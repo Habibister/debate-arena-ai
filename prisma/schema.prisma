@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  COACH
+  ADMIN
+}
+
+enum Organization {
+  DEBATE
+  MODEL_UN
+  DECA
+  HOSA
+  MOCK_TRIAL
+  PUBLIC_SPEAKING
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ELITE
+}
+
+enum DebateMode {
+  AI
+  REAL_STUDENT
+}
+
+enum DebateStatus {
+  SETUP
+  ACTIVE
+  JUDGED
+  ARCHIVED
+}
+
+enum MessageRole {
+  AFFIRMATIVE
+  NEGATIVE
+  MODERATOR
+  JUDGE
+  SYSTEM
+}
+
+enum TestStatus {
+  GENERATED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum SkillTrack {
+  DEBATE
+  MODEL_UN
+  DECA
+  HOSA
+  MOCK_TRIAL
+  PUBLIC_SPEAKING
+}
+
+enum LessonType {
+  LESSON
+  EXAMPLES
+  GUIDED_PRACTICE
+  INDEPENDENT_PRACTICE
+  MASTERY_QUIZ
+}
+
+enum Rank {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+  MASTER
+}
+
+enum AchievementType {
+  XP_STREAK
+  DEBATE_WIN
+  MASTERY_TEST
+  COACH_ASSIGNED
+  READINESS
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  passwordHash   String?
+  role           Role      @default(STUDENT)
+  organization   Organization?
+  level          Level     @default(BEGINNER)
+  ageGroup       String?
+  xp             Int       @default(0)
+  streak         Int       @default(0)
+  wins           Int       @default(0)
+  rank           Rank      @default(BRONZE)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  coachProfile      Coach?
+  teamMemberships   TeamMember[]
+  createdDebates    Debate[]           @relation("CreatedDebates")
+  studentDebates    Debate[]           @relation("StudentDebates")
+  opponentDebates   Debate[]           @relation("OpponentDebates")
+  debateMessages    DebateMessage[]
+  practiceTests     PracticeTest[]
+  practiceAnswers   PracticeAnswer[]
+  achievements      Achievement[]
+  xpLogs            XPLog[]
+  lessonAssignments LessonAssignment[] @relation("AssignedTo")
+  assignedLessons   LessonAssignment[] @relation("AssignedBy")
+}
+
+model Debate {
+  id             String       @id @default(cuid())
+  organization   Organization
+  level          Level
+  topic          String
+  mode           DebateMode
+  status         DebateStatus @default(SETUP)
+  roundsMinimum  Int          @default(3)
+  aiPersona      String?
+  createdById    String
+  studentId      String?
+  opponentUserId String?
+  logicScore     Int?
+  evidenceScore  Int?
+  rebuttalScore  Int?
+  persuasionScore Int?
+  clarityScore   Int?
+  communicationScore Int?
+  overallScore   Int?
+  strengths      String[]     @default([])
+  weaknesses     String[]     @default([])
+  recommendations String[]    @default([])
+  readiness      Json?
+  judgeReport    Json?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  createdBy    User             @relation("CreatedDebates", fields: [createdById], references: [id], onDelete: Cascade)
+  student      User?            @relation("StudentDebates", fields: [studentId], references: [id], onDelete: SetNull)
+  opponentUser User?            @relation("OpponentDebates", fields: [opponentUserId], references: [id], onDelete: SetNull)
+  messages     DebateMessage[]
+
+  @@index([organization, level, status])
+  @@index([studentId])
+  @@index([opponentUserId])
+}
+
+model DebateMessage {
+  id        String      @id @default(cuid())
+  debateId  String
+  authorId  String?
+  role      MessageRole
+  round     Int
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
+
+  debate Debate @relation(fields: [debateId], references: [id], onDelete: Cascade)
+  author User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([debateId, round])
+}
+
+model Skill {
+  id          String       @id @default(cuid())
+  track       SkillTrack
+  organization Organization
+  name        String
+  slug        String       @unique
+  description String
+  order       Int          @default(0)
+  masteryWeights Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  lessons Lesson[]
+
+  @@index([organization, order])
+}
+
+model Lesson {
+  id               String       @id @default(cuid())
+  skillId          String
+  title            String
+  slug             String       @unique
+  type             LessonType
+  summary          String
+  content          Json
+  xpReward         Int          @default(10)
+  estimatedMinutes Int          @default(8)
+  order            Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  skill       Skill              @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  assignments LessonAssignment[]
+
+  @@index([skillId, order])
+}
+
+model PracticeTest {
+  id             String       @id @default(cuid())
+  userId         String
+  organization   Organization
+  difficulty     Level
+  questionCount  Int
+  status         TestStatus    @default(GENERATED)
+  score          Int?
+  weakAreas      String[]      @default([])
+  recommendations Json?
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions PracticeQuestion[]
+  answers   PracticeAnswer[]
+
+  @@index([userId, createdAt])
+  @@index([organization, difficulty])
+}
+
+model PracticeQuestion {
+  id            String       @id @default(cuid())
+  testId        String
+  question      String       @db.Text
+  choices       Json
+  correctAnswer String
+  explanation   String       @db.Text
+  skillTag      String
+  difficulty    Level
+  createdAt     DateTime     @default(now())
+
+  test    PracticeTest    @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers PracticeAnswer[]
+
+  @@index([testId])
+  @@index([skillTag])
+}
+
+model PracticeAnswer {
+  id               String   @id @default(cuid())
+  testId           String
+  questionId       String
+  userId           String
+  selectedAnswer   String
+  isCorrect        Boolean
+  explanationShown Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  test     PracticeTest     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  question PracticeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, userId])
+  @@index([testId, userId])
+}
+
+model Coach {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  title     String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teams Team[]
+}
+
+model Team {
+  id           String       @id @default(cuid())
+  name         String
+  organization Organization
+  coachId      String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  coach  Coach        @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  members TeamMember[]
+
+  @@unique([coachId, name])
+  @@index([organization])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      Role     @default(STUDENT)
+  joinedAt  DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model LessonAssignment {
+  id           String    @id @default(cuid())
+  lessonId     String
+  studentId    String
+  assignedById String
+  dueAt        DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  lesson     Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  student    User   @relation("AssignedTo", fields: [studentId], references: [id], onDelete: Cascade)
+  assignedBy User   @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, studentId])
+  @@index([assignedById])
+}
+
+model Achievement {
+  id          String          @id @default(cuid())
+  userId      String
+  type        AchievementType
+  name        String
+  description String
+  metadata    Json?
+  awardedAt   DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, awardedAt])
+}
+
+model XPLog {
+  id         String   @id @default(cuid())
+  userId     String
+  amount     Int
+  reason     String
+  sourceType String
+  sourceId   String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

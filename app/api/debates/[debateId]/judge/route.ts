@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { judgeDebate } from "@/lib/ai";
+import { judgeDebate, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/ai";
 import { apiError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +11,84 @@ export const runtime = "nodejs";
 
 function normalizeScore(score: number) {
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+type CategoryScore = {
+  key: string;
+  score: number;
+};
+
+type JudgeResult = {
+  overallScore: number;
+  categoryScores: CategoryScore[];
+  sharedSpeaking?: {
+    clarity?: number;
+    confidence?: number;
+    pacing?: number;
+    volume?: number;
+    organization?: number;
+    vocabulary?: number;
+    persuasion?: number;
+    professionalism?: number;
+  };
+  strengths: string[];
+  weaknesses: string[];
+  improvementAdvice?: string[];
+  recommendedLessons?: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }>;
+  readinessForNextLevel: {
+    ready: boolean;
+    rationale: string;
+    nextMilestone: string;
+  };
+};
+
+function categoryScore(result: JudgeResult, keys: string[]) {
+  const found = result.categoryScores.find((category) => keys.includes(category.key));
+  if (!found) {
+    return undefined;
+  }
+
+  return found.score <= 5 ? normalizeScore(found.score * 20) : normalizeScore(found.score);
+}
+
+async function runOrganizationJudge(debate: {
+  organization: "DEBATE" | "MODEL_UN" | "DECA" | "HOSA" | "MOCK_TRIAL" | "PUBLIC_SPEAKING";
+  eventType: string;
+  level: "BEGINNER" | "INTERMEDIATE" | "ELITE";
+  topic: string;
+  messages: Array<{ role: "AFFIRMATIVE" | "NEGATIVE" | "MODERATOR" | "JUDGE" | "SYSTEM"; round: number; content: string }>;
+}) {
+  const transcript = debate.messages.map((message) => ({
+    role: message.role,
+    round: message.round,
+    content: message.content
+  }));
+
+  if (debate.organization === "DECA") {
+    return judgeDecaRoleplay({
+      level: debate.level,
+      eventType: debate.eventType,
+      scenario: debate.topic,
+      transcript
+    });
+  }
+
+  if (debate.organization === "HOSA") {
+    return judgeHosaPerformance({
+      level: debate.level,
+      eventType: debate.eventType,
+      scenario: debate.topic,
+      transcript
+    });
+  }
+
+  return judgeDebate({
+    organization: debate.organization,
+    level: debate.level,
+    eventType: debate.eventType,
+    topic: debate.topic,
+    transcript
+  });
 }
 
 export async function POST(_request: Request, { params }: { params: { debateId: string } }) {
@@ -46,24 +124,19 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
       );
     }
 
-    const result = await judgeDebate({
-      organization: debate.organization,
-      level: debate.level,
-      topic: debate.topic,
-      transcript: debate.messages.map((message) => ({
-        role: message.role,
-        round: message.round,
-        content: message.content
-      }))
-    });
+    const result = (await runOrganizationJudge(debate)) as JudgeResult;
 
     const scores = {
-      logic: normalizeScore(result.scores.logic),
-      evidence: normalizeScore(result.scores.evidence),
-      rebuttal: normalizeScore(result.scores.rebuttal),
-      persuasion: normalizeScore(result.scores.persuasion),
-      clarity: normalizeScore(result.scores.clarity),
-      communication: normalizeScore(result.scores.communication)
+      logic: categoryScore(result, ["argument", "businessReasoning", "healthScienceKnowledge"]),
+      evidence: categoryScore(result, ["contentEvidence", "performanceIndicators", "medicalAccuracy"]),
+      rebuttal: categoryScore(result, ["refutation", "judgeQuestions", "scenarioResponse"]),
+      persuasion: categoryScore(result, ["clash", "solutionQuality", "taskCompletion"]),
+      clarity: result.sharedSpeaking?.clarity ? normalizeScore(result.sharedSpeaking.clarity) : undefined,
+      communication: result.sharedSpeaking?.professionalism
+        ? normalizeScore(result.sharedSpeaking.professionalism)
+        : result.sharedSpeaking?.confidence
+          ? normalizeScore(result.sharedSpeaking.confidence)
+          : undefined
     };
     const overallScore = normalizeScore(result.overallScore);
     const wonDebate = overallScore >= 80;
@@ -91,7 +164,10 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
           overallScore,
           strengths: result.strengths,
           weaknesses: result.weaknesses,
-          recommendations: result.recommendations,
+          recommendations: [
+            ...(result.improvementAdvice ?? []),
+            ...(result.recommendedLessons ?? []).map((lesson) => lesson.reason)
+          ],
           readiness: result.readinessForNextLevel,
           judgeReport: result
         }
@@ -116,6 +192,26 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
           sourceId: debate.id
         }
       });
+
+      if (result.sharedSpeaking) {
+        await tx.speakingSkillSnapshot.create({
+          data: {
+            userId: session.user.id,
+            organization: debate.organization,
+            eventType: debate.eventType,
+            sourceType: debate.practiceMode,
+            sourceId: debate.id,
+            clarity: result.sharedSpeaking.clarity,
+            confidence: result.sharedSpeaking.confidence,
+            pacing: result.sharedSpeaking.pacing,
+            volume: result.sharedSpeaking.volume,
+            organizationScore: result.sharedSpeaking.organization,
+            vocabulary: result.sharedSpeaking.vocabulary,
+            persuasion: result.sharedSpeaking.persuasion,
+            professionalism: result.sharedSpeaking.professionalism
+          }
+        });
+      }
 
       return [savedDebate, savedUser] as const;
     });

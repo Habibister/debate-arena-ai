@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
+import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { practiceTestCreateSchema } from "@/lib/validators";
@@ -35,13 +36,34 @@ export async function POST(request: Request) {
     }
 
     const input = await parseJson(request, practiceTestCreateSchema);
+    const generated = await generatePracticeQuestions({
+      organization: input.organization,
+      eventType: input.eventType,
+      eventCluster: input.eventCluster,
+      difficulty: input.difficulty,
+      count: input.questionCount
+    });
+
     const test = await prisma.practiceTest.create({
       data: {
         userId: session.user.id,
         organization: input.organization,
+        eventType: input.eventType,
+        eventCluster: input.eventCluster,
         difficulty: input.difficulty,
-        questionCount: input.questionCount
-      }
+        questionCount: input.questionCount,
+        questions: {
+          create: generated.questions.map((question) => ({
+            question: question.question,
+            choices: question.choices,
+            correctAnswer: question.correctAnswer,
+            explanation: question.explanation,
+            skillTag: question.skillTag,
+            difficulty: input.difficulty
+          }))
+        }
+      },
+      include: { questions: true }
     });
 
     return NextResponse.json({ test }, { status: 201 });

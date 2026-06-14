@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { PrismaClient, type Level, type Organization, type SkillTrack } from "@prisma/client";
+import { RUBRIC_SEEDS } from "../lib/rubrics";
 
 const prisma = new PrismaClient();
 
@@ -154,11 +155,90 @@ async function seedSkills() {
   }
 }
 
+async function seedRubrics() {
+  for (const rubric of RUBRIC_SEEDS) {
+    const dbRubric = await prisma.rubric.upsert({
+      where: {
+        organization_eventType_version: {
+          organization: rubric.organization,
+          eventType: rubric.eventType,
+          version: 1
+        }
+      },
+      update: {
+        name: rubric.name,
+        description: rubric.description,
+        scoreMin: rubric.scoreMin,
+        scoreMax: rubric.scoreMax,
+        isActive: true
+      },
+      create: {
+        organization: rubric.organization,
+        eventType: rubric.eventType,
+        name: rubric.name,
+        description: rubric.description,
+        scoreMin: rubric.scoreMin,
+        scoreMax: rubric.scoreMax,
+        isActive: true
+      }
+    });
+
+    for (const [order, category] of rubric.categories.entries()) {
+      const dbCategory = await prisma.rubricCategory.upsert({
+        where: {
+          rubricId_key: {
+            rubricId: dbRubric.id,
+            key: category.key
+          }
+        },
+        update: {
+          label: category.label,
+          description: category.description,
+          scoreMin: category.scoreMin,
+          scoreMax: category.scoreMax,
+          weight: category.weight,
+          order,
+          lessonSlugs: category.lessonSlugs,
+          sharedSpeakingSkill: category.sharedSpeakingSkill ?? false
+        },
+        create: {
+          rubricId: dbRubric.id,
+          key: category.key,
+          label: category.label,
+          description: category.description,
+          scoreMin: category.scoreMin,
+          scoreMax: category.scoreMax,
+          weight: category.weight,
+          order,
+          lessonSlugs: category.lessonSlugs,
+          sharedSpeakingSkill: category.sharedSpeakingSkill ?? false
+        }
+      });
+
+      await prisma.rubricDescriptor.deleteMany({
+        where: { categoryId: dbCategory.id }
+      });
+
+      await prisma.rubricDescriptor.createMany({
+        data: category.descriptors.map((descriptor) => ({
+          categoryId: dbCategory.id,
+          label: descriptor.label,
+          minScore: descriptor.minScore,
+          maxScore: descriptor.maxScore,
+          description: descriptor.description
+        }))
+      });
+    }
+  }
+}
+
 async function seedPracticeSkeleton(studentId: string) {
   const test = await prisma.practiceTest.create({
     data: {
       userId: studentId,
       organization: "DECA",
+      eventType: "ROLEPLAY",
+      eventCluster: "Marketing",
       difficulty: "BEGINNER" as Level,
       questionCount: 10,
       status: "COMPLETED",
@@ -247,6 +327,7 @@ async function main() {
   });
 
   await seedSkills();
+  await seedRubrics();
 
   const existingTests = await prisma.practiceTest.count({ where: { userId: student.id } });
   if (existingTests === 0) {

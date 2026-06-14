@@ -59,13 +59,22 @@ export const LEVELS: Array<{
   }
 ];
 
-export const JUDGE_RUBRIC = [
-  "Logic",
-  "Evidence",
-  "Rebuttal",
-  "Persuasion",
-  "Clarity",
-  "Communication"
+export const PARLIAMENTARY_JUDGE_CATEGORIES = [
+  "Argument",
+  "Refutation",
+  "Content and Evidence",
+  "Organization",
+  "Style",
+  "Delivery",
+  "Government Case Quality",
+  "Opposition Response Quality",
+  "Clash",
+  "Definitions",
+  "Contentions",
+  "Signposting",
+  "Rebuttal Effectiveness",
+  "Rule Awareness",
+  "Time Usage"
 ];
 
 export const RANK_THRESHOLDS: Array<{ rank: Rank; minXp: number }> = [

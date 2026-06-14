@@ -10,37 +10,55 @@ export const organizationSchema = z.enum([
 ]);
 
 export const levelSchema = z.enum(["BEGINNER", "INTERMEDIATE", "ELITE"]);
+export const practiceModeSchema = z.enum(["DEBATE", "ROLEPLAY", "TEST", "LESSON"]);
+
+const transcriptSchema = z.array(
+  z.object({
+    role: z.enum(["AFFIRMATIVE", "NEGATIVE", "MODERATOR", "JUDGE", "SYSTEM"]),
+    round: z.number().int().min(1),
+    content: z.string().min(1)
+  })
+);
 
 export const topicRequestSchema = z.object({
   organization: organizationSchema,
   level: levelSchema,
+  eventType: z.string().min(2).max(120).optional(),
+  practiceMode: practiceModeSchema.optional(),
   focusArea: z.string().max(120).optional()
 });
 
 export const opponentRequestSchema = z.object({
   organization: organizationSchema,
   level: levelSchema,
+  eventType: z.string().min(2).max(120).optional(),
+  practiceMode: practiceModeSchema.optional(),
   topic: z.string().min(8),
   side: z.enum(["AFFIRMATIVE", "NEGATIVE"]),
   round: z.number().int().min(1).max(10),
-  transcript: z.array(
-    z.object({
-      role: z.enum(["AFFIRMATIVE", "NEGATIVE", "MODERATOR", "JUDGE", "SYSTEM"]),
-      round: z.number().int().min(1),
-      content: z.string().min(1)
-    })
-  )
+  transcript: transcriptSchema
 });
 
 export const judgeRequestSchema = z.object({
   organization: organizationSchema,
   level: levelSchema,
+  eventType: z.string().min(2).max(120).default("PARLIAMENTARY_DEBATE"),
   topic: z.string().min(8),
-  transcript: opponentRequestSchema.shape.transcript.min(3)
+  transcript: transcriptSchema.min(3)
+});
+
+export const roleplayJudgeRequestSchema = z.object({
+  organization: z.enum(["DECA", "HOSA"]),
+  level: levelSchema,
+  eventType: z.string().min(2).max(120),
+  scenario: z.string().min(8),
+  transcript: transcriptSchema.min(1)
 });
 
 export const practiceQuestionRequestSchema = z.object({
   organization: z.enum(["DECA", "HOSA"]),
+  eventType: z.string().min(2).max(120),
+  eventCluster: z.string().min(2).max(120).optional(),
   difficulty: levelSchema,
   count: z.union([z.literal(10), z.literal(25), z.literal(50)])
 });
@@ -53,6 +71,7 @@ export const lessonContentRequestSchema = z.object({
 
 export const recommendationRequestSchema = z.object({
   organization: organizationSchema,
+  eventType: z.string().min(2).max(120).optional(),
   weaknesses: z.array(z.string().min(2)).min(1),
   availableLessons: z.array(
     z.object({
@@ -65,6 +84,7 @@ export const recommendationRequestSchema = z.object({
 
 export const readinessRequestSchema = z.object({
   organization: organizationSchema,
+  eventType: z.string().min(2).max(120).optional(),
   currentLevel: levelSchema,
   recentScores: z.array(z.number().min(0).max(100)).min(1),
   weaknessSummary: z.array(z.string()).default([])
@@ -72,6 +92,8 @@ export const readinessRequestSchema = z.object({
 
 export const debateCreateSchema = z.object({
   organization: organizationSchema,
+  eventType: z.string().min(2).max(120),
+  practiceMode: practiceModeSchema,
   level: levelSchema,
   topic: z.string().min(8),
   mode: z.enum(["AI", "REAL_STUDENT"]),
@@ -80,8 +102,19 @@ export const debateCreateSchema = z.object({
 
 export const practiceTestCreateSchema = z.object({
   organization: z.enum(["DECA", "HOSA"]),
+  eventType: z.string().min(2).max(120),
+  eventCluster: z.string().min(2).max(120).optional(),
   difficulty: levelSchema,
   questionCount: z.union([z.literal(10), z.literal(25), z.literal(50)])
+});
+
+export const practiceTestGradeSchema = z.object({
+  answers: z.array(
+    z.object({
+      questionId: z.string().min(1),
+      selectedAnswer: z.string().min(1)
+    })
+  ).min(1)
 });
 
 export const teamCreateSchema = z.object({

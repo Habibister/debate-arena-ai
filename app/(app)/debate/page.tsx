@@ -4,15 +4,16 @@ import { DebateFlow } from "@/components/debate/debate-flow";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LEVELS, ORGANIZATIONS } from "@/lib/constants";
+import { RUBRIC_SEEDS, SPEAKER_POINT_SCALE } from "@/lib/rubrics";
 
 export default function DebatePage() {
   return (
     <div className="space-y-6">
       <div>
         <Badge variant="secondary">AI Debate System</Badge>
-        <h1 className="mt-3 text-3xl font-bold">Create a round</h1>
+        <h1 className="mt-3 text-3xl font-bold">Create a judged practice round</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Generate an original topic, complete at least three rounds against an AI opponent, and submit the transcript for AI judging.
+          Select organization, event type, level, and practice mode. The judge switches scoring engines for parliamentary debate, DECA roleplays, and HOSA performances.
         </p>
       </div>
 
@@ -68,15 +69,38 @@ export default function DebatePage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquareText className="h-5 w-5 text-primary" aria-hidden />
-            <CardTitle>AI Judge Rubric</CardTitle>
+            <CardTitle>Organization-Specific Judge Engines</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          {["Logic", "Evidence", "Rebuttal", "Persuasion", "Clarity", "Communication"].map((metric) => (
-            <div key={metric} className="rounded-lg border bg-background p-4 font-semibold">
-              {metric}
+        <CardContent className="space-y-5">
+          <div className="grid gap-3 xl:grid-cols-3">
+            {RUBRIC_SEEDS.map((rubric) => (
+              <div key={`${rubric.organization}-${rubric.eventType}`} className="rounded-lg border bg-background p-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">{rubric.organization.replace("_", " ")}</p>
+                <h3 className="mt-2 font-semibold">{rubric.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{rubric.description}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {rubric.categories.slice(0, 5).map((category) => (
+                    <Badge key={category.key} variant="outline">
+                      {category.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-lg border bg-background p-4">
+            <p className="font-semibold">Parliamentary speaker point scale</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {SPEAKER_POINT_SCALE.map((item) => (
+                <div key={item.score} className="rounded-md border bg-card p-3 text-sm">
+                  <span className="font-semibold">{item.score}</span>
+                  <span className="ml-2 text-muted-foreground">{item.label}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </CardContent>
       </Card>
     </div>

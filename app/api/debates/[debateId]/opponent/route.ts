@@ -40,6 +40,8 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const opponent = await generateOpponentResponse({
       organization: debate.organization,
       level: debate.level,
+      eventType: debate.eventType,
+      practiceMode: debate.practiceMode,
       topic: debate.topic,
       side: input.side,
       round: input.round,

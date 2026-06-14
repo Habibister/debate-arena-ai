@@ -43,9 +43,21 @@ export async function POST(request: Request) {
     }
 
     const input = await parseJson(request, debateCreateSchema);
+    const rubric = await prisma.rubric.findFirst({
+      where: {
+        organization: input.organization,
+        eventType: input.eventType,
+        isActive: true
+      },
+      orderBy: { version: "desc" }
+    });
+
     const debate = await prisma.debate.create({
       data: {
         organization: input.organization,
+        eventType: input.eventType,
+        practiceMode: input.practiceMode,
+        rubricId: rubric?.id,
         level: input.level,
         topic: input.topic,
         mode: input.mode,

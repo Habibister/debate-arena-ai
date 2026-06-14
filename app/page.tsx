@@ -30,7 +30,7 @@ const featureCards = [
   },
   {
     title: "AI Judging",
-    description: "Rubric scoring across logic, evidence, rebuttal, persuasion, clarity, and communication.",
+    description: "Separate scoring engines for debate, DECA, HOSA, and shared speaking-skill growth.",
     icon: Medal
   },
   {

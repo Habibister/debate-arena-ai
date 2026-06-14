@@ -40,6 +40,13 @@ enum DebateStatus {
   ARCHIVED
 }
 
+enum PracticeMode {
+  DEBATE
+  ROLEPLAY
+  TEST
+  LESSON
+}
+
 enum MessageRole {
   AFFIRMATIVE
   NEGATIVE
@@ -118,6 +125,7 @@ model User {
   practiceAnswers   PracticeAnswer[]
   achievements      Achievement[]
   xpLogs            XPLog[]
+  speakingSnapshots SpeakingSkillSnapshot[]
   lessonAssignments LessonAssignment[] @relation("AssignedTo")
   assignedLessons   LessonAssignment[] @relation("AssignedBy")
 }
@@ -125,6 +133,9 @@ model User {
 model Debate {
   id             String       @id @default(cuid())
   organization   Organization
+  eventType      String       @default("PARLIAMENTARY_DEBATE")
+  practiceMode   PracticeMode @default(DEBATE)
+  rubricId       String?
   level          Level
   topic          String
   mode           DebateMode
@@ -154,11 +165,13 @@ model Debate {
   createdBy    User             @relation("CreatedDebates", fields: [createdById], references: [id], onDelete: Cascade)
   student      User?            @relation("StudentDebates", fields: [studentId], references: [id], onDelete: SetNull)
   opponentUser User?            @relation("OpponentDebates", fields: [opponentUserId], references: [id], onDelete: SetNull)
+  rubric       Rubric?          @relation(fields: [rubricId], references: [id], onDelete: SetNull)
   messages     DebateMessage[]
 
-  @@index([organization, level, status])
+  @@index([organization, eventType, level, status])
   @@index([studentId])
   @@index([opponentUserId])
+  @@index([rubricId])
 }
 
 model DebateMessage {
@@ -217,6 +230,8 @@ model PracticeTest {
   id             String       @id @default(cuid())
   userId         String
   organization   Organization
+  eventType      String       @default("GENERAL_TEST")
+  eventCluster   String?
   difficulty     Level
   questionCount  Int
   status         TestStatus    @default(GENERATED)
@@ -231,7 +246,7 @@ model PracticeTest {
   answers   PracticeAnswer[]
 
   @@index([userId, createdAt])
-  @@index([organization, difficulty])
+  @@index([organization, eventType, difficulty])
 }
 
 model PracticeQuestion {
@@ -354,6 +369,85 @@ model XPLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model Rubric {
+  id           String       @id @default(cuid())
+  organization Organization
+  eventType    String
+  name         String
+  version      Int          @default(1)
+  description  String       @db.Text
+  scoreMin     Int          @default(0)
+  scoreMax     Int          @default(100)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  categories RubricCategory[]
+  debates    Debate[]
+
+  @@unique([organization, eventType, version])
+  @@index([organization, eventType, isActive])
+}
+
+model RubricCategory {
+  id                  String   @id @default(cuid())
+  rubricId            String
+  key                 String
+  label               String
+  description         String   @db.Text
+  scoreMin            Int      @default(1)
+  scoreMax            Int      @default(5)
+  weight              Int      @default(1)
+  order               Int      @default(0)
+  lessonSlugs         String[] @default([])
+  sharedSpeakingSkill Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  rubric      Rubric             @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  descriptors RubricDescriptor[]
+
+  @@unique([rubricId, key])
+  @@index([rubricId, order])
+}
+
+model RubricDescriptor {
+  id          String   @id @default(cuid())
+  categoryId  String
+  label       String
+  minScore    Int
+  maxScore    Int
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  category RubricCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId, minScore, maxScore])
+}
+
+model SpeakingSkillSnapshot {
+  id              String       @id @default(cuid())
+  userId          String
+  organization    Organization
+  eventType       String
+  sourceType      String
+  sourceId        String?
+  clarity         Int?
+  confidence      Int?
+  pacing          Int?
+  volume          Int?
+  organizationScore Int?
+  vocabulary      Int?
+  persuasion      Int?
+  professionalism Int?
+  createdAt       DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([organization, eventType])
 }
 
 model Account {

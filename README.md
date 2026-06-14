@@ -30,6 +30,15 @@ Phase 2 has started with the AI Debate System:
 - XP, streak, wins, and rank updates after judging
 - Matchmaking endpoint with automatic AI fallback
 
+This phase also adds organization-specific scoring engines transformed from uploaded reference rubrics:
+
+- Parliamentary debate judging with argument/refutation/content/organization/style/delivery/case/clash/rules/time categories
+- 19-30 parliamentary speaker points, 1-4 speaker ranks, team winner, and reason for decision
+- DECA roleplay and case-study judging with business scenario, performance indicator, solution, feasibility, and professional communication scoring
+- HOSA performance judging with health science knowledge, medical accuracy, task completion, scenario response, and professionalism scoring
+- Shared speaking-skill tracking across clarity, confidence, pacing, volume, organization, vocabulary, persuasion, and professionalism
+- Flexible Prisma rubric models for categories, score ranges, descriptors, and lesson recommendations
+
 Remaining Phase 2 depth includes realtime student-to-student rooms, timers, speech/audio support, richer judge explainability, and durable availability queues.
 
 ## Tech Stack
@@ -60,6 +69,8 @@ app/
   api/
     ai/
       judge/
+      judge-deca/
+      judge-hosa/
       lesson/
       opponent/
       practice-questions/
@@ -75,6 +86,8 @@ app/
     matchmaking/
     teams/
     tests/
+      [testId]/
+        grade/
 components/
   analytics/
   app/
@@ -118,6 +131,10 @@ The Prisma schema includes the requested product models:
 - `Team`
 - `Achievement`
 - `XPLog`
+- `Rubric`
+- `RubricCategory`
+- `RubricDescriptor`
+- `SpeakingSkillSnapshot`
 
 It also includes NextAuth tables and small supporting join tables for team membership and lesson assignments.
 
@@ -128,6 +145,8 @@ The OpenAI-powered functions live in `lib/ai.ts`:
 - `generateTopic()`
 - `generateOpponentResponse()`
 - `judgeDebate()`
+- `judgeDecaRoleplay()`
+- `judgeHosaPerformance()`
 - `generatePracticeQuestions()`
 - `generateLessonContent()`
 - `recommendLessons()`
@@ -147,6 +166,10 @@ The live debate system uses:
 - `POST /api/debates/:debateId/opponent`
 - `POST /api/debates/:debateId/judge`
 - `POST /api/matchmaking`
+- `POST /api/ai/judge-deca`
+- `POST /api/ai/judge-hosa`
+- `POST /api/tests`
+- `POST /api/tests/:testId/grade`
 
 ## Getting Started
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { Level, Organization } from "@prisma/client";
+import { useEffect, useMemo, useState } from "react";
+import type { Level, Organization, PracticeMode } from "@prisma/client";
 import {
   Bot,
   CheckCircle2,
@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { LEVELS, ORGANIZATIONS } from "@/lib/constants";
+import { EVENT_OPTIONS, PRACTICE_MODES } from "@/lib/rubrics";
 import { cn, titleCase } from "@/lib/utils";
 
 type DebateMode = "AI" | "REAL_STUDENT";
@@ -41,17 +42,36 @@ type TopicPackage = {
 
 type JudgeReport = {
   overallScore: number;
-  scores: {
-    logic: number;
-    evidence: number;
-    rebuttal: number;
-    persuasion: number;
-    clarity: number;
-    communication: number;
+  categoryScores: Array<{
+    key: string;
+    label: string;
+    score: number;
+    reason: string;
+  }>;
+  sharedSpeaking?: {
+    clarity?: number;
+    confidence?: number;
+    pacing?: number;
+    volume?: number;
+    organization?: number;
+    vocabulary?: number;
+    persuasion?: number;
+    professionalism?: number;
   };
+  speakerScores?: Array<{
+    speaker: string;
+    team: "GOVERNMENT" | "OPPOSITION";
+    score: number;
+    rank: number;
+    descriptor: string;
+    rationale: string;
+  }>;
+  teamWinner?: "GOVERNMENT" | "OPPOSITION";
+  reasonForDecision?: string;
   strengths: string[];
   weaknesses: string[];
-  recommendations: string[];
+  improvementAdvice?: string[];
+  recommendedLessons?: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }>;
   readinessForNextLevel: {
     ready: boolean;
     rationale: string;
@@ -79,7 +99,9 @@ async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
 
 export function DebateRoom() {
   const [organization, setOrganization] = useState<Organization>("DEBATE");
+  const [eventType, setEventType] = useState("PARLIAMENTARY_DEBATE");
   const [level, setLevel] = useState<Level>("BEGINNER");
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>("DEBATE");
   const [mode, setMode] = useState<DebateMode>("AI");
   const [topicPackage, setTopicPackage] = useState<TopicPackage | null>(null);
   const [topicText, setTopicText] = useState("");
@@ -98,10 +120,26 @@ export function DebateRoom() {
   const [error, setError] = useState<string | null>(null);
 
   const selectedOrg = ORGANIZATIONS.find((item) => item.value === organization);
+  const eventOptions = EVENT_OPTIONS[organization];
+  const selectedEvent = eventOptions.find((item) => item.value === eventType) ?? eventOptions[0];
+  const allowedPracticeModes = PRACTICE_MODES.filter((item) => selectedEvent.allowedModes.includes(item.value));
   const selectedLevel = LEVELS.find((item) => item.value === level);
   const studentTurns = useMemo(() => messages.filter((message) => message.role === "AFFIRMATIVE"), [messages]);
   const roundProgress = Math.min(Math.round((studentTurns.length / 3) * 100), 100);
   const canJudge = Boolean(debateId && studentTurns.length >= 3 && !judgeReport);
+  const isInteractiveRound = practiceMode === "DEBATE" || practiceMode === "ROLEPLAY";
+
+  useEffect(() => {
+    const nextEvent = EVENT_OPTIONS[organization][0];
+    setEventType(nextEvent.value);
+    setPracticeMode(nextEvent.allowedModes[0]);
+  }, [organization]);
+
+  useEffect(() => {
+    if (!selectedEvent.allowedModes.includes(practiceMode)) {
+      setPracticeMode(selectedEvent.allowedModes[0]);
+    }
+  }, [practiceMode, selectedEvent.allowedModes]);
 
   async function generateTopic() {
     setIsGeneratingTopic(true);
@@ -110,7 +148,7 @@ export function DebateRoom() {
     try {
       const generated = await requestJson<TopicPackage>("/api/ai/topic", {
         method: "POST",
-        body: JSON.stringify({ organization, level })
+        body: JSON.stringify({ organization, eventType, practiceMode, level })
       });
       setTopicPackage(generated);
       setTopicText(generated.topic);
@@ -154,6 +192,8 @@ export function DebateRoom() {
         method: "POST",
         body: JSON.stringify({
           organization,
+          eventType,
+          practiceMode,
           level,
           topic: topicText,
           mode: nextMode,
@@ -166,7 +206,7 @@ export function DebateRoom() {
         body: JSON.stringify({
           role: "MODERATOR",
           round: 1,
-          content: `Topic: ${topicText}`
+          content: `${practiceMode === "ROLEPLAY" ? "Scenario" : "Topic"}: ${topicText}`
         })
       });
 
@@ -298,40 +338,88 @@ export function DebateRoom() {
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-semibold">Opponent</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setMode("AI")}
-                  className={cn(
-                    "focus-ring rounded-md border p-3 text-left transition-colors",
-                    mode === "AI" ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-                  )}
-                  disabled={Boolean(debateId)}
-                >
-                  <Bot className="mb-2 h-4 w-4" aria-hidden />
-                  <span className="text-sm font-semibold">AI opponent</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("REAL_STUDENT")}
-                  className={cn(
-                    "focus-ring rounded-md border p-3 text-left transition-colors",
-                    mode === "REAL_STUDENT" ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-                  )}
-                  disabled={Boolean(debateId)}
-                >
-                  <Users className="mb-2 h-4 w-4" aria-hidden />
-                  <span className="text-sm font-semibold">Student match</span>
-                </button>
+              <p className="mb-3 text-sm font-semibold">Event type</p>
+              <div className="grid gap-2">
+                {eventOptions.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setEventType(item.value)}
+                    className={cn(
+                      "focus-ring rounded-md border p-3 text-left text-sm transition-colors",
+                      eventType === item.value ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
+                    )}
+                    disabled={Boolean(debateId)}
+                  >
+                    <span className="font-semibold">{item.label}</span>
+                    <span className={cn("mt-1 block leading-5", eventType === item.value ? "text-primary-foreground/85" : "text-muted-foreground")}>
+                      {item.description}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
+
+            <div>
+              <p className="mb-3 text-sm font-semibold">Practice mode</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {allowedPracticeModes.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setPracticeMode(item.value)}
+                    className={cn(
+                      "focus-ring rounded-md border p-3 text-left text-sm transition-colors",
+                      practiceMode === item.value ? "border-secondary bg-secondary text-secondary-foreground" : "bg-background hover:bg-muted"
+                    )}
+                    disabled={Boolean(debateId)}
+                  >
+                    <span className="font-semibold">{item.label}</span>
+                    <span className={cn("mt-1 block leading-5", practiceMode === item.value ? "text-secondary-foreground/85" : "text-muted-foreground")}>
+                      {item.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {isInteractiveRound ? (
+              <div>
+                <p className="mb-3 text-sm font-semibold">Opponent</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setMode("AI")}
+                    className={cn(
+                      "focus-ring rounded-md border p-3 text-left transition-colors",
+                      mode === "AI" ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
+                    )}
+                    disabled={Boolean(debateId)}
+                  >
+                    <Bot className="mb-2 h-4 w-4" aria-hidden />
+                    <span className="text-sm font-semibold">AI opponent</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("REAL_STUDENT")}
+                    className={cn(
+                      "focus-ring rounded-md border p-3 text-left transition-colors",
+                      mode === "REAL_STUDENT" ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
+                    )}
+                    disabled={Boolean(debateId)}
+                  >
+                    <Users className="mb-2 h-4 w-4" aria-hidden />
+                    <span className="text-sm font-semibold">Student match</span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             <div className="rounded-lg border bg-background p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold">{selectedOrg?.label} Topic</p>
-                  <p className="text-xs text-muted-foreground">{selectedLevel?.label} difficulty</p>
+                  <p className="text-sm font-semibold">{selectedOrg?.label} {practiceMode === "ROLEPLAY" ? "Scenario" : "Prompt"}</p>
+                  <p className="text-xs text-muted-foreground">{selectedEvent.label} · {selectedLevel?.label}</p>
                 </div>
                 <Button type="button" variant="secondary" onClick={generateTopic} disabled={isGeneratingTopic || Boolean(debateId)}>
                   {isGeneratingTopic ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
@@ -341,7 +429,7 @@ export function DebateRoom() {
               <Textarea
                 value={topicText}
                 onChange={(event) => setTopicText(event.target.value)}
-                placeholder="Generate a topic or write one manually."
+                placeholder="Generate a prompt or write one manually."
                 className="mt-4 min-h-24"
                 disabled={Boolean(debateId)}
               />
@@ -371,7 +459,7 @@ export function DebateRoom() {
 
             <Button type="button" className="w-full" size="lg" onClick={startDebate} disabled={isStarting || Boolean(debateId)}>
               {isStarting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MessageSquareText className="h-5 w-5" aria-hidden />}
-              Start debate
+              {practiceMode === "ROLEPLAY" ? "Start roleplay" : practiceMode === "TEST" ? "Create test prompt" : practiceMode === "LESSON" ? "Create lesson prompt" : "Start debate"}
             </Button>
 
             {error ? (
@@ -391,7 +479,7 @@ export function DebateRoom() {
               <div>
                 <CardTitle>Live Debate Room</CardTitle>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Complete at least three affirmative turns before submitting to the AI judge.
+                  Complete at least three turns before submitting to the organization-specific AI judge.
                 </p>
               </div>
               <Badge variant={resolvedMode === "AI" ? "secondary" : "accent"}>
@@ -443,14 +531,16 @@ export function DebateRoom() {
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">Your turn</p>
-                    <p className="text-sm text-muted-foreground">Round {currentRound} affirmative argument</p>
+                    <p className="text-sm text-muted-foreground">
+                      Round {currentRound} {practiceMode === "ROLEPLAY" ? "student response" : "affirmative argument"}
+                    </p>
                   </div>
                   {studentTurns.length >= 3 ? <Badge variant="accent">Judge ready</Badge> : null}
                 </div>
                 <Textarea
                   value={studentInput}
                   onChange={(event) => setStudentInput(event.target.value)}
-                  placeholder="Write your argument, rebuttal, weighing, or closing extension."
+                  placeholder={practiceMode === "ROLEPLAY" ? "Write your roleplay response, proposed solution, or judge-question answer." : "Write your argument, rebuttal, weighing, or closing extension."}
                 />
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                   <Button type="button" onClick={submitTurn} disabled={isSubmitting || !studentInput.trim()} className="sm:flex-1">
@@ -485,22 +575,46 @@ export function DebateRoom() {
                   <p className="mt-3 text-5xl font-bold">{judgeReport.overallScore}</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {Object.entries(judgeReport.scores).map(([label, score]) => (
-                    <div key={label} className="rounded-lg border bg-background p-3">
+                  {judgeReport.categoryScores.slice(0, 8).map((category) => (
+                    <div key={category.key} className="rounded-lg border bg-background p-3">
                       <div className="mb-2 flex items-center justify-between text-sm">
-                        <span className="font-semibold">{titleCase(label)}</span>
-                        <span className="text-muted-foreground">{score}</span>
+                        <span className="font-semibold">{category.label}</span>
+                        <span className="text-muted-foreground">{category.score}</span>
                       </div>
-                      <Progress value={score} />
+                      <Progress value={category.score <= 5 ? category.score * 20 : category.score} />
                     </div>
                   ))}
                 </div>
               </div>
 
+              {judgeReport.teamWinner || judgeReport.reasonForDecision ? (
+                <div className="rounded-lg border bg-background p-4">
+                  {judgeReport.teamWinner ? <p className="font-semibold">Winner: {titleCase(judgeReport.teamWinner)}</p> : null}
+                  {judgeReport.reasonForDecision ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{judgeReport.reasonForDecision}</p> : null}
+                </div>
+              ) : null}
+
+              {judgeReport.speakerScores ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {judgeReport.speakerScores.map((speaker) => (
+                    <div key={`${speaker.team}-${speaker.rank}`} className="rounded-lg border bg-background p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold">{speaker.speaker}</p>
+                        <Badge variant="outline">Rank {speaker.rank}</Badge>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {speaker.score} speaker points · {speaker.descriptor}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{speaker.rationale}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
               <div className="grid gap-3 md:grid-cols-3">
                 <FeedbackList title="Strengths" items={judgeReport.strengths} />
                 <FeedbackList title="Weaknesses" items={judgeReport.weaknesses} />
-                <FeedbackList title="Recommendations" items={judgeReport.recommendations} />
+                <FeedbackList title="Recommendations" items={judgeReport.improvementAdvice ?? judgeReport.recommendedLessons?.map((lesson) => lesson.reason) ?? []} />
               </div>
 
               <div className="rounded-lg border bg-background p-4">

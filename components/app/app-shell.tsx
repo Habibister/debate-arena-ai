@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   BookOpenCheck,
   ClipboardList,
+  Flame,
   GraduationCap,
   LayoutDashboard,
   MessageSquareText,
@@ -14,6 +14,7 @@ import {
   Users
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -51,8 +52,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
+                aria-current={active ? "page" : undefined}
               >
                 <Icon className="h-4 w-4" aria-hidden />
                 {item.label}
@@ -60,6 +62,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        <div className="mt-8 rounded-lg border bg-background p-4">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="font-semibold">Silver progress</span>
+            <span className="text-muted-foreground">375 XP</span>
+          </div>
+          <Progress value={42} className="mt-3" />
+          <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <Flame className="h-3.5 w-3.5 text-accent" aria-hidden />
+            8-day streak
+          </div>
+        </div>
 
         <div className="mt-8 rounded-lg border bg-background p-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -72,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="lg:pl-64">
+      <div className="pb-16 lg:pb-0 lg:pl-64">
         <header className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 font-bold">
@@ -95,6 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     "flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold",
                     active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
                   )}
+                  aria-current={active ? "page" : undefined}
                 >
                   <Icon className="h-3.5 w-3.5" aria-hidden />
                   {item.label}
@@ -105,6 +120,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-card/95 px-2 py-2 backdrop-blur lg:hidden">
+        {navItems.slice(0, 4).map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
+                active ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              )}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon className="h-4 w-4" aria-hidden />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

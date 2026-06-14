@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { Level } from "@prisma/client";
-import { ClipboardList, Loader2, Sparkles } from "lucide-react";
+import { CircleAlert, ClipboardList, Loader2, Sparkles, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingState } from "@/components/ui/loading-state";
+import { Progress } from "@/components/ui/progress";
 import { LEVELS } from "@/lib/constants";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
 import { testingClustersForOrganization } from "@/lib/testing";
@@ -56,6 +58,7 @@ export function PracticeTestGenerator() {
 
   const events = EVENT_OPTIONS[organization];
   const clusters = useMemo(() => testingClustersForOrganization(organization), [organization]);
+  const generationProgress = isLoading ? 66 : 0;
 
   function updateOrganization(nextOrganization: TestingOrganization) {
     setOrganization(nextOrganization);
@@ -87,11 +90,18 @@ export function PracticeTestGenerator() {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Generate Original Practice Test</CardTitle>
-          <Badge variant="secondary">AI-generated questions only</Badge>
+          <div>
+            <CardTitle>Generate Original Practice Test</CardTitle>
+            <p className="mt-2 text-sm text-muted-foreground">Choose a track, focus area, and difficulty. Then jump straight into a timed-feeling practice set.</p>
+          </div>
+          <Badge variant="secondary">Original questions only</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        {isLoading ? (
+          <LoadingState title="Generating your practice set" description="Creating original questions, answer choices, explanations, and skill tags." />
+        ) : null}
+
         <div>
           <p className="mb-3 text-sm font-semibold">Organization</p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -104,6 +114,7 @@ export function PracticeTestGenerator() {
                   "focus-ring rounded-md border p-4 text-left transition-colors",
                   organization === item ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
                 )}
+                disabled={isLoading}
               >
                 <span className="font-semibold">{item}</span>
                 <span className={cn("mt-1 block text-sm", organization === item ? "text-primary-foreground/85" : "text-muted-foreground")}>
@@ -126,6 +137,7 @@ export function PracticeTestGenerator() {
                   "focus-ring rounded-md border p-4 text-left transition-colors",
                   eventType === event.value ? "border-secondary bg-secondary text-secondary-foreground" : "bg-background hover:bg-muted"
                 )}
+                disabled={isLoading}
               >
                 <span className="font-semibold">{event.label}</span>
                 <span className={cn("mt-1 block text-sm", eventType === event.value ? "text-secondary-foreground/85" : "text-muted-foreground")}>
@@ -148,6 +160,7 @@ export function PracticeTestGenerator() {
                   "focus-ring rounded-md border px-3 py-2 text-left text-sm font-semibold transition-colors",
                   eventCluster === cluster ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
                 )}
+                disabled={isLoading}
               >
                 {cluster}
               </button>
@@ -168,6 +181,7 @@ export function PracticeTestGenerator() {
                     "focus-ring rounded-md border px-3 py-2 text-left text-sm font-semibold transition-colors",
                     difficulty === level.value ? "border-secondary bg-secondary text-secondary-foreground" : "bg-background hover:bg-muted"
                   )}
+                  disabled={isLoading}
                 >
                   {level.label}
                 </button>
@@ -187,6 +201,7 @@ export function PracticeTestGenerator() {
                     "focus-ring rounded-md border px-3 py-2 text-left text-sm font-semibold transition-colors",
                     questionCount === count ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
                   )}
+                  disabled={isLoading}
                 >
                   {count} questions
                 </button>
@@ -195,7 +210,26 @@ export function PracticeTestGenerator() {
           </div>
         </div>
 
-        {error ? <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p> : null}
+        <div className="rounded-lg border bg-background p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span className="font-semibold">Selected set</span>
+            <span className="text-muted-foreground">
+              {organization} · {eventCluster} · {questionCount} questions
+            </span>
+          </div>
+          <Progress value={generationProgress} className="mt-3" />
+          <div className="mt-3 flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+            <Target className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />
+            Results will map missed questions to weak skills and recommended lessons.
+          </div>
+        </div>
+
+        {error ? (
+          <div className="flex gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            {error}
+          </div>
+        ) : null}
 
         <Button type="button" size="lg" onClick={onGenerate} disabled={isLoading} className="w-full">
           {isLoading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Sparkles className="h-5 w-5" aria-hidden />}

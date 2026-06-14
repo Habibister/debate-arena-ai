@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BookOpenCheck, CheckCircle2, ClipboardList, Dumbbell, GraduationCap } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, ClipboardList, Clock, Dumbbell, Flame, GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { prisma } from "@/lib/prisma";
+import { cn } from "@/lib/utils";
 
 type LessonContent = {
   objective?: string;
@@ -52,6 +53,8 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
 
   const content = parseLessonContent(lesson.content);
   const currentIndex = lesson.skill.lessons.findIndex((item) => item.id === lesson.id);
+  const previousLesson = currentIndex > 0 ? lesson.skill.lessons[currentIndex - 1] : null;
+  const nextLesson = currentIndex < lesson.skill.lessons.length - 1 ? lesson.skill.lessons[currentIndex + 1] : null;
   const masteryProgress = Math.round(((currentIndex + 1) / Math.max(lesson.skill.lessons.length, 1)) * 100);
   const examples = content.examples && content.examples.length > 0 ? content.examples : ["Identify the skill in a realistic prompt.", "Explain why the stronger answer works.", "Revise a weaker response into a competitive version."];
   const guidedPractice =
@@ -67,7 +70,7 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="rounded-lg border bg-card p-5">
         <Link href="/skills" className={buttonVariants({ variant: "ghost", size: "sm" })}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Skills
@@ -78,6 +81,26 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
         </div>
         <h1 className="mt-3 text-3xl font-bold">{lesson.title}</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">{lesson.summary}</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Clock className="h-4 w-4 text-primary" aria-hidden />
+              {lesson.estimatedMinutes} min
+            </div>
+          </div>
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Flame className="h-4 w-4 text-accent" aria-hidden />
+              +{lesson.xpReward} XP
+            </div>
+          </div>
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <CheckCircle2 className="h-4 w-4 text-secondary" aria-hidden />
+              Step {currentIndex + 1} of {lesson.skill.lessons.length}
+            </div>
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -182,6 +205,31 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
             ))}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {previousLesson ? (
+          <Link href={`/skills/${previousLesson.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Previous: {previousLesson.title}
+          </Link>
+        ) : (
+          <Link href="/tests" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+            <ClipboardList className="h-4 w-4" aria-hidden />
+            Try a diagnostic test
+          </Link>
+        )}
+        {nextLesson ? (
+          <Link href={`/skills/${nextLesson.slug}` as Route} className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+            Next: {nextLesson.title}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        ) : (
+          <Link href="/debate" className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+            Apply in a judged round
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        )}
       </div>
     </div>
   );

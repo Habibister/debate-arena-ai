@@ -1,27 +1,117 @@
-import { Flame, Medal, Target, Trophy } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { BookOpenCheck, ClipboardList, Flame, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
+import { NextStepCard } from "@/components/app/next-step-card";
 import { StatCard } from "@/components/app/stat-card";
+import { XpProgressCard } from "@/components/app/xp-progress-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-export default function DashboardPage() {
+const fallbackLessons = [
+  ["Evidence weighing", 68],
+  ["Cross examination setup", 57],
+  ["Rebuttal collapse", 72]
+] as const;
+
+function masteryFromTests(tests: Array<{ score: number | null }>) {
+  const completedScores = tests.map((test) => test.score).filter((score): score is number => typeof score === "number");
+
+  if (completedScores.length === 0) {
+    return 71;
+  }
+
+  return Math.round(completedScores.reduce((total, score) => total + score, 0) / completedScores.length);
+}
+
+function latestWeakAreas(tests: Array<{ weakAreas: string[] }>) {
+  return Array.from(new Set(tests.flatMap((test) => test.weakAreas))).slice(0, 3);
+}
+
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  const user = session?.user?.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: {
+          practiceTests: {
+            orderBy: { createdAt: "desc" },
+            take: 5
+          }
+        }
+      })
+    : null;
+
+  const displayName = user?.name?.split(" ")[0] ?? "Alex";
+  const xp = user?.xp ?? 375;
+  const streak = user?.streak ?? 8;
+  const wins = user?.wins ?? 12;
+  const rank = user?.rank ?? "SILVER";
+  const recentTests = user?.practiceTests ?? [];
+  const mastery = masteryFromTests(recentTests);
+  const weakAreas = latestWeakAreas(recentTests);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Badge variant="secondary">Student dashboard</Badge>
-          <h1 className="mt-3 text-3xl font-bold">Welcome back, Alex</h1>
-          <p className="mt-2 text-muted-foreground">Your next milestone is Elite readiness in rebuttal and evidence weighing.</p>
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <div className="rounded-lg border bg-card p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">Student dashboard</Badge>
+            <Badge variant="outline">{rank.replace("_", " ")} rank</Badge>
+          </div>
+          <h1 className="mt-4 text-3xl font-bold sm:text-4xl">Welcome back, {displayName}</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">
+            Your training loop is ready: one speaking rep, one test set, and one targeted lesson will move the week forward.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Today</p>
+              <p className="mt-1 font-semibold">Finish one focused rep</p>
+            </div>
+            <div className="rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Weak skill</p>
+              <p className="mt-1 font-semibold">{weakAreas[0] ?? "Evidence depth"}</p>
+            </div>
+            <div className="rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Next reward</p>
+              <p className="mt-1 font-semibold">+20 XP test set</p>
+            </div>
+          </div>
         </div>
-        <div className="rounded-lg border bg-card px-4 py-3 text-sm font-semibold">Silver Rank</div>
+        <XpProgressCard xp={xp} rank={rank} streak={streak} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="XP" value="375" detail="125 XP until Gold readiness track." icon={Medal} />
-        <StatCard label="Streak" value="8 days" detail="Complete one drill today to keep it alive." icon={Flame} />
-        <StatCard label="Wins" value="12" detail="Win rate is trending up across beginner rounds." icon={Trophy} />
-        <StatCard label="Mastery" value="71%" detail="Strong clarity, improving evidence depth." icon={Target} />
+        <StatCard label="XP" value={String(xp)} detail="Earn XP from debates, lessons, and generated practice tests." icon={Medal} />
+        <StatCard label="Streak" value={`${streak} days`} detail="Complete one drill today to keep it alive." icon={Flame} />
+        <StatCard label="Wins" value={String(wins)} detail="Win rate improves as judged rounds turn into targeted lessons." icon={Trophy} />
+        <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <NextStepCard
+          title="Start an AI round"
+          description="Get a topic, speak through three turns, and receive judge feedback."
+          href="/debate"
+          icon={MessageSquareText}
+        />
+        <NextStepCard
+          title="Generate a practice test"
+          description="Train DECA or HOSA with original questions and explanations."
+          href="/tests"
+          icon={ClipboardList}
+          tone="secondary"
+        />
+        <NextStepCard
+          title="Open mastery lessons"
+          description="Work through examples, guided practice, and a mastery check."
+          href="/skills"
+          icon={BookOpenCheck}
+          tone="accent"
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -31,11 +121,7 @@ export default function DashboardPage() {
             <CardTitle>Recommended Lessons</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              ["Evidence weighing", 68],
-              ["Cross examination setup", 57],
-              ["Rebuttal collapse", 72]
-            ].map(([lesson, value]) => (
+            {(weakAreas.length > 0 ? weakAreas.map((area, index) => [area, Math.max(45, 76 - index * 9)] as const) : fallbackLessons).map(([lesson, value]) => (
               <div key={lesson.toString()} className="rounded-lg border bg-background p-4">
                 <div className="mb-3 flex items-center justify-between text-sm">
                   <span className="font-semibold">{lesson}</span>
@@ -47,6 +133,16 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {recentTests.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="No completed practice tests yet"
+          description="Generate a DECA or HOSA test to unlock score history, weak-skill detection, and recommended lessons."
+          actionLabel="Create first test"
+          actionHref="/tests"
+        />
+      ) : null}
     </div>
   );
 }

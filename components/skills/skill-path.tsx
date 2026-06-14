@@ -45,13 +45,19 @@ export function SkillPath() {
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <BookOpenCheck className="h-3.5 w-3.5" aria-hidden />
-                    Lesson set
+                    {skill.status === "locked" ? "Locked path" : "Lesson set"}
                   </span>
                   <span className="font-semibold">{skill.mastery}%</span>
                 </div>
-                <Link href={`/skills/${skill.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
-                  Practice
-                </Link>
+                {skill.status === "locked" ? (
+                  <div className="mt-4 rounded-md border bg-muted px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    Unlock after rebuttal
+                  </div>
+                ) : (
+                  <Link href={`/skills/${skill.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
+                    {skill.status === "complete" ? "Review" : "Practice"}
+                  </Link>
+                )}
               </div>
             );
           })}

@@ -1,18 +1,39 @@
+import { BookOpenCheck, CheckCircle2, ClipboardList, Sparkles } from "lucide-react";
 import { TestBuilderPreview } from "@/components/tests/test-builder-preview";
 import { PracticeTestGenerator } from "@/components/tests/practice-test-generator";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
 
+const testSteps = [
+  { title: "Generate", detail: "Choose track, level, and question count.", icon: Sparkles },
+  { title: "Answer", detail: "Complete the set with progress tracking.", icon: ClipboardList },
+  { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
+];
+
 export default function TestsPage() {
   return (
     <div className="space-y-6">
-      <div>
+      <div className="rounded-lg border bg-card p-5">
         <Badge variant="secondary">DECA and HOSA</Badge>
-        <h1 className="mt-3 text-3xl font-bold">Practice tests</h1>
+        <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Practice tests</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas back into lessons.
+          Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.
         </p>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {testSteps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.title} className="rounded-md border bg-background p-3">
+                <div className="flex items-center gap-2 font-semibold">
+                  <Icon className="h-4 w-4 text-primary" aria-hidden />
+                  {step.title}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.detail}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <PracticeTestGenerator />
@@ -33,7 +54,10 @@ export default function TestsPage() {
             <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
           </div>
           <div className="rounded-lg border bg-background p-4">
-            <p className="text-sm font-semibold text-muted-foreground">After grading</p>
+            <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-accent" aria-hidden />
+              After grading
+            </div>
             <p className="mt-2 font-semibold">Score, explanations, weak areas, recommended lessons</p>
           </div>
         </CardContent>

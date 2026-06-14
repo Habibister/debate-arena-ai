@@ -3,11 +3,14 @@ import {
   BarChart3,
   BookOpenCheck,
   Bot,
+  ClipboardList,
+  Flame,
   GraduationCap,
   Medal,
   MessageSquareText,
   ShieldCheck,
   Sparkles,
+  Target,
   Users
 } from "lucide-react";
 import { HeroArena } from "@/components/app/hero-arena";
@@ -43,8 +46,27 @@ const featureCards = [
 export default function HomePage() {
   return (
     <main className="bg-background">
+      <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur">
+        <div className="container flex h-16 items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3 font-bold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Sparkles className="h-4 w-4" aria-hidden />
+            </span>
+            DebateArena AI
+          </Link>
+          <nav className="hidden items-center gap-5 text-sm font-semibold text-muted-foreground md:flex">
+            <a href="#training-loop" className="hover:text-foreground">Training loop</a>
+            <a href="#tracks" className="hover:text-foreground">Tracks</a>
+            <a href="#analytics" className="hover:text-foreground">Analytics</a>
+          </nav>
+          <Link href="/dashboard" className={buttonVariants({ size: "sm" })}>
+            Open app
+          </Link>
+        </div>
+      </header>
+
       <section className="arena-grid border-b">
-        <div className="container grid min-h-[calc(100svh-96px)] items-center gap-10 py-10 lg:grid-cols-[0.92fr_1.08fr] lg:py-14">
+        <div className="container grid min-h-[calc(100svh-64px)] items-center gap-10 py-10 lg:grid-cols-[0.92fr_1.08fr] lg:py-14">
           <div>
             <Badge variant="secondary">Khan Academy + Duolingo for competitive speaking</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">DebateArena AI</h1>
@@ -64,7 +86,10 @@ export default function HomePage() {
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
               <div className="rounded-lg border bg-card p-3">
-                <p className="text-2xl font-bold">+25</p>
+                <p className="flex items-center gap-2 text-2xl font-bold">
+                  <Flame className="h-5 w-5 text-accent" aria-hidden />
+                  +25
+                </p>
                 <p className="text-xs font-semibold text-muted-foreground">Debate XP</p>
               </div>
               <div className="rounded-lg border bg-card p-3">
@@ -81,7 +106,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="container py-12">
+      <section id="training-loop" className="container py-12">
         <SectionHeading
           eyebrow="Training platform"
           title="A production-ready foundation for adaptive competitive practice"
@@ -103,9 +128,25 @@ export default function HomePage() {
             );
           })}
         </div>
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          {[
+            { title: "Practice", detail: "Debate AI opponents, take original tests, or open a mastery lesson.", icon: MessageSquareText },
+            { title: "Get judged", detail: "Receive organization-specific scoring, explanations, and weak skill detection.", icon: Medal },
+            { title: "Level up", detail: "Follow next steps, XP progress, streaks, and mastery bars.", icon: Target }
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.title} className="rounded-lg border bg-card p-5">
+                <Icon className="h-6 w-6 text-primary" aria-hidden />
+                <h3 className="mt-4 font-semibold">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
-      <section className="border-y bg-card">
+      <section id="tracks" className="border-y bg-card">
         <div className="container grid gap-8 py-12 lg:grid-cols-[0.8fr_1.2fr]">
           <SectionHeading
             eyebrow="Supported tracks"
@@ -126,7 +167,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="container grid gap-4 py-12 md:grid-cols-3">
+      <section id="analytics" className="container grid gap-4 py-12 md:grid-cols-3">
         <div className="rounded-lg border bg-card p-5">
           <BarChart3 className="h-6 w-6 text-accent" aria-hidden />
           <h3 className="mt-4 font-semibold">Analytics</h3>
@@ -138,9 +179,9 @@ export default function HomePage() {
           <p className="mt-2 text-sm leading-6 text-muted-foreground">Roles, teams, XP logs, achievements, and database-ready permissions.</p>
         </div>
         <div className="rounded-lg border bg-card p-5">
-          <Bot className="h-6 w-6 text-secondary" aria-hidden />
-          <h3 className="mt-4 font-semibold">OpenAI-powered</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Topic, lesson, judging, recommendation, and test generation functions.</p>
+          <ClipboardList className="h-6 w-6 text-secondary" aria-hidden />
+          <h3 className="mt-4 font-semibold">Practice-ready</h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Topic, lesson, judging, recommendation, and original test generation functions.</p>
         </div>
       </section>
     </main>

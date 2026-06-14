@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, ClipboardList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ export function TestTakingClient({ test }: TestTakingClientProps) {
   const answeredCount = Object.keys(answers).length;
   const progress = Math.round((answeredCount / Math.max(test.questions.length, 1)) * 100);
   const canSubmit = answeredCount === test.questions.length;
+  const unansweredCount = Math.max(test.questions.length - answeredCount, 0);
 
   const groupedSkills = useMemo(() => {
     return Array.from(new Set(test.questions.map((question) => question.skillTag)));
@@ -117,10 +119,51 @@ export function TestTakingClient({ test }: TestTakingClientProps) {
         </CardContent>
       </Card>
 
+      {test.questions.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="No questions were generated"
+          description="This test does not have questions attached yet. Return to the generator and create a new practice set."
+          actionLabel="Back to tests"
+          actionHref="/tests"
+        />
+      ) : null}
+
+      {test.questions.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Answer Map</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {test.questions.map((question, index) => {
+                const answered = Boolean(answers[question.id]);
+                return (
+                  <a
+                    key={question.id}
+                    href={`#question-${index + 1}`}
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-md border text-sm font-semibold",
+                      answered ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+                    )}
+                    aria-label={`Question ${index + 1}${answered ? " answered" : " unanswered"}`}
+                  >
+                    {index + 1}
+                  </a>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {unansweredCount === 0 ? "Every question has an answer. You can submit when ready." : `${unansweredCount} unanswered question${unansweredCount === 1 ? "" : "s"} remaining.`}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {test.questions.map((question, index) => {
         const choices = normalizeChoices(question.choices);
         return (
-          <Card key={question.id}>
+          <Card key={question.id} id={`question-${index + 1}`} className="scroll-mt-24">
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <CardTitle className="text-base">Question {index + 1}</CardTitle>
@@ -153,13 +196,23 @@ export function TestTakingClient({ test }: TestTakingClientProps) {
         );
       })}
 
-      {error ? <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p> : null}
+      {error ? (
+        <div className="flex gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          {error}
+        </div>
+      ) : null}
 
       <div className="sticky bottom-4 z-10 rounded-lg border bg-card p-3 shadow-soft">
-        <Button type="button" size="lg" className="w-full" onClick={submitTest} disabled={!canSubmit || isSubmitting}>
-          {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <CheckCircle2 className="h-5 w-5" aria-hidden />}
-          Submit and grade
-        </Button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-muted-foreground">
+            {canSubmit ? "Ready for instant grading" : `${unansweredCount} left before grading`}
+          </p>
+          <Button type="button" size="lg" className="sm:min-w-56" onClick={submitTest} disabled={!canSubmit || isSubmitting}>
+            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <CheckCircle2 className="h-5 w-5" aria-hidden />}
+            Submit and grade
+          </Button>
+        </div>
       </div>
     </div>
   );

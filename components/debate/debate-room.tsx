@@ -15,6 +15,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { LEVELS, ORGANIZATIONS } from "@/lib/constants";
@@ -292,7 +294,10 @@ export function DebateRoom() {
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle>Round Setup</CardTitle>
+              <div>
+                <CardTitle>Round Setup</CardTitle>
+                <p className="mt-2 text-sm text-muted-foreground">Choose the track, generate a prompt, then start your judged practice room.</p>
+              </div>
               <Badge variant={debateId ? "accent" : "secondary"}>{debateId ? "Live" : "Ready"}</Badge>
             </div>
           </CardHeader>
@@ -433,6 +438,9 @@ export function DebateRoom() {
                 className="mt-4 min-h-24"
                 disabled={Boolean(debateId)}
               />
+              {isGeneratingTopic ? (
+                <LoadingState className="mt-4" title="Building an original prompt" description="Creating context, sides, and evidence angles for your level." />
+              ) : null}
               {topicPackage ? (
                 <div className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
                   <p>{topicPackage.background}</p>
@@ -498,11 +506,11 @@ export function DebateRoom() {
 
             <div className="max-h-[520px] space-y-3 overflow-y-auto rounded-lg border bg-background p-3">
               {messages.length === 0 ? (
-                <div className="flex min-h-48 flex-col items-center justify-center rounded-md border border-dashed bg-card p-6 text-center">
-                  <MessageSquareText className="h-8 w-8 text-primary" aria-hidden />
-                  <p className="mt-3 font-semibold">No round started yet</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">Generate a topic, start the debate, then submit your first argument.</p>
-                </div>
+                <EmptyState
+                  icon={MessageSquareText}
+                  title="No round started yet"
+                  description="Generate a topic, start the debate, then submit your first argument."
+                />
               ) : (
                 messages.map((message) => (
                   <div
@@ -524,6 +532,9 @@ export function DebateRoom() {
                   </div>
                 ))
               )}
+              {isSubmitting ? (
+                <LoadingState title={resolvedMode === "AI" ? "AI opponent is preparing a response" : "Saving your turn"} description="Keeping the round transcript and progress in sync." />
+              ) : null}
             </div>
 
             {debateId && !judgeReport ? (
@@ -587,6 +598,23 @@ export function DebateRoom() {
                 </div>
               </div>
 
+              {judgeReport.sharedSpeaking ? (
+                <div className="rounded-lg border bg-background p-4">
+                  <p className="font-semibold">Shared speaking skills</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {Object.entries(judgeReport.sharedSpeaking).map(([skill, value]) => (
+                      <div key={skill}>
+                        <div className="mb-2 flex items-center justify-between text-sm">
+                          <span className="font-semibold">{titleCase(skill)}</span>
+                          <span className="text-muted-foreground">{value ?? 0}%</span>
+                        </div>
+                        <Progress value={value ?? 0} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {judgeReport.teamWinner || judgeReport.reasonForDecision ? (
                 <div className="rounded-lg border bg-background p-4">
                   {judgeReport.teamWinner ? <p className="font-semibold">Winner: {titleCase(judgeReport.teamWinner)}</p> : null}
@@ -636,11 +664,15 @@ function FeedbackList({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="rounded-lg border bg-background p-4">
       <p className="font-semibold">{title}</p>
-      <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">No items returned yet.</p>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { Target, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import type { MasteryPoint } from "@/types/domain";
 
@@ -18,6 +19,9 @@ export function MasteryChart({ data = fallbackData }: { data?: MasteryPoint[] })
         <CardTitle>Skill Growth</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {data.length === 0 ? (
+          <EmptyState icon={Target} title="No mastery data yet" description="Complete a debate, lesson, or practice test to start charting growth." className="min-h-40" />
+        ) : null}
         {data.map((point) => (
           <div key={point.skill}>
             <div className="mb-2 flex items-center justify-between gap-3 text-sm">

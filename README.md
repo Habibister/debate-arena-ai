@@ -4,62 +4,252 @@ AI-powered training for Debate, Model UN, DECA, HOSA, Mock Trial, and public spe
 
 DebateArena AI is designed to become the "Khan Academy + Duolingo for Debate and Competitive Organizations": students train through AI debates, AI judging, adaptive skill lessons, original practice tests, XP, streaks, mastery analytics, and coach dashboards.
 
-## Build Status
+## Current Product
 
-Phase 1 contains the production foundation:
-
-- Next.js 14 App Router with TypeScript
-- Tailwind CSS and shadcn-style UI primitives
-- Prisma schema for PostgreSQL
-- NextAuth credentials authentication
-- OpenAI service functions and API routes
-- Student, coach, and admin UI shells
-- Responsive startup-quality landing page and product surfaces
-- Seed data for demo users, skills, lessons, team, practice test, XP, and achievements
-- Vercel-ready environment configuration
-
-Phase 2 has started with the AI Debate System:
-
-- Live debate room at `/debate`
-- Organization, level, and opponent setup
-- AI topic generation
-- Debate creation and message persistence
-- Three-turn minimum round progress
-- AI opponent response route
-- AI judge route with rubric scoring
-- XP, streak, wins, and rank updates after judging
-- Matchmaking endpoint with automatic AI fallback
-
-This phase also adds organization-specific scoring engines transformed from uploaded reference rubrics:
-
-- Parliamentary debate judging with argument/refutation/content/organization/style/delivery/case/clash/rules/time categories
-- 19-30 parliamentary speaker points, 1-4 speaker ranks, team winner, and reason for decision
-- DECA roleplay and case-study judging with business scenario, performance indicator, solution, feasibility, and professional communication scoring
-- HOSA performance judging with health science knowledge, medical accuracy, task completion, scenario response, and professionalism scoring
-- Shared speaking-skill tracking across clarity, confidence, pacing, volume, organization, vocabulary, persuasion, and professionalism
-- Flexible Prisma rubric models for categories, score ranges, descriptors, and lesson recommendations
-
-Phase 3 adds DECA/HOSA testing and Khan Academy-style skill practice:
-
-- DECA and HOSA original practice test generator by event type, event cluster/category, level, and question count
-- Test-taking UI that keeps answer keys server-side until grading
-- Grading route with score, explanations, weak skill detection, XP award, and lesson recommendations
-- Results page with wrong-answer explanations and recommended mastery practice
-- Dynamic skill practice pages with lesson content, examples, guided practice, independent practice, and mastery checks
-
-Remaining debate-system depth includes realtime student-to-student rooms, timers, speech/audio support, richer judge explainability, and durable availability queues.
+- Student dashboard with XP, ranks, streaks, mastery bars, weak-skill detection, and recommended next steps
+- AI debate and roleplay room with topic generation, AI opponents, AI judging, XP awards, and speaking-skill analytics
+- Organization-specific judging engines for parliamentary debate, DECA, and HOSA
+- DECA and HOSA original practice test generator with grading, explanations, weak areas, and recommended lessons
+- Khan Academy-style skill pages with lessons, examples, guided practice, independent practice, and mastery checks
+- Coach/admin shells, team models, seed data, and deployment-ready Next.js/Prisma architecture
 
 ## Tech Stack
 
-- Next.js 14
+- Next.js 14 App Router
 - TypeScript
 - Tailwind CSS
 - shadcn/ui-style local primitives
 - Prisma
 - PostgreSQL
 - OpenAI API
-- NextAuth
-- Vercel
+- NextAuth credentials authentication
+- Vercel-ready build setup
+
+## Requirements
+
+- Node.js 20 or newer
+- npm
+- PostgreSQL database, local or hosted
+- OpenAI API key
+
+The repo includes `.nvmrc` with Node `20`.
+
+```bash
+nvm use
+```
+
+## Environment Variables
+
+Copy the example file:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="replace-with-a-long-random-secret"
+OPENAI_API_KEY="sk-proj-replace-me"
+OPENAI_MODEL="gpt-4o-mini"
+```
+
+Generate a strong NextAuth secret:
+
+```bash
+openssl rand -base64 32
+```
+
+Optional seed-user variables:
+
+```bash
+SEED_ADMIN_EMAIL="admin@debatearena.ai"
+SEED_ADMIN_PASSWORD="password123"
+SEED_COACH_EMAIL="coach@debatearena.ai"
+SEED_COACH_PASSWORD="password123"
+SEED_STUDENT_EMAIL="student@debatearena.ai"
+SEED_STUDENT_PASSWORD="password123"
+```
+
+Never prefix secrets with `NEXT_PUBLIC_`.
+
+## Database Setup
+
+### Local PostgreSQL
+
+Create a local database named `debatearena_ai`, then set:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/debatearena_ai?schema=public"
+```
+
+Push the Prisma schema and generate the client:
+
+```bash
+npm run db:generate
+npm run db:push
+```
+
+Seed demo data:
+
+```bash
+npm run db:seed
+```
+
+### Neon PostgreSQL
+
+1. Create a Neon project and database.
+2. Copy the PostgreSQL connection string.
+3. Add `?sslmode=require` if it is not already included.
+4. Put that value in `DATABASE_URL`.
+5. Run `npm run db:push` and `npm run db:seed` from your local machine with the Neon `DATABASE_URL`.
+
+### Supabase PostgreSQL
+
+1. Create a Supabase project.
+2. Use the project database connection string with `sslmode=require`.
+3. Prefer the direct/session connection for Prisma schema pushes and migrations.
+4. Put that value in `DATABASE_URL`.
+5. Run `npm run db:push` and `npm run db:seed`.
+
+If you later switch to pooled runtime connections, keep Prisma migrations on a direct database connection.
+
+## OpenAI Setup
+
+1. Create an OpenAI API key.
+2. Set `OPENAI_API_KEY` in `.env.local` and in Vercel.
+3. Keep `OPENAI_MODEL="gpt-4o-mini"` unless you intentionally choose another model.
+
+AI-powered routes return a `503` if `OPENAI_API_KEY` is missing.
+
+## Local Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Generate Prisma client:
+
+```bash
+npm run db:generate
+```
+
+Push schema:
+
+```bash
+npm run db:push
+```
+
+Seed demo users, lessons, rubrics, teams, XP, and practice tests:
+
+```bash
+npm run db:seed
+```
+
+Run the app:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+Demo credentials after seeding:
+
+```txt
+student@debatearena.ai / password123
+coach@debatearena.ai / password123
+admin@debatearena.ai / password123
+```
+
+## Validation Commands
+
+Run these before committing or deploying:
+
+```bash
+npm run lint
+npm run typecheck
+npm run validate
+npm run build
+```
+
+Useful Prisma checks:
+
+```bash
+npm run db:generate
+npm run db:push
+```
+
+Health endpoint:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+The health endpoint reports whether required server-side environment variables are configured without exposing secret values.
+
+## Vercel Deployment
+
+1. Push the repo to GitHub.
+2. Import the repo in Vercel.
+3. Set Node.js version to 20 if prompted.
+4. Add environment variables:
+   - `DATABASE_URL`
+   - `NEXTAUTH_URL`
+   - `NEXTAUTH_SECRET`
+   - `OPENAI_API_KEY`
+   - `OPENAI_MODEL`
+   - optional seed-user variables
+5. Set `NEXTAUTH_URL` to your production URL, for example:
+
+```bash
+NEXTAUTH_URL="https://your-app.vercel.app"
+```
+
+6. Use the default install command:
+
+```bash
+npm install
+```
+
+7. Use the default build command:
+
+```bash
+npm run build
+```
+
+The build script runs `prisma generate` before `next build`, and `postinstall` also runs Prisma generation.
+
+For first production setup, run the schema push against the production database:
+
+```bash
+DATABASE_URL="your-production-postgres-url" npm run db:push
+```
+
+Seed production only if you explicitly want demo accounts:
+
+```bash
+DATABASE_URL="your-production-postgres-url" npm run db:seed
+```
+
+For a real launch, replace seeded password accounts with invited users or OAuth providers.
+
+## API Error Handling
+
+The shared API helper in `lib/api.ts` handles:
+
+- malformed JSON request bodies
+- Zod validation failures
+- unauthorized and forbidden responses
+- common Prisma unique/not-found errors
+- missing OpenAI key responses
+- generic server errors without leaking production internals
+
+Most API routes use the helper through `parseJson()` and `apiError()`.
 
 ## Folder Structure
 
@@ -70,35 +260,16 @@ app/
     coach/
     dashboard/
     debate/
-    skills/
-      [slug]/
-    tests/
-      [testId]/
-        results/
-  (auth)/
-    signin/
+    skills/[slug]/
+    tests/[testId]/results/
+  (auth)/signin/
   api/
     ai/
-      judge/
-      judge-deca/
-      judge-hosa/
-      lesson/
-      opponent/
-      practice-questions/
-      readiness/
-      recommendations/
-      topic/
     auth/[...nextauth]/
-    debates/
-      [debateId]/
-        judge/
-        messages/
-        opponent/
+    debates/[debateId]/
     matchmaking/
     teams/
-    tests/
-      [testId]/
-        grade/
+    tests/[testId]/
 components/
   analytics/
   app/
@@ -117,20 +288,16 @@ lib/
   prisma.ts
   rubrics.ts
   testing.ts
-  utils.ts
   validators.ts
   xp.ts
 prisma/
   schema.prisma
   seed.ts
 types/
-  domain.ts
   next-auth.d.ts
 ```
 
 ## Core Data Models
-
-The Prisma schema includes the requested product models:
 
 - `User`
 - `Debate`
@@ -149,124 +316,9 @@ The Prisma schema includes the requested product models:
 - `RubricDescriptor`
 - `SpeakingSkillSnapshot`
 
-It also includes NextAuth tables and small supporting join tables for team membership and lesson assignments.
+## Important Notes
 
-## AI Functions
-
-The OpenAI-powered functions live in `lib/ai.ts`:
-
-- `generateTopic()`
-- `generateOpponentResponse()`
-- `judgeDebate()`
-- `judgeDecaRoleplay()`
-- `judgeHosaPerformance()`
-- `generatePracticeQuestions()`
-- `generateLessonContent()`
-- `recommendLessons()`
-- `evaluateReadiness()`
-
-Each function returns JSON and is exposed through an API route under `app/api/ai/*`.
-
-## AI Debate API
-
-The live debate system uses:
-
-- `POST /api/ai/topic`
-- `POST /api/debates`
-- `GET /api/debates`
-- `GET /api/debates/:debateId/messages`
-- `POST /api/debates/:debateId/messages`
-- `POST /api/debates/:debateId/opponent`
-- `POST /api/debates/:debateId/judge`
-- `POST /api/matchmaking`
-- `POST /api/ai/judge-deca`
-- `POST /api/ai/judge-hosa`
-- `GET /api/tests`
-- `POST /api/tests`
-- `GET /api/tests/:testId`
-- `POST /api/tests/:testId/grade`
-
-## Getting Started
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-2. Create an environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-3. Fill in:
-
-```bash
-DATABASE_URL="postgresql://..."
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret"
-OPENAI_API_KEY="sk-proj-..."
-OPENAI_MODEL="gpt-4o-mini"
-```
-
-4. Generate Prisma client and push the schema:
-
-```bash
-npm run db:generate
-npm run db:push
-```
-
-5. Seed demo data:
-
-```bash
-npm run db:seed
-```
-
-6. Run locally:
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
-Demo credentials after seeding:
-
-```txt
-student@debatearena.ai / password123
-coach@debatearena.ai / password123
-admin@debatearena.ai / password123
-```
-
-## Vercel Deployment
-
-1. Create a PostgreSQL database, such as Vercel Postgres, Neon, Supabase, or Railway.
-2. Add these Vercel environment variables:
-   - `DATABASE_URL`
-   - `NEXTAUTH_URL`
-   - `NEXTAUTH_SECRET`
-   - `OPENAI_API_KEY`
-   - `OPENAI_MODEL`
-3. Run the Prisma migration or push command against production:
-
-```bash
-npx prisma db push
-```
-
-4. Deploy with:
-
-```bash
-vercel
-```
-
-For production, replace demo credentials with invited users or OAuth providers, add rate limits to AI routes, and persist detailed AI usage logs for cost and safety monitoring.
-
-## Phase 2 Build Plan
-
-1. Live debate room with timer, round composer, message persistence, and judge submission.
-2. Matchmaking queue by organization, level, and age group with AI fallback.
-3. Practice test attempt flow with generated questions, answer scoring, explanations, and weak-area extraction.
-4. Lesson completion, XP events, streak updates, rank progression, and achievement unlocks.
-5. Coach team CRUD, lesson assignments, student drill review, and debate feedback.
-6. Admin usage analytics, moderation, organization content controls, and AI cost dashboards.
+- Practice questions must be original AI-generated content. Do not paste copyrighted past exams unless legally provided.
+- Keep `.env.local` out of Git.
+- Use `npm run validate` before deployment.
+- Use `/api/health` after deployment to confirm required configuration is present.

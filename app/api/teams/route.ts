@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, forbidden, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { teamCreateSchema } from "@/lib/validators";
@@ -8,34 +8,42 @@ import { teamCreateSchema } from "@/lib/validators";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!session?.user?.id) {
+      return unauthorized();
+    }
 
-  const coach = await prisma.coach.findUnique({
-    where: { userId: session.user.id },
-    include: {
-      teams: {
-        include: {
-          members: {
-            include: { user: true }
+    const coach = await prisma.coach.findUnique({
+      where: { userId: session.user.id },
+      include: {
+        teams: {
+          include: {
+            members: {
+              include: { user: true }
+            }
           }
         }
       }
-    }
-  });
+    });
 
-  return NextResponse.json({ teams: coach?.teams ?? [] });
+    return NextResponse.json({ teams: coach?.teams ?? [] });
+  } catch (error) {
+    return apiError(error);
+  }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id || session.user.role !== "COACH") {
-      return NextResponse.json({ error: "Coach access required" }, { status: 403 });
+    if (!session?.user?.id) {
+      return unauthorized();
+    }
+
+    if (session.user.role !== "COACH") {
+      return forbidden("Coach access required");
     }
 
     const input = await parseJson(request, teamCreateSchema);

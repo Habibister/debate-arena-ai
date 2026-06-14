@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { judgeDebate, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/ai";
-import { apiError } from "@/lib/api";
+import { apiError, HttpError, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateRank } from "@/lib/xp";
@@ -96,7 +96,7 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const debate = await prisma.debate.findFirst({
@@ -112,16 +112,17 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
     });
 
     if (!debate) {
-      return NextResponse.json({ error: "Debate not found" }, { status: 404 });
+      throw new HttpError("Debate not found", 404);
+    }
+
+    if (debate.status === "JUDGED" || debate.status === "ARCHIVED") {
+      throw new HttpError("This debate has already been judged", 409);
     }
 
     const studentTurns = debate.messages.filter((message) => message.authorId === session.user.id);
 
     if (studentTurns.length < debate.roundsMinimum) {
-      return NextResponse.json(
-        { error: `Complete at least ${debate.roundsMinimum} student turns before judging.` },
-        { status: 409 }
-      );
+      throw new HttpError(`Complete at least ${debate.roundsMinimum} student turns before judging.`, 409);
     }
 
     const result = (await runOrganizationJudge(debate)) as JudgeResult;

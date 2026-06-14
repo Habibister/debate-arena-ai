@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, parseJson, unauthorized } from "@/lib/api";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,42 +9,46 @@ import { practiceTestCreateSchema } from "@/lib/validators";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!session?.user?.id) {
+      return unauthorized();
+    }
 
-  const tests = await prisma.practiceTest.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: {
-      id: true,
-      organization: true,
-      eventType: true,
-      eventCluster: true,
-      difficulty: true,
-      questionCount: true,
-      status: true,
-      score: true,
-      weakAreas: true,
-      recommendations: true,
-      createdAt: true,
-      completedAt: true,
-      questions: {
-        select: {
-          id: true,
-          question: true,
-          choices: true,
-          skillTag: true,
-          difficulty: true
+    const tests = await prisma.practiceTest.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        organization: true,
+        eventType: true,
+        eventCluster: true,
+        difficulty: true,
+        questionCount: true,
+        status: true,
+        score: true,
+        weakAreas: true,
+        recommendations: true,
+        createdAt: true,
+        completedAt: true,
+        questions: {
+          select: {
+            id: true,
+            question: true,
+            choices: true,
+            skillTag: true,
+            difficulty: true
+          }
         }
       }
-    }
-  });
+    });
 
-  return NextResponse.json({ tests });
+    return NextResponse.json({ tests });
+  } catch (error) {
+    return apiError(error);
+  }
 }
 
 export async function POST(request: Request) {
@@ -52,7 +56,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const input = await parseJson(request, practiceTestCreateSchema);

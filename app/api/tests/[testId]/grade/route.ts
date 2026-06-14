@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { practiceTestGradeSchema } from "@/lib/validators";
@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: { params: { testId: str
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const input = await parseJson(request, practiceTestGradeSchema);
@@ -29,11 +29,11 @@ export async function POST(request: Request, { params }: { params: { testId: str
     });
 
     if (!test) {
-      return NextResponse.json({ error: "Practice test not found" }, { status: 404 });
+      throw new HttpError("Practice test not found", 404);
     }
 
     if (test.status === "COMPLETED") {
-      return NextResponse.json({ error: "Practice test has already been graded" }, { status: 409 });
+      throw new HttpError("Practice test has already been graded", 409);
     }
 
     const questionIds = new Set(test.questions.map((question) => question.id));
@@ -44,7 +44,7 @@ export async function POST(request: Request, { params }: { params: { testId: str
       input.answers.length !== test.questions.length ||
       input.answers.some((answer) => !questionIds.has(answer.questionId))
     ) {
-      return NextResponse.json({ error: "Submit one answer for every question in this practice test" }, { status: 400 });
+      throw new HttpError("Submit one answer for every question in this practice test", 400);
     }
 
     const answerMap = new Map(input.answers.map((answer) => [answer.questionId, answer.selectedAnswer]));

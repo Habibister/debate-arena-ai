@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { generateOpponentResponse } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -13,7 +13,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const input = await parseJson(request, opponentTurnRequestSchema);
@@ -30,11 +30,11 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     });
 
     if (!debate) {
-      return NextResponse.json({ error: "Debate not found" }, { status: 404 });
+      throw new HttpError("Debate not found", 404);
     }
 
     if (debate.mode !== "AI") {
-      return NextResponse.json({ error: "AI opponent is only available for AI debates" }, { status: 409 });
+      throw new HttpError("AI opponent is only available for AI debates", 409);
     }
 
     const opponent = await generateOpponentResponse({

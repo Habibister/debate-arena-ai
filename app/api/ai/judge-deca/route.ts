@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, HttpError, parseJson } from "@/lib/api";
 import { judgeDecaRoleplay } from "@/lib/ai";
 import { roleplayJudgeRequestSchema } from "@/lib/validators";
 
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const input = await parseJson(request, roleplayJudgeRequestSchema);
 
     if (input.organization !== "DECA") {
-      return NextResponse.json({ error: "DECA organization is required" }, { status: 400 });
+      throw new HttpError("DECA organization is required", 400);
     }
 
     const result = await judgeDecaRoleplay({

@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { debateCreateSchema } from "@/lib/validators";
@@ -8,30 +8,34 @@ import { debateCreateSchema } from "@/lib/validators";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const debates = await prisma.debate.findMany({
-    where: {
-      OR: [
-        { createdById: session.user.id },
-        { studentId: session.user.id },
-        { opponentUserId: session.user.id }
-      ]
-    },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    include: {
-      messages: {
-        orderBy: [{ round: "asc" }, { createdAt: "asc" }]
-      }
+    if (!session?.user?.id) {
+      return unauthorized();
     }
-  });
 
-  return NextResponse.json({ debates });
+    const debates = await prisma.debate.findMany({
+      where: {
+        OR: [
+          { createdById: session.user.id },
+          { studentId: session.user.id },
+          { opponentUserId: session.user.id }
+        ]
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      include: {
+        messages: {
+          orderBy: [{ round: "asc" }, { createdAt: "asc" }]
+        }
+      }
+    });
+
+    return NextResponse.json({ debates });
+  } catch (error) {
+    return apiError(error);
+  }
 }
 
 export async function POST(request: Request) {
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const input = await parseJson(request, debateCreateSchema);

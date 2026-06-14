@@ -1,4 +1,5 @@
 import { Bot, MessageSquareText, Users } from "lucide-react";
+import { DebateRoom } from "@/components/debate/debate-room";
 import { DebateFlow } from "@/components/debate/debate-flow";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +12,11 @@ export default function DebatePage() {
         <Badge variant="secondary">AI Debate System</Badge>
         <h1 className="mt-3 text-3xl font-bold">Create a round</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Phase 1 defines the complete setup flow, AI API routes, debate schema, and judging rubric. Phase 2 will add the live round composer and realtime matchmaking.
+          Generate an original topic, complete at least three rounds against an AI opponent, and submit the transcript for AI judging.
         </p>
       </div>
+
+      <DebateRoom />
 
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>

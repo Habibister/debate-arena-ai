@@ -4,9 +4,9 @@ AI-powered training for Debate, Model UN, DECA, HOSA, Mock Trial, and public spe
 
 DebateArena AI is designed to become the "Khan Academy + Duolingo for Debate and Competitive Organizations": students train through AI debates, AI judging, adaptive skill lessons, original practice tests, XP, streaks, mastery analytics, and coach dashboards.
 
-## Phase 1 Status
+## Build Status
 
-This repository contains the production foundation:
+Phase 1 contains the production foundation:
 
 - Next.js 14 App Router with TypeScript
 - Tailwind CSS and shadcn-style UI primitives
@@ -18,7 +18,19 @@ This repository contains the production foundation:
 - Seed data for demo users, skills, lessons, team, practice test, XP, and achievements
 - Vercel-ready environment configuration
 
-Feature depth such as realtime debate rounds, live matchmaking queues, attempt submission, lesson completion, and coach assignment workflows should be implemented in Phase 2 on top of this foundation.
+Phase 2 has started with the AI Debate System:
+
+- Live debate room at `/debate`
+- Organization, level, and opponent setup
+- AI topic generation
+- Debate creation and message persistence
+- Three-turn minimum round progress
+- AI opponent response route
+- AI judge route with rubric scoring
+- XP, streak, wins, and rank updates after judging
+- Matchmaking endpoint with automatic AI fallback
+
+Remaining Phase 2 depth includes realtime student-to-student rooms, timers, speech/audio support, richer judge explainability, and durable availability queues.
 
 ## Tech Stack
 
@@ -56,6 +68,11 @@ app/
       topic/
     auth/[...nextauth]/
     debates/
+      [debateId]/
+        judge/
+        messages/
+        opponent/
+    matchmaking/
     teams/
     tests/
 components/
@@ -117,6 +134,19 @@ The OpenAI-powered functions live in `lib/ai.ts`:
 - `evaluateReadiness()`
 
 Each function returns JSON and is exposed through an API route under `app/api/ai/*`.
+
+## AI Debate API
+
+The live debate system uses:
+
+- `POST /api/ai/topic`
+- `POST /api/debates`
+- `GET /api/debates`
+- `GET /api/debates/:debateId/messages`
+- `POST /api/debates/:debateId/messages`
+- `POST /api/debates/:debateId/opponent`
+- `POST /api/debates/:debateId/judge`
+- `POST /api/matchmaking`
 
 ## Getting Started
 

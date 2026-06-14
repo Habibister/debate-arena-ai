@@ -88,3 +88,20 @@ export const teamCreateSchema = z.object({
   name: z.string().min(2).max(80),
   organization: organizationSchema
 });
+
+export const debateMessageCreateSchema = z.object({
+  role: z.enum(["AFFIRMATIVE", "NEGATIVE", "MODERATOR", "JUDGE", "SYSTEM"]),
+  round: z.number().int().min(1).max(10),
+  content: z.string().min(1).max(8000)
+});
+
+export const opponentTurnRequestSchema = z.object({
+  side: z.enum(["AFFIRMATIVE", "NEGATIVE"]).default("NEGATIVE"),
+  round: z.number().int().min(1).max(10)
+});
+
+export const matchmakingRequestSchema = z.object({
+  organization: organizationSchema,
+  level: levelSchema,
+  ageGroup: z.string().max(80).optional()
+});

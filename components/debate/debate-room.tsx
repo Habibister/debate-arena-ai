@@ -28,6 +28,7 @@ type MessageRole = "AFFIRMATIVE" | "NEGATIVE" | "MODERATOR" | "JUDGE" | "SYSTEM"
 
 type DebateMessage = {
   id: string;
+  authorId?: string | null;
   role: MessageRole;
   round: number;
   content: string;
@@ -40,6 +41,7 @@ type TopicPackage = {
   affirmativePosition: string;
   negativePosition: string;
   suggestedEvidenceAngles: string[];
+  fallbackNotice?: string;
 };
 
 type JudgeReport = {
@@ -79,6 +81,7 @@ type JudgeReport = {
     rationale: string;
     nextMilestone: string;
   };
+  fallbackNotice?: string;
 };
 
 async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
@@ -90,10 +93,10 @@ async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
     headers
   });
 
-  const payload = (await response.json()) as T & { error?: string };
+  const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Request failed.");
+    throw new Error(payload.error ?? "We could not complete that request. Please try again.");
   }
 
   return payload;
@@ -120,16 +123,21 @@ export function DebateRoom() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJudging, setIsJudging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
 
   const selectedOrg = ORGANIZATIONS.find((item) => item.value === organization);
   const eventOptions = EVENT_OPTIONS[organization];
   const selectedEvent = eventOptions.find((item) => item.value === eventType) ?? eventOptions[0];
   const allowedPracticeModes = PRACTICE_MODES.filter((item) => selectedEvent.allowedModes.includes(item.value));
   const selectedLevel = LEVELS.find((item) => item.value === level);
-  const studentTurns = useMemo(() => messages.filter((message) => message.role === "AFFIRMATIVE"), [messages]);
+  const studentTurns = useMemo(() => messages.filter((message) => Boolean(message.authorId)), [messages]);
   const roundProgress = Math.min(Math.round((studentTurns.length / 3) * 100), 100);
   const canJudge = Boolean(debateId && studentTurns.length >= 3 && !judgeReport);
   const isInteractiveRound = practiceMode === "DEBATE" || practiceMode === "ROLEPLAY";
+  const currentStudentSide: Extract<MessageRole, "AFFIRMATIVE" | "NEGATIVE"> =
+    currentRound % 2 === 1 ? "AFFIRMATIVE" : "NEGATIVE";
+  const currentOpponentSide: Extract<MessageRole, "AFFIRMATIVE" | "NEGATIVE"> =
+    currentStudentSide === "AFFIRMATIVE" ? "NEGATIVE" : "AFFIRMATIVE";
 
   useEffect(() => {
     const nextEvent = EVENT_OPTIONS[organization][0];
@@ -146,6 +154,7 @@ export function DebateRoom() {
   async function generateTopic() {
     setIsGeneratingTopic(true);
     setError(null);
+    setAiNotice(null);
 
     try {
       const generated = await requestJson<TopicPackage>("/api/ai/topic", {
@@ -154,6 +163,7 @@ export function DebateRoom() {
       });
       setTopicPackage(generated);
       setTopicText(generated.topic);
+      setAiNotice(generated.fallbackNotice ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to generate topic.");
     } finally {
@@ -170,6 +180,7 @@ export function DebateRoom() {
     setIsStarting(true);
     setError(null);
     setMatchNotice(null);
+    setAiNotice(null);
 
     try {
       let nextMode = mode;
@@ -237,7 +248,7 @@ export function DebateRoom() {
       const studentMessage = await requestJson<{ message: DebateMessage }>(`/api/debates/${debateId}/messages`, {
         method: "POST",
         body: JSON.stringify({
-          role: "AFFIRMATIVE",
+          role: currentStudentSide,
           round: currentRound,
           content: studentInput.trim()
         })
@@ -247,15 +258,16 @@ export function DebateRoom() {
       setStudentInput("");
 
       if (resolvedMode === "AI") {
-        const opponentMessage = await requestJson<{ message: DebateMessage }>(`/api/debates/${debateId}/opponent`, {
+        const opponentMessage = await requestJson<{ message: DebateMessage; opponent?: { fallbackNotice?: string } }>(`/api/debates/${debateId}/opponent`, {
           method: "POST",
           body: JSON.stringify({
-            side: "NEGATIVE",
+            side: currentOpponentSide,
             round: currentRound
           })
         });
 
         setMessages((current) => [...current, opponentMessage.message]);
+        setAiNotice(opponentMessage.opponent?.fallbackNotice ?? null);
       }
 
       setCurrentRound((round) => round + 1);
@@ -281,6 +293,7 @@ export function DebateRoom() {
       });
       setJudgeReport(result.judge);
       setXpEarned(result.xpEarned);
+      setAiNotice(result.judge.fallbackNotice ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to judge debate.");
     } finally {
@@ -465,6 +478,13 @@ export function DebateRoom() {
               </div>
             ) : null}
 
+            {aiNotice ? (
+              <div className="flex gap-2 rounded-md border border-primary/25 bg-primary/10 p-3 text-sm font-medium text-primary">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                {aiNotice}
+              </div>
+            ) : null}
+
             <Button type="button" className="w-full" size="lg" onClick={startDebate} disabled={isStarting || Boolean(debateId)}>
               {isStarting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MessageSquareText className="h-5 w-5" aria-hidden />}
               {practiceMode === "ROLEPLAY" ? "Start roleplay" : practiceMode === "TEST" ? "Create test prompt" : practiceMode === "LESSON" ? "Create lesson prompt" : "Start debate"}
@@ -543,7 +563,7 @@ export function DebateRoom() {
                   <div>
                     <p className="font-semibold">Your turn</p>
                     <p className="text-sm text-muted-foreground">
-                      Round {currentRound} {practiceMode === "ROLEPLAY" ? "student response" : "affirmative argument"}
+                      Round {currentRound} {practiceMode === "ROLEPLAY" ? "student response" : `${titleCase(currentStudentSide)} argument`}
                     </p>
                   </div>
                   {studentTurns.length >= 3 ? <Badge variant="accent">Judge ready</Badge> : null}
@@ -580,6 +600,13 @@ export function DebateRoom() {
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
+              {judgeReport.fallbackNotice ? (
+                <div className="flex gap-2 rounded-md border border-primary/25 bg-primary/10 p-3 text-sm font-medium text-primary">
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  {judgeReport.fallbackNotice}
+                </div>
+              ) : null}
+
               <div className="grid gap-3 md:grid-cols-[0.6fr_1.4fr]">
                 <div className="rounded-lg border bg-background p-5 text-center">
                   <p className="text-sm font-semibold text-muted-foreground">Overall score</p>

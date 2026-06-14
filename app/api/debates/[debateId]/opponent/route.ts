@@ -37,13 +37,15 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       throw new HttpError("AI opponent is only available for AI debates", 409);
     }
 
+    const opponentSide = input.side ?? "NEGATIVE";
+
     const opponent = await generateOpponentResponse({
       organization: debate.organization,
       level: debate.level,
       eventType: debate.eventType,
       practiceMode: debate.practiceMode,
       topic: debate.topic,
-      side: input.side,
+      side: opponentSide,
       round: input.round,
       transcript: debate.messages.map((message) => ({
         role: message.role,
@@ -55,7 +57,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const message = await prisma.debateMessage.create({
       data: {
         debateId: debate.id,
-        role: input.side,
+        role: opponentSide,
         round: input.round,
         content: opponent.response
       }

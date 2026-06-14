@@ -23,6 +23,8 @@ type LessonContent = {
   }>;
 };
 
+type MasteryQuizItem = NonNullable<LessonContent["masteryQuiz"]>[number];
+
 function parseLessonContent(content: unknown): LessonContent {
   if (!content || typeof content !== "object" || Array.isArray(content)) {
     return {};
@@ -66,7 +68,10 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
       ? content.independentPractice
       : ["Set a short timer and produce the skill without notes.", "Log one weakness to target in your next practice test or judged round."];
   const checks = content.checks && content.checks.length > 0 ? content.checks : ["Can you name the goal of this skill?", "Can you use it under time pressure?", "Can you explain how it improves your score?"];
-  const masteryQuiz = content.masteryQuiz && content.masteryQuiz.length > 0 ? content.masteryQuiz : checks.map((check) => ({ question: check }));
+  const masteryQuiz: MasteryQuizItem[] =
+    content.masteryQuiz && content.masteryQuiz.length > 0
+      ? content.masteryQuiz
+      : checks.map((check) => ({ question: check }));
 
   return (
     <div className="space-y-6">

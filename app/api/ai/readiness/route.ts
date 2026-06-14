@@ -8,7 +8,10 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const input = await parseJson(request, readinessRequestSchema);
-    const readiness = await evaluateReadiness(input);
+    const readiness = await evaluateReadiness({
+      ...input,
+      weaknessSummary: input.weaknessSummary ?? []
+    });
     return NextResponse.json(readiness);
   } catch (error) {
     return apiError(error);

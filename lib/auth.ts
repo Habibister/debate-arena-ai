@@ -1,8 +1,34 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
+import type { User as PrismaUser } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+
+const DEV_DEMO_EMAIL = "student@debatearena.ai";
+const DEV_DEMO_PASSWORD = "password123";
+
+function isDevDemoLogin(email: string, password: string) {
+  return (
+    process.env.NODE_ENV === "development" &&
+    email.trim().toLowerCase() === DEV_DEMO_EMAIL &&
+    password === DEV_DEMO_PASSWORD
+  );
+}
+
+function getDevDemoStudent() {
+  return {
+    id: "dev-demo-student",
+    name: "Demo Student",
+    email: DEV_DEMO_EMAIL,
+    image: null,
+    role: "STUDENT" as const,
+    organization: "DEBATE" as const,
+    level: "BEGINNER" as const,
+    rank: "BRONZE" as const,
+    xp: 375
+  };
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -24,15 +50,35 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
+        const email = credentials.email.trim().toLowerCase();
+        const password = credentials.password;
+        const allowDevDemoLogin = isDevDemoLogin(email, password);
+
+        let user: PrismaUser | null;
+
+        try {
+          user = await prisma.user.findUnique({
+            where: { email }
+          });
+        } catch (error) {
+          if (allowDevDemoLogin) {
+            console.warn("[dev-only demo auth] Database lookup failed. Using local demo student fallback.");
+            return getDevDemoStudent();
+          }
+
+          throw error;
+        }
+
+        if (!user && allowDevDemoLogin) {
+          console.warn("[dev-only demo auth] Demo user is missing from the database. Using local fallback.");
+          return getDevDemoStudent();
+        }
 
         if (!user?.passwordHash) {
           return null;
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        const isValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValid) {
           return null;

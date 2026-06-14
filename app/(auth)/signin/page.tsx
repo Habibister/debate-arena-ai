@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SignInPage() {
+  const showDemoLogin = process.env.NODE_ENV === "development";
+
   return (
     <main className="arena-grid flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
@@ -15,12 +17,12 @@ export default function SignInPage() {
         <Card>
           <CardHeader>
             <Badge variant="secondary" className="w-fit">
-              Demo credentials prefilled
+              {showDemoLogin ? "Local dev demo enabled" : "Secure sign in"}
             </Badge>
             <CardTitle className="pt-3 text-2xl">Sign in to training</CardTitle>
           </CardHeader>
           <CardContent>
-            <SignInForm />
+            <SignInForm showDemoLogin={showDemoLogin} />
           </CardContent>
         </Card>
       </div>

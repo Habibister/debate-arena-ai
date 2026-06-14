@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { judgeDebate, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/ai";
 import { apiError, HttpError, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
+import { getNextSpeech, isSpeechComplete, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
 import { calculateRank } from "@/lib/xp";
 import { XP_REWARDS } from "@/lib/constants";
@@ -15,6 +16,7 @@ function normalizeScore(score: number) {
 
 type CategoryScore = {
   key: string;
+  label?: string;
   score: number;
 };
 
@@ -35,6 +37,7 @@ type JudgeResult = {
   weaknesses: string[];
   improvementAdvice?: string[];
   recommendedLessons?: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }>;
+  teamWinner?: "GOVERNMENT" | "OPPOSITION";
   readinessForNextLevel: {
     ready: boolean;
     rationale: string;
@@ -49,6 +52,57 @@ function categoryScore(result: JudgeResult, keys: string[]) {
   }
 
   return found.score <= 5 ? normalizeScore(found.score * 20) : normalizeScore(found.score);
+}
+
+function debateSkillRecommendations(result: JudgeResult) {
+  const weakText = [
+    ...result.weaknesses,
+    ...result.categoryScores.filter((category) => category.score <= 3 || category.score <= 65).map((category) => category.label ?? category.key)
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const recommendations: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }> = [];
+
+  const add = (lessonSlug: string, reason: string, priority: "high" | "medium" | "low" = "medium") => {
+    if (!recommendations.some((item) => item.lessonSlug === lessonSlug)) {
+      recommendations.push({ lessonSlug, reason, priority });
+    }
+  };
+
+  if (weakText.includes("refut") || weakText.includes("rebut")) {
+    add("debate-refutation-lesson", "Build direct refutation so each answer clearly clashes with the opponent's claim.", "high");
+  }
+
+  if (weakText.includes("signpost") || weakText.includes("organization")) {
+    add("debate-signposting-lesson", "Strengthen organization and signposting so the judge can follow the flow.", "high");
+  }
+
+  if (weakText.includes("evidence") || weakText.includes("support") || weakText.includes("content")) {
+    add("debate-claim-warrant-impact-lesson", "Improve support by connecting claims, warrants, and impacts.", "medium");
+  }
+
+  if (weakText.includes("weigh") || weakText.includes("impact") || weakText.includes("clash")) {
+    add("debate-weighing-lesson", "Practice comparing impacts and explaining why one argument should decide the round.", "medium");
+  }
+
+  if (weakText.includes("structure") || weakText.includes("speech")) {
+    add("debate-constructive-speeches-lesson", "Build clearer speech structure for constructive and summary work.", "low");
+  }
+
+  return recommendations.slice(0, 5);
+}
+
+function didStudentWin(result: JudgeResult, studentSide: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST", overallScore: number) {
+  if (!result.teamWinner) {
+    return overallScore >= 80;
+  }
+
+  if (result.teamWinner === "GOVERNMENT") {
+    return studentSide === "GOVERNMENT" || studentSide === "FOR";
+  }
+
+  return studentSide === "OPPOSITION" || studentSide === "AGAINST";
 }
 
 async function runOrganizationJudge(debate: {
@@ -119,13 +173,27 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
       throw new HttpError("This debate has already been judged", 409);
     }
 
-    const studentTurns = debate.messages.filter((message) => message.authorId === session.user.id);
+    const formatConfig = parseFormatConfig(debate.formatConfig, debate.format, debate.turnTimeSeconds);
 
-    if (studentTurns.length < debate.roundsMinimum) {
-      throw new HttpError(`Complete at least ${debate.roundsMinimum} student turns before judging.`, 409);
+    if (!isSpeechComplete(debate.messages, formatConfig)) {
+      const completedSpeechCount = debate.messages.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length;
+      const nextSpeech = getNextSpeech(formatConfig, completedSpeechCount);
+      throw new HttpError(
+        nextSpeech
+          ? `Complete all required speeches before judging. Next up: ${nextSpeech.label}.`
+          : "Complete all required speeches before judging.",
+        409
+      );
     }
 
     const result = (await runOrganizationJudge(debate)) as JudgeResult;
+    const targetedRecommendations = debateSkillRecommendations(result);
+    result.recommendedLessons = [
+      ...targetedRecommendations,
+      ...(result.recommendedLessons ?? []).filter(
+        (lesson) => !targetedRecommendations.some((targeted) => targeted.lessonSlug === lesson.lessonSlug)
+      )
+    ].slice(0, 6);
 
     const scores = {
       logic: categoryScore(result, ["argument", "businessReasoning", "healthScienceKnowledge"]),
@@ -140,7 +208,7 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
           : undefined
     };
     const overallScore = normalizeScore(result.overallScore);
-    const wonDebate = overallScore >= 80;
+    const wonDebate = didStudentWin(result, debate.studentSide, overallScore);
     const xpEarned = XP_REWARDS.debateCompleted + (wonDebate ? XP_REWARDS.debateWon : 0);
 
     const [updatedDebate, updatedUser] = await prisma.$transaction(async (tx) => {

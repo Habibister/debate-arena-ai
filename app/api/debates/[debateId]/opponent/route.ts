@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { generateOpponentResponse } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
+import { countDebateSpeeches, getNextSpeech, getSideLabel, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
 import { opponentTurnRequestSchema } from "@/lib/validators";
 
@@ -38,6 +39,20 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     }
 
     const opponentSide = input.side ?? "NEGATIVE";
+    const config = parseFormatConfig(debate.formatConfig, debate.format, debate.turnTimeSeconds);
+    const nextSpeech = getNextSpeech(config, countDebateSpeeches(debate.messages));
+
+    if (!nextSpeech) {
+      throw new HttpError("All required speeches are complete. Send the debate to the judge when you are ready.", 409);
+    }
+
+    if (nextSpeech.side !== debate.opponentSide) {
+      throw new HttpError(`${getSideLabel(nextSpeech.side)} is up next. Submit the student speech before asking the AI opponent to respond.`, 409);
+    }
+
+    if (opponentSide !== nextSpeech.messageRole || input.round !== nextSpeech.round || (input.speechKey && input.speechKey !== nextSpeech.key)) {
+      throw new HttpError(`The AI opponent must give the next required speech: ${nextSpeech.label}.`, 400);
+    }
 
     const opponent = await generateOpponentResponse({
       organization: debate.organization,
@@ -57,8 +72,8 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const message = await prisma.debateMessage.create({
       data: {
         debateId: debate.id,
-        role: opponentSide,
-        round: input.round,
+        role: nextSpeech.messageRole,
+        round: nextSpeech.round,
         content: opponent.response
       }
     });

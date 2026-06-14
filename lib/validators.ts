@@ -11,6 +11,8 @@ export const organizationSchema = z.enum([
 
 export const levelSchema = z.enum(["BEGINNER", "INTERMEDIATE", "ELITE"]);
 export const practiceModeSchema = z.enum(["DEBATE", "ROLEPLAY", "TEST", "LESSON"]);
+export const debateFormatSchema = z.enum(["PARLIAMENTARY", "QUICK_1V1", "PUBLIC_FORUM", "PRACTICE_REBUTTAL", "CUSTOM"]);
+export const debateSideChoiceSchema = z.enum(["GOVERNMENT", "OPPOSITION", "FOR", "AGAINST", "RANDOM"]);
 
 const transcriptSchema = z.array(
   z.object({
@@ -94,8 +96,14 @@ export const debateCreateSchema = z.object({
   organization: organizationSchema,
   eventType: z.string().min(2).max(120),
   practiceMode: practiceModeSchema,
+  format: debateFormatSchema.default("PARLIAMENTARY"),
+  category: z.string().min(2).max(80).default("Global"),
   level: levelSchema,
   topic: z.string().min(8),
+  aiGeneratedTopic: z.boolean().default(false),
+  turnTimeSeconds: z.number().int().min(30).max(600).optional(),
+  prepTimeSeconds: z.number().int().min(0).max(900).optional(),
+  side: debateSideChoiceSchema.default("GOVERNMENT"),
   mode: z.enum(["AI", "REAL_STUDENT"]),
   opponentUserId: z.string().optional()
 });
@@ -125,12 +133,14 @@ export const teamCreateSchema = z.object({
 export const debateMessageCreateSchema = z.object({
   role: z.enum(["AFFIRMATIVE", "NEGATIVE", "MODERATOR", "JUDGE", "SYSTEM"]),
   round: z.number().int().min(1).max(10),
+  speechKey: z.string().min(1).max(80).optional(),
   content: z.string().min(1).max(8000)
 });
 
 export const opponentTurnRequestSchema = z.object({
   side: z.enum(["AFFIRMATIVE", "NEGATIVE"]).default("NEGATIVE"),
-  round: z.number().int().min(1).max(10)
+  round: z.number().int().min(1).max(10),
+  speechKey: z.string().min(1).max(80).optional()
 });
 
 export const matchmakingRequestSchema = z.object({

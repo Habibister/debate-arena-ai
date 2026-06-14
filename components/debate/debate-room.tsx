@@ -1,39 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { Level, Organization, PracticeMode } from "@prisma/client";
-import {
-  Bot,
-  CheckCircle2,
-  CircleAlert,
-  Gavel,
-  Loader2,
-  MessageSquareText,
-  Sparkles,
-  Users
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
+import type { DebateFormat, Level } from "@prisma/client";
+import { Bot, Check, CircleAlert, Clock3, Loader2, MessageSquareText, RefreshCw, Sparkles, Swords } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingState } from "@/components/ui/loading-state";
-import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { LEVELS, ORGANIZATIONS } from "@/lib/constants";
-import { EVENT_OPTIONS, PRACTICE_MODES } from "@/lib/rubrics";
-import { cn, titleCase } from "@/lib/utils";
-
-type DebateMode = "AI" | "REAL_STUDENT";
-type MessageRole = "AFFIRMATIVE" | "NEGATIVE" | "MODERATOR" | "JUDGE" | "SYSTEM";
-
-type DebateMessage = {
-  id: string;
-  authorId?: string | null;
-  role: MessageRole;
-  round: number;
-  content: string;
-  createdAt?: string;
-};
+import {
+  DEBATE_CATEGORIES,
+  FORMAT_CARDS,
+  QUICK_TURN_OPTIONS,
+  buildDebateFormatConfig,
+  getSideLabel,
+  type DebateSideChoice
+} from "@/lib/debate-formats";
+import { LEVELS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 type TopicPackage = {
   topic: string;
@@ -41,46 +25,6 @@ type TopicPackage = {
   affirmativePosition: string;
   negativePosition: string;
   suggestedEvidenceAngles: string[];
-  fallbackNotice?: string;
-};
-
-type JudgeReport = {
-  overallScore: number;
-  categoryScores: Array<{
-    key: string;
-    label: string;
-    score: number;
-    reason: string;
-  }>;
-  sharedSpeaking?: {
-    clarity?: number;
-    confidence?: number;
-    pacing?: number;
-    volume?: number;
-    organization?: number;
-    vocabulary?: number;
-    persuasion?: number;
-    professionalism?: number;
-  };
-  speakerScores?: Array<{
-    speaker: string;
-    team: "GOVERNMENT" | "OPPOSITION";
-    score: number;
-    rank: number;
-    descriptor: string;
-    rationale: string;
-  }>;
-  teamWinner?: "GOVERNMENT" | "OPPOSITION";
-  reasonForDecision?: string;
-  strengths: string[];
-  weaknesses: string[];
-  improvementAdvice?: string[];
-  recommendedLessons?: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }>;
-  readinessForNextLevel: {
-    ready: boolean;
-    rationale: string;
-    nextMilestone: string;
-  };
   fallbackNotice?: string;
 };
 
@@ -92,64 +36,55 @@ async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
     ...options,
     headers
   });
-
   const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "We could not complete that request. Please try again.");
+    throw new Error(payload.error ?? "Something went wrong. Please try again.");
   }
 
   return payload;
 }
 
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return remainder === 0 ? `${minutes} min` : `${minutes}:${String(remainder).padStart(2, "0")}`;
+}
+
 export function DebateRoom() {
-  const [organization, setOrganization] = useState<Organization>("DEBATE");
-  const [eventType, setEventType] = useState("PARLIAMENTARY_DEBATE");
+  const router = useRouter();
+  const [format, setFormat] = useState<DebateFormat>("PARLIAMENTARY");
+  const [category, setCategory] = useState<(typeof DEBATE_CATEGORIES)[number]>("Global");
   const [level, setLevel] = useState<Level>("BEGINNER");
-  const [practiceMode, setPracticeMode] = useState<PracticeMode>("DEBATE");
-  const [mode, setMode] = useState<DebateMode>("AI");
+  const [turnTimeSeconds, setTurnTimeSeconds] = useState<number>(120);
+  const [sideChoice, setSideChoice] = useState<DebateSideChoice>("GOVERNMENT");
+  const [aiGeneratedTopic, setAiGeneratedTopic] = useState(true);
+  const [topicText, setTopicText] = useState("This house believes that schools should teach practical AI literacy.");
   const [topicPackage, setTopicPackage] = useState<TopicPackage | null>(null);
-  const [topicText, setTopicText] = useState("");
-  const [debateId, setDebateId] = useState<string | null>(null);
-  const [resolvedMode, setResolvedMode] = useState<DebateMode>("AI");
-  const [matchNotice, setMatchNotice] = useState<string | null>(null);
-  const [messages, setMessages] = useState<DebateMessage[]>([]);
-  const [currentRound, setCurrentRound] = useState(1);
-  const [studentInput, setStudentInput] = useState("");
-  const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(null);
-  const [xpEarned, setXpEarned] = useState<number | null>(null);
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isJudging, setIsJudging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [aiNotice, setAiNotice] = useState<string | null>(null);
 
-  const selectedOrg = ORGANIZATIONS.find((item) => item.value === organization);
-  const eventOptions = EVENT_OPTIONS[organization];
-  const selectedEvent = eventOptions.find((item) => item.value === eventType) ?? eventOptions[0];
-  const allowedPracticeModes = PRACTICE_MODES.filter((item) => selectedEvent.allowedModes.includes(item.value));
-  const selectedLevel = LEVELS.find((item) => item.value === level);
-  const studentTurns = useMemo(() => messages.filter((message) => Boolean(message.authorId)), [messages]);
-  const roundProgress = Math.min(Math.round((studentTurns.length / 3) * 100), 100);
-  const canJudge = Boolean(debateId && studentTurns.length >= 3 && !judgeReport);
-  const isInteractiveRound = practiceMode === "DEBATE" || practiceMode === "ROLEPLAY";
-  const currentStudentSide: Extract<MessageRole, "AFFIRMATIVE" | "NEGATIVE"> =
-    currentRound % 2 === 1 ? "AFFIRMATIVE" : "NEGATIVE";
-  const currentOpponentSide: Extract<MessageRole, "AFFIRMATIVE" | "NEGATIVE"> =
-    currentStudentSide === "AFFIRMATIVE" ? "NEGATIVE" : "AFFIRMATIVE";
-
-  useEffect(() => {
-    const nextEvent = EVENT_OPTIONS[organization][0];
-    setEventType(nextEvent.value);
-    setPracticeMode(nextEvent.allowedModes[0]);
-  }, [organization]);
-
-  useEffect(() => {
-    if (!selectedEvent.allowedModes.includes(practiceMode)) {
-      setPracticeMode(selectedEvent.allowedModes[0]);
+  const config = useMemo(() => buildDebateFormatConfig(format, turnTimeSeconds), [format, turnTimeSeconds]);
+  const selectedFormat = FORMAT_CARDS.find((item) => item.format === format) ?? FORMAT_CARDS[0];
+  const sideOptions: Array<{ value: DebateSideChoice; label: string; detail: string }> = [
+    {
+      value: config.sides.affirmative,
+      label: getSideLabel(config.sides.affirmative),
+      detail: "You speak for the motion or proposal."
+    },
+    {
+      value: config.sides.negative,
+      label: getSideLabel(config.sides.negative),
+      detail: "You challenge the motion or proposal."
+    },
+    {
+      value: "RANDOM",
+      label: "Random",
+      detail: "Let the room assign your side."
     }
-  }, [practiceMode, selectedEvent.allowedModes]);
+  ];
 
   async function generateTopic() {
     setIsGeneratingTopic(true);
@@ -159,13 +94,20 @@ export function DebateRoom() {
     try {
       const generated = await requestJson<TopicPackage>("/api/ai/topic", {
         method: "POST",
-        body: JSON.stringify({ organization, eventType, practiceMode, level })
+        body: JSON.stringify({
+          organization: "DEBATE",
+          eventType: config.eventType,
+          practiceMode: "DEBATE",
+          level,
+          focusArea: category
+        })
       });
       setTopicPackage(generated);
       setTopicText(generated.topic);
+      setAiGeneratedTopic(true);
       setAiNotice(generated.fallbackNotice ?? null);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to generate topic.");
+      setError(requestError instanceof Error ? requestError.message : "Unable to generate a motion right now.");
     } finally {
       setIsGeneratingTopic(false);
     }
@@ -173,533 +115,321 @@ export function DebateRoom() {
 
   async function startDebate() {
     if (!topicText.trim()) {
-      setError("Generate or enter a topic before starting.");
+      setError("Add a motion or generate one before creating the room.");
       return;
     }
 
     setIsStarting(true);
     setError(null);
-    setMatchNotice(null);
-    setAiNotice(null);
 
     try {
-      let nextMode = mode;
-      let opponentUserId: string | undefined;
-
-      if (mode === "REAL_STUDENT") {
-        const match = await requestJson<{
-          mode: DebateMode;
-          opponent: { id: string; name: string | null } | null;
-          reason: string;
-        }>("/api/matchmaking", {
-          method: "POST",
-          body: JSON.stringify({ organization, level })
-        });
-
-        nextMode = match.mode;
-        opponentUserId = match.opponent?.id;
-        setMatchNotice(match.reason);
-      }
-
       const created = await requestJson<{ debate: { id: string } }>("/api/debates", {
         method: "POST",
         body: JSON.stringify({
-          organization,
-          eventType,
-          practiceMode,
+          organization: "DEBATE",
+          eventType: config.eventType,
+          practiceMode: "DEBATE",
+          format,
+          category,
           level,
-          topic: topicText,
-          mode: nextMode,
-          opponentUserId
+          topic: topicText.trim(),
+          aiGeneratedTopic,
+          turnTimeSeconds: format === "QUICK_1V1" ? turnTimeSeconds : config.turnTimeSeconds,
+          prepTimeSeconds: config.prepTimeSeconds,
+          side: sideChoice,
+          mode: "AI"
         })
       });
 
-      const moderator = await requestJson<{ message: DebateMessage }>(`/api/debates/${created.debate.id}/messages`, {
+      await requestJson<{ message: { id: string } }>(`/api/debates/${created.debate.id}/messages`, {
         method: "POST",
         body: JSON.stringify({
           role: "MODERATOR",
           round: 1,
-          content: `${practiceMode === "ROLEPLAY" ? "Scenario" : "Topic"}: ${topicText}`
+          content: `Motion: ${topicText.trim()}`
         })
       });
 
-      setResolvedMode(nextMode);
-      setDebateId(created.debate.id);
-      setMessages([moderator.message]);
-      setCurrentRound(1);
-      setJudgeReport(null);
-      setXpEarned(null);
+      router.push(`/debate/${created.debate.id}` as Route);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to start debate.");
+      setError(requestError instanceof Error ? requestError.message : "Unable to create the debate room.");
     } finally {
       setIsStarting(false);
     }
   }
 
-  async function submitTurn() {
-    if (!debateId || !studentInput.trim()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const studentMessage = await requestJson<{ message: DebateMessage }>(`/api/debates/${debateId}/messages`, {
-        method: "POST",
-        body: JSON.stringify({
-          role: currentStudentSide,
-          round: currentRound,
-          content: studentInput.trim()
-        })
-      });
-
-      setMessages((current) => [...current, studentMessage.message]);
-      setStudentInput("");
-
-      if (resolvedMode === "AI") {
-        const opponentMessage = await requestJson<{ message: DebateMessage; opponent?: { fallbackNotice?: string } }>(`/api/debates/${debateId}/opponent`, {
-          method: "POST",
-          body: JSON.stringify({
-            side: currentOpponentSide,
-            round: currentRound
-          })
-        });
-
-        setMessages((current) => [...current, opponentMessage.message]);
-        setAiNotice(opponentMessage.opponent?.fallbackNotice ?? null);
-      }
-
-      setCurrentRound((round) => round + 1);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to submit turn.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function judgeDebate() {
-    if (!debateId) {
-      return;
-    }
-
-    setIsJudging(true);
-    setError(null);
-
-    try {
-      const result = await requestJson<{ judge: JudgeReport; xpEarned: number }>(`/api/debates/${debateId}/judge`, {
-        method: "POST",
-        body: JSON.stringify({})
-      });
-      setJudgeReport(result.judge);
-      setXpEarned(result.xpEarned);
-      setAiNotice(result.judge.fallbackNotice ?? null);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to judge debate.");
-    } finally {
-      setIsJudging(false);
-    }
-  }
-
   return (
-    <div className="grid gap-4 xl:grid-cols-[0.88fr_1.12fr]">
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
+    <div className="overflow-hidden rounded-lg border border-white/10 bg-neutral-950 text-white shadow-2xl">
+      <div className="border-b border-white/10 px-4 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-500/15 text-blue-300">
+              <Swords className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-blue-200">DebateArena AI</p>
+              <h2 className="text-xl font-bold">Create Debate Room</h2>
+            </div>
+          </div>
+          <Badge className="border border-purple-400/30 bg-purple-500/10 text-purple-100">AI opponent ready</Badge>
+        </div>
+      </div>
+
+      <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[1fr_0.72fr]">
+        <div className="space-y-6">
+          <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle>Round Setup</CardTitle>
-                <p className="mt-2 text-sm text-muted-foreground">Choose the track, generate a prompt, then start your judged practice room.</p>
+                <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Motion</p>
+                <p className="mt-1 text-sm text-neutral-400">Write your own motion or let the local/AI generator create one.</p>
               </div>
-              <Badge variant={debateId ? "accent" : "secondary"}>{debateId ? "Live" : "Ready"}</Badge>
+              <button
+                type="button"
+                onClick={() => setAiGeneratedTopic((current) => !current)}
+                className={cn(
+                  "focus-ring inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition",
+                  aiGeneratedTopic ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100" : "border-white/15 bg-white/5 text-neutral-300"
+                )}
+              >
+                <span className={cn("h-3 w-3 rounded-full", aiGeneratedTopic ? "bg-emerald-300" : "bg-neutral-500")} />
+                AI-generated topic
+              </button>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div>
-              <p className="mb-3 text-sm font-semibold">Organization</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {ORGANIZATIONS.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setOrganization(item.value)}
-                    className={cn(
-                      "focus-ring rounded-md border p-3 text-left text-sm transition-colors",
-                      organization === item.value ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-                    )}
-                    disabled={Boolean(debateId)}
-                  >
-                    <span className="font-semibold">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-3 text-sm font-semibold">Level</p>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {LEVELS.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setLevel(item.value)}
-                    className={cn(
-                      "focus-ring rounded-md border p-3 text-left text-sm transition-colors",
-                      level === item.value ? "border-secondary bg-secondary text-secondary-foreground" : "bg-background hover:bg-muted"
-                    )}
-                    disabled={Boolean(debateId)}
-                  >
-                    <span className="font-semibold">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-3 text-sm font-semibold">Event type</p>
-              <div className="grid gap-2">
-                {eventOptions.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setEventType(item.value)}
-                    className={cn(
-                      "focus-ring rounded-md border p-3 text-left text-sm transition-colors",
-                      eventType === item.value ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-                    )}
-                    disabled={Boolean(debateId)}
-                  >
-                    <span className="font-semibold">{item.label}</span>
-                    <span className={cn("mt-1 block leading-5", eventType === item.value ? "text-primary-foreground/85" : "text-muted-foreground")}>
-                      {item.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-3 text-sm font-semibold">Practice mode</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {allowedPracticeModes.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setPracticeMode(item.value)}
-                    className={cn(
-                      "focus-ring rounded-md border p-3 text-left text-sm transition-colors",
-                      practiceMode === item.value ? "border-secondary bg-secondary text-secondary-foreground" : "bg-background hover:bg-muted"
-                    )}
-                    disabled={Boolean(debateId)}
-                  >
-                    <span className="font-semibold">{item.label}</span>
-                    <span className={cn("mt-1 block leading-5", practiceMode === item.value ? "text-secondary-foreground/85" : "text-muted-foreground")}>
-                      {item.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {isInteractiveRound ? (
-              <div>
-                <p className="mb-3 text-sm font-semibold">Opponent</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setMode("AI")}
-                    className={cn(
-                      "focus-ring rounded-md border p-3 text-left transition-colors",
-                      mode === "AI" ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-                    )}
-                    disabled={Boolean(debateId)}
-                  >
-                    <Bot className="mb-2 h-4 w-4" aria-hidden />
-                    <span className="text-sm font-semibold">AI opponent</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode("REAL_STUDENT")}
-                    className={cn(
-                      "focus-ring rounded-md border p-3 text-left transition-colors",
-                      mode === "REAL_STUDENT" ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-                    )}
-                    disabled={Boolean(debateId)}
-                  >
-                    <Users className="mb-2 h-4 w-4" aria-hidden />
-                    <span className="text-sm font-semibold">Student match</span>
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="rounded-lg border bg-background p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold">{selectedOrg?.label} {practiceMode === "ROLEPLAY" ? "Scenario" : "Prompt"}</p>
-                  <p className="text-xs text-muted-foreground">{selectedEvent.label} · {selectedLevel?.label}</p>
-                </div>
-                <Button type="button" variant="secondary" onClick={generateTopic} disabled={isGeneratingTopic || Boolean(debateId)}>
-                  {isGeneratingTopic ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
-                  Generate
-                </Button>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
               <Textarea
                 value={topicText}
-                onChange={(event) => setTopicText(event.target.value)}
-                placeholder="Generate a prompt or write one manually."
-                className="mt-4 min-h-24"
-                disabled={Boolean(debateId)}
+                onChange={(event) => {
+                  setTopicText(event.target.value);
+                  setAiGeneratedTopic(false);
+                }}
+                className="min-h-28 border-emerald-500/30 bg-neutral-900 text-base text-white placeholder:text-neutral-500 focus-visible:ring-emerald-400"
+                placeholder="Enter a motion..."
+                disabled={isStarting}
               />
-              {isGeneratingTopic ? (
-                <LoadingState className="mt-4" title="Building an original prompt" description="Creating context, sides, and evidence angles for your level." />
-              ) : null}
-              {topicPackage ? (
-                <div className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
-                  <p>{topicPackage.background}</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-md border bg-card p-3">
-                      <span className="font-semibold text-foreground">Affirmative</span>
-                      <p className="mt-1">{topicPackage.affirmativePosition}</p>
-                    </div>
-                    <div className="rounded-md border bg-card p-3">
-                      <span className="font-semibold text-foreground">Negative</span>
-                      <p className="mt-1">{topicPackage.negativePosition}</p>
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value as (typeof DEBATE_CATEGORIES)[number])}
+                  className="focus-ring h-11 w-full rounded-md border border-white/15 bg-neutral-900 px-3 text-sm font-semibold text-white"
+                  disabled={isStarting}
+                >
+                  {DEBATE_CATEGORIES.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full bg-emerald-500 text-white hover:bg-emerald-500/90"
+                  onClick={generateTopic}
+                  disabled={isGeneratingTopic || isStarting}
+                >
+                  {isGeneratingTopic ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
+                  Generate motion
+                </Button>
+              </div>
+            </div>
+
+            {topicPackage ? (
+              <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-neutral-300 md:grid-cols-2">
+                <p className="md:col-span-2">{topicPackage.background}</p>
+                <div className="rounded-md border border-emerald-400/20 bg-emerald-500/10 p-3">
+                  <p className="font-semibold text-emerald-100">{config.sides.affirmativeLabel}</p>
+                  <p className="mt-1">{topicPackage.affirmativePosition}</p>
                 </div>
-              ) : null}
-            </div>
-
-            {matchNotice ? (
-              <div className="flex gap-2 rounded-md border bg-muted p-3 text-sm text-muted-foreground">
-                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                {matchNotice}
+                <div className="rounded-md border border-rose-400/20 bg-rose-500/10 p-3">
+                  <p className="font-semibold text-rose-100">{config.sides.negativeLabel}</p>
+                  <p className="mt-1">{topicPackage.negativePosition}</p>
+                </div>
               </div>
             ) : null}
+          </section>
 
-            {aiNotice ? (
-              <div className="flex gap-2 rounded-md border border-primary/25 bg-primary/10 p-3 text-sm font-medium text-primary">
-                <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                {aiNotice}
-              </div>
-            ) : null}
-
-            <Button type="button" className="w-full" size="lg" onClick={startDebate} disabled={isStarting || Boolean(debateId)}>
-              {isStarting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MessageSquareText className="h-5 w-5" aria-hidden />}
-              {practiceMode === "ROLEPLAY" ? "Start roleplay" : practiceMode === "TEST" ? "Create test prompt" : practiceMode === "LESSON" ? "Create lesson prompt" : "Start debate"}
-            </Button>
-
-            {error ? (
-              <div className="flex gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
-                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                {error}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <CardTitle>Live Debate Room</CardTitle>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Complete at least three turns before submitting to the organization-specific AI judge.
-                </p>
-              </div>
-              <Badge variant={resolvedMode === "AI" ? "secondary" : "accent"}>
-                {resolvedMode === "AI" ? "AI opponent" : "Student match"}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="font-semibold">Minimum round progress</span>
-                <span className="text-muted-foreground">{studentTurns.length}/3 turns</span>
-              </div>
-              <Progress value={roundProgress} />
-            </div>
-
-            <div className="max-h-[520px] space-y-3 overflow-y-auto rounded-lg border bg-background p-3">
-              {messages.length === 0 ? (
-                <EmptyState
-                  icon={MessageSquareText}
-                  title="No round started yet"
-                  description="Generate a topic, start the debate, then submit your first argument."
-                />
-              ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
+          <section className="space-y-3 border-t border-white/10 pt-6">
+            <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Debate format</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              {FORMAT_CARDS.map((item) => {
+                const selected = item.format === format;
+                return (
+                  <button
+                    key={item.format}
+                    type="button"
+                    onClick={() => {
+                      if (!item.disabled) {
+                        setFormat(item.format);
+                        setSideChoice(item.format === "PARLIAMENTARY" ? "GOVERNMENT" : "FOR");
+                      }
+                    }}
                     className={cn(
-                      "rounded-lg border p-4",
-                      message.role === "AFFIRMATIVE"
-                        ? "bg-primary text-primary-foreground"
-                        : message.role === "NEGATIVE"
-                          ? "bg-card"
-                          : "bg-muted"
+                      "focus-ring min-h-28 rounded-lg border p-4 text-left transition",
+                      selected ? "border-emerald-400 bg-emerald-500/10" : "border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]",
+                      item.disabled ? "cursor-not-allowed opacity-55" : ""
                     )}
+                    disabled={isStarting || item.disabled}
                   >
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-                      <span>{message.role === "MODERATOR" ? "Moderator" : titleCase(message.role)}</span>
-                      <span>Round {message.round}</span>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold">{item.label}</p>
+                      {selected ? <Check className="h-4 w-4 text-emerald-300" aria-hidden /> : null}
                     </div>
-                    <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
+                    <p className="mt-2 text-sm text-neutral-400">{item.summary}</p>
+                    <p className="mt-3 text-sm leading-6 text-neutral-300">{item.detail}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="grid gap-6 border-t border-white/10 pt-6 lg:grid-cols-2">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Turn time</p>
+              {format === "QUICK_1V1" ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {QUICK_TURN_OPTIONS.map((seconds) => (
+                    <button
+                      key={seconds}
+                      type="button"
+                      onClick={() => setTurnTimeSeconds(seconds)}
+                      className={cn(
+                        "focus-ring rounded-md border px-3 py-3 text-sm font-semibold transition",
+                        turnTimeSeconds === seconds ? "border-emerald-400 bg-emerald-500/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-neutral-300"
+                      )}
+                      disabled={isStarting}
+                    >
+                      {formatTime(seconds)}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-100">
+                    <Clock3 className="h-4 w-4" aria-hidden />
+                    Official timing
                   </div>
-                ))
+                  <p className="mt-2 text-sm leading-6 text-neutral-400">
+                    {format === "PARLIAMENTARY"
+                      ? "5 min prep, then PM 7, LO 8, MG 8, MO 8, LO rebuttal 4, PM rebuttal 5 with 30 sec grace."
+                      : `${config.label} uses fixed speech times for this MVP.`}
+                  </p>
+                </div>
               )}
-              {isSubmitting ? (
-                <LoadingState title={resolvedMode === "AI" ? "AI opponent is preparing a response" : "Saving your turn"} description="Keeping the round transcript and progress in sync." />
-              ) : null}
             </div>
 
-            {debateId && !judgeReport ? (
-              <div className="rounded-lg border bg-card p-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">Your turn</p>
-                    <p className="text-sm text-muted-foreground">
-                      Round {currentRound} {practiceMode === "ROLEPLAY" ? "student response" : `${titleCase(currentStudentSide)} argument`}
-                    </p>
-                  </div>
-                  {studentTurns.length >= 3 ? <Badge variant="accent">Judge ready</Badge> : null}
-                </div>
-                <Textarea
-                  value={studentInput}
-                  onChange={(event) => setStudentInput(event.target.value)}
-                  placeholder={practiceMode === "ROLEPLAY" ? "Write your roleplay response, proposed solution, or judge-question answer." : "Write your argument, rebuttal, weighing, or closing extension."}
-                />
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                  <Button type="button" onClick={submitTurn} disabled={isSubmitting || !studentInput.trim()} className="sm:flex-1">
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquareText className="h-4 w-4" aria-hidden />}
-                    Submit turn
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={judgeDebate} disabled={!canJudge || isJudging} className="sm:flex-1">
-                    {isJudging ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Gavel className="h-4 w-4" aria-hidden />}
-                    Judge debate
-                  </Button>
+            <div className="space-y-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Debate mode</p>
+              <div className="grid gap-2">
+                <button type="button" className="focus-ring rounded-md border border-emerald-400 bg-emerald-500/10 px-3 py-3 text-sm font-semibold text-emerald-100">
+                  <MessageSquareText className="mr-2 inline h-4 w-4" aria-hidden />
+                  Text debate
+                </button>
+                <button type="button" className="cursor-not-allowed rounded-md border border-white/10 bg-white/[0.03] px-3 py-3 text-sm font-semibold text-neutral-500" disabled>
+                  Audio debate coming soon
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3 border-t border-white/10 pt-6">
+            <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Choose your side</p>
+            <div className="grid gap-2 md:grid-cols-3">
+              {sideOptions.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setSideChoice(item.value)}
+                  className={cn(
+                    "focus-ring min-h-24 rounded-lg border p-4 text-left transition",
+                    sideChoice === item.value ? "border-emerald-400 bg-emerald-500/10" : "border-white/10 bg-white/[0.03] hover:border-white/25"
+                  )}
+                  disabled={isStarting}
+                >
+                  <p className="font-semibold">{item.label}</p>
+                  <p className="mt-2 text-sm leading-5 text-neutral-400">{item.detail}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+            <Badge className="border border-blue-400/30 bg-blue-500/10 text-blue-100">Room preview</Badge>
+            <h3 className="mt-4 text-2xl font-bold">{selectedFormat.label}</h3>
+            <p className="mt-2 text-sm leading-6 text-neutral-300">{config.description}</p>
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-md border border-white/10 bg-neutral-950 p-3">
+                <p className="text-xs font-semibold uppercase text-neutral-500">Level</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                  {LEVELS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setLevel(item.value)}
+                      className={cn(
+                        "focus-ring rounded-md border px-3 py-2 text-left text-sm font-semibold",
+                        level === item.value ? "border-purple-400 bg-purple-500/10 text-purple-100" : "border-white/10 bg-white/[0.03] text-neutral-300"
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        {judgeReport ? (
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle>AI Judge Report</CardTitle>
-                <Badge variant="accent">
-                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" aria-hidden />
-                  +{xpEarned ?? 0} XP
-                </Badge>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="rounded-md border border-emerald-400/20 bg-emerald-500/10 p-3">
+                  <p className="text-xs font-semibold uppercase text-emerald-200">You</p>
+                  <p className="mt-1 font-semibold">{sideChoice === "RANDOM" ? "Random side" : getSideLabel(sideChoice)}</p>
+                </div>
+                <div className="rounded-md border border-rose-400/20 bg-rose-500/10 p-3">
+                  <p className="text-xs font-semibold uppercase text-rose-200">AI opponent</p>
+                  <p className="mt-1 font-semibold">{sideChoice === "RANDOM" ? "Opposite side" : "Automatically assigned"}</p>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {judgeReport.fallbackNotice ? (
-                <div className="flex gap-2 rounded-md border border-primary/25 bg-primary/10 p-3 text-sm font-medium text-primary">
-                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  {judgeReport.fallbackNotice}
-                </div>
-              ) : null}
-
-              <div className="grid gap-3 md:grid-cols-[0.6fr_1.4fr]">
-                <div className="rounded-lg border bg-background p-5 text-center">
-                  <p className="text-sm font-semibold text-muted-foreground">Overall score</p>
-                  <p className="mt-3 text-5xl font-bold">{judgeReport.overallScore}</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {judgeReport.categoryScores.slice(0, 8).map((category) => (
-                    <div key={category.key} className="rounded-lg border bg-background p-3">
-                      <div className="mb-2 flex items-center justify-between text-sm">
-                        <span className="font-semibold">{category.label}</span>
-                        <span className="text-muted-foreground">{category.score}</span>
-                      </div>
-                      <Progress value={category.score <= 5 ? category.score * 20 : category.score} />
+              <div className="rounded-md border border-white/10 bg-neutral-950 p-3">
+                <p className="text-xs font-semibold uppercase text-neutral-500">Speech order</p>
+                <div className="mt-3 space-y-2">
+                  {config.speeches.map((speech, index) => (
+                    <div key={speech.key} className="flex items-center justify-between gap-3 rounded-md bg-white/[0.03] px-3 py-2 text-sm">
+                      <span>
+                        {index + 1}. {speech.shortLabel}
+                      </span>
+                      <span className="text-neutral-400">
+                        {formatTime(speech.timeSeconds)}
+                        {speech.graceSeconds ? ` + ${speech.graceSeconds}s` : ""}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
 
-              {judgeReport.sharedSpeaking ? (
-                <div className="rounded-lg border bg-background p-4">
-                  <p className="font-semibold">Shared speaking skills</p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {Object.entries(judgeReport.sharedSpeaking).map(([skill, value]) => (
-                      <div key={skill}>
-                        <div className="mb-2 flex items-center justify-between text-sm">
-                          <span className="font-semibold">{titleCase(skill)}</span>
-                          <span className="text-muted-foreground">{value ?? 0}%</span>
-                        </div>
-                        <Progress value={value ?? 0} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+          {aiNotice ? (
+            <div className="flex gap-2 rounded-md border border-blue-400/25 bg-blue-500/10 p-3 text-sm font-medium text-blue-100">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              {aiNotice}
+            </div>
+          ) : null}
 
-              {judgeReport.teamWinner || judgeReport.reasonForDecision ? (
-                <div className="rounded-lg border bg-background p-4">
-                  {judgeReport.teamWinner ? <p className="font-semibold">Winner: {titleCase(judgeReport.teamWinner)}</p> : null}
-                  {judgeReport.reasonForDecision ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{judgeReport.reasonForDecision}</p> : null}
-                </div>
-              ) : null}
+          {error ? (
+            <div className="flex gap-2 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-100">
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              {error}
+            </div>
+          ) : null}
 
-              {judgeReport.speakerScores ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {judgeReport.speakerScores.map((speaker) => (
-                    <div key={`${speaker.team}-${speaker.rank}`} className="rounded-lg border bg-background p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-semibold">{speaker.speaker}</p>
-                        <Badge variant="outline">Rank {speaker.rank}</Badge>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {speaker.score} speaker points · {speaker.descriptor}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{speaker.rationale}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="grid gap-3 md:grid-cols-3">
-                <FeedbackList title="Strengths" items={judgeReport.strengths} />
-                <FeedbackList title="Weaknesses" items={judgeReport.weaknesses} />
-                <FeedbackList title="Recommendations" items={judgeReport.improvementAdvice ?? judgeReport.recommendedLessons?.map((lesson) => lesson.reason) ?? []} />
-              </div>
-
-              <div className="rounded-lg border bg-background p-4">
-                <p className="font-semibold">
-                  Readiness: {judgeReport.readinessForNextLevel.ready ? "Ready for the next level" : "Keep training"}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{judgeReport.readinessForNextLevel.rationale}</p>
-                <p className="mt-3 text-sm font-semibold">Next milestone: {judgeReport.readinessForNextLevel.nextMilestone}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
+          <Button
+            type="button"
+            className="h-14 w-full bg-emerald-500 text-base text-white hover:bg-emerald-500/90"
+            onClick={startDebate}
+            disabled={isStarting || !topicText.trim()}
+          >
+            {isStarting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Bot className="h-5 w-5" aria-hidden />}
+            Create room
+          </Button>
+        </aside>
       </div>
-    </div>
-  );
-}
-
-function FeedbackList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="rounded-lg border bg-background p-4">
-      <p className="font-semibold">{title}</p>
-      {items.length > 0 ? (
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-          {items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">No items returned yet.</p>
-      )}
     </div>
   );
 }

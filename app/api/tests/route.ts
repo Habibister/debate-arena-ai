@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       normalizedQuestions.length !== input.questionCount ||
       normalizedQuestions.some((question) => question.choices.length < 2 || !question.question || !question.explanation || !question.skillTag)
     ) {
-      throw new Error("Practice question generation returned an invalid test shape.");
+      throw new HttpError("Practice test generation returned an invalid question set. Please try again.", 502);
     }
 
     const test = await prisma.practiceTest.create({

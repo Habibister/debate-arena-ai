@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
+import { buildDebateFormatConfig, getOpponentSide, resolveDebateSide } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
 import { debateCreateSchema } from "@/lib/validators";
 
@@ -47,10 +48,21 @@ export async function POST(request: Request) {
     }
 
     const input = await parseJson(request, debateCreateSchema);
+    const format = input.format ?? "PARLIAMENTARY";
+    const side = input.side ?? "GOVERNMENT";
+    const category = input.category ?? "Global";
+
+    if (format === "CUSTOM") {
+      throw new HttpError("Custom debate formats are coming soon. Choose one of the available formats for now.", 400);
+    }
+
+    const formatConfig = buildDebateFormatConfig(format, input.turnTimeSeconds);
+    const studentSide = resolveDebateSide(format, side);
+    const opponentSide = getOpponentSide(format, studentSide);
     const rubric = await prisma.rubric.findFirst({
       where: {
         organization: input.organization,
-        eventType: input.eventType,
+        eventType: formatConfig.eventType,
         isActive: true
       },
       orderBy: { version: "desc" }
@@ -59,13 +71,25 @@ export async function POST(request: Request) {
     const debate = await prisma.debate.create({
       data: {
         organization: input.organization,
-        eventType: input.eventType,
+        eventType: formatConfig.eventType,
         practiceMode: input.practiceMode,
+        format,
         rubricId: rubric?.id,
         level: input.level,
         topic: input.topic,
         mode: input.mode,
         status: "ACTIVE",
+        roundsMinimum: formatConfig.speeches.length,
+        studentSide,
+        opponentSide,
+        turnTimeSeconds: formatConfig.turnTimeSeconds,
+        prepTimeSeconds: input.prepTimeSeconds ?? formatConfig.prepTimeSeconds,
+        graceTimeSeconds: formatConfig.graceTimeSeconds,
+        formatConfig: {
+          ...formatConfig,
+          category,
+          aiGeneratedTopic: input.aiGeneratedTopic
+        },
         startedAt: new Date(),
         createdById: session.user.id,
         studentId: session.user.id,

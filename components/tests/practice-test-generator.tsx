@@ -37,10 +37,10 @@ async function createPracticeTest(input: {
     body: JSON.stringify(input)
   });
 
-  const payload = (await response.json()) as CreatedTestResponse & { error?: string };
+  const payload = (await response.json().catch(() => ({}))) as CreatedTestResponse & { error?: string };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Unable to generate practice test.");
+    throw new Error(payload.error ?? "We could not generate that practice test. Please try again.");
   }
 
   return payload.test;

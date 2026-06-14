@@ -73,7 +73,23 @@ type DebateJudgeResult = {
     rationale: string;
   }>;
   teamWinner: "GOVERNMENT" | "OPPOSITION";
+  losingSide?: "GOVERNMENT" | "OPPOSITION";
+  shortReasonForDecision?: string;
+  longReasonForDecision?: string;
   reasonForDecision: string;
+  sideFeedback?: {
+    government: {
+      didWell: string[];
+      missed: string[];
+    };
+    opposition: {
+      didWell: string[];
+      missed: string[];
+    };
+  };
+  keyClash?: string;
+  strongestArgument?: string;
+  weakestArgument?: string;
   strengths: string[];
   weaknesses: string[];
   improvementAdvice: string[];
@@ -329,8 +345,25 @@ function fallbackDebateJudge(input: {
       }
     ],
     teamWinner: winner,
+    losingSide: winner === "GOVERNMENT" ? "OPPOSITION" : "GOVERNMENT",
+    shortReasonForDecision: "The winning side did more comparison on the central clash.",
+    longReasonForDecision:
+      "Local development judge: the winning side gave the judge a clearer path to the ballot by extending a usable impact, answering the main response, and explaining why that issue outweighed the opponent's best material.",
     reasonForDecision:
       "Local development judge: the winning side did the better job extending a clear impact and comparing it against the opponent's main answer.",
+    sideFeedback: {
+      government: {
+        didWell: ["Presented a readable case structure", "Connected at least one argument to a ballot impact"],
+        missed: ["Needed tighter weighing in the final speech", "Could make definitions and contention labels more explicit"]
+      },
+      opposition: {
+        didWell: ["Put pressure on feasibility and opportunity cost", "Created direct clash against the main proposal"],
+        missed: ["Needed more organized refutation", "Could collapse to fewer decisive voters"]
+      }
+    },
+    keyClash: "Whether the proposal's long-term preparation benefit outweighs feasibility and opportunity-cost concerns.",
+    strongestArgument: "The strongest argument was the side that connected its main claim to a concrete, judge-relevant impact.",
+    weakestArgument: "The weakest argument was the least developed response, where the speaker asserted a problem without enough warrant or comparison.",
     strengths: ["Clear baseline structure", "Some direct clash", "Usable examples for the level"],
     weaknesses: ["Needs more explicit weighing", "Evidence should be tied to the claim earlier", "Final turns should collapse to fewer voters"],
     improvementAdvice: [
@@ -567,7 +600,8 @@ Speaker points must use the 19-30 range:
 Create four speaker slots if names are absent: Government 1, Government 2, Opposition 1, Opposition 2.
 Assign ranks 1-4 with no ties.
 
-Return JSON with overallScore, categoryScores, sharedSpeaking, speakerScores, teamWinner, reasonForDecision, strengths, weaknesses, improvementAdvice, recommendedLessons, and readinessForNextLevel.`,
+Return JSON with overallScore, categoryScores, sharedSpeaking, speakerScores, teamWinner, losingSide, shortReasonForDecision, longReasonForDecision, reasonForDecision, sideFeedback, keyClash, strongestArgument, weakestArgument, strengths, weaknesses, improvementAdvice, recommendedLessons, and readinessForNextLevel.
+sideFeedback must contain government.didWell, government.missed, opposition.didWell, and opposition.missed arrays.`,
     () => fallbackDebateJudge(input)
   );
 }

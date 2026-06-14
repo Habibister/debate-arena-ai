@@ -1,14 +1,18 @@
+import Link from "next/link";
+import type { Route } from "next";
 import { BookOpenCheck, CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const skills = [
-  { name: "Claim Building", org: "Debate", mastery: 82, status: "complete" },
-  { name: "Evidence", org: "Debate", mastery: 64, status: "active" },
-  { name: "Rebuttal", org: "Debate", mastery: 58, status: "active" },
-  { name: "Cross Examination", org: "Debate", mastery: 34, status: "locked" },
-  { name: "Resolution Writing", org: "Model UN", mastery: 46, status: "active" },
-  { name: "Roleplay", org: "DECA", mastery: 71, status: "active" }
+  { name: "Claim Building", org: "Debate", mastery: 82, status: "complete", slug: "debate-claim-building-1" },
+  { name: "Evidence", org: "Debate", mastery: 64, status: "active", slug: "debate-evidence-1" },
+  { name: "Rebuttal", org: "Debate", mastery: 58, status: "active", slug: "debate-rebuttal-1" },
+  { name: "Cross Examination", org: "Debate", mastery: 34, status: "locked", slug: "debate-rebuttal-2" },
+  { name: "Resolution Writing", org: "Model UN", mastery: 46, status: "active", slug: "mun-resolution-writing-1" },
+  { name: "Roleplay", org: "DECA", mastery: 71, status: "active", slug: "deca-roleplay-1" }
 ];
 
 export function SkillPath() {
@@ -45,6 +49,9 @@ export function SkillPath() {
                   </span>
                   <span className="font-semibold">{skill.mastery}%</span>
                 </div>
+                <Link href={`/skills/${skill.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
+                  Practice
+                </Link>
               </div>
             );
           })}

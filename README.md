@@ -39,7 +39,15 @@ This phase also adds organization-specific scoring engines transformed from uplo
 - Shared speaking-skill tracking across clarity, confidence, pacing, volume, organization, vocabulary, persuasion, and professionalism
 - Flexible Prisma rubric models for categories, score ranges, descriptors, and lesson recommendations
 
-Remaining Phase 2 depth includes realtime student-to-student rooms, timers, speech/audio support, richer judge explainability, and durable availability queues.
+Phase 3 adds DECA/HOSA testing and Khan Academy-style skill practice:
+
+- DECA and HOSA original practice test generator by event type, event cluster/category, level, and question count
+- Test-taking UI that keeps answer keys server-side until grading
+- Grading route with score, explanations, weak skill detection, XP award, and lesson recommendations
+- Results page with wrong-answer explanations and recommended mastery practice
+- Dynamic skill practice pages with lesson content, examples, guided practice, independent practice, and mastery checks
+
+Remaining debate-system depth includes realtime student-to-student rooms, timers, speech/audio support, richer judge explainability, and durable availability queues.
 
 ## Tech Stack
 
@@ -63,7 +71,10 @@ app/
     dashboard/
     debate/
     skills/
+      [slug]/
     tests/
+      [testId]/
+        results/
   (auth)/
     signin/
   api/
@@ -104,6 +115,8 @@ lib/
   constants.ts
   openai.ts
   prisma.ts
+  rubrics.ts
+  testing.ts
   utils.ts
   validators.ts
   xp.ts
@@ -168,7 +181,9 @@ The live debate system uses:
 - `POST /api/matchmaking`
 - `POST /api/ai/judge-deca`
 - `POST /api/ai/judge-hosa`
+- `GET /api/tests`
 - `POST /api/tests`
+- `GET /api/tests/:testId`
 - `POST /api/tests/:testId/grade`
 
 ## Getting Started

@@ -83,9 +83,9 @@ export default function HomePage() {
 
       <section className="container py-12">
         <SectionHeading
-          eyebrow="Phase 1 architecture"
-          title="A production-ready foundation for the full training platform"
-          description="The scaffold includes app routes, Prisma schema, NextAuth, OpenAI service functions, API routes, seed data, and responsive UI surfaces for every major product area."
+          eyebrow="Training platform"
+          title="A production-ready foundation for adaptive competitive practice"
+          description="The app includes live debate flows, original DECA and HOSA tests, flexible rubrics, mastery lessons, Prisma data models, NextAuth, OpenAI service functions, and responsive product surfaces."
         />
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {featureCards.map((feature) => {

@@ -17,7 +17,7 @@ export function DebateFlow() {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle>AI Debate Flow</CardTitle>
-          <Badge variant="secondary">Phase 2 ready</Badge>
+          <Badge variant="secondary">Live practice</Badge>
         </div>
       </CardHeader>
       <CardContent>

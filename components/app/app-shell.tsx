@@ -64,10 +64,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mt-8 rounded-lg border bg-background p-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <GraduationCap className="h-4 w-4 text-accent" aria-hidden />
-            Phase 1
+            Training stack
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Architecture, schema, AI routes, and product shell are ready for feature buildout.
+            Debate rounds, original tests, skill practice, XP, and coach visibility are wired into one learning loop.
           </p>
         </div>
       </aside>

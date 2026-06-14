@@ -108,6 +108,38 @@ async function upsertUser(email: string, name: string, role: "STUDENT" | "COACH"
   });
 }
 
+function buildLessonContent(skillName: string, title: string) {
+  return {
+    objective: title,
+    lesson: `Use ${title.toLowerCase()} to strengthen ${skillName.toLowerCase()} performance in a timed competitive setting. Start by naming the goal, show the judge the reasoning, then close with the impact or decision standard.`,
+    examples: [
+      `A strong ${skillName.toLowerCase()} response states the point, explains why it matters, and connects it back to the event criteria.`,
+      `A developing response may name the right idea but leave the judge to infer the business, health science, or debate impact.`
+    ],
+    guidedPractice: [
+      "Write one sentence that names the skill goal.",
+      "Add one sentence that explains the reasoning.",
+      "Revise the response so the judge can see how it earns points."
+    ],
+    independentPractice: [
+      "Set a three-minute timer and answer a fresh prompt using the same structure.",
+      "Underline the sentence that creates the clearest score impact."
+    ],
+    checks: [
+      "Can you identify what the judge is scoring?",
+      "Can you explain the skill without using filler?",
+      "Can you apply it under time pressure?"
+    ],
+    masteryQuiz: [
+      {
+        question: `What is the main purpose of ${title.toLowerCase()}?`,
+        answer: "To make the response easier to score and more strategically connected to the event criteria.",
+        explanation: "Mastery means the skill is visible, purposeful, and tied to how the performance is evaluated."
+      }
+    ]
+  };
+}
+
 async function seedSkills() {
   for (const skill of skillCatalog) {
     const dbSkill = await prisma.skill.upsert({
@@ -129,12 +161,14 @@ async function seedSkills() {
 
     for (const [index, title] of skill.lessons.entries()) {
       const lessonSlug = `${skill.slug}-${index + 1}`;
+      const content = buildLessonContent(skill.name, title);
       await prisma.lesson.upsert({
         where: { slug: lessonSlug },
         update: {
           title,
           order: index,
-          summary: `Practice ${title.toLowerCase()} with examples, guided reps, and a mastery check.`
+          summary: `Practice ${title.toLowerCase()} with examples, guided reps, and a mastery check.`,
+          content
         },
         create: {
           skillId: dbSkill.id,
@@ -143,12 +177,7 @@ async function seedSkills() {
           type: index === 0 ? "LESSON" : index === 1 ? "GUIDED_PRACTICE" : "MASTERY_QUIZ",
           order: index,
           summary: `Practice ${title.toLowerCase()} with examples, guided reps, and a mastery check.`,
-          content: {
-            objective: title,
-            lesson: "Phase 1 seed content. Phase 2 will replace this with AI-generated lesson bodies.",
-            examples: [],
-            checks: []
-          }
+          content
         }
       });
     }
@@ -245,7 +274,13 @@ async function seedPracticeSkeleton(studentId: string) {
       score: 80,
       weakAreas: ["Pricing strategy", "Promotion metrics"],
       recommendations: {
-        lessons: ["deca-marketing"],
+        lessons: [
+          {
+            lessonSlug: "deca-marketing-3",
+            title: "Metrics that matter",
+            reason: "Targets marketing measurement, which appears in the missed-question pattern."
+          }
+        ],
         note: "Review marketing metrics before attempting an intermediate exam."
       }
     }

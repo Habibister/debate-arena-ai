@@ -1,4 +1,5 @@
 import { TestBuilderPreview } from "@/components/tests/test-builder-preview";
+import { PracticeTestGenerator } from "@/components/tests/practice-test-generator";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
@@ -13,6 +14,8 @@ export default function TestsPage() {
           Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas back into lessons.
         </p>
       </div>
+
+      <PracticeTestGenerator />
 
       <TestBuilderPreview />
 

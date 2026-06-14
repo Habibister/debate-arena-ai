@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { practiceTestGradeSchema } from "@/lib/validators";
 import { XP_REWARDS } from "@/lib/constants";
+import { calculateRank } from "@/lib/xp";
 
 export const runtime = "nodejs";
 
@@ -29,6 +30,21 @@ export async function POST(request: Request, { params }: { params: { testId: str
 
     if (!test) {
       return NextResponse.json({ error: "Practice test not found" }, { status: 404 });
+    }
+
+    if (test.status === "COMPLETED") {
+      return NextResponse.json({ error: "Practice test has already been graded" }, { status: 409 });
+    }
+
+    const questionIds = new Set(test.questions.map((question) => question.id));
+    const submittedQuestionIds = new Set(input.answers.map((answer) => answer.questionId));
+
+    if (
+      submittedQuestionIds.size !== test.questions.length ||
+      input.answers.length !== test.questions.length ||
+      input.answers.some((answer) => !questionIds.has(answer.questionId))
+    ) {
+      return NextResponse.json({ error: "Submit one answer for every question in this practice test" }, { status: 400 });
     }
 
     const answerMap = new Map(input.answers.map((answer) => [answer.questionId, answer.selectedAnswer]));
@@ -59,7 +75,7 @@ export async function POST(request: Request, { params }: { params: { testId: str
       take: 20
     });
 
-    const recommendedLessons = lessons
+    let recommendedLessons = lessons
       .filter((lesson) =>
         weakAreas.some((area) => {
           const normalizedArea = area.toLowerCase();
@@ -77,7 +93,20 @@ export async function POST(request: Request, { params }: { params: { testId: str
         reason: `Targets ${lesson.skill.name}, which appeared in your missed-question pattern.`
       }));
 
+    if (recommendedLessons.length === 0 && weakAreas.length > 0) {
+      recommendedLessons = lessons.slice(0, 3).map((lesson) => ({
+        lessonSlug: lesson.slug,
+        title: lesson.title,
+        reason: `Builds foundational ${lesson.skill.name} skills that support ${weakAreas[0]}.`
+      }));
+    }
+
     await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: session.user.id },
+        select: { xp: true, streak: true }
+      });
+
       for (const item of gradedQuestions) {
         await tx.practiceAnswer.upsert({
           where: {
@@ -126,6 +155,16 @@ export async function POST(request: Request, { params }: { params: { testId: str
           reason: `Completed ${test.organization} practice test`,
           sourceType: "PRACTICE_TEST",
           sourceId: test.id
+        }
+      });
+
+      const nextXp = user.xp + XP_REWARDS.practiceTest;
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: {
+          xp: nextXp,
+          streak: user.streak + 1,
+          rank: calculateRank(nextXp)
         }
       });
     });

@@ -11,7 +11,7 @@ export default function SkillsPage() {
         <Badge variant="secondary">Skill Development</Badge>
         <h1 className="mt-3 text-3xl font-bold">Mastery paths</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Skills are organized by organization and lesson sequence, with generated content slots ready for AI lesson creation.
+          Skills are organized by organization and lesson sequence, with focused pages for lessons, examples, guided reps, independent practice, and mastery checks.
         </p>
       </div>
 

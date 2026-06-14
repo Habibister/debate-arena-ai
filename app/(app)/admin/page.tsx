@@ -16,7 +16,7 @@ export default function AdminPage() {
         <Badge variant="secondary">Admin</Badge>
         <h1 className="mt-3 text-3xl font-bold">Platform controls</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Phase 1 creates the operational foundation. Phase 2 can add user management screens, AI usage logs, moderation queues, and billing controls.
+          Manage the operational foundation for users, organizations, AI usage, moderation, and coach-led learning programs.
         </p>
       </div>
 

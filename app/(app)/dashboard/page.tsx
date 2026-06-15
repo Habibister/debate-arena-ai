@@ -10,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
+import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
 
 const fallbackLessons = [
   ["Evidence weighing", 68],
@@ -46,6 +48,14 @@ export default async function DashboardPage() {
         }
       })
     : null;
+  const judgedDebateCount = session?.user?.id
+    ? await prisma.debate.count({
+        where: {
+          studentId: session.user.id,
+          status: "JUDGED"
+        }
+      })
+    : 0;
 
   const displayName = user?.name?.split(" ")[0] ?? "Alex";
   const fullDisplayName = user?.displayName ?? user?.name ?? "Alex Rivera";
@@ -58,6 +68,9 @@ export default async function DashboardPage() {
   const recentTests = user?.practiceTests ?? [];
   const mastery = masteryFromTests(recentTests);
   const weakAreas = latestWeakAreas(recentTests);
+  const debateRating = calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount });
+  const debateProgress = debateRatingProgress(debateRating);
+  const recommendedBot = nearestAiPersona(debateRating);
 
   return (
     <div className="space-y-6">
@@ -87,8 +100,8 @@ export default async function DashboardPage() {
               <p className="mt-1 font-semibold">{weakAreas[0] ?? "Evidence depth"}</p>
             </div>
             <div className="rounded-md border bg-background p-3">
-              <p className="text-xs font-semibold text-muted-foreground">Next reward</p>
-              <p className="mt-1 font-semibold">+20 XP test set</p>
+              <p className="text-xs font-semibold text-muted-foreground">Recommended bot</p>
+              <p className="mt-1 font-semibold">{recommendedBot.name}</p>
             </div>
           </div>
         </div>
@@ -96,11 +109,42 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Debate rating"
+          value={String(debateRating)}
+          detail={`${ratingLabel(debateRating)} · ${debateProgress.pointsToNext} points to next band.`}
+          icon={Trophy}
+        />
         <StatCard label="XP" value={String(xp)} detail="Earn XP from debates, lessons, and generated practice tests." icon={Medal} />
         <StatCard label="Streak" value={`${streak} days`} detail="Complete one drill today to keep it alive." icon={Flame} />
-        <StatCard label="Wins" value={String(wins)} detail="Win rate improves as judged rounds turn into targeted lessons." icon={Trophy} />
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
+
+      <Card>
+        <CardContent className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <Badge variant="outline">Competitive ladder</Badge>
+              <h2 className="mt-3 text-xl font-bold">{ratingLabel(debateRating)}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                DebateArena rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
+              </p>
+            </div>
+            <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">
+              {wins} wins · {judgedDebateCount} judged rounds
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="font-semibold">{debateProgress.currentLabel}</span>
+              <span className="text-muted-foreground">
+                Next: {debateProgress.nextLabel} ({debateProgress.pointsToNext} pts)
+              </span>
+            </div>
+            <Progress value={debateProgress.percent} />
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-4">
         <NextStepCard

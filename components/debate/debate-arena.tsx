@@ -25,6 +25,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
 import {
   countDebateSpeeches,
   getNextSpeech,
@@ -34,6 +35,7 @@ import {
   type DebateSpeech
 } from "@/lib/debate-formats";
 import { cn, titleCase } from "@/lib/utils";
+import { calculateDebateRating } from "@/lib/xp";
 
 type ArenaDebate = {
   id: string;
@@ -52,6 +54,7 @@ type ArenaDebate = {
   prepTimeSeconds: number;
   graceTimeSeconds: number;
   formatConfig: unknown;
+  aiPersona: string | null;
   overallScore: number | null;
 };
 
@@ -71,6 +74,9 @@ type ParticipantProfile = {
   avatarUrl: string | null;
   level: Level;
   organization: Organization | null;
+  xp?: number | null;
+  wins?: number | null;
+  judgedDebates?: number | null;
 };
 
 export type JudgeReport = {
@@ -112,6 +118,16 @@ export type JudgeReport = {
   weaknesses: string[];
   improvementAdvice?: string[];
   recommendedLessons?: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }>;
+  ratingChange?: {
+    overall: number;
+    argument: number;
+    refutation: number;
+    weighing: number;
+    evidence: number;
+    organization: number;
+    deliveryStyle: number;
+    recommendedBot?: string;
+  };
   readinessForNextLevel: {
     ready: boolean;
     rationale: string;
@@ -243,10 +259,19 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
   const progress = Math.round((Math.min(completedSpeechCount, config.speeches.length) / Math.max(config.speeches.length, 1)) * 100);
+  const persona = getAiPersona(debate.aiPersona);
+  const studentRating = calculateDebateRating({
+    xp: studentProfile?.xp,
+    wins: studentProfile?.wins,
+    judgedDebates: studentProfile?.judgedDebates
+  });
   const studentName = profileLabel(studentProfile, "Student");
   const studentHandle = profileHandle(studentProfile, "student");
-  const aiName = opponentProfile ? profileLabel(opponentProfile, "Opponent") : "LogicBot";
-  const aiHandle = opponentProfile ? profileHandle(opponentProfile, "opponent") : "logicbot_ai";
+  const aiName = opponentProfile ? profileLabel(opponentProfile, "Opponent") : persona.name;
+  const aiHandle = opponentProfile ? profileHandle(opponentProfile, "opponent") : persona.id;
+  const aiRating = opponentProfile
+    ? calculateDebateRating({ xp: opponentProfile.xp, wins: opponentProfile.wins, judgedDebates: opponentProfile.judgedDebates })
+    : persona.rating;
 
   useEffect(() => {
     setTurnRemaining(currentSpeech?.timeSeconds ?? debate.turnTimeSeconds);
@@ -387,13 +412,23 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                 <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="lg" className="mx-auto border-white/20" />
                 <p className="mt-2 truncate text-sm font-bold">{studentName}</p>
                 <p className="truncate text-xs text-neutral-400">@{studentHandle}</p>
+                <p className="mt-1 text-xs font-semibold text-emerald-200">{studentRating} · {ratingLabel(studentRating)}</p>
               </div>
               <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-bold text-neutral-300">VS</span>
               <div className="min-w-0 text-center">
                 <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="lg" className="mx-auto border-white/20" />
                 <p className="mt-2 truncate text-sm font-bold">{aiName}</p>
                 <p className="truncate text-xs text-neutral-400">@{aiHandle}</p>
+                <p className="mt-1 text-xs font-semibold text-rose-200">{aiRating} · {ratingLabel(aiRating)}</p>
               </div>
+            </div>
+            <div className="mt-4 grid gap-2 text-xs font-semibold sm:grid-cols-2">
+              <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
+                {aiNotice ? "Local AI opponent" : "AI opponent ready"}
+              </span>
+              <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
+                Strength: {opponentProfile ? "student" : persona.difficulty}
+              </span>
             </div>
           </div>
 
@@ -660,6 +695,12 @@ function JudgeDecisionModal({
               <p className="text-sm font-semibold text-neutral-400">Overall score</p>
               <p className="mt-3 text-6xl font-bold">{overallScore ?? report.overallScore}</p>
               <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned</p>
+              {report.ratingChange ? (
+                <p className="mt-2 text-sm font-semibold text-emerald-200">
+                  {report.ratingChange.overall >= 0 ? "+" : ""}
+                  {report.ratingChange.overall} Debate Rating
+                </p>
+              ) : null}
             </div>
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Short reason</p>
@@ -690,6 +731,35 @@ function JudgeDecisionModal({
               </div>
             ))}
           </div>
+
+          {report.ratingChange ? (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-semibold">Rating movement</p>
+                {report.ratingChange.recommendedBot ? (
+                  <Badge className="border border-blue-400/30 bg-blue-500/10 text-blue-100">Next bot: {report.ratingChange.recommendedBot}</Badge>
+                ) : null}
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ["Argument", report.ratingChange.argument],
+                  ["Refutation", report.ratingChange.refutation],
+                  ["Weighing", report.ratingChange.weighing],
+                  ["Evidence", report.ratingChange.evidence],
+                  ["Organization", report.ratingChange.organization],
+                  ["Delivery", report.ratingChange.deliveryStyle]
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm">
+                    <span className="font-semibold">{label}</span>
+                    <span className={cn("float-right font-bold", Number(value) >= 0 ? "text-emerald-200" : "text-rose-200")}>
+                      {Number(value) >= 0 ? "+" : ""}
+                      {String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {report.speakerScores ? (
             <div className="grid gap-3 md:grid-cols-2">
@@ -740,6 +810,9 @@ function JudgeDecisionModal({
           <div className="flex flex-wrap gap-3">
             <Link href="/debate" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
               New debate
+            </Link>
+            <Link href={(report.recommendedLessons?.[0] ? `/skills/${report.recommendedLessons[0].lessonSlug}/practice` : "/skills") as Route} className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
+              Practice weak skill
             </Link>
             <Link href="/dashboard" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
               Back to dashboard

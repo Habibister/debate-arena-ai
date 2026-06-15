@@ -86,6 +86,35 @@ const decaClusterSpecs: Record<string, {
   }
 };
 
+function decaSpecFor(cluster: string) {
+  const exact = decaClusterSpecs[cluster];
+
+  if (exact) {
+    return exact;
+  }
+
+  const normalized = cluster.toLowerCase();
+  const theme = normalized.replace(/\s+basics$/, "");
+
+  return {
+    scenarios: [
+      `a student business team facing a ${theme} decision`,
+      `a small company reviewing its ${theme} strategy`,
+      `a roleplay judge asking about ${theme} tradeoffs`,
+      `a local organization trying to improve ${theme} outcomes`
+    ],
+    roles: ["business consultant", "student advisor", "operations analyst", "management trainee"],
+    metrics: ["customer value", "cost control", "decision quality", "measurable improvement"],
+    skills: [cluster, "Business reasoning", "Performance indicators", "Professional communication"],
+    indicators: [
+      `explain ${theme} decision factors`,
+      `recommend a practical ${theme} action`,
+      `connect ${theme} choices to measurable results`,
+      `evaluate risks in a ${theme} recommendation`
+    ]
+  };
+}
+
 const hosaCategorySpecs: Record<string, {
   scenarios: string[];
   concepts: string[];
@@ -135,6 +164,33 @@ const hosaCategorySpecs: Record<string, {
     safeActions: ["focus on prevention and credible sources", "identify the at-risk population", "use clear risk communication", "connect people to appropriate resources"]
   }
 };
+
+function hosaSpecFor(category: string) {
+  const exact = hosaCategorySpecs[category];
+
+  if (exact) {
+    return exact;
+  }
+
+  const theme = category.toLowerCase();
+
+  return {
+    scenarios: [
+      `a health science classroom prompt about ${theme}`,
+      `a patient education moment involving ${theme}`,
+      `a clinical safety scenario connected to ${theme}`,
+      `a HOSA-style judge question about ${theme}`
+    ],
+    concepts: [`${theme} fundamentals`, `${theme} safety`, `${theme} communication`, `${theme} accuracy`],
+    skills: [category, "Health science knowledge", "Professional communication", "Safety reasoning"],
+    safeActions: [
+      `apply the safest ${theme} principle`,
+      `explain the ${theme} idea in plain language`,
+      `connect ${theme} to patient safety`,
+      `ask for clarification and stay within scope`
+    ]
+  };
+}
 
 export const DECA_ROLEPLAY_SCENARIOS = [
   {
@@ -244,7 +300,7 @@ function hosaDistractors() {
 }
 
 function buildDecaQuestion(cluster: string, difficulty: Level, index: number): BankPracticeQuestion {
-  const spec = decaClusterSpecs[cluster] ?? decaClusterSpecs.Marketing;
+  const spec = decaSpecFor(cluster);
   const scenario = spec.scenarios[index % spec.scenarios.length];
   const role = spec.roles[index % spec.roles.length];
   const metric = spec.metrics[index % spec.metrics.length];
@@ -277,7 +333,7 @@ function buildDecaQuestion(cluster: string, difficulty: Level, index: number): B
 }
 
 function buildHosaQuestion(category: string, difficulty: Level, index: number): BankPracticeQuestion {
-  const spec = hosaCategorySpecs[category] ?? hosaCategorySpecs["Health Science Concepts"];
+  const spec = hosaSpecFor(category);
   const scenario = spec.scenarios[index % spec.scenarios.length];
   const concept = spec.concepts[index % spec.concepts.length];
   const skill = spec.skills[index % spec.skills.length];

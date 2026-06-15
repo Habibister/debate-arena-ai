@@ -8,6 +8,7 @@ import { Bot, Check, CircleAlert, Clock3, Loader2, MessageSquareText, RefreshCw,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { AI_DEBATE_PERSONAS } from "@/lib/ai-personas";
 import {
   DEBATE_CATEGORIES,
   FORMAT_CARDS,
@@ -61,6 +62,8 @@ export function DebateRoom() {
   const [aiGeneratedTopic, setAiGeneratedTopic] = useState(true);
   const [topicText, setTopicText] = useState("This house believes that schools should teach practical AI literacy.");
   const [topicPackage, setTopicPackage] = useState<TopicPackage | null>(null);
+  const [generatedTopics, setGeneratedTopics] = useState<string[]>([]);
+  const [aiPersona, setAiPersona] = useState("socratic-questioner");
   const [aiNotice, setAiNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
@@ -99,11 +102,13 @@ export function DebateRoom() {
           eventType: config.eventType,
           practiceMode: "DEBATE",
           level,
-          focusArea: category
+          focusArea: category,
+          previousTopics: generatedTopics
         })
       });
       setTopicPackage(generated);
       setTopicText(generated.topic);
+      setGeneratedTopics((current) => [...current, generated.topic].slice(-25));
       setAiGeneratedTopic(true);
       setAiNotice(generated.fallbackNotice ?? null);
     } catch (requestError) {
@@ -137,7 +142,8 @@ export function DebateRoom() {
           turnTimeSeconds: format === "QUICK_1V1" ? turnTimeSeconds : config.turnTimeSeconds,
           prepTimeSeconds: config.prepTimeSeconds,
           side: sideChoice,
-          mode: "AI"
+          mode: "AI",
+          aiPersona
         })
       });
 
@@ -350,6 +356,37 @@ export function DebateRoom() {
               ))}
             </div>
           </section>
+
+          <section className="space-y-3 border-t border-white/10 pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">AI opponent</p>
+                <p className="mt-1 text-sm text-neutral-400">Pick a sparring style and rating target for this room.</p>
+              </div>
+              <Badge className="border border-blue-400/30 bg-blue-500/10 text-blue-100">Bot ladder</Badge>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {AI_DEBATE_PERSONAS.map((persona) => (
+                <button
+                  key={persona.id}
+                  type="button"
+                  onClick={() => setAiPersona(persona.id)}
+                  className={cn(
+                    "focus-ring min-h-28 rounded-lg border p-4 text-left transition",
+                    aiPersona === persona.id ? "border-blue-400 bg-blue-500/10" : "border-white/10 bg-white/[0.03] hover:border-white/25"
+                  )}
+                  disabled={isStarting}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold">{persona.name}</p>
+                    <span className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-xs font-bold">{persona.rating}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-neutral-400">{persona.style}</p>
+                  <p className="mt-2 text-sm leading-5 text-neutral-300">{persona.bestFor}</p>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
 
         <aside className="space-y-4">
@@ -383,7 +420,8 @@ export function DebateRoom() {
                 </div>
                 <div className="rounded-md border border-rose-400/20 bg-rose-500/10 p-3">
                   <p className="text-xs font-semibold uppercase text-rose-200">AI opponent</p>
-                  <p className="mt-1 font-semibold">{sideChoice === "RANDOM" ? "Opposite side" : "Automatically assigned"}</p>
+                  <p className="mt-1 font-semibold">{AI_DEBATE_PERSONAS.find((persona) => persona.id === aiPersona)?.name ?? "Socratic Questioner"}</p>
+                  <p className="mt-1 text-xs text-rose-100/80">{sideChoice === "RANDOM" ? "Opposite side" : "Automatically assigned"}</p>
                 </div>
               </div>
               <div className="rounded-md border border-white/10 bg-neutral-950 p-3">

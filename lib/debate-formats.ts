@@ -1,4 +1,5 @@
 import type { DebateFormat, DebateSide, MessageRole } from "@prisma/client";
+import { DEBATE_CATEGORY_OPTIONS } from "@/lib/debate-topics";
 
 export type DebateSideChoice = DebateSide | "RANDOM";
 
@@ -32,15 +33,7 @@ export type DebateFormatConfig = {
   speeches: DebateSpeech[];
 };
 
-export const DEBATE_CATEGORIES = [
-  "Global",
-  "Education",
-  "Technology",
-  "Civic life",
-  "Business",
-  "Health",
-  "Ethics"
-] as const;
+export const DEBATE_CATEGORIES = DEBATE_CATEGORY_OPTIONS;
 
 export const QUICK_TURN_OPTIONS = [60, 90, 120, 240] as const;
 

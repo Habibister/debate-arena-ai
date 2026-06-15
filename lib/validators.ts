@@ -27,7 +27,8 @@ export const topicRequestSchema = z.object({
   level: levelSchema,
   eventType: z.string().min(2).max(120).optional(),
   practiceMode: practiceModeSchema.optional(),
-  focusArea: z.string().max(120).optional()
+  focusArea: z.string().max(120).optional(),
+  previousTopics: z.array(z.string().min(1).max(300)).max(25).optional()
 });
 
 export const opponentRequestSchema = z.object({
@@ -105,7 +106,8 @@ export const debateCreateSchema = z.object({
   prepTimeSeconds: z.number().int().min(0).max(900).optional(),
   side: debateSideChoiceSchema.default("GOVERNMENT"),
   mode: z.enum(["AI", "REAL_STUDENT"]),
-  opponentUserId: z.string().optional()
+  opponentUserId: z.string().optional(),
+  aiPersona: z.string().min(2).max(80).optional()
 });
 
 export const practiceTestCreateSchema = z.object({

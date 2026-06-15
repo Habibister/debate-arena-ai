@@ -4,7 +4,7 @@ import { BookOpenCheck, Layers3, PlayCircle } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { deckSummaries } from "@/lib/study-content";
+import { deckSummaries, FLASHCARDS } from "@/lib/study-content";
 
 export default function StudyPage() {
   const decks = deckSummaries();
@@ -28,7 +28,7 @@ export default function StudyPage() {
           <div className="rounded-md border bg-background p-3">
             <div className="flex items-center gap-2 font-semibold">
               <BookOpenCheck className="h-4 w-4 text-secondary" aria-hidden />
-              200+ cards
+              {FLASHCARDS.length}+ cards
             </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">Original definitions, examples, and quick checks.</p>
           </div>

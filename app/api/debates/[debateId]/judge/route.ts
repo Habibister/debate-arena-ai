@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { judgeDebate, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/ai";
 import { apiError, HttpError, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
+import { nearestAiPersona } from "@/lib/ai-personas";
 import { getNextSpeech, isSpeechComplete, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
-import { calculateRank } from "@/lib/xp";
+import { calculateDebateRating, calculateRank } from "@/lib/xp";
 import { XP_REWARDS } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -43,6 +44,16 @@ type JudgeResult = {
     rationale: string;
     nextMilestone: string;
   };
+  ratingChange?: {
+    overall: number;
+    argument: number;
+    refutation: number;
+    weighing: number;
+    evidence: number;
+    organization: number;
+    deliveryStyle: number;
+    recommendedBot: string;
+  };
 };
 
 function categoryScore(result: JudgeResult, keys: string[]) {
@@ -57,7 +68,9 @@ function categoryScore(result: JudgeResult, keys: string[]) {
 function debateSkillRecommendations(result: JudgeResult) {
   const weakText = [
     ...result.weaknesses,
-    ...result.categoryScores.filter((category) => category.score <= 3 || category.score <= 65).map((category) => category.label ?? category.key)
+    ...result.categoryScores
+      .filter((category) => (category.score <= 5 ? category.score <= 3 : category.score <= 65))
+      .map((category) => category.label ?? category.key)
   ]
     .join(" ")
     .toLowerCase();
@@ -103,6 +116,36 @@ function didStudentWin(result: JudgeResult, studentSide: "GOVERNMENT" | "OPPOSIT
   }
 
   return studentSide === "OPPOSITION" || studentSide === "AGAINST";
+}
+
+function skillDelta(score: number | undefined, fallbackScore: number) {
+  const normalized = normalizeScore(score ?? fallbackScore);
+
+  if (normalized >= 90) {
+    return 14;
+  }
+
+  if (normalized >= 80) {
+    return 9;
+  }
+
+  if (normalized >= 70) {
+    return 4;
+  }
+
+  if (normalized >= 60) {
+    return -3;
+  }
+
+  return -8;
+}
+
+function overallRatingDelta(input: { wonDebate: boolean; overallScore: number; completedTurns: number; requiredTurns: number }) {
+  const resultSwing = input.wonDebate ? 14 : -10;
+  const qualitySwing = Math.round((input.overallScore - 75) / 3);
+  const completionSwing = input.completedTurns >= input.requiredTurns ? 4 : -8;
+
+  return Math.max(-24, Math.min(36, resultSwing + qualitySwing + completionSwing));
 }
 
 async function runOrganizationJudge(debate: {
@@ -210,6 +253,14 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
     const overallScore = normalizeScore(result.overallScore);
     const wonDebate = didStudentWin(result, debate.studentSide, overallScore);
     const xpEarned = XP_REWARDS.debateCompleted + (wonDebate ? XP_REWARDS.debateWon : 0);
+    const completedSpeechCount = debate.messages.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length;
+    const ratingDelta = overallRatingDelta({
+      wonDebate,
+      overallScore,
+      completedTurns: completedSpeechCount,
+      requiredTurns: formatConfig.speeches.length
+    });
+    let resultWithRating: JudgeResult = result;
 
     const [updatedDebate, updatedUser] = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUniqueOrThrow({
@@ -218,6 +269,24 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
       });
 
       const nextXp = user.xp + xpEarned;
+      const projectedRating = calculateDebateRating({
+        xp: nextXp,
+        wins: wonDebate ? user.wins + 1 : user.wins
+      });
+
+      resultWithRating = {
+        ...result,
+        ratingChange: {
+          overall: ratingDelta,
+          argument: skillDelta(scores.logic, overallScore),
+          refutation: skillDelta(scores.rebuttal, overallScore),
+          weighing: skillDelta(categoryScore(result, ["clash", "weighing", "solutionQuality"]), overallScore),
+          evidence: skillDelta(scores.evidence, overallScore),
+          organization: skillDelta(categoryScore(result, ["organization", "signposting", "taskCompletion"]), overallScore),
+          deliveryStyle: skillDelta(categoryScore(result, ["delivery", "style", "professionalCommunication"]), scores.communication ?? overallScore),
+          recommendedBot: nearestAiPersona(projectedRating).name
+        }
+      };
 
       const savedDebate = await tx.debate.update({
         where: { id: debate.id },
@@ -238,7 +307,7 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
             ...(result.recommendedLessons ?? []).map((lesson) => lesson.reason)
           ],
           readiness: result.readinessForNextLevel,
-          judgeReport: result
+          judgeReport: resultWithRating
         }
       });
 
@@ -294,7 +363,7 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
         rank: updatedUser.rank
       },
       xpEarned,
-      judge: result
+      judge: resultWithRating
     });
   } catch (error) {
     return apiError(error);

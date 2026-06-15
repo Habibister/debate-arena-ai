@@ -94,7 +94,7 @@ export async function POST(request: Request) {
         createdById: session.user.id,
         studentId: session.user.id,
         opponentUserId: input.opponentUserId,
-        aiPersona: input.mode === "AI" ? `${input.level} ${input.organization} sparring opponent` : null
+        aiPersona: input.mode === "AI" ? input.aiPersona ?? "socratic-questioner" : null
       }
     });
 

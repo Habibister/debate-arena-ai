@@ -62,6 +62,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       topic: debate.topic,
       side: opponentSide,
       round: input.round,
+      personaId: debate.aiPersona,
       transcript: debate.messages.map((message) => ({
         role: message.role,
         round: message.round,

@@ -26,6 +26,8 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
           avatarUrl: true,
           image: true,
           level: true,
+          xp: true,
+          wins: true,
           preferredOrganization: true,
           organization: true
         }
@@ -39,6 +41,8 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
           avatarUrl: true,
           image: true,
           level: true,
+          xp: true,
+          wins: true,
           preferredOrganization: true,
           organization: true
         }
@@ -72,6 +76,7 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
         prepTimeSeconds: debate.prepTimeSeconds,
         graceTimeSeconds: debate.graceTimeSeconds,
         formatConfig: debate.formatConfig,
+        aiPersona: debate.aiPersona,
         overallScore: debate.overallScore
       }}
       studentProfile={
@@ -82,7 +87,10 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
               displayName: debate.student.displayName ?? debate.student.name,
               avatarUrl: debate.student.avatarUrl ?? debate.student.image,
               level: debate.student.level,
-              organization: debate.student.preferredOrganization ?? debate.student.organization
+              organization: debate.student.preferredOrganization ?? debate.student.organization,
+              xp: debate.student.xp,
+              wins: debate.student.wins,
+              judgedDebates: 0
             }
           : null
       }
@@ -94,7 +102,10 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
               displayName: debate.opponentUser.displayName ?? debate.opponentUser.name,
               avatarUrl: debate.opponentUser.avatarUrl ?? debate.opponentUser.image,
               level: debate.opponentUser.level,
-              organization: debate.opponentUser.preferredOrganization ?? debate.opponentUser.organization
+              organization: debate.opponentUser.preferredOrganization ?? debate.opponentUser.organization,
+              xp: debate.opponentUser.xp,
+              wins: debate.opponentUser.wins,
+              judgedDebates: 0
             }
           : null
       }

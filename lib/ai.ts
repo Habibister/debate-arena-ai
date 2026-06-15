@@ -6,6 +6,8 @@ import {
   isLikelyOpenAIUnavailableError,
   openAIModel
 } from "@/lib/openai";
+import { getAiPersona } from "@/lib/ai-personas";
+import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 
@@ -247,7 +249,15 @@ function fallbackTopic(input: {
   eventType?: string;
   practiceMode?: PracticeMode;
   focusArea?: string;
+  previousTopics?: string[];
 }): TopicPackage {
+  if (input.organization === "DEBATE") {
+    return {
+      ...pickFallbackDebateTopic(input),
+      fallbackNotice: DEV_AI_FALLBACK_NOTICE
+    };
+  }
+
   const eventType = input.eventType ?? "GENERAL";
   const focus = input.focusArea ?? "strategic communication";
   const normalizedFocus = focus.toLowerCase();
@@ -353,19 +363,115 @@ function fallbackOpponent(input: {
   side: "AFFIRMATIVE" | "NEGATIVE";
   topic: string;
   round: number;
+  level: Level;
+  personaId?: string;
+  transcript: DebateTranscriptMessage[];
 }): OpponentResponse {
   const isAffirmative = input.side === "AFFIRMATIVE";
+  const persona = getAiPersona(input.personaId);
+  const studentRole = isAffirmative ? "NEGATIVE" : "AFFIRMATIVE";
+  const latestStudentSpeech = [...input.transcript].reverse().find((message) => message.role === studentRole)?.content ?? "";
+  const firstSentence = latestStudentSpeech.split(/[.!?]/).find((sentence) => sentence.trim().length > 20)?.trim();
+  const studentClaim = firstSentence ? `${firstSentence.slice(0, 180)}${firstSentence.length > 180 ? "..." : ""}` : "the other side's main claim";
+  const strategyPool = [
+    {
+      name: "feasibility attack",
+      direct: `Their strongest claim assumes the plan can be implemented smoothly, but the warrant is missing: who pays, who trains staff, and how do we measure success?`,
+      independent: "A policy that sounds good but lacks a working mechanism can crowd out simpler fixes that reach students faster.",
+      weighing: "Prefer the side with the more realistic mechanism because probability comes before magnitude."
+    },
+    {
+      name: "rights and fairness",
+      direct: `Their claim about benefits does not answer who bears the burden or whether the policy treats students fairly.`,
+      independent: "A fair policy must protect the students most likely to be overregulated, priced out, or misclassified.",
+      weighing: "Fairness should outweigh convenience because unfair rules create durable harms."
+    },
+    {
+      name: "cost-benefit weighing",
+      direct: `They identify a benefit, but they have not shown that the benefit is larger than the tradeoffs.`,
+      independent: "The opportunity cost matters: time, money, attention, and trust spent here cannot be spent on targeted support.",
+      weighing: "The judge should prefer the side that proves net benefit, not just possible benefit."
+    },
+    {
+      name: "unintended consequences",
+      direct: `The other side's solution may create the exact problem it tries to solve by changing incentives in the wrong direction.`,
+      independent: "Broad mandates often push people toward compliance theater instead of real learning or safety.",
+      weighing: "Unintended consequences are highly probable because institutions respond to metrics and rules."
+    },
+    {
+      name: "alternative solution",
+      direct: `Even if their problem is real, their remedy is not the best answer to it.`,
+      independent: "A narrower opt-in pilot can test benefits, protect resources, and avoid forcing a one-size-fits-all policy.",
+      weighing: "A smaller solution wins if it solves enough of the harm with less risk."
+    },
+    {
+      name: "impact turn",
+      direct: `Their impact can flip: the proposal may reduce independence, trust, or flexibility instead of improving outcomes.`,
+      independent: "When people feel managed rather than supported, they often disengage from the very system meant to help them.",
+      weighing: "A turned impact matters because it converts their offense into a reason to vote against the plan."
+    },
+    {
+      name: "no-link response",
+      direct: `The other side has not connected the policy to the claimed outcome with a clear causal link.`,
+      independent: "Good intentions do not prove solvency; the judge needs a mechanism between action and impact.",
+      weighing: "No-link responses come first because an impact without causation has little ballot weight."
+    },
+    {
+      name: "values principle",
+      direct: `Their argument treats efficiency as the main value, but the round also asks what students and communities should control for themselves.`,
+      independent: "A strong policy must respect agency, transparency, and accountability, not just produce a cleaner metric.",
+      weighing: "Principles matter when the policy sets a precedent for future decisions."
+    },
+    {
+      name: "evidence challenge",
+      direct: `The claim needs stronger support. A plausible story is not the same as evidence that the policy works across different schools or communities.`,
+      independent: "Without examples, metrics, or comparison, the judge cannot know whether the benefit is typical or exceptional.",
+      weighing: "Evidence quality should decide close rounds because it separates asserted impacts from proven impacts."
+    },
+    {
+      name: "strategic weighing",
+      direct: `Even granting part of their case, they have not explained why their impact is bigger, sooner, or more likely than ours.`,
+      independent: "This round should be judged on probability and reversibility: avoid the side that creates hard-to-fix harms.",
+      weighing: "Our impact controls because it is more probable and less reversible."
+    }
+  ];
+  const strategy = strategyPool[(input.round + input.topic.length + persona.id.length) % strategyPool.length];
+  const sideLabel = isAffirmative ? "Affirmative" : "Negative";
+  const levelPressure: Record<Level, string> = {
+    BEGINNER: "I will keep the structure simple: one answer, one argument, and one comparison.",
+    INTERMEDIATE: "The key is direct clash: I answer the warrant, then compare impacts.",
+    ELITE: "I am collapsing to a ballot path: link defense, an independent turn, and explicit weighing."
+  };
+  const personaLine =
+    persona.id === "socratic-questioner"
+      ? "Before accepting their case, ask: what assumption makes their impact happen, and what happens if that assumption fails?"
+      : persona.id === "evidence-specialist"
+        ? "The evidence burden matters here: examples must prove the mechanism, not just decorate the claim."
+        : persona.id === "policy-analyst"
+          ? "Implementation is the center of this speech: resources, incentives, and accountability decide whether the plan survives contact with reality."
+          : persona.id === "rhetorician"
+            ? "Frame the round around what the judge can trust: a persuasive story still needs a working link."
+            : persona.id === "ethics-philosopher"
+              ? "The ethical question is whether the policy respects fairness while solving the harm."
+              : persona.id === "deca-judge"
+                ? "Treat this like a performance indicator: name the stakeholder, the metric, and the risk."
+                : persona.id === "hosa-judge"
+                  ? "Safety, communication, and professional boundaries should guide the decision."
+                  : "I will pressure the part of the case that matters most to the ballot.";
+
   return {
-    response: isAffirmative
-      ? `I affirm the topic because the proposal gives students a concrete skill they can apply beyond the classroom. In round ${input.round}, my main pressure is that implementation can start small through existing advisory periods, so the negative must prove the tradeoff is larger than the preparedness benefit.`
-      : `I negate the topic because the affirmative still needs to prove this plan is the best use of limited school time. In round ${input.round}, my main pressure is feasibility: schools already struggle to staff core requirements, and a narrower opt-in module could solve without a mandate.`,
-    strategy: isAffirmative
-      ? "Extend the clearest benefit, answer feasibility, and weigh long-term readiness."
-      : "Pressure the mandate, offer a narrower alternative, and weigh opportunity cost.",
+    response: `${sideLabel} speech ${input.round}. ${levelPressure[input.level]}
+
+First, direct clash: they say "${studentClaim}", but ${strategy.direct}
+
+Second, independent offense: ${strategy.independent} On this motion, ${personaLine}
+
+Finally, weighing: ${strategy.weighing} Even if the other side wins a small benefit, the judge should prefer the side with clearer causation, lower risk, and a more defensible impact comparison.`,
+    strategy: `${persona.name}: ${strategy.name}`,
     pressurePoints: [
       `Clarify the mechanism behind: ${input.topic}`,
-      "Ask for one measurable impact.",
-      "Force comparison against a smaller alternative."
+      "Answer the opponent's strongest claim before adding new offense.",
+      "Force comparison on magnitude, probability, timeframe, or reversibility."
     ],
     fallbackNotice: DEV_AI_FALLBACK_NOTICE
   };
@@ -577,6 +683,7 @@ export async function generateTopic(input: {
   eventType?: string;
   practiceMode?: PracticeMode;
   focusArea?: string;
+  previousTopics?: string[];
 }) {
   return jsonCompletion<TopicPackage>(
     "You generate original, age-appropriate competitive practice prompts. Avoid copyrighted prompts, past exams, judge packet wording, and real private student data. Return JSON only.",
@@ -584,6 +691,7 @@ export async function generateTopic(input: {
 Event type: ${input.eventType ?? "default"}
 Practice mode: ${input.practiceMode ?? "DEBATE"}
 Optional focus area: ${input.focusArea ?? "none"}.
+Avoid repeating these previous topics from the current session: ${JSON.stringify(input.previousTopics ?? [])}.
 Return JSON with topic, background, affirmativePosition, negativePosition, and suggestedEvidenceAngles.`,
     () => fallbackTopic(input)
   );
@@ -598,9 +706,12 @@ export async function generateOpponentResponse(input: {
   side: "AFFIRMATIVE" | "NEGATIVE";
   round: number;
   transcript: DebateTranscriptMessage[];
+  personaId?: string | null;
 }) {
+  const persona = getAiPersona(input.personaId);
+
   return jsonCompletion<OpponentResponse>(
-    "You are a realistic debate sparring partner. Match the student's level, keep arguments educational, and never invent citations as real sources.",
+    `You are a realistic debate sparring partner. Match the student's level, keep arguments educational, and never invent citations as real sources. Persona: ${persona.name}. ${persona.promptInstructions}`,
     `Topic: ${input.topic}
 Organization: ${input.organization}
 Event type: ${input.eventType ?? "default"}
@@ -608,10 +719,11 @@ Practice mode: ${input.practiceMode ?? "DEBATE"}
 Level: ${input.level}
 Opponent side: ${input.side}
 Round: ${input.round}
+Persona JSON: ${JSON.stringify(persona)}
 Transcript JSON: ${JSON.stringify(input.transcript)}
 
 Return JSON with response, strategy, and pressurePoints.`,
-    () => fallbackOpponent(input)
+    () => fallbackOpponent({ ...input, personaId: input.personaId ?? undefined })
   );
 }
 

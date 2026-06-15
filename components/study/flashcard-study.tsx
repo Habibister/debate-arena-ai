@@ -165,14 +165,32 @@ export function FlashcardStudy({ cards, deckName }: FlashcardStudyProps) {
               <p className="text-sm font-semibold text-muted-foreground">Definition</p>
               <p className="mt-2 text-lg leading-8">{currentCard.definition}</p>
             </div>
+            <div className="rounded-lg border bg-primary/5 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold">Beginner-friendly explanation</p>
+                <Badge variant="secondary">{currentCard.difficulty.toLowerCase()}</Badge>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentCard.beginnerExplanation}</p>
+            </div>
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold">Example</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentCard.example}</p>
             </div>
             <div className="rounded-lg border bg-background p-4">
+              <p className="text-sm font-semibold">Common mistake</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentCard.commonMistake}</p>
+            </div>
+            <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold">Quick check</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentCard.quickCheck}</p>
               <p className="mt-3 text-sm leading-6">{currentCard.quickCheckAnswer}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {currentCard.tags.slice(0, 5).map((tag) => (
+                <Badge key={tag} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
             </div>
           </div>
         )}

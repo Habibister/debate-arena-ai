@@ -19,6 +19,7 @@ type CategoryScore = {
   key: string;
   label?: string;
   score: number;
+  reason?: string;
 };
 
 type JudgeResult = {
@@ -53,11 +54,24 @@ type JudgeResult = {
     organization: number;
     deliveryStyle: number;
     recommendedBot: string;
+    reasons?: {
+      overall: string;
+      argument: string;
+      refutation: string;
+      weighing: string;
+      evidence: string;
+      organization: string;
+      deliveryStyle: string;
+    };
   };
 };
 
+function findCategory(result: JudgeResult, keys: string[]) {
+  return result.categoryScores.find((category) => keys.includes(category.key));
+}
+
 function categoryScore(result: JudgeResult, keys: string[]) {
-  const found = result.categoryScores.find((category) => keys.includes(category.key));
+  const found = findCategory(result, keys);
   if (!found) {
     return undefined;
   }
@@ -140,6 +154,12 @@ function skillDelta(score: number | undefined, fallbackScore: number) {
   return -8;
 }
 
+function ratingReason(label: string, delta: number, category: CategoryScore | undefined, fallback: string) {
+  const movement = delta > 0 ? "increased" : delta < 0 ? "decreased" : "stayed flat";
+  const evidence = category?.reason ?? fallback;
+  return `${label} ${movement} because ${evidence}`;
+}
+
 function overallRatingDelta(input: { wonDebate: boolean; overallScore: number; completedTurns: number; requiredTurns: number }) {
   const resultSwing = input.wonDebate ? 14 : -10;
   const qualitySwing = Math.round((input.overallScore - 75) / 3);
@@ -154,6 +174,10 @@ async function runOrganizationJudge(debate: {
   level: "BEGINNER" | "INTERMEDIATE" | "ELITE";
   topic: string;
   messages: Array<{ role: "AFFIRMATIVE" | "NEGATIVE" | "MODERATOR" | "JUDGE" | "SYSTEM"; round: number; content: string }>;
+  studentSide: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
+  opponentSide: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
+  format: string;
+  aiPersona: string | null;
 }) {
   const transcript = debate.messages.map((message) => ({
     role: message.role,
@@ -184,7 +208,11 @@ async function runOrganizationJudge(debate: {
     level: debate.level,
     eventType: debate.eventType,
     topic: debate.topic,
-    transcript
+    transcript,
+    studentSide: debate.studentSide,
+    opponentSide: debate.opponentSide,
+    format: debate.format,
+    aiPersona: debate.aiPersona
   });
 }
 
@@ -254,6 +282,12 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
     const wonDebate = didStudentWin(result, debate.studentSide, overallScore);
     const xpEarned = XP_REWARDS.debateCompleted + (wonDebate ? XP_REWARDS.debateWon : 0);
     const completedSpeechCount = debate.messages.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length;
+    const argumentCategory = findCategory(result, ["argument"]);
+    const refutationCategory = findCategory(result, ["refutation"]);
+    const weighingCategory = findCategory(result, ["clash", "weighing", "solutionQuality"]);
+    const evidenceCategory = findCategory(result, ["contentEvidence", "performanceIndicators", "medicalAccuracy"]);
+    const organizationCategory = findCategory(result, ["organization", "signposting", "taskCompletion"]);
+    const deliveryCategory = findCategory(result, ["delivery", "style", "professionalCommunication"]);
     const ratingDelta = overallRatingDelta({
       wonDebate,
       overallScore,
@@ -273,18 +307,33 @@ export async function POST(_request: Request, { params }: { params: { debateId: 
         xp: nextXp,
         wins: wonDebate ? user.wins + 1 : user.wins
       });
+      const argumentDelta = skillDelta(scores.logic, overallScore);
+      const refutationDelta = skillDelta(scores.rebuttal, overallScore);
+      const weighingDelta = skillDelta(categoryScore(result, ["clash", "weighing", "solutionQuality"]), overallScore);
+      const evidenceDelta = skillDelta(scores.evidence, overallScore);
+      const organizationDelta = skillDelta(categoryScore(result, ["organization", "signposting", "taskCompletion"]), overallScore);
+      const deliveryDelta = skillDelta(categoryScore(result, ["delivery", "style", "professionalCommunication"]), scores.communication ?? overallScore);
 
       resultWithRating = {
         ...result,
         ratingChange: {
           overall: ratingDelta,
-          argument: skillDelta(scores.logic, overallScore),
-          refutation: skillDelta(scores.rebuttal, overallScore),
-          weighing: skillDelta(categoryScore(result, ["clash", "weighing", "solutionQuality"]), overallScore),
-          evidence: skillDelta(scores.evidence, overallScore),
-          organization: skillDelta(categoryScore(result, ["organization", "signposting", "taskCompletion"]), overallScore),
-          deliveryStyle: skillDelta(categoryScore(result, ["delivery", "style", "professionalCommunication"]), scores.communication ?? overallScore),
-          recommendedBot: nearestAiPersona(projectedRating).name
+          argument: argumentDelta,
+          refutation: refutationDelta,
+          weighing: weighingDelta,
+          evidence: evidenceDelta,
+          organization: organizationDelta,
+          deliveryStyle: deliveryDelta,
+          recommendedBot: nearestAiPersona(projectedRating).name,
+          reasons: {
+            overall: `${ratingDelta >= 0 ? "Overall rating increased" : "Overall rating decreased"} because the student ${wonDebate ? "won" : "lost"} this judged round with a ${overallScore} overall performance score.`,
+            argument: ratingReason("Argument rating", argumentDelta, argumentCategory, "the judge's argument score came from the student's claim clarity."),
+            refutation: ratingReason("Refutation rating", refutationDelta, refutationCategory, "the judge evaluated how specifically the student answered the opponent."),
+            weighing: ratingReason("Weighing rating", weighingDelta, weighingCategory, "the judge evaluated impact comparison and ballot framing."),
+            evidence: ratingReason("Evidence rating", evidenceDelta, evidenceCategory, "the judge evaluated examples, evidence, and support."),
+            organization: ratingReason("Organization rating", organizationDelta, organizationCategory, "the judge evaluated structure and signposting."),
+            deliveryStyle: ratingReason("Delivery/style rating", deliveryDelta, deliveryCategory, "the judge evaluated style, clarity, and communication.")
+          }
         }
       };
 

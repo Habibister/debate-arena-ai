@@ -98,6 +98,7 @@ export type JudgeReport = {
   }>;
   teamWinner?: "GOVERNMENT" | "OPPOSITION";
   losingSide?: "GOVERNMENT" | "OPPOSITION";
+  confidenceLevel?: "low" | "medium" | "high";
   shortReasonForDecision?: string;
   longReasonForDecision?: string;
   reasonForDecision?: string;
@@ -110,6 +111,26 @@ export type JudgeReport = {
       didWell?: string[];
       missed?: string[];
     };
+  };
+  sideAnalysis?: {
+    government?: TranscriptSideAnalysis;
+    opposition?: TranscriptSideAnalysis;
+  };
+  transcriptFeedback?: {
+    studentSide?: "GOVERNMENT" | "OPPOSITION";
+    strongestClaim?: string;
+    weakestClaim?: string;
+    bestRefutation?: string;
+    biggestDroppedArgument?: string;
+    mostMissingPiece?: string;
+    betterSentence?: string;
+    modelRewrite?: string;
+    skillToPractice?: string;
+  };
+  internalScoringSummary?: {
+    governmentScore?: number;
+    oppositionScore?: number;
+    reasonWinnerSelected?: string;
   };
   keyClash?: string;
   strongestArgument?: string;
@@ -127,6 +148,15 @@ export type JudgeReport = {
     organization: number;
     deliveryStyle: number;
     recommendedBot?: string;
+    reasons?: {
+      overall?: string;
+      argument?: string;
+      refutation?: string;
+      weighing?: string;
+      evidence?: string;
+      organization?: string;
+      deliveryStyle?: string;
+    };
   };
   readinessForNextLevel: {
     ready: boolean;
@@ -134,6 +164,20 @@ export type JudgeReport = {
     nextMilestone: string;
   };
   fallbackNotice?: string;
+};
+
+type TranscriptSideAnalysis = {
+  whatTheyClaimed?: string[];
+  bestArgument?: string;
+  weakestArgument?: string;
+  failedToAnswer?: string[];
+  dropped?: string[];
+  neededMoreWarrant?: string;
+  neededMoreImpact?: string;
+  neededMoreWeighing?: string;
+  vagueOrUnsupported?: string;
+  persuasiveReframe?: string;
+  hiddenAssumptionAttack?: string;
 };
 
 type DebateArenaProps = {
@@ -218,6 +262,10 @@ function winnerLabel(report: JudgeReport) {
 function losingLabel(report: JudgeReport) {
   const losingSide = report.losingSide ?? (report.teamWinner === "GOVERNMENT" ? "OPPOSITION" : "GOVERNMENT");
   return losingSide === "GOVERNMENT" ? "Government / Affirmative" : "Opposition / Negative";
+}
+
+function debateSideLabel(side: "GOVERNMENT" | "OPPOSITION") {
+  return side === "GOVERNMENT" ? "Government / Affirmative" : "Opposition / Negative";
 }
 
 function profileLabel(profile: ParticipantProfile | null, fallback: string) {
@@ -675,7 +723,10 @@ function JudgeDecisionModal({
               Judge decision
             </Badge>
             <h2 className="mt-3 text-3xl font-bold">{winnerLabel(report)} wins</h2>
-            <p className="mt-2 text-sm text-neutral-400">Losing side: {losingLabel(report)}</p>
+            <p className="mt-2 text-sm text-neutral-400">
+              Losing side: {losingLabel(report)}
+              {report.confidenceLevel ? ` · ${titleCase(report.confidenceLevel)} confidence` : ""}
+            </p>
           </div>
           <button type="button" onClick={onClose} className="focus-ring rounded-md p-2 text-neutral-400 hover:bg-white/10 hover:text-white" aria-label="Close decision">
             <X className="h-5 w-5" aria-hidden />
@@ -715,10 +766,40 @@ function JudgeDecisionModal({
             <InsightCard title="Weakest argument" value={report.weakestArgument ?? report.weaknesses[0] ?? "The weakest argument needed more support and comparison."} />
           </div>
 
+          {report.transcriptFeedback ? (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-semibold">What you said</p>
+                {report.transcriptFeedback.studentSide ? (
+                  <Badge variant="outline" className="border-white/15 text-neutral-200">
+                    Your side: {debateSideLabel(report.transcriptFeedback.studentSide)}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <InsightCard title="Strongest claim" value={report.transcriptFeedback.strongestClaim ?? "No clear strongest claim was returned."} />
+                <InsightCard title="Weakest claim" value={report.transcriptFeedback.weakestClaim ?? "No clear weakest claim was returned."} />
+                <InsightCard title="Best refutation" value={report.transcriptFeedback.bestRefutation ?? "No direct refutation was identified."} />
+                <InsightCard title="Biggest dropped argument" value={report.transcriptFeedback.biggestDroppedArgument ?? "No dropped argument was identified."} />
+              </div>
+              <div className="mt-3 rounded-md border border-white/10 bg-neutral-950 p-3">
+                <p className="text-sm font-semibold text-rose-200">Most missing piece</p>
+                <p className="mt-2 text-sm leading-6 text-neutral-300">{report.transcriptFeedback.mostMissingPiece ?? "Add more warrant, impact, and weighing."}</p>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-3 md:grid-cols-2">
             <SideFeedback title="Government / Affirmative" didWell={governmentFeedback?.didWell ?? report.strengths.slice(0, 2)} missed={governmentFeedback?.missed ?? report.weaknesses.slice(0, 2)} />
             <SideFeedback title="Opposition / Negative" didWell={oppositionFeedback?.didWell ?? report.strengths.slice(0, 2)} missed={oppositionFeedback?.missed ?? report.weaknesses.slice(0, 2)} />
           </div>
+
+          {report.sideAnalysis ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              <TranscriptAnalysisCard title="Government transcript analysis" analysis={report.sideAnalysis.government} />
+              <TranscriptAnalysisCard title="Opposition transcript analysis" analysis={report.sideAnalysis.opposition} />
+            </div>
+          ) : null}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             {report.categoryScores.slice(0, 10).map((category) => (
@@ -728,6 +809,7 @@ function JudgeDecisionModal({
                   <span className="text-neutral-400">{category.score}</span>
                 </div>
                 <Progress value={category.score <= 5 ? category.score * 20 : category.score} className="bg-white/10" />
+                {category.reason ? <p className="mt-2 text-xs leading-5 text-neutral-400">{category.reason}</p> : null}
               </div>
             ))}
           </div>
@@ -742,21 +824,40 @@ function JudgeDecisionModal({
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {[
-                  ["Argument", report.ratingChange.argument],
-                  ["Refutation", report.ratingChange.refutation],
-                  ["Weighing", report.ratingChange.weighing],
-                  ["Evidence", report.ratingChange.evidence],
-                  ["Organization", report.ratingChange.organization],
-                  ["Delivery", report.ratingChange.deliveryStyle]
-                ].map(([label, value]) => (
+                  ["Argument", report.ratingChange.argument, report.ratingChange.reasons?.argument],
+                  ["Refutation", report.ratingChange.refutation, report.ratingChange.reasons?.refutation],
+                  ["Weighing", report.ratingChange.weighing, report.ratingChange.reasons?.weighing],
+                  ["Evidence", report.ratingChange.evidence, report.ratingChange.reasons?.evidence],
+                  ["Organization", report.ratingChange.organization, report.ratingChange.reasons?.organization],
+                  ["Delivery", report.ratingChange.deliveryStyle, report.ratingChange.reasons?.deliveryStyle]
+                ].map(([label, value, reason]) => (
                   <div key={String(label)} className="rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm">
-                    <span className="font-semibold">{label}</span>
-                    <span className={cn("float-right font-bold", Number(value) >= 0 ? "text-emerald-200" : "text-rose-200")}>
-                      {Number(value) >= 0 ? "+" : ""}
-                      {String(value)}
-                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold">{label}</span>
+                      <span className={cn("font-bold", Number(value) >= 0 ? "text-emerald-200" : "text-rose-200")}>
+                        {Number(value) >= 0 ? "+" : ""}
+                        {String(value)}
+                      </span>
+                    </div>
+                    {reason ? <p className="mt-2 text-xs leading-5 text-neutral-400">{String(reason)}</p> : null}
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : null}
+
+          {report.transcriptFeedback ? (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <p className="font-semibold">How to improve</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="rounded-md border border-white/10 bg-neutral-950 p-3">
+                  <p className="text-sm font-semibold text-emerald-200">Better sentence</p>
+                  <p className="mt-2 text-sm leading-6 text-neutral-300">{report.transcriptFeedback.betterSentence}</p>
+                </div>
+                <div className="rounded-md border border-white/10 bg-neutral-950 p-3">
+                  <p className="text-sm font-semibold text-blue-200">Model rewrite</p>
+                  <p className="mt-2 text-sm leading-6 text-neutral-300">{report.transcriptFeedback.modelRewrite}</p>
+                </div>
               </div>
             </div>
           ) : null}
@@ -849,6 +950,46 @@ function SideFeedback({ title, didWell, missed }: { title: string; didWell: stri
           <li key={item}>{item}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function TranscriptAnalysisCard({ title, analysis }: { title: string; analysis?: TranscriptSideAnalysis }) {
+  const claims = analysis?.whatTheyClaimed?.slice(0, 3) ?? [];
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+      <p className="font-semibold">{title}</p>
+      {claims.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-sm font-semibold text-neutral-400">What they claimed</p>
+          <ul className="mt-2 space-y-2 text-sm leading-6 text-neutral-300">
+            {claims.map((claim) => (
+              <li key={claim}>{claim}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div className="mt-3 grid gap-2 text-sm leading-6 text-neutral-300">
+        <p>
+          <span className="font-semibold text-emerald-200">Best:</span> {analysis?.bestArgument ?? "No best argument returned."}
+        </p>
+        <p>
+          <span className="font-semibold text-rose-200">Weakest:</span> {analysis?.weakestArgument ?? "No weakest argument returned."}
+        </p>
+        <p>
+          <span className="font-semibold text-neutral-200">Warrant:</span> {analysis?.neededMoreWarrant ?? "No warrant note returned."}
+        </p>
+        <p>
+          <span className="font-semibold text-neutral-200">Impact:</span> {analysis?.neededMoreImpact ?? "No impact note returned."}
+        </p>
+        <p>
+          <span className="font-semibold text-neutral-200">Weighing:</span> {analysis?.neededMoreWeighing ?? "No weighing note returned."}
+        </p>
+        <p>
+          <span className="font-semibold text-neutral-200">Unsupported/vague:</span> {analysis?.vagueOrUnsupported ?? "No unsupported claim note returned."}
+        </p>
+      </div>
     </div>
   );
 }

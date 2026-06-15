@@ -7,6 +7,7 @@ import {
   openAIModel
 } from "@/lib/openai";
 import { getAiPersona } from "@/lib/ai-personas";
+import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
@@ -77,6 +78,7 @@ type DebateJudgeResult = {
   }>;
   teamWinner: "GOVERNMENT" | "OPPOSITION";
   losingSide?: "GOVERNMENT" | "OPPOSITION";
+  confidenceLevel?: "low" | "medium" | "high";
   shortReasonForDecision?: string;
   longReasonForDecision?: string;
   reasonForDecision: string;
@@ -90,6 +92,26 @@ type DebateJudgeResult = {
       missed: string[];
     };
   };
+  sideAnalysis?: {
+    government: TranscriptSideAnalysis;
+    opposition: TranscriptSideAnalysis;
+  };
+  transcriptFeedback?: {
+    studentSide: "GOVERNMENT" | "OPPOSITION";
+    strongestClaim: string;
+    weakestClaim: string;
+    bestRefutation: string;
+    biggestDroppedArgument: string;
+    mostMissingPiece: string;
+    betterSentence: string;
+    modelRewrite: string;
+    skillToPractice: string;
+  };
+  internalScoringSummary?: {
+    governmentScore: number;
+    oppositionScore: number;
+    reasonWinnerSelected: string;
+  };
   keyClash?: string;
   strongestArgument?: string;
   weakestArgument?: string;
@@ -99,6 +121,20 @@ type DebateJudgeResult = {
   recommendedLessons: LessonRecommendation[];
   readinessForNextLevel: ReadinessForNextLevel;
   fallbackNotice?: string;
+};
+
+type TranscriptSideAnalysis = {
+  whatTheyClaimed: string[];
+  bestArgument: string;
+  weakestArgument: string;
+  failedToAnswer: string[];
+  dropped: string[];
+  neededMoreWarrant: string;
+  neededMoreImpact: string;
+  neededMoreWeighing: string;
+  vagueOrUnsupported: string;
+  persuasiveReframe: string;
+  hiddenAssumptionAttack: string;
 };
 
 type PerformanceJudgeResult = {
@@ -479,88 +515,21 @@ Finally, weighing: ${strategy.weighing} Even if the other side wins a small bene
 
 function fallbackDebateJudge(input: {
   organization: Organization;
+  level: Level;
+  topic: string;
   eventType?: string;
   transcript: DebateTranscriptMessage[];
+  studentSide?: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
 }): DebateJudgeResult {
   const eventType = input.eventType ?? "PARLIAMENTARY_DEBATE";
-  const categories = fallbackCategories(input.organization, eventType);
-  const affirmativeTurns = input.transcript.filter((message) => message.role === "AFFIRMATIVE").length;
-  const negativeTurns = input.transcript.filter((message) => message.role === "NEGATIVE").length;
-  const winner = affirmativeTurns >= negativeTurns ? "GOVERNMENT" : "OPPOSITION";
-
-  return {
-    overallScore: 76,
-    categoryScores: categories,
-    sharedSpeaking: fallbackSharedSpeaking(),
-    speakerScores: [
-      {
-        speaker: "Government 1",
-        team: "GOVERNMENT",
-        score: 25,
-        rank: 1,
-        descriptor: "good",
-        rationale: "Clear structure and usable offense, with room to sharpen weighing."
-      },
-      {
-        speaker: "Opposition 1",
-        team: "OPPOSITION",
-        score: 24,
-        rank: 2,
-        descriptor: "good",
-        rationale: "Direct responses and practical pressure, but needs deeper comparison."
-      },
-      {
-        speaker: "Government 2",
-        team: "GOVERNMENT",
-        score: 23,
-        rank: 3,
-        descriptor: "competent",
-        rationale: "Good signposting, though some claims need stronger examples."
-      },
-      {
-        speaker: "Opposition 2",
-        team: "OPPOSITION",
-        score: 22,
-        rank: 4,
-        descriptor: "competent",
-        rationale: "Understands the clash but should collapse to fewer decisive issues."
-      }
-    ],
-    teamWinner: winner,
-    losingSide: winner === "GOVERNMENT" ? "OPPOSITION" : "GOVERNMENT",
-    shortReasonForDecision: "The winning side did more comparison on the central clash.",
-    longReasonForDecision:
-      "Local development judge: the winning side gave the judge a clearer path to the ballot by extending a usable impact, answering the main response, and explaining why that issue outweighed the opponent's best material.",
-    reasonForDecision:
-      "Local development judge: the winning side did the better job extending a clear impact and comparing it against the opponent's main answer.",
-    sideFeedback: {
-      government: {
-        didWell: ["Presented a readable case structure", "Connected at least one argument to a ballot impact"],
-        missed: ["Needed tighter weighing in the final speech", "Could make definitions and contention labels more explicit"]
-      },
-      opposition: {
-        didWell: ["Put pressure on feasibility and opportunity cost", "Created direct clash against the main proposal"],
-        missed: ["Needed more organized refutation", "Could collapse to fewer decisive voters"]
-      }
-    },
-    keyClash: "Whether the proposal's long-term preparation benefit outweighs feasibility and opportunity-cost concerns.",
-    strongestArgument: "The strongest argument was the side that connected its main claim to a concrete, judge-relevant impact.",
-    weakestArgument: "The weakest argument was the least developed response, where the speaker asserted a problem without enough warrant or comparison.",
-    strengths: ["Clear baseline structure", "Some direct clash", "Usable examples for the level"],
-    weaknesses: ["Needs more explicit weighing", "Evidence should be tied to the claim earlier", "Final turns should collapse to fewer voters"],
-    improvementAdvice: [
-      "Name the main voting issue before giving supporting details.",
-      "Compare your impact against the opponent's best impact.",
-      "Use signposting before each rebuttal answer."
-    ],
-    recommendedLessons: fallbackLessons(input.organization, eventType),
-    readinessForNextLevel: {
-      ready: false,
-      rationale: "This is a solid local practice result, but the student should show stronger weighing across multiple rounds before moving up.",
-      nextMilestone: "Complete one more judged round with explicit voters and impact comparison."
-    },
-    fallbackNotice: DEV_AI_FALLBACK_NOTICE
-  };
+  return buildTranscriptBasedDebateJudge({
+    organization: input.organization,
+    eventType,
+    level: input.level,
+    topic: input.topic,
+    transcript: input.transcript,
+    studentSide: input.studentSide
+  }) as DebateJudgeResult;
 }
 
 function fallbackPerformanceJudge(input: {
@@ -733,25 +702,47 @@ export async function judgeDebate(input: {
   eventType?: string;
   topic: string;
   transcript: DebateTranscriptMessage[];
+  studentSide?: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
+  opponentSide?: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
+  format?: string;
+  aiPersona?: string | null;
 }) {
   const eventType = input.eventType ?? "PARLIAMENTARY_DEBATE";
   const rubric = rubricFor(input.organization, eventType);
 
   return jsonCompletion<DebateJudgeResult>(
-    `You are a fair educational parliamentary debate judge. ${originalRubricInstruction()} Return JSON only.`,
+    `You are a fair educational debate judge. ${originalRubricInstruction()} Return JSON only.
+Do not default to Government, Affirmative, the student, the AI, the first speaker, or the longer speech.
+You must decide the winner from the actual transcript and quote or tightly paraphrase what each side said.
+Generic ballot language is forbidden unless it is attached to a specific claim from the transcript.`,
     `Judge this ${input.level} ${input.organization} ${eventType} round.
 Topic: ${input.topic}
+Format: ${input.format ?? eventType}
+Student side: ${input.studentSide ?? "unknown"}
+Opponent side: ${input.opponentSide ?? "unknown"}
+Selected AI persona: ${input.aiPersona ?? "unknown"}
 Transcript JSON: ${JSON.stringify(input.transcript)}
 Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
+
+Required analysis:
+- Score Government/Affirmative and Opposition/Negative separately on claim clarity, warrant/reasoning, impact, refutation/direct clash, weighing/comparison, evidence/examples, organization/signposting, responsiveness, final speech quality, and rule compliance.
+- Identify what each side claimed, what each side dropped, which claims were extended, and which final speech introduced new arguments if it happened.
+- Penalize speeches like "my opponent is wrong" for no warrant, no specific refutation, no impact comparison, and no evidence/example.
+- Reward direct answers with warrant and weighing, for example when a side explains why one impact outweighs another.
+- The RFD must reference actual speech content. Include at least one quoted or tightly paraphrased phrase from the transcript in side feedback and student feedback.
 
 Speaker points must use the 19-30 range:
 19 poor; 20-21 developing; 22-23 competent; 24-26 good; 27-28 excellent; 29 outstanding; 30 exceptional.
 Create four speaker slots if names are absent: Government 1, Government 2, Opposition 1, Opposition 2.
 Assign ranks 1-4 with no ties.
 
-Return JSON with overallScore, categoryScores, sharedSpeaking, speakerScores, teamWinner, losingSide, shortReasonForDecision, longReasonForDecision, reasonForDecision, sideFeedback, keyClash, strongestArgument, weakestArgument, strengths, weaknesses, improvementAdvice, recommendedLessons, and readinessForNextLevel.
-sideFeedback must contain government.didWell, government.missed, opposition.didWell, and opposition.missed arrays.`,
+Return JSON with overallScore, categoryScores, sharedSpeaking, speakerScores, teamWinner, losingSide, confidenceLevel, shortReasonForDecision, longReasonForDecision, reasonForDecision, sideFeedback, sideAnalysis, transcriptFeedback, internalScoringSummary, keyClash, strongestArgument, weakestArgument, strengths, weaknesses, improvementAdvice, recommendedLessons, and readinessForNextLevel.
+categoryScores must include transcript-specific reason strings.
+sideFeedback must contain government.didWell, government.missed, opposition.didWell, and opposition.missed arrays.
+sideAnalysis must explain what each side claimed, bestArgument, weakestArgument, failedToAnswer, dropped, neededMoreWarrant, neededMoreImpact, neededMoreWeighing, vagueOrUnsupported, persuasiveReframe, and hiddenAssumptionAttack.
+transcriptFeedback must focus on the student side and include strongestClaim, weakestClaim, bestRefutation, biggestDroppedArgument, mostMissingPiece, betterSentence, modelRewrite, and skillToPractice.
+internalScoringSummary must include governmentScore, oppositionScore, and reasonWinnerSelected.`,
     () => fallbackDebateJudge(input)
   );
 }

@@ -366,6 +366,10 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[]): S
   const lengthBonus = Math.min(16, wordCount / 14);
   const vaguePenalty = vague * 9 + (wordCount > 220 && warrant + impact + weighing + evidence < 4 ? 10 : 0);
   const finalSpeechText = speeches[speeches.length - 1]?.content ?? "";
+  const directAnswerBonus =
+    opponentReference > 0 && refutation > 0
+      ? (warrant > 0 ? 7 : 0) + (impact > 0 ? 4 : 0) + (weighing > 0 ? 6 : 0) + (evidence > 0 ? 3 : 0)
+      : 0;
   const finalSpeechScore = finalSpeechText
     ? clamp(
         42 +
@@ -381,11 +385,11 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[]): S
     claimClarity: clamp(36 + lengthBonus + claims.length * 9 + signpost * 3 - vaguePenalty),
     warrant: clamp(30 + warrant * 15 + Math.min(10, wordCount / 30) - vague * 7),
     impact: clamp(30 + impact * 9 + warrant * 2 - vague * 5),
-    refutation: clamp(26 + refutation * 10 + opponentReference * 7 - vague * 4),
+    refutation: clamp(26 + refutation * 10 + opponentReference * 7 + directAnswerBonus - vague * 4),
     weighing: clamp(24 + weighing * 18 + (impact > 1 ? 5 : 0) - vague * 4),
     evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5),
     organization: clamp(38 + signpost * 11 + Math.min(10, sideSentences.length * 2) - vague * 3),
-    responsiveness: clamp(30 + opponentReference * 8 + refutation * 7 - vague * 4),
+    responsiveness: clamp(30 + opponentReference * 8 + refutation * 7 + Math.round(directAnswerBonus / 2) - vague * 4),
     finalSpeech: finalSpeechScore,
     ruleCompliance: clamp(88 - finalNewArgument * 22 - vague * 2),
     style: clamp(45 + Math.min(18, wordCount / 18) + signpost * 5 - vague * 5),
@@ -602,6 +606,58 @@ function confidenceLevel(diff: number) {
   return "low";
 }
 
+function winnerFromTranscriptScores(government: SideMetrics, opposition: SideMetrics): DebateSide {
+  const governmentTieBreak =
+    government.scores.refutation * 1.3 +
+    government.scores.weighing * 1.35 +
+    government.scores.warrant +
+    government.scores.impact +
+    government.scores.evidence * 0.8 +
+    government.scores.finalSpeech * 0.7 -
+    government.dropped.length * 5 -
+    government.counts.vague * 4 -
+    government.counts.finalNewArgument * 4;
+  const oppositionTieBreak =
+    opposition.scores.refutation * 1.3 +
+    opposition.scores.weighing * 1.35 +
+    opposition.scores.warrant +
+    opposition.scores.impact +
+    opposition.scores.evidence * 0.8 +
+    opposition.scores.finalSpeech * 0.7 -
+    opposition.dropped.length * 5 -
+    opposition.counts.vague * 4 -
+    opposition.counts.finalNewArgument * 4;
+
+  if (government.scores.overall !== opposition.scores.overall) {
+    return government.scores.overall > opposition.scores.overall ? "GOVERNMENT" : "OPPOSITION";
+  }
+
+  if (governmentTieBreak !== oppositionTieBreak) {
+    return governmentTieBreak > oppositionTieBreak ? "GOVERNMENT" : "OPPOSITION";
+  }
+
+  if (government.counts.words !== opposition.counts.words) {
+    return government.counts.words > opposition.counts.words ? "GOVERNMENT" : "OPPOSITION";
+  }
+
+  return government.combinedText.localeCompare(opposition.combinedText) > 0 ? "GOVERNMENT" : "OPPOSITION";
+}
+
+function winnerSelectionReason(winner: SideMetrics, loser: SideMetrics) {
+  const winnerAdvantages = [
+    winner.scores.refutation > loser.scores.refutation ? "more direct refutation" : null,
+    winner.scores.weighing > loser.scores.weighing ? "better impact comparison" : null,
+    winner.scores.warrant > loser.scores.warrant ? "clearer warrants" : null,
+    winner.scores.evidence > loser.scores.evidence ? "more concrete examples or support" : null,
+    winner.dropped.length < loser.dropped.length ? "fewer dropped claims" : null,
+    winner.counts.vague < loser.counts.vague ? "less vague assertion" : null
+  ].filter((item): item is string => Boolean(item));
+
+  return winnerAdvantages.length > 0
+    ? `${sideLabel(winner.side)} won because it had ${winnerAdvantages.slice(0, 3).join(", ")} in the transcript.`
+    : `${sideLabel(winner.side)} won the close tie-break on the stronger final comparative position in the transcript.`;
+}
+
 function betterSentenceFor(student: SideMetrics, opponent: SideMetrics) {
   const opponentClaim = opponent.bestClaim ? excerpt(opponent.bestClaim, 120) : "their main argument";
 
@@ -622,14 +678,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
   const opposition = analyzeSide("OPPOSITION", input.transcript);
   government.dropped = unansweredClaims(opposition.claims, government.combinedText, government.scores.responsiveness);
   opposition.dropped = unansweredClaims(government.claims, opposition.combinedText, opposition.scores.responsiveness);
-  const winner: DebateSide =
-    government.scores.overall === opposition.scores.overall
-      ? government.scores.weighing + government.scores.refutation >= opposition.scores.weighing + opposition.scores.refutation
-        ? "GOVERNMENT"
-        : "OPPOSITION"
-      : government.scores.overall > opposition.scores.overall
-        ? "GOVERNMENT"
-        : "OPPOSITION";
+  const winner = winnerFromTranscriptScores(government, opposition);
   const loser: DebateSide = winner === "GOVERNMENT" ? "OPPOSITION" : "GOVERNMENT";
   const winnerMetrics = winner === "GOVERNMENT" ? government : opposition;
   const loserMetrics = loser === "GOVERNMENT" ? government : opposition;
@@ -642,8 +691,13 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
   const oppositionFeedback = sideFeedback(opposition, government);
   const studentRecommendation = recommendationForStudent(student);
   const betterSentence = betterSentenceFor(student, opponent);
-  const keyClash = `Whether "${excerpt(government.bestClaim, 110)}" outweighed "${excerpt(opposition.bestClaim, 110)}." ${sideLabel(winner)} won that clash because ${winnerMetrics.scores.weighing >= loserMetrics.scores.weighing ? "it compared the ballot impact more clearly" : "it had the more developed warrant and answer to the other side"}.`;
-  const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default. ${sideLabel(winner)} scored ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall} because its best material, "${excerpt(winnerMetrics.bestClaim)}", had more usable warrant, clash, or comparison than the losing side's weakest material, "${excerpt(loserMetrics.weakestClaim)}." ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left this important point underanswered: "${loserMetrics.dropped[0]}."` : "answered some material, but did not turn those answers into a clearer ballot comparison."}`;
+  const winnerReason = winnerSelectionReason(winnerMetrics, loserMetrics);
+  const keyClash = `Central clash: whether "${excerpt(government.bestClaim, 110)}" beat "${excerpt(opposition.bestClaim, 110)}." ${sideLabel(winner)} won that clash because ${
+    winnerMetrics.scores.weighing > loserMetrics.scores.weighing
+      ? `it made the better comparison around "${excerpt(winnerMetrics.bestClaim, 120)}"`
+      : `its warrant around "${excerpt(winnerMetrics.bestClaim, 120)}" was more complete than the answer from ${sideLabel(loser)}`
+  }.`;
+  const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default. ${sideLabel(winner)} scored ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall}. ${winnerReason} Its best material was "${excerpt(winnerMetrics.bestClaim)}." ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left this important point underanswered: "${loserMetrics.dropped[0]}."` : `did answer some material, but its weakest point, "${excerpt(loserMetrics.weakestClaim)}", still lacked enough warrant, impact, or weighing to overtake the winning offense.`}`;
 
   return {
     overallScore: student.scores.overall,
@@ -742,7 +796,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     internalScoringSummary: {
       governmentScore: government.scores.overall,
       oppositionScore: opposition.scores.overall,
-      reasonWinnerSelected: `${sideLabel(winner)} had the stronger weighted total after claim clarity, warrant, impact, refutation, weighing, evidence, organization, responsiveness, final speech quality, and rule compliance were scored from the transcript.`
+      reasonWinnerSelected: winnerReason
     },
     readinessForNextLevel: {
       ready: student.scores.overall >= 82 && student.scores.weighing >= 75 && student.scores.refutation >= 75,

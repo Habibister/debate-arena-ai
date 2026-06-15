@@ -30,20 +30,22 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
   const created = searchParams.get("created") === "1";
   const createdEmail = searchParams.get("email") ?? "";
+  const initialEmail = createdEmail || (showDemoLogin ? DEMO_EMAIL : "");
+  const initialPassword = createdEmail ? "" : showDemoLogin ? DEMO_PASSWORD : "";
 
   async function signInWithCredentials(email: string, password: string) {
     setIsLoading(true);
     setError(null);
 
     const result = await signIn("credentials", {
-      email,
+      email: email.trim().toLowerCase(),
       password,
       callbackUrl,
       redirect: false
     });
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError(created ? "That email and password did not match. Use the password you chose when creating this account." : "Invalid email or password.");
       setIsLoading(false);
       setIsDemoLoading(false);
       return;
@@ -80,13 +82,13 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
         <label className="text-sm font-semibold" htmlFor="email">
           Email
         </label>
-        <Input id="email" name="email" type="email" defaultValue={createdEmail || (showDemoLogin ? DEMO_EMAIL : "")} required className="mt-2" />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={initialEmail} required className="mt-2" />
       </div>
       <div>
         <label className="text-sm font-semibold" htmlFor="password">
           Password
         </label>
-        <Input id="password" name="password" type="password" defaultValue={showDemoLogin ? DEMO_PASSWORD : ""} required className="mt-2" />
+        <Input id="password" name="password" type="password" autoComplete="current-password" defaultValue={initialPassword} required className="mt-2" />
       </div>
       {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
       <Button type="submit" className="w-full" disabled={isBusy}>

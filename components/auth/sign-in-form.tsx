@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Loader2, LogIn, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +14,20 @@ type SignInFormProps = {
   showDemoLogin?: boolean;
 };
 
+function safeCallbackUrl(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/dashboard";
+  }
+
+  return value;
+}
+
 export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   async function signInWithCredentials(email: string, password: string) {
     setIsLoading(true);
@@ -25,7 +36,7 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
     const result = await signIn("credentials", {
       email,
       password,
-      callbackUrl: "/dashboard",
+      callbackUrl,
       redirect: false
     });
 
@@ -36,7 +47,7 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
       return;
     }
 
-    window.location.href = result?.url ?? "/dashboard";
+    window.location.href = result?.url ?? callbackUrl;
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {

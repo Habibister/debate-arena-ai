@@ -8,7 +8,7 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect("/signin");
+    redirect(`/signin?callbackUrl=/debate/${params.debateId}`);
   }
 
   const debate = await prisma.debate.findFirst({
@@ -17,6 +17,32 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
       OR: [{ createdById: session.user.id }, { studentId: session.user.id }, { opponentUserId: session.user.id }]
     },
     include: {
+      student: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          image: true,
+          level: true,
+          preferredOrganization: true,
+          organization: true
+        }
+      },
+      opponentUser: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          image: true,
+          level: true,
+          preferredOrganization: true,
+          organization: true
+        }
+      },
       messages: {
         orderBy: [{ round: "asc" }, { createdAt: "asc" }]
       }
@@ -48,6 +74,30 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
         formatConfig: debate.formatConfig,
         overallScore: debate.overallScore
       }}
+      studentProfile={
+        debate.student
+          ? {
+              id: debate.student.id,
+              username: debate.student.username,
+              displayName: debate.student.displayName ?? debate.student.name,
+              avatarUrl: debate.student.avatarUrl ?? debate.student.image,
+              level: debate.student.level,
+              organization: debate.student.preferredOrganization ?? debate.student.organization
+            }
+          : null
+      }
+      opponentProfile={
+        debate.opponentUser
+          ? {
+              id: debate.opponentUser.id,
+              username: debate.opponentUser.username,
+              displayName: debate.opponentUser.displayName ?? debate.opponentUser.name,
+              avatarUrl: debate.opponentUser.avatarUrl ?? debate.opponentUser.image,
+              level: debate.opponentUser.level,
+              organization: debate.opponentUser.preferredOrganization ?? debate.opponentUser.organization
+            }
+          : null
+      }
       initialMessages={debate.messages.map((message) => ({
         id: message.id,
         authorId: message.authorId,

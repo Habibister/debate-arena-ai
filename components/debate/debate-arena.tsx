@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import {
   countDebateSpeeches,
   getNextSpeech,
@@ -61,6 +62,15 @@ type DebateMessage = {
   round: number;
   content: string;
   createdAt: string;
+};
+
+type ParticipantProfile = {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  level: Level;
+  organization: Organization | null;
 };
 
 export type JudgeReport = {
@@ -112,6 +122,8 @@ export type JudgeReport = {
 
 type DebateArenaProps = {
   initialDebate: ArenaDebate;
+  studentProfile: ParticipantProfile | null;
+  opponentProfile: ParticipantProfile | null;
   initialMessages: DebateMessage[];
   initialJudgeReport: unknown;
 };
@@ -192,7 +204,15 @@ function losingLabel(report: JudgeReport) {
   return losingSide === "GOVERNMENT" ? "Government / Affirmative" : "Opposition / Negative";
 }
 
-export function DebateArena({ initialDebate, initialMessages, initialJudgeReport }: DebateArenaProps) {
+function profileLabel(profile: ParticipantProfile | null, fallback: string) {
+  return profile?.displayName ?? profile?.username ?? fallback;
+}
+
+function profileHandle(profile: ParticipantProfile | null, fallback: string) {
+  return profile?.username ?? profile?.displayName ?? fallback;
+}
+
+export function DebateArena({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport }: DebateArenaProps) {
   const [debate, setDebate] = useState(initialDebate);
   const [messages, setMessages] = useState(initialMessages);
   const [studentInput, setStudentInput] = useState("");
@@ -223,6 +243,10 @@ export function DebateArena({ initialDebate, initialMessages, initialJudgeReport
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
   const progress = Math.round((Math.min(completedSpeechCount, config.speeches.length) / Math.max(config.speeches.length, 1)) * 100);
+  const studentName = profileLabel(studentProfile, "Student");
+  const studentHandle = profileHandle(studentProfile, "student");
+  const aiName = opponentProfile ? profileLabel(opponentProfile, "Opponent") : "LogicBot";
+  const aiHandle = opponentProfile ? profileHandle(opponentProfile, "opponent") : "logicbot_ai";
 
   useEffect(() => {
     setTurnRemaining(currentSpeech?.timeSeconds ?? debate.turnTimeSeconds);
@@ -357,6 +381,23 @@ export function DebateArena({ initialDebate, initialMessages, initialJudgeReport
       <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[320px_1fr_340px]">
         <aside className="space-y-4">
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Matchup</p>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="min-w-0 text-center">
+                <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="lg" className="mx-auto border-white/20" />
+                <p className="mt-2 truncate text-sm font-bold">{studentName}</p>
+                <p className="truncate text-xs text-neutral-400">@{studentHandle}</p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-bold text-neutral-300">VS</span>
+              <div className="min-w-0 text-center">
+                <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="lg" className="mx-auto border-white/20" />
+                <p className="mt-2 truncate text-sm font-bold">{aiName}</p>
+                <p className="truncate text-xs text-neutral-400">@{aiHandle}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <div className="flex flex-wrap gap-2">
               <Badge className="border border-blue-400/30 bg-blue-500/10 text-blue-100">{config.label}</Badge>
               <Badge className="border border-purple-400/30 bg-purple-500/10 text-purple-100">{titleCase(debate.level)}</Badge>
@@ -367,11 +408,17 @@ export function DebateArena({ initialDebate, initialMessages, initialJudgeReport
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             <div className={cn("rounded-lg border p-4", sideTone(debate.studentSide))}>
-              <p className="text-xs font-semibold uppercase opacity-75">You</p>
+              <div className="flex items-center gap-3">
+                <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="sm" />
+                <p className="text-xs font-semibold uppercase opacity-75">{studentName}</p>
+              </div>
               <p className="mt-2 font-semibold">{getSideLabel(debate.studentSide)}</p>
             </div>
             <div className={cn("rounded-lg border p-4", sideTone(debate.opponentSide))}>
-              <p className="text-xs font-semibold uppercase opacity-75">AI opponent</p>
+              <div className="flex items-center gap-3">
+                <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="sm" />
+                <p className="text-xs font-semibold uppercase opacity-75">{opponentProfile ? aiName : "AI opponent"}</p>
+              </div>
               <p className="mt-2 font-semibold">{getSideLabel(debate.opponentSide)}</p>
             </div>
           </div>
@@ -440,7 +487,7 @@ export function DebateArena({ initialDebate, initialMessages, initialJudgeReport
                 return (
                   <article key={message.id} className={cn("rounded-lg border p-4", tone)}>
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-                      <span>{speech ? `${speech.shortLabel} · ${isStudent ? "You" : "AI opponent"}` : "Moderator"}</span>
+                      <span>{speech ? `${speech.shortLabel} · ${isStudent ? studentName : aiName}` : "Moderator"}</span>
                       <span>{speech ? `Speech ${speech.round}` : "Room"}</span>
                     </div>
                     <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
@@ -547,6 +594,10 @@ export function DebateArena({ initialDebate, initialMessages, initialJudgeReport
           </div>
 
           <div className="grid gap-2">
+            <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.03] p-4 text-sm text-neutral-300">
+              <p className="font-semibold text-white">Live students coming soon</p>
+              <p className="mt-1 leading-6">Future rooms will show opponent username, avatar, level, organization, online status, and invite links.</p>
+            </div>
             <Link href="/debate" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
               New debate
             </Link>

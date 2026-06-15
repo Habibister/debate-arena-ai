@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Sparkles } from "lucide-react";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,9 @@ export default function SignInPage() {
             <CardTitle className="pt-3 text-2xl">Sign in to training</CardTitle>
           </CardHeader>
           <CardContent>
-            <SignInForm showDemoLogin={showDemoLogin} />
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading sign-in form...</p>}>
+              <SignInForm showDemoLogin={showDemoLogin} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

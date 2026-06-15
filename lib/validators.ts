@@ -148,3 +148,34 @@ export const matchmakingRequestSchema = z.object({
   level: levelSchema,
   ageGroup: z.string().max(80).optional()
 });
+
+const optionalCleanString = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .transform((value) => value.trim())
+    .transform((value) => (value.length > 0 ? value : null))
+    .optional();
+
+export const profileUpdateSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, "Choose a username with at least 3 characters.")
+    .max(24, "Keep usernames to 24 characters or fewer.")
+    .regex(/^[a-zA-Z0-9_]+$/, "Use only letters, numbers, and underscores.")
+    .transform((value) => value.toLowerCase()),
+  displayName: z
+    .string()
+    .trim()
+    .min(2, "Add a display name.")
+    .max(80, "Keep display names to 80 characters or fewer."),
+  avatarUrl: z
+    .union([z.string().trim().url("Use a valid image URL."), z.literal("")])
+    .transform((value) => (value ? value : null))
+    .optional(),
+  bio: optionalCleanString(280),
+  schoolOrClub: optionalCleanString(120),
+  preferredOrganization: organizationSchema.nullable().optional(),
+  level: levelSchema
+});

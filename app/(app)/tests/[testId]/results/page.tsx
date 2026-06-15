@@ -59,7 +59,7 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect("/signin");
+    redirect(`/signin?callbackUrl=/tests/${params.testId}/results`);
   }
 
   const test = await prisma.practiceTest.findFirst({

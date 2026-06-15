@@ -129,6 +129,12 @@ model User {
   emailVerified  DateTime?
   image          String?
   passwordHash   String?
+  username       String?   @unique
+  displayName    String?
+  avatarUrl      String?
+  bio            String?   @db.Text
+  schoolOrClub   String?
+  preferredOrganization Organization?
   role           Role      @default(STUDENT)
   organization   Organization?
   level          Level     @default(BEGINNER)

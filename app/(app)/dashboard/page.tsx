@@ -4,6 +4,7 @@ import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { StatCard } from "@/components/app/stat-card";
 import { XpProgressCard } from "@/components/app/xp-progress-card";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +48,9 @@ export default async function DashboardPage() {
     : null;
 
   const displayName = user?.name?.split(" ")[0] ?? "Alex";
+  const fullDisplayName = user?.displayName ?? user?.name ?? "Alex Rivera";
+  const username = user?.username ?? session?.user?.username ?? "alex_rivera";
+  const avatarUrl = user?.avatarUrl ?? user?.image ?? session?.user?.avatarUrl ?? null;
   const xp = user?.xp ?? 375;
   const streak = user?.streak ?? 8;
   const wins = user?.wins ?? 12;
@@ -63,7 +67,13 @@ export default async function DashboardPage() {
             <Badge variant="secondary">Student dashboard</Badge>
             <Badge variant="outline">{rank.replace("_", " ")} rank</Badge>
           </div>
-          <h1 className="mt-4 text-3xl font-bold sm:text-4xl">Welcome back, {displayName}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <UserAvatar username={username} displayName={fullDisplayName} avatarUrl={avatarUrl} size="lg" />
+            <div>
+              <h1 className="text-3xl font-bold sm:text-4xl">Welcome back, {displayName}</h1>
+              <p className="mt-1 text-sm font-semibold text-muted-foreground">@{username}</p>
+            </div>
+          </div>
           <p className="mt-2 max-w-3xl text-muted-foreground">
             Your training loop is ready: one speaking rep, one test set, and one targeted lesson will move the week forward.
           </p>

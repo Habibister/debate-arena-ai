@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  if (token && pathname === "/signin") {
+  if (token && (pathname === "/signin" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -34,6 +34,7 @@ export const config = {
     "/coach/:path*",
     "/admin/:path*",
     "/profile/:path*",
-    "/signin"
+    "/signin",
+    "/signup"
   ]
 };

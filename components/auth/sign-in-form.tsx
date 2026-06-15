@@ -28,6 +28,8 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
+  const created = searchParams.get("created") === "1";
+  const createdEmail = searchParams.get("email") ?? "";
 
   async function signInWithCredentials(email: string, password: string) {
     setIsLoading(true);
@@ -69,11 +71,16 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {created ? (
+        <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-700">
+          Account created. Sign in{createdEmail ? ` as ${createdEmail}` : ""} to open your dashboard.
+        </p>
+      ) : null}
       <div>
         <label className="text-sm font-semibold" htmlFor="email">
           Email
         </label>
-        <Input id="email" name="email" type="email" defaultValue={showDemoLogin ? DEMO_EMAIL : ""} required className="mt-2" />
+        <Input id="email" name="email" type="email" defaultValue={createdEmail || (showDemoLogin ? DEMO_EMAIL : "")} required className="mt-2" />
       </div>
       <div>
         <label className="text-sm font-semibold" htmlFor="password">

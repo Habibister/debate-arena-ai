@@ -179,3 +179,32 @@ export const profileUpdateSchema = z.object({
   preferredOrganization: organizationSchema.nullable().optional(),
   level: levelSchema
 });
+
+export const signupSchema = z
+  .object({
+    email: z.string().trim().email("Enter a valid email address.").max(160).transform((value) => value.toLowerCase()),
+    password: z.string().min(8, "Password must be at least 8 characters.").max(120),
+    confirmPassword: z.string().min(8, "Confirm your password."),
+    username: z
+      .string()
+      .trim()
+      .min(3, "Choose a username with at least 3 characters.")
+      .max(24, "Keep usernames to 24 characters or fewer.")
+      .regex(/^[a-zA-Z0-9_]+$/, "Use only letters, numbers, and underscores.")
+      .transform((value) => value.toLowerCase()),
+    displayName: z
+      .string()
+      .trim()
+      .min(2, "Add a display name.")
+      .max(80, "Keep display names to 80 characters or fewer."),
+    avatarUrl: z
+      .union([z.string().trim().url("Use a valid image URL."), z.literal("")])
+      .transform((value) => (value ? value : null))
+      .optional(),
+    schoolOrClub: optionalCleanString(120),
+    preferredOrganization: organizationSchema.nullable().optional()
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords must match.",
+    path: ["confirmPassword"]
+  });

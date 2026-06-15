@@ -28,7 +28,7 @@ const featureCards = [
   },
   {
     title: "Skill Development",
-    description: "Khan Academy style lessons with examples, guided practice, independent reps, and quizzes.",
+    description: "Mastery-based lessons with examples, guided practice, independent reps, and quizzes.",
     icon: BookOpenCheck
   },
   {
@@ -68,7 +68,7 @@ export default function HomePage() {
       <section className="arena-grid border-b">
         <div className="container grid min-h-[calc(100svh-64px)] items-center gap-10 py-10 lg:grid-cols-[0.92fr_1.08fr] lg:py-14">
           <div>
-            <Badge variant="secondary">Khan Academy + Duolingo for competitive speaking</Badge>
+            <Badge variant="secondary">Mastery learning for competitive speaking</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">DebateArena AI</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
               Train students for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking with AI opponents,

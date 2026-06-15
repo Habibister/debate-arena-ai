@@ -75,11 +75,11 @@ export function apiError(error: unknown) {
     }
   }
 
-  const message = error instanceof Error ? error.message : "Unexpected server error";
+  const message = error instanceof Error ? error.message : "Unknown server issue";
 
   return NextResponse.json(
     {
-      error: "Unexpected server error",
+      error: "Something went wrong. Please try again in a moment.",
       ...(process.env.NODE_ENV === "development" ? { details: message } : {})
     },
     { status: 500 }

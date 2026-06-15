@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth";
-import { BookOpenCheck, ClipboardList, Flame, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
+import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { StatCard } from "@/components/app/stat-card";
 import { XpProgressCard } from "@/components/app/xp-progress-card";
+import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -91,7 +92,7 @@ export default async function DashboardPage() {
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-4">
         <NextStepCard
           title="Start an AI round"
           description="Get a topic, speak through three turns, and receive judge feedback."
@@ -111,6 +112,13 @@ export default async function DashboardPage() {
           href="/skills"
           icon={BookOpenCheck}
           tone="accent"
+        />
+        <NextStepCard
+          title="Study weak terms"
+          description="Use flashcards and video resources before your next test."
+          href="/study"
+          icon={Layers3}
+          tone="secondary"
         />
       </div>
 
@@ -133,6 +141,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <RecommendedVideos skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]} title="Recommended video resources" />
 
       {recentTests.length === 0 ? (
         <EmptyState

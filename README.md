@@ -2,15 +2,16 @@
 
 AI-powered training for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking.
 
-DebateArena AI is designed to become the "Khan Academy + Duolingo for Debate and Competitive Organizations": students train through AI debates, AI judging, adaptive skill lessons, original practice tests, XP, streaks, mastery analytics, and coach dashboards.
+DebateArena AI helps students train through AI debates, AI judging, mastery-based skill lessons, original practice tests, XP, streaks, flashcards, study resources, analytics, and coach dashboards.
 
 ## Current Product
 
 - Student dashboard with XP, ranks, streaks, mastery bars, weak-skill detection, and recommended next steps
 - AI debate and roleplay room with topic generation, AI opponents, AI judging, XP awards, and speaking-skill analytics
 - Organization-specific judging engines for parliamentary debate, DECA, and HOSA
-- DECA and HOSA original practice test generator with grading, explanations, weak areas, and recommended lessons
-- Khan Academy-style skill pages with lessons, examples, guided practice, independent practice, and mastery checks
+- DECA and HOSA original practice test generator with 10/25/50/100 question modes, grading, explanations, weak areas, and recommended lessons
+- Mastery skill pages with lessons, examples, guided practice, writing practice, independent practice, and mastery checks
+- Study section with original DECA/HOSA flashcards and external video/resource cards
 - Coach/admin shells, team models, seed data, and deployment-ready Next.js/Prisma architecture
 
 ## Tech Stack
@@ -30,7 +31,7 @@ DebateArena AI is designed to become the "Khan Academy + Duolingo for Debate and
 - Node.js 20 or newer
 - npm
 - PostgreSQL database, local or hosted
-- OpenAI API key
+- OpenAI API key for live AI generation, optional for local demo mode
 
 The repo includes `.nvmrc` with Node `20`.
 
@@ -52,6 +53,7 @@ Required variables:
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="replace-with-a-long-random-secret"
+# Optional locally. Placeholder/missing keys use development-only fallback content.
 OPENAI_API_KEY="sk-proj-replace-me"
 OPENAI_MODEL="gpt-4o-mini"
 ```
@@ -122,7 +124,9 @@ If you later switch to pooled runtime connections, keep Prisma migrations on a d
 2. Set `OPENAI_API_KEY` in `.env.local` and in Vercel.
 3. Keep `OPENAI_MODEL="gpt-4o-mini"` unless you intentionally choose another model.
 
-AI-powered routes return a `503` if `OPENAI_API_KEY` is missing.
+In `NODE_ENV=development`, AI-powered routes use clearly marked local fallback content when `OPENAI_API_KEY` is missing, invalid, or still a placeholder. This keeps local demos working for debate motions, AI opponent speeches, judging, DECA/HOSA tests, lessons, and recommendations.
+
+In production, add a valid OpenAI key to use live AI generation.
 
 ## Local Setup
 
@@ -157,6 +161,14 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+Demo path:
+
+1. Sign in as `student@debatearena.ai / password123`.
+2. Open Dashboard.
+3. Create a debate room from Debate and use local AI fallback if no OpenAI key is configured.
+4. Generate a DECA or HOSA practice test, including a 100-question mixed mode.
+5. Open Skills for debate writing practice or Study for flashcards and resource videos.
 
 Demo credentials after seeding:
 

@@ -7,6 +7,7 @@ import {
   openAIModel
 } from "@/lib/openai";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
+import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 
 type DebateTranscriptMessage = {
   role: MessageRole;
@@ -249,19 +250,94 @@ function fallbackTopic(input: {
 }): TopicPackage {
   const eventType = input.eventType ?? "GENERAL";
   const focus = input.focusArea ?? "strategic communication";
-
-  const topics: Record<Organization, string> = {
-    DEBATE: "This House would require schools to teach practical AI literacy before graduation.",
-    MODEL_UN: "A committee must design a regional agreement for responsible AI use in education.",
-    DECA: "A local business needs a student-friendly launch strategy for a new tutoring subscription.",
-    HOSA: "A community clinic needs a youth outreach plan to improve preventive health communication.",
-    MOCK_TRIAL: "A trial team must argue whether a school policy reasonably protected student safety.",
-    PUBLIC_SPEAKING: "Students should learn persuasive speaking as a core career-readiness skill."
+  const normalizedFocus = focus.toLowerCase();
+  const levelLens: Record<Level, string> = {
+    BEGINNER: "clear, student-friendly",
+    INTERMEDIATE: "policy tradeoff",
+    ELITE: "multi-stakeholder, high-clash"
+  };
+  const debateMotionsByFocus: Record<string, string[]> = {
+    global: [
+      "This House would require schools to teach practical AI literacy before graduation.",
+      "This House believes international student exchanges should prioritize climate resilience projects.",
+      "This House would make digital privacy education a graduation requirement."
+    ],
+    education: [
+      "This House would require every high school student to complete a financial literacy course.",
+      "This House believes schools should replace some homework with supervised skill labs.",
+      "This House would let students use AI tools only after completing a responsible-use certification."
+    ],
+    technology: [
+      "This House would require social media platforms to offer teen accounts with default time limits.",
+      "This House believes schools should teach students how to audit AI-generated information.",
+      "This House would prioritize public funding for cybersecurity education over consumer device subsidies."
+    ],
+    health: [
+      "This House would require schools to provide mental health first-aid training for student leaders.",
+      "This House believes public health campaigns should focus more on prevention than punishment.",
+      "This House would expand school-based health clinics in underserved communities."
+    ],
+    "civic life": [
+      "This House would require local governments to include youth advisory councils in major policy decisions.",
+      "This House believes community service should be a graduation requirement.",
+      "This House would make civic media literacy a required high school course."
+    ],
+    ethics: [
+      "This House would require companies to label AI-generated customer service interactions.",
+      "This House believes schools should prioritize restorative accountability over zero-tolerance discipline.",
+      "This House would ban persuasive design features that target minors."
+    ],
+    business: [
+      "This House believes student entrepreneurs should receive school credit for validated business projects.",
+      "This House would require large companies to publish plain-language explanations of pricing changes.",
+      "This House believes local governments should prioritize grants for youth-run small businesses."
+    ],
+    law: [
+      "This House would require schools to teach basic legal rights and responsibilities.",
+      "This House believes restorative justice should be the default response to minor school discipline issues.",
+      "This House would limit the use of predictive algorithms in public decision-making."
+    ]
   };
 
+  const topicPools: Record<Organization, string[]> = {
+    DEBATE:
+      debateMotionsByFocus[
+        Object.keys(debateMotionsByFocus).find((key) => normalizedFocus.includes(key)) ?? "global"
+      ],
+    MODEL_UN: [
+      "A committee must design a regional agreement for responsible AI use in education.",
+      "A committee must negotiate a public health cooperation plan for climate-related displacement.",
+      "A committee must balance national security with youth digital privacy rights."
+    ],
+    DECA: [
+      "A local business needs a student-friendly launch strategy for a new tutoring subscription.",
+      "A community retailer needs a loyalty plan that improves repeat visits without over-discounting.",
+      "A student startup needs a lean validation plan before building its first app."
+    ],
+    HOSA: [
+      "A community clinic needs a youth outreach plan to improve preventive health communication.",
+      "A health science team must explain a safety checklist to nervous first-time patients.",
+      "A public health group needs a plain-language campaign about credible health information."
+    ],
+    MOCK_TRIAL: [
+      "A trial team must argue whether a school policy reasonably protected student safety.",
+      "A trial team must decide whether a business acted negligently after ignoring repeated warnings.",
+      "A trial team must evaluate whether digital evidence was reliable enough to use."
+    ],
+    PUBLIC_SPEAKING: [
+      "Students should learn persuasive speaking as a core career-readiness skill.",
+      "Young leaders should practice explaining complex topics in plain language.",
+      "Public speaking courses should include debate-style rebuttal practice."
+    ]
+  };
+  const pool = topicPools[input.organization];
+  const rotationSeed = Date.now() + focus.length + eventType.length + input.level.length;
+  const topic = pool[rotationSeed % pool.length];
+  const formatLabel = eventType.replaceAll("_", " ").toLowerCase();
+
   return {
-    topic: topics[input.organization],
-    background: `Local ${input.level.toLowerCase()} development prompt for ${eventType.replaceAll("_", " ").toLowerCase()}. It is original practice content focused on ${focus}.`,
+    topic,
+    background: `Local ${input.level.toLowerCase()} development prompt for ${formatLabel}. It is original practice content focused on ${focus} with a ${levelLens[input.level]} clash.`,
     affirmativePosition: "Defend the proposal by showing clear benefits, practical implementation, and why the status quo leaves students underprepared.",
     negativePosition: "Challenge the proposal by testing feasibility, tradeoffs, cost, unintended consequences, and whether a narrower solution is better.",
     suggestedEvidenceAngles: [
@@ -417,49 +493,11 @@ function fallbackPracticeQuestions(input: {
   eventType: string;
   eventCluster?: string;
   difficulty: Level;
-  count: 10 | 25 | 50;
+  count: 10 | 25 | 50 | 100;
 }) {
-  const focus = input.eventCluster ?? input.eventType;
-  const skillTags =
-    input.organization === "DECA"
-      ? ["Performance indicators", "Business reasoning", "Marketing strategy", "Feasibility"]
-      : ["Medical terminology", "Health science knowledge", "Patient communication", "Healthcare ethics"];
-
   return {
     fallbackNotice: DEV_AI_FALLBACK_NOTICE,
-    questions: Array.from({ length: input.count }, (_, index) => {
-      const skillTag = skillTags[index % skillTags.length];
-      const number = index + 1;
-      return {
-        question:
-          input.organization === "DECA"
-            ? `Original local practice ${number}: A ${focus.toLowerCase()} team must improve customer engagement. Which first action best fits a ${input.difficulty.toLowerCase()} business roleplay?`
-            : `Original local practice ${number}: In a ${focus.toLowerCase()} scenario, which response best demonstrates safe and professional health communication?`,
-        choices:
-          input.organization === "DECA"
-            ? [
-                "Identify the target customer, choose one measurable goal, and recommend a practical tactic.",
-                "Start with a broad slogan before defining the business problem.",
-                "Promise immediate results without mentioning resources or timeline.",
-                "Avoid discussing risks so the recommendation sounds confident."
-              ]
-            : [
-                "Use accurate terminology, confirm understanding, and recommend an appropriate next step.",
-                "Give a definitive diagnosis without enough information.",
-                "Use technical language only and move quickly to the next patient.",
-                "Ignore patient concerns if the planned procedure is routine."
-              ],
-        correctAnswer:
-          input.organization === "DECA"
-            ? "Identify the target customer, choose one measurable goal, and recommend a practical tactic."
-            : "Use accurate terminology, confirm understanding, and recommend an appropriate next step.",
-        explanation:
-          input.organization === "DECA"
-            ? "The best answer defines the stakeholder, sets a measurable objective, and stays feasible."
-            : "The best answer balances accuracy, communication, and safe next-step reasoning.",
-        skillTag
-      };
-    })
+    questions: buildFallbackPracticeQuestions(input)
   };
 }
 
@@ -655,7 +693,7 @@ export async function generatePracticeQuestions(input: {
   eventType: string;
   eventCluster?: string;
   difficulty: Level;
-  count: 10 | 25 | 50;
+  count: 10 | 25 | 50 | 100;
 }) {
   return jsonCompletion<{
     questions: Array<{
@@ -666,11 +704,13 @@ export async function generatePracticeQuestions(input: {
       skillTag: string;
     }>;
   }>(
-    "You generate original practice exam questions inspired by competition standards. Do not copy copyrighted past exams unless legally provided by the user. Return JSON only.",
+    "You generate original practice exam questions inspired by public competition guidelines, event structures, and career/health science standards. Do not copy copyrighted past exams, official sample questions, or protected exam wording. Return JSON only.",
     `Create ${input.count} original ${input.organization} ${input.difficulty} multiple-choice practice questions.
 Event/category: ${input.eventType}
 Cluster or focus: ${input.eventCluster ?? "general"}
-Each question must include question, choices, correctAnswer, explanation, and skillTag.
+Each question must include question, choices, correctAnswer, explanation, skillTag, linkedSkill, difficulty, and either eventCluster or eventCategory.
+DECA questions should align to career clusters, instructional areas, performance-indicator style skills, roleplay/case reasoning, metrics, and judge-facing business decisions.
+HOSA questions should be labeled as original practice inspired by public event guidelines and health science topics, not official HOSA practice tests.
 Questions should test transferable standards and concepts, not reproduce protected exam language.`,
     () => fallbackPracticeQuestions(input)
   );

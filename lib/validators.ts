@@ -62,7 +62,7 @@ export const practiceQuestionRequestSchema = z.object({
   eventType: z.string().min(2).max(120),
   eventCluster: z.string().min(2).max(120).optional(),
   difficulty: levelSchema,
-  count: z.union([z.literal(10), z.literal(25), z.literal(50)])
+  count: z.union([z.literal(10), z.literal(25), z.literal(50), z.literal(100)])
 });
 
 export const lessonContentRequestSchema = z.object({
@@ -113,7 +113,7 @@ export const practiceTestCreateSchema = z.object({
   eventType: z.string().min(2).max(120),
   eventCluster: z.string().min(2).max(120).optional(),
   difficulty: levelSchema,
-  questionCount: z.union([z.literal(10), z.literal(25), z.literal(50)])
+  questionCount: z.union([z.literal(10), z.literal(25), z.literal(50), z.literal(100)])
 });
 
 export const practiceTestGradeSchema = z.object({

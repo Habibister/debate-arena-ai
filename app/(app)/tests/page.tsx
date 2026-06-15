@@ -1,4 +1,5 @@
-import { BookOpenCheck, CheckCircle2, ClipboardList, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { BookOpenCheck, CheckCircle2, ClipboardList, Layers3, Sparkles } from "lucide-react";
 import { TestBuilderPreview } from "@/components/tests/test-builder-preview";
 import { PracticeTestGenerator } from "@/components/tests/practice-test-generator";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
 
 const testSteps = [
-  { title: "Generate", detail: "Choose track, level, and question count.", icon: Sparkles },
+  { title: "Generate", detail: "Choose 10, 25, 50, or a 100-question mixed exam.", icon: Sparkles },
   { title: "Answer", detail: "Complete the set with progress tracking.", icon: ClipboardList },
   { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
 ];
@@ -62,6 +63,16 @@ export default function TestsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Link href="/study" className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+        <Layers3 className="mt-1 h-5 w-5 text-primary" aria-hidden />
+        <span>
+          <span className="block font-semibold">Study DECA/HOSA terms before testing</span>
+          <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+            Open original flashcard decks with definitions, examples, quick checks, and external video resources.
+          </span>
+        </span>
+      </Link>
     </div>
   );
 }

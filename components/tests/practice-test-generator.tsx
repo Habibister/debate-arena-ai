@@ -16,7 +16,7 @@ import { testingClustersForOrganization } from "@/lib/testing";
 import { cn } from "@/lib/utils";
 
 type TestingOrganization = "DECA" | "HOSA";
-type QuestionCount = 10 | 25 | 50;
+type QuestionCount = 10 | 25 | 50 | 100;
 
 type CreatedTestResponse = {
   test: {
@@ -92,7 +92,9 @@ export function PracticeTestGenerator() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <CardTitle>Generate Original Practice Test</CardTitle>
-            <p className="mt-2 text-sm text-muted-foreground">Choose a track, focus area, and difficulty. Then jump straight into a timed-feeling practice set.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Choose a track, focus area, and difficulty. Then jump into original practice inspired by public event guidance and classroom standards.
+            </p>
           </div>
           <Badge variant="secondary">Original questions only</Badge>
         </div>
@@ -191,8 +193,8 @@ export function PracticeTestGenerator() {
 
           <div>
             <p className="mb-3 text-sm font-semibold">Question count</p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {([10, 25, 50] as const).map((count) => (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([10, 25, 50, 100] as const).map((count) => (
                 <button
                   key={count}
                   type="button"
@@ -203,7 +205,7 @@ export function PracticeTestGenerator() {
                   )}
                   disabled={isLoading}
                 >
-                  {count} questions
+                  {count === 100 ? "100-question mixed exam" : `${count} questions`}
                 </button>
               ))}
             </div>
@@ -220,7 +222,7 @@ export function PracticeTestGenerator() {
           <Progress value={generationProgress} className="mt-3" />
           <div className="mt-3 flex items-start gap-2 text-sm leading-6 text-muted-foreground">
             <Target className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />
-            Results will map missed questions to weak skills and recommended lessons.
+            Results will map missed questions to weak skills, recommended lessons, flashcards, and next practice steps.
           </div>
         </div>
 
@@ -238,7 +240,7 @@ export function PracticeTestGenerator() {
 
         <div className="flex gap-3 rounded-lg border bg-background p-4 text-sm leading-6 text-muted-foreground">
           <ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-          Questions are generated from original prompts by event cluster/category and difficulty. The app does not copy protected past exams.
+          These are not official DECA or HOSA tests. Questions are original prompts by event cluster/category and difficulty, designed to practice public guideline-style skills without copying protected past exams.
         </div>
       </CardContent>
     </Card>

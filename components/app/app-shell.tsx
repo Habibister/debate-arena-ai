@@ -8,6 +8,7 @@ import {
   Flame,
   GraduationCap,
   LayoutDashboard,
+  Layers3,
   MessageSquareText,
   ShieldCheck,
   Sparkles,
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/debate", label: "Debate", icon: MessageSquareText },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
   { href: "/tests", label: "Tests", icon: ClipboardList },
+  { href: "/study", label: "Study", icon: Layers3 },
   { href: "/coach", label: "Coach", icon: Users },
   { href: "/admin", label: "Admin", icon: ShieldCheck }
 ] as const;

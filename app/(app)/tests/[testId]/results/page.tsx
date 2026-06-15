@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { ArrowRight, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target } from "lucide-react";
 import { NextStepCard } from "@/components/app/next-step-card";
+import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { studyDeckForSkill, type StudyOrganization } from "@/lib/study-content";
 import { cn } from "@/lib/utils";
 
 type RecommendationPayload = {
@@ -43,6 +45,14 @@ function normalizeLessonRecommendations(value: unknown): LessonRecommendation[] 
       typeof item.reason === "string"
     );
   });
+}
+
+function explainWrongSelection(selectedAnswer: string, skillTag: string) {
+  if (selectedAnswer === "No answer") {
+    return `No answer was submitted, so this counts as a missed ${skillTag} rep. Review the correct answer and retry a smaller set.`;
+  }
+
+  return `Your selected answer was weaker because it did not best satisfy the tested ${skillTag} skill. The correct answer is stronger because it directly addresses the scenario, stays within the event expectations, and gives a measurable or safe next step.`;
 }
 
 export default async function PracticeTestResultsPage({ params }: { params: { testId: string } }) {
@@ -82,6 +92,8 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
   const score = test.score ?? 0;
   const correctCount = test.questions.filter((question) => question.answers[0]?.isCorrect).length;
   const readinessLabel = score >= 85 ? "Ready to level up" : score >= 70 ? "Close to ready" : "Focused review";
+  const studyOrganization = test.organization === "DECA" || test.organization === "HOSA" ? test.organization : undefined;
+  const recommendedDeck = studyOrganization ? studyDeckForSkill(test.weakAreas[0] ?? test.eventCluster ?? test.eventType, studyOrganization) : undefined;
 
   return (
     <div className="space-y-6">
@@ -130,11 +142,18 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
 
       <div className="grid gap-4 lg:grid-cols-3">
         <NextStepCard
-          title="Review weak lessons"
+          title="Practice weak skills"
           description="Start with the first recommended lesson, then retry the same cluster."
           href={(lessonRecommendations[0] ? `/skills/${lessonRecommendations[0].lessonSlug}` : "/skills") as Route}
           icon={BookOpenCheck}
           tone="secondary"
+        />
+        <NextStepCard
+          title="Study weak terms"
+          description="Review flashcards tied to the terms and concepts you missed."
+          href={(recommendedDeck ? `/study/${recommendedDeck.deckSlug}` : "/study") as Route}
+          icon={Target}
+          tone="accent"
         />
         <NextStepCard
           title="Generate a retake"
@@ -142,12 +161,20 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
           href="/tests"
           icon={ClipboardList}
         />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <RecommendedVideos
+          organization={studyOrganization as StudyOrganization | undefined}
+          skillTags={[...test.weakAreas, test.eventCluster ?? test.eventType]}
+          title="Recommended videos and resources"
+        />
         <NextStepCard
           title="Practice speaking"
           description="Turn the same weak skill into a judged roleplay or debate response."
           href="/debate"
           icon={MessageSquareText}
-          tone="accent"
+          tone="secondary"
         />
       </div>
 
@@ -239,9 +266,17 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
                   })}
                 </div>
                 {!isCorrect ? (
-                  <div className="mt-4 rounded-lg border bg-background p-4">
-                    <p className="font-semibold">Explanation</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{question.explanation}</p>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg border bg-background p-4">
+                      <p className="font-semibold">Why the correct answer is right</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{question.explanation}</p>
+                    </div>
+                    <div className="rounded-lg border bg-background p-4">
+                      <p className="font-semibold">Why your answer missed</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {explainWrongSelection(selectedAnswer, question.skillTag)}
+                      </p>
+                    </div>
                   </div>
                 ) : null}
               </CardContent>

@@ -33,7 +33,7 @@ export const PROVIDER_BANNER: Record<ProviderName, string | null> = {
   groq: "Groq AI is active.",
   openrouter: "OpenRouter free model is active. Quality may vary.",
   openai: null,
-  fallback: "Fallback AI is active. Opponent quality is limited."
+  fallback: "Using backup AI response."
 };
 
 export function providerBanner(provider: ProviderName): string | null {

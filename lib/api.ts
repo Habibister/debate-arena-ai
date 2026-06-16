@@ -39,7 +39,7 @@ export function apiError(error: unknown) {
   if (error instanceof OpenAIUnavailableError || isLikelyOpenAIUnavailableError(error)) {
     return NextResponse.json(
       {
-        error: "AI service unavailable. Add a valid OpenAI API key or try again later."
+        error: "AI is temporarily unavailable. Please try again in a moment."
       },
       { status: 503 }
     );

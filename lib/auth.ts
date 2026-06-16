@@ -117,34 +117,37 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        const profileUser = user as typeof user & {
-          username?: string | null;
-          displayName?: string | null;
-          avatarUrl?: string | null;
-          bio?: string | null;
-          schoolOrClub?: string | null;
-          preferredOrganization?: PrismaUser["preferredOrganization"];
-        };
         token.id = user.id;
         token.role = user.role;
         token.organization = user.organization;
-        token.username = profileUser.username;
-        token.displayName = profileUser.displayName ?? user.name;
-        token.avatarUrl = profileUser.avatarUrl ?? user.image;
-        token.bio = profileUser.bio;
-        token.schoolOrClub = profileUser.schoolOrClub;
-        token.preferredOrganization = profileUser.preferredOrganization ?? user.organization;
-        token.level = user.level;
-        token.rank = user.rank;
-        token.xp = user.xp;
       }
+
+      // Keep the JWT — and therefore the session cookie — small. Profile fields
+      // like avatarUrl and bio are unbounded free text; persisting them here can
+      // push the cookie past the server's request-header size limit and trigger
+      // HTTP 431 (Request Header Fields Too Large). The session() callback
+      // rehydrates the full profile from the database on every request instead.
+      // NextAuth copies user.image (the avatar URL) into token.picture by
+      // default, so drop it explicitly as well.
+      delete token.picture;
+      delete token.username;
+      delete token.displayName;
+      delete token.avatarUrl;
+      delete token.bio;
+      delete token.schoolOrClub;
+      delete token.preferredOrganization;
+      delete token.level;
+      delete token.rank;
+      delete token.xp;
 
       return token;
     },
     async session({ session, token }) {
       let latestUser: ReturnType<typeof serializeUserProfile> | null = null;
 
-      if (token.id && token.id !== "dev-demo-student") {
+      if (token.id === "dev-demo-student") {
+        latestUser = getDevDemoStudent();
+      } else if (token.id) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id },
@@ -157,22 +160,25 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (session.user) {
+        // The JWT only carries minimal identity (see jwt callback). When the
+        // database profile is unavailable we fall back to those few claims and
+        // leave the richer fields null rather than bloating the cookie.
         const profile = latestUser ?? {
           id: token.id,
-          name: token.displayName ?? token.name,
+          name: token.name,
           email: token.email,
-          image: token.avatarUrl ?? token.picture,
-          username: token.username,
-          displayName: token.displayName ?? token.name,
-          avatarUrl: token.avatarUrl ?? token.picture,
-          bio: token.bio,
-          schoolOrClub: token.schoolOrClub,
-          preferredOrganization: token.preferredOrganization ?? token.organization,
+          image: null,
+          username: null,
+          displayName: token.name,
+          avatarUrl: null,
+          bio: null,
+          schoolOrClub: null,
+          preferredOrganization: token.organization ?? null,
           role: token.role,
           organization: token.organization,
-          level: token.level,
-          rank: token.rank,
-          xp: token.xp
+          level: undefined,
+          rank: undefined,
+          xp: undefined
         };
 
         session.user.id = profile.id;

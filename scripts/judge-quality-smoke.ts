@@ -10,6 +10,26 @@ import { getAiPersona } from "../lib/ai-personas";
 import { assessStudentSpeech, OPPONENT_COACHING_RESPONSE } from "../lib/speech-quality";
 import { getProviderOrder, extractJson } from "../lib/ai-providers";
 import { judgeDebate, mergeJudgeEnhancement } from "../lib/ai";
+import { FLASHCARDS } from "../lib/study-content";
+
+// Flashcard content quality (clear, beginner-friendly definitions; no mixed definition+strategy).
+for (const card of FLASHCARDS) {
+  // Test 2: no card starts with / leans on "Applying [term] means...".
+  assert.ok(!/applying/i.test(card.definition), `Flashcard "${card.term}" definition must not use "Applying...": ${card.definition}`);
+  // Test 4: the definition is a plain definition with no scenario language baked in.
+  assert.ok(!/in a (hosa|deca) (scenario|roleplay)/i.test(card.definition), `Flashcard "${card.term}" definition must not contain scenario language.`);
+  // Test 5: the quick check tests the actual term, and its answer is the definition.
+  assert.equal(card.quickCheck, `What does ${card.term} mean?`, `Flashcard "${card.term}" quick check must test the term.`);
+  assert.equal(card.quickCheckAnswer, card.definition, `Flashcard "${card.term}" answer must be its definition.`);
+  assert.ok(card.beginnerExplanation.length > 0, `Flashcard "${card.term}" needs a beginner explanation.`);
+}
+// Test 1: every medical (HOSA) card starts with a real definition, not a generic template.
+for (const card of FLASHCARDS.filter((c) => c.organization === "HOSA")) {
+  assert.ok(!/is a key .* term every competitor/i.test(card.definition), `HOSA card "${card.term}" must have a real definition.`);
+}
+// Spot-check the spec's worked example.
+const tachycardia = FLASHCARDS.find((c) => c.term === "tachycardia");
+assert.equal(tachycardia?.definition, "An abnormally fast heart rate.", "Tachycardia must have the correct plain definition.");
 
 function judge(transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>, studentSide: "GOVERNMENT" | "OPPOSITION" = "GOVERNMENT") {
   return buildTranscriptBasedDebateJudge({

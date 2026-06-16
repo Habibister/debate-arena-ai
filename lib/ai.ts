@@ -1,10 +1,11 @@
 import type { Level, MessageRole, Organization, PracticeMode } from "@prisma/client";
 import {
   OpenAIUnavailableError,
+  describeOpenAIError,
   getOpenAIClient,
-  hasUsableOpenAIKey,
   isLikelyOpenAIUnavailableError,
-  openAIModel
+  openAIModel,
+  unusableKeyReason
 } from "@/lib/openai";
 import { getAiPersona } from "@/lib/ai-personas";
 import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
@@ -664,12 +665,18 @@ function fallbackLessonContent(input: { organization: Organization; level: Level
   };
 }
 
-async function jsonCompletion<T>(system: string, prompt: string, fallback?: () => T): Promise<T> {
-  if (!hasUsableOpenAIKey()) {
+async function jsonCompletion<T>(system: string, prompt: string, fallback?: () => T, label = "AI"): Promise<T> {
+  // Live OpenAI is the primary path. We only ever fall back when the key is missing/invalid or the
+  // request errors — and every decision is logged so it is obvious which path produced the result.
+  const keyProblem = unusableKeyReason();
+
+  if (keyProblem) {
     if (canUseDevelopmentFallback(fallback)) {
+      console.warn(`[ai] Using fallback ${label} because: ${keyProblem}.`);
       return fallback();
     }
 
+    console.error(`[ai] OpenAI ${label} unavailable and no fallback allowed: ${keyProblem}.`);
     throw new OpenAIUnavailableError();
   }
 
@@ -689,15 +696,21 @@ async function jsonCompletion<T>(system: string, prompt: string, fallback?: () =
     const content = response.choices[0]?.message?.content;
 
     if (!content) {
-      throw new OpenAIUnavailableError("AI service unavailable. The model returned an empty response.");
+      throw new OpenAIUnavailableError("the model returned an empty response");
     }
 
-    return JSON.parse(content) as T;
+    const parsed = JSON.parse(content) as T;
+    console.info(`[ai] Using OpenAI ${label} (model: ${openAIModel}).`);
+    return parsed;
   } catch (error) {
+    const reason = describeOpenAIError(error);
+
     if (canUseDevelopmentFallback(fallback)) {
-      console.warn("[development-only AI fallback] OpenAI request failed. Using local fallback content.", error);
+      console.warn(`[ai] Using fallback ${label} because: ${reason}.`);
       return fallback();
     }
+
+    console.error(`[ai] OpenAI ${label} failed: ${reason}.`);
 
     if (isLikelyOpenAIUnavailableError(error)) {
       throw new OpenAIUnavailableError();
@@ -723,7 +736,8 @@ Practice mode: ${input.practiceMode ?? "DEBATE"}
 Optional focus area: ${input.focusArea ?? "none"}.
 Avoid repeating these previous topics from the current session: ${JSON.stringify(input.previousTopics ?? [])}.
 Return JSON with topic, background, affirmativePosition, negativePosition, and suggestedEvidenceAngles.`,
-    () => fallbackTopic(input)
+    () => fallbackTopic(input),
+    "topic generator"
   );
 }
 
@@ -737,8 +751,14 @@ export async function generateOpponentResponse(input: {
   round: number;
   transcript: DebateTranscriptMessage[];
   personaId?: string | null;
+  format?: string;
+  phase?: string;
 }) {
   const persona = getAiPersona(input.personaId);
+  const studentRole: MessageRole = input.side === "AFFIRMATIVE" ? "NEGATIVE" : "AFFIRMATIVE";
+  const latestStudentSpeech = [...input.transcript].reverse().find((message) => message.role === studentRole)?.content ?? "";
+  const previousAiSpeeches = input.transcript.filter((message) => message.role === input.side).map((message) => message.content);
+  const ratingLabel = `${persona.rating} (${persona.difficulty})`;
 
   return jsonCompletion<OpponentResponse>(
     `You are a sharp, human-sounding debate opponent arguing the ${input.side} side in a student training app. Your job is not to sound formal — your job is to make the student better.
@@ -763,21 +783,24 @@ Use normal, persuasive language in flowing paragraphs, specific to THIS motion a
 
 Never invent citations as real sources. Argue in this persona's voice: ${persona.name}. ${persona.promptInstructions}`,
     `Motion: ${input.topic}
-Organization: ${input.organization}
-Event type: ${input.eventType ?? "default"}
-Practice mode: ${input.practiceMode ?? "DEBATE"}
-Level: ${input.level}
 You are arguing: ${input.side}
-Round: ${input.round}
-Persona voice: ${persona.name} — ${persona.style}. ${persona.promptInstructions}
-Transcript so far (JSON): ${JSON.stringify(input.transcript)}
+Persona / opponent voice: ${persona.name} — ${persona.style}. ${persona.promptInstructions}
+Difficulty / rating: ${ratingLabel}
+Debate format: ${input.format ?? input.eventType ?? "default"} (${input.organization})
+Practice mode: ${input.practiceMode ?? "DEBATE"}
+Student level: ${input.level}
+Current round: ${input.round}${input.phase ? ` — phase: ${input.phase}` : ""}
+Latest student speech (answer THIS directly): ${latestStudentSpeech || "(none yet — open the clash)"}
+Your previous speeches this round (do not repeat yourself): ${previousAiSpeeches.length ? JSON.stringify(previousAiSpeeches) : "(none)"}
+Full transcript so far (JSON): ${JSON.stringify(input.transcript)}
 
 Respond to the student's most recent point using the reasoning flow above. Sound like a real, specific, persuasive human — not a template.
 Return JSON with:
 - "response": your spoken argument as natural paragraphs (no headings, no speech labels, no jargon filler).
 - "strategy": a short plain-English note on the line of attack you took (for the coach, not spoken).
 - "pressurePoints": 2-4 specific things the student must answer next.`,
-    () => fallbackOpponent({ ...input, personaId: input.personaId ?? undefined })
+    () => fallbackOpponent({ ...input, personaId: input.personaId ?? undefined }),
+    "opponent"
   );
 }
 
@@ -849,7 +872,8 @@ judgeFairnessReport must include:
 - betterVersion: rewrite the student's weakest line into a real argument with claim, warrant, motion connection, and impact.
 - fairWinnerLogic: explain that the winner was chosen on real argument quality, not debate vocabulary, referencing the actual transcript.
 - practiceSkill: name the single real skill the student should drill next (claim-warrant-impact, rebuttal, weighing/impact calculus, flowing, evidence comparison, mechanism analysis, or collapse).`,
-    () => fallbackDebateJudge(input)
+    () => fallbackDebateJudge(input),
+    "judge"
   );
 }
 
@@ -871,7 +895,8 @@ Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}
 
 Focus on business scenario understanding, performance indicators, solution quality, business reasoning, creativity, feasibility, professional communication, organization, judge questions, and delivery.
 Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, judgeQuestionFeedback, and readinessForNextLevel.`,
-    () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType })
+    () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
+    "DECA judge"
   );
 }
 
@@ -893,7 +918,8 @@ Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}
 
 Focus on health science knowledge, medical/health accuracy, event task completion, scenario response, communication, professionalism, presentation quality, and skill/performance quality when relevant.
 Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, accuracyFlags, and readinessForNextLevel.`,
-    () => fallbackPerformanceJudge({ organization: "HOSA", eventType: input.eventType })
+    () => fallbackPerformanceJudge({ organization: "HOSA", eventType: input.eventType }),
+    "HOSA judge"
   );
 }
 
@@ -921,7 +947,8 @@ Each question must include question, choices, correctAnswer, explanation, skillT
 DECA questions should align to career clusters, instructional areas, performance-indicator style skills, roleplay/case reasoning, metrics, and judge-facing business decisions.
 HOSA questions should be labeled as original practice inspired by public event guidelines and health science topics, not official HOSA practice tests.
 Questions should test transferable standards and concepts, not reproduce protected exam language.`,
-    () => fallbackPracticeQuestions(input)
+    () => fallbackPracticeQuestions(input),
+    "practice questions"
   );
 }
 
@@ -940,7 +967,8 @@ export async function generateLessonContent(input: {
     "You write concise, scaffolded lessons for middle and high school competitors. Return JSON only.",
     `Generate a ${input.level} lesson for ${input.organization} skill "${input.skillName}".
 Return lesson, examples, guidedPractice, independentPractice, and masteryQuiz.`,
-    () => fallbackLessonContent(input)
+    () => fallbackLessonContent(input),
+    "lesson content"
   );
 }
 
@@ -970,7 +998,8 @@ Return JSON recommendations with lessonSlug, reason, and priority.`,
         reason: `Development fallback recommendation for ${lesson.skill}: addresses one of the listed weak areas.`,
         priority: index === 0 ? "high" : index === 1 ? "medium" : "low"
       }))
-    })
+    }),
+    "lesson recommendations"
   );
 }
 
@@ -1010,6 +1039,7 @@ Return JSON with ready, confidence, rationale, and requiredEvidence.`,
           "A completed lesson tied to the current weakness summary"
         ]
       };
-    }
+    },
+    "readiness evaluation"
   );
 }

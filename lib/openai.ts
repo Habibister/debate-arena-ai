@@ -22,6 +22,39 @@ export function hasUsableOpenAIKey() {
   return !PLACEHOLDER_KEY_PARTS.some((part) => normalizedKey.includes(part));
 }
 
+// Why is OpenAI unusable right now? Returns null when the key is usable, otherwise a short reason
+// suitable for server logs and for choosing the fallback path.
+export function unusableKeyReason(): string | null {
+  const key = process.env.OPENAI_API_KEY?.trim();
+
+  if (!key) {
+    return "OPENAI_API_KEY is not set";
+  }
+
+  if (PLACEHOLDER_KEY_PARTS.some((part) => key.toLowerCase().includes(part))) {
+    return "OPENAI_API_KEY looks like a placeholder";
+  }
+
+  return null;
+}
+
+// Turn an OpenAI/SDK error into a concise, log-friendly reason (status + message).
+export function describeOpenAIError(error: unknown): string {
+  if (error instanceof OpenAIUnavailableError) {
+    return error.message;
+  }
+
+  const status =
+    typeof error === "object" && error && "status" in error ? Number((error as { status?: unknown }).status) : undefined;
+  const code =
+    typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+  const message = error instanceof Error ? error.message : String(error);
+  const statusLabel = status ? `HTTP ${status}` : "";
+  const codeLabel = code ? `${code}` : "";
+
+  return [statusLabel, codeLabel, message].filter(Boolean).join(" · ") || "unknown OpenAI error";
+}
+
 export function isLikelyOpenAIUnavailableError(error: unknown) {
   if (error instanceof OpenAIUnavailableError) {
     return true;

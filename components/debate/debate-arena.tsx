@@ -177,6 +177,8 @@ export type JudgeReport = {
     nextMilestone: string;
   };
   fallbackNotice?: string;
+  aiNotice?: string;
+  aiProvider?: string;
 };
 
 type TranscriptSideAnalysis = {
@@ -296,7 +298,9 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(coerceJudgeReport(initialJudgeReport));
   const [decisionOpen, setDecisionOpen] = useState(Boolean(coerceJudgeReport(initialJudgeReport)));
   const [xpEarned, setXpEarned] = useState<number | null>(null);
-  const [aiNotice, setAiNotice] = useState(coerceJudgeReport(initialJudgeReport)?.fallbackNotice ?? null);
+  const [aiNotice, setAiNotice] = useState(
+    coerceJudgeReport(initialJudgeReport)?.aiNotice ?? coerceJudgeReport(initialJudgeReport)?.fallbackNotice ?? null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpponentThinking, setIsOpponentThinking] = useState(false);
   const [isJudging, setIsJudging] = useState(false);
@@ -408,7 +412,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
     setError(null);
 
     try {
-      const opponentMessage = await requestJson<{ message: DebateMessage; opponent?: { fallbackNotice?: string } }>(`/api/debates/${debate.id}/opponent`, {
+      const opponentMessage = await requestJson<{ message: DebateMessage; opponent?: { aiNotice?: string; fallbackNotice?: string } }>(`/api/debates/${debate.id}/opponent`, {
         method: "POST",
         body: JSON.stringify({
           side: currentSpeech.messageRole,
@@ -418,7 +422,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
       });
 
       setMessages((current) => [...current, opponentMessage.message]);
-      setAiNotice(opponentMessage.opponent?.fallbackNotice ?? null);
+      setAiNotice(opponentMessage.opponent?.aiNotice ?? opponentMessage.opponent?.fallbackNotice ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to get the AI opponent response.");
     } finally {
@@ -439,7 +443,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
       setJudgeReport(result.judge);
       setDecisionOpen(true);
       setXpEarned(result.xpEarned);
-      setAiNotice(result.judge.fallbackNotice ?? null);
+      setAiNotice(result.judge.aiNotice ?? result.judge.fallbackNotice ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to judge this round.");
     } finally {
@@ -494,7 +498,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
             </div>
             <div className="mt-4 grid gap-2 text-xs font-semibold sm:grid-cols-2">
               <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
-                {aiNotice ? "Local AI opponent" : "AI opponent ready"}
+                {aiNotice && /fallback/i.test(aiNotice) ? "Local AI opponent" : "AI opponent ready"}
               </span>
               <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
                 Strength: {opponentProfile ? "student" : persona.difficulty}
@@ -772,10 +776,10 @@ function JudgeDecisionModal({
         </div>
 
         <div className="space-y-5 p-5">
-          {report.fallbackNotice ? (
+          {report.aiNotice ?? report.fallbackNotice ? (
             <div className="flex gap-2 rounded-md border border-blue-400/25 bg-blue-500/10 p-3 text-sm font-medium text-blue-100">
               <Bot className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              {report.fallbackNotice}
+              {report.aiNotice ?? report.fallbackNotice}
             </div>
           ) : null}
 

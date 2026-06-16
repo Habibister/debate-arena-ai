@@ -27,6 +27,7 @@ type TopicPackage = {
   negativePosition: string;
   suggestedEvidenceAngles: string[];
   fallbackNotice?: string;
+  aiNotice?: string;
 };
 
 async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
@@ -110,7 +111,7 @@ export function DebateRoom() {
       setTopicText(generated.topic);
       setGeneratedTopics((current) => [...current, generated.topic].slice(-25));
       setAiGeneratedTopic(true);
-      setAiNotice(generated.fallbackNotice ?? null);
+      setAiNotice(generated.aiNotice ?? generated.fallbackNotice ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to generate a motion right now.");
     } finally {

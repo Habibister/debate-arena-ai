@@ -8,6 +8,7 @@ import { buildTranscriptBasedDebateJudge } from "../lib/debate-judge-analysis";
 import { generateOpponentResponse } from "../lib/ai";
 import { getAiPersona } from "../lib/ai-personas";
 import { assessStudentSpeech, OPPONENT_COACHING_RESPONSE } from "../lib/speech-quality";
+import { getProviderOrder } from "../lib/ai-providers";
 
 function judge(transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>, studentSide: "GOVERNMENT" | "OPPOSITION" = "GOVERNMENT") {
   return buildTranscriptBasedDebateJudge({
@@ -340,6 +341,49 @@ async function opponentSoundsHuman() {
     );
   }
 }
+
+// Provider priority + cost mode (offline: only reads env, never calls the network).
+function providerOrderWith(env: Record<string, string | undefined>): string[] {
+  const keys = ["GEMINI_API_KEY", "GROQ_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "AI_COST_MODE", "AI_PROVIDER"];
+  const saved: Record<string, string | undefined> = {};
+  for (const key of keys) {
+    saved[key] = process.env[key];
+    if (env[key] === undefined) delete process.env[key];
+    else process.env[key] = env[key];
+  }
+  try {
+    return getProviderOrder();
+  } finally {
+    for (const key of keys) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+  }
+}
+
+// Test 1/2: Gemini is preferred when present; priority is Gemini -> Groq -> OpenRouter.
+assert.deepEqual(providerOrderWith({ GEMINI_API_KEY: "gemini-live" }), ["gemini"], "Gemini key alone -> gemini.");
+assert.deepEqual(
+  providerOrderWith({ GEMINI_API_KEY: "gemini-live", GROQ_API_KEY: "groq-live", OPENROUTER_API_KEY: "or-live", OPENAI_API_KEY: "oai-live" }),
+  ["gemini", "groq", "openrouter"],
+  "free_only default: priority Gemini -> Groq -> OpenRouter, and paid OpenAI excluded."
+);
+// Test 3: free_only must never call paid OpenAI, even if it is the only key.
+assert.deepEqual(providerOrderWith({ OPENAI_API_KEY: "oai-live" }), [], "free_only with only OpenAI -> no provider (fallback).");
+assert.deepEqual(providerOrderWith({ OPENAI_API_KEY: "oai-live", AI_COST_MODE: "allow_paid" }), ["openai"], "allow_paid lets OpenAI run.");
+assert.deepEqual(
+  providerOrderWith({ GEMINI_API_KEY: "gemini-live", OPENAI_API_KEY: "oai-live", AI_COST_MODE: "allow_paid" }),
+  ["gemini", "openai"],
+  "allow_paid keeps free-first priority, then OpenAI."
+);
+// AI_PROVIDER pins to a single provider.
+assert.deepEqual(
+  providerOrderWith({ GEMINI_API_KEY: "gemini-live", GROQ_API_KEY: "groq-live", AI_PROVIDER: "groq" }),
+  ["groq"],
+  "AI_PROVIDER=groq pins to Groq."
+);
+// A placeholder key is treated as unconfigured.
+assert.deepEqual(providerOrderWith({ GEMINI_API_KEY: "your-gemini-key" }), [], "Placeholder Gemini key is ignored.");
 
 function judgeSpeech(topic: string, role: "AFFIRMATIVE" | "NEGATIVE", content: string) {
   return buildTranscriptBasedDebateJudge({

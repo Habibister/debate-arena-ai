@@ -53,10 +53,27 @@ Required variables:
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="replace-with-a-long-random-secret"
-# Optional locally. Placeholder/missing keys use development-only fallback content.
-OPENAI_API_KEY="sk-proj-replace-me"
+```
+
+AI providers (no paid OpenAI required — a free Gemini key is enough):
+
+```bash
+AI_PROVIDER="auto"        # auto = Gemini -> Groq -> OpenRouter -> OpenAI
+AI_COST_MODE="free_only"  # free_only never calls paid OpenAI; allow_paid lets it run
+
+GEMINI_API_KEY=""         # https://aistudio.google.com/apikey  (recommended)
+GEMINI_MODEL="gemini-2.5-flash"
+GROQ_API_KEY=""           # https://console.groq.com/keys
+GROQ_MODEL="llama-3.3-70b-versatile"
+OPENROUTER_API_KEY=""     # https://openrouter.ai/keys
+OPENROUTER_MODEL="meta-llama/llama-3.3-70b-instruct:free"
+OPENAI_API_KEY=""         # optional/paid; only used when AI_COST_MODE="allow_paid"
 OPENAI_MODEL="gpt-4o-mini"
 ```
+
+If no provider key is set (or all fail), AI routes use clearly-marked deterministic
+fallback content so local demos still work. The server logs which engine produced
+each response, e.g. `[ai] Using Gemini opponent.` or `[ai] Using fallback judge because: ...`.
 
 Generate a strong NextAuth secret:
 
@@ -118,15 +135,25 @@ npm run db:seed
 
 If you later switch to pooled runtime connections, keep Prisma migrations on a direct database connection.
 
-## OpenAI Setup
+## AI Setup
 
-1. Create an OpenAI API key.
-2. Set `OPENAI_API_KEY` in `.env.local` and in Vercel.
-3. Keep `OPENAI_MODEL="gpt-4o-mini"` unless you intentionally choose another model.
+You do not need a paid OpenAI key. The recommended path is a free Google Gemini key:
 
-In `NODE_ENV=development`, AI-powered routes use clearly marked local fallback content when `OPENAI_API_KEY` is missing, invalid, or still a placeholder. This keeps local demos working for debate motions, AI opponent speeches, judging, DECA/HOSA tests, lessons, and recommendations.
+1. Get a free key at https://aistudio.google.com/apikey.
+2. Set `GEMINI_API_KEY` in `.env.local` (and in Vercel for deploys).
+3. Leave `AI_PROVIDER="auto"` and `AI_COST_MODE="free_only"`.
 
-In production, add a valid OpenAI key to use live AI generation.
+Provider priority is **Gemini → Groq → OpenRouter (:free) → OpenAI**. The app uses the
+first configured provider whose request succeeds. `AI_COST_MODE="free_only"` (the default)
+never calls the paid OpenAI provider — set `AI_COST_MODE="allow_paid"` to opt back in.
+
+The opponent, judge, rebuttal feedback, and model rewrites all go through this layer
+(`lib/ai-providers.ts`). Every call logs which engine was used, e.g.
+`[ai] Using Gemini opponent.` or `[ai] OpenRouter judge failed because: HTTP 429 ...`.
+
+If no provider is configured (or all fail), AI routes use clearly marked deterministic
+local fallback content so debate motions, opponent speeches, judging, DECA/HOSA tests,
+lessons, and recommendations still work for local demos.
 
 ## Local Setup
 

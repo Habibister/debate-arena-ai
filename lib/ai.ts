@@ -1,12 +1,12 @@
 import type { Level, MessageRole, Organization, PracticeMode } from "@prisma/client";
+import { OpenAIUnavailableError } from "@/lib/openai";
 import {
-  OpenAIUnavailableError,
-  describeOpenAIError,
-  getOpenAIClient,
-  isLikelyOpenAIUnavailableError,
-  openAIModel,
-  unusableKeyReason
-} from "@/lib/openai";
+  AllProvidersUnavailableError,
+  extractJson,
+  providerBanner,
+  runProviderCompletion,
+  type ProviderName
+} from "@/lib/ai-providers";
 import { getAiPersona } from "@/lib/ai-personas";
 import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
@@ -64,6 +64,8 @@ type OpponentResponse = {
   strategy: string;
   pressurePoints: string[];
   fallbackNotice?: string;
+  aiNotice?: string;
+  aiProvider?: ProviderName;
 };
 
 type DebateJudgeResult = {
@@ -135,6 +137,8 @@ type DebateJudgeResult = {
   recommendedLessons: LessonRecommendation[];
   readinessForNextLevel: ReadinessForNextLevel;
   fallbackNotice?: string;
+  aiNotice?: string;
+  aiProvider?: ProviderName;
 };
 
 type TranscriptSideAnalysis = {
@@ -749,58 +753,39 @@ function fallbackLessonContent(input: { organization: Organization; level: Level
   };
 }
 
-async function jsonCompletion<T>(system: string, prompt: string, fallback?: () => T, label = "AI"): Promise<T> {
-  // Live OpenAI is the primary path. We only ever fall back when the key is missing/invalid or the
-  // request errors — and every decision is logged so it is obvious which path produced the result.
-  const keyProblem = unusableKeyReason();
-
-  if (keyProblem) {
-    if (canUseDevelopmentFallback(fallback)) {
-      console.warn(`[ai] Using fallback ${label} because: ${keyProblem}.`);
-      return fallback();
+// Tag a result object with which provider produced it and the UI banner to show (if any).
+function tagProvider<T>(value: T, provider: ProviderName): T {
+  if (value && typeof value === "object") {
+    (value as Record<string, unknown>).aiProvider = provider;
+    const banner = providerBanner(provider);
+    if (banner) {
+      (value as Record<string, unknown>).aiNotice = banner;
     }
-
-    console.error(`[ai] OpenAI ${label} unavailable and no fallback allowed: ${keyProblem}.`);
-    throw new OpenAIUnavailableError();
   }
+  return value;
+}
 
-  const openai = getOpenAIClient();
-
+// Run a JSON completion through the multi-provider layer (Gemini -> Groq -> OpenRouter -> OpenAI),
+// falling back to deterministic local content only when every configured provider fails.
+async function jsonCompletion<T>(system: string, prompt: string, fallback?: () => T, label = "AI"): Promise<T> {
   try {
-    const response = await openai.chat.completions.create({
-      model: openAIModel,
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: prompt }
-      ]
-    });
-
-    const content = response.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new OpenAIUnavailableError("the model returned an empty response");
-    }
-
-    const parsed = JSON.parse(content) as T;
-    console.info(`[ai] Using OpenAI ${label} (model: ${openAIModel}).`);
-    return parsed;
+    const { content, provider } = await runProviderCompletion({ system, prompt, temperature: 0.7 }, label);
+    return tagProvider(extractJson<T>(content), provider);
   } catch (error) {
-    const reason = describeOpenAIError(error);
+    const reason =
+      error instanceof AllProvidersUnavailableError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
 
     if (canUseDevelopmentFallback(fallback)) {
       console.warn(`[ai] Using fallback ${label} because: ${reason}.`);
-      return fallback();
+      return tagProvider(fallback(), "fallback");
     }
 
-    console.error(`[ai] OpenAI ${label} failed: ${reason}.`);
-
-    if (isLikelyOpenAIUnavailableError(error)) {
-      throw new OpenAIUnavailableError();
-    }
-
-    throw new OpenAIUnavailableError("AI service unavailable. Try again later.");
+    console.error(`[ai] ${label} unavailable and no fallback allowed: ${reason}.`);
+    throw new OpenAIUnavailableError(`AI service unavailable: ${reason}`);
   }
 }
 
@@ -867,8 +852,8 @@ export async function generateOpponentResponse(input: {
     ? `You are on the ${stanceLabel} side, so you SUPPORT and DEFEND the motion. Argue that the motion SHOULD happen: give reasons it is right, defend how it would be implemented, and answer objections to it. Do NOT attack the motion, ask for proof that the motion is true, or propose a "narrower fix instead of" the motion — that is the other side's job.`
     : `You are on the ${stanceLabel} side, so you OPPOSE the motion. Argue that the motion SHOULD NOT happen: attack the case for it, expose its weak links, and offer alternatives or disadvantages. Do NOT end up defending the motion.`;
 
-  return jsonCompletion<OpponentResponse>(
-    `You are a sharp, human-sounding debate opponent in a student training app, arguing the ${stanceLabel} side. Your job is not to sound formal — your job is to make the student better with realistic, persuasive opposition FROM YOUR ASSIGNED SIDE.
+  const fallbackFn = () => fallbackOpponent({ ...input, personaId: input.personaId ?? undefined });
+  const systemPrompt = `You are a sharp, human-sounding debate opponent in a student training app, arguing the ${stanceLabel} side. Your job is not to sound formal — your job is to make the student better with realistic, persuasive opposition FROM YOUR ASSIGNED SIDE.
 
 SIDE FIDELITY — THIS OVERRIDES EVERYTHING: ${stanceRule}
 
@@ -891,8 +876,8 @@ NEVER write any of these (they make you sound robotic and fake):
 
 Use normal, persuasive language in flowing paragraphs, specific to THIS motion and to what the student actually said. Target voice, for example: "I get why your point sounds appealing. If students are going to use AI anyway, schools should probably teach them to use it responsibly. But your argument assumes the best way to do that is a separate school requirement. That isn't obvious. A better approach is to teach AI use inside English, science, and research work, where students actually need to evaluate sources and check whether AI is wrong."
 
-Never invent citations as real sources. Argue in this persona's voice: ${persona.name}. ${persona.promptInstructions}`,
-    `Motion: ${input.topic}
+Never invent citations as real sources. Argue in this persona's voice: ${persona.name}. ${persona.promptInstructions}`;
+  const userPrompt = `Motion: ${input.topic}
 You are arguing: ${stanceLabel} — you ${supportsMotion ? "SUPPORT and defend this motion" : "OPPOSE this motion"}.
 Persona / opponent voice: ${persona.name} — ${persona.style}. ${persona.promptInstructions}
 Difficulty / rating: ${ratingLabel}
@@ -910,10 +895,63 @@ Length and shape: aim for ${wordTarget}, conversational but sharp. The response 
 Return JSON with:
 - "response": your spoken argument as natural paragraphs (no headings, no speech labels, no jargon filler).
 - "strategy": a short plain-English note on the line of attack you took (for the coach, not spoken).
-- "pressurePoints": 2-4 specific things the student must answer next.`,
-    () => fallbackOpponent({ ...input, personaId: input.personaId ?? undefined }),
-    "opponent"
-  );
+- "pressurePoints": 2-4 specific things the student must answer next.`;
+
+  let result = await jsonCompletion<OpponentResponse>(systemPrompt, userPrompt, fallbackFn, "opponent");
+
+  // Side-fidelity guardrail on live output: if a provider returned the wrong side, regenerate once,
+  // then fall back to the deterministic (side-correct) opponent. The fallback is already side-correct.
+  if (result.aiProvider && result.aiProvider !== "fallback" && arguesWrongSide(result.response, supportsMotion)) {
+    console.warn("[ai] Opponent argued the wrong side; regenerating once.");
+    result = await jsonCompletion<OpponentResponse>(
+      `${systemPrompt}\n\nIMPORTANT: your previous attempt argued the WRONG side. You are ${stanceLabel}; you MUST ${supportsMotion ? "DEFEND" : "OPPOSE"} the motion "${input.topic}". Rewrite so you clearly argue your assigned side.`,
+      userPrompt,
+      fallbackFn,
+      "opponent (side retry)"
+    );
+
+    if (result.aiProvider && result.aiProvider !== "fallback" && arguesWrongSide(result.response, supportsMotion)) {
+      console.warn("[ai] Opponent still argued the wrong side; using side-correct fallback.");
+      return tagProvider(fallbackFn(), "fallback");
+    }
+  }
+
+  return result;
+}
+
+// Conservative live-output side check: flags only a clear inversion (>= 2 wrong-side cues dominating)
+// so we never regenerate a genuinely on-side speech.
+export function arguesWrongSide(text: string, supportsMotion: boolean): boolean {
+  const lower = (text ?? "").toLowerCase();
+  const supportCues = [
+    "should be implemented",
+    "should be adopted",
+    "should happen",
+    "we should",
+    "i support",
+    "i'm defending",
+    "i am defending",
+    "i will defend",
+    "defend the motion",
+    "in favor of",
+    "this policy should"
+  ];
+  const opposeCues = [
+    "should not be implemented",
+    "should not",
+    "shouldn't",
+    "i oppose",
+    "oppose the motion",
+    "against the motion",
+    "do not support",
+    "this should not happen",
+    "a narrower fix",
+    "reject the motion"
+  ];
+  const support = supportCues.filter((cue) => lower.includes(cue)).length;
+  const oppose = opposeCues.filter((cue) => lower.includes(cue)).length;
+
+  return supportsMotion ? oppose >= 2 && oppose > support : support >= 2 && support > oppose;
 }
 
 type ModelRewrite = {

@@ -7,6 +7,7 @@ delete process.env.OPENAI_API_KEY;
 import { buildTranscriptBasedDebateJudge } from "../lib/debate-judge-analysis";
 import { generateOpponentResponse } from "../lib/ai";
 import { getAiPersona } from "../lib/ai-personas";
+import { assessStudentSpeech, OPPONENT_COACHING_RESPONSE } from "../lib/speech-quality";
 
 function judge(transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>, studentSide: "GOVERNMENT" | "OPPOSITION" = "GOVERNMENT") {
   return buildTranscriptBasedDebateJudge({
@@ -400,8 +401,60 @@ async function sideFidelityTests() {
   }
 }
 
+// Non-substantive speech guardrail.
+// Test 1: "n" is not a submittable speech.
+assert.ok(!assessStudentSpeech("n").ok, '"n" must be blocked as non-substantive.');
+// Test 2: "phones bad" is not a submittable speech.
+assert.ok(!assessStudentSpeech("phones bad").ok, '"phones bad" must be blocked as non-substantive.');
+// Test 3: a real 2-3 sentence argument is allowed.
+assert.ok(
+  assessStudentSpeech(
+    "Dress codes should be implemented because they reduce distractions and set clear expectations for students. They must be enforced fairly so the policy helps rather than targets anyone."
+  ).ok,
+  "A real 2-3 sentence argument must be allowed."
+);
+// Beginner mode allows shorter speeches but still requires a claim.
+assert.ok(assessStudentSpeech("Phones should be banned because they distract students", "BEGINNER").ok, "Beginner: a short real claim is allowed.");
+assert.ok(!assessStudentSpeech("phones bad", "BEGINNER").ok, "Beginner: nonsense is still blocked.");
+
+// Test 5: the judge scores a nonsense speech very low and explains why.
+const nonsenseJudged = buildTranscriptBasedDebateJudge({
+  organization: "DEBATE",
+  eventType: "PARLIAMENTARY_DEBATE",
+  level: "INTERMEDIATE",
+  topic: "This house believes dress codes should be implemented in schools.",
+  studentSide: "GOVERNMENT",
+  transcript: [
+    { role: "AFFIRMATIVE", round: 1, content: "n" },
+    {
+      role: "NEGATIVE",
+      round: 2,
+      content: "Dress codes should not be implemented because they are unevenly enforced and focus on controlling students rather than improving learning."
+    }
+  ]
+});
+assert.ok(category(nonsenseJudged, "argument") < 20, "A nonsense speech must score very low on claim.");
+assert.ok(category(nonsenseJudged, "warrant") < 20, "A nonsense speech must score very low on warrant.");
+const nonsenseArgReason = nonsenseJudged.categoryScores.find((entry) => entry.key === "argument")?.reason ?? "";
+assert.ok(/too short or unclear/i.test(nonsenseArgReason), "The judge must explain that the speech was too short or unclear.");
+
+// Test 4: if the backend is handed a nonsense student speech, the opponent coaches instead of debating.
+async function guardrailTests() {
+  const coaching = await generateOpponentResponse({
+    organization: "DEBATE",
+    level: "INTERMEDIATE",
+    topic: "This house believes dress codes should be implemented in schools.",
+    side: "NEGATIVE",
+    round: 2,
+    personaId: "evidence-specialist",
+    transcript: [{ role: "AFFIRMATIVE", round: 1, content: "n" }]
+  });
+  assert.equal(coaching.response, OPPONENT_COACHING_RESPONSE, "A nonsense student speech must get a coaching response, not a full opponent speech.");
+}
+
 opponentSoundsHuman()
   .then(() => sideFidelityTests())
+  .then(() => guardrailTests())
   .then(() => {
     console.log("Judge quality smoke tests passed.");
   })

@@ -36,6 +36,7 @@ import {
 } from "@/lib/debate-formats";
 import { cn, titleCase } from "@/lib/utils";
 import { calculateDebateRating } from "@/lib/xp";
+import { assessStudentSpeech, SUBMIT_HELPER_TEXT } from "@/lib/speech-quality";
 
 type ArenaDebate = {
   id: string;
@@ -318,6 +319,9 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const canJudge = Boolean(!judgeReport && completedSpeechCount >= config.speeches.length && debate.status !== "JUDGED");
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
+  // Non-substantive speech guardrail: don't let "n" / "phones bad" through to a real debate round.
+  const speechAssessment = useMemo(() => assessStudentSpeech(studentInput, debate.level), [studentInput, debate.level]);
+  const canSubmitSpeech = studentInput.trim().length > 0 && speechAssessment.ok;
   const progress = Math.round((Math.min(completedSpeechCount, config.speeches.length) / Math.max(config.speeches.length, 1)) * 100);
   const persona = getAiPersona(debate.aiPersona);
   const studentRating = calculateDebateRating({
@@ -363,6 +367,12 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
   async function submitStudentSpeech() {
     if (!studentInput.trim() || !currentSpeech || !isStudentTurn || judgeReport || prepActive) {
+      return;
+    }
+
+    const assessment = assessStudentSpeech(studentInput, debate.level);
+    if (!assessment.ok) {
+      setError(assessment.reason ?? "Write at least 2–3 sentences so the opponent has something real to answer.");
       return;
     }
 
@@ -624,8 +634,13 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                     className="min-h-32 border-white/15 bg-neutral-900 text-white placeholder:text-neutral-500 focus-visible:ring-emerald-400"
                     disabled={isSubmitting || prepActive}
                   />
+                  {studentInput.trim().length > 0 && !speechAssessment.ok ? (
+                    <p className="mt-2 text-sm font-medium text-amber-300">{speechAssessment.reason ?? SUBMIT_HELPER_TEXT}</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-neutral-500">{SUBMIT_HELPER_TEXT}</p>
+                  )}
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <Button type="button" onClick={submitStudentSpeech} disabled={isSubmitting || !studentInput.trim() || prepActive} className="bg-emerald-500 text-white hover:bg-emerald-500/90">
+                    <Button type="button" onClick={submitStudentSpeech} disabled={isSubmitting || !canSubmitSpeech || prepActive} className="bg-emerald-500 text-white hover:bg-emerald-500/90">
                       {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquareText className="h-4 w-4" aria-hidden />}
                       Submit speech
                     </Button>

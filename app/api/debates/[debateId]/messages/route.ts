@@ -4,6 +4,7 @@ import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { countDebateSpeeches, getNextSpeech, getSideLabel, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
+import { assessStudentSpeech } from "@/lib/speech-quality";
 import { debateMessageCreateSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -99,6 +100,13 @@ export async function POST(request: Request, { params }: { params: { debateId: s
 
       if (input.role !== nextSpeech.messageRole || input.round !== nextSpeech.round || (input.speechKey && input.speechKey !== nextSpeech.key)) {
         throw new HttpError(`Submit the next required speech: ${nextSpeech.label}.`, 400);
+      }
+
+      // Non-substantive speech guardrail: reject nonsense / ultra-short speeches so they never create
+      // a fake debate round (mirrors the client check; the client should block these first).
+      const assessment = assessStudentSpeech(input.content, debate.level);
+      if (!assessment.ok) {
+        throw new HttpError(assessment.reason ?? "Write at least 2–3 sentences so the opponent has something real to answer.", 422);
       }
     }
 

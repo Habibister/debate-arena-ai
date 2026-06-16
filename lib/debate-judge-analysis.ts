@@ -1,4 +1,5 @@
 import type { Level, MessageRole, Organization } from "@prisma/client";
+import { countMeaningfulWords, hasClaim } from "@/lib/speech-quality";
 
 type DebateTranscriptMessage = {
   role: MessageRole;
@@ -75,6 +76,7 @@ type SideMetrics = {
     realWarrant: number;
   };
   isMostlyJargon: boolean;
+  nonSubstantive: boolean;
   jargonPhrase: string | null;
   dropped: string[];
 };
@@ -591,6 +593,10 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const finalNewArgument = detectFinalNewArgument(speeches);
   const claims = extractClaims(sideSentences);
 
+  // Nonsense / non-substantive text ("n", "phones bad") cannot earn real argument scores.
+  const meaningfulWords = countMeaningfulWords(combinedText);
+  const nonSubstantive = speeches.length > 0 && (meaningfulWords < 6 || (!hasClaim(combinedText) && meaningfulWords < 12));
+
   // SIDE FIDELITY: Government must support the motion, Opposition must oppose it. If a side's language
   // clearly argues the wrong direction, that is a side inversion and side fidelity is tanked.
   const supportSignal = countMarkers(combinedText, SUPPORT_MARKERS);
@@ -667,6 +673,20 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     overall: 0
   };
 
+  // A nonsense / non-substantive speech earns no real argument credit, whatever stray markers it hit.
+  if (nonSubstantive) {
+    scores.claimClarity = Math.min(scores.claimClarity, 12);
+    scores.warrant = Math.min(scores.warrant, 10);
+    scores.mechanism = Math.min(scores.mechanism, 10);
+    scores.impact = Math.min(scores.impact, 10);
+    scores.refutation = Math.min(scores.refutation, 12);
+    scores.weighing = Math.min(scores.weighing, 10);
+    scores.evidence = Math.min(scores.evidence, 10);
+    scores.motionConnection = Math.min(scores.motionConnection, 10);
+    scores.centralClashResponse = Math.min(scores.centralClashResponse, 10);
+    scores.sideFidelity = Math.min(scores.sideFidelity, 12);
+  }
+
   scores.overall = clamp(
     scores.claimClarity * 0.1 +
       scores.warrant * 0.11 +
@@ -710,6 +730,7 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
       realWarrant
     },
     isMostlyJargon,
+    nonSubstantive,
     jargonPhrase,
     dropped: []
   };
@@ -870,7 +891,14 @@ function buildSpeakerScores(government: SideMetrics, opposition: SideMetrics) {
 
 function buildCategoryScores(student: SideMetrics): CategoryScore[] {
   return [
-    { key: "argument", label: "Claim", score: student.scores.claimClarity, reason: scoreReason("claim clarity", student.scores.claimClarity, student) },
+    {
+      key: "argument",
+      label: "Claim",
+      score: student.scores.claimClarity,
+      reason: student.nonSubstantive
+        ? "This speech was too short or unclear to count as an argument. Make one clear claim about the motion and give a reason for it."
+        : scoreReason("claim clarity", student.scores.claimClarity, student)
+    },
     { key: "warrant", label: "Warrant", score: student.scores.warrant, reason: scoreReason("warrant/reasoning", student.scores.warrant, student) },
     { key: "mechanism", label: "Mechanism", score: student.scores.mechanism, reason: scoreReason("mechanism", student.scores.mechanism, student) },
     { key: "impact", label: "Impact", score: student.scores.impact, reason: scoreReason("impact", student.scores.impact, student) },

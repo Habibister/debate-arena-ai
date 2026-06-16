@@ -12,6 +12,7 @@ import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
+import { assessStudentSpeech, OPPONENT_COACHING_RESPONSE } from "@/lib/speech-quality";
 
 type DebateTranscriptMessage = {
   role: MessageRole;
@@ -841,6 +842,22 @@ export async function generateOpponentResponse(input: {
   const studentRole: MessageRole = input.side === "AFFIRMATIVE" ? "NEGATIVE" : "AFFIRMATIVE";
   const latestStudentSpeech = [...input.transcript].reverse().find((message) => message.role === studentRole)?.content ?? "";
   const previousAiSpeeches = input.transcript.filter((message) => message.role === input.side).map((message) => message.content);
+
+  // Non-substantive speech guardrail: if the student's last speech is nonsense or too short to
+  // debate, coach them instead of inventing a full opposition speech around "n". (Only when there IS
+  // a student speech to answer — an opening AI speech with an empty transcript proceeds normally.)
+  if (latestStudentSpeech.trim().length > 0 && !assessStudentSpeech(latestStudentSpeech, input.level).ok) {
+    console.info("[ai] Coaching opponent because: the last student speech was non-substantive.");
+    return {
+      response: OPPONENT_COACHING_RESPONSE,
+      strategy: "Coaching: the last speech was too short or unclear to debate.",
+      pressurePoints: [
+        "State one clear claim (your position on the motion).",
+        "Give one reason for it — a 'because' clause.",
+        "Tie that reason to the motion with a concrete impact."
+      ]
+    };
+  }
   const ratingLabel = `${persona.rating} (${persona.difficulty})`;
   const advanced = input.level === "ELITE" || persona.difficulty === "elite";
   const wordTarget = advanced ? "180-260 words" : "100-180 words";

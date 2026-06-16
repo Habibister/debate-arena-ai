@@ -1290,7 +1290,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
           : "Keep training before the next level: the speech still needs more warrant, impact comparison, or direct clash.",
       nextMilestone: "Complete a judged round where your final speech answers the opponent's best argument and weighs your impact in one clear voter."
     },
-    fallbackNotice: "Fallback AI is active. Judging quality is limited until OPENAI_API_KEY is configured.",
+    fallbackNotice: "AI is temporarily unavailable, so we used a backup response.",
     eventType,
     topic: input.topic,
     organization: input.organization,

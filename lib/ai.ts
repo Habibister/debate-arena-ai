@@ -178,8 +178,7 @@ type PerformanceJudgeResult = {
   fallbackNotice?: string;
 };
 
-const DEV_AI_FALLBACK_NOTICE =
-  "Fallback AI is active. Opponent quality is limited until OPENAI_API_KEY is configured.";
+const DEV_AI_FALLBACK_NOTICE = "AI is temporarily unavailable, so we used a backup response.";
 
 function compactRubric(categories: RubricCategorySeed[]) {
   return categories.map((category) => ({
@@ -198,10 +197,10 @@ function rubricFor(organization: Organization, eventType: string) {
   return seed ? compactRubric(seed.categories) : [];
 }
 
-function canUseDevelopmentFallback<T>(fallback?: () => T): fallback is () => T {
-  // Development-only safety valve: local deterministic content is used only while running Next.js locally.
-  // Production never bypasses OpenAI when NODE_ENV is not "development".
-  return process.env.NODE_ENV === "development" && Boolean(fallback);
+function hasFallback<T>(fallback?: () => T): fallback is () => T {
+  // The deterministic local fallback is the last resort in EVERY environment (including production on
+  // Vercel). AI must never hard-fail the UI just because a provider errors or no key is configured.
+  return Boolean(fallback);
 }
 
 function fallbackCategories(organization: Organization, eventType: string) {
@@ -940,13 +939,13 @@ async function jsonCompletion<T>(
           ? error.message
           : String(error);
 
-    if (canUseDevelopmentFallback(fallback)) {
+    if (hasFallback(fallback)) {
       console.warn(`[ai] Using fallback ${label} because: ${reason}.`);
       return tagProvider(fallback(), "fallback");
     }
 
-    console.error(`[ai] ${label} unavailable and no fallback allowed: ${reason}.`);
-    throw new OpenAIUnavailableError(`AI service unavailable: ${reason}`);
+    console.error(`[ai] ${label} failed and no local fallback is available: ${reason}.`);
+    throw new OpenAIUnavailableError(`AI is temporarily unavailable: ${reason}`);
   }
 }
 

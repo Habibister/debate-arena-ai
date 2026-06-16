@@ -3,7 +3,7 @@ import OpenAI from "openai";
 let cachedClient: OpenAI | null = null;
 
 export class OpenAIUnavailableError extends Error {
-  constructor(message = "AI service unavailable. Add a valid OpenAI API key or try again later.") {
+  constructor(message = "AI is temporarily unavailable. Please try again in a moment.") {
     super(message);
     this.name = "OpenAIUnavailableError";
   }

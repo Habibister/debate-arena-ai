@@ -66,7 +66,12 @@ type SideMetrics = {
     signpost: number;
     vague: number;
     finalNewArgument: number;
+    jargon: number;
+    topicEngagement: number;
+    realWarrant: number;
   };
+  isMostlyJargon: boolean;
+  jargonPhrase: string | null;
   dropped: string[];
 };
 
@@ -227,6 +232,45 @@ const VAGUE_PATTERNS = [
   "just because"
 ];
 
+// Empty debate jargon: phrases that SOUND like weighing/comparison but carry no argument on their
+// own. They earn nothing unless the speech also proves the underlying claim with warrant and impact.
+const EMPTY_JARGON_MARKERS = [
+  "clearer causation",
+  "lower risk",
+  "impact comparison",
+  "stronger impact",
+  "more defensible impact",
+  "judge should prefer",
+  "prefer our side",
+  "prefer us",
+  "we outweigh",
+  "direct clash",
+  "independent offense",
+  "clearer warrant",
+  "stronger warrant"
+];
+
+// A genuine warrant connective. Excludes the bare "if " used by WARRANT_MARKERS, because "even if"
+// (a weighing phrase) would otherwise register as a real warrant and let jargon pass the substance gate.
+const REAL_WARRANT_MARKERS = [
+  "because",
+  "since",
+  "therefore",
+  "this means",
+  "as a result",
+  "leads to",
+  "causes",
+  "due to",
+  "mechanism",
+  "solves",
+  "works"
+];
+
+function firstMarkerMatch(text: string, markers: string[]) {
+  const lower = text.toLowerCase();
+  return markers.find((marker) => lower.includes(marker)) ?? null;
+}
+
 function clamp(score: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(score)));
 }
@@ -348,12 +392,14 @@ function detectFinalNewArgument(speeches: DebateTranscriptMessage[]) {
   return newKeywords.length >= 4 ? 1 : 0;
 }
 
-function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[]): SideMetrics {
+function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], topicKeywords: string[]): SideMetrics {
   const speeches = transcript.filter((message) => sideForRole(message.role) === side);
   const combinedText = speeches.map((speech) => speech.content).join("\n\n");
+  const lowerText = combinedText.toLowerCase();
   const sideSentences = sentences(combinedText);
   const wordCount = words(combinedText).length;
   const warrant = countMarkers(combinedText, WARRANT_MARKERS);
+  const realWarrant = countMarkers(combinedText, REAL_WARRANT_MARKERS);
   const impact = countMarkers(combinedText, IMPACT_MARKERS);
   const refutation = countMarkers(combinedText, REFUTATION_MARKERS);
   const opponentReference = countMarkers(combinedText, ["opponent", "they say", "they argue", "their", "opposition", "government", "affirmative", "negative"]);
@@ -361,35 +407,49 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[]): S
   const evidence = countMarkers(combinedText, EVIDENCE_MARKERS) + (/\d/.test(combinedText) ? 1 : 0);
   const signpost = countMarkers(combinedText, SIGNPOST_MARKERS);
   const vague = countMarkers(combinedText, VAGUE_PATTERNS);
+  const jargon = countMarkers(combinedText, EMPTY_JARGON_MARKERS);
+  const jargonPhrase = firstMarkerMatch(combinedText, EMPTY_JARGON_MARKERS);
+  const topicEngagement = topicKeywords.filter((keyword) => lowerText.includes(keyword)).length;
   const finalNewArgument = detectFinalNewArgument(speeches);
   const claims = extractClaims(sideSentences);
+
+  // Substance gate: a speech only earns weighing/refutation/impact credit if it shows REAL content —
+  // a genuine warrant, a concrete impact, evidence, or real engagement with the motion. A speech that
+  // is only ballot jargon (e.g. "judge should prefer us for clearer causation and lower risk") with no
+  // proven claim is treated as empty and penalized instead of rewarded.
+  const substanceSignals = realWarrant + topicEngagement + (impact > 0 ? 1 : 0) + (evidence > 0 ? 1 : 0);
+  const isMostlyJargon = jargon >= 1 && realWarrant === 0 && topicEngagement === 0 && substanceSignals <= 1;
+  const grounded = isMostlyJargon ? 0 : 1;
+  const jargonPenalty = jargon * 6 + (isMostlyJargon ? 22 : 0);
+
   const lengthBonus = Math.min(16, wordCount / 14);
   const vaguePenalty = vague * 9 + (wordCount > 220 && warrant + impact + weighing + evidence < 4 ? 10 : 0);
   const finalSpeechText = speeches[speeches.length - 1]?.content ?? "";
   const directAnswerBonus =
-    opponentReference > 0 && refutation > 0
-      ? (warrant > 0 ? 7 : 0) + (impact > 0 ? 4 : 0) + (weighing > 0 ? 6 : 0) + (evidence > 0 ? 3 : 0)
+    !isMostlyJargon && opponentReference > 0 && refutation > 0
+      ? (realWarrant > 0 ? 7 : 0) + (impact > 0 ? 4 : 0) + (weighing > 0 ? 6 : 0) + (evidence > 0 ? 3 : 0)
       : 0;
   const finalSpeechScore = finalSpeechText
     ? clamp(
         42 +
-          countMarkers(finalSpeechText, REFUTATION_MARKERS) * 9 +
-          countMarkers(finalSpeechText, WEIGHING_MARKERS) * 14 +
-          countMarkers(finalSpeechText, WARRANT_MARKERS) * 7 +
-          countMarkers(finalSpeechText, IMPACT_MARKERS) * 5 -
-          finalNewArgument * 14
+          (isMostlyJargon ? 0 : countMarkers(finalSpeechText, REFUTATION_MARKERS) * 9) +
+          (isMostlyJargon ? 0 : countMarkers(finalSpeechText, WEIGHING_MARKERS) * 14) +
+          (isMostlyJargon ? 0 : countMarkers(finalSpeechText, REAL_WARRANT_MARKERS) * 7) +
+          (isMostlyJargon ? 0 : countMarkers(finalSpeechText, IMPACT_MARKERS) * 5) -
+          finalNewArgument * 14 -
+          jargonPenalty
       )
     : 45;
 
   const scores = {
-    claimClarity: clamp(36 + lengthBonus + claims.length * 9 + signpost * 3 - vaguePenalty),
-    warrant: clamp(30 + warrant * 15 + Math.min(10, wordCount / 30) - vague * 7),
-    impact: clamp(30 + impact * 9 + warrant * 2 - vague * 5),
-    refutation: clamp(26 + refutation * 10 + opponentReference * 7 + directAnswerBonus - vague * 4),
-    weighing: clamp(24 + weighing * 18 + (impact > 1 ? 5 : 0) - vague * 4),
-    evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5),
+    claimClarity: clamp(36 + lengthBonus + claims.length * 9 + signpost * 3 - vaguePenalty - jargonPenalty),
+    warrant: clamp(30 + warrant * 15 + Math.min(10, wordCount / 30) - vague * 7 - jargonPenalty),
+    impact: clamp(30 + grounded * impact * 9 + grounded * warrant * 2 - vague * 5 - jargonPenalty),
+    refutation: clamp(26 + grounded * (refutation * 10 + opponentReference * 7) + directAnswerBonus - vague * 4 - jargonPenalty),
+    weighing: clamp(24 + grounded * weighing * 18 + (!isMostlyJargon && impact > 1 ? 5 : 0) - vague * 4 - jargonPenalty),
+    evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5 - jargonPenalty),
     organization: clamp(38 + signpost * 11 + Math.min(10, sideSentences.length * 2) - vague * 3),
-    responsiveness: clamp(30 + opponentReference * 8 + refutation * 7 + Math.round(directAnswerBonus / 2) - vague * 4),
+    responsiveness: clamp(30 + grounded * (opponentReference * 8 + refutation * 7) + Math.round(directAnswerBonus / 2) - vague * 4 - jargonPenalty),
     finalSpeech: finalSpeechScore,
     ruleCompliance: clamp(88 - finalNewArgument * 22 - vague * 2),
     style: clamp(45 + Math.min(18, wordCount / 18) + signpost * 5 - vague * 5),
@@ -406,7 +466,8 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[]): S
       scores.organization * 0.08 +
       scores.responsiveness * 0.09 +
       scores.finalSpeech * 0.05 +
-      scores.ruleCompliance * 0.03
+      scores.ruleCompliance * 0.03 -
+      (isMostlyJargon ? 10 : 0)
   );
 
   return {
@@ -428,8 +489,13 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[]): S
       evidence,
       signpost,
       vague,
-      finalNewArgument
+      finalNewArgument,
+      jargon,
+      topicEngagement,
+      realWarrant
     },
+    isMostlyJargon,
+    jargonPhrase,
     dropped: []
   };
 }
@@ -616,7 +682,9 @@ function winnerFromTranscriptScores(government: SideMetrics, opposition: SideMet
     government.scores.finalSpeech * 0.7 -
     government.dropped.length * 5 -
     government.counts.vague * 4 -
-    government.counts.finalNewArgument * 4;
+    government.counts.finalNewArgument * 4 -
+    government.counts.jargon * 6 -
+    (government.isMostlyJargon ? 30 : 0);
   const oppositionTieBreak =
     opposition.scores.refutation * 1.3 +
     opposition.scores.weighing * 1.35 +
@@ -626,7 +694,9 @@ function winnerFromTranscriptScores(government: SideMetrics, opposition: SideMet
     opposition.scores.finalSpeech * 0.7 -
     opposition.dropped.length * 5 -
     opposition.counts.vague * 4 -
-    opposition.counts.finalNewArgument * 4;
+    opposition.counts.finalNewArgument * 4 -
+    opposition.counts.jargon * 6 -
+    (opposition.isMostlyJargon ? 30 : 0);
 
   if (government.scores.overall !== opposition.scores.overall) {
     return government.scores.overall > opposition.scores.overall ? "GOVERNMENT" : "OPPOSITION";
@@ -672,10 +742,22 @@ function betterSentenceFor(student: SideMetrics, opponent: SideMetrics) {
   return `My strongest point is not just that this sounds fair; it is that the mechanism changes who is protected, how often, and with what accountability.`;
 }
 
+function motionLabel(topic: string) {
+  const cleaned = topic
+    .replace(/^\s*this house (would|believes that|believes|supports|opposes|that)?\s*/i, "")
+    .replace(/\s+/g, " ")
+    .replace(/[.\s]+$/, "")
+    .trim();
+
+  return cleaned.length > 4 ? cleaned : topic.replace(/[.\s]+$/, "").trim();
+}
+
 export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
   const eventType = input.eventType ?? "PARLIAMENTARY_DEBATE";
-  const government = analyzeSide("GOVERNMENT", input.transcript);
-  const opposition = analyzeSide("OPPOSITION", input.transcript);
+  const topicKeywords = keywords(input.topic);
+  const motion = motionLabel(input.topic);
+  const government = analyzeSide("GOVERNMENT", input.transcript, topicKeywords);
+  const opposition = analyzeSide("OPPOSITION", input.transcript, topicKeywords);
   government.dropped = unansweredClaims(opposition.claims, government.combinedText, government.scores.responsiveness);
   opposition.dropped = unansweredClaims(government.claims, opposition.combinedText, opposition.scores.responsiveness);
   const winner = winnerFromTranscriptScores(government, opposition);
@@ -698,6 +780,31 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       : `its warrant around "${excerpt(winnerMetrics.bestClaim, 120)}" was more complete than the answer from ${sideLabel(loser)}`
   }.`;
   const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default. ${sideLabel(winner)} scored ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall}. ${winnerReason} Its best material was "${excerpt(winnerMetrics.bestClaim)}." ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left this important point underanswered: "${loserMetrics.dropped[0]}."` : `did answer some material, but its weakest point, "${excerpt(loserMetrics.weakestClaim)}", still lacked enough warrant, impact, or weighing to overtake the winning offense.`}`;
+
+  const jargonySide = government.isMostlyJargon ? government : opposition.isMostlyJargon ? opposition : null;
+  const emptyPhraseWarning = jargonySide
+    ? `${sideLabel(jargonySide.side)} leaned on debate-sounding language${jargonySide.jargonPhrase ? ` like "${jargonySide.jargonPhrase}"` : ""} without proving the underlying argument. That is not enough on its own: it has to explain what causes what, why the link is true, and how it applies to "${motion}". It did not win on that language.`
+    : student.counts.jargon > 0
+      ? `Watch the weighing words${student.jargonPhrase ? ` like "${student.jargonPhrase}"` : ""}: they only count when you have already proven the claim, the warrant, and the impact behind them.`
+      : null;
+
+  const motionConnection =
+    student.counts.topicEngagement >= 2
+      ? `Your argument stayed connected to the motion "${motion}" by engaging its actual terms, which is what a judge needs to see.`
+      : `This was weak because it did not clearly tie back to the motion "${motion}". Name the specific thing the motion changes and argue about that, not the topic in general.`;
+
+  const mechanismCheck =
+    student.counts.realWarrant > 0 && student.scores.warrant >= 60
+      ? `You explained at least one cause-and-effect ("because"/"leads to") rather than only asserting it, which is the right move. Tighten it so every claim has that link.`
+      : `You needed to explain the mechanism: HOW does your claim actually produce the result you want on "${motion}"? Right now the cause-and-effect is asserted, not shown.`;
+
+  const betterVersion = `Instead of a bare label, write a full argument: ${betterSentence}`;
+
+  const fairWinnerLogic = `${sideLabel(winner)} won on real argument quality, not on debate vocabulary. ${winnerReason}${
+    loserMetrics.isMostlyJargon
+      ? ` ${sideLabel(loser)} mostly used ballot phrases without a proven claim, so that language earned no credit.`
+      : ""
+  }`;
 
   return {
     overallScore: student.scores.overall,
@@ -797,6 +904,13 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       governmentScore: government.scores.overall,
       oppositionScore: opposition.scores.overall,
       reasonWinnerSelected: winnerReason
+    },
+    judgeFairnessReport: {
+      emptyPhraseWarning,
+      motionConnection,
+      mechanismCheck,
+      betterVersion,
+      fairWinnerLogic
     },
     readinessForNextLevel: {
       ready: student.scores.overall >= 82 && student.scores.weighing >= 75 && student.scores.refutation >= 75,

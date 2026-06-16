@@ -101,4 +101,70 @@ assert.notEqual(
   "Different transcripts should produce different ballot feedback."
 );
 
+// Class-rank fairness cases: empty debate jargon must not beat real argumentation.
+function judgeClassRank(
+  transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>,
+  studentSide: "GOVERNMENT" | "OPPOSITION"
+) {
+  return buildTranscriptBasedDebateJudge({
+    organization: "DEBATE",
+    eventType: "PARLIAMENTARY_DEBATE",
+    level: "INTERMEDIATE",
+    topic: "This House believes schools should end class rankings.",
+    studentSide,
+    transcript
+  });
+}
+
+const classRankGovernment = {
+  role: "AFFIRMATIVE" as const,
+  round: 1,
+  content: "Class ranks are unfair because they increase anxiety and stress, and colleges usually do not care about class rank."
+};
+
+// Test 1: Opposition answers only with weighing buzzwords and must NOT win automatically.
+const oppositionJargonOnly = judgeClassRank(
+  [
+    classRankGovernment,
+    {
+      role: "NEGATIVE",
+      round: 2,
+      content: "Even if the other side wins a small benefit, the judge should prefer clearer causation, lower risk, and stronger impact comparison."
+    }
+  ],
+  "GOVERNMENT"
+);
+assert.equal(
+  oppositionJargonOnly.teamWinner,
+  "GOVERNMENT",
+  "Empty debate jargon ('clearer causation, lower risk, impact comparison') must not beat a real (if imperfect) argument."
+);
+assert.ok(
+  oppositionJargonOnly.judgeFairnessReport.emptyPhraseWarning,
+  "Judge must flag the side that leaned on empty weighing language."
+);
+assert.ok(
+  category(oppositionJargonOnly, "clash") < 55,
+  "Unsupported weighing language must score low, not high."
+);
+
+// Test 2: Opposition gives a real argument about optional/private rank and can win.
+const oppositionRealArgument = judgeClassRank(
+  [
+    classRankGovernment,
+    {
+      role: "NEGATIVE",
+      round: 2,
+      content:
+        "Class rank can create stress, but removing it completely also removes context for students who perform strongly in under-resourced schools. A better policy is optional or private rank reporting, so students are not publicly compared but can still use rank when it helps scholarships. This targets the harm because the real problem is public comparison, not the ranking itself."
+    }
+  ],
+  "OPPOSITION"
+);
+assert.equal(
+  oppositionRealArgument.teamWinner,
+  "OPPOSITION",
+  "A real opposition argument (optional/private rank reporting with a mechanism) can win."
+);
+
 console.log("Judge quality smoke tests passed.");

@@ -132,6 +132,13 @@ export type JudgeReport = {
     oppositionScore?: number;
     reasonWinnerSelected?: string;
   };
+  judgeFairnessReport?: {
+    emptyPhraseWarning?: string | null;
+    motionConnection?: string;
+    mechanismCheck?: string;
+    betterVersion?: string;
+    fairWinnerLogic?: string;
+  };
   keyClash?: string;
   strongestArgument?: string;
   weakestArgument?: string;
@@ -759,6 +766,32 @@ function JudgeDecisionModal({
               <p className="mt-4 text-sm leading-7 text-neutral-300">{reason}</p>
             </div>
           </div>
+
+          {report.judgeFairnessReport ? (
+            <div className="rounded-lg border border-amber-400/20 bg-amber-500/[0.06] p-4">
+              <p className="font-semibold text-amber-100">Real argument vs. debate jargon</p>
+              {report.judgeFairnessReport.emptyPhraseWarning ? (
+                <div className="mt-3 rounded-md border border-amber-400/30 bg-amber-500/10 p-3">
+                  <p className="text-sm font-semibold text-amber-200">Empty phrase warning</p>
+                  <p className="mt-1 text-sm leading-6 text-amber-50/90">{report.judgeFairnessReport.emptyPhraseWarning}</p>
+                </div>
+              ) : null}
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {report.judgeFairnessReport.motionConnection ? (
+                  <InsightCard title="Motion connection" value={report.judgeFairnessReport.motionConnection} />
+                ) : null}
+                {report.judgeFairnessReport.mechanismCheck ? (
+                  <InsightCard title="Mechanism check" value={report.judgeFairnessReport.mechanismCheck} />
+                ) : null}
+                {report.judgeFairnessReport.betterVersion ? (
+                  <InsightCard title="Better version" value={report.judgeFairnessReport.betterVersion} />
+                ) : null}
+                {report.judgeFairnessReport.fairWinnerLogic ? (
+                  <InsightCard title="Fair winner logic" value={report.judgeFairnessReport.fairWinnerLogic} />
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-3 md:grid-cols-3">
             <InsightCard title="Key clash" value={report.keyClash ?? "The central clash was which side gave the judge the clearer impact comparison."} />

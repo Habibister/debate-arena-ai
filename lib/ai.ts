@@ -113,11 +113,16 @@ type DebateJudgeResult = {
     reasonWinnerSelected: string;
   };
   judgeFairnessReport?: {
+    centralClash?: string;
+    realArgumentQuality?: string;
     emptyPhraseWarning: string | null;
+    droppedArguments?: string;
     motionConnection: string;
     mechanismCheck: string;
+    weighingCheck?: string;
     betterVersion: string;
     fairWinnerLogic: string;
+    practiceSkill?: string;
   };
   keyClash?: string;
   strongestArgument?: string;
@@ -738,7 +743,7 @@ export async function judgeDebate(input: {
 Do not default to Government, Affirmative, the student, the AI, the first speaker, or the longer speech.
 You must decide the winner from the actual transcript and quote or tightly paraphrase what each side said.
 
-CRITICAL — do not reward debate-sounding filler. Phrases like "judge should prefer us", "clearer causation", "lower risk", "impact comparison", "stronger impact", "we outweigh", "direct clash", and "independent offense" are NOT arguments by themselves. They earn ZERO credit unless the speaker also actually:
+CRITICAL — do not reward debate-sounding filler. Phrases like "judge should prefer us", "clearer causation", "lower risk", "impact comparison", "stronger impact", "we outweigh", "direct clash", "independent offense", "ballot", "voter", "solvency", "turn", "link", "no link", "magnitude", "probability", "timeframe", and even "weighing" itself are NOT arguments by themselves. They earn ZERO credit unless the speaker also actually:
 - states a specific claim,
 - explains why it is true (a real warrant / mechanism, not a label),
 - connects it to THIS motion,
@@ -758,7 +763,7 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Required analysis:
-- Score Government/Affirmative and Opposition/Negative separately on claim clarity, warrant/reasoning, impact, refutation/direct clash, weighing/comparison, evidence/examples, organization/signposting, responsiveness, final speech quality, and rule compliance.
+- Score Government/Affirmative and Opposition/Negative separately on these dimensions: (1) claim quality — clear, testable, topic-specific; (2) warrant quality — why the claim is true; (3) mechanism quality — how the harm/benefit actually happens; (4) impact quality — why it matters; (5) refutation quality — does it answer the opponent's actual claim; (6) evidence/example quality — concrete support or reasoning; (7) weighing quality — real comparison via magnitude, probability, timeframe, scope, reversibility, or prerequisites (NOT just the word "weighing"); (8) collapse/strategy — focuses on the most important issue; (9) motion connection — actually connects to the motion; (10) empty-jargon penalty — used debate words without proving anything.
 - Identify what each side claimed, what each side dropped, which claims were extended, and which final speech introduced new arguments if it happened.
 - Penalize speeches like "my opponent is wrong" for no warrant, no specific refutation, no impact comparison, and no evidence/example.
 - Penalize empty debate jargon just as hard: weighing words with no proven claim behind them, generic "judge should prefer" lines, claims with no warrant, claims with no impact, arguments that never connect to the motion, and "refutations" that do not answer the opponent's actual claim.
@@ -777,11 +782,16 @@ sideAnalysis must explain what each side claimed, bestArgument, weakestArgument,
 transcriptFeedback must focus on the student side and include strongestClaim, weakestClaim, bestRefutation, biggestDroppedArgument, mostMissingPiece, betterSentence, modelRewrite, and skillToPractice.
 internalScoringSummary must include governmentScore, oppositionScore, and reasonWinnerSelected.
 judgeFairnessReport must include:
+- centralClash: what the debate was really about — the one disagreement that decided it.
+- realArgumentQuality: which side proved a real, topic-specific argument (claim + warrant + impact), not just which side sounded like a debater.
 - emptyPhraseWarning: if either side leaned on weighing words or generic ballot phrases without proving the claim, name the side and the exact phrase and say it was not backed by a real argument (for example: "Opposition used weighing language like 'clearer causation' but never explained what causes what or how it applies to the motion."). Use null only if neither side did this.
+- droppedArguments: name the important argument the student failed to answer (unanswered arguments count as conceded).
 - motionConnection: judge how well the student's argument actually connected to the specific motion, and say what was weak if it did not.
 - mechanismCheck: state the cause-and-effect the student needed to prove and whether they proved it.
+- weighingCheck: state whether the student compared impacts with real substance (magnitude, probability, timeframe, scope, reversibility) or only used weighing vocabulary.
 - betterVersion: rewrite the student's weakest line into a real argument with claim, warrant, motion connection, and impact.
-- fairWinnerLogic: explain that the winner was chosen on real argument quality, not debate vocabulary, referencing the actual transcript.`,
+- fairWinnerLogic: explain that the winner was chosen on real argument quality, not debate vocabulary, referencing the actual transcript.
+- practiceSkill: name the single real skill the student should drill next (claim-warrant-impact, rebuttal, weighing/impact calculus, flowing, evidence comparison, mechanism analysis, or collapse).`,
     () => fallbackDebateJudge(input)
   );
 }

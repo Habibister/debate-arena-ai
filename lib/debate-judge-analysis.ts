@@ -44,10 +44,12 @@ type SideMetrics = {
   scores: {
     claimClarity: number;
     warrant: number;
+    mechanism: number;
     impact: number;
     refutation: number;
     weighing: number;
     evidence: number;
+    motionConnection: number;
     organization: number;
     responsiveness: number;
     finalSpeech: number;
@@ -232,8 +234,9 @@ const VAGUE_PATTERNS = [
   "just because"
 ];
 
-// Empty debate jargon: phrases that SOUND like weighing/comparison but carry no argument on their
-// own. They earn nothing unless the speech also proves the underlying claim with warrant and impact.
+// Empty debate jargon: phrases that SOUND like weighing/comparison/clash but carry no argument on
+// their own. They earn nothing unless the speech also proves the underlying claim with warrant and
+// impact, and a speech built only out of them is penalized rather than rewarded.
 const EMPTY_JARGON_MARKERS = [
   "clearer causation",
   "lower risk",
@@ -247,8 +250,37 @@ const EMPTY_JARGON_MARKERS = [
   "direct clash",
   "independent offense",
   "clearer warrant",
-  "stronger warrant"
+  "stronger warrant",
+  "ballot story",
+  "on the ballot",
+  "key voter",
+  "main voter",
+  "first voter",
+  "solvency"
 ];
+
+// Terms that are legitimate debate concepts but mean nothing on their own. They never trigger a
+// penalty by themselves; they simply earn no credit unless the speech also shows real substance
+// (a genuine warrant, a concrete impact, evidence, or real engagement with the motion).
+const CONDITIONAL_JARGON_MARKERS = [
+  "weighing",
+  "magnitude",
+  "probability",
+  "timeframe",
+  "reversibility",
+  "no link",
+  "the link",
+  "turn it",
+  "clash",
+  "voter",
+  "ballot"
+];
+
+// Lightweight stem so motion keywords match across plural/verb forms ("rankings" ~ "rank",
+// "schools" ~ "school"). Avoids labelling an on-topic speech as disconnected on a plural mismatch.
+function stem(word: string) {
+  return word.replace(/(ings|ies|ing|ed|es|s)$/, "");
+}
 
 // A genuine warrant connective. Excludes the bare "if " used by WARRANT_MARKERS, because "even if"
 // (a weighing phrase) would otherwise register as a real warrant and let jargon pass the substance gate.
@@ -407,9 +439,12 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const evidence = countMarkers(combinedText, EVIDENCE_MARKERS) + (/\d/.test(combinedText) ? 1 : 0);
   const signpost = countMarkers(combinedText, SIGNPOST_MARKERS);
   const vague = countMarkers(combinedText, VAGUE_PATTERNS);
-  const jargon = countMarkers(combinedText, EMPTY_JARGON_MARKERS);
-  const jargonPhrase = firstMarkerMatch(combinedText, EMPTY_JARGON_MARKERS);
-  const topicEngagement = topicKeywords.filter((keyword) => lowerText.includes(keyword)).length;
+  const hardJargon = countMarkers(combinedText, EMPTY_JARGON_MARKERS);
+  const conditionalJargon = countMarkers(combinedText, CONDITIONAL_JARGON_MARKERS);
+  const jargon = hardJargon + conditionalJargon;
+  const jargonPhrase = firstMarkerMatch(combinedText, EMPTY_JARGON_MARKERS) ?? firstMarkerMatch(combinedText, CONDITIONAL_JARGON_MARKERS);
+  const topicStems = topicKeywords.map(stem).filter((value) => value.length >= 4);
+  const topicEngagement = topicStems.filter((keyword) => lowerText.includes(keyword)).length;
   const finalNewArgument = detectFinalNewArgument(speeches);
   const claims = extractClaims(sideSentences);
 
@@ -418,9 +453,18 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   // is only ballot jargon (e.g. "judge should prefer us for clearer causation and lower risk") with no
   // proven claim is treated as empty and penalized instead of rewarded.
   const substanceSignals = realWarrant + topicEngagement + (impact > 0 ? 1 : 0) + (evidence > 0 ? 1 : 0);
-  const isMostlyJargon = jargon >= 1 && realWarrant === 0 && topicEngagement === 0 && substanceSignals <= 1;
+  const hasSubstance = substanceSignals >= 2;
+  // A speech is "mostly jargon" when it leans on empty ballot phrases but never engages the motion's
+  // own terms. Stacking two or more empty phrases while saying nothing topic-specific is the tell —
+  // a stray "because" or "benefit" glued to jargon ("because we have clearer causation") does not
+  // count as real substance. A genuinely on-topic speech (topicEngagement > 0) is never flagged.
+  const isMostlyJargon =
+    topicEngagement === 0 &&
+    ((hardJargon >= 1 && realWarrant === 0 && substanceSignals <= 1) || hardJargon >= 2);
   const grounded = isMostlyJargon ? 0 : 1;
-  const jargonPenalty = jargon * 6 + (isMostlyJargon ? 22 : 0);
+  // Jargon only costs points when it is NOT backed by substance: a speech full of real argument may
+  // freely use the word "weighing" or "clash"; a speech that is only those words is penalized.
+  const jargonPenalty = isMostlyJargon ? hardJargon * 6 + 22 : hasSubstance ? 0 : jargon * 4;
 
   const lengthBonus = Math.min(16, wordCount / 14);
   const vaguePenalty = vague * 9 + (wordCount > 220 && warrant + impact + weighing + evidence < 4 ? 10 : 0);
@@ -444,10 +488,12 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const scores = {
     claimClarity: clamp(36 + lengthBonus + claims.length * 9 + signpost * 3 - vaguePenalty - jargonPenalty),
     warrant: clamp(30 + warrant * 15 + Math.min(10, wordCount / 30) - vague * 7 - jargonPenalty),
+    mechanism: clamp(28 + grounded * realWarrant * 16 + (grounded && impact > 0 ? 8 : 0) - vague * 5 - jargonPenalty),
     impact: clamp(30 + grounded * impact * 9 + grounded * warrant * 2 - vague * 5 - jargonPenalty),
     refutation: clamp(26 + grounded * (refutation * 10 + opponentReference * 7) + directAnswerBonus - vague * 4 - jargonPenalty),
     weighing: clamp(24 + grounded * weighing * 18 + (!isMostlyJargon && impact > 1 ? 5 : 0) - vague * 4 - jargonPenalty),
     evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5 - jargonPenalty),
+    motionConnection: clamp(34 + topicEngagement * 16 + (topicEngagement === 0 ? -16 : 0)),
     organization: clamp(38 + signpost * 11 + Math.min(10, sideSentences.length * 2) - vague * 3),
     responsiveness: clamp(30 + grounded * (opponentReference * 8 + refutation * 7) + Math.round(directAnswerBonus / 2) - vague * 4 - jargonPenalty),
     finalSpeech: finalSpeechScore,
@@ -457,16 +503,18 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   };
 
   scores.overall = clamp(
-    scores.claimClarity * 0.12 +
-      scores.warrant * 0.14 +
-      scores.impact * 0.12 +
+    scores.claimClarity * 0.11 +
+      scores.warrant * 0.12 +
+      scores.mechanism * 0.08 +
+      scores.impact * 0.11 +
       scores.refutation * 0.13 +
-      scores.weighing * 0.14 +
-      scores.evidence * 0.1 +
-      scores.organization * 0.08 +
-      scores.responsiveness * 0.09 +
-      scores.finalSpeech * 0.05 +
-      scores.ruleCompliance * 0.03 -
+      scores.weighing * 0.13 +
+      scores.evidence * 0.09 +
+      scores.motionConnection * 0.06 +
+      scores.organization * 0.05 +
+      scores.responsiveness * 0.08 +
+      scores.finalSpeech * 0.04 +
+      scores.ruleCompliance * 0.0 -
       (isMostlyJargon ? 10 : 0)
   );
 
@@ -574,6 +622,35 @@ function recommendationForStudent(student: SideMetrics) {
   };
 }
 
+// Names the real debate skill to drill next, ordered by the weakest part of the argument chain.
+function practiceSkillFor(student: SideMetrics): string {
+  if (student.scores.claimClarity < 60 || student.scores.warrant < 60) {
+    return "claim-warrant-impact: build each point as a clear claim, a 'because' warrant, and a concrete impact";
+  }
+
+  if (student.scores.mechanism < 60) {
+    return "mechanism analysis: explain HOW your argument actually produces its effect, step by step";
+  }
+
+  if (student.scores.refutation < 60) {
+    return "rebuttal: name the opponent's exact claim, attack its weakest link, then compare to your side";
+  }
+
+  if (student.scores.evidence < 60) {
+    return "evidence comparison: support the warrant with a concrete example, not just assertion";
+  }
+
+  if (student.scores.weighing < 65) {
+    return "impact calculus / weighing: compare magnitude, probability, timeframe, scope, and reversibility";
+  }
+
+  if (student.scores.motionConnection < 60) {
+    return "motion framing: tie every argument back to the specific thing the motion changes";
+  }
+
+  return "collapse: spend your final speech on the one issue that decides the round";
+}
+
 function speakerPoint(score: number, offset: number) {
   return clamp(19 + (score - 45) / 5 - offset, 19, 30);
 }
@@ -626,12 +703,22 @@ function buildSpeakerScores(government: SideMetrics, opposition: SideMetrics) {
 
 function buildCategoryScores(student: SideMetrics): CategoryScore[] {
   return [
-    { key: "argument", label: "Argument", score: student.scores.claimClarity, reason: scoreReason("claim clarity", student.scores.claimClarity, student) },
+    { key: "argument", label: "Claim", score: student.scores.claimClarity, reason: scoreReason("claim clarity", student.scores.claimClarity, student) },
     { key: "warrant", label: "Warrant", score: student.scores.warrant, reason: scoreReason("warrant/reasoning", student.scores.warrant, student) },
+    { key: "mechanism", label: "Mechanism", score: student.scores.mechanism, reason: scoreReason("mechanism", student.scores.mechanism, student) },
     { key: "impact", label: "Impact", score: student.scores.impact, reason: scoreReason("impact", student.scores.impact, student) },
     { key: "refutation", label: "Refutation", score: student.scores.refutation, reason: scoreReason("refutation", student.scores.refutation, student) },
     { key: "clash", label: "Weighing", score: student.scores.weighing, reason: scoreReason("weighing", student.scores.weighing, student) },
     { key: "contentEvidence", label: "Evidence", score: student.scores.evidence, reason: scoreReason("evidence/examples", student.scores.evidence, student) },
+    {
+      key: "motionConnection",
+      label: "Motion connection",
+      score: student.scores.motionConnection,
+      reason:
+        student.counts.topicEngagement > 0
+          ? `The argument engaged the actual terms of the motion, which is what keeps it on-topic.`
+          : `This did not clearly connect to the motion. Argue about the specific thing the motion changes, not the subject in general.`
+    },
     { key: "organization", label: "Organization", score: student.scores.organization, reason: scoreReason("organization", student.scores.organization, student) },
     { key: "delivery", label: "Style", score: student.scores.style, reason: scoreReason("style", student.scores.style, student) },
     { key: "responsiveness", label: "Responsiveness", score: student.scores.responsiveness, reason: scoreReason("responsiveness", student.scores.responsiveness, student) },
@@ -806,6 +893,23 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       : ""
   }`;
 
+  const realArgumentQuality = winnerMetrics.isMostlyJargon
+    ? `Neither side proved much, but ${sideLabel(winner)} edged it. Both still need a real claim-warrant-impact chain tied to "${motion}".`
+    : `${sideLabel(winner)} proved the more complete argument on "${motion}" — a claim with a warrant and an impact the judge could actually weigh${
+        loserMetrics.isMostlyJargon ? `, while ${sideLabel(loser)} mostly asserted debate vocabulary.` : "."
+      }`;
+
+  const weighingCheck =
+    student.scores.weighing >= 70 && !student.isMostlyJargon
+      ? `You compared impacts with real substance (why yours matters more), which is what weighing means.`
+      : `Weighing was missing or only verbal. Don't just say you "outweigh" — compare on magnitude, probability, timeframe, scope, or reversibility and explain why your impact wins.`;
+
+  const droppedArguments = student.dropped[0]
+    ? `You did not answer the opponent's point: "${student.dropped[0]}". An unanswered argument is treated as conceded.`
+    : `No major argument was fully dropped, but extend your answers — a one-line mention is not the same as engaging the point.`;
+
+  const practiceSkill = practiceSkillFor(student);
+
   return {
     overallScore: student.scores.overall,
     categoryScores: buildCategoryScores(student),
@@ -906,11 +1010,16 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       reasonWinnerSelected: winnerReason
     },
     judgeFairnessReport: {
+      centralClash: keyClash,
+      realArgumentQuality,
       emptyPhraseWarning,
+      droppedArguments,
       motionConnection,
       mechanismCheck,
+      weighingCheck,
       betterVersion,
-      fairWinnerLogic
+      fairWinnerLogic,
+      practiceSkill
     },
     readinessForNextLevel: {
       ready: student.scores.overall >= 82 && student.scores.weighing >= 75 && student.scores.refutation >= 75,

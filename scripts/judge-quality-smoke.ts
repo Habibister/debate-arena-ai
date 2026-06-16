@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
+
+// Force the deterministic development fallback so we can test opponent generation without a live key.
+Object.assign(process.env, { NODE_ENV: "development" });
+delete process.env.OPENAI_API_KEY;
+
 import { buildTranscriptBasedDebateJudge } from "../lib/debate-judge-analysis";
+import { generateOpponentResponse } from "../lib/ai";
 
 function judge(transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>, studentSide: "GOVERNMENT" | "OPPOSITION" = "GOVERNMENT") {
   return buildTranscriptBasedDebateJudge({
@@ -167,4 +173,83 @@ assert.equal(
   "A real opposition argument (optional/private rank reporting with a mechanism) can win."
 );
 
-console.log("Judge quality smoke tests passed.");
+// Test 4: "my opponent is wrong" must score very low on refutation.
+const bareDenial = judgeClassRank([{ role: "AFFIRMATIVE", round: 1, content: "My opponent is wrong." }], "GOVERNMENT");
+assert.ok(category(bareDenial, "refutation") < 50, "A bare denial must score very low on refutation.");
+
+// Test 5: a clear claim with no warrant should be identifiable but underdeveloped.
+const claimNoWarrant = judgeClassRank(
+  [
+    {
+      role: "AFFIRMATIVE",
+      round: 1,
+      content: "Public class rank increases student stress and anxiety. It turns school into a constant comparison between classmates."
+    }
+  ],
+  "GOVERNMENT"
+);
+assert.ok(category(claimNoWarrant, "argument") >= 50, "A clear claim should be identifiable.");
+assert.ok(category(claimNoWarrant, "warrant") < 60, "A claim with no 'because'/mechanism should score low on warrant.");
+
+// Test 6: an impact with no comparison should score the impact but flag missing weighing.
+const impactNoWeighing = judgeClassRank(
+  [
+    {
+      role: "AFFIRMATIVE",
+      round: 1,
+      content:
+        "Public class rank harms students because it increases stress, which hurts their mental health, motivation, and long-term opportunity to enjoy learning."
+    }
+  ],
+  "GOVERNMENT"
+);
+assert.ok(category(impactNoWeighing, "impact") >= 55, "A developed impact should score on impact.");
+assert.ok(category(impactNoWeighing, "clash") < 60, "An impact with no comparison should score low on weighing.");
+
+// Test 3: the AI opponent must sound human and motion-specific, never a template.
+const BANNED_OPPONENT_PHRASES = [
+  "Negative speech",
+  "Affirmative speech",
+  "The key is direct clash",
+  "First, direct clash",
+  "Second, independent offense",
+  "Finally, weighing",
+  "independent offense"
+];
+
+async function opponentSoundsHuman() {
+  for (const personaId of ["evidence-specialist", "policy-analyst", "devils-advocate", "socratic-questioner", "starter-coach"]) {
+    const response = await generateOpponentResponse({
+      organization: "DEBATE",
+      level: "INTERMEDIATE",
+      topic: "This House believes schools should end class rankings.",
+      side: "NEGATIVE",
+      round: 2,
+      personaId,
+      transcript: [
+        {
+          role: "AFFIRMATIVE",
+          round: 1,
+          content: "Schools should end class rank because it causes stress and anxiety for students."
+        }
+      ]
+    });
+
+    for (const phrase of BANNED_OPPONENT_PHRASES) {
+      assert.ok(
+        !response.response.includes(phrase),
+        `AI opponent (${personaId}) must not use template phrase "${phrase}".`
+      );
+    }
+    assert.ok(response.response.length > 120, `AI opponent (${personaId}) should give a real, developed response.`);
+  }
+}
+
+opponentSoundsHuman()
+  .then(() => {
+    console.log("Judge quality smoke tests passed.");
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

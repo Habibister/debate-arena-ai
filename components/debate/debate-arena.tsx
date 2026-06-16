@@ -133,11 +133,16 @@ export type JudgeReport = {
     reasonWinnerSelected?: string;
   };
   judgeFairnessReport?: {
+    centralClash?: string;
+    realArgumentQuality?: string;
     emptyPhraseWarning?: string | null;
+    droppedArguments?: string;
     motionConnection?: string;
     mechanismCheck?: string;
+    weighingCheck?: string;
     betterVersion?: string;
     fairWinnerLogic?: string;
+    practiceSkill?: string;
   };
   keyClash?: string;
   strongestArgument?: string;
@@ -777,17 +782,29 @@ function JudgeDecisionModal({
                 </div>
               ) : null}
               <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {report.judgeFairnessReport.realArgumentQuality ? (
+                  <InsightCard title="Real argument quality" value={report.judgeFairnessReport.realArgumentQuality} />
+                ) : null}
                 {report.judgeFairnessReport.motionConnection ? (
                   <InsightCard title="Motion connection" value={report.judgeFairnessReport.motionConnection} />
                 ) : null}
                 {report.judgeFairnessReport.mechanismCheck ? (
                   <InsightCard title="Mechanism check" value={report.judgeFairnessReport.mechanismCheck} />
                 ) : null}
+                {report.judgeFairnessReport.weighingCheck ? (
+                  <InsightCard title="Weighing check" value={report.judgeFairnessReport.weighingCheck} />
+                ) : null}
+                {report.judgeFairnessReport.droppedArguments ? (
+                  <InsightCard title="Dropped arguments" value={report.judgeFairnessReport.droppedArguments} />
+                ) : null}
                 {report.judgeFairnessReport.betterVersion ? (
                   <InsightCard title="Better version" value={report.judgeFairnessReport.betterVersion} />
                 ) : null}
                 {report.judgeFairnessReport.fairWinnerLogic ? (
                   <InsightCard title="Fair winner logic" value={report.judgeFairnessReport.fairWinnerLogic} />
+                ) : null}
+                {report.judgeFairnessReport.practiceSkill ? (
+                  <InsightCard title="Practice next" value={report.judgeFairnessReport.practiceSkill} />
                 ) : null}
               </div>
             </div>

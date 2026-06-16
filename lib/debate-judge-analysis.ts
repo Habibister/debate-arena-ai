@@ -597,14 +597,13 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const meaningfulWords = countMeaningfulWords(combinedText);
   const nonSubstantive = speeches.length > 0 && (meaningfulWords < 6 || (!hasClaim(combinedText) && meaningfulWords < 12));
 
-  // SIDE FIDELITY: Government must support the motion, Opposition must oppose it. If a side's language
-  // clearly argues the wrong direction, that is a side inversion and side fidelity is tanked.
+  // SIDE FIDELITY: Government must support the motion, Opposition must oppose it. A clear margin of
+  // wrong-side language (>= 2) is a real inversion. A single stray hit — often just the motion quoted
+  // back while attacking it — is not, so genuine speeches that echo the motion are not falsely flagged.
   const supportSignal = countMarkers(combinedText, SUPPORT_MARKERS);
   const opposeSignal = countMarkers(combinedText, OPPOSE_MARKERS);
   const sideInverted =
-    side === "GOVERNMENT"
-      ? opposeSignal >= 1 && opposeSignal > supportSignal
-      : supportSignal >= 1 && supportSignal > opposeSignal;
+    side === "GOVERNMENT" ? opposeSignal - supportSignal >= 2 : supportSignal - opposeSignal >= 2;
 
   // Substance gate: a speech only earns weighing/refutation/impact credit if it shows REAL content —
   // a genuine warrant, a concrete impact, evidence, or real engagement with the motion. A speech that
@@ -1145,6 +1144,26 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     ? `${sideLabel(loser)} leaned on debate vocabulary without proving a real claim.`
     : `${sideLabel(loser)} fell short because its key point — ${cleanClaim(loserMetrics.weakestClaim, 120)} — lacked enough warrant, impact, or direct clash.`;
 
+  // Proof the judge read the whole transcript: name each side's best material (clean paraphrase) and
+  // explain, in plain English, why that clash decided the round.
+  const roundDecidingClash = {
+    governmentBestArgument: cleanClaim(government.bestClaim),
+    oppositionBestAnswer: cleanClaim(opposition.bestClaim),
+    whyItDecides: `${sideLabel(winner)} takes the round-deciding clash: ${
+      loserMetrics.isMostlyJargon
+        ? `${sideLabel(loser)} leaned on debate vocabulary without proving its case`
+        : loserMetrics.dropped[0]
+          ? `${sideLabel(loser)} left "${cleanClaim(loserMetrics.dropped[0], 90)}" unanswered`
+          : `${sideLabel(loser)} had the weaker warrant and impact on the central question`
+    }, while ${sideLabel(winner)} ${
+      winnerMetrics.scores.weighing > loserMetrics.scores.weighing
+        ? "made the clearer impact comparison"
+        : winnerMetrics.scores.motionConnection > loserMetrics.scores.motionConnection
+          ? "stayed more tightly connected to the motion"
+          : "gave the more complete reasoning"
+    }.`
+  };
+
   return {
     overallScore: student.scores.overall,
     categoryScores: buildCategoryScores(student),
@@ -1262,6 +1281,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       whyWinnerWon,
       whyLoserLost
     },
+    roundDecidingClash,
     readinessForNextLevel: {
       ready: student.scores.overall >= 82 && student.scores.weighing >= 75 && student.scores.refutation >= 75,
       rationale:

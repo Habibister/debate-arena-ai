@@ -330,12 +330,10 @@ async function opponentSoundsHuman() {
       );
     }
 
-    // Advanced/elite personas argue longer (180-260); normal personas are tighter (100-180). Allow
-    // a little slack around the fallback's deterministic length.
-    const advanced = persona.difficulty === "elite";
-    const [min, max] = advanced ? [170, 280] : [90, 190];
+    // Length scales with strength tier (tested precisely in difficultyScales); here just require a
+    // real, developed response within a sane range.
     const count = wordCount(response.response);
-    assert.ok(count >= min && count <= max, `AI opponent (${personaId}, ${advanced ? "advanced" : "normal"}) should be ${min}-${max} words (was ${count}).`);
+    assert.ok(count >= 30 && count <= 220, `AI opponent (${personaId}) should be a real developed response (was ${count} words).`);
     assert.ok(
       response.response.toLowerCase().includes("ai") || response.response.toLowerCase().includes("literacy"),
       `AI opponent (${personaId}) should engage the actual motion.`
@@ -385,6 +383,51 @@ assert.deepEqual(
 );
 // A placeholder key is treated as unconfigured.
 assert.deepEqual(providerOrderWith({ GEMINI_API_KEY: "your-gemini-key" }), [], "Placeholder Gemini key is ignored.");
+
+// Round-deciding clash (Tests 1 & 4): the judge proves it read the full transcript.
+const sugarJudge = buildTranscriptBasedDebateJudge({
+  organization: "DEBATE",
+  eventType: "PARLIAMENTARY_DEBATE",
+  level: "INTERMEDIATE",
+  topic: "This house believes the government should reduce sugar consumption.",
+  studentSide: "GOVERNMENT",
+  transcript: [
+    {
+      role: "AFFIRMATIVE",
+      round: 1,
+      content:
+        "The government should reduce sugar because education alone is not enough; social media and food marketing overpower individual choices, so sugar consumption and diabetes keep rising."
+    },
+    {
+      role: "NEGATIVE",
+      round: 2,
+      content:
+        "Broad government mandates may backfire, restrict choice, and create black markets; targeted subsidies for healthy food plus clear labeling and education solve the same problem with far less risk because they change incentives without banning anything."
+    }
+  ]
+});
+assert.equal(sugarJudge.teamWinner, "OPPOSITION", "Opposition wins the sugar debate with the clearer less-restrictive alternative.");
+const sugarClash = sugarJudge.roundDecidingClash;
+assert.ok(sugarClash?.governmentBestArgument && sugarClash.governmentBestArgument.length > 10, "Round-deciding clash cites Government's best argument.");
+assert.ok(sugarClash?.oppositionBestAnswer && sugarClash.oppositionBestAnswer.length > 10, "Round-deciding clash cites Opposition's best answer.");
+assert.ok(sugarClash?.whyItDecides && /opposition/i.test(sugarClash.whyItDecides), "Round-deciding clash explains why Opposition wins.");
+
+// Test 5 (paraphrase): a messy Government speech is paraphrased cleanly in the clash, not quoted raw.
+const messyClash = buildTranscriptBasedDebateJudge({
+  organization: "DEBATE",
+  eventType: "PARLIAMENTARY_DEBATE",
+  level: "INTERMEDIATE",
+  topic: "This house believes the government should reduce sugar consumption.",
+  studentSide: "GOVERNMENT",
+  transcript: [
+    { role: "AFFIRMATIVE", round: 1, content: "i am not exactly sure what the opposition is saying however sugar is bad and the government should reduce it because diabetes" },
+    { role: "NEGATIVE", round: 2, content: "Targeted subsidies and labeling reduce sugar with less risk than a broad mandate, because they change incentives without banning choice." }
+  ]
+});
+assert.ok(
+  !(messyClash.roundDecidingClash?.governmentBestArgument ?? "").toLowerCase().includes("i am not exactly sure"),
+  "The round-deciding clash paraphrases messy text cleanly."
+);
 
 // Crash-proof judge: robust JSON extraction.
 // Test 1: valid JSON parses.
@@ -563,10 +606,52 @@ async function guardrailTests() {
   assert.equal(coaching.response, OPPONENT_COACHING_RESPONSE, "A nonsense student speech must get a coaching response, not a full opponent speech.");
 }
 
+// Test 3: same strength, different persona -> meaningfully different debating shapes.
+async function personaStylesAreDistinct() {
+  const topic = "This house believes the government should reduce sugar consumption.";
+  const transcript = [
+    { role: "AFFIRMATIVE" as const, round: 1, content: "The government should reduce sugar because it causes diabetes and shortens lifespan for many people." }
+  ];
+  async function opp(personaId: string) {
+    const r = await generateOpponentResponse({ organization: "DEBATE", level: "INTERMEDIATE", topic, side: "NEGATIVE", round: 1, personaId, transcript });
+    return r.response;
+  }
+
+  const socratic = await opp("socratic-questioner");
+  const evidence = await opp("evidence-specialist");
+  const policy = await opp("policy-analyst");
+  const devils = await opp("devils-advocate");
+  const friendly = await opp("friendly-practice");
+
+  assert.ok(socratic.includes("?"), "Socratic Questioner asks questions.");
+  assert.ok(/evidence|proof|data|study/i.test(evidence), "Evidence Specialist demands proof.");
+  assert.ok(/mechanism|tax|subsid|regulat|enforce|implement|policy memo/i.test(policy), "Policy Analyst talks implementation.");
+  assert.ok(/assum/i.test(devils), "Devil's Advocate attacks assumptions.");
+  assert.ok(/instinct|gently/i.test(friendly), "Friendly Practice is supportive.");
+  assert.equal(new Set([socratic, evidence, policy, devils, friendly]).size, 5, "All five personas produce distinct responses.");
+}
+
+// Test 2: same persona, different strength -> obviously different depth/length.
+async function difficultyScales() {
+  const topic = "This house believes the government should reduce sugar consumption.";
+  const transcript = [
+    { role: "AFFIRMATIVE" as const, round: 1, content: "The government should reduce sugar because it causes diabetes and shortens lifespan." }
+  ];
+  const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+  const beginner = await generateOpponentResponse({ organization: "DEBATE", level: "BEGINNER", topic, side: "NEGATIVE", round: 1, personaId: "policy-analyst", transcript });
+  const elite = await generateOpponentResponse({ organization: "DEBATE", level: "ELITE", topic, side: "NEGATIVE", round: 1, personaId: "policy-analyst", transcript });
+  const beginnerWords = words(beginner.response);
+  const eliteWords = words(elite.response);
+  assert.ok(beginnerWords < eliteWords, `Beginner (${beginnerWords}w) should be shorter than Elite (${eliteWords}w).`);
+  assert.ok(eliteWords >= beginnerWords * 1.8, `Elite (${eliteWords}w) should be substantially deeper than Beginner (${beginnerWords}w).`);
+}
+
 opponentSoundsHuman()
   .then(() => sideFidelityTests())
   .then(() => guardrailTests())
   .then(() => judgeIsCrashProof())
+  .then(() => personaStylesAreDistinct())
+  .then(() => difficultyScales())
   .then(() => {
     console.log("Judge quality smoke tests passed.");
   })

@@ -132,6 +132,11 @@ type DebateJudgeResult = {
     whyWinnerWon?: string;
     whyLoserLost?: string;
   };
+  roundDecidingClash?: {
+    governmentBestArgument: string;
+    oppositionBestAnswer: string;
+    whyItDecides: string;
+  };
   keyClash?: string;
   strongestArgument?: string;
   weakestArgument?: string;
@@ -495,123 +500,274 @@ function extractStudentPoint(transcript: DebateTranscriptMessage[], studentRole:
 }
 
 type DebateStance = "support" | "oppose";
+type StrengthTier = "beginner" | "jv" | "tournament" | "elite";
 
-// SIDE FIDELITY: the fallback opponent must argue its ASSIGNED side. Government/Affirmative/For
-// supports and defends the motion; Opposition/Negative/Against opposes it. buildPersonaArgument
-// dispatches on stance so a Government persona never attacks its own motion.
-function buildPersonaArgument(personaId: string, claim: string | null, motion: string, stance: DebateStance) {
-  return stance === "support"
-    ? buildSupportArgument(personaId, claim, motion)
-    : buildOpposeArgument(personaId, claim ?? "there's a real problem worth solving here", motion);
+// Strength tier scales the opponent's depth. Driven mainly by the debate level, nudged by how strong
+// the chosen bot (persona rating) is. More layers = more depth, more weighing, harsher pushback.
+const TIER_LAYER_COUNT: Record<StrengthTier, number> = { beginner: 2, jv: 3, tournament: 5, elite: 6 };
+const TIER_ORDER: StrengthTier[] = ["beginner", "jv", "tournament", "elite"];
+
+function strengthTier(level: Level, personaRating: number): StrengthTier {
+  let index = level === "BEGINNER" ? 0 : level === "ELITE" ? 3 : 1;
+  if (personaRating >= 1500) {
+    index += 1;
+  } else if (personaRating < 800) {
+    index -= 1;
+  }
+  return TIER_ORDER[Math.max(0, Math.min(TIER_ORDER.length - 1, index))];
 }
 
-// SUPPORT: defend the motion. Give a reason it should happen, answer the strongest objection, and
-// keep the persona's distinct emphasis. Never attack the motion or propose a "narrower fix instead".
-function buildSupportArgument(personaId: string, claim: string | null, motion: string) {
-  const objection = claim ?? "that the rule will be unfair or go too far";
-  const builders: Record<string, () => { response: string; move: string }> = {
-    "evidence-specialist": () => ({
-      move: "defending the motion with concrete benefits",
-      response: `${capitalize(motion)}, and I'll defend that with concrete reasons rather than slogans. The benefits are specific: clearer expectations, fewer daily conflicts, and a setting that keeps the focus on learning. When people ask for proof, the honest answer is to point to places that adopted this and saw exactly those gains. The fair objection is ${objection}, and it deserves an answer: write the rule narrowly — clear standards, equal enforcement, no arbitrary targeting. That keeps the upside while removing the part critics actually fear. Real benefits with manageable, designable risks is why this should happen.`
-    }),
-    "policy-analyst": () => ({
-      move: "defending the motion on implementation",
-      response: `Let me defend ${motion} on the practical details, because that is where it is won or lost. It works when it is implemented well: simple published rules, consistent enforcement, and a clear process for exceptions. Yes, ${objection} is a real risk — but that is a design problem, not a reason to do nothing. Build the policy to avoid it and you get the structure and predictability a school needs without the overreach. Done right, the upside is steady and the downside is contained, which is exactly why I would implement it.`
-    }),
-    "devils-advocate": () => ({
-      move: "defending the motion by beating its strongest objection",
-      response: `I will defend ${motion} by taking the strongest argument against it head on: ${objection}. That is the objection that sounds best, and it still does not hold. Nothing about this policy requires it to be unfair or heavy-handed — that is a failure of bad implementation, not of the idea itself. Written with clear rules and equal enforcement, it delivers the benefit while removing the very thing critics fear. If the only case against it is "it could be done badly," then the answer is to do it well, and the motion stands.`
-    }),
-    "socratic-questioner": () => ({
-      move: "defending the motion by answering the decisive question",
-      response: `Let me defend ${motion}, starting with the question that actually decides it: does this do more good than harm when it is done well? It clearly does. The real benefits — structure, fewer distractions, clearer expectations — are concrete and everyday. The usual worry is ${objection}; but is that a flaw in the idea, or only in a sloppy version of it? Write it narrowly and the worry falls away while the benefit stays. That is why the answer here is yes, and why I am defending the motion.`
-    }),
-    "ethics-philosopher": () => ({
-      move: "defending the motion on principle",
-      response: `I will defend ${motion} on principle. A school owes every student a fair, focused environment, and clear shared standards serve that duty better than leaving things to chance. The honest objection is ${objection}, and fairness does cut both ways — which is exactly why the rule must be written narrowly and enforced equally, with no targeting. Done that way, it protects students rather than controlling them. The principled position is not to avoid the policy; it is to implement it fairly.`
-    }),
-    "rhetorician": () => ({
-      move: "defending the motion by reframing the choice",
-      response: `Let me make the case for ${motion}, plainly. Strip away the noise and the choice is simple: a clear, shared standard that keeps the focus on learning, versus leaving everyone to sort it out alone. The objection you will hear is ${objection} — but that is an argument for writing the rule well, not for refusing to write it at all. With clear standards and equal enforcement, this gives students structure without being heavy-handed. That is the version worth defending, and it is why this should happen.`
-    }),
-    "tournament-judge": () => ({
-      move: "defending the motion on the substance",
-      response: `I am defending ${motion}, and here is the substance before any debate terms. The case rests on real, recurring benefits — clearer expectations, fewer distractions, a steadier learning environment. The best response against me is ${objection}, and it only has force if the policy is written carelessly. Written narrowly, with clear rules and equal enforcement, that objection falls away. So weigh it directly: real, everyday benefits against a risk we can design out. That comparison comes down on the side of the motion.`
-    }),
-    "deca-judge": () => ({
-      move: "defending the motion as a sound decision",
-      response: `From a practical standpoint, ${motion} is the right call, and I will defend it like a sound decision. The benefits are tangible — clearer expectations, fewer conflicts, more time kept on learning — and they recur every day. The cost critics raise is ${objection}; treat that as a risk to manage, not a dealbreaker. Clear rules, equal enforcement, and a simple exceptions process keep that cost low. Steady benefit at a controllable cost is a good investment, which is why I would implement it.`
-    }),
-    "hosa-judge": () => ({
-      move: "defending the motion as the responsible policy",
-      response: `I will defend ${motion} as the more responsible policy. A predictable, well-run environment protects students and keeps the focus where it belongs. The worry worth taking seriously is ${objection}; the answer is to implement carefully — clear standards, equal enforcement, real exceptions — not to walk away from the benefit. Handled that way, the policy supports students without overreaching. Protecting a steady, safe environment comes first, and this is how you deliver it.`
-    }),
-    "starter-coach": () => ({
-      move: "defending the motion and modelling a clean case",
-      response: `Let me defend ${motion}, and model how to do it well. Lead with the benefit: clearer expectations and fewer daily distractions, so more time goes to learning. Then answer the obvious objection — ${objection} — instead of dodging it: the fix is a narrow rule with clear standards and equal enforcement. Notice the move: claim, reason, then pre-empting the strongest pushback. That is a complete case for the motion, and it is why the policy holds up.`
-    }),
-    "friendly-practice": () => ({
-      move: "defending the motion directly",
-      response: `I am happy to defend ${motion}. The simple case is that a clear, shared standard helps a school run better — fewer distractions, clearer expectations, less daily friction. The fair pushback is ${objection}, so let me answer it directly: write the rule narrowly, enforce it equally, and that worry mostly goes away. You keep the real benefit without the heavy-handedness. That is why I would back this rather than leave things as they are.`
-    })
-  };
+// Each persona contributes ordered layers (most essential first). A beginner bot uses the first two;
+// an elite bot uses all six and so adds a steelman, a countermodel, explicit weighing, and a close.
+// The SHAPE differs by persona: Socratic = questions, Evidence = proof demands, Devil's = assumption
+// attacks, Policy = implementation, Tournament = ballot framing, Rhetorician = framing, Friendly = gentle.
+const PERSONA_MOVE: Record<string, { support: string; oppose: string }> = {
+  "friendly-practice": { support: "backing the motion supportively", oppose: "pointing out one gentle improvement" },
+  "socratic-questioner": { support: "leading to yes with questions", oppose: "exposing the gap with questions" },
+  "devils-advocate": { support: "beating the strongest objection", oppose: "attacking the hidden assumption hard" },
+  "evidence-specialist": { support: "defending with concrete proof", oppose: "demanding evidence and examples" },
+  "policy-analyst": { support: "defending on implementation", oppose: "stress-testing implementation and tradeoffs" },
+  "tournament-judge": { support: "winning the ballot on substance", oppose: "framing the ballot path" },
+  "rhetorician": { support: "winning the framing", oppose: "reframing the real choice" },
+  "starter-coach": { support: "modelling a clean case", oppose: "coaching toward a stronger argument" },
+  "ethics-philosopher": { support: "defending on principle", oppose: "showing fairness cuts both ways" },
+  "deca-judge": { support: "defending as a sound decision", oppose: "making the cost-benefit call" },
+  "hosa-judge": { support: "defending the measured policy", oppose: "favoring the measured intervention" }
+};
 
-  const build = builders[personaId] ?? builders["policy-analyst"];
-  return build();
+// Style directives the LIVE model uses so each persona debates in a genuinely different shape.
+const PERSONA_STYLE: Record<string, string> = {
+  "friendly-practice":
+    "Supportive and encouraging. Explain the weakness gently and give ONE clear improvement. Do not be aggressive.",
+  "socratic-questioner":
+    "Lead with QUESTIONS. Ask sharp questions that expose the gap (which policy exactly? what causes the harm? why this over the cheaper alternative?) instead of delivering a full countercase.",
+  "devils-advocate":
+    "Aggressive assumption attacks. Name the hidden assumption and push the hardest possible counterargument. Sound sharper than the other bots.",
+  "evidence-specialist":
+    "Demand proof. Ask for studies, data, examples, or concrete evidence. Do not argue philosophy — argue what the evidence actually shows.",
+  "policy-analyst":
+    "Talk like a policy designer: the exact mechanism (tax, subsidy, regulation, rule change), enforcement, costs, incentives, and unintended consequences.",
+  "tournament-judge":
+    "Ballot-focused: say which side is currently winning and why, and what each side must do to win. Use debate terms only when tied to real substance.",
+  "rhetorician":
+    "Framing and persuasion: reframe what the round is really about and use vivid, plain, emotionally resonant language to make the point land.",
+  "starter-coach":
+    "Teach while you push back: name the weakness plainly and model a stronger version of the student's line.",
+  "ethics-philosopher":
+    "Argue from duties, rights, fairness, and moral consistency — but stay concrete, never vague moral fog.",
+  "deca-judge": "Decide it like a business case: name the stakeholder, the cost, the return, and the cheaper targeted option.",
+  "hosa-judge":
+    "Favor the measured, safer intervention; weigh certain everyday benefits against unpredictable side effects."
+};
+
+// Difficulty/strength directives: depth and length scale with the bot's tier.
+const DIFFICULTY_DIRECTIVE: Record<StrengthTier, string> = {
+  beginner: "BEGINNER strength: keep it short and simple — about 70-100 words, raise ONE weakness only, no layering.",
+  jv: "JV strength: about 100-140 words — one clear counterargument plus one comparison or alternative.",
+  tournament:
+    "TOURNAMENT-STRONG strength: about 140-190 words — direct refutation, a countermodel, and an explicit impact comparison.",
+  elite:
+    "ELITE strength: about 180-240 words — steelman the student, name the hidden assumption, give a countermodel, weigh the impacts, and point out a dropped argument."
+};
+
+function opposeLayers(personaId: string, claim: string, motion: string): string[] {
+  const layers: Record<string, string[]> = {
+    "friendly-practice": [
+      `You've got a real instinct here with ${claim}, and you're right to lead with it.`,
+      `The one piece I'd gently push on is the mechanism — how exactly does ${motion} produce the result you want, step by step?`,
+      `Name that clearly — who does what, and why it works — and your point gets much harder to answer.`,
+      `A cleaner version might target the specific harm rather than the whole system, so you keep the benefit with less to defend.`,
+      `Set side by side, the narrower fix asks you to prove less, which usually makes it the easier case to win.`,
+      `So there's no need to overhaul your argument — just fill in that "how," and you're in good shape.`
+    ],
+    "socratic-questioner": [
+      `Before I answer ${claim}, let me ask you a few things.`,
+      `What exactly are you defending — which specific policy, and applied to whom?`,
+      `And what's really causing the harm: the thing itself, or the way it gets used?`,
+      `If it's the way it's used, why does that require ${motion} rather than changing how the current system works?`,
+      `Who gains here, and who quietly loses something they were relying on?`,
+      `Answer those and we'll see whether the full change is truly necessary — right now, I don't think you've shown it is.`
+    ],
+    "devils-advocate": [
+      `Let's not be polite about this — ${claim} rests on an assumption you haven't earned.`,
+      `You're treating "there's a problem" as if it automatically means "${motion}." Those are two completely different claims.`,
+      `That's the weak link: plenty of real problems don't justify a sweeping fix, and you haven't shown why this one does.`,
+      `And if the milder approach already failed, why would a broad mandate avoid the same failure instead of breeding resentment or workarounds?`,
+      `Weigh it honestly — your upside is speculative, while the cost of overreach lands on everyone, immediately.`,
+      `Until you prove the full change is the only thing that works, the assumption collapses, and the whole case goes with it.`
+    ],
+    "evidence-specialist": [
+      `Let's set the philosophy aside — ${claim} needs proof, not a good story.`,
+      `What's the actual evidence that ${motion} delivers the result you're promising: a study, a real case, a number?`,
+      `Because without it, the honest version is far weaker — this might help some people, sometimes.`,
+      `Show me somewhere that tried this and got the outcome, and that it beat cheaper options like labeling or subsidies.`,
+      `On the evidence we actually have, the smaller, testable version is the safer bet.`,
+      `Bring data that your specific policy outperforms the alternatives and I'll move — until then it's unproven.`
+    ],
+    "policy-analyst": [
+      `Let's treat ${claim} like a real policy memo, because that's where it lives or dies.`,
+      `What's the actual mechanism — a tax, a subsidy, a regulation, a rule change? Each carries different costs and failure modes.`,
+      `Who enforces it, what gets cut to pay for it, and how do you stop it becoming a box-ticking exercise?`,
+      `A narrower, opt-in design hits the same harm with far less enforcement burden and fewer unintended consequences.`,
+      `So the real comparison is broad-and-costly versus targeted-and-cheaper, and on net the targeted option usually wins.`,
+      `Give me implementation details that survive contact with reality, or ${motion} stays a slogan, not a policy.`
+    ],
+    "tournament-judge": [
+      `Let me tell you how this round is actually flowing right now.`,
+      `Your instinct is strong, but the ballot turns on the link from "${claim}" to "${motion}," and that link isn't proven yet.`,
+      `The other bench is ahead because a narrower countermodel does the same work with less risk.`,
+      `To win this you'd need to collapse on why only the full change solves, and why the cheaper alternative fails.`,
+      `Weigh it as impact against impact: your benefit only lands if the sweep is necessary, while the cost is paid daily by everyone.`,
+      `Close that gap and the ballot flips to you — leave it open and the more careful side takes the round.`
+    ],
+    "rhetorician": [
+      `Step back from the mechanics and look at the story you're telling with ${claim}.`,
+      `Right now it lands as "control," and that's a losing frame — people resist being managed.`,
+      `Reframe the choice: this was never problem-versus-nothing, it's a sweeping change versus a precise one.`,
+      `The precise fix sounds like respect — solve the harm without treating everyone as the problem.`,
+      `When a smaller move reaches the same goal without the collateral damage, the bold option looks reckless, not brave.`,
+      `Win that framing — least breakage, most respect — and you win the room; ${motion} doesn't.`
+    ],
+    "starter-coach": [
+      `Good start with ${claim} — let me coach you through where it's thin.`,
+      `You've got a claim, but the warrant is doing quiet work; say out loud HOW it produces the result.`,
+      `Then answer the obvious response — that a smaller, targeted change gets most of the benefit.`,
+      `Try this model line: "the broad policy is worth it because it does X, and the narrow fix fails because of Y."`,
+      `Fill that in with something concrete and you're comparing real impacts, which is what wins rounds.`,
+      `Right now the only missing piece is that "how" — nail it and this becomes a genuinely strong case.`
+    ],
+    "ethics-philosopher": [
+      `Take the fairness concern in ${claim} seriously — it deserves a real answer, not a dismissal.`,
+      `But fairness cuts both ways: ${motion} helps one group while quietly taking something from another.`,
+      `A principle that fixes one unfairness by creating a new one isn't fair — it just hides the cost.`,
+      `The more defensible path is the narrower one: address the specific harm without making a new group lose out.`,
+      `Weigh the duties honestly and the targeted fix respects everyone's claim, not only the loudest.`,
+      `So on principle, not just practicality, the sweeping version is the harder one to justify.`
+    ],
+    "deca-judge": [
+      `Practically, ${claim} points at a real cost, and I won't wave it away.`,
+      `But make the call like any resource decision: ${motion} is the broad, expensive option across the board.`,
+      `A targeted alternative goes after the same problem at a fraction of the cost and reaches who actually needs it.`,
+      `If a cheaper, narrower move captures most of the upside, that's simply the smarter investment.`,
+      `So weigh return on cost: the sweep has to deliver a lot of extra benefit to justify its extra price.`,
+      `I don't see that return here, which is why the targeted option is the better decision.`
+    ],
+    "hosa-judge": [
+      `I hear the worry behind ${claim}, and it's worth taking seriously.`,
+      `But the more responsible move is the measured one — ${motion} changes everything at once.`,
+      `Broad changes carry side effects you can't fully predict, so caution should come first.`,
+      `A narrower response treats the specific harm while protecting the parts already working.`,
+      `Weigh certain, everyday benefits against unpredictable downside, and the careful fix wins.`,
+      `Protect what works, expand only once you've seen results — that's why the targeted version is safer here.`
+    ]
+  };
+  return layers[personaId] ?? layers["devils-advocate"];
 }
 
-// OPPOSE: argue against the motion. Acknowledge the real point, expose the hidden assumption, attack
-// the weakest link, offer a countermodel, and explain why it is stronger. No template tics.
-function buildOpposeArgument(personaId: string, claim: string, motion: string) {
-  const builders: Record<string, () => { response: string; move: string }> = {
-    "evidence-specialist": () => ({
-      move: "asking for proof before accepting the claim",
-      response: `You're claiming ${claim}, and that might turn out to be true — but right now it's asserted, not shown. What's the actual evidence that ${motion} produces the result you're promising, rather than just sounding like it should? Before backing a change this big, I'd want real cases where it worked and didn't just add another layer that looks good on paper. Without that, the safer claim is the modest one: this can help some people, some of the time, when it's done carefully — not that we should build the whole system around it. A smaller, testable version would let us check whether the benefit is real before committing everyone to it.`
-    }),
-    "devils-advocate": () => ({
-      move: "attacking the hidden assumption",
-      response: `I get why ${claim} feels persuasive — there's a real concern underneath it. But your argument leans on an assumption you haven't proven: that because the problem is real, ${motion} must be the answer. Those are two different claims. We don't adopt a sweeping policy every time something is imperfect; the burden is to show this specific change is worth what it costs and that a narrower fix wouldn't do the same job. A more targeted version — addressing the exact harm you named without overhauling everything — would likely capture most of the benefit with far less downside. Until you show why only the full change works, the more measured option is winning this.`
-    }),
-    "policy-analyst": () => ({
-      move: "weighing tradeoffs and implementation",
-      response: `I'll take ${claim} seriously, because the concern is legitimate. The problem is what happens when this becomes a real policy. ${capitalize(motion)} sounds clean in the abstract, but you have to ask who carries it out, what gets pushed aside to make room, and how you stop it from turning into a box-ticking exercise. A narrower, opt-in version targets the same harm without those tradeoffs — it reaches the people who actually need it and leaves the rest of the system intact. So the honest comparison isn't this policy versus nothing; it's a broad change versus a precise one that costs far less and is much harder to get wrong. On that comparison, the targeted fix wins.`
-    }),
-    "socratic-questioner": () => ({
-      move: "asking questions that expose the gap",
-      response: `Before I accept ${claim}, I want to pin down what we're actually solving. What exactly is causing the harm here — the thing itself, or the way it gets used? And if it's the way it's used, why does fixing that require ${motion} rather than changing how the existing system works? Which specific people benefit, and which ones lose something they were relying on? I ask because the answer changes everything: if the real problem is narrow, then a narrow fix is the honest response, and the sweeping version does more than the problem justifies. Convince me the full change is necessary — not just that the concern is real.`
-    }),
-    "ethics-philosopher": () => ({
-      move: "showing fairness cuts both ways",
-      response: `I take the fairness concern in ${claim} seriously — it deserves a real answer, not a dismissal. But fairness has two sides here. ${capitalize(motion)} protects the people you're worried about, and in the same move it can take something away from others who were depending on the current system. A principle that helps one group by quietly harming another isn't actually fair; it just moves the unfairness somewhere less visible. The fairer path is the narrower one: address the specific harm you've identified without creating a new set of people who lose out. That respects everyone's claim, not only the group whose problem is loudest right now.`
-    }),
-    "rhetorician": () => ({
-      move: "reframing the real choice",
-      response: `I understand why ${claim} resonates — it's the kind of argument that sounds right the moment you hear it. But step back and look at the real choice in front of us. This was never a clean question of fixing a problem or ignoring it. It's a question of how much to change, and how carefully. ${capitalize(motion)} is the maximal option, and the maximal option always feels bold — but bold and wise aren't the same thing. When a smaller, sharper fix reaches the same goal without the collateral damage, the sweeping version isn't the brave choice; it's the careless one. The side that solves the problem with the least breakage should come out ahead, and that isn't yours.`
-    }),
-    "tournament-judge": () => ({
-      move: "testing the connection from problem to policy",
-      response: `Let's be precise about what you actually have to prove. ${capitalize(claim)} establishes the problem, and I'll accept the problem is real. What's missing is the connection from there to ${motion}. You need to show the full policy is what fixes the harm, and that a narrower option wouldn't do the same work — otherwise the comparison runs against you. Think of it as impact against impact: your benefit only lands if the sweeping change is genuinely necessary, while the cost of overreach is paid by everyone, every day. A targeted fix is more likely to deliver and far less likely to backfire. Close that gap and you're ahead; until then, you're not.`
-    }),
-    "deca-judge": () => ({
-      move: "making the cost-benefit decision",
-      response: `Practically speaking, ${claim} points at a real cost, and I won't wave it away. But make the decision the way you'd make any resource call. ${capitalize(motion)} is the expensive, broad option: it commits time, money, and attention across the board. A targeted alternative goes after the same problem at a fraction of that cost and reaches the people who actually need it. If a cheaper, narrower move captures most of the upside, that's the smarter investment. So the real question isn't whether your concern matters — it's whether the sweeping fix returns enough extra benefit to justify its extra cost. I don't think it does.`
-    }),
-    "hosa-judge": () => ({
-      move: "favoring the more measured intervention",
-      response: `I hear the worry behind ${claim}, and it's worth taking seriously. But the more responsible move is the measured one. ${capitalize(motion)} changes everything at once, and broad changes carry side effects you can't fully predict in advance. A narrower response treats the specific harm you've named while protecting the parts of the system that were already working. When you're not certain of the downstream effects, you protect what works first and expand only once you've seen results. That's why a careful, targeted fix beats the sweeping one here — the same goal, with far less risk of doing harm while trying to help.`
-    }),
-    "starter-coach": () => ({
-      move: "coaching toward a stronger version of the argument",
-      response: `Your claim is solid, and you're right to lead with it — ${claim} is the kind of point that can win a round. But the warrant underneath it is thin, and I'm going to push on it. You're assuming ${motion} is the way to deliver that benefit without explaining how it actually produces better outcomes than the alternatives. Walk me through the mechanism: what specifically changes for people, step by step? And answer the obvious response — that a smaller, more targeted version gets you most of the way there. If you can show the full change clearly beats the narrow one, you've got me. Right now that connection is missing.`
-    }),
-    "friendly-practice": () => ({
-      move: "answering directly and offering a cleaner alternative",
-      response: `That's a fair point — ${claim} is worth taking seriously, so let me actually engage it instead of brushing it off. Here's where I'd push: you've gone straight from the problem to ${motion} as if it's the only option on the table. It isn't. If the harm you're describing is really about one specific part, a narrower change fixes that part without turning everything upside down. I'd back that version, because it solves the same problem with a lot less that can go wrong. So before we commit to the big change, what's the reason a smaller, more focused fix wouldn't do the job?`
-    })
+function supportLayers(personaId: string, objection: string, motion: string): string[] {
+  const layers: Record<string, string[]> = {
+    "friendly-practice": [
+      `I'm glad to defend ${motion} — and the case is more solid than it first looks.`,
+      `The benefit is concrete: clearer expectations and fewer daily distractions, so more time goes to learning.`,
+      `The fair worry is ${objection}, and it deserves a straight answer, not a dodge.`,
+      `Write the rule narrowly — clear standards, equal enforcement — and that worry mostly disappears.`,
+      `Set against doing nothing, you keep a real, everyday benefit at a cost you can actually control.`,
+      `So the friendly version of my case is simple: good idea, done carefully, worth backing.`
+    ],
+    "socratic-questioner": [
+      `Let me defend ${motion} by starting with the question that decides it.`,
+      `Does this do more good than harm when it's implemented well? I think it clearly does.`,
+      `What's the real worry — ${objection}? And is that a flaw in the idea, or only in a sloppy version of it?`,
+      `If careful drafting removes the worry, what's left except the benefit?`,
+      `Weigh it: concrete everyday gains against a risk we can design out — which should win?`,
+      `Answer honestly and you land on yes, which is exactly where I am.`
+    ],
+    "devils-advocate": [
+      `I'll defend ${motion} by taking its strongest objection head on: ${objection}.`,
+      `That's the best shot against it — and it still misses.`,
+      `Nothing about this requires it to be unfair or heavy-handed; that's bad implementation, not the idea.`,
+      `Written with clear rules and equal enforcement, it delivers the benefit and removes the very thing critics fear.`,
+      `Weigh it: a real, recurring benefit against a risk that only appears if you do it badly.`,
+      `If the only case against it is "it could be botched," then do it well — and the motion stands.`
+    ],
+    "evidence-specialist": [
+      `I'll defend ${motion} with concrete benefits, not slogans.`,
+      `The gains are specific: clearer expectations, fewer conflicts, more time on task.`,
+      `When people ask for proof, point to places that adopted this and saw exactly those results.`,
+      `The fair objection is ${objection} — answered by narrow drafting and equal enforcement.`,
+      `On the evidence, a well-run version delivers the benefit while keeping the risk small and measurable.`,
+      `Real, observable gains at a manageable cost is why this should happen.`
+    ],
+    "policy-analyst": [
+      `Let me defend ${motion} on the implementation, because that's where it's won.`,
+      `It works when it's done well: simple published rules, consistent enforcement, a clear exceptions process.`,
+      `Yes, ${objection} is a real risk — but that's a design problem, not a reason to do nothing.`,
+      `Build it to avoid that and you get the structure a school needs without the overreach.`,
+      `Weigh steady, contained benefit against a downside you've engineered out — the policy comes out ahead.`,
+      `Done right, the upside is reliable and the cost is controlled, which is why I'd implement it.`
+    ],
+    "tournament-judge": [
+      `Here's why ${motion} is winning this round on the substance.`,
+      `The case rests on real, recurring benefits — clearer expectations, fewer distractions, a steadier room.`,
+      `The best response against me is ${objection}, and it only bites if the policy is written carelessly.`,
+      `Written narrowly, with equal enforcement, that objection falls away.`,
+      `Weigh it as impact against impact: everyday benefit versus a risk we can design out.`,
+      `On that comparison the ballot comes down for the motion.`
+    ],
+    "rhetorician": [
+      `Let me make the case for ${motion}, and notice the framing.`,
+      `This isn't control — it's a clear, shared standard that keeps the focus on learning.`,
+      `The objection you'll hear is ${objection}, but that argues for writing the rule well, not refusing to.`,
+      `Framed right, it's not banning anything — it's making the better choice the easier one.`,
+      `Against leaving everyone to sort it out alone, structure wins without heavy-handedness.`,
+      `Win that frame and the motion is the obvious, humane choice.`
+    ],
+    "starter-coach": [
+      `Let me defend ${motion} and model how to build it cleanly.`,
+      `Lead with the benefit: clearer expectations and fewer distractions, so more time goes to learning.`,
+      `Then pre-empt the obvious objection — ${objection} — instead of dodging it.`,
+      `The fix is a narrow rule: clear standards, equal enforcement, real exceptions.`,
+      `Notice the move — claim, reason, then answer the strongest pushback; that's a complete case.`,
+      `That structure is why the motion holds up under pressure.`
+    ],
+    "ethics-philosopher": [
+      `I'll defend ${motion} on principle, not just practicality.`,
+      `A school owes every student a fair, focused environment, and clear standards serve that duty.`,
+      `The honest objection is ${objection}, and fairness does cut both ways.`,
+      `That's exactly why the rule must be narrow and enforced equally, with no targeting.`,
+      `Weighed as duties, it protects students rather than controlling them.`,
+      `The principled position isn't to avoid the policy; it's to implement it fairly.`
+    ],
+    "deca-judge": [
+      `From a practical standpoint, ${motion} is the right call.`,
+      `The benefits are tangible — clearer expectations, fewer conflicts, time kept on learning — and they recur daily.`,
+      `The cost critics raise is ${objection}; treat it as a risk to manage, not a dealbreaker.`,
+      `Clear rules, equal enforcement, and a simple exceptions process keep that cost low.`,
+      `Weigh return on cost: steady benefit at a controllable price is a good investment.`,
+      `That's why I'd implement it rather than leave things as they are.`
+    ],
+    "hosa-judge": [
+      `I'll defend ${motion} as the more responsible policy.`,
+      `A predictable, well-run environment protects students and keeps the focus where it belongs.`,
+      `The worry worth taking seriously is ${objection}.`,
+      `The answer is careful implementation — clear standards, equal enforcement, real exceptions — not walking away.`,
+      `Weigh steady protection against a risk we can manage, and the measured policy wins.`,
+      `Protecting a safe, steady environment comes first, and this is how you deliver it.`
+    ]
   };
+  return layers[personaId] ?? layers["policy-analyst"];
+}
 
-  const build = builders[personaId] ?? builders["devils-advocate"];
-  return build();
+// SIDE FIDELITY + DIFFICULTY: assemble a persona-distinct speech and scale its depth to the tier.
+// Government/Affirmative supports the motion; Opposition/Negative opposes it.
+function buildPersonaArgument(personaId: string, claim: string | null, motion: string, stance: DebateStance, tier: StrengthTier) {
+  const layers =
+    stance === "support"
+      ? supportLayers(personaId, claim ?? "that the rule will be unfair or go too far", motion)
+      : opposeLayers(personaId, claim ?? "there's a real problem worth solving here", motion);
+  const response = layers.slice(0, TIER_LAYER_COUNT[tier]).join(" ");
+  const move = PERSONA_MOVE[personaId]?.[stance] ?? (stance === "support" ? "defending the motion" : "pressing the weak link");
+  return { response, move };
 }
 
 function capitalize(text: string) {
@@ -633,15 +789,9 @@ function fallbackOpponent(input: {
   const studentRole: MessageRole = isAffirmative ? "NEGATIVE" : "AFFIRMATIVE";
   const motion = cleanMotion(input.topic);
   const studentPoint = extractStudentPoint(input.transcript, studentRole);
-  const { response, move } = buildPersonaArgument(persona.id, studentPoint, motion, stance);
-  const advanced = input.level === "ELITE" || persona.difficulty === "elite";
-  // Advanced/elite mode expects a longer speech (180-260 words): add a concrete weighing close that
-  // matches the assigned stance so the fallback still hits the expected shape.
-  const advancedClose =
-    stance === "support"
-      ? ` And weigh it directly: the everyday benefits — structure, focus, clearer expectations — land for every student, every day, while the main risk only appears if the policy is implemented badly, which we can prevent by writing it narrowly. Concrete, recurring upside against a risk we can design out is why my side should win this.`
-      : ` And weigh it directly: a narrower fix reaches the same goal with less collateral damage, which on this motion matters more than the sweep of the full version, because a smaller change is both more likely to work and easier to walk back if it doesn't. Comparable benefit at far less risk is why my side should come out ahead here.`;
-  const fullResponse = advanced ? `${response}${advancedClose}` : response;
+  // The bot's strength (persona rating) plus the debate level set how deep/long the speech goes.
+  const tier = strengthTier(input.level, persona.rating);
+  const { response, move } = buildPersonaArgument(persona.id, studentPoint, motion, stance, tier);
   const pressurePoints =
     stance === "support"
       ? [
@@ -656,7 +806,7 @@ function fallbackOpponent(input: {
         ];
 
   return {
-    response: fullResponse,
+    response,
     strategy: `${persona.name} — ${move}`,
     pressurePoints,
     fallbackNotice: DEV_AI_FALLBACK_NOTICE
@@ -855,8 +1005,9 @@ export async function generateOpponentResponse(input: {
     };
   }
   const ratingLabel = `${persona.rating} (${persona.difficulty})`;
-  const advanced = input.level === "ELITE" || persona.difficulty === "elite";
-  const wordTarget = advanced ? "180-260 words" : "100-180 words";
+  const tier = strengthTier(input.level, persona.rating);
+  const personaStyle = PERSONA_STYLE[persona.id] ?? persona.promptInstructions;
+  const difficultyDirective = DIFFICULTY_DIRECTIVE[tier];
   const supportsMotion = input.side === "AFFIRMATIVE";
   const stanceLabel = supportsMotion ? "Government / Affirmative / For" : "Opposition / Negative / Against";
   const stanceRule = supportsMotion
@@ -890,8 +1041,9 @@ Use normal, persuasive language in flowing paragraphs, specific to THIS motion a
 Never invent citations as real sources. Argue in this persona's voice: ${persona.name}. ${persona.promptInstructions}`;
   const userPrompt = `Motion: ${input.topic}
 You are arguing: ${stanceLabel} — you ${supportsMotion ? "SUPPORT and defend this motion" : "OPPOSE this motion"}.
-Persona / opponent voice: ${persona.name} — ${persona.style}. ${persona.promptInstructions}
-Difficulty / rating: ${ratingLabel}
+Persona / opponent voice: ${persona.name} — ${persona.style}.
+Persona STYLE (debate in this distinct way, not a generic "I hear you, but..." pattern): ${personaStyle}
+Difficulty / rating: ${ratingLabel}. ${difficultyDirective}
 Debate format: ${input.format ?? input.eventType ?? "default"} (${input.organization})
 Practice mode: ${input.practiceMode ?? "DEBATE"}
 Student level: ${input.level}
@@ -902,7 +1054,7 @@ Full transcript so far (JSON): ${JSON.stringify(input.transcript)}
 
 Respond to the student's most recent point using the reasoning flow above. Sound like a real, specific, persuasive human — not a template.
 
-Length and shape: aim for ${wordTarget}, conversational but sharp. The response must contain (woven into natural prose, NOT as headings): one direct response to the student, one concrete counterargument, one comparison or better alternative, and a final sentence explaining why your side is stronger. Do not pad, do not use headings.
+Length and shape: ${difficultyDirective} Conversational but sharp, woven into natural prose, NOT headings. Do not pad, do not use headings, and do not fall into the same template as other personas.
 Return JSON with:
 - "response": your spoken argument as natural paragraphs (no headings, no speech labels, no jargon filler).
 - "strategy": a short plain-English note on the line of attack you took (for the coach, not spoken).

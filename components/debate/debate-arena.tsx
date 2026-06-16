@@ -147,6 +147,11 @@ export type JudgeReport = {
     whyWinnerWon?: string;
     whyLoserLost?: string;
   };
+  roundDecidingClash?: {
+    governmentBestArgument?: string;
+    oppositionBestAnswer?: string;
+    whyItDecides?: string;
+  };
   keyClash?: string;
   strongestArgument?: string;
   weakestArgument?: string;
@@ -822,6 +827,29 @@ function JudgeDecisionModal({
                   <li key={index}>{bullet}</li>
                 ))}
               </ul>
+            </div>
+          ) : null}
+
+          {report.roundDecidingClash ? (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Round-deciding clash</p>
+              <div className="mt-2 space-y-2 text-sm leading-6 text-neutral-300">
+                {report.roundDecidingClash.governmentBestArgument ? (
+                  <p>
+                    <span className="font-semibold text-neutral-100">Government&rsquo;s best argument:</span> {report.roundDecidingClash.governmentBestArgument}
+                  </p>
+                ) : null}
+                {report.roundDecidingClash.oppositionBestAnswer ? (
+                  <p>
+                    <span className="font-semibold text-neutral-100">Opposition&rsquo;s best answer:</span> {report.roundDecidingClash.oppositionBestAnswer}
+                  </p>
+                ) : null}
+                {report.roundDecidingClash.whyItDecides ? (
+                  <p>
+                    <span className="font-semibold text-neutral-100">Why it decides the round:</span> {report.roundDecidingClash.whyItDecides}
+                  </p>
+                ) : null}
+              </div>
             </div>
           ) : null}
 

@@ -102,7 +102,7 @@ export const AI_DEBATE_PERSONAS: AiDebatePersona[] = [
     strengths: ["Clash", "Weighing", "Ballot framing"],
     weakness: "Less conversational",
     localStrategy: "collapse to voters and explain why one impact controls the ballot",
-    promptInstructions: "Argue with the rigor of a strong tournament competitor: test the link from the student's problem to their conclusion and show what they still have to prove. Be precise and real — explain WHY, never just say 'we outweigh' or 'judge prefers us'."
+    promptInstructions: "Argue with the rigor of a strong tournament competitor: test the connection from the student's problem to their conclusion and show what they still have to prove. You may use debate vocabulary, but ONLY after you have clearly explained the substance in plain language first — never just assert 'we outweigh' or 'judge prefers us'."
   },
   {
     id: "rhetorician",

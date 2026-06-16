@@ -724,6 +724,17 @@ function JudgeDecisionModal({
   const governmentFeedback = report.sideFeedback?.government;
   const oppositionFeedback = report.sideFeedback?.opposition;
   const reason = report.longReasonForDecision ?? report.reasonForDecision ?? "The judge returned a completed ballot for this round.";
+  const [showFullRubric, setShowFullRubric] = useState(false);
+
+  const fairness = report.judgeFairnessReport;
+  const compactReason = report.shortReasonForDecision ?? report.reasonForDecision ?? "The winning side won the key comparison.";
+  const whyBullets = [fairness?.realArgumentQuality ?? report.strengths?.[0], report.weaknesses?.[0] ?? fairness?.mechanismCheck].filter(
+    (value): value is string => Boolean(value)
+  );
+  const biggestFix =
+    report.transcriptFeedback?.mostMissingPiece ?? fairness?.mechanismCheck ?? "Add a clear warrant and a concrete impact to your main point.";
+  const betterSentence = report.transcriptFeedback?.betterSentence ?? fairness?.betterVersion;
+  const practiceNext = fairness?.practiceSkill ?? report.transcriptFeedback?.skillToPractice ?? report.recommendedLessons?.[0]?.reason;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm">
@@ -753,6 +764,7 @@ function JudgeDecisionModal({
             </div>
           ) : null}
 
+          {/* Compact default view — the whole result in about 15 seconds. */}
           <div className="grid gap-3 md:grid-cols-[0.55fr_1.45fr]">
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5 text-center">
               <p className="text-sm font-semibold text-neutral-400">Overall score</p>
@@ -767,21 +779,52 @@ function JudgeDecisionModal({
             </div>
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Short reason</p>
-              <p className="mt-2 text-xl font-semibold">{report.shortReasonForDecision ?? report.reasonForDecision ?? "The winning side won the key comparison."}</p>
-              <p className="mt-4 text-sm leading-7 text-neutral-300">{reason}</p>
+              <p className="mt-2 text-lg font-semibold leading-7">{compactReason}</p>
             </div>
           </div>
 
+          {fairness?.emptyPhraseWarning ? (
+            <div className="rounded-md border border-amber-400/30 bg-amber-500/10 p-3">
+              <p className="text-sm font-semibold text-amber-200">Empty phrase warning</p>
+              <p className="mt-1 text-sm leading-6 text-amber-50/90">{fairness.emptyPhraseWarning}</p>
+            </div>
+          ) : null}
+
+          {whyBullets.length > 0 ? (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Why you won / lost</p>
+              <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-neutral-300">
+                {whyBullets.slice(0, 2).map((bullet, index) => (
+                  <li key={index}>{bullet}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <InsightCard title="Biggest fix" value={biggestFix} />
+            {betterSentence ? <InsightCard title="Better sentence" value={betterSentence} /> : null}
+            {practiceNext ? <InsightCard title="Practice next" value={practiceNext} /> : null}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowFullRubric((value) => !value)}
+            className="focus-ring flex w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-neutral-200 hover:bg-white/10"
+            aria-expanded={showFullRubric}
+          >
+            {showFullRubric ? "Hide full rubric breakdown" : "Show full rubric breakdown"}
+          </button>
+
+          {showFullRubric ? (
+            <div className="space-y-5 border-t border-white/10 pt-5">
           {report.judgeFairnessReport ? (
             <div className="rounded-lg border border-amber-400/20 bg-amber-500/[0.06] p-4">
               <p className="font-semibold text-amber-100">Real argument vs. debate jargon</p>
-              {report.judgeFairnessReport.emptyPhraseWarning ? (
-                <div className="mt-3 rounded-md border border-amber-400/30 bg-amber-500/10 p-3">
-                  <p className="text-sm font-semibold text-amber-200">Empty phrase warning</p>
-                  <p className="mt-1 text-sm leading-6 text-amber-50/90">{report.judgeFairnessReport.emptyPhraseWarning}</p>
-                </div>
-              ) : null}
               <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {report.judgeFairnessReport.centralClash ? (
+                  <InsightCard title="Central clash" value={report.judgeFairnessReport.centralClash} />
+                ) : null}
                 {report.judgeFairnessReport.realArgumentQuality ? (
                   <InsightCard title="Real argument quality" value={report.judgeFairnessReport.realArgumentQuality} />
                 ) : null}
@@ -797,14 +840,8 @@ function JudgeDecisionModal({
                 {report.judgeFairnessReport.droppedArguments ? (
                   <InsightCard title="Dropped arguments" value={report.judgeFairnessReport.droppedArguments} />
                 ) : null}
-                {report.judgeFairnessReport.betterVersion ? (
-                  <InsightCard title="Better version" value={report.judgeFairnessReport.betterVersion} />
-                ) : null}
                 {report.judgeFairnessReport.fairWinnerLogic ? (
                   <InsightCard title="Fair winner logic" value={report.judgeFairnessReport.fairWinnerLogic} />
-                ) : null}
-                {report.judgeFairnessReport.practiceSkill ? (
-                  <InsightCard title="Practice next" value={report.judgeFairnessReport.practiceSkill} />
                 ) : null}
               </div>
             </div>
@@ -957,6 +994,8 @@ function JudgeDecisionModal({
             <p className="mt-2 text-sm leading-6 text-neutral-300">{report.readinessForNextLevel.rationale}</p>
             <p className="mt-3 text-sm font-semibold">Next milestone: {report.readinessForNextLevel.nextMilestone}</p>
           </div>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-3">
             <Link href="/debate" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>

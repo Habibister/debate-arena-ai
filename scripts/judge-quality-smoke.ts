@@ -206,7 +206,34 @@ const impactNoWeighing = judgeClassRank(
 assert.ok(category(impactNoWeighing, "impact") >= 55, "A developed impact should score on impact.");
 assert.ok(category(impactNoWeighing, "clash") < 60, "An impact with no comparison should score low on weighing.");
 
-// Test 3: the AI opponent must sound human and motion-specific, never a template.
+// Test 6 (paraphrase): a messy student speech must be paraphrased cleanly, not quoted verbatim.
+const messySpeech = judgeClassRank(
+  [
+    {
+      role: "AFFIRMATIVE",
+      round: 1,
+      content:
+        "I am not exactly sure what the opposition is refering to however I still stand on my points AI helps with both mental and physical health adjusting a fitness training and study habits for students"
+    }
+  ],
+  "GOVERNMENT"
+);
+assert.ok(
+  !(messySpeech.transcriptFeedback?.strongestClaim ?? "").toLowerCase().includes("i am not exactly sure"),
+  "Judge must paraphrase the student's idea, not quote the rambling hedge verbatim."
+);
+assert.ok(
+  (messySpeech.transcriptFeedback?.strongestClaim ?? "").toLowerCase().includes("you argued that"),
+  "Judge should frame the student's idea as a clean paraphrase."
+);
+
+// Rubric preservation (Test 3 of spec): all ten rubric dimensions still calculate.
+const rubricKeys = messySpeech.categoryScores.map((entry) => entry.key);
+for (const key of ["argument", "warrant", "mechanism", "impact", "refutation", "contentEvidence", "clash", "motionConnection", "organization"]) {
+  assert.ok(rubricKeys.includes(key), `Rubric dimension "${key}" must still be scored.`);
+}
+
+// Test 1 + 3: the AI opponent must sound human and motion-specific, never a template.
 const BANNED_OPPONENT_PHRASES = [
   "Negative speech",
   "Affirmative speech",
@@ -214,15 +241,26 @@ const BANNED_OPPONENT_PHRASES = [
   "First, direct clash",
   "Second, independent offense",
   "Finally, weighing",
-  "independent offense"
+  "independent offense",
+  "Take your best point",
+  "I'll grant it",
+  "I'll even grant it",
+  "The trouble is the link",
+  "That's the step I need you to win",
+  "Judge should prefer us",
+  "This is my ballot story"
 ];
 
+function wordCount(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 async function opponentSoundsHuman() {
-  for (const personaId of ["evidence-specialist", "policy-analyst", "devils-advocate", "socratic-questioner", "starter-coach"]) {
+  for (const personaId of ["evidence-specialist", "policy-analyst", "devils-advocate", "socratic-questioner", "starter-coach", "tournament-judge"]) {
     const response = await generateOpponentResponse({
       organization: "DEBATE",
       level: "INTERMEDIATE",
-      topic: "This House believes schools should end class rankings.",
+      topic: "This House believes schools should teach practical AI literacy.",
       side: "NEGATIVE",
       round: 2,
       personaId,
@@ -230,18 +268,24 @@ async function opponentSoundsHuman() {
         {
           role: "AFFIRMATIVE",
           round: 1,
-          content: "Schools should end class rank because it causes stress and anxiety for students."
+          content: "Schools should teach AI literacy because students are going to use AI anyway and need to use it responsibly."
         }
       ]
     });
 
     for (const phrase of BANNED_OPPONENT_PHRASES) {
       assert.ok(
-        !response.response.includes(phrase),
+        !response.response.toLowerCase().includes(phrase.toLowerCase()),
         `AI opponent (${personaId}) must not use template phrase "${phrase}".`
       );
     }
-    assert.ok(response.response.length > 120, `AI opponent (${personaId}) should give a real, developed response.`);
+
+    const count = wordCount(response.response);
+    assert.ok(count >= 90 && count <= 170, `AI opponent (${personaId}) should be 90-170 words (was ${count}).`);
+    assert.ok(
+      response.response.toLowerCase().includes("ai") || response.response.toLowerCase().includes("literacy"),
+      `AI opponent (${personaId}) should engage the actual motion.`
+    );
   }
 }
 

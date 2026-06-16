@@ -354,6 +354,83 @@ function excerpt(text: string, max = 170) {
   return clean.length > max ? `${clean.slice(0, max - 3)}...` : clean;
 }
 
+const CLAIM_HEDGE_PREFIXES = [
+  "i am not exactly sure what the opposition is referring to",
+  "i am not exactly sure what the opposition is refering to",
+  "i am not exactly sure",
+  "i'm not exactly sure",
+  "i am not entirely sure",
+  "i am not sure",
+  "i'm not sure",
+  "i still stand on my points",
+  "i still stand on my point",
+  "what i'm trying to say is",
+  "what i am trying to say is",
+  "to be honest",
+  "honestly",
+  "i think that",
+  "i think",
+  "i believe that",
+  "i believe",
+  "i guess",
+  "i mean",
+  "basically",
+  "well",
+  "um",
+  "uh"
+];
+
+// Turn a possibly messy transcript fragment into a clean, readable paraphrase of the idea, rather
+// than quoting rambling text verbatim. Picks the most substantive clause, strips filler hedges,
+// trims at a word boundary, and keeps acronyms ("AI") intact.
+function cleanClaim(raw: string, max = 150) {
+  let text = (raw || "").replace(/\s+/g, " ").trim();
+
+  if (!text) {
+    return "your main point";
+  }
+
+  const clauses = text
+    .split(/(?<=[.!?;])\s+|;|\b(?:however|but|although|though)\b/i)
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.length > 14);
+
+  if (clauses.length > 0) {
+    text = clauses.reduce((best, clause) => (sentenceQuality(clause) > sentenceQuality(best) ? clause : best));
+  }
+
+  let lower = text.toLowerCase();
+  let stripped = true;
+  while (stripped) {
+    stripped = false;
+    for (const hedge of CLAIM_HEDGE_PREFIXES) {
+      if (lower.startsWith(hedge)) {
+        text = text.slice(hedge.length).replace(/^[\s,.;:]+/, "");
+        lower = text.toLowerCase();
+        stripped = true;
+      }
+    }
+  }
+
+  text = text.replace(/[.!?]+$/, "").trim();
+
+  if (!text) {
+    return "your main point";
+  }
+
+  if (text.length > max) {
+    let cut = text.slice(0, max);
+    const boundary = Math.max(cut.lastIndexOf(", "), cut.lastIndexOf("; "));
+    cut = boundary > max * 0.5 ? cut.slice(0, boundary) : cut.replace(/\s+\S*$/, "");
+    text = cut.trim();
+  }
+
+  // Drop a dangling connective left at the end of a trim so the paraphrase reads as a complete thought.
+  text = text.replace(/[\s,;:]+$/, "").replace(/\s+(?:because|that|and|but|so|the|a|an|to|of|with|for|which|when|where|while|since)$/i, "");
+
+  return /^[A-Z][a-z]/.test(text) ? text.charAt(0).toLowerCase() + text.slice(1) : text;
+}
+
 function sentenceQuality(sentence: string) {
   const lower = sentence.toLowerCase();
   return (
@@ -578,7 +655,7 @@ function sideFeedback(side: SideMetrics, opponent: SideMetrics) {
 
   return {
     didWell: [
-      `Best claim: "${excerpt(side.bestClaim)}"`,
+      `Best idea: ${cleanClaim(side.bestClaim)}`,
       side.scores.refutation >= 70
         ? `Created direct clash by answering opposing material in the speech.`
         : `Gave at least one position the judge could identify, but clash was limited.`,
@@ -816,17 +893,17 @@ function winnerSelectionReason(winner: SideMetrics, loser: SideMetrics) {
 }
 
 function betterSentenceFor(student: SideMetrics, opponent: SideMetrics) {
-  const opponentClaim = opponent.bestClaim ? excerpt(opponent.bestClaim, 120) : "their main argument";
+  const opponentClaim = opponent.bestClaim ? cleanClaim(opponent.bestClaim, 120) : "their main argument";
 
   if (student.scores.weighing < 68) {
-    return `Even if ${sideLabel(opponent.side)} is right that "${opponentClaim}", my impact matters more because it affects students more directly and more often.`;
+    return `Even if it's true that ${opponentClaim}, my side matters more because the harm I'm describing hits more people, more often, and is harder to undo.`;
   }
 
   if (student.scores.refutation < 68) {
-    return `${sideLabel(opponent.side)} says "${opponentClaim}", but that does not answer my mechanism because it assumes the policy works without proving enforcement.`;
+    return `It's claimed that ${opponentClaim}, but that doesn't actually answer my point — it assumes the policy works without showing how.`;
   }
 
-  return `My strongest point is not just that this sounds fair; it is that the mechanism changes who is protected, how often, and with what accountability.`;
+  return `My argument isn't just that this sounds fair; it's that the specific change I'm proposing alters who is affected, how often, and with what result.`;
 }
 
 function motionLabel(topic: string) {
@@ -861,12 +938,12 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
   const studentRecommendation = recommendationForStudent(student);
   const betterSentence = betterSentenceFor(student, opponent);
   const winnerReason = winnerSelectionReason(winnerMetrics, loserMetrics);
-  const keyClash = `Central clash: whether "${excerpt(government.bestClaim, 110)}" beat "${excerpt(opposition.bestClaim, 110)}." ${sideLabel(winner)} won that clash because ${
+  const keyClash = `The debate really turned on whether ${cleanClaim(government.bestClaim, 110)} outweighed ${cleanClaim(opposition.bestClaim, 110)}. ${sideLabel(winner)} won that clash because ${
     winnerMetrics.scores.weighing > loserMetrics.scores.weighing
-      ? `it made the better comparison around "${excerpt(winnerMetrics.bestClaim, 120)}"`
-      : `its warrant around "${excerpt(winnerMetrics.bestClaim, 120)}" was more complete than the answer from ${sideLabel(loser)}`
+      ? "it made the more substantive comparison between the impacts"
+      : "its reasoning was more complete than the answer it got back"
   }.`;
-  const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default. ${sideLabel(winner)} scored ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall}. ${winnerReason} Its best material was "${excerpt(winnerMetrics.bestClaim)}." ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left this important point underanswered: "${loserMetrics.dropped[0]}."` : `did answer some material, but its weakest point, "${excerpt(loserMetrics.weakestClaim)}", still lacked enough warrant, impact, or weighing to overtake the winning offense.`}`;
+  const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default, scoring ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall}. ${winnerReason} Its strongest idea was that ${cleanClaim(winnerMetrics.bestClaim)}. ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left an important point unanswered: ${cleanClaim(loserMetrics.dropped[0])}.` : `had a weakest point — ${cleanClaim(loserMetrics.weakestClaim)} — that still lacked the warrant, impact, or comparison needed to overtake the winning argument.`}`;
 
   const jargonySide = government.isMostlyJargon ? government : opposition.isMostlyJargon ? opposition : null;
   const emptyPhraseWarning = jargonySide
@@ -905,7 +982,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       : `Weighing was missing or only verbal. Don't just say you "outweigh" — compare on magnitude, probability, timeframe, scope, or reversibility and explain why your impact wins.`;
 
   const droppedArguments = student.dropped[0]
-    ? `You did not answer the opponent's point: "${student.dropped[0]}". An unanswered argument is treated as conceded.`
+    ? `You did not answer the opponent's point that ${cleanClaim(student.dropped[0])}. An unanswered argument is treated as conceded.`
     : `No major argument was fully dropped, but extend your answers — a one-line mention is not the same as engaging the point.`;
 
   const practiceSkill = practiceSkillFor(student);
@@ -918,7 +995,11 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     teamWinner: winner,
     losingSide: loser,
     confidenceLevel: confidence,
-    shortReasonForDecision: `${sideLabel(winner)} won ${confidence}-confidence because it won the more important comparison from the actual speeches.`,
+    shortReasonForDecision: `${sideLabel(winner)} wins, ${confidence === "high" ? "fairly clearly" : confidence === "medium" ? "but not by a lot" : "but only just"}. The clearer topic-specific argument was that ${cleanClaim(winnerMetrics.bestClaim, 120)}. ${
+      loserMetrics.isMostlyJargon
+        ? `${sideLabel(loser)} mostly leaned on debate vocabulary without proving the claim behind it.`
+        : `${sideLabel(loser)} needed more ${loserMetrics.scores.warrant < 60 ? "warrant" : loserMetrics.scores.weighing < 60 ? "comparison" : "concrete impact"} to overtake it.`
+    }`,
     longReasonForDecision: reasonForDecision,
     reasonForDecision,
     sideFeedback: {
@@ -927,36 +1008,36 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     },
     sideAnalysis: {
       government: {
-        whatTheyClaimed: government.claims.map((claim) => excerpt(claim)),
-        bestArgument: excerpt(government.bestClaim),
-        weakestArgument: excerpt(government.weakestClaim),
+        whatTheyClaimed: government.claims.map((claim) => cleanClaim(claim)),
+        bestArgument: cleanClaim(government.bestClaim),
+        weakestArgument: cleanClaim(government.weakestClaim),
         failedToAnswer: government.dropped,
         dropped: government.dropped,
-        neededMoreWarrant: government.scores.warrant < 68 ? `Explain why "${excerpt(government.bestClaim, 120)}" is true, not just that it matters.` : "Warrants were present.",
+        neededMoreWarrant: government.scores.warrant < 68 ? `Explain why ${cleanClaim(government.bestClaim, 120)} is true, not just that it matters.` : "Warrants were present.",
         neededMoreImpact: government.scores.impact < 68 ? "Add a concrete harm or benefit and explain who experiences it." : "Impacts were present.",
         neededMoreWeighing: government.scores.weighing < 68 ? "Compare magnitude, probability, timeframe, or reversibility against the opposition." : "Some weighing was present.",
-        vagueOrUnsupported: government.counts.vague > 0 || government.scores.evidence < 65 ? `Most unsupported piece: "${excerpt(government.weakestClaim, 130)}."` : "No major unsupported claim stood out.",
+        vagueOrUnsupported: government.counts.vague > 0 || government.scores.evidence < 65 ? `Most unsupported part: ${cleanClaim(government.weakestClaim, 130)}.` : "No major unsupported claim stood out.",
         persuasiveReframe: government.scores.weighing >= 76 ? "Created a usable ballot frame." : "Did not clearly reframe the round.",
         hiddenAssumptionAttack: government.scores.refutation >= 76 ? "Pressed an assumption in the opposing case." : "Needed to expose the opponent's hidden assumption more directly."
       },
       opposition: {
-        whatTheyClaimed: opposition.claims.map((claim) => excerpt(claim)),
-        bestArgument: excerpt(opposition.bestClaim),
-        weakestArgument: excerpt(opposition.weakestClaim),
+        whatTheyClaimed: opposition.claims.map((claim) => cleanClaim(claim)),
+        bestArgument: cleanClaim(opposition.bestClaim),
+        weakestArgument: cleanClaim(opposition.weakestClaim),
         failedToAnswer: opposition.dropped,
         dropped: opposition.dropped,
-        neededMoreWarrant: opposition.scores.warrant < 68 ? `Explain why "${excerpt(opposition.bestClaim, 120)}" is true, not just that it matters.` : "Warrants were present.",
+        neededMoreWarrant: opposition.scores.warrant < 68 ? `Explain why ${cleanClaim(opposition.bestClaim, 120)} is true, not just that it matters.` : "Warrants were present.",
         neededMoreImpact: opposition.scores.impact < 68 ? "Add a concrete harm or benefit and explain who experiences it." : "Impacts were present.",
         neededMoreWeighing: opposition.scores.weighing < 68 ? "Compare magnitude, probability, timeframe, or reversibility against the government." : "Some weighing was present.",
-        vagueOrUnsupported: opposition.counts.vague > 0 || opposition.scores.evidence < 65 ? `Most unsupported piece: "${excerpt(opposition.weakestClaim, 130)}."` : "No major unsupported claim stood out.",
+        vagueOrUnsupported: opposition.counts.vague > 0 || opposition.scores.evidence < 65 ? `Most unsupported part: ${cleanClaim(opposition.weakestClaim, 130)}.` : "No major unsupported claim stood out.",
         persuasiveReframe: opposition.scores.weighing >= 76 ? "Created a usable ballot frame." : "Did not clearly reframe the round.",
         hiddenAssumptionAttack: opposition.scores.refutation >= 76 ? "Pressed an assumption in the opposing case." : "Needed to expose the opponent's hidden assumption more directly."
       }
     },
     transcriptFeedback: {
       studentSide,
-      strongestClaim: excerpt(student.bestClaim),
-      weakestClaim: excerpt(student.weakestClaim),
+      strongestClaim: `You argued that ${cleanClaim(student.bestClaim)}.`,
+      weakestClaim: `Your weakest moment was the idea that ${cleanClaim(student.weakestClaim)}.`,
       bestRefutation:
         student.scores.refutation >= 68
           ? `Your best refutation was the part where you answered opposing material around "${excerpt(opponent.bestClaim, 120)}."`
@@ -969,14 +1050,14 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
             ? "The missing piece was weighing: explain why your impact matters more."
             : "The biggest next step is collapsing your best point into a cleaner voter.",
       betterSentence,
-      modelRewrite: `${excerpt(student.bestClaim, 110)}. This becomes stronger if you add: "${betterSentence}"`,
+      modelRewrite: `Your idea — ${cleanClaim(student.bestClaim, 110)} — gets stronger like this: "${betterSentence}"`,
       skillToPractice: studentRecommendation.lessonSlug
     },
     keyClash,
     strongestArgument: `Best winning argument: "${excerpt(winnerMetrics.bestClaim)}."`,
     weakestArgument: `Weakest losing-side argument: "${excerpt(loserMetrics.weakestClaim)}."`,
     strengths: [
-      `Your strongest claim was: "${excerpt(student.bestClaim)}."`,
+      `Your strongest idea: ${cleanClaim(student.bestClaim)}.`,
       student.scores.organization >= 70 ? "Your structure gave the judge some signposts to follow." : "You had at least one identifiable position to evaluate.",
       student.scores.refutation >= 70 ? "You made at least one direct answer to the other side." : "You gave the judge a starting point for your side."
     ],
@@ -1029,7 +1110,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
           : "Keep training before the next level: the speech still needs more warrant, impact comparison, or direct clash.",
       nextMilestone: "Complete a judged round where your final speech answers the opponent's best argument and weighs your impact in one clear voter."
     },
-    fallbackNotice: "Development-only local AI fallback is active because OpenAI is unavailable. Add a valid OPENAI_API_KEY to use live AI.",
+    fallbackNotice: "Fallback AI is active. Judging quality is limited until OPENAI_API_KEY is configured.",
     eventType,
     topic: input.topic,
     organization: input.organization,

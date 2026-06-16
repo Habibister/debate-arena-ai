@@ -164,7 +164,7 @@ type PerformanceJudgeResult = {
 };
 
 const DEV_AI_FALLBACK_NOTICE =
-  "Development-only local AI fallback is active because OpenAI is unavailable. Add a valid OPENAI_API_KEY to use live AI.";
+  "Fallback AI is active. Opponent quality is limited until OPENAI_API_KEY is configured.";
 
 function compactRubric(categories: RubricCategorySeed[]) {
   return categories.map((category) => ({
@@ -417,72 +417,125 @@ function cleanMotion(topic: string) {
   return cleaned.length > 4 ? cleaned : topic.replace(/[.\s]+$/, "").trim();
 }
 
+const STUDENT_HEDGE_PREFIXES = [
+  "i am not exactly sure what the opposition is referring to",
+  "i am not exactly sure what the opposition is refering to",
+  "i am not exactly sure",
+  "i'm not exactly sure",
+  "i am not entirely sure",
+  "i am not sure",
+  "i'm not sure",
+  "i still stand on my points",
+  "i still stand on my point",
+  "what i'm trying to say is",
+  "what i am trying to say is",
+  "i guess what i'm saying is",
+  "to be honest",
+  "honestly",
+  "i think that",
+  "i think",
+  "i believe that",
+  "i believe",
+  "i guess",
+  "i mean",
+  "basically",
+  "well",
+  "um",
+  "uh",
+  "like"
+];
+
+// Pull out the student's actual point and tidy it so it can be acknowledged cleanly: pick the most
+// substantive clause, strip rambling hedges, and fix casing without breaking acronyms like "AI".
 function extractStudentPoint(transcript: DebateTranscriptMessage[], studentRole: MessageRole) {
   const latestStudentSpeech = [...transcript].reverse().find((message) => message.role === studentRole)?.content ?? "";
-  const firstSentence = latestStudentSpeech
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .find((sentence) => sentence.length > 20);
 
-  if (!firstSentence) {
+  const clauses = latestStudentSpeech
+    .split(/(?<=[.!?])\s+|\b(?:however|but|although|though)\b/i)
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.length > 20);
+
+  if (clauses.length === 0) {
     return null;
   }
 
-  // Strip trailing terminal punctuation so the claim embeds cleanly mid-sentence.
-  const stripped = firstSentence.replace(/[.!?]+$/, "");
-  const trimmed = stripped.length > 200 ? `${stripped.slice(0, 197)}...` : stripped;
-  // Lowercase the first letter so the claim reads naturally when embedded mid-sentence.
-  return trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
+  let best = clauses.reduce((longest, clause) => (clause.length > longest.length ? clause : longest));
+
+  let lower = best.toLowerCase();
+  let stripped = true;
+  while (stripped) {
+    stripped = false;
+    for (const hedge of STUDENT_HEDGE_PREFIXES) {
+      if (lower.startsWith(hedge)) {
+        best = best.slice(hedge.length).replace(/^[\s,.;:]+/, "");
+        lower = best.toLowerCase();
+        stripped = true;
+      }
+    }
+  }
+
+  best = best.replace(/[.!?]+$/, "").trim();
+
+  if (best.length < 8) {
+    return null;
+  }
+
+  if (best.length > 180) {
+    best = best.slice(0, 180).replace(/\s+\S*$/, "");
+  }
+
+  // Lowercase the first letter for mid-sentence embedding, but leave acronyms ("AI", "UN") intact.
+  return /^[A-Z][a-z]/.test(best) ? best.charAt(0).toLowerCase() + best.slice(1) : best;
 }
 
 // Each persona argues like a distinct, thoughtful human: acknowledge the real point, expose the
-// hidden assumption, attack the mechanism, offer a narrower alternative, and explain why that wins.
-// No speech labels, no "First/Second/Finally", no empty ballot vocabulary.
+// hidden assumption, attack the weakest link, offer a countermodel, and explain why it is stronger.
+// No speech labels, no "First/Second/Finally", no empty ballot vocabulary, no template tics.
 function buildPersonaArgument(personaId: string, claim: string, motion: string) {
   const builders: Record<string, () => { response: string; move: string }> = {
     "evidence-specialist": () => ({
       move: "asking for proof before accepting the claim",
-      response: `I hear you when you say ${claim}. The part I'm not sold on yet is the proof. What actually shows that ${motion} produces that result, instead of just sounding like it should? If the strongest support is a story or a hunch, then we'd be making a big change on thin evidence. Show me the case where a narrower, more targeted version wouldn't get most of the same benefit — because if it would, the sweeping version isn't worth the cost.`
+      response: `You're claiming ${claim}, and that might turn out to be true — but right now it's asserted, not shown. What's the actual evidence that ${motion} produces the result you're promising, rather than just sounding like it should? Before backing a change this big, I'd want real cases where it worked and didn't just add another layer that looks good on paper. Without that, the safer claim is the modest one: this can help some people, some of the time, when it's done carefully — not that we should build the whole system around it. A smaller, testable version would let us check whether the benefit is real before committing everyone to it.`
     }),
     "devils-advocate": () => ({
       move: "attacking the hidden assumption",
-      response: `Let me take the strongest version of your point: ${claim}. Even granting that, your argument quietly assumes the only fix is ${motion}. That skips the middle ground. If the real harm is narrower than the whole system, a smaller change solves it without the side effects. So the question isn't whether your problem is real — it might be. It's whether the blunt solution is the one that actually fixes it, and I don't think you've shown that.`
+      response: `I get why ${claim} feels persuasive — there's a real concern underneath it. But your argument leans on an assumption you haven't proven: that because the problem is real, ${motion} must be the answer. Those are two different claims. We don't adopt a sweeping policy every time something is imperfect; the burden is to show this specific change is worth what it costs and that a narrower fix wouldn't do the same job. A more targeted version — addressing the exact harm you named without overhauling everything — would likely capture most of the benefit with far less downside. Until you show why only the full change works, the more measured option is winning this.`
     }),
     "policy-analyst": () => ({
-      move: "focusing on implementation and a narrower alternative",
-      response: `I'll take your concern seriously: ${claim}. But implementation is where this falls apart. ${capitalize(motion)} is a blunt instrument — it changes everything at once, including the parts that were working fine. A more precise policy targets just the harm you named and leaves the rest alone. That gets most of the benefit with far less disruption, which is exactly why I'd pick the narrower fix over the sweeping one.`
+      move: "weighing tradeoffs and implementation",
+      response: `I'll take ${claim} seriously, because the concern is legitimate. The problem is what happens when this becomes a real policy. ${capitalize(motion)} sounds clean in the abstract, but you have to ask who carries it out, what gets pushed aside to make room, and how you stop it from turning into a box-ticking exercise. A narrower, opt-in version targets the same harm without those tradeoffs — it reaches the people who actually need it and leaves the rest of the system intact. So the honest comparison isn't this policy versus nothing; it's a broad change versus a precise one that costs far less and is much harder to get wrong. On that comparison, the targeted fix wins.`
     }),
     "socratic-questioner": () => ({
-      move: "questioning the cause of the harm",
-      response: `You're arguing that ${claim}. Let me ask what's underneath it: what is actually causing the harm — the thing itself, or the way it's used? Because if it's how it's used, then ${motion} is aimed at the wrong target. Wouldn't changing how it works solve the problem more directly than removing it entirely? Until that's answered, I don't see why the full change is the right call.`
+      move: "asking questions that expose the gap",
+      response: `Before I accept ${claim}, I want to pin down what we're actually solving. What exactly is causing the harm here — the thing itself, or the way it gets used? And if it's the way it's used, why does fixing that require ${motion} rather than changing how the existing system works? Which specific people benefit, and which ones lose something they were relying on? I ask because the answer changes everything: if the real problem is narrow, then a narrow fix is the honest response, and the sweeping version does more than the problem justifies. Convince me the full change is necessary — not just that the concern is real.`
     }),
     "ethics-philosopher": () => ({
-      move: "weighing fairness on both sides",
-      response: `I agree the fairness concern in your point — ${claim} — is worth taking seriously. But fairness cuts both ways. ${capitalize(motion)} helps the people you're worried about, and it may take something away from others who were relying on it. The more principled move is the narrower one: fix the unfairness you named without creating a new group of people who lose out.`
+      move: "showing fairness cuts both ways",
+      response: `I take the fairness concern in ${claim} seriously — it deserves a real answer, not a dismissal. But fairness has two sides here. ${capitalize(motion)} protects the people you're worried about, and in the same move it can take something away from others who were depending on the current system. A principle that helps one group by quietly harming another isn't actually fair; it just moves the unfairness somewhere less visible. The fairer path is the narrower one: address the specific harm you've identified without creating a new set of people who lose out. That respects everyone's claim, not only the group whose problem is loudest right now.`
     }),
     "rhetorician": () => ({
       move: "reframing the real choice",
-      response: `I'll meet your point head-on: ${claim} lands, and I'm not going to pretend it doesn't. But step back and look at what we're really choosing. This isn't "problem versus solution." It's a sweeping change versus a precise one. When a smaller fix gets the same result without the collateral damage, the bold-sounding option is the riskier bet — not the safer one.`
+      response: `I understand why ${claim} resonates — it's the kind of argument that sounds right the moment you hear it. But step back and look at the real choice in front of us. This was never a clean question of fixing a problem or ignoring it. It's a question of how much to change, and how carefully. ${capitalize(motion)} is the maximal option, and the maximal option always feels bold — but bold and wise aren't the same thing. When a smaller, sharper fix reaches the same goal without the collateral damage, the sweeping version isn't the brave choice; it's the careless one. The side that solves the problem with the least breakage should come out ahead, and that isn't yours.`
     }),
     "tournament-judge": () => ({
-      move: "testing the link from problem to solution",
-      response: `Take your best point — ${claim} — and I'll even grant it. The trouble is the link to your conclusion. Getting from "this is a real problem" to "${motion}" means showing that the full change is what fixes it, and that a narrower option wouldn't do the same job. That's the step I'd need you to win, and right now it's missing, so the more careful side is ahead.`
+      move: "testing the connection from problem to policy",
+      response: `Let's be precise about what you actually have to prove. ${capitalize(claim)} establishes the problem, and I'll accept the problem is real. What's missing is the connection from there to ${motion}. You need to show the full policy is what fixes the harm, and that a narrower option wouldn't do the same work — otherwise the comparison runs against you. Think of it as impact against impact: your benefit only lands if the sweeping change is genuinely necessary, while the cost of overreach is paid by everyone, every day. A targeted fix is more likely to deliver and far less likely to backfire. Close that gap and you're ahead; until then, you're not.`
     }),
     "deca-judge": () => ({
-      move: "treating it as a cost-benefit decision",
-      response: `From a practical standpoint, ${claim} is a fair concern. But weigh it the way a decision-maker would: ${motion} is broad and high-cost, while a targeted change is cheaper and hits the same problem. If the narrower option gets most of the result for a fraction of the disruption, that's simply the better decision — and that's the one I'd defend.`
+      move: "making the cost-benefit decision",
+      response: `Practically speaking, ${claim} points at a real cost, and I won't wave it away. But make the decision the way you'd make any resource call. ${capitalize(motion)} is the expensive, broad option: it commits time, money, and attention across the board. A targeted alternative goes after the same problem at a fraction of that cost and reaches the people who actually need it. If a cheaper, narrower move captures most of the upside, that's the smarter investment. So the real question isn't whether your concern matters — it's whether the sweeping fix returns enough extra benefit to justify its extra cost. I don't think it does.`
     }),
     "hosa-judge": () => ({
       move: "favoring the more measured intervention",
-      response: `I understand the worry behind ${claim}. But the safer path is the more measured one. ${capitalize(motion)} changes everything at once, and broad changes carry side effects you can't always predict. A narrower fix addresses the specific harm while protecting the parts that were already working — and protecting what works should come first.`
+      response: `I hear the worry behind ${claim}, and it's worth taking seriously. But the more responsible move is the measured one. ${capitalize(motion)} changes everything at once, and broad changes carry side effects you can't fully predict in advance. A narrower response treats the specific harm you've named while protecting the parts of the system that were already working. When you're not certain of the downstream effects, you protect what works first and expand only once you've seen results. That's why a careful, targeted fix beats the sweeping one here — the same goal, with far less risk of doing harm while trying to help.`
     }),
     "starter-coach": () => ({
       move: "coaching toward a stronger version of the argument",
-      response: `Good instinct — ${claim} is a real concern, and you're right to start there. Here's how I'd push back, and watch the move: you have a claim, but the warrant is doing a lot of quiet work. You're assuming ${motion} is the only fix. A stronger version of your own case would explain why a smaller, targeted change wouldn't work just as well — because if it would, the calmer option usually wins.`
+      response: `Your claim is solid, and you're right to lead with it — ${claim} is the kind of point that can win a round. But the warrant underneath it is thin, and I'm going to push on it. You're assuming ${motion} is the way to deliver that benefit without explaining how it actually produces better outcomes than the alternatives. Walk me through the mechanism: what specifically changes for people, step by step? And answer the obvious response — that a smaller, more targeted version gets you most of the way there. If you can show the full change clearly beats the narrow one, you've got me. Right now that connection is missing.`
     }),
     "friendly-practice": () => ({
       move: "answering directly and offering a cleaner alternative",
-      response: `Fair point — ${claim} is worth taking seriously, so let me answer it directly. The issue is that you've jumped straight to ${motion} as the answer. If the harm you described is really about one specific part, a narrower change fixes that part without upending everything else. That's the version I'd back, because it solves the same problem with less to go wrong.`
+      response: `That's a fair point — ${claim} is worth taking seriously, so let me actually engage it instead of brushing it off. Here's where I'd push: you've gone straight from the problem to ${motion} as if it's the only option on the table. It isn't. If the harm you're describing is really about one specific part, a narrower change fixes that part without turning everything upside down. I'd back that version, because it solves the same problem with a lot less that can go wrong. So before we commit to the big change, what's the reason a smaller, more focused fix wouldn't do the job?`
     })
   };
 
@@ -688,23 +741,27 @@ export async function generateOpponentResponse(input: {
   const persona = getAiPersona(input.personaId);
 
   return jsonCompletion<OpponentResponse>(
-    `You are a smart, real person arguing the ${input.side} side of a debate. You are NOT a debate-format generator.
+    `You are a sharp, human-sounding debate opponent arguing the ${input.side} side in a student training app. Your job is not to sound formal — your job is to make the student better.
 
-Talk like an articulate human in a real conversation. Your reasoning must follow this flow:
-1. Understand the other person's actual point.
-2. Admit the strongest part of it if it genuinely holds up.
-3. Find the hidden assumption their argument depends on.
-4. Attack the mechanism — explain why their cause-and-effect does not hold.
-5. Offer a better alternative, narrower fix, or countermodel.
-6. Explain, in plain language, why that means your side is more persuasive.
+For every response:
+1. Understand the student's actual argument.
+2. Briefly acknowledge the strongest part.
+3. Identify the hidden assumption.
+4. Attack the weakest link — claim, warrant, mechanism, evidence, impact, or weighing.
+5. Offer a better alternative or countermodel if useful.
+6. Explain why your side is stronger.
+7. Sound natural, like a smart person debating — not like a template.
 
-HARD BANS — never write any of these:
-- Speech labels like "Negative speech 2", "Affirmative speech 1", or any "<side> speech <number>".
-- Outline headers like "First, direct clash", "Second, independent offense", "Finally, weighing", or "First/Second/Third/Finally" as section labels.
-- Jargon used as filler: "direct clash", "independent offense", "I answer the warrant then compare impacts", "the key is direct clash".
-- Empty ballot lines like "the judge should prefer my side because we have clearer causation, lower risk, and stronger impact comparison." You may only claim you are ahead if you have just explained, concretely, WHY.
+NEVER write any of these (they make you sound robotic and fake):
+- "Negative speech 2", "Affirmative speech 1", or any "<side> speech <number>"
+- "First, direct clash", "Second, independent offense", "Finally, weighing", or First/Second/Finally as section labels
+- "Take your best point", "I'll grant it" / "I'll even grant it", "The trouble is the link", "That's the step I need you to win"
+- "direct clash", "independent offense", "the key is direct clash", "I answer the warrant then compare impacts"
+- "Judge should prefer us", "This is my ballot story", or any empty ballot line. You may only claim you are ahead once you have explained, concretely, WHY.
 
-Write in flowing paragraphs, specific to THIS motion and to what the other side actually said. Be genuinely persuasive, not formulaic. Never invent citations as real sources. Persona — argue in this voice: ${persona.name}. ${persona.promptInstructions}`,
+Use normal, persuasive language in flowing paragraphs, specific to THIS motion and to what the student actually said. Target voice, for example: "I get why your point sounds appealing. If students are going to use AI anyway, schools should probably teach them to use it responsibly. But your argument assumes the best way to do that is a separate school requirement. That isn't obvious. A better approach is to teach AI use inside English, science, and research work, where students actually need to evaluate sources and check whether AI is wrong."
+
+Never invent citations as real sources. Argue in this persona's voice: ${persona.name}. ${persona.promptInstructions}`,
     `Motion: ${input.topic}
 Organization: ${input.organization}
 Event type: ${input.eventType ?? "default"}
@@ -715,7 +772,7 @@ Round: ${input.round}
 Persona voice: ${persona.name} — ${persona.style}. ${persona.promptInstructions}
 Transcript so far (JSON): ${JSON.stringify(input.transcript)}
 
-Respond to the other side's most recent point using the 6-step reasoning flow. Sound like a real, specific, persuasive human — not a template.
+Respond to the student's most recent point using the reasoning flow above. Sound like a real, specific, persuasive human — not a template.
 Return JSON with:
 - "response": your spoken argument as natural paragraphs (no headings, no speech labels, no jargon filler).
 - "strategy": a short plain-English note on the line of attack you took (for the coach, not spoken).

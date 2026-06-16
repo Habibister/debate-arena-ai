@@ -253,6 +253,53 @@ const VAGUE_PATTERNS = [
   "just because"
 ];
 
+// Stance signals used for SIDE-FIDELITY: does a speech argue FOR the motion or AGAINST it? Government
+// must support the motion; Opposition must oppose it. A clear mismatch is a side inversion.
+const SUPPORT_MARKERS = [
+  "should be implemented",
+  "should be adopted",
+  "should happen",
+  "should require",
+  "should teach",
+  "should ban",
+  "we should",
+  "support the motion",
+  "in favor",
+  "i support",
+  "i am defending",
+  "i'm defending",
+  "i will defend",
+  "defend the motion",
+  "this policy works",
+  "the benefits outweigh",
+  "it should happen",
+  "is the right call",
+  "i would implement"
+];
+const OPPOSE_MARKERS = [
+  "should not be implemented",
+  "should not be adopted",
+  "should not happen",
+  "should not require",
+  "should not ban",
+  "we should not",
+  "shouldn't",
+  "oppose the motion",
+  "i oppose",
+  "against the motion",
+  "do not support",
+  "reject the motion",
+  "scrap",
+  "abolish",
+  "bad idea",
+  "won't work",
+  "will not work",
+  "do more harm than good",
+  "not be implemented",
+  "a narrower fix",
+  "a smaller, testable version"
+];
+
 // Empty debate jargon: phrases that SOUND like weighing/comparison/clash but carry no argument on
 // their own. They earn nothing unless the speech also proves the underlying claim with warrant and
 // impact, and a speech built only out of them is penalized rather than rewarded.
@@ -544,6 +591,15 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const finalNewArgument = detectFinalNewArgument(speeches);
   const claims = extractClaims(sideSentences);
 
+  // SIDE FIDELITY: Government must support the motion, Opposition must oppose it. If a side's language
+  // clearly argues the wrong direction, that is a side inversion and side fidelity is tanked.
+  const supportSignal = countMarkers(combinedText, SUPPORT_MARKERS);
+  const opposeSignal = countMarkers(combinedText, OPPOSE_MARKERS);
+  const sideInverted =
+    side === "GOVERNMENT"
+      ? opposeSignal >= 1 && opposeSignal > supportSignal
+      : supportSignal >= 1 && supportSignal > opposeSignal;
+
   // Substance gate: a speech only earns weighing/refutation/impact credit if it shows REAL content —
   // a genuine warrant, a concrete impact, evidence, or real engagement with the motion. A speech that
   // is only ballot jargon (e.g. "judge should prefer us for clearer causation and lower risk") with no
@@ -595,9 +651,11 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     weighing: clamp(24 + groundedValue * weighing * 18 + (!isMostlyJargon && !abstract && impact > 1 ? 5 : 0) - vague * 4 - jargonPenalty),
     evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5 - jargonPenalty),
     motionConnection: clamp(34 + topicEngagement * 16 + (topicEngagement === 0 ? -16 : 0)),
-    // Did the side actually argue its own side with real positions, instead of conceding or drifting
-    // into vague language? Real claims raise it; jargon and vagueness lower it.
-    sideFidelity: clamp(46 + claims.length * 10 + (realWarrant > 0 ? 10 : 0) - vague * 6 - (isMostlyJargon ? 28 : 0)),
+    // Did the side actually argue its own side with real positions, instead of conceding, drifting, or
+    // arguing the WRONG side? A clear side inversion tanks this; jargon and vagueness lower it.
+    sideFidelity: sideInverted
+      ? clamp(12 - vague * 2)
+      : clamp(46 + claims.length * 10 + (realWarrant > 0 ? 10 : 0) - vague * 6 - (isMostlyJargon ? 28 : 0)),
     // Did the side directly answer the other side's strongest material — the central clash — rather
     // than sounding polished while never engaging it? Polished-but-vague speeches score low here.
     centralClashResponse: clamp(22 + grounded * (opponentReference * 9 + refutation * 7 + directAnswerBonus) - vague * 5 - jargonPenalty),
@@ -623,7 +681,8 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
       scores.organization * 0.04 +
       scores.responsiveness * 0.04 +
       scores.finalSpeech * 0.04 -
-      (isMostlyJargon ? 10 : 0)
+      (isMostlyJargon ? 10 : 0) -
+      (sideInverted ? 18 : 0)
   );
 
   return {

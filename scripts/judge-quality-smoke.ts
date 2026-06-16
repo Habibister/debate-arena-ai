@@ -340,7 +340,68 @@ async function opponentSoundsHuman() {
   }
 }
 
+function judgeSpeech(topic: string, role: "AFFIRMATIVE" | "NEGATIVE", content: string) {
+  return buildTranscriptBasedDebateJudge({
+    organization: "DEBATE",
+    eventType: "PARLIAMENTARY_DEBATE",
+    level: "INTERMEDIATE",
+    topic,
+    studentSide: role === "AFFIRMATIVE" ? "GOVERNMENT" : "OPPOSITION",
+    transcript: [{ role, round: 1, content }]
+  });
+}
+
+// Test 5: the judge must penalize a side whose speech argues the WRONG side.
+const invertedGovernment = judgeSpeech(
+  "This house believes dress codes should be implemented in schools.",
+  "AFFIRMATIVE",
+  "Dress codes should not be implemented because they are unfair, unevenly enforced, and focus on controlling students instead of improving learning."
+);
+assert.ok(
+  category(invertedGovernment, "sideFidelity") < 30,
+  "A Government speech that opposes the motion must score very low on side fidelity."
+);
+
+// Tests 1-4: the AI opponent must argue its assigned side (Government defends, Opposition opposes).
+const SUPPORT_DEFEND = /i'?ll defend|i will defend|i am defending|happy to defend/i;
+const OPPOSE_TELLS = /should not be implemented|a narrower fix|smaller, testable version|what'?s the actual evidence/i;
+
+async function sideFidelityTests() {
+  const cases: Array<{ motion: string; side: "AFFIRMATIVE" | "NEGATIVE" }> = [
+    { motion: "This house believes dress codes should be implemented in schools.", side: "AFFIRMATIVE" },
+    { motion: "This house believes dress codes should be implemented in schools.", side: "NEGATIVE" },
+    { motion: "This house believes schools should ban phone use during instructional time.", side: "AFFIRMATIVE" },
+    { motion: "This house believes schools should ban phone use during instructional time.", side: "NEGATIVE" }
+  ];
+
+  for (const testCase of cases) {
+    const speech = await generateOpponentResponse({
+      organization: "DEBATE",
+      level: "INTERMEDIATE",
+      topic: testCase.motion,
+      side: testCase.side,
+      round: 1,
+      personaId: "evidence-specialist",
+      transcript: []
+    });
+    const judged = judgeSpeech(testCase.motion, testCase.side, speech.response);
+
+    assert.ok(
+      category(judged, "sideFidelity") >= 50,
+      `AI ${testCase.side} speech must argue its assigned side (side fidelity was ${category(judged, "sideFidelity")}).`
+    );
+
+    if (testCase.side === "AFFIRMATIVE") {
+      assert.ok(SUPPORT_DEFEND.test(speech.response), "A Government/Affirmative speech must defend the motion.");
+      assert.ok(!OPPOSE_TELLS.test(speech.response), "A Government/Affirmative speech must not argue the Opposition's case.");
+    } else {
+      assert.ok(!SUPPORT_DEFEND.test(speech.response), "An Opposition/Negative speech must not defend the motion.");
+    }
+  }
+}
+
 opponentSoundsHuman()
+  .then(() => sideFidelityTests())
   .then(() => {
     console.log("Judge quality smoke tests passed.");
   })

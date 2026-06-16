@@ -489,10 +489,75 @@ function extractStudentPoint(transcript: DebateTranscriptMessage[], studentRole:
   return /^[A-Z][a-z]/.test(best) ? best.charAt(0).toLowerCase() + best.slice(1) : best;
 }
 
-// Each persona argues like a distinct, thoughtful human: acknowledge the real point, expose the
-// hidden assumption, attack the weakest link, offer a countermodel, and explain why it is stronger.
-// No speech labels, no "First/Second/Finally", no empty ballot vocabulary, no template tics.
-function buildPersonaArgument(personaId: string, claim: string, motion: string) {
+type DebateStance = "support" | "oppose";
+
+// SIDE FIDELITY: the fallback opponent must argue its ASSIGNED side. Government/Affirmative/For
+// supports and defends the motion; Opposition/Negative/Against opposes it. buildPersonaArgument
+// dispatches on stance so a Government persona never attacks its own motion.
+function buildPersonaArgument(personaId: string, claim: string | null, motion: string, stance: DebateStance) {
+  return stance === "support"
+    ? buildSupportArgument(personaId, claim, motion)
+    : buildOpposeArgument(personaId, claim ?? "there's a real problem worth solving here", motion);
+}
+
+// SUPPORT: defend the motion. Give a reason it should happen, answer the strongest objection, and
+// keep the persona's distinct emphasis. Never attack the motion or propose a "narrower fix instead".
+function buildSupportArgument(personaId: string, claim: string | null, motion: string) {
+  const objection = claim ?? "that the rule will be unfair or go too far";
+  const builders: Record<string, () => { response: string; move: string }> = {
+    "evidence-specialist": () => ({
+      move: "defending the motion with concrete benefits",
+      response: `${capitalize(motion)}, and I'll defend that with concrete reasons rather than slogans. The benefits are specific: clearer expectations, fewer daily conflicts, and a setting that keeps the focus on learning. When people ask for proof, the honest answer is to point to places that adopted this and saw exactly those gains. The fair objection is ${objection}, and it deserves an answer: write the rule narrowly — clear standards, equal enforcement, no arbitrary targeting. That keeps the upside while removing the part critics actually fear. Real benefits with manageable, designable risks is why this should happen.`
+    }),
+    "policy-analyst": () => ({
+      move: "defending the motion on implementation",
+      response: `Let me defend ${motion} on the practical details, because that is where it is won or lost. It works when it is implemented well: simple published rules, consistent enforcement, and a clear process for exceptions. Yes, ${objection} is a real risk — but that is a design problem, not a reason to do nothing. Build the policy to avoid it and you get the structure and predictability a school needs without the overreach. Done right, the upside is steady and the downside is contained, which is exactly why I would implement it.`
+    }),
+    "devils-advocate": () => ({
+      move: "defending the motion by beating its strongest objection",
+      response: `I will defend ${motion} by taking the strongest argument against it head on: ${objection}. That is the objection that sounds best, and it still does not hold. Nothing about this policy requires it to be unfair or heavy-handed — that is a failure of bad implementation, not of the idea itself. Written with clear rules and equal enforcement, it delivers the benefit while removing the very thing critics fear. If the only case against it is "it could be done badly," then the answer is to do it well, and the motion stands.`
+    }),
+    "socratic-questioner": () => ({
+      move: "defending the motion by answering the decisive question",
+      response: `Let me defend ${motion}, starting with the question that actually decides it: does this do more good than harm when it is done well? It clearly does. The real benefits — structure, fewer distractions, clearer expectations — are concrete and everyday. The usual worry is ${objection}; but is that a flaw in the idea, or only in a sloppy version of it? Write it narrowly and the worry falls away while the benefit stays. That is why the answer here is yes, and why I am defending the motion.`
+    }),
+    "ethics-philosopher": () => ({
+      move: "defending the motion on principle",
+      response: `I will defend ${motion} on principle. A school owes every student a fair, focused environment, and clear shared standards serve that duty better than leaving things to chance. The honest objection is ${objection}, and fairness does cut both ways — which is exactly why the rule must be written narrowly and enforced equally, with no targeting. Done that way, it protects students rather than controlling them. The principled position is not to avoid the policy; it is to implement it fairly.`
+    }),
+    "rhetorician": () => ({
+      move: "defending the motion by reframing the choice",
+      response: `Let me make the case for ${motion}, plainly. Strip away the noise and the choice is simple: a clear, shared standard that keeps the focus on learning, versus leaving everyone to sort it out alone. The objection you will hear is ${objection} — but that is an argument for writing the rule well, not for refusing to write it at all. With clear standards and equal enforcement, this gives students structure without being heavy-handed. That is the version worth defending, and it is why this should happen.`
+    }),
+    "tournament-judge": () => ({
+      move: "defending the motion on the substance",
+      response: `I am defending ${motion}, and here is the substance before any debate terms. The case rests on real, recurring benefits — clearer expectations, fewer distractions, a steadier learning environment. The best response against me is ${objection}, and it only has force if the policy is written carelessly. Written narrowly, with clear rules and equal enforcement, that objection falls away. So weigh it directly: real, everyday benefits against a risk we can design out. That comparison comes down on the side of the motion.`
+    }),
+    "deca-judge": () => ({
+      move: "defending the motion as a sound decision",
+      response: `From a practical standpoint, ${motion} is the right call, and I will defend it like a sound decision. The benefits are tangible — clearer expectations, fewer conflicts, more time kept on learning — and they recur every day. The cost critics raise is ${objection}; treat that as a risk to manage, not a dealbreaker. Clear rules, equal enforcement, and a simple exceptions process keep that cost low. Steady benefit at a controllable cost is a good investment, which is why I would implement it.`
+    }),
+    "hosa-judge": () => ({
+      move: "defending the motion as the responsible policy",
+      response: `I will defend ${motion} as the more responsible policy. A predictable, well-run environment protects students and keeps the focus where it belongs. The worry worth taking seriously is ${objection}; the answer is to implement carefully — clear standards, equal enforcement, real exceptions — not to walk away from the benefit. Handled that way, the policy supports students without overreaching. Protecting a steady, safe environment comes first, and this is how you deliver it.`
+    }),
+    "starter-coach": () => ({
+      move: "defending the motion and modelling a clean case",
+      response: `Let me defend ${motion}, and model how to do it well. Lead with the benefit: clearer expectations and fewer daily distractions, so more time goes to learning. Then answer the obvious objection — ${objection} — instead of dodging it: the fix is a narrow rule with clear standards and equal enforcement. Notice the move: claim, reason, then pre-empting the strongest pushback. That is a complete case for the motion, and it is why the policy holds up.`
+    }),
+    "friendly-practice": () => ({
+      move: "defending the motion directly",
+      response: `I am happy to defend ${motion}. The simple case is that a clear, shared standard helps a school run better — fewer distractions, clearer expectations, less daily friction. The fair pushback is ${objection}, so let me answer it directly: write the rule narrowly, enforce it equally, and that worry mostly goes away. You keep the real benefit without the heavy-handedness. That is why I would back this rather than leave things as they are.`
+    })
+  };
+
+  const build = builders[personaId] ?? builders["policy-analyst"];
+  return build();
+}
+
+// OPPOSE: argue against the motion. Acknowledge the real point, expose the hidden assumption, attack
+// the weakest link, offer a countermodel, and explain why it is stronger. No template tics.
+function buildOpposeArgument(personaId: string, claim: string, motion: string) {
   const builders: Record<string, () => { response: string; move: string }> = {
     "evidence-specialist": () => ({
       move: "asking for proof before accepting the claim",
@@ -558,25 +623,37 @@ function fallbackOpponent(input: {
 }): OpponentResponse {
   const isAffirmative = input.side === "AFFIRMATIVE";
   const persona = getAiPersona(input.personaId);
+  // Government/Affirmative defends the motion; Opposition/Negative argues against it.
+  const stance: DebateStance = isAffirmative ? "support" : "oppose";
   const studentRole: MessageRole = isAffirmative ? "NEGATIVE" : "AFFIRMATIVE";
   const motion = cleanMotion(input.topic);
-  const studentPoint = extractStudentPoint(input.transcript, studentRole) ?? "there's a real problem worth solving here";
-  const { response, move } = buildPersonaArgument(persona.id, studentPoint, motion);
+  const studentPoint = extractStudentPoint(input.transcript, studentRole);
+  const { response, move } = buildPersonaArgument(persona.id, studentPoint, motion, stance);
   const advanced = input.level === "ELITE" || persona.difficulty === "elite";
-  // Advanced/elite mode expects a longer speech (180-260 words): add a concrete weighing close so the
-  // fallback still hits the expected shape rather than stopping short.
-  const fullResponse = advanced
-    ? `${response} And weigh it directly: the narrower fix reaches the same goal with less collateral damage, which on this motion matters more than the sweep of your version, because a smaller change is both more likely to work and easier to walk back if it doesn't. That trade — comparable benefit, far less risk — is why my side should come out ahead here.`
-    : response;
+  // Advanced/elite mode expects a longer speech (180-260 words): add a concrete weighing close that
+  // matches the assigned stance so the fallback still hits the expected shape.
+  const advancedClose =
+    stance === "support"
+      ? ` And weigh it directly: the everyday benefits — structure, focus, clearer expectations — land for every student, every day, while the main risk only appears if the policy is implemented badly, which we can prevent by writing it narrowly. Concrete, recurring upside against a risk we can design out is why my side should win this.`
+      : ` And weigh it directly: a narrower fix reaches the same goal with less collateral damage, which on this motion matters more than the sweep of the full version, because a smaller change is both more likely to work and easier to walk back if it doesn't. Comparable benefit at far less risk is why my side should come out ahead here.`;
+  const fullResponse = advanced ? `${response}${advancedClose}` : response;
+  const pressurePoints =
+    stance === "support"
+      ? [
+          "Answer the strongest objection to the motion directly, not in the abstract.",
+          `Show how ${motion} is implemented fairly: clear rules and equal enforcement.`,
+          "Tie the policy to a concrete, everyday benefit for students."
+        ]
+      : [
+          "Name the exact harm and explain what actually causes it.",
+          `Show why ${motion} solves better than a narrower, more targeted fix.`,
+          "Connect the claim to a concrete impact, not just a label."
+        ];
 
   return {
     response: fullResponse,
     strategy: `${persona.name} — ${move}`,
-    pressurePoints: [
-      "Name the exact harm and explain what actually causes it.",
-      `Show why ${motion} solves better than a narrower, more targeted fix.`,
-      "Connect the claim to a concrete impact, not just a label."
-    ],
+    pressurePoints,
     fallbackNotice: DEV_AI_FALLBACK_NOTICE
   };
 }
@@ -767,18 +844,26 @@ export async function generateOpponentResponse(input: {
   const ratingLabel = `${persona.rating} (${persona.difficulty})`;
   const advanced = input.level === "ELITE" || persona.difficulty === "elite";
   const wordTarget = advanced ? "180-260 words" : "100-180 words";
+  const supportsMotion = input.side === "AFFIRMATIVE";
+  const stanceLabel = supportsMotion ? "Government / Affirmative / For" : "Opposition / Negative / Against";
+  const stanceRule = supportsMotion
+    ? `You are on the ${stanceLabel} side, so you SUPPORT and DEFEND the motion. Argue that the motion SHOULD happen: give reasons it is right, defend how it would be implemented, and answer objections to it. Do NOT attack the motion, ask for proof that the motion is true, or propose a "narrower fix instead of" the motion — that is the other side's job.`
+    : `You are on the ${stanceLabel} side, so you OPPOSE the motion. Argue that the motion SHOULD NOT happen: attack the case for it, expose its weak links, and offer alternatives or disadvantages. Do NOT end up defending the motion.`;
 
   return jsonCompletion<OpponentResponse>(
-    `You are a sharp, human-sounding debate opponent arguing the ${input.side} side in a student training app. Your job is not to sound formal — your job is to make the student better.
+    `You are a sharp, human-sounding debate opponent in a student training app, arguing the ${stanceLabel} side. Your job is not to sound formal — your job is to make the student better with realistic, persuasive opposition FROM YOUR ASSIGNED SIDE.
+
+SIDE FIDELITY — THIS OVERRIDES EVERYTHING: ${stanceRule}
 
 For every response:
-1. Understand the student's actual argument.
-2. Briefly acknowledge the strongest part.
-3. Identify the hidden assumption.
-4. Attack the weakest link — claim, warrant, mechanism, evidence, impact, or weighing.
-5. Offer a better alternative or countermodel if useful.
-6. Explain why your side is stronger.
-7. Sound natural, like a smart person debating — not like a template.
+1. Understand the student's actual argument (or, if you speak first, open your own case).
+2. Briefly acknowledge the strongest part of the other side's position.
+3. Identify the hidden assumption or weak link in the OTHER side's case (never in your own motion if you are Government).
+4. Make YOUR side's argument with a concrete reason and, where useful, an alternative or implementation detail.
+5. Explain why your side is stronger.
+6. Sound natural, like a smart person debating — not like a template.
+
+Before you finish, run a side-fidelity check: if you are Government/Affirmative/For, does your speech clearly DEFEND the motion? If you are Opposition/Negative/Against, does it clearly OPPOSE the motion? If not, rewrite it so it argues your assigned side.
 
 NEVER write any of these (they make you sound robotic and fake):
 - "Negative speech 2", "Affirmative speech 1", or any "<side> speech <number>"
@@ -791,7 +876,7 @@ Use normal, persuasive language in flowing paragraphs, specific to THIS motion a
 
 Never invent citations as real sources. Argue in this persona's voice: ${persona.name}. ${persona.promptInstructions}`,
     `Motion: ${input.topic}
-You are arguing: ${input.side}
+You are arguing: ${stanceLabel} — you ${supportsMotion ? "SUPPORT and defend this motion" : "OPPOSE this motion"}.
 Persona / opponent voice: ${persona.name} — ${persona.style}. ${persona.promptInstructions}
 Difficulty / rating: ${ratingLabel}
 Debate format: ${input.format ?? input.eventType ?? "default"} (${input.organization})
@@ -889,7 +974,8 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Required analysis:
-- Score Government/Affirmative and Opposition/Negative separately on these twelve dimensions: (1) claim quality — clear, testable, topic-specific; (2) warrant quality — why the claim is true; (3) mechanism quality — how the harm/benefit actually happens; (4) impact quality — why it matters; (5) refutation quality — does it answer the opponent's actual claim; (6) evidence/example quality — concrete support or reasoning; (7) weighing quality — real comparison via magnitude, probability, timeframe, scope, reversibility, or prerequisites (NOT just the word "weighing"); (8) collapse/strategy — focuses on the most important issue; (9) motion connection — actually connects to the motion; (10) empty-jargon penalty — used debate words without proving anything; (11) side fidelity — actually argued its own side instead of conceding or drifting; (12) central clash response — directly answered the OTHER side's strongest argument.
+- Score Government/Affirmative and Opposition/Negative separately on these twelve dimensions: (1) claim quality — clear, testable, topic-specific; (2) warrant quality — why the claim is true; (3) mechanism quality — how the harm/benefit actually happens; (4) impact quality — why it matters; (5) refutation quality — does it answer the opponent's actual claim; (6) evidence/example quality — concrete support or reasoning; (7) weighing quality — real comparison via magnitude, probability, timeframe, scope, reversibility, or prerequisites (NOT just the word "weighing"); (8) collapse/strategy — focuses on the most important issue; (9) motion connection — actually connects to the motion; (10) empty-jargon penalty — used debate words without proving anything; (11) side fidelity — actually argued its ASSIGNED side (Government/Affirmative defends the motion; Opposition/Negative opposes it); (12) central clash response — directly answered the OTHER side's strongest argument.
+- SIDE CONTRADICTION: if a side argues the wrong side (a Government speech that attacks or opposes the motion, or an Opposition speech that defends it), score its side fidelity near zero, do not credit those arguments toward its assigned side, and it should normally lose for failing to do its job.
 - THE MOST IMPORTANT QUESTION: who actually answered the central clash? A polished, confident, smooth, or morally-toned speech that never directly engages the other side's strongest argument must NOT beat a rougher speech that did engage it. Example — motion "schools should ban phones during instruction": if Opposition argues safety/emergency access and Government only says something vague like "fairness has two sides," Government has not answered the clash and should not win on polish. A real Government answer would be "emergency access can be preserved through office calls and teacher-approved exceptions while still preventing daily distraction." Reward the side that engaged; penalize the side that dodged.
 - Identify what each side claimed, what each side dropped, which claims were extended, and which final speech introduced new arguments if it happened.
 - Penalize speeches like "my opponent is wrong" for no warrant, no specific refutation, no impact comparison, and no evidence/example.

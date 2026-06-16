@@ -3,7 +3,9 @@ import { OpenAIUnavailableError } from "@/lib/openai";
 import {
   AllProvidersUnavailableError,
   extractJson,
+  getProviderOrder,
   providerBanner,
+  providerLabel,
   runProviderCompletion,
   type ProviderName
 } from "@/lib/ai-providers";
@@ -127,6 +129,8 @@ type DebateJudgeResult = {
     betterVersion: string;
     fairWinnerLogic: string;
     practiceSkill?: string;
+    whyWinnerWon?: string;
+    whyLoserLost?: string;
   };
   keyClash?: string;
   strongestArgument?: string;
@@ -187,10 +191,6 @@ function compactRubric(categories: RubricCategorySeed[]) {
 function rubricFor(organization: Organization, eventType: string) {
   const seed = getRubricSeed(organization, eventType);
   return seed ? compactRubric(seed.categories) : [];
-}
-
-function originalRubricInstruction() {
-  return "Use an original DebateArena scoring system. The uploaded judge packet is reference material only: preserve the evaluation ideas but do not copy its wording.";
 }
 
 function canUseDevelopmentFallback<T>(fallback?: () => T): fallback is () => T {
@@ -766,11 +766,22 @@ function tagProvider<T>(value: T, provider: ProviderName): T {
 }
 
 // Run a JSON completion through the multi-provider layer (Gemini -> Groq -> OpenRouter -> OpenAI),
-// falling back to deterministic local content only when every configured provider fails.
-async function jsonCompletion<T>(system: string, prompt: string, fallback?: () => T, label = "AI"): Promise<T> {
+// falling back to deterministic local content only when every configured provider fails or the
+// provider returns JSON that fails the optional structural `validate` check.
+async function jsonCompletion<T>(
+  system: string,
+  prompt: string,
+  fallback?: () => T,
+  label = "AI",
+  validate?: (value: T) => boolean
+): Promise<T> {
   try {
     const { content, provider } = await runProviderCompletion({ system, prompt, temperature: 0.7 }, label);
-    return tagProvider(extractJson<T>(content), provider);
+    const parsed = extractJson<T>(content);
+    if (validate && !validate(parsed)) {
+      throw new Error("provider response failed structural validation (missing required fields)");
+    }
+    return tagProvider(parsed, provider);
   } catch (error) {
     const reason =
       error instanceof AllProvidersUnavailableError
@@ -990,6 +1001,92 @@ Return JSON with:
   );
 }
 
+export type JudgeEnhancement = {
+  shortReason?: unknown;
+  whyWinnerWon?: unknown;
+  whyLoserLost?: unknown;
+  biggestFix?: unknown;
+  betterSentence?: unknown;
+  practiceNext?: unknown;
+};
+
+function nonEmptyString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+const JUDGE_PROSE_SYSTEM = `You are an experienced debate judge writing the student-facing summary of a ballot that has ALREADY been scored by a rubric. Do NOT re-score and do NOT change the winner — only explain the decision clearly, fairly, and kindly.
+
+Return ONLY valid JSON. No markdown. No code fences. No commentary outside the JSON. Use EXACTLY this schema:
+{"shortReason": string (at most 3 sentences), "whyWinnerWon": string (1-2 sentences), "whyLoserLost": string (1-2 sentences), "biggestFix": string (1 sentence), "betterSentence": string (one polished model sentence the student could have said), "practiceNext": string (one concrete skill)}
+
+Reference the actual motion and what was said. No debate jargon as filler.`;
+
+function judgeProsePrompt(
+  input: { topic: string; studentSide?: string; transcript: DebateTranscriptMessage[] },
+  base: DebateJudgeResult
+): string {
+  return `Motion: ${input.topic}
+Student side: ${input.studentSide ?? "unknown"}
+Winner (already decided — do not change): ${base.teamWinner ?? "unknown"} at ${base.confidenceLevel ?? "unknown"} confidence.
+Rubric scores: Government ${base.internalScoringSummary?.governmentScore ?? "?"} vs Opposition ${base.internalScoringSummary?.oppositionScore ?? "?"}.
+The central clash: ${base.keyClash ?? "see transcript"}
+Student's strongest idea: ${base.transcriptFeedback?.strongestClaim ?? "n/a"}
+Student's weakest moment: ${base.transcriptFeedback?.weakestClaim ?? "n/a"}
+Transcript JSON: ${JSON.stringify(input.transcript)}
+
+Write the compact ballot summary. Return ONLY the JSON object with shortReason, whyWinnerWon, whyLoserLost, biggestFix, betterSentence, practiceNext.`;
+}
+
+// Merge provider prose onto the local ballot. Returns null when the enhancement has no usable field.
+export function mergeJudgeEnhancement(base: DebateJudgeResult, raw: JudgeEnhancement, provider: ProviderName): DebateJudgeResult | null {
+  const shortReason = nonEmptyString(raw.shortReason);
+  const whyWinnerWon = nonEmptyString(raw.whyWinnerWon);
+  const whyLoserLost = nonEmptyString(raw.whyLoserLost);
+  const biggestFix = nonEmptyString(raw.biggestFix);
+  const betterSentence = nonEmptyString(raw.betterSentence);
+  const practiceNext = nonEmptyString(raw.practiceNext);
+
+  if (![shortReason, whyWinnerWon, whyLoserLost, biggestFix, betterSentence, practiceNext].some(Boolean)) {
+    return null;
+  }
+
+  const merged: DebateJudgeResult = { ...base };
+  merged.aiProvider = provider;
+  merged.aiNotice = providerBanner(provider) ?? undefined;
+
+  if (shortReason) {
+    merged.shortReasonForDecision = shortReason;
+  }
+  merged.judgeFairnessReport = {
+    ...(base.judgeFairnessReport ?? {
+      emptyPhraseWarning: null,
+      motionConnection: "",
+      mechanismCheck: "",
+      betterVersion: "",
+      fairWinnerLogic: ""
+    }),
+    ...(whyWinnerWon ? { whyWinnerWon, realArgumentQuality: whyWinnerWon } : {}),
+    ...(whyLoserLost ? { whyLoserLost } : {}),
+    ...(practiceNext ? { practiceSkill: practiceNext } : {})
+  };
+  merged.transcriptFeedback = {
+    ...(base.transcriptFeedback ?? { studentSide: "GOVERNMENT" }),
+    ...(biggestFix ? { mostMissingPiece: biggestFix } : {}),
+    ...(betterSentence ? { betterSentence } : {})
+  } as DebateJudgeResult["transcriptFeedback"];
+
+  return merged;
+}
+
+const JUDGE_LOCAL_FALLBACK_NOTICE = "Live AI judge unavailable — showing the local rubric judge.";
+
+// Crash-proof judge. The deterministic local rubric judge is the SOURCE OF TRUTH (full 12-dimension
+// ballot, winner, scores, side fidelity). A provider (Gemini first) is used ONLY to improve the
+// compact prose. Any provider/JSON/structure failure keeps the complete local ballot — never a 500.
 export async function judgeDebate(input: {
   organization: Organization;
   level: Level;
@@ -1000,68 +1097,65 @@ export async function judgeDebate(input: {
   opponentSide?: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
   format?: string;
   aiPersona?: string | null;
-}) {
-  const eventType = input.eventType ?? "PARLIAMENTARY_DEBATE";
-  const rubric = rubricFor(input.organization, eventType);
+}): Promise<DebateJudgeResult> {
+  const base = fallbackDebateJudge(input);
 
-  return jsonCompletion<DebateJudgeResult>(
-    `You are a fair educational debate judge. ${originalRubricInstruction()} Return JSON only.
-Do not default to Government, Affirmative, the student, the AI, the first speaker, or the longer speech.
-You must decide the winner from the actual transcript and quote or tightly paraphrase what each side said.
+  // No external provider configured -> keep the local ballot (already full rubric + side-correct).
+  if (getProviderOrder().length === 0) {
+    base.aiProvider = "fallback";
+    return base;
+  }
 
-CRITICAL — do not reward debate-sounding filler. Phrases like "judge should prefer us", "clearer causation", "lower risk", "impact comparison", "stronger impact", "we outweigh", "direct clash", "independent offense", "ballot", "voter", "solvency", "turn", "link", "no link", "magnitude", "probability", "timeframe", and even "weighing" itself are NOT arguments by themselves. They earn ZERO credit unless the speaker also actually:
-- states a specific claim,
-- explains why it is true (a real warrant / mechanism, not a label),
-- connects it to THIS motion,
-- names a concrete harm or benefit and who it affects,
-- answers what the opponent actually said,
-- and explains why it outweighs the other side with real reasoning.
+  let content: string;
+  let provider: ProviderName;
+  try {
+    const result = await runProviderCompletion(
+      { system: JUDGE_PROSE_SYSTEM, prompt: judgeProsePrompt(input, base), temperature: 0.5 },
+      "judge"
+    );
+    content = result.content;
+    provider = result.provider;
+  } catch (error) {
+    // 503 / 429 / timeout / network / all-providers-failed — never crash the route.
+    console.warn(`[ai] judge provider failed because: ${errorMessage(error)}.`);
+    console.info("[ai] Using local rubric judge fallback.");
+    base.aiNotice = JUDGE_LOCAL_FALLBACK_NOTICE;
+    base.aiProvider = "fallback";
+    return base;
+  }
 
-A side must never win just because it used weighing vocabulary. If a side says something like "even if they win a small benefit, prefer us for clearer causation and lower risk" but never proves the underlying claim, you must score it LOW, flag it as empty jargon, and you must NOT give it the win on that basis. The winner is decided on real argument quality, not on who sounds more like a debater.`,
-    `Judge this ${input.level} ${input.organization} ${eventType} round.
-Topic: ${input.topic}
-Format: ${input.format ?? eventType}
-Student side: ${input.studentSide ?? "unknown"}
-Opponent side: ${input.opponentSide ?? "unknown"}
-Selected AI persona: ${input.aiPersona ?? "unknown"}
-Transcript JSON: ${JSON.stringify(input.transcript)}
-Rubric JSON: ${JSON.stringify(rubric)}
-Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
+  let enhancement: JudgeEnhancement;
+  try {
+    enhancement = extractJson<JudgeEnhancement>(content);
+  } catch (parseError) {
+    console.warn(`[ai] ${providerLabel(provider)} judge failed because JSON_PARSE_ERROR: ${errorMessage(parseError)}.`);
+    console.info("[ai] Using local rubric judge fallback.");
+    base.aiNotice = JUDGE_LOCAL_FALLBACK_NOTICE;
+    base.aiProvider = "fallback";
+    return base;
+  }
 
-Required analysis:
-- Score Government/Affirmative and Opposition/Negative separately on these twelve dimensions: (1) claim quality — clear, testable, topic-specific; (2) warrant quality — why the claim is true; (3) mechanism quality — how the harm/benefit actually happens; (4) impact quality — why it matters; (5) refutation quality — does it answer the opponent's actual claim; (6) evidence/example quality — concrete support or reasoning; (7) weighing quality — real comparison via magnitude, probability, timeframe, scope, reversibility, or prerequisites (NOT just the word "weighing"); (8) collapse/strategy — focuses on the most important issue; (9) motion connection — actually connects to the motion; (10) empty-jargon penalty — used debate words without proving anything; (11) side fidelity — actually argued its ASSIGNED side (Government/Affirmative defends the motion; Opposition/Negative opposes it); (12) central clash response — directly answered the OTHER side's strongest argument.
-- SIDE CONTRADICTION: if a side argues the wrong side (a Government speech that attacks or opposes the motion, or an Opposition speech that defends it), score its side fidelity near zero, do not credit those arguments toward its assigned side, and it should normally lose for failing to do its job.
-- THE MOST IMPORTANT QUESTION: who actually answered the central clash? A polished, confident, smooth, or morally-toned speech that never directly engages the other side's strongest argument must NOT beat a rougher speech that did engage it. Example — motion "schools should ban phones during instruction": if Opposition argues safety/emergency access and Government only says something vague like "fairness has two sides," Government has not answered the clash and should not win on polish. A real Government answer would be "emergency access can be preserved through office calls and teacher-approved exceptions while still preventing daily distraction." Reward the side that engaged; penalize the side that dodged.
-- Identify what each side claimed, what each side dropped, which claims were extended, and which final speech introduced new arguments if it happened.
-- Penalize speeches like "my opponent is wrong" for no warrant, no specific refutation, no impact comparison, and no evidence/example.
-- Penalize empty debate jargon just as hard: weighing words with no proven claim behind them, generic "judge should prefer" lines, claims with no warrant, claims with no impact, arguments that never connect to the motion, and "refutations" that do not answer the opponent's actual claim.
-- Reward only real argumentation: topic-specific claims, clear warrants/mechanisms, concrete impacts, actual refutation that answers the opponent, and comparison that explains WHY one impact matters more.
-- The RFD must reference actual speech content. Include at least one quoted or tightly paraphrased phrase from the transcript in side feedback and student feedback.
+  const merged = mergeJudgeEnhancement(base, enhancement, provider);
+  if (!merged) {
+    console.warn(`[ai] ${providerLabel(provider)} judge failed because MISSING_FIELDS: enhancement had no usable prose.`);
+    console.info("[ai] Using local rubric judge fallback.");
+    base.aiNotice = JUDGE_LOCAL_FALLBACK_NOTICE;
+    base.aiProvider = "fallback";
+    return base;
+  }
 
-Speaker points must use the 19-30 range:
-19 poor; 20-21 developing; 22-23 competent; 24-26 good; 27-28 excellent; 29 outstanding; 30 exceptional.
-Create four speaker slots if names are absent: Government 1, Government 2, Opposition 1, Opposition 2.
-Assign ranks 1-4 with no ties.
+  return merged;
+}
 
-Return JSON with overallScore, categoryScores, sharedSpeaking, speakerScores, teamWinner, losingSide, confidenceLevel, shortReasonForDecision, longReasonForDecision, reasonForDecision, sideFeedback, sideAnalysis, transcriptFeedback, internalScoringSummary, keyClash, strongestArgument, weakestArgument, strengths, weaknesses, improvementAdvice, recommendedLessons, and readinessForNextLevel.
-categoryScores must include transcript-specific reason strings.
-sideFeedback must contain government.didWell, government.missed, opposition.didWell, and opposition.missed arrays.
-sideAnalysis must explain what each side claimed, bestArgument, weakestArgument, failedToAnswer, dropped, neededMoreWarrant, neededMoreImpact, neededMoreWeighing, vagueOrUnsupported, persuasiveReframe, and hiddenAssumptionAttack.
-transcriptFeedback must focus on the student side and include strongestClaim, weakestClaim, bestRefutation, biggestDroppedArgument, mostMissingPiece, betterSentence, modelRewrite, and skillToPractice.
-internalScoringSummary must include governmentScore, oppositionScore, and reasonWinnerSelected.
-judgeFairnessReport must include:
-- centralClash: what the debate was really about — the one disagreement that decided it.
-- realArgumentQuality: which side proved a real, topic-specific argument (claim + warrant + impact), not just which side sounded like a debater.
-- emptyPhraseWarning: if either side leaned on weighing words or generic ballot phrases without proving the claim, name the side and the exact phrase and say it was not backed by a real argument (for example: "Opposition used weighing language like 'clearer causation' but never explained what causes what or how it applies to the motion."). Use null only if neither side did this.
-- droppedArguments: name the important argument the student failed to answer (unanswered arguments count as conceded).
-- motionConnection: judge how well the student's argument actually connected to the specific motion, and say what was weak if it did not.
-- mechanismCheck: state the cause-and-effect the student needed to prove and whether they proved it.
-- weighingCheck: state whether the student compared impacts with real substance (magnitude, probability, timeframe, scope, reversibility) or only used weighing vocabulary.
-- betterVersion: rewrite the student's weakest line into a real argument with claim, warrant, motion connection, and impact.
-- fairWinnerLogic: explain that the winner was chosen on real argument quality, not debate vocabulary, referencing the actual transcript.
-- practiceSkill: name the single real skill the student should drill next (claim-warrant-impact, rebuttal, weighing/impact calculus, flowing, evidence comparison, mechanism analysis, or collapse).`,
-    () => fallbackDebateJudge(input),
-    "judge"
+// A provider performance ballot must carry the fields the judge route reads, or we keep the local one.
+function isValidPerformanceJudge(result: PerformanceJudgeResult): boolean {
+  return (
+    Array.isArray(result?.categoryScores) &&
+    result.categoryScores.length > 0 &&
+    typeof result.overallScore === "number" &&
+    Array.isArray(result.strengths) &&
+    Array.isArray(result.weaknesses) &&
+    Boolean(result.readinessForNextLevel)
   );
 }
 
@@ -1084,7 +1178,8 @@ Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}
 Focus on business scenario understanding, performance indicators, solution quality, business reasoning, creativity, feasibility, professional communication, organization, judge questions, and delivery.
 Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, judgeQuestionFeedback, and readinessForNextLevel.`,
     () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
-    "DECA judge"
+    "DECA judge",
+    isValidPerformanceJudge
   );
 }
 
@@ -1107,7 +1202,8 @@ Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}
 Focus on health science knowledge, medical/health accuracy, event task completion, scenario response, communication, professionalism, presentation quality, and skill/performance quality when relevant.
 Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, accuracyFlags, and readinessForNextLevel.`,
     () => fallbackPerformanceJudge({ organization: "HOSA", eventType: input.eventType }),
-    "HOSA judge"
+    "HOSA judge",
+    isValidPerformanceJudge
   );
 }
 

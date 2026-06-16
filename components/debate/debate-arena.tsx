@@ -144,6 +144,8 @@ export type JudgeReport = {
     betterVersion?: string;
     fairWinnerLogic?: string;
     practiceSkill?: string;
+    whyWinnerWon?: string;
+    whyLoserLost?: string;
   };
   keyClash?: string;
   strongestArgument?: string;
@@ -747,7 +749,10 @@ function JudgeDecisionModal({
 
   const fairness = report.judgeFairnessReport;
   const compactReason = report.shortReasonForDecision ?? report.reasonForDecision ?? "The winning side won the key comparison.";
-  const whyBullets = [fairness?.realArgumentQuality ?? report.strengths?.[0], report.weaknesses?.[0] ?? fairness?.mechanismCheck].filter(
+  const whyBullets = [
+    fairness?.whyWinnerWon ?? fairness?.realArgumentQuality ?? report.strengths?.[0],
+    fairness?.whyLoserLost ?? report.weaknesses?.[0] ?? fairness?.mechanismCheck
+  ].filter(
     (value): value is string => Boolean(value)
   );
   const biggestFix =

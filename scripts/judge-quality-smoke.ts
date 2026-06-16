@@ -8,7 +8,8 @@ import { buildTranscriptBasedDebateJudge } from "../lib/debate-judge-analysis";
 import { generateOpponentResponse } from "../lib/ai";
 import { getAiPersona } from "../lib/ai-personas";
 import { assessStudentSpeech, OPPONENT_COACHING_RESPONSE } from "../lib/speech-quality";
-import { getProviderOrder } from "../lib/ai-providers";
+import { getProviderOrder, extractJson } from "../lib/ai-providers";
+import { judgeDebate, mergeJudgeEnhancement } from "../lib/ai";
 
 function judge(transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>, studentSide: "GOVERNMENT" | "OPPOSITION" = "GOVERNMENT") {
   return buildTranscriptBasedDebateJudge({
@@ -385,6 +386,72 @@ assert.deepEqual(
 // A placeholder key is treated as unconfigured.
 assert.deepEqual(providerOrderWith({ GEMINI_API_KEY: "your-gemini-key" }), [], "Placeholder Gemini key is ignored.");
 
+// Crash-proof judge: robust JSON extraction.
+// Test 1: valid JSON parses.
+assert.deepEqual(extractJson<{ shortReason: string }>('{"shortReason":"Gov wins."}'), { shortReason: "Gov wins." }, "Valid JSON parses.");
+// Test 2: markdown/code-fence-wrapped JSON parses.
+assert.deepEqual(extractJson<{ a: number }>("```json\n{\"a\":1}\n```"), { a: 1 }, "Fenced JSON parses.");
+// JSON embedded in prose is recovered.
+assert.deepEqual(extractJson<{ a: number }>('Here is the ballot: {"a":1} — hope it helps!'), { a: 1 }, "JSON embedded in prose is recovered.");
+// Test 3: pure prose / malformed throws (the judge then falls back to the local rubric).
+assert.throws(() => extractJson("Gov clearly won, no JSON here."), "Prose without JSON throws so the judge can fall back.");
+
+// Test 5: a provider enhancement with MISSING fields fills the rest from the local rubric ballot.
+const judgeBase = buildTranscriptBasedDebateJudge({
+  organization: "DEBATE",
+  eventType: "PARLIAMENTARY_DEBATE",
+  level: "INTERMEDIATE",
+  topic: "This house believes dress codes should be implemented in schools.",
+  studentSide: "GOVERNMENT",
+  transcript: [
+    { role: "AFFIRMATIVE", round: 1, content: "Dress codes should be implemented because clear standards reduce daily distraction and conflict over clothing." },
+    { role: "NEGATIVE", round: 2, content: "Dress codes are unevenly enforced and police students instead of improving learning, so we should not adopt them." }
+  ]
+}) as Parameters<typeof mergeJudgeEnhancement>[0];
+
+const mergedPartial = mergeJudgeEnhancement(judgeBase, { shortReason: "Government edged it on clearer benefits." }, "gemini");
+assert.ok(mergedPartial, "Partial enhancement with one usable field still merges.");
+assert.equal(mergedPartial!.shortReasonForDecision, "Government edged it on clearer benefits.", "Provided field overrides the local one.");
+assert.equal(mergedPartial!.teamWinner, judgeBase.teamWinner, "Winner stays from the local rubric ballot.");
+assert.ok(Array.isArray(mergedPartial!.categoryScores) && mergedPartial!.categoryScores.length >= 12, "Full rubric category scores are preserved through the merge.");
+assert.ok(mergedPartial!.judgeFairnessReport?.motionConnection, "Missing enhancement fields are filled from the local ballot.");
+// An enhancement with no usable fields returns null so the caller keeps the local ballot.
+assert.equal(mergeJudgeEnhancement(judgeBase, {}, "gemini"), null, "Empty enhancement -> keep local ballot.");
+
+// Tests 6/7: with no provider configured, the judge still returns a complete ballot (never a 500),
+// with the full 12-dimension rubric intact.
+async function judgeIsCrashProof() {
+  const ballot = await judgeDebate({
+    organization: "DEBATE",
+    level: "INTERMEDIATE",
+    topic: "This house believes dress codes should be implemented in schools.",
+    studentSide: "GOVERNMENT",
+    transcript: [
+      { role: "AFFIRMATIVE", round: 1, content: "Dress codes should be implemented because clear standards reduce daily distraction and conflict over clothing." },
+      { role: "NEGATIVE", round: 2, content: "Dress codes are unevenly enforced and police students instead of improving learning, so we should not adopt them." }
+    ]
+  });
+  assert.ok(ballot.teamWinner === "GOVERNMENT" || ballot.teamWinner === "OPPOSITION", "Judge always returns a winner.");
+  assert.ok(typeof ballot.shortReasonForDecision === "string" && ballot.shortReasonForDecision.length > 0, "Judge always returns a short reason.");
+  const keys = ballot.categoryScores.map((entry) => entry.key);
+  for (const key of [
+    "argument",
+    "warrant",
+    "mechanism",
+    "impact",
+    "refutation",
+    "contentEvidence",
+    "clash",
+    "collapse",
+    "motionConnection",
+    "emptyJargon",
+    "sideFidelity",
+    "centralClashResponse"
+  ]) {
+    assert.ok(keys.includes(key), `Full rubric dimension "${key}" survives the crash-proof judge.`);
+  }
+}
+
 function judgeSpeech(topic: string, role: "AFFIRMATIVE" | "NEGATIVE", content: string) {
   return buildTranscriptBasedDebateJudge({
     organization: "DEBATE",
@@ -499,6 +566,7 @@ async function guardrailTests() {
 opponentSoundsHuman()
   .then(() => sideFidelityTests())
   .then(() => guardrailTests())
+  .then(() => judgeIsCrashProof())
   .then(() => {
     console.log("Judge quality smoke tests passed.");
   })

@@ -40,6 +40,25 @@ export function providerBanner(provider: ProviderName): string | null {
   return PROVIDER_BANNER[provider] ?? null;
 }
 
+export function providerLabel(provider: ProviderName): string {
+  return PROVIDER_LABEL[provider] ?? provider;
+}
+
+export function providerModel(provider: ProviderName): string {
+  switch (provider) {
+    case "gemini":
+      return process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    case "groq":
+      return process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+    case "openrouter":
+      return process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
+    case "openai":
+      return openAIModel;
+    default:
+      return "local";
+  }
+}
+
 export class AllProvidersUnavailableError extends Error {
   constructor(reason: string) {
     super(reason);
@@ -142,7 +161,7 @@ export async function runProviderCompletion(req: CompletionRequest, label: strin
       if (!content || !content.trim()) {
         throw new Error("the model returned an empty response");
       }
-      console.info(`[ai] Using ${PROVIDER_LABEL[provider.name]} ${label}.`);
+      console.info(`[ai] Using ${PROVIDER_LABEL[provider.name]} ${label} (${providerModel(provider.name)}).`);
       return { content, provider: provider.name };
     } catch (error) {
       lastReason = describeProviderError(error);

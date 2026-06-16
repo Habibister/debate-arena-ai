@@ -1140,6 +1140,10 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     : `No major argument was fully dropped, but extend your answers — a one-line mention is not the same as engaging the point.`;
 
   const practiceSkill = practiceSkillFor(student);
+  const whyWinnerWon = `${sideLabel(winner)} won because it proved the more complete argument: ${cleanClaim(winnerMetrics.bestClaim, 120)}.`;
+  const whyLoserLost = loserMetrics.isMostlyJargon
+    ? `${sideLabel(loser)} leaned on debate vocabulary without proving a real claim.`
+    : `${sideLabel(loser)} fell short because its key point — ${cleanClaim(loserMetrics.weakestClaim, 120)} — lacked enough warrant, impact, or direct clash.`;
 
   return {
     overallScore: student.scores.overall,
@@ -1254,7 +1258,9 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       weighingCheck,
       betterVersion,
       fairWinnerLogic,
-      practiceSkill
+      practiceSkill,
+      whyWinnerWon,
+      whyLoserLost
     },
     readinessForNextLevel: {
       ready: student.scores.overall >= 82 && student.scores.weighing >= 75 && student.scores.refutation >= 75,

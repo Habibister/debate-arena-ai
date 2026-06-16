@@ -10,22 +10,33 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
+import type { MasteryPoint } from "@/types/domain";
 import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { authOptions } from "@/lib/auth";
+import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
 import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
 
-const fallbackLessons = [
+// Sample rows shown ONLY for demo accounts. Real users see their real data (zero until they train).
+const demoSampleLessons = [
   ["Evidence weighing", 68],
   ["Cross examination setup", 57],
   ["Rebuttal collapse", 72]
 ] as const;
 
+const demoSampleMastery: MasteryPoint[] = [
+  { skill: "Logic", mastery: 84, trend: "up" },
+  { skill: "Evidence", mastery: 68, trend: "up" },
+  { skill: "Rebuttal", mastery: 72, trend: "flat" },
+  { skill: "Clarity", mastery: 91, trend: "up" }
+];
+
 function masteryFromTests(tests: Array<{ score: number | null }>) {
   const completedScores = tests.map((test) => test.score).filter((score): score is number => typeof score === "number");
 
   if (completedScores.length === 0) {
-    return 71;
+    // A brand-new user has no real mastery yet — never fake it.
+    return 0;
   }
 
   return Math.round(completedScores.reduce((total, score) => total + score, 0) / completedScores.length);
@@ -57,17 +68,21 @@ export default async function DashboardPage() {
       })
     : 0;
 
-  const displayName = user?.name?.split(" ")[0] ?? "Alex";
-  const fullDisplayName = user?.displayName ?? user?.name ?? "Alex Rivera";
-  const username = user?.username ?? session?.user?.username ?? "alex_rivera";
+  const demo = isDemoUser(user?.email ?? session?.user?.email);
+  const fullDisplayName = user?.displayName ?? user?.name ?? session?.user?.displayName ?? "Debater";
+  const displayName = (user?.name ?? user?.displayName)?.split(" ")[0] ?? "there";
+  const username = user?.username ?? session?.user?.username ?? "debater";
   const avatarUrl = user?.avatarUrl ?? user?.image ?? session?.user?.avatarUrl ?? null;
-  const xp = user?.xp ?? 375;
-  const streak = user?.streak ?? 8;
-  const wins = user?.wins ?? 12;
-  const rank = user?.rank ?? "SILVER";
+  // Real values from the DB (a new account is 0 / BRONZE). Never substitute sample numbers for real users.
+  const xp = user?.xp ?? 0;
+  const streak = user?.streak ?? 0;
+  const wins = user?.wins ?? 0;
+  const rank = user?.rank ?? "BRONZE";
   const recentTests = user?.practiceTests ?? [];
   const mastery = masteryFromTests(recentTests);
   const weakAreas = latestWeakAreas(recentTests);
+  const masteryData: MasteryPoint[] = demo ? demoSampleMastery : [];
+  const recommendedRows = weakAreas.length > 0 ? weakAreas.map((area, index) => [area, Math.max(45, 76 - index * 9)] as const) : demo ? demoSampleLessons : [];
   const debateRating = calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount });
   const debateProgress = debateRatingProgress(debateRating);
   const recommendedBot = nearestAiPersona(debateRating);
@@ -97,7 +112,7 @@ export default async function DashboardPage() {
             </div>
             <div className="rounded-md border bg-background p-3">
               <p className="text-xs font-semibold text-muted-foreground">Weak skill</p>
-              <p className="mt-1 font-semibold">{weakAreas[0] ?? "Evidence depth"}</p>
+              <p className="mt-1 font-semibold">{weakAreas[0] ?? "Not started yet"}</p>
             </div>
             <div className="rounded-md border bg-background p-3">
               <p className="text-xs font-semibold text-muted-foreground">Recommended bot</p>
@@ -177,21 +192,28 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <MasteryChart />
+        <MasteryChart data={masteryData} />
         <Card>
           <CardHeader>
             <CardTitle>Recommended Lessons</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(weakAreas.length > 0 ? weakAreas.map((area, index) => [area, Math.max(45, 76 - index * 9)] as const) : fallbackLessons).map(([lesson, value]) => (
-              <div key={lesson.toString()} className="rounded-lg border bg-background p-4">
-                <div className="mb-3 flex items-center justify-between text-sm">
-                  <span className="font-semibold">{lesson}</span>
-                  <span className="text-muted-foreground">{value}%</span>
+            {recommendedRows.length > 0 ? (
+              recommendedRows.map(([lesson, value]) => (
+                <div key={lesson.toString()} className="rounded-lg border bg-background p-4">
+                  <div className="mb-3 flex items-center justify-between text-sm">
+                    <span className="font-semibold">{lesson}</span>
+                    <span className="text-muted-foreground">{value}%</span>
+                  </div>
+                  <Progress value={Number(value)} />
                 </div>
-                <Progress value={Number(value)} />
+              ))
+            ) : (
+              <div className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">Start here</p>
+                <p className="mt-1">Complete a debate, lesson, or practice test and your recommended lessons will appear with real progress.</p>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
       </div>

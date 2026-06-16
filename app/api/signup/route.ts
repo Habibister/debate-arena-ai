@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(input.password, 12);
+    const isCoach = input.accountType === "COACH";
 
     const user = await prisma.user.create({
       data: {
@@ -40,19 +41,22 @@ export async function POST(request: Request) {
         schoolOrClub: input.schoolOrClub ?? null,
         preferredOrganization: input.preferredOrganization ?? null,
         organization: input.preferredOrganization ?? null,
-        role: "STUDENT",
+        role: isCoach ? "COACH" : "STUDENT",
         level: "BEGINNER",
         ageGroup: null,
         xp: 0,
         streak: 0,
         wins: 0,
-        rank: "BRONZE"
+        rank: "BRONZE",
+        // Give coaches a Coach profile up front so they can create teams from the coach dashboard.
+        ...(isCoach ? { coachProfile: { create: {} } } : {})
       },
       select: {
         id: true,
         email: true,
         username: true,
-        displayName: true
+        displayName: true,
+        role: true
       }
     });
 

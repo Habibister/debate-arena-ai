@@ -1,10 +1,16 @@
+import { getServerSession } from "next-auth";
 import { SkillPath } from "@/components/skills/skill-path";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authOptions } from "@/lib/auth";
+import { isDemoUser } from "@/lib/demo";
 
 const lessonStructure = ["Lesson", "Examples", "Guided practice", "Independent practice", "Mastery quiz"];
 
-export default function SkillsPage() {
+export default async function SkillsPage() {
+  const session = await getServerSession(authOptions);
+  const showSampleProgress = isDemoUser(session?.user?.email);
+
   return (
     <div className="space-y-6">
       <div>
@@ -15,7 +21,7 @@ export default function SkillsPage() {
         </p>
       </div>
 
-      <SkillPath />
+      <SkillPath showSampleProgress={showSampleProgress} />
 
       <Card>
         <CardHeader>

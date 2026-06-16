@@ -215,7 +215,9 @@ export const signupSchema = z
       .max(80, "Keep display names to 80 characters or fewer."),
     avatarUrl: avatarValueSchema,
     schoolOrClub: optionalCleanString(120),
-    preferredOrganization: organizationSchema.nullable().optional()
+    preferredOrganization: organizationSchema.nullable().optional(),
+    // Self-signup may only create a student or coach account — never an admin.
+    accountType: z.enum(["STUDENT", "COACH"]).default("STUDENT")
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: "Passwords must match.",

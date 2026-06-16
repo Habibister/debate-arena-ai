@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Organization } from "@prisma/client";
 import { Loader2, UserPlus } from "lucide-react";
+import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,10 +127,18 @@ export function SignUpForm() {
       </div>
 
       <div>
-        <label className="text-sm font-semibold" htmlFor="avatarUrl">
-          Avatar URL <span className="font-normal text-muted-foreground">(optional)</span>
-        </label>
-        <Input id="avatarUrl" name="avatarUrl" type="url" value={avatarUrl} onChange={(event) => setAvatarUrl(event.target.value)} placeholder="https://..." className="mt-2" />
+        <p className="text-sm font-semibold">
+          Profile picture <span className="font-normal text-muted-foreground">(optional)</span>
+        </p>
+        <div className="mt-2">
+          <AvatarUploader
+            value={avatarUrl || null}
+            onChange={(url) => setAvatarUrl(url ?? "")}
+            displayName={displayName}
+            username={username}
+            disabled={isLoading}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

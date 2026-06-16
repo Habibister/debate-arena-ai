@@ -159,6 +159,23 @@ const optionalCleanString = (max: number) =>
     .transform((value) => (value.length > 0 ? value : null))
     .optional();
 
+// Accepts either an uploaded avatar path ("/uploads/avatars/<file>") or a bounded hosted URL.
+// Rejects data: URLs and oversized strings so avatar data never bloats the cookie/JWT (HTTP 431).
+const AVATAR_UPLOAD_PATH = /^\/uploads\/avatars\/[A-Za-z0-9._-]+$/;
+const avatarValueSchema = z
+  .union([
+    z.literal(""),
+    z.string().trim().regex(AVATAR_UPLOAD_PATH, "Upload a valid image."),
+    z
+      .string()
+      .trim()
+      .max(300, "That image URL is too long.")
+      .url("Use a valid image URL.")
+      .refine((value) => !value.toLowerCase().startsWith("data:"), "Use a hosted image, not embedded image data.")
+  ])
+  .transform((value) => (value ? value : null))
+  .optional();
+
 export const profileUpdateSchema = z.object({
   username: z
     .string()
@@ -172,10 +189,7 @@ export const profileUpdateSchema = z.object({
     .trim()
     .min(2, "Add a display name.")
     .max(80, "Keep display names to 80 characters or fewer."),
-  avatarUrl: z
-    .union([z.string().trim().url("Use a valid image URL."), z.literal("")])
-    .transform((value) => (value ? value : null))
-    .optional(),
+  avatarUrl: avatarValueSchema,
   bio: optionalCleanString(280),
   schoolOrClub: optionalCleanString(120),
   preferredOrganization: organizationSchema.nullable().optional(),
@@ -199,10 +213,7 @@ export const signupSchema = z
       .trim()
       .min(2, "Add a display name.")
       .max(80, "Keep display names to 80 characters or fewer."),
-    avatarUrl: z
-      .union([z.string().trim().url("Use a valid image URL."), z.literal("")])
-      .transform((value) => (value ? value : null))
-      .optional(),
+    avatarUrl: avatarValueSchema,
     schoolOrClub: optionalCleanString(120),
     preferredOrganization: organizationSchema.nullable().optional()
   })

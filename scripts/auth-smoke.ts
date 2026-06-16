@@ -41,6 +41,24 @@ async function main() {
     "Invalid email must fail."
   );
 
+  // 4. Avatar: an uploaded path is accepted; data: URLs and huge strings are rejected so image data
+  // never lands in the cookie/JWT (HTTP 431 guard).
+  const base = { email: "a@example.com", password: "password123", confirmPassword: "password123", username: "abc", displayName: "Ab" };
+  assert.equal(
+    signupSchema.parse({ ...base, avatarUrl: "/uploads/avatars/new-123.webp" }).avatarUrl,
+    "/uploads/avatars/new-123.webp",
+    "Uploaded avatar path must be accepted."
+  );
+  assert.equal(signupSchema.parse({ ...base, avatarUrl: "" }).avatarUrl, null, "Empty avatar becomes null (initials fallback).");
+  assert.throws(
+    () => signupSchema.parse({ ...base, avatarUrl: "data:image/png;base64,AAAA" }),
+    "data: image URLs must be rejected (no image data in the cookie)."
+  );
+  assert.throws(
+    () => signupSchema.parse({ ...base, avatarUrl: `https://x.com/${"a".repeat(400)}.png` }),
+    "Oversized avatar URLs must be rejected."
+  );
+
   console.log("Auth smoke tests passed.");
 }
 

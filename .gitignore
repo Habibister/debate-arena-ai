@@ -12,3 +12,7 @@ prisma/dev.db
 fix_db.py
 set_db.py
 tsconfig.tsbuildinfo
+
+# Uploaded avatars (runtime files; do not commit user uploads)
+/public/uploads/avatars/*
+!/public/uploads/avatars/.gitkeep

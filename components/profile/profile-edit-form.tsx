@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Level, Organization } from "@prisma/client";
 import { Loader2, Save } from "lucide-react";
+import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,11 +123,17 @@ export function ProfileEditForm({ user }: { user: ProfileFormUser }) {
       </div>
 
       <div>
-        <label className="text-sm font-semibold" htmlFor="avatarUrl">
-          Avatar URL
-        </label>
-        <Input id="avatarUrl" type="url" value={avatarUrl} onChange={(event) => setAvatarUrl(event.target.value)} placeholder="https://..." className="mt-2" />
-        <p className="mt-1 text-xs text-muted-foreground">Leave blank to use a generated initials avatar.</p>
+        <p className="text-sm font-semibold">Profile picture</p>
+        <div className="mt-2">
+          <AvatarUploader
+            value={previewAvatar}
+            onChange={(url) => setAvatarUrl(url ?? "")}
+            displayName={displayName}
+            username={username}
+            disabled={isSaving}
+          />
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">Remove the photo to use a generated initials avatar.</p>
       </div>
 
       <div>

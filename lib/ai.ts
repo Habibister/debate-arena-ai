@@ -562,9 +562,15 @@ function fallbackOpponent(input: {
   const motion = cleanMotion(input.topic);
   const studentPoint = extractStudentPoint(input.transcript, studentRole) ?? "there's a real problem worth solving here";
   const { response, move } = buildPersonaArgument(persona.id, studentPoint, motion);
+  const advanced = input.level === "ELITE" || persona.difficulty === "elite";
+  // Advanced/elite mode expects a longer speech (180-260 words): add a concrete weighing close so the
+  // fallback still hits the expected shape rather than stopping short.
+  const fullResponse = advanced
+    ? `${response} And weigh it directly: the narrower fix reaches the same goal with less collateral damage, which on this motion matters more than the sweep of your version, because a smaller change is both more likely to work and easier to walk back if it doesn't. That trade — comparable benefit, far less risk — is why my side should come out ahead here.`
+    : response;
 
   return {
-    response,
+    response: fullResponse,
     strategy: `${persona.name} — ${move}`,
     pressurePoints: [
       "Name the exact harm and explain what actually causes it.",
@@ -759,6 +765,8 @@ export async function generateOpponentResponse(input: {
   const latestStudentSpeech = [...input.transcript].reverse().find((message) => message.role === studentRole)?.content ?? "";
   const previousAiSpeeches = input.transcript.filter((message) => message.role === input.side).map((message) => message.content);
   const ratingLabel = `${persona.rating} (${persona.difficulty})`;
+  const advanced = input.level === "ELITE" || persona.difficulty === "elite";
+  const wordTarget = advanced ? "180-260 words" : "100-180 words";
 
   return jsonCompletion<OpponentResponse>(
     `You are a sharp, human-sounding debate opponent arguing the ${input.side} side in a student training app. Your job is not to sound formal — your job is to make the student better.
@@ -795,12 +803,50 @@ Your previous speeches this round (do not repeat yourself): ${previousAiSpeeches
 Full transcript so far (JSON): ${JSON.stringify(input.transcript)}
 
 Respond to the student's most recent point using the reasoning flow above. Sound like a real, specific, persuasive human — not a template.
+
+Length and shape: aim for ${wordTarget}, conversational but sharp. The response must contain (woven into natural prose, NOT as headings): one direct response to the student, one concrete counterargument, one comparison or better alternative, and a final sentence explaining why your side is stronger. Do not pad, do not use headings.
 Return JSON with:
 - "response": your spoken argument as natural paragraphs (no headings, no speech labels, no jargon filler).
 - "strategy": a short plain-English note on the line of attack you took (for the coach, not spoken).
 - "pressurePoints": 2-4 specific things the student must answer next.`,
     () => fallbackOpponent({ ...input, personaId: input.personaId ?? undefined }),
     "opponent"
+  );
+}
+
+type ModelRewrite = {
+  rewrite: string;
+  whatChanged: string;
+  fallbackNotice?: string;
+};
+
+export async function generateModelRewrite(input: {
+  motion: string;
+  side: string;
+  weakSentence: string;
+  organization?: Organization;
+  level?: Level;
+}) {
+  return jsonCompletion<ModelRewrite>(
+    `You are a supportive debate coach. Rewrite a student's weak line into ONE or TWO strong, natural sentences that a real debater would say: a clear claim, a genuine warrant (why it is true), and a concrete impact, all tied to the motion. No debate jargon as filler, no headings. Return JSON.`,
+    `Motion: ${input.motion}
+Student side: ${input.side}
+Student level: ${input.level ?? "INTERMEDIATE"}
+Student's weak line: "${input.weakSentence}"
+
+Return JSON with:
+- "rewrite": the stronger version (1-2 sentences, natural and human, tied to the motion).
+- "whatChanged": one short clause naming what you added (e.g. "added a causal warrant and a concrete impact").`,
+    () => {
+      const trimmed = input.weakSentence.replace(/\s+/g, " ").trim().replace(/[.!?]+$/, "");
+      const core = trimmed.length > 140 ? `${trimmed.slice(0, 140).replace(/\s+\S*$/, "")}` : trimmed || "your main point";
+      return {
+        rewrite: `${core.charAt(0).toUpperCase() + core.slice(1)} — and here is why that matters: explain the mechanism that makes it happen and name the concrete harm or benefit it creates on "${input.motion}", so the judge can weigh it.`,
+        whatChanged: "Added a causal warrant and a concrete, motion-specific impact.",
+        fallbackNotice: DEV_AI_FALLBACK_NOTICE
+      };
+    },
+    "model rewrite"
   );
 }
 
@@ -843,7 +889,8 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Required analysis:
-- Score Government/Affirmative and Opposition/Negative separately on these dimensions: (1) claim quality — clear, testable, topic-specific; (2) warrant quality — why the claim is true; (3) mechanism quality — how the harm/benefit actually happens; (4) impact quality — why it matters; (5) refutation quality — does it answer the opponent's actual claim; (6) evidence/example quality — concrete support or reasoning; (7) weighing quality — real comparison via magnitude, probability, timeframe, scope, reversibility, or prerequisites (NOT just the word "weighing"); (8) collapse/strategy — focuses on the most important issue; (9) motion connection — actually connects to the motion; (10) empty-jargon penalty — used debate words without proving anything.
+- Score Government/Affirmative and Opposition/Negative separately on these twelve dimensions: (1) claim quality — clear, testable, topic-specific; (2) warrant quality — why the claim is true; (3) mechanism quality — how the harm/benefit actually happens; (4) impact quality — why it matters; (5) refutation quality — does it answer the opponent's actual claim; (6) evidence/example quality — concrete support or reasoning; (7) weighing quality — real comparison via magnitude, probability, timeframe, scope, reversibility, or prerequisites (NOT just the word "weighing"); (8) collapse/strategy — focuses on the most important issue; (9) motion connection — actually connects to the motion; (10) empty-jargon penalty — used debate words without proving anything; (11) side fidelity — actually argued its own side instead of conceding or drifting; (12) central clash response — directly answered the OTHER side's strongest argument.
+- THE MOST IMPORTANT QUESTION: who actually answered the central clash? A polished, confident, smooth, or morally-toned speech that never directly engages the other side's strongest argument must NOT beat a rougher speech that did engage it. Example — motion "schools should ban phones during instruction": if Opposition argues safety/emergency access and Government only says something vague like "fairness has two sides," Government has not answered the clash and should not win on polish. A real Government answer would be "emergency access can be preserved through office calls and teacher-approved exceptions while still preventing daily distraction." Reward the side that engaged; penalize the side that dodged.
 - Identify what each side claimed, what each side dropped, which claims were extended, and which final speech introduced new arguments if it happened.
 - Penalize speeches like "my opponent is wrong" for no warrant, no specific refutation, no impact comparison, and no evidence/example.
 - Penalize empty debate jargon just as hard: weighing words with no proven claim behind them, generic "judge should prefer" lines, claims with no warrant, claims with no impact, arguments that never connect to the motion, and "refutations" that do not answer the opponent's actual claim.

@@ -6,6 +6,7 @@ delete process.env.OPENAI_API_KEY;
 
 import { buildTranscriptBasedDebateJudge } from "../lib/debate-judge-analysis";
 import { generateOpponentResponse } from "../lib/ai";
+import { getAiPersona } from "../lib/ai-personas";
 
 function judge(transcript: Array<{ role: "AFFIRMATIVE" | "NEGATIVE"; round: number; content: string }>, studentSide: "GOVERNMENT" | "OPPOSITION" = "GOVERNMENT") {
   return buildTranscriptBasedDebateJudge({
@@ -227,11 +228,56 @@ assert.ok(
   "Judge should frame the student's idea as a clean paraphrase."
 );
 
-// Rubric preservation (Test 3 of spec): all ten rubric dimensions still calculate.
+// Rubric preservation (Test 6 of spec): all twelve rubric dimensions still calculate.
 const rubricKeys = messySpeech.categoryScores.map((entry) => entry.key);
-for (const key of ["argument", "warrant", "mechanism", "impact", "refutation", "contentEvidence", "clash", "motionConnection", "organization"]) {
+for (const key of [
+  "argument",
+  "warrant",
+  "mechanism",
+  "impact",
+  "refutation",
+  "contentEvidence",
+  "clash",
+  "collapse",
+  "motionConnection",
+  "emptyJargon",
+  "sideFidelity",
+  "centralClashResponse"
+]) {
   assert.ok(rubricKeys.includes(key), `Rubric dimension "${key}" must still be scored.`);
 }
+
+// Central clash (spec's key judge logic): a polished-but-vague speech that never answers the other
+// side's strongest argument must not win on polish.
+const phoneBan = buildTranscriptBasedDebateJudge({
+  organization: "DEBATE",
+  eventType: "PARLIAMENTARY_DEBATE",
+  level: "INTERMEDIATE",
+  topic: "This House believes schools should ban phone use during instructional time.",
+  studentSide: "GOVERNMENT",
+  transcript: [
+    {
+      role: "NEGATIVE",
+      round: 1,
+      content:
+        "Phones during instruction keep students safe: they can contact family in an emergency, record dangerous behavior, and reach help quickly when something goes wrong at school."
+    },
+    {
+      role: "AFFIRMATIVE",
+      round: 2,
+      content: "Fairness has two sides. A principle that helps one group by harming another is not truly fair."
+    }
+  ]
+});
+assert.equal(
+  phoneBan.teamWinner,
+  "OPPOSITION",
+  "A polished-but-vague Government that never answers the safety/emergency clash must not beat the side that engaged it."
+);
+assert.ok(
+  category(phoneBan, "centralClashResponse") < 60,
+  "The side that dodged the central clash should score low on central clash response."
+);
 
 // Test 1 + 3: the AI opponent must sound human and motion-specific, never a template.
 const BANNED_OPPONENT_PHRASES = [
@@ -257,6 +303,7 @@ function wordCount(text: string) {
 
 async function opponentSoundsHuman() {
   for (const personaId of ["evidence-specialist", "policy-analyst", "devils-advocate", "socratic-questioner", "starter-coach", "tournament-judge"]) {
+    const persona = getAiPersona(personaId);
     const response = await generateOpponentResponse({
       organization: "DEBATE",
       level: "INTERMEDIATE",
@@ -280,8 +327,12 @@ async function opponentSoundsHuman() {
       );
     }
 
+    // Advanced/elite personas argue longer (180-260); normal personas are tighter (100-180). Allow
+    // a little slack around the fallback's deterministic length.
+    const advanced = persona.difficulty === "elite";
+    const [min, max] = advanced ? [170, 280] : [90, 190];
     const count = wordCount(response.response);
-    assert.ok(count >= 90 && count <= 170, `AI opponent (${personaId}) should be 90-170 words (was ${count}).`);
+    assert.ok(count >= min && count <= max, `AI opponent (${personaId}, ${advanced ? "advanced" : "normal"}) should be ${min}-${max} words (was ${count}).`);
     assert.ok(
       response.response.toLowerCase().includes("ai") || response.response.toLowerCase().includes("literacy"),
       `AI opponent (${personaId}) should engage the actual motion.`

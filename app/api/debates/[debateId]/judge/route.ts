@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { judgeDebate, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/ai";
+import { generateJudgeDecision, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/openai-debate";
 import { apiError, HttpError, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { nearestAiPersona } from "@/lib/ai-personas";
@@ -203,7 +203,7 @@ async function runOrganizationJudge(debate: {
     });
   }
 
-  return judgeDebate({
+  return generateJudgeDecision({
     organization: debate.organization,
     level: debate.level,
     eventType: debate.eventType,

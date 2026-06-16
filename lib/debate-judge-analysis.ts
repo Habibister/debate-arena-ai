@@ -50,6 +50,8 @@ type SideMetrics = {
     weighing: number;
     evidence: number;
     motionConnection: number;
+    sideFidelity: number;
+    centralClashResponse: number;
     organization: number;
     responsiveness: number;
     finalSpeech: number;
@@ -135,12 +137,29 @@ const IMPACT_MARKERS = [
   "benefit",
   "risk",
   "safety",
+  "safe",
+  "danger",
+  "emergency",
+  "protect",
   "fairness",
   "rights",
   "cost",
   "trust",
   "learning",
   "health",
+  "mental",
+  "stress",
+  "anxiety",
+  "distract",
+  "focus",
+  "attention",
+  "privacy",
+  "afford",
+  "poverty",
+  "crime",
+  "violence",
+  "bully",
+  "addiction",
   "opportunity",
   "access",
   "equity",
@@ -542,6 +561,11 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   // Jargon only costs points when it is NOT backed by substance: a speech full of real argument may
   // freely use the word "weighing" or "clash"; a speech that is only those words is penalized.
   const jargonPenalty = isMostlyJargon ? hardJargon * 6 + 22 : hasSubstance ? 0 : jargon * 4;
+  // "Abstract" = polished/moral language that never engages the motion and never explains anything
+  // (no topic terms, no real warrant). Words like "fairness" or "harm" should NOT earn impact credit
+  // on their own — e.g. "fairness has two sides" must not out-score concrete safety reasoning.
+  const abstract = !isMostlyJargon && topicEngagement === 0 && realWarrant === 0;
+  const groundedValue = isMostlyJargon ? 0 : abstract ? 0.35 : 1;
 
   const lengthBonus = Math.min(16, wordCount / 14);
   const vaguePenalty = vague * 9 + (wordCount > 220 && warrant + impact + weighing + evidence < 4 ? 10 : 0);
@@ -566,11 +590,17 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     claimClarity: clamp(36 + lengthBonus + claims.length * 9 + signpost * 3 - vaguePenalty - jargonPenalty),
     warrant: clamp(30 + warrant * 15 + Math.min(10, wordCount / 30) - vague * 7 - jargonPenalty),
     mechanism: clamp(28 + grounded * realWarrant * 16 + (grounded && impact > 0 ? 8 : 0) - vague * 5 - jargonPenalty),
-    impact: clamp(30 + grounded * impact * 9 + grounded * warrant * 2 - vague * 5 - jargonPenalty),
+    impact: clamp(30 + groundedValue * impact * 9 + groundedValue * warrant * 2 - vague * 5 - jargonPenalty),
     refutation: clamp(26 + grounded * (refutation * 10 + opponentReference * 7) + directAnswerBonus - vague * 4 - jargonPenalty),
-    weighing: clamp(24 + grounded * weighing * 18 + (!isMostlyJargon && impact > 1 ? 5 : 0) - vague * 4 - jargonPenalty),
+    weighing: clamp(24 + groundedValue * weighing * 18 + (!isMostlyJargon && !abstract && impact > 1 ? 5 : 0) - vague * 4 - jargonPenalty),
     evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5 - jargonPenalty),
     motionConnection: clamp(34 + topicEngagement * 16 + (topicEngagement === 0 ? -16 : 0)),
+    // Did the side actually argue its own side with real positions, instead of conceding or drifting
+    // into vague language? Real claims raise it; jargon and vagueness lower it.
+    sideFidelity: clamp(46 + claims.length * 10 + (realWarrant > 0 ? 10 : 0) - vague * 6 - (isMostlyJargon ? 28 : 0)),
+    // Did the side directly answer the other side's strongest material — the central clash — rather
+    // than sounding polished while never engaging it? Polished-but-vague speeches score low here.
+    centralClashResponse: clamp(22 + grounded * (opponentReference * 9 + refutation * 7 + directAnswerBonus) - vague * 5 - jargonPenalty),
     organization: clamp(38 + signpost * 11 + Math.min(10, sideSentences.length * 2) - vague * 3),
     responsiveness: clamp(30 + grounded * (opponentReference * 8 + refutation * 7) + Math.round(directAnswerBonus / 2) - vague * 4 - jargonPenalty),
     finalSpeech: finalSpeechScore,
@@ -580,18 +610,19 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   };
 
   scores.overall = clamp(
-    scores.claimClarity * 0.11 +
-      scores.warrant * 0.12 +
+    scores.claimClarity * 0.1 +
+      scores.warrant * 0.11 +
       scores.mechanism * 0.08 +
-      scores.impact * 0.11 +
-      scores.refutation * 0.13 +
-      scores.weighing * 0.13 +
-      scores.evidence * 0.09 +
+      scores.impact * 0.1 +
+      scores.refutation * 0.12 +
+      scores.weighing * 0.12 +
+      scores.evidence * 0.08 +
       scores.motionConnection * 0.06 +
-      scores.organization * 0.05 +
-      scores.responsiveness * 0.08 +
-      scores.finalSpeech * 0.04 +
-      scores.ruleCompliance * 0.0 -
+      scores.centralClashResponse * 0.08 +
+      scores.sideFidelity * 0.03 +
+      scores.organization * 0.04 +
+      scores.responsiveness * 0.04 +
+      scores.finalSpeech * 0.04 -
       (isMostlyJargon ? 10 : 0)
   );
 
@@ -788,6 +819,15 @@ function buildCategoryScores(student: SideMetrics): CategoryScore[] {
     { key: "clash", label: "Weighing", score: student.scores.weighing, reason: scoreReason("weighing", student.scores.weighing, student) },
     { key: "contentEvidence", label: "Evidence", score: student.scores.evidence, reason: scoreReason("evidence/examples", student.scores.evidence, student) },
     {
+      key: "collapse",
+      label: "Collapse / strategy",
+      score: student.scores.finalSpeech,
+      reason:
+        student.scores.finalSpeech >= 65
+          ? "The closing focused on the issues that actually decide the round rather than re-listing everything."
+          : "The closing did not collapse to the one or two issues that win the round."
+    },
+    {
       key: "motionConnection",
       label: "Motion connection",
       score: student.scores.motionConnection,
@@ -795,6 +835,33 @@ function buildCategoryScores(student: SideMetrics): CategoryScore[] {
         student.counts.topicEngagement > 0
           ? `The argument engaged the actual terms of the motion, which is what keeps it on-topic.`
           : `This did not clearly connect to the motion. Argue about the specific thing the motion changes, not the subject in general.`
+    },
+    {
+      key: "sideFidelity",
+      label: "Side fidelity",
+      score: student.scores.sideFidelity,
+      reason:
+        student.scores.sideFidelity >= 65
+          ? "Argued its own side with clear positions instead of conceding or drifting."
+          : "Did not firmly hold its side — too much agreement, vagueness, or drift away from a clear position."
+    },
+    {
+      key: "centralClashResponse",
+      label: "Central clash response",
+      score: student.scores.centralClashResponse,
+      reason:
+        student.scores.centralClashResponse >= 65
+          ? "Directly engaged the other side's strongest argument — the central clash — not just its own case."
+          : "Sounded polished but did not directly answer the other side's strongest argument. Name their best point and beat it."
+    },
+    {
+      key: "emptyJargon",
+      label: "Empty jargon penalty",
+      score: clamp(100 - student.counts.jargon * 9 - (student.isMostlyJargon ? 45 : 0)),
+      reason:
+        student.counts.jargon === 0
+          ? "No empty debate vocabulary — points stood on real substance."
+          : `Leaned on debate vocabulary${student.jargonPhrase ? ` like "${student.jargonPhrase}"` : ""}; such words only count when a proven claim sits behind them.`
     },
     { key: "organization", label: "Organization", score: student.scores.organization, reason: scoreReason("organization", student.scores.organization, student) },
     { key: "delivery", label: "Style", score: student.scores.style, reason: scoreReason("style", student.scores.style, student) },

@@ -889,7 +889,7 @@ function JudgeDecisionModal({
           ) : null}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            {report.categoryScores.slice(0, 10).map((category) => (
+            {report.categoryScores.slice(0, 16).map((category) => (
               <div key={category.key} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
                 <div className="mb-2 flex items-center justify-between gap-2 text-sm">
                   <span className="font-semibold">{category.label}</span>

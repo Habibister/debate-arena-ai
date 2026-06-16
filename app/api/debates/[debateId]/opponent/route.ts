@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
-import { generateOpponentResponse } from "@/lib/ai";
+import { generateOpponentSpeech } from "@/lib/openai-debate";
 import { authOptions } from "@/lib/auth";
 import { countDebateSpeeches, getNextSpeech, getSideLabel, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +54,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       throw new HttpError(`The AI opponent must give the next required speech: ${nextSpeech.label}.`, 400);
     }
 
-    const opponent = await generateOpponentResponse({
+    const opponent = await generateOpponentSpeech({
       organization: debate.organization,
       level: debate.level,
       eventType: debate.eventType,

@@ -5,7 +5,18 @@ export const DECA_EVENT_CLUSTERS = [
   "Hospitality and Tourism",
   "Entrepreneurship",
   "Sports and Entertainment Marketing",
-  "Personal Financial Literacy"
+  "Personal Financial Literacy",
+  "Economics basics",
+  "Promotion",
+  "Pricing",
+  "Distribution",
+  "Market research",
+  "Customer relations",
+  "Operations",
+  "Financial analysis",
+  "Business law basics",
+  "Ethics",
+  "Human resources"
 ];
 
 export const HOSA_EVENT_CATEGORIES = [
@@ -15,7 +26,16 @@ export const HOSA_EVENT_CATEGORIES = [
   "Patient Communication",
   "Anatomy and Physiology",
   "Clinical Skills",
-  "Public Health"
+  "Public Health",
+  "Body Systems",
+  "Infection Control",
+  "Vital Signs",
+  "Medical Abbreviations",
+  "Emergency Care Basics",
+  "Nutrition",
+  "Epidemiology Basics",
+  "Healthcare Careers",
+  "Safety Procedures"
 ];
 
 export function testingClustersForOrganization(organization: "DECA" | "HOSA") {

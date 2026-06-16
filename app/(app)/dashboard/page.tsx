@@ -1,15 +1,19 @@
 import { getServerSession } from "next-auth";
-import { BookOpenCheck, ClipboardList, Flame, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
+import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { StatCard } from "@/components/app/stat-card";
 import { XpProgressCard } from "@/components/app/xp-progress-card";
+import { UserAvatar } from "@/components/profile/user-avatar";
+import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
+import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
 
 const fallbackLessons = [
   ["Evidence weighing", 68],
@@ -44,8 +48,19 @@ export default async function DashboardPage() {
         }
       })
     : null;
+  const judgedDebateCount = session?.user?.id
+    ? await prisma.debate.count({
+        where: {
+          studentId: session.user.id,
+          status: "JUDGED"
+        }
+      })
+    : 0;
 
   const displayName = user?.name?.split(" ")[0] ?? "Alex";
+  const fullDisplayName = user?.displayName ?? user?.name ?? "Alex Rivera";
+  const username = user?.username ?? session?.user?.username ?? "alex_rivera";
+  const avatarUrl = user?.avatarUrl ?? user?.image ?? session?.user?.avatarUrl ?? null;
   const xp = user?.xp ?? 375;
   const streak = user?.streak ?? 8;
   const wins = user?.wins ?? 12;
@@ -53,6 +68,9 @@ export default async function DashboardPage() {
   const recentTests = user?.practiceTests ?? [];
   const mastery = masteryFromTests(recentTests);
   const weakAreas = latestWeakAreas(recentTests);
+  const debateRating = calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount });
+  const debateProgress = debateRatingProgress(debateRating);
+  const recommendedBot = nearestAiPersona(debateRating);
 
   return (
     <div className="space-y-6">
@@ -62,7 +80,13 @@ export default async function DashboardPage() {
             <Badge variant="secondary">Student dashboard</Badge>
             <Badge variant="outline">{rank.replace("_", " ")} rank</Badge>
           </div>
-          <h1 className="mt-4 text-3xl font-bold sm:text-4xl">Welcome back, {displayName}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <UserAvatar username={username} displayName={fullDisplayName} avatarUrl={avatarUrl} size="lg" />
+            <div>
+              <h1 className="text-3xl font-bold sm:text-4xl">Welcome back, {displayName}</h1>
+              <p className="mt-1 text-sm font-semibold text-muted-foreground">@{username}</p>
+            </div>
+          </div>
           <p className="mt-2 max-w-3xl text-muted-foreground">
             Your training loop is ready: one speaking rep, one test set, and one targeted lesson will move the week forward.
           </p>
@@ -76,8 +100,8 @@ export default async function DashboardPage() {
               <p className="mt-1 font-semibold">{weakAreas[0] ?? "Evidence depth"}</p>
             </div>
             <div className="rounded-md border bg-background p-3">
-              <p className="text-xs font-semibold text-muted-foreground">Next reward</p>
-              <p className="mt-1 font-semibold">+20 XP test set</p>
+              <p className="text-xs font-semibold text-muted-foreground">Recommended bot</p>
+              <p className="mt-1 font-semibold">{recommendedBot.name}</p>
             </div>
           </div>
         </div>
@@ -85,13 +109,44 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Debate rating"
+          value={String(debateRating)}
+          detail={`${ratingLabel(debateRating)} · ${debateProgress.pointsToNext} points to next band.`}
+          icon={Trophy}
+        />
         <StatCard label="XP" value={String(xp)} detail="Earn XP from debates, lessons, and generated practice tests." icon={Medal} />
         <StatCard label="Streak" value={`${streak} days`} detail="Complete one drill today to keep it alive." icon={Flame} />
-        <StatCard label="Wins" value={String(wins)} detail="Win rate improves as judged rounds turn into targeted lessons." icon={Trophy} />
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <Card>
+        <CardContent className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <Badge variant="outline">Competitive ladder</Badge>
+              <h2 className="mt-3 text-xl font-bold">{ratingLabel(debateRating)}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                DebateArena rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
+              </p>
+            </div>
+            <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">
+              {wins} wins · {judgedDebateCount} judged rounds
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="font-semibold">{debateProgress.currentLabel}</span>
+              <span className="text-muted-foreground">
+                Next: {debateProgress.nextLabel} ({debateProgress.pointsToNext} pts)
+              </span>
+            </div>
+            <Progress value={debateProgress.percent} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-4">
         <NextStepCard
           title="Start an AI round"
           description="Get a topic, speak through three turns, and receive judge feedback."
@@ -111,6 +166,13 @@ export default async function DashboardPage() {
           href="/skills"
           icon={BookOpenCheck}
           tone="accent"
+        />
+        <NextStepCard
+          title="Study weak terms"
+          description="Use flashcards and video resources before your next test."
+          href="/study"
+          icon={Layers3}
+          tone="secondary"
         />
       </div>
 
@@ -133,6 +195,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <RecommendedVideos skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]} title="Recommended video resources" />
 
       {recentTests.length === 0 ? (
         <EmptyState

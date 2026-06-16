@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 import { practiceTestCreateSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -60,14 +61,31 @@ export async function POST(request: Request) {
     }
 
     const input = await parseJson(request, practiceTestCreateSchema);
-    const generated = await generatePracticeQuestions({
+    const fallbackQuestions = buildFallbackPracticeQuestions({
       organization: input.organization,
       eventType: input.eventType,
       eventCluster: input.eventCluster,
       difficulty: input.difficulty,
       count: input.questionCount
     });
-    const normalizedQuestions = generated.questions.map((question) => {
+    let generated: Awaited<ReturnType<typeof generatePracticeQuestions>>;
+
+    try {
+      generated = await generatePracticeQuestions({
+        organization: input.organization,
+        eventType: input.eventType,
+        eventCluster: input.eventCluster,
+        difficulty: input.difficulty,
+        count: input.questionCount
+      });
+    } catch (generationError) {
+      // Development-only resilience: local demo tests must keep working when OpenAI is missing,
+      // invalid, rate-limited, or unreachable. Production still uses live AI whenever configured.
+      console.warn("[practice-test fallback] AI question generation failed. Using local question bank.", generationError);
+      generated = { questions: [] };
+    }
+    const generatedQuestions = Array.isArray(generated.questions) ? generated.questions : [];
+    const normalizedQuestions = [...generatedQuestions, ...fallbackQuestions].map((question) => {
       const choices = (Array.isArray(question.choices) ? question.choices : [])
         .map((choice) => String(choice).trim())
         .filter(Boolean);
@@ -76,21 +94,27 @@ export async function POST(request: Request) {
         choices.find((choice) => choice.toLowerCase() === rawCorrectAnswer.toLowerCase()) ??
         choices[0] ??
         rawCorrectAnswer;
+      const uniqueChoices = Array.from(new Set(choices)).slice(0, 4);
+
+      if (!uniqueChoices.includes(correctAnswer) && uniqueChoices.length > 0) {
+        uniqueChoices[0] = correctAnswer;
+      }
 
       return {
         question: String(question.question).trim(),
-        choices,
+        choices: uniqueChoices,
         correctAnswer,
         explanation: String(question.explanation).trim(),
         skillTag: String(question.skillTag).trim()
       };
-    });
+    }).filter((question) => question.choices.length === 4 && question.choices.includes(question.correctAnswer));
+    const selectedQuestions = normalizedQuestions.slice(0, input.questionCount);
 
     if (
-      normalizedQuestions.length !== input.questionCount ||
-      normalizedQuestions.some((question) => question.choices.length < 2 || !question.question || !question.explanation || !question.skillTag)
+      selectedQuestions.length !== input.questionCount ||
+      selectedQuestions.some((question) => !question.question || !question.explanation || !question.skillTag)
     ) {
-      throw new Error("Practice question generation returned an invalid test shape.");
+      throw new HttpError("We could not build a complete practice set. Please try a different category or question count.", 502);
     }
 
     const test = await prisma.practiceTest.create({
@@ -102,7 +126,7 @@ export async function POST(request: Request) {
         difficulty: input.difficulty,
         questionCount: input.questionCount,
         questions: {
-          create: normalizedQuestions.map((question) => ({
+          create: selectedQuestions.map((question) => ({
             question: question.question,
             choices: question.choices,
             correctAnswer: question.correctAnswer,

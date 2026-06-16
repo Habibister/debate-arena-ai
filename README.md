@@ -2,15 +2,16 @@
 
 AI-powered training for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking.
 
-DebateArena AI is designed to become the "Khan Academy + Duolingo for Debate and Competitive Organizations": students train through AI debates, AI judging, adaptive skill lessons, original practice tests, XP, streaks, mastery analytics, and coach dashboards.
+DebateArena AI helps students train through AI debates, AI judging, mastery-based skill lessons, original practice tests, XP, streaks, flashcards, study resources, analytics, and coach dashboards.
 
 ## Current Product
 
 - Student dashboard with XP, ranks, streaks, mastery bars, weak-skill detection, and recommended next steps
 - AI debate and roleplay room with topic generation, AI opponents, AI judging, XP awards, and speaking-skill analytics
 - Organization-specific judging engines for parliamentary debate, DECA, and HOSA
-- DECA and HOSA original practice test generator with grading, explanations, weak areas, and recommended lessons
-- Khan Academy-style skill pages with lessons, examples, guided practice, independent practice, and mastery checks
+- DECA and HOSA original practice test generator with 10/25/50/100 question modes, grading, explanations, weak areas, and recommended lessons
+- Mastery skill pages with lessons, examples, guided practice, writing practice, independent practice, and mastery checks
+- Study section with original DECA/HOSA flashcards and external video/resource cards
 - Coach/admin shells, team models, seed data, and deployment-ready Next.js/Prisma architecture
 
 ## Tech Stack
@@ -30,7 +31,7 @@ DebateArena AI is designed to become the "Khan Academy + Duolingo for Debate and
 - Node.js 20 or newer
 - npm
 - PostgreSQL database, local or hosted
-- OpenAI API key
+- OpenAI API key for live AI generation, optional for local demo mode
 
 The repo includes `.nvmrc` with Node `20`.
 
@@ -52,9 +53,27 @@ Required variables:
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="replace-with-a-long-random-secret"
-OPENAI_API_KEY="sk-proj-replace-me"
+```
+
+AI providers (no paid OpenAI required — a free Gemini key is enough):
+
+```bash
+AI_PROVIDER="auto"        # auto = Gemini -> Groq -> OpenRouter -> OpenAI
+AI_COST_MODE="free_only"  # free_only never calls paid OpenAI; allow_paid lets it run
+
+GEMINI_API_KEY=""         # https://aistudio.google.com/apikey  (recommended)
+GEMINI_MODEL="gemini-2.5-flash"
+GROQ_API_KEY=""           # https://console.groq.com/keys
+GROQ_MODEL="llama-3.3-70b-versatile"
+OPENROUTER_API_KEY=""     # https://openrouter.ai/keys
+OPENROUTER_MODEL="meta-llama/llama-3.3-70b-instruct:free"
+OPENAI_API_KEY=""         # optional/paid; only used when AI_COST_MODE="allow_paid"
 OPENAI_MODEL="gpt-4o-mini"
 ```
+
+If no provider key is set (or all fail), AI routes use clearly-marked deterministic
+fallback content so local demos still work. The server logs which engine produced
+each response, e.g. `[ai] Using Gemini opponent.` or `[ai] Using fallback judge because: ...`.
 
 Generate a strong NextAuth secret:
 
@@ -116,13 +135,25 @@ npm run db:seed
 
 If you later switch to pooled runtime connections, keep Prisma migrations on a direct database connection.
 
-## OpenAI Setup
+## AI Setup
 
-1. Create an OpenAI API key.
-2. Set `OPENAI_API_KEY` in `.env.local` and in Vercel.
-3. Keep `OPENAI_MODEL="gpt-4o-mini"` unless you intentionally choose another model.
+You do not need a paid OpenAI key. The recommended path is a free Google Gemini key:
 
-AI-powered routes return a `503` if `OPENAI_API_KEY` is missing.
+1. Get a free key at https://aistudio.google.com/apikey.
+2. Set `GEMINI_API_KEY` in `.env.local` (and in Vercel for deploys).
+3. Leave `AI_PROVIDER="auto"` and `AI_COST_MODE="free_only"`.
+
+Provider priority is **Gemini → Groq → OpenRouter (:free) → OpenAI**. The app uses the
+first configured provider whose request succeeds. `AI_COST_MODE="free_only"` (the default)
+never calls the paid OpenAI provider — set `AI_COST_MODE="allow_paid"` to opt back in.
+
+The opponent, judge, rebuttal feedback, and model rewrites all go through this layer
+(`lib/ai-providers.ts`). Every call logs which engine was used, e.g.
+`[ai] Using Gemini opponent.` or `[ai] OpenRouter judge failed because: HTTP 429 ...`.
+
+If no provider is configured (or all fail), AI routes use clearly marked deterministic
+local fallback content so debate motions, opponent speeches, judging, DECA/HOSA tests,
+lessons, and recommendations still work for local demos.
 
 ## Local Setup
 
@@ -157,6 +188,14 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+Demo path:
+
+1. Sign in as `student@debatearena.ai / password123`.
+2. Open Dashboard.
+3. Create a debate room from Debate and use local AI fallback if no OpenAI key is configured.
+4. Generate a DECA or HOSA practice test, including a 100-question mixed mode.
+5. Open Skills for debate writing practice or Study for flashcards and resource videos.
 
 Demo credentials after seeding:
 

@@ -4,6 +4,23 @@ import { RUBRIC_SEEDS } from "../lib/rubrics";
 
 const prisma = new PrismaClient();
 
+type SeedUserProfile = {
+  email: string;
+  name: string;
+  username: string;
+  role: "STUDENT" | "COACH" | "ADMIN";
+  password: string;
+  avatarSeed: string;
+  bio: string;
+  schoolOrClub?: string;
+  preferredOrganization?: Organization | null;
+  level?: Level;
+  xp?: number;
+  streak?: number;
+  wins?: number;
+  ageGroup?: string | null;
+};
+
 const skillCatalog: Array<{
   organization: Organization;
   track: SkillTrack;
@@ -86,24 +103,50 @@ const skillCatalog: Array<{
   }
 ];
 
-async function upsertUser(email: string, name: string, role: "STUDENT" | "COACH" | "ADMIN", password: string) {
-  const passwordHash = await bcrypt.hash(password, 12);
+function demoAvatarUrl(seed: string) {
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=2563eb,7c3aed,06b6d4`;
+}
+
+async function upsertUser(profile: SeedUserProfile) {
+  const passwordHash = await bcrypt.hash(profile.password, 12);
+  const avatarUrl = demoAvatarUrl(profile.avatarSeed);
+  const organization = profile.role === "STUDENT" ? profile.preferredOrganization ?? "DEBATE" : profile.preferredOrganization ?? null;
 
   return prisma.user.upsert({
-    where: { email },
-    update: { name, role, passwordHash },
-    create: {
-      email,
-      name,
-      role,
+    where: { email: profile.email },
+    update: {
+      name: profile.name,
+      displayName: profile.name,
+      username: profile.username,
+      avatarUrl,
+      image: avatarUrl,
+      bio: profile.bio,
+      schoolOrClub: profile.schoolOrClub ?? null,
+      preferredOrganization: profile.preferredOrganization ?? null,
+      role: profile.role,
       passwordHash,
-      organization: role === "STUDENT" ? "DEBATE" : null,
-      level: "BEGINNER",
-      ageGroup: role === "STUDENT" ? "High School" : null,
-      xp: role === "STUDENT" ? 375 : 0,
-      streak: role === "STUDENT" ? 8 : 0,
-      wins: role === "STUDENT" ? 12 : 0,
-      rank: role === "STUDENT" ? "SILVER" : "BRONZE"
+      organization,
+      level: profile.level ?? "BEGINNER"
+    },
+    create: {
+      email: profile.email,
+      name: profile.name,
+      displayName: profile.name,
+      username: profile.username,
+      avatarUrl,
+      image: avatarUrl,
+      bio: profile.bio,
+      schoolOrClub: profile.schoolOrClub ?? null,
+      preferredOrganization: profile.preferredOrganization ?? null,
+      role: profile.role,
+      passwordHash,
+      organization,
+      level: profile.level ?? "BEGINNER",
+      ageGroup: profile.role === "STUDENT" ? profile.ageGroup ?? "High School" : null,
+      xp: profile.role === "STUDENT" ? profile.xp ?? 375 : profile.xp ?? 0,
+      streak: profile.role === "STUDENT" ? profile.streak ?? 8 : profile.streak ?? 0,
+      wins: profile.role === "STUDENT" ? profile.wins ?? 12 : profile.wins ?? 0,
+      rank: profile.role === "STUDENT" ? "SILVER" : "BRONZE"
     }
   });
 }
@@ -300,26 +343,93 @@ async function seedPracticeSkeleton(studentId: string) {
 }
 
 async function main() {
-  const admin = await upsertUser(
-    process.env.SEED_ADMIN_EMAIL ?? "admin@debatearena.ai",
-    "DebateArena Admin",
-    "ADMIN",
-    process.env.SEED_ADMIN_PASSWORD ?? "password123"
-  );
+  const admin = await upsertUser({
+    email: process.env.SEED_ADMIN_EMAIL ?? "admin@debatearena.ai",
+    name: "DebateArena Admin",
+    username: "arena_admin",
+    role: "ADMIN",
+    password: process.env.SEED_ADMIN_PASSWORD ?? "password123",
+    avatarSeed: "DebateArena Admin",
+    bio: "Maintains the local MVP demo workspace and platform configuration.",
+    schoolOrClub: "DebateArena HQ"
+  });
 
-  const coachUser = await upsertUser(
-    process.env.SEED_COACH_EMAIL ?? "coach@debatearena.ai",
-    "Maya Chen",
-    "COACH",
-    process.env.SEED_COACH_PASSWORD ?? "password123"
-  );
+  const coachUser = await upsertUser({
+    email: process.env.SEED_COACH_EMAIL ?? "coach@debatearena.ai",
+    name: "Maya Chen",
+    username: "coach_maya",
+    role: "COACH",
+    password: process.env.SEED_COACH_PASSWORD ?? "password123",
+    avatarSeed: "Maya Chen",
+    bio: "Coach focused on structured speaking reps, tournament prep, and reflective feedback.",
+    schoolOrClub: "Varsity Debate Lab",
+    preferredOrganization: "DEBATE",
+    level: "ELITE"
+  });
 
-  const student = await upsertUser(
-    process.env.SEED_STUDENT_EMAIL ?? "student@debatearena.ai",
-    "Alex Rivera",
-    "STUDENT",
-    process.env.SEED_STUDENT_PASSWORD ?? "password123"
-  );
+  const student = await upsertUser({
+    email: process.env.SEED_STUDENT_EMAIL ?? "student@debatearena.ai",
+    name: "Alex Rivera",
+    username: "nova_debater",
+    role: "STUDENT",
+    password: process.env.SEED_STUDENT_PASSWORD ?? "password123",
+    avatarSeed: "Alex Rivera",
+    bio: "Practicing argument structure, evidence weighing, and DECA/HOSA test discipline.",
+    schoolOrClub: "Varsity Debate Lab",
+    preferredOrganization: "DEBATE",
+    level: "INTERMEDIATE",
+    xp: 375,
+    streak: 8,
+    wins: 12
+  });
+
+  const previewStudents = await Promise.all([
+    upsertUser({
+      email: "casebuilder@debatearena.ai",
+      name: "Case Builder",
+      username: "case_builder",
+      role: "STUDENT",
+      password: "password123",
+      avatarSeed: "Case Builder",
+      bio: "Future live opponent preview profile for parliamentary debate practice.",
+      schoolOrClub: "Varsity Debate Lab",
+      preferredOrganization: "DEBATE",
+      level: "INTERMEDIATE",
+      xp: 520,
+      streak: 5,
+      wins: 9
+    }),
+    upsertUser({
+      email: "marketmaven@debatearena.ai",
+      name: "Market Maven",
+      username: "market_maven",
+      role: "STUDENT",
+      password: "password123",
+      avatarSeed: "Market Maven",
+      bio: "DECA student training marketing roleplays and performance indicators.",
+      schoolOrClub: "Business Competition Club",
+      preferredOrganization: "DECA",
+      level: "BEGINNER",
+      xp: 260,
+      streak: 3,
+      wins: 4
+    }),
+    upsertUser({
+      email: "medtermsmira@debatearena.ai",
+      name: "Mira Patel",
+      username: "medterms_mira",
+      role: "STUDENT",
+      password: "password123",
+      avatarSeed: "Mira Patel",
+      bio: "HOSA student reviewing patient communication and medical terminology.",
+      schoolOrClub: "Health Science Society",
+      preferredOrganization: "HOSA",
+      level: "INTERMEDIATE",
+      xp: 440,
+      streak: 7,
+      wins: 6
+    })
+  ]);
 
   const coach = await prisma.coach.upsert({
     where: { userId: coachUser.id },
@@ -360,6 +470,23 @@ async function main() {
       role: "STUDENT"
     }
   });
+
+  for (const previewStudent of previewStudents) {
+    await prisma.teamMember.upsert({
+      where: {
+        teamId_userId: {
+          teamId: team.id,
+          userId: previewStudent.id
+        }
+      },
+      update: {},
+      create: {
+        teamId: team.id,
+        userId: previewStudent.id,
+        role: "STUDENT"
+      }
+    });
+  }
 
   await seedSkills();
   await seedRubrics();

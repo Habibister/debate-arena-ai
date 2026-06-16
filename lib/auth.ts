@@ -1,8 +1,60 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
+import type { User as PrismaUser } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+
+const DEV_DEMO_EMAIL = "student@debatearena.ai";
+const DEV_DEMO_PASSWORD = "password123";
+
+function isDevDemoLogin(email: string, password: string) {
+  return (
+    process.env.NODE_ENV === "development" &&
+    email.trim().toLowerCase() === DEV_DEMO_EMAIL &&
+    password === DEV_DEMO_PASSWORD
+  );
+}
+
+function getDevDemoStudent() {
+  return {
+    id: "dev-demo-student",
+    name: "Demo Student",
+    email: DEV_DEMO_EMAIL,
+    image: null,
+    username: "demo_student",
+    displayName: "Demo Student",
+    avatarUrl: null,
+    bio: "Local demo competitor for testing DebateArena AI without a seeded database user.",
+    schoolOrClub: "DebateArena Demo Lab",
+    preferredOrganization: "DEBATE" as const,
+    role: "STUDENT" as const,
+    organization: "DEBATE" as const,
+    level: "BEGINNER" as const,
+    rank: "BRONZE" as const,
+    xp: 375
+  };
+}
+
+function serializeUserProfile(user: PrismaUser) {
+  return {
+    id: user.id,
+    name: user.displayName ?? user.name,
+    email: user.email,
+    image: user.avatarUrl ?? user.image,
+    username: user.username,
+    displayName: user.displayName ?? user.name,
+    avatarUrl: user.avatarUrl ?? user.image,
+    bio: user.bio,
+    schoolOrClub: user.schoolOrClub,
+    preferredOrganization: user.preferredOrganization ?? user.organization,
+    role: user.role,
+    organization: user.organization,
+    level: user.level,
+    rank: user.rank,
+    xp: user.xp
+  };
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -24,31 +76,43 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
+        const email = credentials.email.trim().toLowerCase();
+        const password = credentials.password;
+        const allowDevDemoLogin = isDevDemoLogin(email, password);
+
+        let user: PrismaUser | null;
+
+        try {
+          // Case-insensitive lookup so accounts stored with mixed-case emails (older signups, manual
+          // inserts) still sign in. New signups already normalize to lowercase.
+          user = await prisma.user.findFirst({
+            where: { email: { equals: email, mode: "insensitive" } }
+          });
+        } catch (error) {
+          if (allowDevDemoLogin) {
+            console.warn("[dev-only demo auth] Database lookup failed. Using local demo student fallback.");
+            return getDevDemoStudent();
+          }
+
+          throw error;
+        }
+
+        if (!user && allowDevDemoLogin) {
+          console.warn("[dev-only demo auth] Demo user is missing from the database. Using local fallback.");
+          return getDevDemoStudent();
+        }
 
         if (!user?.passwordHash) {
           return null;
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        const isValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValid) {
           return null;
         }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          role: user.role,
-          organization: user.organization,
-          level: user.level,
-          rank: user.rank,
-          xp: user.xp
-        };
+        return serializeUserProfile(user);
       }
     })
   ],
@@ -58,21 +122,82 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.organization = user.organization;
-        token.level = user.level;
-        token.rank = user.rank;
-        token.xp = user.xp;
       }
+
+      // Keep the JWT — and therefore the session cookie — small. Profile fields
+      // like avatarUrl and bio are unbounded free text; persisting them here can
+      // push the cookie past the server's request-header size limit and trigger
+      // HTTP 431 (Request Header Fields Too Large). The session() callback
+      // rehydrates the full profile from the database on every request instead.
+      // NextAuth copies user.image (the avatar URL) into token.picture by
+      // default, so drop it explicitly as well.
+      delete token.picture;
+      delete token.username;
+      delete token.displayName;
+      delete token.avatarUrl;
+      delete token.bio;
+      delete token.schoolOrClub;
+      delete token.preferredOrganization;
+      delete token.level;
+      delete token.rank;
+      delete token.xp;
 
       return token;
     },
-    session({ session, token }) {
+    async session({ session, token }) {
+      let latestUser: ReturnType<typeof serializeUserProfile> | null = null;
+
+      if (token.id === "dev-demo-student") {
+        latestUser = getDevDemoStudent();
+      } else if (token.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id },
+          });
+
+          latestUser = dbUser ? serializeUserProfile(dbUser) : null;
+        } catch (error) {
+          console.warn("[auth] Could not refresh session profile from database. Falling back to JWT values.", error);
+        }
+      }
+
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.organization = token.organization;
-        session.user.level = token.level;
-        session.user.rank = token.rank;
-        session.user.xp = token.xp;
+        // The JWT only carries minimal identity (see jwt callback). When the
+        // database profile is unavailable we fall back to those few claims and
+        // leave the richer fields null rather than bloating the cookie.
+        const profile = latestUser ?? {
+          id: token.id,
+          name: token.name,
+          email: token.email,
+          image: null,
+          username: null,
+          displayName: token.name,
+          avatarUrl: null,
+          bio: null,
+          schoolOrClub: null,
+          preferredOrganization: token.organization ?? null,
+          role: token.role,
+          organization: token.organization,
+          level: undefined,
+          rank: undefined,
+          xp: undefined
+        };
+
+        session.user.id = profile.id;
+        session.user.name = profile.displayName ?? profile.name ?? null;
+        session.user.email = profile.email ?? null;
+        session.user.image = profile.avatarUrl ?? profile.image ?? null;
+        session.user.role = profile.role;
+        session.user.username = profile.username ?? null;
+        session.user.displayName = profile.displayName ?? profile.name ?? null;
+        session.user.avatarUrl = profile.avatarUrl ?? profile.image ?? null;
+        session.user.bio = profile.bio ?? null;
+        session.user.schoolOrClub = profile.schoolOrClub ?? null;
+        session.user.preferredOrganization = profile.preferredOrganization ?? null;
+        session.user.organization = profile.organization;
+        session.user.level = profile.level;
+        session.user.rank = profile.rank;
+        session.user.xp = profile.xp;
       }
 
       return session;

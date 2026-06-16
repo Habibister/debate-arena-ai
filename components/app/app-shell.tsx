@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import {
   BookOpenCheck,
   ClipboardList,
   Flame,
   GraduationCap,
   LayoutDashboard,
+  Layers3,
+  LogOut,
   MessageSquareText,
   ShieldCheck,
   Sparkles,
+  UserRound,
   Users
 } from "lucide-react";
+import { UserAvatar } from "@/components/profile/user-avatar";
+import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -22,12 +29,55 @@ const navItems = [
   { href: "/debate", label: "Debate", icon: MessageSquareText },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
   { href: "/tests", label: "Tests", icon: ClipboardList },
+  { href: "/study", label: "Study", icon: Layers3 },
+  { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/coach", label: "Coach", icon: Users },
   { href: "/admin", label: "Admin", icon: ShieldCheck }
 ] as const;
 
+type ShellSession = {
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    username?: string | null;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+    image?: string | null;
+    role?: string | null;
+  };
+};
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [session, setSession] = useState<ShellSession | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/session");
+        const payload = (await response.json()) as ShellSession;
+        if (active) {
+          setSession(payload);
+        }
+      } catch {
+        if (active) {
+          setSession(null);
+        }
+      }
+    }
+
+    void loadSession();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const profileName = session?.user?.displayName ?? session?.user?.name ?? "Student";
+  const profileUsername = session?.user?.username ?? session?.user?.email?.split("@")[0] ?? "profile";
+  const profileAvatar = session?.user?.avatarUrl ?? session?.user?.image;
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,6 +114,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="mt-8 rounded-lg border bg-background p-4">
+          <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 transition hover:bg-muted">
+            <UserAvatar username={profileUsername} displayName={profileName} avatarUrl={profileAvatar} />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold">{profileName}</span>
+              <span className="block truncate text-xs text-muted-foreground">@{profileUsername}</span>
+            </span>
+          </Link>
+          <Button type="button" variant="outline" size="sm" className="mt-3 w-full" onClick={() => signOut({ callbackUrl: "/signin" })}>
+            <LogOut className="h-4 w-4" aria-hidden />
+            Log out
+          </Button>
+        </div>
+
+        <div className="mt-4 rounded-lg border bg-background p-4">
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="font-semibold">Silver progress</span>
             <span className="text-muted-foreground">375 XP</span>
@@ -93,8 +157,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Sparkles className="h-5 w-5 text-primary" aria-hidden />
               DebateArena AI
             </Link>
-            <Link href="/debate" className={buttonVariants({ size: "sm" })}>
-              Debate
+            <Link href="/profile" className="flex items-center gap-2 rounded-md border bg-card px-2 py-1 text-sm font-semibold">
+              <UserAvatar username={profileUsername} displayName={profileName} avatarUrl={profileAvatar} size="sm" />
+              <span className="max-w-24 truncate">@{profileUsername}</span>
             </Link>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">

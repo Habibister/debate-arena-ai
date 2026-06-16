@@ -1,26 +1,84 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { BookOpenCheck, CheckCircle2, Lock, PlayCircle } from "lucide-react";
+import { BookOpenCheck, CheckCircle2, ClipboardList, Layers3, Lock, PenLine, PlayCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const skills = [
-  { name: "Claim Building", org: "Debate", mastery: 82, status: "complete", slug: "debate-claim-building-1" },
-  { name: "Evidence", org: "Debate", mastery: 64, status: "active", slug: "debate-evidence-1" },
-  { name: "Rebuttal", org: "Debate", mastery: 58, status: "active", slug: "debate-rebuttal-1" },
-  { name: "Cross Examination", org: "Debate", mastery: 34, status: "locked", slug: "debate-rebuttal-2" },
-  { name: "Resolution Writing", org: "Model UN", mastery: 46, status: "active", slug: "mun-resolution-writing-1" },
-  { name: "Roleplay", org: "DECA", mastery: 71, status: "active", slug: "deca-roleplay-1" }
+const skills: Array<{
+  name: string;
+  org: "Debate" | "DECA" | "HOSA" | "Public Speaking";
+  mastery: number;
+  status: "complete" | "active" | "locked";
+  slug: string;
+  action: "writing" | "test" | "study" | "lesson";
+}> = [
+  { name: "Claim, Warrant, Impact", org: "Debate", mastery: 82, status: "complete", slug: "debate-claim-building-1", action: "writing" },
+  { name: "Evidence and Support", org: "Debate", mastery: 64, status: "active", slug: "debate-evidence-1", action: "writing" },
+  { name: "Refutation", org: "Debate", mastery: 58, status: "active", slug: "debate-rebuttal-1", action: "writing" },
+  { name: "Weighing Arguments", org: "Debate", mastery: 42, status: "active", slug: "debate-weighing", action: "writing" },
+  { name: "Reading Scenarios", org: "DECA", mastery: 71, status: "active", slug: "deca-reading-scenarios", action: "test" },
+  { name: "Marketing Terms", org: "DECA", mastery: 49, status: "active", slug: "deca-marketing", action: "study" },
+  { name: "Medical Terminology", org: "HOSA", mastery: 54, status: "active", slug: "hosa-medical-terminology-basics", action: "study" },
+  { name: "Patient Communication", org: "HOSA", mastery: 61, status: "active", slug: "hosa-patient-communication", action: "lesson" },
+  { name: "Presentation Structure", org: "Public Speaking", mastery: 38, status: "locked", slug: "public-speaking-delivery-1", action: "lesson" }
 ];
+
+function actionHref(skill: (typeof skills)[number]): Route {
+  if (skill.action === "writing") {
+    return `/skills/${skill.slug}/practice` as Route;
+  }
+
+  if (skill.action === "test") {
+    return "/tests" as Route;
+  }
+
+  if (skill.action === "study") {
+    return "/study" as Route;
+  }
+
+  return `/skills/${skill.slug}` as Route;
+}
+
+function actionLabel(skill: (typeof skills)[number]) {
+  if (skill.action === "writing") {
+    return "Practice writing";
+  }
+
+  if (skill.action === "test") {
+    return "Test me";
+  }
+
+  if (skill.action === "study") {
+    return "Study terms";
+  }
+
+  return skill.status === "complete" ? "Review" : "Practice";
+}
+
+function actionIcon(skill: (typeof skills)[number]) {
+  if (skill.action === "writing") {
+    return PenLine;
+  }
+
+  if (skill.action === "test") {
+    return ClipboardList;
+  }
+
+  if (skill.action === "study") {
+    return Layers3;
+  }
+
+  return BookOpenCheck;
+}
 
 export function SkillPath() {
   return (
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Khan-Style Mastery Map</CardTitle>
+          <CardTitle>Mastery Map</CardTitle>
           <Badge variant="accent">Adaptive lessons</Badge>
         </div>
       </CardHeader>
@@ -28,6 +86,7 @@ export function SkillPath() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {skills.map((skill) => {
             const Icon = skill.status === "complete" ? CheckCircle2 : skill.status === "locked" ? Lock : PlayCircle;
+            const ActionIcon = actionIcon(skill);
             return (
               <div key={skill.name} className="rounded-lg border bg-background p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -54,8 +113,9 @@ export function SkillPath() {
                     Unlock after rebuttal
                   </div>
                 ) : (
-                  <Link href={`/skills/${skill.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
-                    {skill.status === "complete" ? "Review" : "Practice"}
+                  <Link href={actionHref(skill)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
+                    <ActionIcon className="h-4 w-4" aria-hidden />
+                    {actionLabel(skill)}
                   </Link>
                 )}
               </div>

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, ClipboardList, Clock, Dumbbell, Flame, GraduationCap } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, ClipboardList, Clock, Dumbbell, Flame, GraduationCap, PenLine, Layers3 } from "lucide-react";
+import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { prisma } from "@/lib/prisma";
+import type { StudyOrganization } from "@/lib/study-content";
 import { cn } from "@/lib/utils";
 
 type LessonContent = {
@@ -22,6 +24,8 @@ type LessonContent = {
     explanation?: string;
   }>;
 };
+
+type MasteryQuizItem = NonNullable<LessonContent["masteryQuiz"]>[number];
 
 function parseLessonContent(content: unknown): LessonContent {
   if (!content || typeof content !== "object" || Array.isArray(content)) {
@@ -66,7 +70,12 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
       ? content.independentPractice
       : ["Set a short timer and produce the skill without notes.", "Log one weakness to target in your next practice test or judged round."];
   const checks = content.checks && content.checks.length > 0 ? content.checks : ["Can you name the goal of this skill?", "Can you use it under time pressure?", "Can you explain how it improves your score?"];
-  const masteryQuiz = content.masteryQuiz && content.masteryQuiz.length > 0 ? content.masteryQuiz : checks.map((check) => ({ question: check }));
+  const masteryQuiz: MasteryQuizItem[] =
+    content.masteryQuiz && content.masteryQuiz.length > 0
+      ? content.masteryQuiz
+      : checks.map((check) => ({ question: check }));
+  const isDebateSkill = lesson.skill.organization === "DEBATE";
+  const studyOrganization = lesson.skill.organization === "DECA" || lesson.skill.organization === "HOSA" ? lesson.skill.organization : undefined;
 
   return (
     <div className="space-y-6">
@@ -231,6 +240,33 @@ export default async function SkillPracticePage({ params }: { params: { slug: st
           </Link>
         )}
       </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {isDebateSkill ? (
+          <Link href={`/skills/${lesson.slug}/practice` as Route} className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+            <PenLine className="h-4 w-4" aria-hidden />
+            Practice with writing feedback
+          </Link>
+        ) : null}
+        {studyOrganization ? (
+          <>
+            <Link href="/tests" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+              <ClipboardList className="h-4 w-4" aria-hidden />
+              Test this track
+            </Link>
+            <Link href="/study" className={cn(buttonVariants({ size: "lg", variant: "secondary" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
+              <Layers3 className="h-4 w-4" aria-hidden />
+              Study terms
+            </Link>
+          </>
+        ) : null}
+      </div>
+
+      <RecommendedVideos
+        organization={(isDebateSkill ? "DEBATE" : studyOrganization) as StudyOrganization | undefined}
+        skillTags={[lesson.skill.name, lesson.title]}
+        title="Recommended video resources"
+      />
     </div>
   );
 }

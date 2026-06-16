@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, CircleAlert, ClipboardList, Loader2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, ClipboardList, Loader2, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -36,11 +36,18 @@ function normalizeChoices(choices: unknown): string[] {
   return [];
 }
 
+function formatElapsed(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return `${minutes}:${String(remainder).padStart(2, "0")}`;
+}
+
 export function TestTakingClient({ test }: TestTakingClientProps) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const answeredCount = Object.keys(answers).length;
   const progress = Math.round((answeredCount / Math.max(test.questions.length, 1)) * 100);
@@ -50,6 +57,14 @@ export function TestTakingClient({ test }: TestTakingClientProps) {
   const groupedSkills = useMemo(() => {
     return Array.from(new Set(test.questions.map((question) => question.skillTag)));
   }, [test.questions]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function submitTest() {
     setIsSubmitting(true);
@@ -105,6 +120,13 @@ export function TestTakingClient({ test }: TestTakingClientProps) {
               <p className="text-xs font-semibold text-muted-foreground">Skills</p>
               <p className="mt-1 font-semibold">{groupedSkills.length}</p>
             </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Timer className="h-4 w-4 text-primary" aria-hidden />
+              Practice timer
+            </div>
+            <p className="font-mono text-lg font-bold tabular-nums">{formatElapsed(elapsedSeconds)}</p>
           </div>
 
           <div>

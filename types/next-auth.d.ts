@@ -6,6 +6,12 @@ declare module "next-auth" {
     user: {
       id: string;
       role: Role;
+      username?: string | null;
+      displayName?: string | null;
+      avatarUrl?: string | null;
+      bio?: string | null;
+      schoolOrClub?: string | null;
+      preferredOrganization?: Organization | null;
       organization?: Organization | null;
       level?: Level;
       rank?: Rank;
@@ -15,6 +21,12 @@ declare module "next-auth" {
 
   interface User {
     role: Role;
+    username?: string | null;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+    bio?: string | null;
+    schoolOrClub?: string | null;
+    preferredOrganization?: Organization | null;
     organization?: Organization | null;
     level?: Level;
     rank?: Rank;
@@ -26,6 +38,12 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    username?: string | null;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+    bio?: string | null;
+    schoolOrClub?: string | null;
+    preferredOrganization?: Organization | null;
     organization?: Organization | null;
     level?: Level;
     rank?: Rank;

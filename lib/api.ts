@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { ZodError, type ZodSchema } from "zod";
+import { OpenAIUnavailableError, isLikelyOpenAIUnavailableError } from "@/lib/openai";
 
 export class HttpError extends Error {
   status: number;
@@ -35,6 +36,15 @@ export function forbidden(message = "Forbidden") {
 }
 
 export function apiError(error: unknown) {
+  if (error instanceof OpenAIUnavailableError || isLikelyOpenAIUnavailableError(error)) {
+    return NextResponse.json(
+      {
+        error: "AI service unavailable. Add a valid OpenAI API key or try again later."
+      },
+      { status: 503 }
+    );
+  }
+
   if (error instanceof HttpError) {
     return NextResponse.json(
       {
@@ -65,15 +75,11 @@ export function apiError(error: unknown) {
     }
   }
 
-  const message = error instanceof Error ? error.message : "Unexpected server error";
-
-  if (message.includes("OPENAI_API_KEY")) {
-    return NextResponse.json({ error: message }, { status: 503 });
-  }
+  const message = error instanceof Error ? error.message : "Unknown server issue";
 
   return NextResponse.json(
     {
-      error: "Unexpected server error",
+      error: "Something went wrong. Please try again in a moment.",
       ...(process.env.NODE_ENV === "development" ? { details: message } : {})
     },
     { status: 500 }

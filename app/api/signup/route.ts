@@ -9,21 +9,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const input = signupSchema.parse(body);
 
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: input.email }, { username: input.username }]
-      },
-      select: {
-        email: true,
-        username: true
-      }
+    // Case-insensitive duplicate checks so a mixed-case existing row is still caught.
+    const emailTaken = await prisma.user.findFirst({
+      where: { email: { equals: input.email, mode: "insensitive" } },
+      select: { id: true }
     });
-
-    if (existingUser?.email === input.email) {
+    if (emailTaken) {
       return NextResponse.json({ error: "An account with that email already exists. Try signing in instead." }, { status: 409 });
     }
 
-    if (existingUser?.username === input.username) {
+    const usernameTaken = await prisma.user.findFirst({
+      where: { username: { equals: input.username, mode: "insensitive" } },
+      select: { id: true }
+    });
+    if (usernameTaken) {
       return NextResponse.json({ error: "That username is already taken. Try another one." }, { status: 409 });
     }
 
@@ -61,6 +60,22 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Please check the signup form and try again." }, { status: 400 });
+    }
+
+    // Unique-constraint violation (e.g. a race between the duplicate check and create) — surface a
+    // clear 409 instead of a silent 500.
+    if (typeof error === "object" && error && "code" in error && (error as { code?: string }).code === "P2002") {
+      const target = String((error as { meta?: { target?: unknown } }).meta?.target ?? "");
+      const field = target.includes("username") ? "username" : "email";
+      return NextResponse.json(
+        {
+          error:
+            field === "username"
+              ? "That username is already taken. Try another one."
+              : "An account with that email already exists. Try signing in instead."
+        },
+        { status: 409 }
+      );
     }
 
     console.error("[signup]", error);

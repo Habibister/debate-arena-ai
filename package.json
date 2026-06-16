@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "validate": "npm run lint && npm run typecheck",
     "judge:smoke": "tsx scripts/judge-quality-smoke.ts",
+    "auth:smoke": "tsx scripts/auth-smoke.ts",
+    "auth:check": "tsx scripts/auth-users-check.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",

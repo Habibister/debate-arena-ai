@@ -83,8 +83,10 @@ export const authOptions: NextAuthOptions = {
         let user: PrismaUser | null;
 
         try {
-          user = await prisma.user.findUnique({
-            where: { email }
+          // Case-insensitive lookup so accounts stored with mixed-case emails (older signups, manual
+          // inserts) still sign in. New signups already normalize to lowercase.
+          user = await prisma.user.findFirst({
+            where: { email: { equals: email, mode: "insensitive" } }
           });
         } catch (error) {
           if (allowDevDemoLogin) {

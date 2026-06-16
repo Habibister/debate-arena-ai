@@ -37,21 +37,32 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
     setIsLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      email: email.trim().toLowerCase(),
-      password,
-      callbackUrl,
-      redirect: false
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        callbackUrl,
+        redirect: false
+      });
 
-    if (result?.error) {
-      setError(created ? "That email and password did not match. Use the password you chose when creating this account." : "Invalid email or password.");
+      if (!result || result.error || !result.ok) {
+        setError(
+          created
+            ? "That email and password did not match. Use the password you chose when creating this account."
+            : "Invalid email or password."
+        );
+        return;
+      }
+
+      // Full navigation so the new session cookie is reliably picked up before the dashboard loads.
+      window.location.href = result.url ?? callbackUrl;
+    } catch {
+      setError("We could not sign you in right now. Please try again.");
+    } finally {
+      // Never leave the button stuck spinning, even if sign-in threw or returned no result.
       setIsLoading(false);
       setIsDemoLoading(false);
-      return;
     }
-
-    window.location.href = result?.url ?? callbackUrl;
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {

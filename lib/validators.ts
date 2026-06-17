@@ -128,8 +128,23 @@ export const practiceTestGradeSchema = z.object({
 });
 
 export const teamCreateSchema = z.object({
-  name: z.string().min(2).max(80),
-  organization: organizationSchema
+  name: z.string().trim().min(2, "Team name must be at least 2 characters.").max(80, "Keep team names to 80 characters or fewer."),
+  organization: organizationSchema.default("DEBATE"),
+  schoolOrClub: z
+    .string()
+    .trim()
+    .max(120)
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
+});
+
+export const teamJoinSchema = z.object({
+  joinCode: z.string().trim().min(3, "Enter a join code.").max(40, "That join code is too long.")
+});
+
+export const teamLeaveSchema = z.object({
+  teamId: z.string().min(1, "Missing team.")
 });
 
 export const debateMessageCreateSchema = z.object({

@@ -2,33 +2,27 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, forbidden, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { createTeam, getTeamsForCoach } from "@/lib/teams";
 import { teamCreateSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
 
+function isCoach(role?: string | null) {
+  return role === "COACH" || role === "ADMIN";
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.id) {
       return unauthorized();
     }
+    if (!isCoach(session.user.role)) {
+      return forbidden("You need a coach account to view teams.");
+    }
 
-    const coach = await prisma.coach.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        teams: {
-          include: {
-            members: {
-              include: { user: true }
-            }
-          }
-        }
-      }
-    });
-
-    return NextResponse.json({ teams: coach?.teams ?? [] });
+    const teams = await getTeamsForCoach(session.user.id);
+    return NextResponse.json({ teams });
   } catch (error) {
     return apiError(error);
   }
@@ -37,28 +31,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.id) {
       return unauthorized();
     }
-
-    if (session.user.role !== "COACH") {
-      return forbidden("Coach access required");
+    if (!isCoach(session.user.role)) {
+      return forbidden("You need a coach account to create teams.");
     }
 
     const input = await parseJson(request, teamCreateSchema);
-    const coach = await prisma.coach.upsert({
-      where: { userId: session.user.id },
-      update: {},
-      create: { userId: session.user.id }
-    });
-
-    const team = await prisma.team.create({
-      data: {
-        coachId: coach.id,
-        name: input.name,
-        organization: input.organization
-      }
+    const team = await createTeam({
+      userId: session.user.id,
+      role: session.user.role,
+      name: input.name,
+      organization: input.organization ?? "DEBATE",
+      schoolOrClub: input.schoolOrClub ?? null
     });
 
     return NextResponse.json({ team }, { status: 201 });

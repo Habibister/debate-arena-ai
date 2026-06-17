@@ -6,6 +6,7 @@ import { StatCard } from "@/components/app/stat-card";
 import { XpProgressCard } from "@/components/app/xp-progress-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
+import { JoinTeamCard, type StudentTeam } from "@/components/teams/join-team-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,6 +16,7 @@ import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
+import { getStudentTeams } from "@/lib/teams";
 import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
 
 // Sample rows shown ONLY for demo accounts. Real users see their real data (zero until they train).
@@ -87,6 +89,18 @@ export default async function DashboardPage() {
   const debateProgress = debateRatingProgress(debateRating);
   const recommendedBot = nearestAiPersona(debateRating);
 
+  // Students join/leave coach teams from the dashboard. Coaches/admins manage teams on /coach.
+  const role = session?.user?.role;
+  const studentTeamRows = role === "STUDENT" && session?.user?.id ? await getStudentTeams(session.user.id) : [];
+  const studentTeams: StudentTeam[] = studentTeamRows.map((row) => ({
+    membershipId: row.id,
+    teamId: row.team.id,
+    teamName: row.team.name,
+    organization: row.team.organization,
+    coachName:
+      row.team.coach?.user?.displayName ?? row.team.coach?.user?.name ?? row.team.coach?.user?.username ?? "your coach"
+  }));
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
@@ -134,6 +148,8 @@ export default async function DashboardPage() {
         <StatCard label="Streak" value={`${streak} days`} detail="Complete one drill today to keep it alive." icon={Flame} />
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
+
+      {role === "STUDENT" ? <JoinTeamCard teams={studentTeams} /> : null}
 
       <Card>
         <CardContent className="p-5">

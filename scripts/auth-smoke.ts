@@ -172,10 +172,19 @@ async function databaseRoundtrip() {
     });
     assert.equal(signup.status, 201, `Signup should return 201, got ${signup.status} (${signup.json.error ?? "ok"}).`);
 
-    const dbUser = await prisma.user.findUnique({ where: { email: studentEmail }, select: { id: true, passwordHash: true, role: true } });
+    const dbUser = await prisma.user.findUnique({
+      where: { email: studentEmail },
+      select: { id: true, passwordHash: true, role: true, xp: true, streak: true, wins: true, rank: true }
+    });
     assert.ok(dbUser, "New user must exist in the database after signup.");
     assert.ok(dbUser.passwordHash, "New user must have a bcrypt password hash stored.");
     assert.equal(dbUser.role, "STUDENT", "Default account must have role STUDENT.");
+
+    // New-user stats must start at zero — no fake progress for a brand-new account.
+    assert.equal(dbUser.xp, 0, "New user XP must be 0.");
+    assert.equal(dbUser.streak, 0, "New user streak must be 0.");
+    assert.equal(dbUser.wins, 0, "New user wins must be 0.");
+    assert.equal(dbUser.rank, "BRONZE", "New user rank must be BRONZE.");
 
     // 3+4. Sign in with the same credentials → must return THIS user, not the demo fallback.
     const ok = await authorize({ email: studentEmail, password }, {});
@@ -218,7 +227,7 @@ async function databaseRoundtrip() {
     const demo = await authorize({ email: "student@debatearena.ai", password: demoPassword }, {});
     assert.ok(demo && demo.role === "STUDENT", "Demo student must still sign in.");
 
-    console.log("Part B (database) passed: custom student + coach signup→signin, mixed-case match, wrong-password rejection, demo login, JWT size.");
+    console.log("Part B (database) passed: custom student + coach signup→signin, zero new-user stats, mixed-case match, wrong-password rejection, demo login, JWT size.");
   } finally {
     // Always clean up the accounts we created.
     await prisma.user.deleteMany({ where: { email: { in: [studentEmail, coachEmail] } } });

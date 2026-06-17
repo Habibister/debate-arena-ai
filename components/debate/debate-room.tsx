@@ -30,7 +30,7 @@ type TopicPackage = {
   aiNotice?: string;
 };
 
-async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
+async function requestJson<T>(url: string, options: RequestInit, fallbackMessage = "That request did not go through. Please try again."): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
@@ -41,7 +41,8 @@ async function requestJson<T>(url: string, options: RequestInit): Promise<T> {
   const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? "Something went wrong. Please try again.");
+    // Prefer the server's specific message; otherwise use the caller's action-specific fallback.
+    throw new Error(payload.error ?? fallbackMessage);
   }
 
   return payload;
@@ -106,7 +107,7 @@ export function DebateRoom() {
           focusArea: category,
           previousTopics: generatedTopics
         })
-      });
+      }, "Could not generate a motion right now. Please try again.");
       setTopicPackage(generated);
       setTopicText(generated.topic);
       setGeneratedTopics((current) => [...current, generated.topic].slice(-25));
@@ -146,7 +147,7 @@ export function DebateRoom() {
           mode: "AI",
           aiPersona
         })
-      });
+      }, "Could not create your debate room. Please try again.");
 
       await requestJson<{ message: { id: string } }>(`/api/debates/${created.debate.id}/messages`, {
         method: "POST",
@@ -155,7 +156,7 @@ export function DebateRoom() {
           round: 1,
           content: `Motion: ${topicText.trim()}`
         })
-      });
+      }, "Could not create your debate room. Please try again.");
 
       router.push(`/debate/${created.debate.id}` as Route);
     } catch (requestError) {

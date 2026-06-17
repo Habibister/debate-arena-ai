@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import type { Route } from "next";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, LogIn, UserRound } from "lucide-react";
@@ -29,6 +31,7 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
   const [error, setError] = useState<string | null>(null);
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
   const created = searchParams.get("created") === "1";
+  const justReset = searchParams.get("reset") === "1";
   const createdEmail = searchParams.get("email") ?? "";
   const initialEmail = createdEmail || (showDemoLogin ? DEMO_EMAIL : "");
   const initialPassword = createdEmail ? "" : showDemoLogin ? DEMO_PASSWORD : "";
@@ -89,6 +92,11 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
           Account created. Sign in{createdEmail ? ` as ${createdEmail}` : ""} to open your dashboard.
         </p>
       ) : null}
+      {justReset ? (
+        <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-700">
+          Password reset successful. Please sign in.
+        </p>
+      ) : null}
       <div>
         <label className="text-sm font-semibold" htmlFor="email">
           Email
@@ -96,9 +104,14 @@ export function SignInForm({ showDemoLogin = false }: SignInFormProps) {
         <Input id="email" name="email" type="email" autoComplete="email" defaultValue={initialEmail} required className="mt-2" />
       </div>
       <div>
-        <label className="text-sm font-semibold" htmlFor="password">
-          Password
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold" htmlFor="password">
+            Password
+          </label>
+          <Link href={"/forgot-password" as Route} className="text-xs font-semibold text-primary hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <Input id="password" name="password" type="password" autoComplete="current-password" defaultValue={initialPassword} required className="mt-2" />
       </div>
       {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}

@@ -43,10 +43,17 @@ export function UserAvatar({ username, displayName, avatarUrl, size = "md", clas
 
   if (avatarUrl) {
     return (
+      // shrink-0 + aspect-square keep the circle from being squished by flex rows (sidebar, debate
+      // room, rosters); object-cover + object-center crop any rectangular upload cleanly.
       <img
         src={avatarUrl}
         alt={`${label} avatar`}
-        className={cn("rounded-full border object-cover shadow-sm", sizeClass[size], className)}
+        className={cn(
+          "shrink-0 aspect-square rounded-full border bg-muted object-cover object-center shadow-sm",
+          sizeClass[size],
+          className
+        )}
+        loading="lazy"
         referrerPolicy="no-referrer"
       />
     );

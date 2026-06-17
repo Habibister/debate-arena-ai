@@ -73,7 +73,9 @@ function actionIcon(skill: (typeof skills)[number]) {
   return BookOpenCheck;
 }
 
-export function SkillPath() {
+// showSampleProgress is true only for demo accounts. Real users have not earned mastery yet, so we
+// show "Not started" at 0% instead of fake percentages.
+export function SkillPath({ showSampleProgress = false }: { showSampleProgress?: boolean }) {
   return (
     <Card>
       <CardHeader>
@@ -85,8 +87,12 @@ export function SkillPath() {
       <CardContent>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {skills.map((skill) => {
-            const Icon = skill.status === "complete" ? CheckCircle2 : skill.status === "locked" ? Lock : PlayCircle;
-            const ActionIcon = actionIcon(skill);
+            // Real users start every skill "not started" until they log real activity.
+            const mastery = showSampleProgress ? skill.mastery : 0;
+            const status = showSampleProgress ? skill.status : skill.status === "locked" ? "locked" : "active";
+            const Icon = status === "complete" ? CheckCircle2 : status === "locked" ? Lock : PlayCircle;
+            const skillForAction = { ...skill, status };
+            const ActionIcon = actionIcon(skillForAction);
             return (
               <div key={skill.name} className="rounded-lg border bg-background p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -99,23 +105,23 @@ export function SkillPath() {
                   </span>
                 </div>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${skill.mastery}%` }} />
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${mastery}%` }} />
                 </div>
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <BookOpenCheck className="h-3.5 w-3.5" aria-hidden />
-                    {skill.status === "locked" ? "Locked path" : "Lesson set"}
+                    {status === "locked" ? "Locked path" : "Lesson set"}
                   </span>
-                  <span className="font-semibold">{skill.mastery}%</span>
+                  <span className="font-semibold">{showSampleProgress ? `${mastery}%` : "Not started"}</span>
                 </div>
-                {skill.status === "locked" ? (
+                {status === "locked" ? (
                   <div className="mt-4 rounded-md border bg-muted px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
                     Unlock after rebuttal
                   </div>
                 ) : (
-                  <Link href={actionHref(skill)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
+                  <Link href={actionHref(skillForAction)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
                     <ActionIcon className="h-4 w-4" aria-hidden />
-                    {actionLabel(skill)}
+                    {actionLabel(skillForAction)}
                   </Link>
                 )}
               </div>

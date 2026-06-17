@@ -427,6 +427,8 @@ model Coach {
 model Team {
   id           String       @id @default(cuid())
   name         String
+  joinCode     String?      @unique
+  schoolOrClub String?
   organization Organization
   coachId      String
   createdAt    DateTime     @default(now())

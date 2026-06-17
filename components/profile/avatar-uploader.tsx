@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Loader2, Upload, X } from "lucide-react";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,25 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // null = unknown (still checking), true/false = whether image storage is configured.
+  const [uploadEnabled, setUploadEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/profile/avatar", { method: "GET" })
+      .then((response) => (response.ok ? response.json() : { enabled: false }))
+      .then((data: { enabled?: boolean }) => {
+        if (active) setUploadEnabled(Boolean(data.enabled));
+      })
+      .catch(() => {
+        if (active) setUploadEnabled(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const uploadDisabled = disabled || uploadEnabled === false;
 
   async function handleFile(file: File | undefined | null) {
     if (!file) {
@@ -64,29 +83,29 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
           role="button"
           tabIndex={0}
           aria-label="Upload profile picture"
-          onClick={() => !disabled && !isUploading && inputRef.current?.click()}
+          onClick={() => !uploadDisabled && !isUploading && inputRef.current?.click()}
           onKeyDown={(event) => {
-            if ((event.key === "Enter" || event.key === " ") && !disabled && !isUploading) {
+            if ((event.key === "Enter" || event.key === " ") && !uploadDisabled && !isUploading) {
               event.preventDefault();
               inputRef.current?.click();
             }
           }}
           onDragOver={(event) => {
             event.preventDefault();
-            if (!disabled) setIsDragging(true);
+            if (!uploadDisabled) setIsDragging(true);
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(event) => {
             event.preventDefault();
             setIsDragging(false);
-            if (!disabled && !isUploading) {
+            if (!uploadDisabled && !isUploading) {
               void handleFile(event.dataTransfer.files?.[0]);
             }
           }}
           className={cn(
             "flex flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 p-4 text-center text-sm transition-colors",
             isDragging ? "border-primary bg-primary/10" : "hover:bg-muted/50",
-            (disabled || isUploading) && "cursor-not-allowed opacity-70"
+            (uploadDisabled || isUploading) && "cursor-not-allowed opacity-70"
           )}
         >
           {isUploading ? (
@@ -109,7 +128,7 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
         type="file"
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
-        disabled={disabled || isUploading}
+        disabled={uploadDisabled || isUploading}
         onChange={(event) => {
           void handleFile(event.target.files?.[0]);
           event.target.value = "";
@@ -117,7 +136,7 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="secondary" size="sm" disabled={disabled || isUploading} onClick={() => inputRef.current?.click()}>
+        <Button type="button" variant="secondary" size="sm" disabled={uploadDisabled || isUploading} onClick={() => inputRef.current?.click()}>
           <Upload className="h-4 w-4" aria-hidden />
           {value ? "Change photo" : "Upload photo"}
         </Button>
@@ -137,6 +156,12 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
           </Button>
         ) : null}
       </div>
+
+      {uploadEnabled === false ? (
+        <p className="text-sm text-muted-foreground">
+          Profile photo upload is not configured yet. You can finish without a photo and add one later.
+        </p>
+      ) : null}
 
       {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
     </div>

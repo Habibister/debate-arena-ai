@@ -26,6 +26,7 @@ export function SignUpForm() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [accountType, setAccountType] = useState<"STUDENT" | "COACH">("STUDENT");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,7 +44,8 @@ export function SignUpForm() {
       displayName,
       avatarUrl,
       schoolOrClub: formData.get("schoolOrClub")?.toString() ?? "",
-      preferredOrganization: formData.get("preferredOrganization")?.toString() || null
+      preferredOrganization: formData.get("preferredOrganization")?.toString() || null,
+      accountType
     };
 
     try {
@@ -58,7 +60,8 @@ export function SignUpForm() {
         throw new Error(result.error ?? "We could not create your account. Please try again.");
       }
 
-      router.push(`/signin?created=1&email=${encodeURIComponent(payload.email)}`);
+      const callbackUrl = accountType === "COACH" ? "/coach" : "/dashboard";
+      router.push(`/signin?created=1&email=${encodeURIComponent(payload.email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "We could not create your account. Please try again.");
     } finally {
@@ -73,6 +76,34 @@ export function SignUpForm() {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{displayName || "Your display name"}</p>
           <p className="truncate text-xs text-muted-foreground">@{username || "username"}</p>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold">Account type</p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {(
+            [
+              { value: "STUDENT", title: "Student", detail: "Train with AI debates, tests, and lessons." },
+              { value: "COACH", title: "Coach", detail: "Create teams and track your students." }
+            ] as const
+          ).map((option) => {
+            const active = accountType === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setAccountType(option.value)}
+                aria-pressed={active}
+                className={`rounded-lg border p-3 text-left transition ${
+                  active ? "border-primary bg-primary/5 ring-1 ring-primary" : "bg-background hover:border-primary/50"
+                }`}
+              >
+                <p className="text-sm font-semibold">{option.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{option.detail}</p>
+              </button>
+            );
+          })}
         </div>
       </div>
 

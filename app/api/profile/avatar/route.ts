@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { UTApi } from "uploadthing/server";
 import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -13,6 +14,12 @@ const ALLOWED: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp"
 };
+
+// UploadThing is the production storage backend (Vercel's filesystem is read-only / ephemeral).
+// When UPLOADTHING_TOKEN is set we upload there and store only the returned URL. Locally, without a
+// token, we fall back to writing under public/uploads so development still works.
+const uploadConfigured = Boolean(process.env.UPLOADTHING_TOKEN);
+const isProduction = process.env.NODE_ENV === "production";
 
 // Confirm the bytes really are an image of an allowed type, so a renamed/spoofed file is rejected
 // even if its declared content-type lies.
@@ -29,10 +36,15 @@ function detectImageType(buffer: Buffer): keyof typeof ALLOWED | null {
   return null;
 }
 
+// Lets the client proactively show a graceful "not configured" message before a user tries to upload.
+export async function GET() {
+  return NextResponse.json({ enabled: uploadConfigured || !isProduction });
+}
+
 export async function POST(request: Request) {
   try {
     // Session is optional: profile edits are authenticated, but signup uploads happen before an
-    // account exists. Either way we only ever return a short path, never image data.
+    // account exists. Either way we only ever return a short URL, never image data.
     const session = await getServerSession(authOptions);
 
     const formData = await request.formData().catch(() => null);
@@ -61,10 +73,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "That file is not a valid image." }, { status: 415 });
     }
 
-    // STORAGE SEAM: for production, swap this local write for Cloudinary/S3/Supabase Storage and
-    // return the hosted URL. To resize/convert to webp, run `buffer` through sharp here first.
     const owner = session?.user?.id ? session.user.id.replace(/[^a-zA-Z0-9_-]/g, "") : "new";
     const filename = `${owner}-${randomUUID()}.${ALLOWED[detected]}`;
+
+    if (uploadConfigured) {
+      // Re-wrap the validated bytes so UploadThing stores a clean filename and verified content-type.
+      const utapi = new UTApi();
+      const upload = await utapi.uploadFiles(new File([buffer], filename, { type: detected }));
+      if (upload.error || !upload.data) {
+        console.error("[avatar-upload] uploadthing", upload.error);
+        return NextResponse.json({ error: "We could not upload that image. Please try again." }, { status: 502 });
+      }
+      // ufsUrl is the current field; url is the deprecated alias kept for older SDKs.
+      const hostedUrl = upload.data.ufsUrl ?? upload.data.url;
+      return NextResponse.json({ avatarUrl: hostedUrl }, { status: 201 });
+    }
+
+    if (isProduction) {
+      // No storage backend wired up in production — fail gracefully; profile photos are optional.
+      return NextResponse.json(
+        { error: "Profile photo upload is not configured yet. You can finish without a photo and add one later." },
+        { status: 503 }
+      );
+    }
+
+    // Local development fallback only.
     const directory = path.join(process.cwd(), "public", "uploads", "avatars");
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, filename), buffer);

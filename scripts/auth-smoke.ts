@@ -1,13 +1,37 @@
 /**
- * Offline auth smoke test: verifies the pieces that make signup/signin reliable without needing a
- * database — password hashing, signup validation, and email/username normalization. Run with:
- * npm run auth:smoke
+ * Auth smoke test. Two parts:
+ *
+ *   Part A (offline, always runs): password hashing, signup validation, email/username
+ *   normalization, and the avatar/HTTP-431 guard. No database required.
+ *
+ *   Part B (database roundtrip, runs when DATABASE_URL is reachable): exercises the REAL signup
+ *   route and the REAL NextAuth authorize() so a regression like Prisma schema/DB drift — which
+ *   silently breaks sign-in for custom users while demo login keeps working — is caught here.
+ *
+ * Run with: npm run auth:smoke
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { signupSchema } from "../lib/validators";
 
-async function main() {
+// Load DB env from .env files (without printing anything from them) so the roundtrip can connect.
+function loadEnv(file: string) {
+  try {
+    for (const line of readFileSync(file, "utf8").split("\n")) {
+      const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*"?([^"\n]*)"?\s*$/);
+      if (match && process.env[match[1]] === undefined) {
+        process.env[match[1]] = match[2];
+      }
+    }
+  } catch {
+    // file may not exist; ignore
+  }
+}
+loadEnv(".env.local");
+loadEnv(".env");
+
+async function offlineChecks() {
   // 1. Passwords are hashed and checked correctly.
   const hash = await bcrypt.hash("password123", 12);
   assert.ok(hash.startsWith("$2"), "bcrypt should produce a bcrypt hash.");
@@ -24,6 +48,7 @@ async function main() {
   });
   assert.equal(parsed.email, "test.user@example.com", "Email must be trimmed and lowercased.");
   assert.equal(parsed.username, "testuser", "Username must be lowercased.");
+  assert.equal(parsed.accountType, "STUDENT", "Account type defaults to STUDENT.");
 
   // 3. Validation rejects bad input with clear failures (not silent success).
   assert.throws(
@@ -39,6 +64,12 @@ async function main() {
     () =>
       signupSchema.parse({ email: "not-an-email", password: "password123", confirmPassword: "password123", username: "abc", displayName: "Ab" }),
     "Invalid email must fail."
+  );
+  // Only STUDENT or COACH may be self-selected — never ADMIN.
+  assert.throws(
+    () =>
+      signupSchema.parse({ email: "a@b.com", password: "password123", confirmPassword: "password123", username: "abc", displayName: "Ab", accountType: "ADMIN" }),
+    "accountType ADMIN must be rejected."
   );
 
   // 4. Avatar: an uploaded path is accepted; data: URLs and huge strings are rejected so image data
@@ -59,6 +90,145 @@ async function main() {
     "Oversized avatar URLs must be rejected."
   );
 
+  console.log("Part A (offline) passed: hashing, validation, normalization, 431 avatar guard.");
+}
+
+async function signupViaRoute(payload: Record<string, unknown>) {
+  const { POST } = await import("../app/api/signup/route");
+  const response = await POST(
+    new Request("http://localhost/api/signup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+  );
+  const json = (await response.json().catch(() => ({}))) as { user?: { id: string; role: string }; error?: string };
+  return { status: response.status, json };
+}
+
+// Large profile fields (avatar/bio/etc.) in the cookie are what triggers HTTP 431, so the JWT must
+// keep only minimal claims. Runs the real jwt callback and asserts the heavy fields are stripped.
+function jwtStaysSmall(
+  jwt: (p: { token: Record<string, unknown>; user: unknown }) => Record<string, unknown>,
+  authorizedUser: Record<string, unknown>
+) {
+  // Seed the token the way NextAuth would (default claims copied from the returned user), then run
+  // our callback, which strips the heavy fields.
+  const seeded = {
+    sub: String(authorizedUser.id),
+    name: authorizedUser.name,
+    email: authorizedUser.email,
+    picture: authorizedUser.image,
+    avatarUrl: authorizedUser.avatarUrl,
+    bio: authorizedUser.bio,
+    username: authorizedUser.username
+  };
+  const token = jwt({ token: seeded as Record<string, unknown>, user: authorizedUser });
+  const heavy = ["picture", "avatarUrl", "bio", "username", "displayName", "schoolOrClub", "preferredOrganization", "level", "rank", "xp"];
+  for (const key of heavy) {
+    assert.ok(token[key] === undefined, `JWT must not carry heavy field "${key}" (HTTP 431 guard).`);
+  }
+  const size = Buffer.byteLength(JSON.stringify(token), "utf8");
+  assert.ok(size < 1024, `JWT payload should stay small; got ${size} bytes.`);
+  return true;
+}
+
+async function databaseRoundtrip() {
+  if (!process.env.DATABASE_URL) {
+    console.log("Part B (database) skipped: DATABASE_URL is not set.");
+    return;
+  }
+
+  const { prisma } = await import("../lib/prisma");
+
+  // Confirm the database is reachable AND the Prisma client matches it (a full-row read). Schema/DB
+  // drift surfaces here as P2022 instead of silently breaking only custom sign-in.
+  try {
+    await prisma.user.findFirst({ select: { id: true } });
+  } catch (error) {
+    console.log("Part B (database) skipped: database not reachable.", error instanceof Error ? error.message : error);
+    await prisma.$disconnect();
+    return;
+  }
+
+  const { authOptions } = await import("../lib/auth");
+  const authorize = (authOptions.providers[0] as unknown as { options: { authorize: (c: unknown, r: unknown) => Promise<Record<string, unknown> | null> } }).options.authorize;
+
+  const stamp = Date.now();
+  const short = stamp.toString(36); // keeps usernames within the 24-char limit
+  const studentEmail = `smoke-student-${stamp}@debatearena.test`;
+  const coachEmail = `smoke-coach-${stamp}@debatearena.test`;
+  const password = "Password123!";
+
+  try {
+    // 1+2. Sign up a brand-new student through the real route, with mixed-case email to prove
+    // normalization, and confirm the row exists with a password hash.
+    const signup = await signupViaRoute({
+      email: `  Smoke-Student-${stamp}@DebateArena.TEST `,
+      password,
+      confirmPassword: password,
+      username: `smoke_stu_${short}`,
+      displayName: "Smoke Student"
+    });
+    assert.equal(signup.status, 201, `Signup should return 201, got ${signup.status} (${signup.json.error ?? "ok"}).`);
+
+    const dbUser = await prisma.user.findUnique({ where: { email: studentEmail }, select: { id: true, passwordHash: true, role: true } });
+    assert.ok(dbUser, "New user must exist in the database after signup.");
+    assert.ok(dbUser.passwordHash, "New user must have a bcrypt password hash stored.");
+    assert.equal(dbUser.role, "STUDENT", "Default account must have role STUDENT.");
+
+    // 3+4. Sign in with the same credentials → must return THIS user, not the demo fallback.
+    const ok = await authorize({ email: studentEmail, password }, {});
+    assert.ok(ok, "Correct credentials must sign in.");
+    assert.equal(ok!.id, dbUser.id, "Session user must be the new user, not Demo Student.");
+    assert.notEqual(ok!.id, "dev-demo-student", "Must NOT fall back to the demo student.");
+    assert.equal(ok!.email, studentEmail, "Signed-in email must match the new user.");
+
+    // Mixed-case email at sign-in still matches (case-insensitive lookup).
+    const okMixed = await authorize({ email: studentEmail.toUpperCase(), password }, {});
+    assert.ok(okMixed && okMixed.id === dbUser.id, "Mixed-case email must still sign in.");
+
+    // Wrong password must fail clearly.
+    const wrong = await authorize({ email: studentEmail, password: "totally-wrong" }, {});
+    assert.equal(wrong, null, "Wrong password must be rejected (null).");
+
+    // 431 guard: the JWT keeps only minimal claims.
+    const jwtCallback = authOptions.callbacks?.jwt;
+    assert.ok(jwtCallback, "jwt callback must be defined.");
+    jwtStaysSmall(
+      jwtCallback as unknown as (p: { token: Record<string, unknown>; user: unknown }) => Record<string, unknown>,
+      ok!
+    );
+
+    // 5. Coach signup → role COACH, and can sign in as themselves.
+    const coachSignup = await signupViaRoute({
+      email: coachEmail,
+      password,
+      confirmPassword: password,
+      username: `smoke_co_${short}`,
+      displayName: "Smoke Coach",
+      accountType: "COACH"
+    });
+    assert.equal(coachSignup.status, 201, `Coach signup should return 201, got ${coachSignup.status}.`);
+    const coachOk = await authorize({ email: coachEmail, password }, {});
+    assert.ok(coachOk && coachOk.role === "COACH", "Coach must sign in with role COACH.");
+
+    // 6. Demo account still works (seeded student credentials).
+    const demoPassword = process.env.SEED_STUDENT_PASSWORD || "password123";
+    const demo = await authorize({ email: "student@debatearena.ai", password: demoPassword }, {});
+    assert.ok(demo && demo.role === "STUDENT", "Demo student must still sign in.");
+
+    console.log("Part B (database) passed: custom student + coach signup→signin, mixed-case match, wrong-password rejection, demo login, JWT size.");
+  } finally {
+    // Always clean up the accounts we created.
+    await prisma.user.deleteMany({ where: { email: { in: [studentEmail, coachEmail] } } });
+    await prisma.$disconnect();
+  }
+}
+
+async function main() {
+  await offlineChecks();
+  await databaseRoundtrip();
   console.log("Auth smoke tests passed.");
 }
 

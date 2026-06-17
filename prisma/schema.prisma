@@ -129,8 +129,6 @@ model User {
   emailVerified  DateTime?
   image          String?
   passwordHash   String?
-  resetPasswordTokenHash String?
-  resetPasswordExpires   DateTime?
   username       String?   @unique
   displayName    String?
   avatarUrl      String?
@@ -429,7 +427,6 @@ model Coach {
 model Team {
   id           String       @id @default(cuid())
   name         String
-  joinCode     String?      @unique
   organization Organization
   coachId      String
   createdAt    DateTime     @default(now())

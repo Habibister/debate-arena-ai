@@ -50,7 +50,7 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
     setError(null);
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      setError("Use a JPG, PNG, or WebP image.");
+      setError("Image must be JPG, PNG, or WebP.");
       return;
     }
     if (file.size > MAX_BYTES) {
@@ -65,11 +65,11 @@ export function AvatarUploader({ value, onChange, displayName, username, disable
       const response = await fetch("/api/profile/avatar", { method: "POST", body: formData });
       const result = (await response.json().catch(() => ({}))) as { avatarUrl?: string; error?: string };
       if (!response.ok || !result.avatarUrl) {
-        throw new Error(result.error ?? "We could not upload that image. Please try again.");
+        throw new Error(result.error ?? "Upload failed. Please try a different image.");
       }
       onChange(result.avatarUrl);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "We could not upload that image. Please try again.");
+      setError(uploadError instanceof Error ? uploadError.message : "Upload failed. Please try a different image.");
     } finally {
       setIsUploading(false);
     }

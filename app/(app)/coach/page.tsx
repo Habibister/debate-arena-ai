@@ -1,5 +1,7 @@
 import { getServerSession } from "next-auth";
-import { Lock, Users } from "lucide-react";
+import Link from "next/link";
+import type { Route } from "next";
+import { ChevronRight, Lock, Users } from "lucide-react";
 import { CopyButton } from "@/components/coach/copy-button";
 import { CreateTeamForm } from "@/components/coach/create-team-form";
 import { UserAvatar } from "@/components/profile/user-avatar";
@@ -8,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ratingLabel } from "@/lib/ai-personas";
 import { authOptions } from "@/lib/auth";
+import { getLastActivityForUsers } from "@/lib/coach-progress";
 import { getTeamsForCoach } from "@/lib/teams";
 import { calculateDebateRating } from "@/lib/xp";
 
@@ -37,6 +40,9 @@ export default async function CoachPage() {
   }
 
   const teams = session?.user?.id ? await getTeamsForCoach(session.user.id) : [];
+  // One query for last-activity across every rostered student, so rows can show it without N+1.
+  const memberIds = teams.flatMap((team) => team.members.map((member) => member.user.id));
+  const lastActivity = await getLastActivityForUsers(memberIds);
 
   return (
     <div className="space-y-6">
@@ -91,24 +97,37 @@ export default async function CoachPage() {
                   <p className="text-xs font-semibold uppercase text-muted-foreground">{team.members.length} student{team.members.length === 1 ? "" : "s"}</p>
                   {team.members.map((member) => {
                     const u = member.user;
+                    const hasActivity = u.xp > 0 || u.wins > 0;
                     const rating = calculateDebateRating({ xp: u.xp, wins: u.wins });
-                    const mastery = u.xp > 0 || u.wins > 0 ? ratingLabel(rating) : "Not started";
+                    const mastery = hasActivity ? ratingLabel(rating) : "Not started";
+                    const lastSeen = lastActivity.get(u.id);
                     return (
-                      <div key={member.id} className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3">
+                      <Link
+                        key={member.id}
+                        href={`/coach/students/${u.id}` as Route}
+                        className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-muted/50"
+                      >
                         <div className="flex items-center gap-3">
                           <UserAvatar username={u.username} displayName={u.displayName ?? u.name} avatarUrl={u.avatarUrl ?? u.image} />
                           <div>
                             <p className="font-semibold">{u.displayName ?? u.name ?? u.username ?? "Student"}</p>
                             <p className="text-xs text-muted-foreground">
                               @{u.username ?? "student"} · joined {new Date(member.joinedAt).toLocaleDateString()}
+                              {lastSeen ? <> · active {new Date(lastSeen).toLocaleDateString()}</> : null}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right text-sm">
-                          <p className="font-semibold">{rating} · {u.xp} XP</p>
-                          <p className="text-xs text-muted-foreground">{mastery}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right text-sm">
+                            <p className="font-semibold">{hasActivity ? `${rating} · ${u.xp} XP` : "Not started"}</p>
+                            <p className="text-xs text-muted-foreground">{mastery}</p>
+                          </div>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                            View progress
+                            <ChevronRight className="h-4 w-4" aria-hidden />
+                          </span>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>

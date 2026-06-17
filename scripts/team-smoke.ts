@@ -32,6 +32,7 @@ async function main() {
 
   const { prisma } = await import("@/lib/prisma");
   const teams = await import("@/lib/teams");
+  const { getCoachStudentProgress } = await import("@/lib/coach-progress");
   const { authOptions } = await import("@/lib/auth");
 
   const stamp = Date.now();
@@ -39,7 +40,9 @@ async function main() {
   const coachEmail = `team-coach-${stamp}@debatearena.test`;
   const coach2Email = `team-coach2-${stamp}@debatearena.test`;
   const studentEmail = `team-student-${stamp}@debatearena.test`;
-  const emails = [coachEmail, coach2Email, studentEmail];
+  const freshEmail = `team-fresh-${stamp}@debatearena.test`;
+  const otherStudentEmail = `team-other-${stamp}@debatearena.test`;
+  const emails = [coachEmail, coach2Email, studentEmail, freshEmail, otherStudentEmail];
 
   const baseUser = { level: "BEGINNER" as const, xp: 0, streak: 0, wins: 0, rank: "BRONZE" as const };
 
@@ -52,6 +55,12 @@ async function main() {
     });
     const student = await prisma.user.create({
       data: { email: studentEmail, username: `ts_${short}`, displayName: "Team Student", name: "Team Student", role: "STUDENT", ...baseUser, xp: 40, wins: 1 }
+    });
+    const freshStudent = await prisma.user.create({
+      data: { email: freshEmail, username: `tf_${short}`, displayName: "Fresh Student", name: "Fresh Student", role: "STUDENT", ...baseUser }
+    });
+    const otherStudent = await prisma.user.create({
+      data: { email: otherStudentEmail, username: `to_${short}`, displayName: "Other Student", name: "Other Student", role: "STUDENT", ...baseUser }
     });
 
     // Test 1 — coach creates a team; a Team row and a join code exist.
@@ -103,6 +112,76 @@ async function main() {
     const coach2Teams = await teams.getTeamsForCoach(coach2.id);
     assert.ok(!coach2Teams.some((t) => t.id === team.id), "Coach 2 must NOT see coach 1's team.");
 
+    // ---- Coach student progress view ----
+    freshStudent && (await teams.joinTeamByCode({ userId: freshStudent.id, joinCode: team.joinCode! }));
+
+    // Progress Test 1 — the coach can view a student in their own team.
+    const view = await getCoachStudentProgress(coach.id, student.id, "COACH");
+    assert.equal(view.student.id, student.id, "Coach must see the correct student's progress.");
+
+    // Progress Test 2 — a coach cannot view a student who is not in their team (student is in coach1's
+    // team only, so coach2 must be denied).
+    await assert.rejects(
+      () => getCoachStudentProgress(coach2.id, student.id, "COACH"),
+      (error: unknown) => (error as { status?: number }).status === 403,
+      "A coach must not view a student outside their teams."
+    );
+
+    // Progress Test 3 — a student cannot view another student's progress.
+    await assert.rejects(
+      () => getCoachStudentProgress(student.id, otherStudent.id, "STUDENT"),
+      (error: unknown) => (error as { status?: number }).status === 403,
+      "A student must not view another student's progress."
+    );
+
+    // Progress Test 4 — a brand-new joined student shows zero / not-started progress.
+    const freshView = await getCoachStudentProgress(coach.id, freshStudent.id, "COACH");
+    assert.equal(freshView.debate.judgedRounds, 0, "New student has no judged rounds.");
+    assert.equal(freshView.tests.completed, 0, "New student has no completed tests.");
+    assert.equal(freshView.skills.length, 0, "New student has no skill progress.");
+    assert.equal(freshView.hasAnyActivity, false, "New student has no activity.");
+    assert.deepEqual(
+      freshView.recommendations,
+      ["Have the student complete one debate or practice drill first."],
+      "New student recommendation must prompt first activity."
+    );
+
+    // Progress Test 5 — real activity is reflected (and only real activity).
+    await prisma.debate.create({
+      data: {
+        organization: "DEBATE",
+        level: "BEGINNER",
+        topic: "Smoke motion",
+        mode: "AI",
+        status: "JUDGED",
+        createdById: student.id,
+        studentId: student.id,
+        overallScore: 78,
+        weaknesses: ["Rebuttal depth"]
+      }
+    });
+    await prisma.practiceTest.create({
+      data: {
+        userId: student.id,
+        organization: "DECA",
+        difficulty: "BEGINNER",
+        questionCount: 10,
+        score: 82,
+        completedAt: new Date(),
+        weakAreas: ["Marketing"]
+      }
+    });
+    const activeView = await getCoachStudentProgress(coach.id, student.id, "COACH");
+    assert.equal(activeView.debate.judgedRounds, 1, "Judged round must be counted.");
+    assert.equal(activeView.debate.averageScore, 78, "Average judge score must reflect real data.");
+    assert.equal(activeView.tests.completed, 1, "Completed test must be counted.");
+    assert.equal(activeView.tests.averageScore, 82, "Test average must reflect real data.");
+    assert.ok(activeView.hasAnyActivity, "Student with activity must report activity.");
+    assert.ok(
+      activeView.recommendations.some((step) => /rebuttal/i.test(step)),
+      "Weak rebuttal must drive a rebuttal recommendation."
+    );
+
     // Test 8 — demo accounts still sign in.
     const authorize = (authOptions.providers[0] as unknown as { options: { authorize: (c: unknown, r: unknown) => Promise<{ role?: string } | null> } }).options.authorize;
     const demo = await authorize({ email: "student@debatearena.ai", password: process.env.SEED_STUDENT_PASSWORD || "password123" }, {});
@@ -111,7 +190,7 @@ async function main() {
     // Test 9 — the Gemini/AI health route is present and was not touched by this feature.
     assert.ok(existsSync("app/api/ai/health/route.ts"), "AI health route must still exist.");
 
-    console.log("Team smoke tests passed: create team + join code, join, double-join 409, invalid 404, roster, role gating, coach isolation, demo login, AI health untouched.");
+    console.log("Team smoke tests passed: create team + join code, join, double-join 409, invalid 404, roster, role gating, coach isolation, progress view (authorized/denied/student-blocked/new-zero/real-stats), demo login, AI health untouched.");
   } finally {
     await prisma.user.deleteMany({ where: { email: { in: emails } } });
     await prisma.$disconnect();

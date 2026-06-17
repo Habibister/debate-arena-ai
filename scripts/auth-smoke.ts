@@ -227,7 +227,69 @@ async function databaseRoundtrip() {
     const demo = await authorize({ email: "student@debatearena.ai", password: demoPassword }, {});
     assert.ok(demo && demo.role === "STUDENT", "Demo student must still sign in.");
 
-    console.log("Part B (database) passed: custom student + coach signup→signin, zero new-user stats, mixed-case match, wrong-password rejection, demo login, JWT size.");
+    // ---- Password reset flow ----
+    const { requestPasswordReset, createPasswordResetToken, resetPassword } = await import("../lib/password-reset");
+
+    // Reset Test 1: requesting a reset for a real user stores a token hash + future expiry.
+    await requestPasswordReset(studentEmail);
+    const afterRequest = await prisma.user.findUnique({
+      where: { id: dbUser.id },
+      select: { resetPasswordTokenHash: true, resetPasswordExpires: true }
+    });
+    assert.ok(afterRequest?.resetPasswordTokenHash, "Reset request must store a token hash.");
+    assert.ok(
+      afterRequest?.resetPasswordExpires && afterRequest.resetPasswordExpires.getTime() > Date.now(),
+      "Reset request must store a future expiry."
+    );
+
+    // Reset Test 7: an unknown email must NOT throw (generic success, no account enumeration).
+    await requestPasswordReset(`nobody-${stamp}@debatearena.test`);
+
+    // Reset Test 5: an invalid token is rejected.
+    await assert.rejects(
+      () => resetPassword({ token: "not-a-real-token-value", password: "NewPass123!", confirmPassword: "NewPass123!" }),
+      (e: unknown) => (e as { status?: number }).status === 400,
+      "Invalid token must be rejected."
+    );
+
+    // Reset Test 6: an expired token is rejected.
+    const expiredToken = await createPasswordResetToken(dbUser.id);
+    await prisma.user.update({ where: { id: dbUser.id }, data: { resetPasswordExpires: new Date(Date.now() - 1000) } });
+    await assert.rejects(
+      () => resetPassword({ token: expiredToken.rawToken, password: "NewPass123!", confirmPassword: "NewPass123!" }),
+      (e: unknown) => (e as { status?: number }).status === 400,
+      "Expired token must be rejected."
+    );
+
+    // Mismatched passwords are rejected (before any token lookup).
+    await assert.rejects(
+      () => resetPassword({ token: expiredToken.rawToken, password: "Mismatch11", confirmPassword: "Mismatch22" }),
+      (e: unknown) => (e as { status?: number }).status === 400,
+      "Mismatched passwords must be rejected."
+    );
+
+    // Reset Test 2: a valid token sets a new password and clears the reset fields.
+    const { rawToken } = await createPasswordResetToken(dbUser.id);
+    const newPassword = "BrandNewPass456!";
+    await resetPassword({ token: rawToken, password: newPassword, confirmPassword: newPassword });
+    const afterReset = await prisma.user.findUnique({
+      where: { id: dbUser.id },
+      select: { resetPasswordTokenHash: true, resetPasswordExpires: true }
+    });
+    assert.equal(afterReset?.resetPasswordTokenHash, null, "Reset must clear the token hash.");
+    assert.equal(afterReset?.resetPasswordExpires, null, "Reset must clear the expiry.");
+
+    // Reset Test 3: the old password no longer signs in.
+    const oldLogin = await authorize({ email: studentEmail, password }, {});
+    assert.equal(oldLogin, null, "Old password must fail after reset.");
+
+    // Reset Test 4: the new password signs in.
+    const newLogin = await authorize({ email: studentEmail, password: newPassword }, {});
+    assert.ok(newLogin && newLogin.id === dbUser.id, "New password must sign in.");
+
+    console.log(
+      "Part B (database) passed: custom student + coach signup→signin, zero new-user stats, mixed-case match, wrong-password rejection, demo login, JWT size, password reset (request stores hash, valid token resets + clears fields, old fails, new works, invalid/expired/mismatch rejected, unknown email generic)."
+    );
   } finally {
     // Always clean up the accounts we created.
     await prisma.user.deleteMany({ where: { email: { in: [studentEmail, coachEmail] } } });

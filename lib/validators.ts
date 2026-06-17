@@ -139,6 +139,21 @@ export const teamCreateSchema = z.object({
     .optional()
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address.").max(160).transform((value) => value.toLowerCase())
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().trim().min(10, "That reset link is invalid."),
+    password: z.string().min(8, "Password must be at least 8 characters.").max(120),
+    confirmPassword: z.string().min(8, "Confirm your password.")
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords must match.",
+    path: ["confirmPassword"]
+  });
+
 export const teamJoinSchema = z.object({
   joinCode: z.string().trim().min(3, "Enter a join code.").max(40, "That join code is too long.")
 });

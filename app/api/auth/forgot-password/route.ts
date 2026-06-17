@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { isEmailConfigured } from "@/lib/email";
 import { requestPasswordReset } from "@/lib/password-reset";
 import { forgotPasswordSchema } from "@/lib/validators";
 
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Enter a valid email address." }, { status: 400 });
     }
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+
+  // Make misconfiguration obvious in server logs (for admins) without revealing anything to users.
+  if (process.env.NODE_ENV === "production" && !isEmailConfigured()) {
+    console.error("[password-reset] email provider not configured");
   }
 
   try {

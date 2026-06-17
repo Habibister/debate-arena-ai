@@ -3,6 +3,11 @@
 // production with no provider it reports a clean status (never throws, never prints secrets).
 type SendResult = { status: "sent" | "dev-logged" | "not-configured" };
 
+// True only when a real email provider is wired up (both the API key and a verified From address).
+export function isEmailConfigured() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+}
+
 export async function sendPasswordResetEmail({ to, resetUrl }: { to: string; resetUrl: string }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;

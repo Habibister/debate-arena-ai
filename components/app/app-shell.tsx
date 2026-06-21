@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   BookOpenCheck,
   ClipboardList,
+  FileCheck2,
   GraduationCap,
   LayoutDashboard,
   Layers3,
@@ -24,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/assignments", label: "Assignments", icon: FileCheck2 },
   { href: "/debate", label: "Debate", icon: MessageSquareText },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
   { href: "/tests", label: "Tests", icon: ClipboardList },
@@ -117,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href as Route}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -179,7 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href as Route}
                   className={cn(
                     "flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold",
                     active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
@@ -203,7 +206,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href as Route}
               className={cn(
                 "flex flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
                 active ? "bg-primary text-primary-foreground" : "text-muted-foreground"

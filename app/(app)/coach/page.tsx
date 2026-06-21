@@ -1,14 +1,17 @@
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import type { Route } from "next";
-import { ChevronRight, Lock, Users } from "lucide-react";
+import { ChevronRight, ClipboardList, Lock, Plus, Users } from "lucide-react";
 import { CopyButton } from "@/components/coach/copy-button";
 import { CreateTeamForm } from "@/components/coach/create-team-form";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ratingLabel } from "@/lib/ai-personas";
+import { completionStats } from "@/lib/assignment-types";
+import { getAssignedStudentIds, getCoachAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
 import { getLastActivityForUsers } from "@/lib/coach-progress";
 import { getTeamsForCoach } from "@/lib/teams";
@@ -40,9 +43,21 @@ export default async function CoachPage() {
   }
 
   const teams = session?.user?.id ? await getTeamsForCoach(session.user.id) : [];
+  const assignments = session?.user?.id ? await getCoachAssignments(session.user.id, role) : [];
   // One query for last-activity across every rostered student, so rows can show it without N+1.
   const memberIds = teams.flatMap((team) => team.members.map((member) => member.user.id));
   const lastActivity = await getLastActivityForUsers(memberIds);
+  const assignmentStatuses = assignments.flatMap((assignment) => {
+    const assignedIds = getAssignedStudentIds(assignment);
+    const statusByStudent = new Map(assignment.submissions.map((submission) => [submission.studentId, submission.status]));
+    return assignedIds.map((studentId) => statusByStudent.get(studentId) ?? "NOT_STARTED");
+  });
+  const assignmentStats = completionStats(assignmentStatuses);
+  const dueSoonCount = assignments.filter((assignment) => {
+    if (!assignment.dueDate) return false;
+    const diff = assignment.dueDate.getTime() - Date.now();
+    return diff >= 0 && diff <= 1000 * 60 * 60 * 24 * 7;
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -69,7 +84,53 @@ export default async function CoachPage() {
           </div>
         </div>
       ) : (
-        teams.map((team) => (
+        <>
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle>Assignment overview</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">Track assigned practice across your teams.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Link href={"/coach/assignments" as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                    <ClipboardList className="h-4 w-4" aria-hidden />
+                    View assignments
+                  </Link>
+                  <Link href={"/coach/assignments/new" as Route} className={buttonVariants({ size: "sm" })}>
+                    <Plus className="h-4 w-4" aria-hidden />
+                    Create assignment
+                  </Link>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {assignments.length === 0 ? (
+                <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">You have not created any assignments yet.</p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <div className="rounded-md border bg-background p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Active assignments</p>
+                    <p className="mt-1 text-2xl font-bold">{assignments.length}</p>
+                  </div>
+                  <div className="rounded-md border bg-background p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Completion</p>
+                    <p className="mt-1 text-2xl font-bold">{assignmentStats.completionRate}%</p>
+                  </div>
+                  <div className="rounded-md border bg-background p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">In progress</p>
+                    <p className="mt-1 text-2xl font-bold">{assignmentStats.inProgress}</p>
+                  </div>
+                  <div className="rounded-md border bg-background p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Due soon</p>
+                    <p className="mt-1 text-2xl font-bold">{dueSoonCount}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {teams.map((team) => (
           <Card key={team.id}>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -91,7 +152,7 @@ export default async function CoachPage() {
               </div>
 
               {team.members.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No students have joined this team yet.</p>
+                <p className="text-sm text-muted-foreground">Students will appear here after they join your team.</p>
               ) : (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase text-muted-foreground">{team.members.length} student{team.members.length === 1 ? "" : "s"}</p>
@@ -134,7 +195,8 @@ export default async function CoachPage() {
               )}
             </CardContent>
           </Card>
-        ))
+          ))}
+        </>
       )}
     </div>
   );

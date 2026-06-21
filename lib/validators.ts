@@ -13,6 +13,14 @@ export const levelSchema = z.enum(["BEGINNER", "INTERMEDIATE", "ELITE"]);
 export const practiceModeSchema = z.enum(["DEBATE", "ROLEPLAY", "TEST", "LESSON"]);
 export const debateFormatSchema = z.enum(["PARLIAMENTARY", "QUICK_1V1", "PUBLIC_FORUM", "PRACTICE_REBUTTAL", "CUSTOM"]);
 export const debateSideChoiceSchema = z.enum(["GOVERNMENT", "OPPOSITION", "FOR", "AGAINST", "RANDOM"]);
+export const assignmentTypeSchema = z.enum([
+  "DEBATE_ROUND",
+  "REBUTTAL_PRACTICE",
+  "FLASHCARD_DECK",
+  "REVIEW_GAME",
+  "PRACTICE_TEST",
+  "LESSON"
+]);
 
 const transcriptSchema = z.array(
   z.object({
@@ -160,6 +168,63 @@ export const teamJoinSchema = z.object({
 
 export const teamLeaveSchema = z.object({
   teamId: z.string().min(1, "Missing team.")
+});
+
+const dueDateSchema = z
+  .union([z.string().trim().datetime(), z.string().trim().date(), z.literal(""), z.null()])
+  .optional()
+  .transform((value) => (value ? new Date(value) : null));
+
+export const assignmentCreateSchema = z
+  .object({
+    teamId: z.string().min(1, "Choose a team."),
+    type: assignmentTypeSchema,
+    title: z.string().trim().min(3, "Assignment title must be at least 3 characters.").max(120, "Keep titles to 120 characters or fewer."),
+    instructions: z.string().trim().min(8, "Add clear instructions for students.").max(2000, "Keep instructions to 2,000 characters or fewer."),
+    dueDate: dueDateSchema,
+    targetAllTeam: z.boolean().default(true),
+    studentIds: z.array(z.string().min(1)).max(200).default([]),
+    targetId: z
+      .string()
+      .trim()
+      .max(180)
+      .transform((value) => (value.length > 0 ? value : null))
+      .nullable()
+      .optional(),
+    points: z.number().int().min(0).max(1000).nullable().optional()
+  })
+  .superRefine((value, ctx) => {
+    if (!value.targetAllTeam && value.studentIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["studentIds"],
+        message: "Select at least one student or assign the whole team."
+      });
+    }
+  });
+
+export const assignmentSubmitSchema = z.object({
+  evidenceType: z
+    .string()
+    .trim()
+    .max(80)
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional(),
+  evidenceId: z
+    .string()
+    .trim()
+    .max(160)
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional(),
+  notes: z
+    .string()
+    .trim()
+    .max(2000)
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .optional()
 });
 
 export const debateMessageCreateSchema = z.object({

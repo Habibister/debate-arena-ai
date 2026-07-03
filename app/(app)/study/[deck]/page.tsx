@@ -1,6 +1,7 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gamepad2 } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { FlashcardStudy } from "@/components/study/flashcard-study";
 import { buttonVariants } from "@/components/ui/button";
@@ -18,10 +19,16 @@ export default function StudyDeckPage({ params }: { params: { deck: string } }) 
 
   return (
     <div className="space-y-6">
-      <Link href="/study" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Study
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Link href="/study" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Study
+        </Link>
+        <Link href={`/study/${params.deck}/games` as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <Gamepad2 className="h-4 w-4" aria-hidden />
+          Play review games
+        </Link>
+      </div>
 
       <FlashcardStudy cards={cards} deckName={firstCard.deck} />
 

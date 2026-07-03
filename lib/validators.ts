@@ -50,6 +50,20 @@ export const opponentRequestSchema = z.object({
   transcript: transcriptSchema
 });
 
+export const sideCoachRequestSchema = z.object({
+  organization: organizationSchema,
+  eventType: z.string().max(120).optional(),
+  studentSide: z.enum(["AFFIRMATIVE", "NEGATIVE"]).optional(),
+  stage: z.string().max(120).optional(),
+  level: levelSchema.optional(),
+  // Public transcript only — never judge reasoning or private coaching.
+  transcript: z.array(z.object({ role: z.string().max(20), content: z.string().min(1).max(8000) })).max(40).default([]),
+  latestStudentSpeech: z.string().max(8000).optional(),
+  requestType: z.enum(["turn-feedback", "ask"]).default("turn-feedback"),
+  askKind: z.string().max(80).optional(),
+  guidanceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional()
+});
+
 export const judgeRequestSchema = z.object({
   organization: organizationSchema,
   level: levelSchema,

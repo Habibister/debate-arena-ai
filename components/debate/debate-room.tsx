@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { DebateFormat, Level } from "@prisma/client";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { normalizeAccessibility } from "@/lib/accessibility";
+import { LEARNING_PROFILE_KEY, normalizeLearningProfile } from "@/lib/learning-path";
 import { DEFAULT_TRACK, trackById, trackBySlug } from "@/lib/training-tracks";
 import { AI_DEBATE_PERSONAS } from "@/lib/ai-personas";
 import {
@@ -78,6 +79,40 @@ export function DebateRoom({ track }: { track?: string }) {
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [audioMode, setAudioMode] = useState(false);
+  const [beginnerCoach, setBeginnerCoach] = useState(false);
+
+  // Default beginner coaching ON for new/beginner students (from the learning profile), and persist
+  // the choice so the arena can read it. Recommended-on, but the student can turn it off before start.
+  useEffect(() => {
+    let recommended = false;
+    try {
+      const stored = window.localStorage.getItem(LEARNING_PROFILE_KEY);
+      if (stored) {
+        const exp = normalizeLearningProfile(JSON.parse(stored)).experience;
+        recommended = exp === "NEW" || exp === "BEGINNER";
+      }
+    } catch {
+      // ignore
+    }
+    setBeginnerCoach(recommended);
+    try {
+      window.localStorage.setItem("debatearena_side_coach", recommended ? "on" : "off");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  function toggleBeginnerCoach() {
+    setBeginnerCoach((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem("debatearena_side_coach", next ? "on" : "off");
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
 
   // Audio mode is a client-side presentation preference (no schema change): selecting it enables the
   // arena's audio autoplay + read-aloud via the shared accessibility localStorage key.
@@ -407,6 +442,31 @@ export function DebateRoom({ track }: { track?: string }) {
                   Audio mode reads AI speeches aloud and adds voice input. Fine-tune voice, speed, and dyslexia-friendly text in the debate room.
                 </p>
               ) : null}
+            </div>
+
+            <div className="space-y-2 border-t border-white/10 pt-4">
+              <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Beginner coaching</p>
+              <button
+                type="button"
+                onClick={toggleBeginnerCoach}
+                aria-pressed={beginnerCoach}
+                className={cn(
+                  "focus-ring flex w-full items-center justify-between rounded-md border px-3 py-3 text-sm font-semibold",
+                  beginnerCoach ? "border-emerald-400 bg-emerald-500/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-neutral-300"
+                )}
+              >
+                <span>Side Coach {beginnerCoach ? "on" : "off"}</span>
+                {beginnerCoach ? (
+                  <span className="flex items-center gap-1 text-xs">
+                    <Check className="h-4 w-4" aria-hidden />
+                    On
+                  </span>
+                ) : null}
+              </button>
+              <p className="text-xs text-neutral-400">
+                Get private suggestions from a Side Coach while you debate. The opponent and judge cannot see these
+                suggestions, and they never count as your speech.
+              </p>
             </div>
           </section>
 

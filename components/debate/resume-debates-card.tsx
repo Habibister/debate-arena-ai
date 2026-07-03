@@ -12,13 +12,16 @@ export type ResumeDebate = {
   id: string;
   topic: string;
   trackLabel: string;
+  formatLabel: string;
+  sideLabel: string;
+  opponentLabel: string;
   statusLabel: string;
   updatedLabel: string;
 };
 
 // Dashboard recovery prompt for debates that were left mid-session (SETUP/ACTIVE). Continue reopens the
-// real arena; Dismiss only hides the prompt and clears the local draft — it never deletes the debate,
-// which stays available under History. No completion or score is implied.
+// real arena; Discard draft clears only that debate's local draft (after confirm) and hides the prompt —
+// it never deletes the debate, which stays available under History. No completion or score is implied.
 export function ResumeDebatesCard({ debates }: { debates: ResumeDebate[] }) {
   const [hidden, setHidden] = useState<string[]>([]);
   const visible = debates.filter((debate) => !hidden.includes(debate.id));
@@ -28,7 +31,7 @@ export function ResumeDebatesCard({ debates }: { debates: ResumeDebate[] }) {
   }
 
   function dismiss(id: string) {
-    if (!window.confirm("Dismiss this from your recovery list? Your draft is cleared, but the debate stays in History.")) {
+    if (!window.confirm("Discard your unsent draft for this debate? The debate itself stays in History and nothing is submitted.")) {
       return;
     }
     try {
@@ -56,15 +59,19 @@ export function ResumeDebatesCard({ debates }: { debates: ResumeDebate[] }) {
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{debate.topic}</p>
               <p className="text-xs text-muted-foreground">
-                {debate.trackLabel} · {debate.statusLabel} · Last active {debate.updatedLabel}
+                {debate.trackLabel} · {debate.formatLabel} · {debate.sideLabel} · vs {debate.opponentLabel}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {debate.statusLabel} · Last active {debate.updatedLabel}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Link href={`/debate/${debate.id}` as Route} className={buttonVariants({ size: "sm" })}>
                 Continue
               </Link>
-              <Button type="button" variant="ghost" size="sm" onClick={() => dismiss(debate.id)} aria-label="Dismiss from recovery list">
-                <X className="h-4 w-4" aria-hidden />
+              <Button type="button" variant="ghost" size="sm" onClick={() => dismiss(debate.id)}>
+                <X className="mr-1 h-4 w-4" aria-hidden />
+                Discard draft
               </Button>
             </div>
           </div>

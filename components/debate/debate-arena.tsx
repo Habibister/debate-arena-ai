@@ -787,6 +787,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
           {coachEnabled && !judgeReport ? (
             <SideCoachPanel
+              debateId={debate.id}
               organization={debate.organization}
               eventType={debate.eventType}
               studentSide={coachStudentSide}

@@ -13,9 +13,11 @@ export async function getStudentDebates(userId: string) {
       eventType: true,
       format: true,
       studentSide: true,
+      opponentSide: true,
       status: true,
       overallScore: true,
       aiPersona: true,
+      assistedPractice: true,
       createdAt: true,
       updatedAt: true
     }
@@ -24,6 +26,17 @@ export async function getStudentDebates(userId: string) {
 
 export function isUnfinished(status: string) {
   return status === "SETUP" || status === "ACTIVE";
+}
+
+// Human-readable side label for the stored DebateSide enum (display only).
+export function sideLabel(side: string): string {
+  const map: Record<string, string> = {
+    GOVERNMENT: "Government",
+    OPPOSITION: "Opposition",
+    FOR: "For",
+    AGAINST: "Against"
+  };
+  return map[side] ?? side;
 }
 
 // Full official replay for one debate, with server-side access control:
@@ -44,7 +57,14 @@ export async function getDebateReplay(viewerId: string, viewerRole: string | nul
       opponentSide: true,
       status: true,
       overallScore: true,
+      logicScore: true,
+      evidenceScore: true,
+      rebuttalScore: true,
+      persuasionScore: true,
+      clarityScore: true,
+      communicationScore: true,
       aiPersona: true,
+      assistedPractice: true,
       studentId: true,
       strengths: true,
       weaknesses: true,
@@ -84,11 +104,26 @@ export async function getDebateReplay(viewerId: string, viewerRole: string | nul
   return debate;
 }
 
-// Real prior attempts at the same motion (for honest score comparison — never fabricated).
+// Real prior attempts at the same motion (for honest comparison — only stored values, never fabricated).
 export async function getAttemptsForMotion(userId: string, topic: string, excludeId: string) {
   return prisma.debate.findMany({
     where: { studentId: userId, topic, status: "JUDGED", id: { not: excludeId } },
     orderBy: { createdAt: "asc" },
-    select: { id: true, overallScore: true, createdAt: true }
+    select: {
+      id: true,
+      overallScore: true,
+      logicScore: true,
+      evidenceScore: true,
+      rebuttalScore: true,
+      persuasionScore: true,
+      clarityScore: true,
+      communicationScore: true,
+      strengths: true,
+      weaknesses: true,
+      recommendations: true,
+      studentSide: true,
+      assistedPractice: true,
+      createdAt: true
+    }
   });
 }

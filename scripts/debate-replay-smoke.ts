@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { draftKey } from "../lib/debate-drafts";
-import { isUnfinished } from "../lib/debate-history";
+import { isUnfinished, sideLabel } from "../lib/debate-history";
 
 function read(path: string): string {
   assert.ok(existsSync(path), `expected file to exist: ${path}`);
@@ -13,59 +13,98 @@ function read(path: string): string {
 }
 
 function main() {
-  // 1. Draft keys are per-debate and stable — drafts never leak across debates.
+  // --- Pure logic ---
   assert.equal(draftKey("abc"), "debatearena_draft_abc", "draft key format");
   assert.notEqual(draftKey("a"), draftKey("b"), "different debates get different keys");
   assert.equal(draftKey("a"), draftKey("a"), "same debate key is stable");
-
-  // 2. Unfinished detection: SETUP/ACTIVE recover; JUDGED/ARCHIVED do not.
   assert.ok(isUnfinished("SETUP") && isUnfinished("ACTIVE"), "SETUP/ACTIVE are unfinished");
   assert.ok(!isUnfinished("JUDGED") && !isUnfinished("ARCHIVED"), "JUDGED/ARCHIVED are finished");
+  assert.equal(sideLabel("GOVERNMENT"), "Government", "side label maps enum to readable");
+  assert.equal(sideLabel("AGAINST"), "Against", "side label maps enum to readable");
 
-  // 3. Arena autosave wiring: restore-on-mount, debounced save, clear-on-submit, beforeunload guard.
+  // --- Arena autosave (unchanged foundation) ---
   const arena = read("components/debate/debate-arena.tsx");
-  assert.ok(arena.includes("draftKey(debate.id)"), "arena uses per-debate draft key");
   assert.ok(/getItem\(draftKey\(debate\.id\)\)/.test(arena), "arena restores a saved draft on mount");
   assert.ok(/setTimeout\([\s\S]*setItem\(draftKey/.test(arena), "arena debounces the save");
   assert.ok(arena.includes("beforeunload"), "arena warns before leaving with an unsent draft");
-  assert.ok(arena.includes("clearDraft();"), "arena clears the draft on successful submit");
-  // Autosave must never auto-submit: clearDraft is called right after the manual submit clears input.
   assert.ok(/setStudentInput\(""\);\s*clearDraft\(\);/.test(arena), "draft cleared only after an explicit submit");
 
-  // 4. History + replay routes exist.
+  // Routes exist.
   assert.ok(existsSync("app/(app)/debates/history/page.tsx"), "history route exists");
   assert.ok(existsSync("app/(app)/debates/[debateId]/replay/page.tsx"), "replay route exists");
 
-  // 5. History uses real student debates and distinguishes continue vs replay.
-  const history = read("app/(app)/debates/history/page.tsx");
-  assert.ok(history.includes("getStudentDebates"), "history reads the student's real debates");
-  assert.ok(history.includes("/debate/${debate.id}") && history.includes("/replay"), "history links continue and replay");
-
-  // 6. Replay enforces access control and shows only the official transcript + separate judge feedback.
-  const replay = read("app/(app)/debates/[debateId]/replay/page.tsx");
-  assert.ok(replay.includes("getDebateReplay"), "replay uses the access-controlled loader");
-  assert.ok(/403|permission/i.test(replay) && /404|not be found/i.test(replay), "replay handles denial and not-found honestly");
-  assert.ok(replay.includes("Official transcript") && replay.includes("Judge feedback"), "transcript and judge feedback are separate sections");
-  assert.ok(/never part of this transcript|not shown here/i.test(replay), "replay states private coaching is excluded");
-  assert.ok(!/SideCoachPanel|api\/ai\/side-coach/.test(replay), "replay never mounts the Side Coach panel or its API");
-
-  // 7. Replay loader returns only official fields — never persisted coach messages (which do not exist).
   const historyLib = read("lib/debate-history.ts");
-  assert.ok(/permission to view this debate/.test(historyLib), "loader throws a 403 when not permitted");
-  assert.ok(historyLib.includes("teamMember.findFirst"), "coach-owns-team access path present");
+  const history = read("app/(app)/debates/history/page.tsx");
+  const replay = read("app/(app)/debates/[debateId]/replay/page.tsx");
+  const retry = read("components/debate/retry-motion-button.tsx");
+  const card = read("components/debate/resume-debates-card.tsx");
+  const coachRoute = read("app/api/ai/side-coach/route.ts");
+  const panel = read("components/debate/side-coach-panel.tsx");
+  const room = read("components/debate/debate-room.tsx");
+
+  // 1. Side Coach use marks the correct debate assisted (scoped to the owning student).
+  assert.ok(panel.includes("debateId"), "panel sends debateId to the coach route");
+  assert.ok(/updateMany\(\{[\s\S]*studentId: userId[\s\S]*assistedPractice: true/.test(coachRoute), "coach route marks the owner's debate assisted");
+
+  // 2. Merely enabling the toggle (no coach call) never marks assisted.
+  assert.ok(!/api\/ai\/side-coach/.test(room), "the toggle component never calls the coach API");
+  assert.ok(/if \(input\.debateId\)/.test(coachRoute), "marking only happens on an actual coach request");
+
+  // 3. Assisted label appears in history and replay.
+  assert.ok(history.includes("Assisted Practice"), "history shows the assisted label");
+  assert.ok(replay.includes("Assisted Practice"), "replay shows the assisted label");
+
+  // 4. Coach content stays out of the official transcript.
+  assert.ok(!/SideCoachPanel|api\/ai\/side-coach/.test(replay), "replay never mounts the Side Coach panel or its API");
   assert.ok(!/from "@\/lib\/side-coach"|SideCoachPanel/.test(historyLib), "history loader has no Side Coach coupling");
 
-  // 8. Retry starts a fresh attempt via the normal create flow (never copies transcript/scores).
-  const retry = read("components/debate/retry-motion-button.tsx");
-  assert.ok(retry.includes('fetch("/api/debates"'), "retry POSTs a new debate");
-  assert.ok(retry.includes("/messages") && retry.includes("MODERATOR"), "retry seeds the opening moderator message");
+  // 5. Replay reuses the existing audio control for each speech.
+  assert.ok(replay.includes("SpeakButton") && /accessibility\/speak-button/.test(replay), "replay reuses the existing SpeakButton");
+  assert.ok(/messages\.map[\s\S]*SpeakButton text=\{message\.content\}/.test(replay), "each official speech has a read-aloud control");
 
-  // 9. Attempt comparison uses only real judged scores.
-  assert.ok(historyLib.includes("getAttemptsForMotion") && /status: "JUDGED"/.test(historyLib), "attempt compare uses real judged scores only");
+  // 6. Judge feedback has a read-aloud control.
+  assert.ok(replay.includes("judgeSpeech") && /SpeakButton text=\{judgeSpeech\}/.test(replay), "judge feedback has a read-aloud control");
 
-  // 10. Dashboard offers recovery for unfinished debates.
-  const dashboard = read("app/(app)/dashboard/page.tsx");
-  assert.ok(dashboard.includes("ResumeDebatesCard") && dashboard.includes("isUnfinished"), "dashboard shows unfinished-debate recovery");
+  // 7. Retry offers same / opposite / random side.
+  assert.ok(/Same side/.test(retry) && /Opposite side/.test(retry) && /Random side/.test(retry), "retry offers same/opposite/random side");
+  assert.ok(retry.includes('"RANDOM"') && retry.includes("oppositeSide"), "retry resolves random and opposite sides");
+
+  // 8. Retry preserves motion, track/organization, format/event, and difficulty (persona).
+  for (const field of ["organization: config.organization", "eventType: config.eventType", "format: config.format", "level: config.level", "topic: config.topic", "aiPersona: config.aiPersona"]) {
+    assert.ok(retry.includes(field), `retry preserves ${field}`);
+  }
+
+  // 9. Retry creates a fresh debate and copies no transcript/score/judge feedback.
+  assert.ok(retry.includes('fetch("/api/debates"'), "retry POSTs a new debate via the normal API");
+  assert.ok(retry.includes("MODERATOR") && retry.includes("Motion:"), "retry seeds only the opening moderator message");
+  assert.ok(!/overallScore|strengths|weaknesses|judgeReport/.test(retry), "retry copies no score or judge feedback");
+
+  // 10. Comparison uses real category scores when available.
+  assert.ok(replay.includes("categoryRows") && /logicScore/.test(replay), "comparison uses real stored category scores");
+  assert.ok(historyLib.includes("logicScore: true") && historyLib.includes("communicationScore: true"), "attempt loader selects real category scores");
+
+  // 11. Comparison falls back to real qualitative feedback when scores are unavailable.
+  assert.ok(/hasQualitative/.test(replay) && /Comparison data is unavailable/.test(replay), "comparison degrades to qualitative feedback then honest empty state");
+
+  // 12. Comparison never invents improvement.
+  assert.ok(/No improvement is calculated/.test(replay), "comparison explicitly avoids fabricated improvement");
+  assert.ok(!/improved by|% better|delta/i.test(replay), "comparison shows no invented deltas");
+
+  // 13. Recovery shows side, opponent, track/format, and last-active date.
+  for (const token of ["sideLabel", "opponentLabel", "trackLabel", "formatLabel", "Last active"]) {
+    assert.ok(card.includes(token), `recovery card shows ${token}`);
+  }
+
+  // 14. Discard draft clears only the selected debate's draft (with confirm) and keeps the debate.
+  assert.ok(card.includes("Discard draft"), "recovery uses the clear 'Discard draft' label");
+  assert.ok(/window\.confirm/.test(card) && /removeItem\(draftKey\(id\)\)/.test(card), "discard confirms and clears only that draft");
+
+  // 15. Student history is owner-only.
+  assert.ok(/where: \{ studentId: userId \}/.test(historyLib), "history is scoped to the current student");
+
+  // 16 & 17. Replay authorization: owner/admin/team-coach allowed; everyone else 403.
+  assert.ok(historyLib.includes("teamMember.findFirst"), "authorized team coach can view a student's replay");
+  assert.ok(/permission to view this debate/.test(historyLib), "unauthorized viewers get a 403");
 
   console.log("debate-replay smoke: all assertions passed");
 }

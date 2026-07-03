@@ -4,12 +4,13 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { Gavel, Lock, ShieldAlert } from "lucide-react";
 import { RetryMotionButton } from "@/components/debate/retry-motion-button";
+import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
-import { getAttemptsForMotion, getDebateReplay } from "@/lib/debate-history";
+import { getAttemptsForMotion, getDebateReplay, sideLabel } from "@/lib/debate-history";
 import { trackByOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,28 @@ function speakerLabel(role: string, hasAuthor: boolean, persona: string | null):
   if (role === "MODERATOR") return "Moderator";
   if (hasAuthor) return "You";
   return persona ? `Opponent (${persona})` : "Opponent";
+}
+
+type ScoredDebate = {
+  logicScore: number | null;
+  evidenceScore: number | null;
+  rebuttalScore: number | null;
+  persuasionScore: number | null;
+  clarityScore: number | null;
+  communicationScore: number | null;
+};
+
+// Only real, stored category scores — nulls are omitted, never zero-filled or estimated.
+function categoryRows(debate: ScoredDebate): Array<{ label: string; score: number }> {
+  const rows: Array<{ label: string; score: number | null }> = [
+    { label: "Logic", score: debate.logicScore },
+    { label: "Evidence", score: debate.evidenceScore },
+    { label: "Rebuttal", score: debate.rebuttalScore },
+    { label: "Persuasion", score: debate.persuasionScore },
+    { label: "Clarity", score: debate.clarityScore },
+    { label: "Communication", score: debate.communicationScore }
+  ];
+  return rows.filter((row): row is { label: string; score: number } => typeof row.score === "number");
 }
 
 export default async function DebateReplayPage({ params }: { params: { debateId: string } }) {
@@ -61,6 +84,16 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
   const hasJudgeNotes =
     debate.strengths.length > 0 || debate.weaknesses.length > 0 || debate.recommendations.length > 0 || typeof debate.overallScore === "number";
 
+  // Read-aloud text for the judge feedback — reuses the same speech-synthesis engine as the transcript.
+  const judgeSpeech = [
+    typeof debate.overallScore === "number" ? `Overall score ${debate.overallScore}.` : "",
+    debate.strengths.length ? `Strengths: ${debate.strengths.join(". ")}.` : "",
+    debate.weaknesses.length ? `To improve: ${debate.weaknesses.join(". ")}.` : "",
+    debate.recommendations.length ? `Recommendations: ${debate.recommendations.join(". ")}.` : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -69,10 +102,11 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
           <Badge variant="outline">{track?.label ?? debate.organization}</Badge>
           <Badge variant="outline">{debate.eventType}</Badge>
           {judged ? <Badge>Completed</Badge> : <Badge variant="outline">Not yet judged</Badge>}
+          {debate.assistedPractice ? <Badge variant="outline">Assisted Practice</Badge> : null}
         </div>
         <h1 className="text-2xl font-bold">{debate.topic}</h1>
         <p className="text-sm text-muted-foreground">
-          Your side: {debate.studentSide} · Opponent side: {debate.opponentSide} · Opponent: {debate.aiPersona ?? "AI opponent"}
+          Your side: {sideLabel(debate.studentSide)} · Opponent side: {sideLabel(debate.opponentSide)} · Opponent: {debate.aiPersona ?? "AI opponent"}
         </p>
       </div>
 
@@ -86,10 +120,13 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
           ) : (
             debate.messages.map((message) => (
               <div key={message.id} className="rounded-md border bg-background p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {speakerLabel(message.role, Boolean(message.authorId), debate.aiPersona)}
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-sm">{message.content}</p>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {speakerLabel(message.role, Boolean(message.authorId), debate.aiPersona)}
+                  </p>
+                  <SpeakButton text={message.content} label="Read aloud" />
+                </div>
+                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
               </div>
             ))
           )}
@@ -102,9 +139,12 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Gavel className="h-4 w-4" aria-hidden />
-            Judge feedback
+          <CardTitle className="flex items-center justify-between gap-2 text-base">
+            <span className="flex items-center gap-2">
+              <Gavel className="h-4 w-4" aria-hidden />
+              Judge feedback
+            </span>
+            {judged && hasJudgeNotes && judgeSpeech ? <SpeakButton text={judgeSpeech} label="Read aloud" /> : null}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -116,6 +156,15 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
             <>
               {typeof debate.overallScore === "number" ? (
                 <p className="text-sm font-semibold">Overall score: {debate.overallScore}</p>
+              ) : null}
+              {categoryRows(debate).length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {categoryRows(debate).map((row) => (
+                    <span key={row.label} className="rounded-md border bg-background px-2 py-1 text-xs">
+                      {row.label}: <span className="font-semibold">{row.score}</span>
+                    </span>
+                  ))}
+                </div>
               ) : null}
               {debate.strengths.length > 0 ? (
                 <div>
@@ -157,15 +206,49 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Your other attempts at this motion</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm text-muted-foreground">
-            {attempts.map((attempt) => (
-              <p key={attempt.id}>
-                <Link href={`/debates/${attempt.id}/replay` as Route} className="font-semibold text-foreground hover:underline">
-                  {typeof attempt.overallScore === "number" ? `Score ${attempt.overallScore}` : "Not scored"}
-                </Link>
-              </p>
-            ))}
-            <p className="pt-1 text-xs">Only real, judged attempts are compared — nothing is estimated.</p>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Real results from your judged attempts at this motion. No improvement is calculated — compare the values yourself.
+            </p>
+            {attempts.map((attempt) => {
+              const rows = categoryRows(attempt);
+              const hasQualitative = attempt.strengths.length > 0 || attempt.weaknesses.length > 0 || attempt.recommendations.length > 0;
+              return (
+                <div key={attempt.id} className="space-y-2 rounded-md border bg-background p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">
+                      {attempt.createdAt.toLocaleDateString()} · {sideLabel(attempt.studentSide)}
+                      {typeof attempt.overallScore === "number" ? ` · Overall ${attempt.overallScore}` : ""}
+                      {attempt.assistedPractice ? (
+                        <Badge variant="outline" className="ml-2 align-middle text-[10px]">
+                          Assisted Practice
+                        </Badge>
+                      ) : null}
+                    </p>
+                    <Link href={`/debates/${attempt.id}/replay` as Route} className="text-xs font-semibold text-primary hover:underline">
+                      View replay
+                    </Link>
+                  </div>
+                  {rows.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {rows.map((row) => (
+                        <span key={row.label} className="rounded-md border px-2 py-0.5 text-xs">
+                          {row.label}: <span className="font-semibold">{row.score}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : hasQualitative ? (
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      {attempt.strengths.length > 0 ? <p><span className="font-semibold text-emerald-600">Strengths:</span> {attempt.strengths.join("; ")}</p> : null}
+                      {attempt.weaknesses.length > 0 ? <p><span className="font-semibold text-amber-600">To improve:</span> {attempt.weaknesses.join("; ")}</p> : null}
+                      {attempt.recommendations.length > 0 ? <p><span className="font-semibold text-sky-600">Recommendations:</span> {attempt.recommendations.join("; ")}</p> : null}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Comparison data is unavailable for this attempt.</p>
+                  )}
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       ) : null}

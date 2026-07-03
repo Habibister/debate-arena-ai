@@ -20,7 +20,7 @@ import type { MasteryPoint } from "@/types/domain";
 import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
-import { getStudentDebates, isUnfinished } from "@/lib/debate-history";
+import { getStudentDebates, isUnfinished, sideLabel } from "@/lib/debate-history";
 import { trackByOrganization } from "@/lib/training-tracks";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
@@ -112,6 +112,9 @@ export default async function DashboardPage() {
             id: debate.id,
             topic: debate.topic,
             trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
+            formatLabel: `${debate.eventType} · ${debate.format}`,
+            sideLabel: sideLabel(debate.studentSide),
+            opponentLabel: debate.aiPersona ?? "AI opponent",
             statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
             updatedLabel: debate.updatedAt.toLocaleDateString()
           }))

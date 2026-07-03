@@ -79,6 +79,13 @@ export function trackToOrganization(id: TrainingTrack): Organization {
   return trackById(id).organization;
 }
 
+// Direct-URL isolation: is `contentOrg` (a deck/resource organization) allowed for the active track?
+// With no selected track the user is browsing broadly, so everything is allowed; otherwise the
+// content must belong to the selected track's organization — knowing a URL never exposes another org.
+export function trackAllowsOrganization(track: TrackInfo | null | undefined, contentOrg: string): boolean {
+  return !track || track.organization === contentOrg;
+}
+
 // Reverse lookup so a team/assignment's existing Organization maps to a track label (no schema needed).
 export function trackByOrganization(org: Organization | null | undefined): TrackInfo | undefined {
   return TRACKS.find((t) => t.organization === org);

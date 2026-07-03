@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
 import { StudyGames } from "@/components/study/games/study-games";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,20 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MIN_CARDS } from "@/lib/study-games";
 import { flashcardsForDeck } from "@/lib/study-content";
+import { getActiveTrack } from "@/lib/track-server";
+import { trackAllowsOrganization } from "@/lib/training-tracks";
 
 export default function StudyDeckGamesPage({ params }: { params: { deck: string } }) {
   const cards = flashcardsForDeck(params.deck);
 
   if (cards.length === 0) {
     notFound();
+  }
+
+  // Direct-URL isolation for the games route too (same rule as the deck page).
+  const activeTrack = getActiveTrack();
+  if (!trackAllowsOrganization(activeTrack, cards[0].organization)) {
+    redirect("/study");
   }
 
   const deckName = cards[0].deck;

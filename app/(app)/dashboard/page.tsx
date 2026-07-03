@@ -22,7 +22,7 @@ import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isUnfinished, sideLabel } from "@/lib/debate-history";
-import { trackByOrganization } from "@/lib/training-tracks";
+import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
 import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
 import { authOptions } from "@/lib/auth";
@@ -125,10 +125,13 @@ export default async function DashboardPage() {
   const studentTeamRows = role === "STUDENT" && session?.user?.id ? await getStudentTeams(session.user.id) : [];
   const assignments = role === "STUDENT" && session?.user?.id ? await getStudentAssignments(session.user.id) : [];
   // Recovery: debates the student left mid-session (never submitted or scored).
+  // Only surface unfinished sessions that match the selected track — never invite the user to resume
+  // an unrelated track's session from this dashboard. All sessions remain intact in /debates/history.
   const unfinishedDebates: ResumeDebate[] =
     role === "STUDENT" && session?.user?.id
       ? (await getStudentDebates(session.user.id))
           .filter((debate) => isUnfinished(debate.status))
+          .filter((debate) => trackAllowsOrganization(activeTrack, debate.organization))
           .slice(0, 4)
           .map((debate) => ({
             id: debate.id,

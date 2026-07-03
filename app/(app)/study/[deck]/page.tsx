@@ -1,11 +1,13 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { FlashcardStudy } from "@/components/study/flashcard-study";
 import { buttonVariants } from "@/components/ui/button";
 import { flashcardsForDeck } from "@/lib/study-content";
+import { getActiveTrack } from "@/lib/track-server";
+import { trackAllowsOrganization } from "@/lib/training-tracks";
 
 export default function StudyDeckPage({ params }: { params: { deck: string } }) {
   const cards = flashcardsForDeck(params.deck);
@@ -16,6 +18,13 @@ export default function StudyDeckPage({ params }: { params: { deck: string } }) 
 
   const firstCard = cards[0];
   const organization = firstCard.organization;
+
+  // Direct-URL isolation: a HOSA user cannot open a DECA deck just by knowing its URL. Bounce back to
+  // the track-filtered study list rather than exposing another organization's content.
+  const activeTrack = getActiveTrack();
+  if (!trackAllowsOrganization(activeTrack, organization)) {
+    redirect("/study");
+  }
 
   return (
     <div className="space-y-6">

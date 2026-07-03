@@ -186,10 +186,27 @@ export const teamLeaveSchema = z.object({
   teamId: z.string().min(1, "Missing team.")
 });
 
+// Accept whatever the browser sends: a `datetime-local` value ("2026-07-10T14:30", no seconds/zone),
+// a date ("2026-07-10"), a full ISO string, empty, or null. Empty → no due date; a non-empty value
+// that does not parse to a real date is a clear, specific validation error (not "Invalid request body").
 const dueDateSchema = z
-  .union([z.string().trim().datetime(), z.string().trim().date(), z.literal(""), z.null()])
+  .union([z.string(), z.null()])
   .optional()
-  .transform((value) => (value ? new Date(value) : null));
+  .transform((value, ctx) => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (trimmed === "") {
+      return null;
+    }
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a valid due date." });
+      return z.NEVER;
+    }
+    return parsed;
+  });
 
 export const assignmentCreateSchema = z
   .object({

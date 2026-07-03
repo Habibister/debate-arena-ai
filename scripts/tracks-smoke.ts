@@ -15,6 +15,7 @@ import {
   TRACK_COOKIE,
   TRACKS,
   skillVisibleForTrack,
+  trackAllowsOrganization,
   trackByOrganization,
   trackBySlug,
   trackToOrganization
@@ -245,7 +246,49 @@ function main() {
   assert.ok(!/coming soon/i.test(readFileSync("components/debate/debate-room.tsx", "utf8")), "debate room shows no 'coming soon' placeholder");
   assert.ok(!/Live students coming soon/.test(readFileSync("components/debate/debate-arena.tsx", "utf8")), "arena 'Live students coming soon' placeholder removed");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice (terminology/stages/context, no parliamentary labels), Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, and removed placeholders.");
+  // ----------------------------------------------------------------------------------------------
+  // Video-verified addendum coverage.
+  // ----------------------------------------------------------------------------------------------
+
+  // A1. Direct-URL track isolation: a HOSA user cannot open a DECA deck just by knowing the URL.
+  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "DECA"), false, "HOSA track disallows a DECA deck via direct URL");
+  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "HOSA"), true, "HOSA track allows HOSA decks");
+  assert.equal(trackAllowsOrganization(trackBySlug("deca"), "HOSA"), false, "DECA track disallows a HOSA deck via direct URL");
+  assert.equal(trackAllowsOrganization(undefined, "DECA"), true, "no selected track -> browse-all allowed");
+  const deckPage = readFileSync("app/(app)/study/[deck]/page.tsx", "utf8");
+  assert.ok(deckPage.includes("trackAllowsOrganization") && deckPage.includes("redirect"), "study deck route validates the deck against the active track and redirects on mismatch");
+  const deckGamesPage = readFileSync("app/(app)/study/[deck]/games/page.tsx", "utf8");
+  assert.ok(deckGamesPage.includes("trackAllowsOrganization") && deckGamesPage.includes("redirect"), "study deck games route enforces the same isolation");
+
+  // A2. DECA (and other non-general tracks) must not route into parliamentary debate.
+  const debatePage = readFileSync("app/(app)/debate/page.tsx", "utf8");
+  assert.ok(debatePage.includes('activeTrack.id !== "GENERAL_DEBATE"') && debatePage.includes("/practice"), "debate page redirects non-general tracks to their real practice (no parliamentary debate as DECA/HOSA/MUN)");
+
+  // A3. Unfinished practice is filtered by the selected track (records still kept in history).
+  const mixedDebates = [{ organization: "DEBATE" }, { organization: "MODEL_UN" }, { organization: "HOSA" }];
+  const gdOnly = mixedDebates.filter((d) => trackAllowsOrganization(trackBySlug("debate"), d.organization));
+  assert.deepEqual(gdOnly.map((d) => d.organization), ["DEBATE"], "General Debate dashboard shows only General Debate unfinished sessions");
+  const munOnly = mixedDebates.filter((d) => trackAllowsOrganization(trackBySlug("model-un"), d.organization));
+  assert.deepEqual(munOnly.map((d) => d.organization), ["MODEL_UN"], "Model UN dashboard shows only Model UN unfinished sessions");
+  const dashSrc = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
+  assert.ok(dashSrc.includes("trackAllowsOrganization(activeTrack, debate.organization)"), "dashboard filters unfinished sessions by the active track");
+
+  // A5. HOSA mastery path shows no debate-only 'rebuttal' prerequisite text. The lock/progression copy
+  // is now track-neutral, and Debate-org skills (the only place "rebuttal" appears, as a slug) are
+  // filtered out of the HOSA path entirely — so a HOSA user never sees a rebuttal prerequisite.
+  const skillPath = readFileSync("components/skills/skill-path.tsx", "utf8");
+  assert.ok(!/Unlock after rebuttal/.test(skillPath), "the 'Unlock after rebuttal' lock text is gone");
+  assert.ok(skillPath.includes("Complete the earlier lessons to unlock"), "lock text is track-neutral progression copy");
+  assert.equal(skillVisibleForTrack("Debate", "HOSA").visible, false, "HOSA path excludes Debate skills (no rebuttal prerequisite reaches HOSA)");
+
+  // A6. Coach dashboards follow the same track isolation: the shared dashboard actions/resources are
+  // track-filtered (and NOT student-only), and coach pages render no organization-specific generator
+  // or resource shelf, so a Model UN coach never sees DECA/HOSA actions.
+  assert.ok(dashSrc.includes("nextStepsForTrack(activeTrack)") && dashSrc.includes("resourceOrgForTrack(activeTrack)"), "dashboard actions + resources are track-filtered for every role");
+  const coachPage = readFileSync("app/(app)/coach/page.tsx", "utf8");
+  assert.ok(!/PracticeTestGenerator|RecommendedVideos/.test(coachPage), "coach page renders no organization-specific generator or resource shelf");
+
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice (terminology/stages/context, no parliamentary labels), Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect, track-filtered unfinished sessions, HOSA mastery has no rebuttal text, and coach dashboard isolation.");
 }
 
 main();

@@ -24,9 +24,37 @@ function loadEnv(file: string) {
 loadEnv(".env.local");
 loadEnv(".env");
 
+async function offlineSchemaChecks() {
+  // Regression: the coach form sends a browser `datetime-local` value ("2026-07-10T14:30" — no
+  // seconds/timezone). The old schema only accepted full ISO / date strings and rejected this as
+  // "Invalid request body". These checks run without a database so the fix is always verified.
+  const { assignmentCreateSchema } = await import("@/lib/validators");
+  const base = {
+    teamId: "team_1",
+    type: "DEBATE_ROUND" as const,
+    title: "Due-date drill",
+    instructions: "Complete the assigned round.",
+    targetAllTeam: true,
+    studentIds: [],
+    targetId: null,
+    points: null
+  };
+
+  const withDueDate = assignmentCreateSchema.parse({ ...base, dueDate: "2026-07-10T14:30" });
+  assert.ok(withDueDate.dueDate instanceof Date && !Number.isNaN(withDueDate.dueDate.getTime()), "datetime-local due date must parse to a valid Date (no 'Invalid request body').");
+  assert.equal(assignmentCreateSchema.parse({ ...base, dueDate: "" }).dueDate, null, "empty due date -> no due date");
+  assert.equal(assignmentCreateSchema.parse({ ...base, dueDate: null }).dueDate, null, "null due date -> no due date");
+  assert.ok(assignmentCreateSchema.parse({ ...base, dueDate: "2026-07-10" }).dueDate instanceof Date, "plain date string still accepted");
+  assert.throws(() => assignmentCreateSchema.parse({ ...base, dueDate: "not-a-date" }), /valid due date/i, "invalid due date gives a specific error, not a generic rejection");
+
+  console.log("Assignment offline checks passed: datetime-local + date + empty due dates accepted; invalid due date gives a clear field error.");
+}
+
 async function main() {
+  await offlineSchemaChecks();
+
   if (!process.env.DATABASE_URL) {
-    console.log("Assignment smoke skipped: DATABASE_URL is not set.");
+    console.log("Assignment smoke (database) skipped: DATABASE_URL is not set.");
     return;
   }
 
@@ -83,6 +111,28 @@ async function main() {
       }
     });
     assert.ok(debateAssignment.id, "Assignment must be created.");
+
+    // 1b. Coach creates a DUE-DATED assignment through the REAL validation schema (browser
+    // datetime-local value). This is the end-to-end regression check for the "Invalid request body"
+    // bug: it must create, persist a due date, and be visible to the student.
+    const { assignmentCreateSchema } = await import("@/lib/validators");
+    const dueInput = assignmentCreateSchema.parse({
+      teamId: team.id,
+      type: "DEBATE_ROUND",
+      title: "Due Friday round",
+      instructions: "Finish a judged debate before the due date.",
+      dueDate: "2026-07-10T14:30",
+      targetAllTeam: true,
+      studentIds: [],
+      targetId: null,
+      points: null
+    });
+    const dueAssignment = await assignments.createAssignment({ coachUserId: coach.id, role: "COACH", input: dueInput });
+    assert.ok(dueAssignment.id, "Due-dated assignment must be created (not rejected as invalid).");
+    const dueVisible = await assignments.getStudentAssignments(student.id);
+    const seenDue = dueVisible.find((assignment) => assignment.id === dueAssignment.id);
+    assert.ok(seenDue, "Student must see the due-dated assignment.");
+    assert.ok(seenDue?.dueDate instanceof Date, "Persisted assignment retains its due date.");
 
     // 2. Student in the team sees the assignment.
     const visibleToStudent = await assignments.getStudentAssignments(student.id);

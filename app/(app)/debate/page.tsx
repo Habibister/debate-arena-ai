@@ -1,7 +1,18 @@
+import type { Route } from "next";
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { DebateRoom } from "@/components/debate/debate-room";
+import { getActiveTrack } from "@/lib/track-server";
 
 export default function DebatePage({ searchParams }: { searchParams: { track?: string } }) {
+  // The debate room is a General Debate (parliamentary/PF) experience. Other tracks have their own
+  // legitimate practice (DECA role play, HOSA scenarios, Model UN committee) — never present
+  // parliamentary debate as their training. Send them to the correct track practice instead.
+  const activeTrack = getActiveTrack(searchParams.track);
+  if (activeTrack && activeTrack.id !== "GENERAL_DEBATE") {
+    redirect(`/training/${activeTrack.slug}/practice` as Route);
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">

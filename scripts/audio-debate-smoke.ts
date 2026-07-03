@@ -67,6 +67,22 @@ function main() {
 
   const stt = readFileSync("components/debate/accessibility/speech-input.tsx", "utf8");
   assert.ok(stt.includes("Voice input is not supported in this browser"), "STT unsupported fallback message present");
+  // Continuous listening + stop-on-timer wiring.
+  assert.ok(stt.includes("continuous = true"), "recognition listens continuously (survives pauses)");
+  assert.ok(/stoppedIntentionally/.test(stt), "intentional-stop guard prevents onend auto-restart");
+  assert.ok(/restartTimerRef/.test(stt), "restart timer exists and can be cleared");
+  assert.ok(stt.includes(".abort()"), "hard stop aborts to drop the mic indicator promptly");
+  assert.ok(stt.includes("Time is up — recording stopped. Review your response before submitting."), "time-up message present");
+  assert.ok(/timeUp/.test(stt) && /turnKey/.test(stt), "SpeechInput accepts timeUp + turnKey signals");
+  assert.ok(/expiredHandledRef/.test(stt), "expiration fires once per turn");
+
+  // Arena passes a per-turn expiry signal, and untimed turns never expire.
+  assert.ok(arena.includes("studentSpeechTimeUp"), "arena computes the student speech-timer expiry");
+  assert.ok(arena.includes("timeUp={studentSpeechTimeUp}"), "arena passes timeUp to SpeechInput");
+  assert.ok(arena.includes("turnKey={currentSpeech.key}"), "arena passes the per-turn key");
+  assert.ok(arena.includes("turnLimitSeconds > 0"), "untimed/disabled turns do not expire");
+  // Timer expiry must not auto-submit (no submit call bound to turnRemaining === 0).
+  assert.ok(!/turnRemaining === 0[\s\S]{0,80}submitStudentSpeech/.test(arena), "timer expiry does not auto-submit");
 
   // Accessibility settings must never touch auth/JWT.
   const auth = readFileSync("lib/auth.ts", "utf8");
@@ -75,7 +91,7 @@ function main() {
   // Gemini/AI health route untouched.
   assert.ok(existsSync("app/api/ai/health/route.ts"), "AI health route still exists");
 
-  console.log("Audio-debate smoke tests passed: voice params, settings normalize, frame/text classes, section splitting (content preserved), arena+room integration, STT fallback, no-JWT storage, AI health untouched.");
+  console.log("Audio-debate smoke tests passed: voice params, settings normalize, frame/text classes, section splitting (content preserved), arena+room integration, STT fallback, continuous listening + stop-on-timer wiring (no auto-submit), no-JWT storage, AI health untouched.");
 }
 
 main();

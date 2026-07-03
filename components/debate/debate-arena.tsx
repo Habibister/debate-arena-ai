@@ -349,6 +349,10 @@ function DebateArenaInner({ initialDebate, studentProfile, opponentProfile, init
   const canJudge = Boolean(!judgeReport && completedSpeechCount >= config.speeches.length && debate.status !== "JUDGED");
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
+  // Signal for the voice input: only timed student turns "expire". Untimed/disabled turns (<=0s) and
+  // paused turns never hit zero, so voice input keeps listening until the student stops it manually.
+  const turnLimitSeconds = currentSpeech?.timeSeconds ?? debate.turnTimeSeconds;
+  const studentSpeechTimeUp = turnLimitSeconds > 0 && turnActive && isStudentTurn && turnRemaining === 0;
   // Non-substantive speech guardrail: don't let "n" / "phones bad" through to a real debate round.
   const speechAssessment = useMemo(() => assessStudentSpeech(studentInput, debate.level), [studentInput, debate.level]);
   const canSubmitSpeech = studentInput.trim().length > 0 && speechAssessment.ok;
@@ -728,6 +732,8 @@ function DebateArenaInner({ initialDebate, studentProfile, opponentProfile, init
                   <div className="mb-2">
                     <SpeechInput
                       disabled={isSubmitting || prepActive}
+                      timeUp={studentSpeechTimeUp}
+                      turnKey={currentSpeech.key}
                       onAppend={(text) => setStudentInput((current) => (current.trim() ? `${current.trim()} ${text}` : text))}
                     />
                   </div>

@@ -6,6 +6,7 @@ import type { Route } from "next";
 import type { AssignmentType, Organization } from "@prisma/client";
 import { Loader2, Send } from "lucide-react";
 import { ASSIGNMENT_TYPE_META, assignmentTypeLabel } from "@/lib/assignment-types";
+import { trackByOrganization } from "@/lib/training-tracks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -136,6 +137,11 @@ export function CreateAssignmentForm({
                   </option>
                 ))}
               </select>
+              {selectedTeam ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Track: {trackByOrganization(selectedTeam.organization)?.label ?? selectedTeam.organization.replace("_", " ")}
+                </p>
+              ) : null}
             </div>
             <div>
               <label className="text-sm font-semibold" htmlFor="type">

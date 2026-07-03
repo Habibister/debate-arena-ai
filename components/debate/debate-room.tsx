@@ -8,7 +8,9 @@ import { Bot, Check, CircleAlert, Clock3, Loader2, MessageSquareText, RefreshCw,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
 import { normalizeAccessibility } from "@/lib/accessibility";
+import { DEFAULT_TRACK, trackById, trackBySlug } from "@/lib/training-tracks";
 import { AI_DEBATE_PERSONAS } from "@/lib/ai-personas";
 import {
   DEBATE_CATEGORIES,
@@ -55,7 +57,11 @@ function formatTime(seconds: number) {
   return remainder === 0 ? `${minutes} min` : `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-export function DebateRoom() {
+export function DebateRoom({ track }: { track?: string }) {
+  // The selected training track (from the hub link ?track=slug) decides the organization the AI
+  // opponent/judge use. Falls back to General Debate. URL is the strongest source of truth.
+  const trackInfo = trackBySlug(track ?? "") ?? trackById(DEFAULT_TRACK);
+  const trackOrganization = trackInfo.organization;
   const router = useRouter();
   const [format, setFormat] = useState<DebateFormat>("PARLIAMENTARY");
   const [category, setCategory] = useState<(typeof DEBATE_CATEGORIES)[number]>("Global");
@@ -122,7 +128,7 @@ export function DebateRoom() {
       const generated = await requestJson<TopicPackage>("/api/ai/topic", {
         method: "POST",
         body: JSON.stringify({
-          organization: "DEBATE",
+          organization: trackOrganization,
           eventType: config.eventType,
           practiceMode: "DEBATE",
           level,
@@ -155,7 +161,7 @@ export function DebateRoom() {
       const created = await requestJson<{ debate: { id: string } }>("/api/debates", {
         method: "POST",
         body: JSON.stringify({
-          organization: "DEBATE",
+          organization: trackOrganization,
           eventType: config.eventType,
           practiceMode: "DEBATE",
           format,
@@ -190,6 +196,12 @@ export function DebateRoom() {
 
   return (
     <div className="overflow-hidden rounded-lg border border-white/10 bg-neutral-950 text-white shadow-2xl">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-white/[0.03] px-4 py-2 text-sm sm:px-6">
+        <span className="font-semibold text-neutral-200">Training in: {trackInfo.label}</span>
+        <Link href="/training" className="font-semibold text-emerald-300 hover:underline">
+          Switch track
+        </Link>
+      </div>
       <div className="border-b border-white/10 px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">

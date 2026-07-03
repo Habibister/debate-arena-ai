@@ -5,6 +5,7 @@ import { PracticeTestGenerator } from "@/components/tests/practice-test-generato
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
+import { trackBySlug } from "@/lib/training-tracks";
 
 const testSteps = [
   { title: "Generate", detail: "Choose 10, 25, 50, or a 100-question mixed exam.", icon: Sparkles },
@@ -12,11 +13,15 @@ const testSteps = [
   { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
 ];
 
-export default function TestsPage() {
+export default function TestsPage({ searchParams }: { searchParams: { track?: string } }) {
+  const activeTrack = trackBySlug(searchParams.track);
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
-        <Badge variant="secondary">DECA and HOSA</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">DECA and HOSA</Badge>
+          {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
+        </div>
         <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Practice tests</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.
@@ -46,14 +51,24 @@ export default function TestsPage() {
           <CardTitle>Supported test tracks</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-lg border bg-background p-4">
-            <p className="text-sm font-semibold text-muted-foreground">DECA</p>
-            <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
-          </div>
-          <div className="rounded-lg border bg-background p-4">
-            <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
-            <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
-          </div>
+          {!activeTrack || activeTrack.id === "DECA" ? (
+            <div className="rounded-lg border bg-background p-4">
+              <p className="text-sm font-semibold text-muted-foreground">DECA</p>
+              <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
+            </div>
+          ) : null}
+          {!activeTrack || activeTrack.id === "HOSA" ? (
+            <div className="rounded-lg border bg-background p-4">
+              <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
+              <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
+            </div>
+          ) : null}
+          {activeTrack && activeTrack.id !== "DECA" && activeTrack.id !== "HOSA" ? (
+            <div className="rounded-lg border bg-background p-4 md:col-span-2">
+              <p className="text-sm font-semibold">Practice tests are available for DECA and HOSA.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Your {activeTrack.label} track uses debate/practice and study instead.</p>
+            </div>
+          ) : null}
           <div className="rounded-lg border bg-background p-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <CheckCircle2 className="h-4 w-4 text-accent" aria-hidden />

@@ -24,9 +24,12 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTrainingTrack } from "@/components/training/training-track-context";
+import { trackById } from "@/lib/training-tracks";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/training", label: "Training", icon: GraduationCap },
   { href: "/assignments", label: "Assignments", icon: FileCheck2 },
   { href: "/debate", label: "Debate", icon: MessageSquareText },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
@@ -89,6 +92,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profileUsername = session?.user?.username ?? session?.user?.email?.split("@")[0] ?? "profile";
   const profileAvatar = session?.user?.avatarUrl ?? session?.user?.image;
   const role = session?.user?.role ?? null;
+  const { track } = useTrainingTrack();
+  const trackSlug = trackById(track).slug;
+  // Preserve the selected track when navigating to track-filterable content routes.
+  const TRACK_AWARE = ["/study", "/tests", "/skills", "/debate"];
+  const withTrack = (href: string) => (TRACK_AWARE.includes(href) ? `${href}?track=${trackSlug}` : href);
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
   const rank = (session?.user?.rank ?? "BRONZE").replace("_", " ");
@@ -122,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={item.href as Route}
+                href={withTrack(item.href) as Route}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -148,6 +156,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Badge variant="secondary">{roleLabel(role)}</Badge>
             <span className="text-xs font-semibold text-muted-foreground">{rank} · {xp} XP</span>
           </div>
+          <Link href={"/training" as Route} className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-background px-2 py-1 text-xs">
+            <span className="font-semibold text-muted-foreground">Track: {trackById(track).short}</span>
+            <span className="font-semibold text-primary">Switch</span>
+          </Link>
           <Button type="button" variant="outline" size="sm" className="mt-3 w-full" onClick={() => signOut({ callbackUrl: "/signin" })}>
             <LogOut className="h-4 w-4" aria-hidden />
             Log out
@@ -184,7 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={item.href}
-                  href={item.href as Route}
+                  href={withTrack(item.href) as Route}
                   className={cn(
                     "flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold",
                     active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
@@ -208,7 +220,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           return (
             <Link
               key={item.href}
-              href={item.href as Route}
+              href={withTrack(item.href) as Route}
               className={cn(
                 "flex flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
                 active ? "bg-primary text-primary-foreground" : "text-muted-foreground"

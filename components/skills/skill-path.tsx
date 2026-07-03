@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { skillVisibleForTrack, type TrainingTrack } from "@/lib/training-tracks";
 
 const skills: Array<{
   name: string;
@@ -75,7 +76,10 @@ function actionIcon(skill: (typeof skills)[number]) {
 
 // showSampleProgress is true only for demo accounts. Real users have not earned mastery yet, so we
 // show "Not started" at 0% instead of fake percentages.
-export function SkillPath({ showSampleProgress = false }: { showSampleProgress?: boolean }) {
+export function SkillPath({ showSampleProgress = false, track }: { showSampleProgress?: boolean; track?: TrainingTrack }) {
+  // When a track is active, show only that track's skills plus shared-foundation skills.
+  const visibleSkills = track ? skills.filter((skill) => skillVisibleForTrack(skill.org, track).visible) : skills;
+
   return (
     <Card>
       <CardHeader>
@@ -85,8 +89,12 @@ export function SkillPath({ showSampleProgress = false }: { showSampleProgress?:
         </div>
       </CardHeader>
       <CardContent>
+        {visibleSkills.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No skills for this track yet.</p>
+        ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {skills.map((skill) => {
+          {visibleSkills.map((skill) => {
+            const shared = track ? skillVisibleForTrack(skill.org, track).shared : false;
             // Real users start every skill "not started" until they log real activity.
             const mastery = showSampleProgress ? skill.mastery : 0;
             const status = showSampleProgress ? skill.status : skill.status === "locked" ? "locked" : "active";
@@ -99,6 +107,7 @@ export function SkillPath({ showSampleProgress = false }: { showSampleProgress?:
                   <div>
                     <p className="text-xs font-semibold uppercase text-muted-foreground">{skill.org}</p>
                     <h3 className="mt-1 font-semibold">{skill.name}</h3>
+                    {shared ? <Badge variant="outline" className="mt-1">Shared foundation</Badge> : null}
                   </div>
                   <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <Icon className="h-4 w-4" aria-hidden />
@@ -128,6 +137,7 @@ export function SkillPath({ showSampleProgress = false }: { showSampleProgress?:
             );
           })}
         </div>
+        )}
       </CardContent>
     </Card>
   );

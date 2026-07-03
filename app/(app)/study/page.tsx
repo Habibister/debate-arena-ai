@@ -5,9 +5,13 @@ import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deckSummaries, FLASHCARDS } from "@/lib/study-content";
+import { trackBySlug } from "@/lib/training-tracks";
 
-export default function StudyPage() {
-  const decks = deckSummaries();
+export default function StudyPage({ searchParams }: { searchParams: { track?: string } }) {
+  // When arriving from a track (hub or sidebar), show only that track's decks — no cross-track content.
+  const activeTrack = trackBySlug(searchParams.track);
+  const allDecks = deckSummaries();
+  const decks = activeTrack ? allDecks.filter((d) => d.organization === activeTrack.organization) : allDecks;
 
   return (
     <div className="space-y-6">
@@ -44,8 +48,18 @@ export default function StudyPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Flashcard decks</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle>Flashcard decks</CardTitle>
+            {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
+          </div>
         </CardHeader>
+        {decks.length === 0 ? (
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              No {activeTrack ? activeTrack.label : ""} flashcard decks are available yet.
+            </p>
+          </CardContent>
+        ) : (
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {decks.map((deck) => (
             <Link key={deck.deckSlug} href={`/study/${deck.deckSlug}` as Route} className="rounded-lg border bg-background p-4 transition-colors hover:bg-muted">
@@ -60,6 +74,7 @@ export default function StudyPage() {
             </Link>
           ))}
         </CardContent>
+        )}
       </Card>
 
       <RecommendedVideos title="Video resource shelf" limit={6} />

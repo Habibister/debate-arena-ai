@@ -9,6 +9,7 @@ import { XpProgressCard } from "@/components/app/xp-progress-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { JoinTeamCard, type StudentTeam } from "@/components/teams/join-team-card";
+import { TrackNextStep } from "@/components/training/track-next-step";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -154,6 +155,8 @@ export default async function DashboardPage() {
         <StatCard label="Streak" value={`${streak} days`} detail="Complete one drill today to keep it alive." icon={Flame} />
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
+
+      <TrackNextStep />
 
       {role === "STUDENT" ? <JoinTeamCard teams={studentTeams} /> : null}
 

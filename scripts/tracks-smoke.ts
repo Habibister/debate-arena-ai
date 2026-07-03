@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import {
+  composePractice,
   CONTENT_SOURCE_LABEL,
   DEFAULT_CONTENT_SOURCE,
   DEFAULT_TRACK,
@@ -88,6 +89,39 @@ function main() {
   const form = readFileSync("components/assignments/create-assignment-form.tsx", "utf8");
   assert.ok(form.includes("trackByOrganization"), "assignment form displays the track");
   assert.ok(!form.includes("setTrack"), "opening/creating an assignment does not overwrite the student's preferred track");
+
+  // Dedicated practice setups compose track-specific fields into the AI-consumed context.
+  const decaPractice = composePractice("DECA", { cluster: "Finance", role: "analyst", participantRole: "Client", performanceIndicators: "explain pricing", scenario: "budget question" });
+  assert.equal(decaPractice.practiceMode, "ROLEPLAY", "DECA is a role play.");
+  assert.equal(decaPractice.organization, "DECA");
+  assert.ok(/Finance/.test(decaPractice.eventType), "DECA eventType carries the cluster.");
+  assert.ok(/Client/.test(decaPractice.topic) && /analyst/.test(decaPractice.topic) && /explain pricing/.test(decaPractice.topic), "DECA topic carries role + participant + performance indicators.");
+  assert.ok(/AI-generated DECA-style practice/.test(decaPractice.topic), "DECA labeled AI-generated (not official).");
+
+  const munPractice = composePractice("MODEL_UN", { committee: "Security Council", country: "Brazil", agenda: "climate", activity: "Opening speech" });
+  assert.ok(/Security Council/.test(munPractice.eventType) && /Security Council/.test(munPractice.topic), "MUN carries committee.");
+  assert.ok(/Brazil/.test(munPractice.topic) && /climate/.test(munPractice.topic) && /Opening speech/.test(munPractice.topic), "MUN topic carries country + agenda + activity.");
+
+  const hosaPractice = composePractice("HOSA", { category: "Medical terminology", scenario: "cardiac terms" });
+  assert.ok(/Medical terminology/.test(hosaPractice.eventType), "HOSA carries the category.");
+  assert.ok(!/Public Forum/.test(hosaPractice.eventType) && !/Public Forum/.test(hosaPractice.topic), "HOSA never labeled Public Forum.");
+  assert.equal(hosaPractice.organization, "HOSA");
+
+  const gdPractice = composePractice("GENERAL_DEBATE", { format: "Lincoln-Douglas" });
+  assert.ok(/Lincoln-Douglas/.test(gdPractice.eventType), "General Debate carries the selected format.");
+
+  // Route + component + hub wiring.
+  assert.ok(existsSync("app/(app)/training/[track]/practice/page.tsx"), "dedicated practice route exists");
+  assert.ok(existsSync("components/training/track-practice-setup.tsx"), "track practice setup component exists");
+  const setup = readFileSync("components/training/track-practice-setup.tsx", "utf8");
+  assert.ok(setup.includes("HOSA_CATEGORIES") && setup.includes("DECA_CLUSTERS") && setup.includes("MUN_COMMITTEES"), "setup renders track-specific fields");
+  assert.ok(/No verified public past material/.test(setup), "Past mode refuses unsourced material");
+  assert.ok(/AI-generated/.test(setup), "AI mode labeled");
+  assert.ok(/so this practice will be AI-generated/.test(setup), "Mixed explains AI fallback honestly");
+  const hub = readFileSync("app/(app)/training/[track]/page.tsx", "utf8");
+  assert.ok(hub.includes("/practice") && hub.includes("Start a DECA role play"), "hub links to dedicated practice with track labels");
+  const shell = readFileSync("components/app/app-shell.tsx", "utf8");
+  assert.ok(shell.includes("withTrack(item.href)"), "sidebar preserves the selected track on content links");
 
   console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved.");
 }

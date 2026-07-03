@@ -5,6 +5,7 @@ import { PracticeTestGenerator } from "@/components/tests/practice-test-generato
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
+import { trackBySlug } from "@/lib/training-tracks";
 
 const testSteps = [
   { title: "Generate", detail: "Choose 10, 25, 50, or a 100-question mixed exam.", icon: Sparkles },
@@ -12,11 +13,15 @@ const testSteps = [
   { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
 ];
 
-export default function TestsPage() {
+export default function TestsPage({ searchParams }: { searchParams: { track?: string } }) {
+  const activeTrack = trackBySlug(searchParams.track);
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
-        <Badge variant="secondary">DECA and HOSA</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">DECA and HOSA</Badge>
+          {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
+        </div>
         <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Practice tests</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.

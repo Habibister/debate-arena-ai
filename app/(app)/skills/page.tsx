@@ -4,17 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
+import { trackBySlug } from "@/lib/training-tracks";
 
 const lessonStructure = ["Lesson", "Examples", "Guided practice", "Independent practice", "Mastery quiz"];
 
-export default async function SkillsPage() {
+export default async function SkillsPage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
   const showSampleProgress = isDemoUser(session?.user?.email);
+  const activeTrack = trackBySlug(searchParams.track);
 
   return (
     <div className="space-y-6">
       <div>
-        <Badge variant="secondary">Skill Development</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">Skill Development</Badge>
+          {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
+        </div>
         <h1 className="mt-3 text-3xl font-bold">Mastery paths</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           Skills are organized by organization and lesson sequence, with focused pages for lessons, examples, guided reps, independent practice, and mastery checks.

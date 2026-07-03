@@ -93,6 +93,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profileAvatar = session?.user?.avatarUrl ?? session?.user?.image;
   const role = session?.user?.role ?? null;
   const { track } = useTrainingTrack();
+  const trackSlug = trackById(track).slug;
+  // Preserve the selected track when navigating to track-filterable content routes.
+  const TRACK_AWARE = ["/study", "/tests", "/skills", "/debate"];
+  const withTrack = (href: string) => (TRACK_AWARE.includes(href) ? `${href}?track=${trackSlug}` : href);
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
   const rank = (session?.user?.rank ?? "BRONZE").replace("_", " ");
@@ -126,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={item.href as Route}
+                href={withTrack(item.href) as Route}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -192,7 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={item.href}
-                  href={item.href as Route}
+                  href={withTrack(item.href) as Route}
                   className={cn(
                     "flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold",
                     active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
@@ -216,7 +220,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           return (
             <Link
               key={item.href}
-              href={item.href as Route}
+              href={withTrack(item.href) as Route}
               className={cn(
                 "flex flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
                 active ? "bg-primary text-primary-foreground" : "text-muted-foreground"

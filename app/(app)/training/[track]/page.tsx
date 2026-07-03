@@ -8,7 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { deckSummaries } from "@/lib/study-content";
-import { CONTENT_SOURCE_LABEL, TRACK_DISCLAIMER, trackBySlug } from "@/lib/training-tracks";
+import { CONTENT_SOURCE_LABEL, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
+
+const PRACTICE_ACTION: Record<TrainingTrack, string> = {
+  GENERAL_DEBATE: "Start a debate practice",
+  HOSA: "Start HOSA practice",
+  DECA: "Start a DECA role play",
+  MODEL_UN: "Start Model UN practice"
+};
 
 export default function TrackHubPage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
@@ -45,27 +52,17 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
 
       {/* Practice */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {isDebate ? (
-          <Link href={`/debate?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-            <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
-            <span>
-              <span className="block font-semibold">Start a debate round</span>
-              <span className="mt-1 block text-sm text-muted-foreground">Choose a format and practice with an AI opponent and judge.</span>
+        <Link href={`/training/${track.slug}/practice` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+          <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
+          <span>
+            <span className="block font-semibold">{PRACTICE_ACTION[track.id]}</span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              {isDebate ? "Choose a format and practice with an AI opponent and judge." : `A ${track.label}-specific setup — the AI uses ${track.label} criteria. AI-generated practice.`}
             </span>
-          </Link>
-        ) : (
-          <Link href={`/debate?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-            <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
-            <span>
-              <span className="block font-semibold">AI practice round</span>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                The AI judge uses {track.label} criteria. Full event-specific simulation is coming — this uses AI-generated practice for now.
-              </span>
-            </span>
-          </Link>
-        )}
+          </span>
+        </Link>
         {hasTests ? (
-          <Link href="/tests" className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+          <Link href={`/tests?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
             <ClipboardList className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
             <span>
               <span className="block font-semibold">Practice tests</span>
@@ -73,7 +70,7 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             </span>
           </Link>
         ) : null}
-        <Link href="/skills" className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+        <Link href={`/skills?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
           <BookOpenCheck className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
           <span>
             <span className="block font-semibold">Lessons & skill drills</span>

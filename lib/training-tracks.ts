@@ -101,3 +101,94 @@ export const DEFAULT_CONTENT_SOURCE: ContentSourceType = "AI_GENERATED";
 
 export const TRACK_DISCLAIMER =
   "CompeteReady is an independent training platform and is not officially affiliated with these organizations.";
+
+// Track-specific setup option lists (used by the dedicated practice setup). Original/AI framings —
+// never presented as official past material.
+export const HOSA_CATEGORIES = [
+  "Medical terminology",
+  "Health-science knowledge",
+  "Case-study practice",
+  "Prepared speaking",
+  "Persuasive speaking",
+  "Event procedure practice",
+  "Timed presentation"
+];
+export const DECA_CLUSTERS = ["Marketing", "Finance", "Hospitality & Tourism", "Business Management", "Entrepreneurship", "Personal Financial Literacy"];
+export const DECA_PARTICIPANT_ROLES = ["Customer", "Manager", "Executive", "Client", "Judge"];
+export const MUN_COMMITTEES = ["General Assembly", "Security Council", "ECOSOC", "Human Rights Council", "Historical Committee"];
+export const MUN_ACTIVITIES = ["Opening speech", "Moderated caucus", "Negotiation", "Resolution writing", "Amendment practice", "Position-paper practice"];
+
+export type PracticeFields = {
+  format?: string;
+  category?: string;
+  scenario?: string;
+  role?: string;
+  participantRole?: string;
+  cluster?: string;
+  performanceIndicators?: string;
+  committee?: string;
+  country?: string;
+  agenda?: string;
+  activity?: string;
+};
+
+// Composes track-specific setup fields into the values the existing AI/debate pipeline consumes:
+// organization (drives the track rubric), eventType (the category/event/committee), a text topic
+// (scenario incl. structured context the AI reads), and practiceMode. No schema change.
+export function composePractice(
+  track: TrainingTrack,
+  f: PracticeFields
+): { organization: Organization; eventType: string; topic: string; practiceMode: "DEBATE" | "ROLEPLAY"; sourceLabel: string } {
+  const organization = trackToOrganization(track);
+  const sourceLabel = `AI-generated ${trackById(track).label}-style practice`;
+  const scenario = (f.scenario ?? "").trim();
+
+  if (track === "DECA") {
+    const cluster = f.cluster ?? DECA_CLUSTERS[0];
+    const role = f.role || "sales associate";
+    const participant = f.participantRole ?? DECA_PARTICIPANT_ROLES[0];
+    const pis = f.performanceIndicators ? ` Performance indicators: ${f.performanceIndicators}.` : "";
+    return {
+      organization,
+      eventType: `DECA ${cluster} Role Play`,
+      practiceMode: "ROLEPLAY",
+      sourceLabel,
+      topic: `${sourceLabel} — ${cluster} role play. You are the ${role}; the AI plays the ${participant}. Objective/scenario: ${scenario || "respond to the business situation and make a recommendation."}${pis}`
+    };
+  }
+
+  if (track === "MODEL_UN") {
+    const committee = f.committee ?? MUN_COMMITTEES[0];
+    const country = f.country || "your assigned delegation";
+    const agenda = f.agenda || "the committee agenda";
+    const activity = f.activity ?? MUN_ACTIVITIES[0];
+    return {
+      organization,
+      eventType: `Model UN — ${committee}`,
+      practiceMode: "DEBATE",
+      sourceLabel,
+      topic: `${sourceLabel} — ${activity}. Committee: ${committee}. Country: ${country}. Agenda: ${agenda}.${scenario ? ` Focus: ${scenario}.` : ""}`
+    };
+  }
+
+  if (track === "HOSA") {
+    const category = f.category ?? HOSA_CATEGORIES[0];
+    return {
+      organization,
+      eventType: `HOSA — ${category}`,
+      practiceMode: "DEBATE",
+      sourceLabel,
+      topic: `${sourceLabel} — ${category}. ${scenario || "Work through this health-science practice item using correct terminology and safe, role-appropriate reasoning."}`
+    };
+  }
+
+  // General Debate (handled by the debate setup, but kept complete for tests).
+  const format = f.format ?? "Public Forum";
+  return {
+    organization,
+    eventType: format,
+    practiceMode: "DEBATE",
+    sourceLabel,
+    topic: scenario || `${format} practice round.`
+  };
+}

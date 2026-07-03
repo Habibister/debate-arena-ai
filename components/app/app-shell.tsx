@@ -24,9 +24,12 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTrainingTrack } from "@/components/training/training-track-context";
+import { trackById } from "@/lib/training-tracks";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/training", label: "Training", icon: GraduationCap },
   { href: "/assignments", label: "Assignments", icon: FileCheck2 },
   { href: "/debate", label: "Debate", icon: MessageSquareText },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
@@ -89,6 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profileUsername = session?.user?.username ?? session?.user?.email?.split("@")[0] ?? "profile";
   const profileAvatar = session?.user?.avatarUrl ?? session?.user?.image;
   const role = session?.user?.role ?? null;
+  const { track } = useTrainingTrack();
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
   const rank = (session?.user?.rank ?? "BRONZE").replace("_", " ");
@@ -148,6 +152,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Badge variant="secondary">{roleLabel(role)}</Badge>
             <span className="text-xs font-semibold text-muted-foreground">{rank} · {xp} XP</span>
           </div>
+          <Link href={"/training" as Route} className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-background px-2 py-1 text-xs">
+            <span className="font-semibold text-muted-foreground">Track: {trackById(track).short}</span>
+            <span className="font-semibold text-primary">Switch</span>
+          </Link>
           <Button type="button" variant="outline" size="sm" className="mt-3 w-full" onClick={() => signOut({ callbackUrl: "/signin" })}>
             <LogOut className="h-4 w-4" aria-hidden />
             Log out

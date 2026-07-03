@@ -52,6 +52,8 @@ export const opponentRequestSchema = z.object({
 
 export const sideCoachRequestSchema = z.object({
   organization: organizationSchema,
+  // When present, the owning student's debate is marked assistedPractice (real coach use, not the toggle).
+  debateId: z.string().optional(),
   eventType: z.string().max(120).optional(),
   studentSide: z.enum(["AFFIRMATIVE", "NEGATIVE"]).optional(),
   stage: z.string().max(120).optional(),

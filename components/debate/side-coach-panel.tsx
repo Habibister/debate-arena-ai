@@ -26,6 +26,7 @@ const ASK_OPTIONS = [
 ];
 
 type Props = {
+  debateId: string; // marks this debate assistedPractice when the coach is actually used
   organization: Organization;
   eventType?: string;
   studentSide?: "AFFIRMATIVE" | "NEGATIVE";
@@ -33,7 +34,7 @@ type Props = {
   messages: OfficialMessage[]; // read-only official transcript; the coach NEVER mutates it
 };
 
-export function SideCoachPanel({ organization, eventType, studentSide, level, messages }: Props) {
+export function SideCoachPanel({ debateId, organization, eventType, studentSide, level, messages }: Props) {
   const [entries, setEntries] = useState<CoachEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const coachedIdRef = useRef<string | null>(null);
@@ -52,6 +53,7 @@ export function SideCoachPanel({ organization, eventType, studentSide, level, me
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          debateId,
           organization,
           eventType,
           studentSide,

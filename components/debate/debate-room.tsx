@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { DebateFormat, Level } from "@prisma/client";
-import { Bot, Check, CircleAlert, Clock3, Loader2, MessageSquareText, RefreshCw, Sparkles, Swords } from "lucide-react";
+import { Bot, Check, CircleAlert, Clock3, Loader2, MessageSquareText, RefreshCw, Sparkles, Swords, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { normalizeAccessibility } from "@/lib/accessibility";
 import { AI_DEBATE_PERSONAS } from "@/lib/ai-personas";
 import {
   DEBATE_CATEGORIES,
@@ -70,6 +71,27 @@ export function DebateRoom() {
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [audioMode, setAudioMode] = useState(false);
+
+  // Audio mode is a client-side presentation preference (no schema change): selecting it enables the
+  // arena's audio autoplay + read-aloud via the shared accessibility localStorage key.
+  function selectDebateMode(audio: boolean) {
+    setAudioMode(audio);
+    if (audio && typeof window !== "undefined") {
+      try {
+        const key = "debatearena-accessibility";
+        const existing = window.localStorage.getItem(key);
+        const merged = normalizeAccessibility({
+          ...(existing ? JSON.parse(existing) : {}),
+          audioAutoplay: true,
+          readAiAloud: true
+        });
+        window.localStorage.setItem(key, JSON.stringify(merged));
+      } catch {
+        // ignore storage failures — text debate still works
+      }
+    }
+  }
 
   const config = useMemo(() => buildDebateFormatConfig(format, turnTimeSeconds), [format, turnTimeSeconds]);
   const selectedFormat = FORMAT_CARDS.find((item) => item.format === format) ?? FORMAT_CARDS[0];
@@ -327,14 +349,52 @@ export function DebateRoom() {
             <div className="space-y-3">
               <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Debate mode</p>
               <div className="grid gap-2">
-                <button type="button" className="focus-ring rounded-md border border-emerald-400 bg-emerald-500/10 px-3 py-3 text-sm font-semibold text-emerald-100">
-                  <MessageSquareText className="mr-2 inline h-4 w-4" aria-hidden />
-                  Text debate
+                <button
+                  type="button"
+                  onClick={() => selectDebateMode(false)}
+                  aria-pressed={!audioMode}
+                  className={cn(
+                    "focus-ring flex items-center justify-between rounded-md border px-3 py-3 text-sm font-semibold",
+                    !audioMode ? "border-emerald-400 bg-emerald-500/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-neutral-300"
+                  )}
+                >
+                  <span>
+                    <MessageSquareText className="mr-2 inline h-4 w-4" aria-hidden />
+                    Text debate
+                  </span>
+                  {!audioMode ? (
+                    <span className="flex items-center gap-1 text-xs">
+                      <Check className="h-4 w-4" aria-hidden />
+                      Selected
+                    </span>
+                  ) : null}
                 </button>
-                <button type="button" className="cursor-not-allowed rounded-md border border-white/10 bg-white/[0.03] px-3 py-3 text-sm font-semibold text-neutral-500" disabled>
-                  Audio debate coming soon
+                <button
+                  type="button"
+                  onClick={() => selectDebateMode(true)}
+                  aria-pressed={audioMode}
+                  className={cn(
+                    "focus-ring flex items-center justify-between rounded-md border px-3 py-3 text-sm font-semibold",
+                    audioMode ? "border-emerald-400 bg-emerald-500/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-neutral-300"
+                  )}
+                >
+                  <span>
+                    <Volume2 className="mr-2 inline h-4 w-4" aria-hidden />
+                    Audio debate
+                  </span>
+                  {audioMode ? (
+                    <span className="flex items-center gap-1 text-xs">
+                      <Check className="h-4 w-4" aria-hidden />
+                      Selected
+                    </span>
+                  ) : null}
                 </button>
               </div>
+              {audioMode ? (
+                <p className="text-xs text-neutral-400">
+                  Audio mode reads AI speeches aloud and adds voice input. Fine-tune voice, speed, and dyslexia-friendly text in the debate room.
+                </p>
+              ) : null}
             </div>
           </section>
 

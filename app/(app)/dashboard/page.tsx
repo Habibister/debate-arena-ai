@@ -9,7 +9,7 @@ import { XpProgressCard } from "@/components/app/xp-progress-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { JoinTeamCard, type StudentTeam } from "@/components/teams/join-team-card";
-import { TrackNextStep } from "@/components/training/track-next-step";
+import { LearningPath } from "@/components/onboarding/learning-path";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,6 +99,9 @@ export default async function DashboardPage() {
   const role = session?.user?.role;
   const studentTeamRows = role === "STUDENT" && session?.user?.id ? await getStudentTeams(session.user.id) : [];
   const assignments = role === "STUDENT" && session?.user?.id ? await getStudentAssignments(session.user.id) : [];
+  // Real signals for the learning path (no fabricated progress).
+  const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0;
+  const pendingAssignment = assignments.some((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED");
   const studentTeams: StudentTeam[] = studentTeamRows.map((row) => ({
     membershipId: row.id,
     teamId: row.team.id,
@@ -156,7 +159,7 @@ export default async function DashboardPage() {
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
 
-      <TrackNextStep />
+      <LearningPath weakAreas={weakAreas} hasActivity={hasActivity} pendingAssignment={pendingAssignment} />
 
       {role === "STUDENT" ? <JoinTeamCard teams={studentTeams} /> : null}
 

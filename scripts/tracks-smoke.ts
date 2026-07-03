@@ -87,7 +87,7 @@ function main() {
 
   // Dashboard uses the selected track; assignment form shows the track (from the team org, no schema).
   const dash = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
-  assert.ok(dash.includes("TrackNextStep"), "dashboard shows a track-specific training path");
+  assert.ok(dash.includes("<LearningPath"), "dashboard shows a track-specific training path");
   const form = readFileSync("components/assignments/create-assignment-form.tsx", "utf8");
   assert.ok(form.includes("trackByOrganization"), "assignment form displays the track");
   assert.ok(!form.includes("setTrack"), "opening/creating an assignment does not overwrite the student's preferred track");

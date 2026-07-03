@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const protectedPrefixes = ["/dashboard", "/debate", "/skills", "/tests", "/study", "/coach", "/admin", "/profile"];
+const protectedPrefixes = ["/dashboard", "/assignments", "/debate", "/skills", "/tests", "/study", "/coach", "/admin", "/profile"];
 
 function isProtectedPath(pathname: string) {
   return protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -27,6 +27,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/assignments/:path*",
     "/debate/:path*",
     "/skills/:path*",
     "/tests/:path*",

@@ -122,6 +122,21 @@ enum PracticeAttemptStatus {
   COMPLETED
 }
 
+enum AssignmentType {
+  DEBATE_ROUND
+  REBUTTAL_PRACTICE
+  FLASHCARD_DECK
+  REVIEW_GAME
+  PRACTICE_TEST
+  LESSON
+}
+
+enum AssignmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -166,6 +181,9 @@ model User {
   masteryProgresses MasteryProgress[]
   practiceAttempts  PracticeAttempt[]
   questionAttempts  QuestionAttempt[]
+  coachAssignments   Assignment[]       @relation("CoachAssignments")
+  assignmentTargets  AssignmentAssignee[]
+  assignmentSubmissions AssignmentSubmission[]
 }
 
 model Debate {
@@ -438,6 +456,7 @@ model Team {
 
   coach  Coach        @relation(fields: [coachId], references: [id], onDelete: Cascade)
   members TeamMember[]
+  assignments Assignment[]
 
   @@unique([coachId, name])
   @@index([organization])
@@ -455,6 +474,69 @@ model TeamMember {
 
   @@unique([teamId, userId])
   @@index([userId])
+}
+
+model Assignment {
+  id           String         @id @default(cuid())
+  coachId      String
+  teamId       String
+  title        String
+  instructions String         @db.Text
+  type         AssignmentType
+  dueDate      DateTime?
+  targetAllTeam Boolean       @default(true)
+  targetType   String?
+  targetId     String?
+  targetLabel  String?
+  targetHref   String?
+  points       Int?
+  isArchived   Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  coach      User                   @relation("CoachAssignments", fields: [coachId], references: [id], onDelete: Cascade)
+  team       Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignees  AssignmentAssignee[]
+  submissions AssignmentSubmission[]
+
+  @@index([coachId, createdAt])
+  @@index([teamId, dueDate])
+  @@index([type])
+}
+
+model AssignmentAssignee {
+  id           String   @id @default(cuid())
+  assignmentId String
+  studentId    String
+  createdAt    DateTime @default(now())
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+}
+
+model AssignmentSubmission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  studentId    String
+  status       AssignmentStatus @default(NOT_STARTED)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  evidenceType String?
+  evidenceId   String?
+  notes        String?          @db.Text
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, status])
+  @@index([assignmentId, status])
+  @@index([evidenceType, evidenceId])
 }
 
 model LessonAssignment {

@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DebateFormat, DebateMode, DebateSide, DebateStatus, Level, MessageRole, Organization, PracticeMode } from "@prisma/client";
 import {
   ArrowLeft,
   Bot,
   CheckCircle2,
   CircleAlert,
+  Copy,
   DoorOpen,
   Gavel,
   Loader2,
@@ -25,6 +26,12 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { AccessibilityPanel } from "@/components/debate/accessibility/accessibility-panel";
+import { AccessibilityProvider, useAccessibility } from "@/components/debate/accessibility/accessibility-context";
+import { MessageContent } from "@/components/debate/accessibility/message-content";
+import { SpeakButton } from "@/components/debate/accessibility/speak-button";
+import { SpeechInput } from "@/components/debate/accessibility/speech-input";
+import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
 import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
 import {
   countDebateSpeeches,
@@ -298,7 +305,19 @@ function profileHandle(profile: ParticipantProfile | null, fallback: string) {
   return profile?.username ?? profile?.displayName ?? fallback;
 }
 
-export function DebateArena({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport }: DebateArenaProps) {
+export function DebateArena(props: DebateArenaProps) {
+  // Provider (localStorage-backed) makes audio/accessibility settings available to every speak
+  // button, the panel, and the judge ballot without threading props through this large component.
+  return (
+    <AccessibilityProvider>
+      <DebateArenaInner {...props} />
+    </AccessibilityProvider>
+  );
+}
+
+function DebateArenaInner({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport }: DebateArenaProps) {
+  const { settings: a11y } = useAccessibility();
+  const spokenIdRef = useRef<string | null>(null);
   const [debate, setDebate] = useState(initialDebate);
   const [messages, setMessages] = useState(initialMessages);
   const [studentInput, setStudentInput] = useState("");
@@ -330,6 +349,10 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const canJudge = Boolean(!judgeReport && completedSpeechCount >= config.speeches.length && debate.status !== "JUDGED");
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
+  // Signal for the voice input: only timed student turns "expire". Untimed/disabled turns (<=0s) and
+  // paused turns never hit zero, so voice input keeps listening until the student stops it manually.
+  const turnLimitSeconds = currentSpeech?.timeSeconds ?? debate.turnTimeSeconds;
+  const studentSpeechTimeUp = turnLimitSeconds > 0 && turnActive && isStudentTurn && turnRemaining === 0;
   // Non-substantive speech guardrail: don't let "n" / "phones bad" through to a real debate round.
   const speechAssessment = useMemo(() => assessStudentSpeech(studentInput, debate.level), [studentInput, debate.level]);
   const canSubmitSpeech = studentInput.trim().length > 0 && speechAssessment.ok;
@@ -458,8 +481,59 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
     }
   }
 
+  // Auto-play the newest AI speech when the student has enabled audio autoplay (each speech once).
+  useEffect(() => {
+    if (!a11y.audioAutoplay || typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+    const last = messages[messages.length - 1];
+    if (!last || last.authorId || (last.role !== "AFFIRMATIVE" && last.role !== "NEGATIVE")) {
+      return;
+    }
+    if (spokenIdRef.current === last.id) {
+      return;
+    }
+    spokenIdRef.current = last.id;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(last.content);
+      const { rate, pitch } = resolveSpeechParams(a11y.voiceStyle, a11y.speechRate);
+      utterance.rate = rate;
+      utterance.pitch = pitch;
+      utterance.lang = "en-US";
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // ignore autoplay failures — transcript is always visible
+    }
+  }, [messages, a11y.audioAutoplay, a11y.voiceStyle, a11y.speechRate]);
+
+  // Cancel any speech when leaving the arena.
+  useEffect(() => {
+    return () => {
+      try {
+        window.speechSynthesis?.cancel();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
+
+  function copyTranscript() {
+    const text = messages
+      .map((message) => {
+        const speaker = message.authorId ? studentName : message.role === "MODERATOR" ? "Moderator" : aiName;
+        return `${speaker}: ${message.content}`;
+      })
+      .join("\n\n");
+    try {
+      void navigator.clipboard?.writeText(text);
+    } catch {
+      // ignore clipboard failures
+    }
+  }
+
   return (
-    <div className="min-h-[calc(100vh-9rem)] overflow-hidden rounded-lg border border-white/10 bg-neutral-950 text-white shadow-2xl">
+    <div className={cn("min-h-[calc(100vh-9rem)] overflow-hidden rounded-lg border border-white/10 bg-neutral-950 text-white shadow-2xl", accessibilityFrameClass(a11y))}>
       <div className="border-b border-white/10 bg-black/30 px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/debate" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-neutral-300 hover:bg-white/10")}>
@@ -586,6 +660,23 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
             ) : null}
           </div>
 
+          <AccessibilityPanel />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Transcript</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copyTranscript}
+              disabled={messages.length === 0}
+              className="border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10"
+            >
+              <Copy className="h-4 w-4" aria-hidden />
+              Copy transcript
+            </Button>
+          </div>
+
           <div className="max-h-[560px] space-y-3 overflow-y-auto rounded-lg border border-white/10 bg-black/25 p-3">
             {messages.length === 0 ? (
               <EmptyState icon={MessageSquareText} title="No speeches yet" description="Start with the first required speech to build the transcript." className="border-white/10 bg-white/[0.04] text-white" />
@@ -606,7 +697,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                       <span>{speech ? `${speech.shortLabel} · ${isStudent ? studentName : aiName}` : "Moderator"}</span>
                       <span>{speech ? `Speech ${speech.round}` : "Room"}</span>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
+                    <MessageContent content={message.content} isStudent={isStudent} />
                   </article>
                 );
               })
@@ -638,10 +729,18 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
               {isStudentTurn ? (
                 <>
+                  <div className="mb-2">
+                    <SpeechInput
+                      disabled={isSubmitting || prepActive}
+                      timeUp={studentSpeechTimeUp}
+                      turnKey={currentSpeech.key}
+                      onAppend={(text) => setStudentInput((current) => (current.trim() ? `${current.trim()} ${text}` : text))}
+                    />
+                  </div>
                   <Textarea
                     value={studentInput}
                     onChange={(event) => setStudentInput(event.target.value)}
-                    placeholder={`Write your ${currentSpeech.shortLabel} speech...`}
+                    placeholder={`Write or speak your ${currentSpeech.shortLabel} speech...`}
                     className="min-h-32 border-white/15 bg-neutral-900 text-white placeholder:text-neutral-500 focus-visible:ring-emerald-400"
                     disabled={isSubmitting || prepActive}
                   />
@@ -807,7 +906,14 @@ function JudgeDecisionModal({
               ) : null}
             </div>
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Short reason</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Short reason</p>
+                <SpeakButton
+                  text={`${compactReason}. ${reason}`}
+                  label="Read feedback aloud"
+                  className="border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10"
+                />
+              </div>
               <p className="mt-2 text-lg font-semibold leading-7">{compactReason}</p>
             </div>
           </div>

@@ -1,4 +1,6 @@
 import { getServerSession } from "next-auth";
+import Link from "next/link";
+import type { Route } from "next";
 import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
@@ -8,11 +10,14 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { JoinTeamCard, type StudentTeam } from "@/components/teams/join-team-card";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import type { MasteryPoint } from "@/types/domain";
 import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
+import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
+import { getStudentAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
@@ -92,6 +97,7 @@ export default async function DashboardPage() {
   // Students join/leave coach teams from the dashboard. Coaches/admins manage teams on /coach.
   const role = session?.user?.role;
   const studentTeamRows = role === "STUDENT" && session?.user?.id ? await getStudentTeams(session.user.id) : [];
+  const assignments = role === "STUDENT" && session?.user?.id ? await getStudentAssignments(session.user.id) : [];
   const studentTeams: StudentTeam[] = studentTeamRows.map((row) => ({
     membershipId: row.id,
     teamId: row.team.id,
@@ -150,6 +156,48 @@ export default async function DashboardPage() {
       </div>
 
       {role === "STUDENT" ? <JoinTeamCard teams={studentTeams} /> : null}
+
+      {role === "STUDENT" ? (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle>Assigned Work</CardTitle>
+              <Link href={"/assignments" as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                View all
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {assignments.length > 0 ? (
+              assignments.slice(0, 3).map((assignment) => {
+                const status = statusForSubmission(assignment.submissions[0]);
+                return (
+                  <Link
+                    key={assignment.id}
+                    href={`/assignments/${assignment.id}` as Route}
+                    className="flex flex-col gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <span>
+                      <span className="font-semibold">{assignment.title}</span>
+                      <span className="mt-1 block text-sm text-muted-foreground">
+                        {assignmentTypeLabel(assignment.type)} · {assignment.team.name}
+                      </span>
+                    </span>
+                    <Badge variant={status === "COMPLETED" ? "secondary" : status === "IN_PROGRESS" ? "accent" : "outline"}>
+                      {assignmentStatusLabel(status)}
+                    </Badge>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">No assignments yet.</p>
+                <p className="mt-1">When a coach assigns work to one of your teams, it will show up here.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardContent className="p-5">

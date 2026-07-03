@@ -14,6 +14,7 @@ import {
   Layers3,
   LogOut,
   MessageSquareText,
+  Settings,
   ShieldCheck,
   Sparkles,
   UserRound,
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/tests", label: "Tests", icon: ClipboardList },
   { href: "/study", label: "Study", icon: Layers3 },
   { href: "/profile", label: "Profile", icon: UserRound },
+  { href: "/settings", label: "Settings", icon: Settings },
   { href: "/coach", label: "Coach", icon: Users, requiresRole: ["COACH", "ADMIN"] },
   { href: "/admin", label: "Admin", icon: ShieldCheck, requiresRole: ["ADMIN"] }
 ] as const;

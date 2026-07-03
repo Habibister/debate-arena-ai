@@ -103,6 +103,8 @@ export function AccessibilityPanel() {
               <Toggle label="Increased line spacing" value={settings.lineSpacing} onToggle={() => update({ lineSpacing: !settings.lineSpacing })} />
               <Toggle label="Reduced motion" value={settings.reducedMotion} onToggle={() => update({ reducedMotion: !settings.reducedMotion })} />
               <Toggle label="High contrast" value={settings.highContrast} onToggle={() => update({ highContrast: !settings.highContrast })} />
+              <Toggle label="Color-blind friendly" value={settings.colorBlind} onToggle={() => update({ colorBlind: !settings.colorBlind })} />
+              <Toggle label="Eye comfort" value={settings.eyeComfort} onToggle={() => update({ eyeComfort: !settings.eyeComfort })} />
             </div>
           </div>
         </div>

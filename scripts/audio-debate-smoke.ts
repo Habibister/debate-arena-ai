@@ -55,7 +55,9 @@ function main() {
 
   // Integration + safety checks via source.
   const arena = readFileSync("components/debate/debate-arena.tsx", "utf8");
-  assert.ok(arena.includes("AccessibilityProvider"), "arena wraps the accessibility provider");
+  assert.ok(arena.includes("useAccessibility"), "arena consumes the sitewide accessibility context");
+  const rootLayout = readFileSync("app/layout.tsx", "utf8");
+  assert.ok(rootLayout.includes("AccessibilityProvider"), "root layout mounts the single sitewide accessibility provider");
   assert.ok(arena.includes("<MessageContent"), "arena uses chunked MessageContent");
   assert.ok(arena.includes("<SpeechInput"), "arena includes speech-to-text input");
   assert.ok(arena.includes("Read feedback aloud"), "judge ballot has read-aloud");

@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { JoinTeamCard, type StudentTeam } from "@/components/teams/join-team-card";
 import { LearningPath } from "@/components/onboarding/learning-path";
+import { ResumeDebatesCard, type ResumeDebate } from "@/components/debate/resume-debates-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,8 @@ import type { MasteryPoint } from "@/types/domain";
 import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
+import { getStudentDebates, isUnfinished } from "@/lib/debate-history";
+import { trackByOrganization } from "@/lib/training-tracks";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
@@ -99,6 +102,20 @@ export default async function DashboardPage() {
   const role = session?.user?.role;
   const studentTeamRows = role === "STUDENT" && session?.user?.id ? await getStudentTeams(session.user.id) : [];
   const assignments = role === "STUDENT" && session?.user?.id ? await getStudentAssignments(session.user.id) : [];
+  // Recovery: debates the student left mid-session (never submitted or scored).
+  const unfinishedDebates: ResumeDebate[] =
+    role === "STUDENT" && session?.user?.id
+      ? (await getStudentDebates(session.user.id))
+          .filter((debate) => isUnfinished(debate.status))
+          .slice(0, 4)
+          .map((debate) => ({
+            id: debate.id,
+            topic: debate.topic,
+            trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
+            statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
+            updatedLabel: debate.updatedAt.toLocaleDateString()
+          }))
+      : [];
   // Real signals for the learning path (no fabricated progress).
   const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0;
   const pendingAssignment = assignments.some((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED");
@@ -113,6 +130,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {unfinishedDebates.length > 0 ? <ResumeDebatesCard debates={unfinishedDebates} /> : null}
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="rounded-lg border bg-card p-5">
           <div className="flex flex-wrap items-center gap-2">

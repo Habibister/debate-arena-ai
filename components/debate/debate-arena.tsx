@@ -32,6 +32,7 @@ import { MessageContent } from "@/components/debate/accessibility/message-conten
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel } from "@/components/debate/side-coach-panel";
+import { draftKey } from "@/lib/debate-drafts";
 import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
 import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
 import {
@@ -335,6 +336,60 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   }, []);
   const coachStudentSide: "AFFIRMATIVE" | "NEGATIVE" =
     debate.studentSide === "OPPOSITION" || debate.studentSide === "AGAINST" ? "NEGATIVE" : "AFFIRMATIVE";
+
+  // Autosave the unsent speech draft (per debate, localStorage only). Restores on refresh, clears on
+  // successful submit, warns before leaving. Never auto-submits.
+  const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "restored">("idle");
+  const draftLoadedRef = useRef(false);
+  useEffect(() => {
+    if (draftLoadedRef.current) {
+      return;
+    }
+    draftLoadedRef.current = true;
+    try {
+      const saved = window.localStorage.getItem(draftKey(debate.id));
+      if (saved && !studentInput.trim()) {
+        setStudentInput(saved);
+        setDraftStatus("restored");
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debate.id]);
+  useEffect(() => {
+    if (!draftLoadedRef.current || !studentInput.trim()) {
+      return;
+    }
+    setDraftStatus("saving");
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(draftKey(debate.id), studentInput);
+        setDraftStatus("saved");
+      } catch {
+        // ignore
+      }
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [studentInput, debate.id]);
+  useEffect(() => {
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+      if (studentInput.trim()) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [studentInput]);
+  function clearDraft() {
+    try {
+      window.localStorage.removeItem(draftKey(debate.id));
+    } catch {
+      // ignore
+    }
+    setDraftStatus("idle");
+  }
   const [prepRemaining, setPrepRemaining] = useState(initialDebate.prepTimeSeconds);
   const [turnRemaining, setTurnRemaining] = useState(initialDebate.turnTimeSeconds);
 
@@ -430,6 +485,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
       setMessages((current) => [...current, studentMessage.message]);
       setStudentInput("");
+      clearDraft();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to submit your speech.");
     } finally {
@@ -758,6 +814,11 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                     className="min-h-32 border-white/15 bg-neutral-900 text-white placeholder:text-neutral-500 focus-visible:ring-emerald-400"
                     disabled={isSubmitting || prepActive}
                   />
+                  {draftStatus !== "idle" ? (
+                    <p className="mt-1 text-xs text-neutral-500" aria-live="polite">
+                      {draftStatus === "saving" ? "Saving…" : draftStatus === "saved" ? "Draft saved" : "Restored draft"}
+                    </p>
+                  ) : null}
                   {studentInput.trim().length > 0 && !speechAssessment.ok ? (
                     <p className="mt-2 text-sm font-medium text-amber-300">{speechAssessment.reason ?? SUBMIT_HELPER_TEXT}</p>
                   ) : (

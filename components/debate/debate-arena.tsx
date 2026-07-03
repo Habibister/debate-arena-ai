@@ -38,7 +38,6 @@ import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
 import {
   countDebateSpeeches,
   getNextSpeech,
-  getSideLabel,
   parseFormatConfig,
   type DebateFormatConfig,
   type DebateSpeech
@@ -405,7 +404,13 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const currentSpeech = getNextSpeech(config, completedSpeechCount);
   const isStudentTurn = Boolean(currentSpeech && currentSpeech.side === debate.studentSide);
   const isOpponentTurn = Boolean(currentSpeech && currentSpeech.side === debate.opponentSide);
-  const canJudge = Boolean(!judgeReport && completedSpeechCount >= config.speeches.length && debate.status !== "JUDGED");
+  // Model UN is a Student-Delegate speaking practice: its side labels come from the (Model UN) config,
+  // and the parliamentary Government/Opposition ballot is intentionally not shown for it.
+  const isModelUn = debate.organization === "MODEL_UN";
+  const sideLabelFor = (side: typeof config.sides.affirmative) =>
+    side === config.sides.affirmative ? config.sides.affirmativeLabel : config.sides.negativeLabel;
+  const sessionComplete = completedSpeechCount >= config.speeches.length;
+  const canJudge = Boolean(!judgeReport && sessionComplete && debate.status !== "JUDGED" && !isModelUn);
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
   // Signal for the voice input: only timed student turns "expire". Untimed/disabled turns (<=0s) and
@@ -662,14 +667,14 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                 <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="sm" />
                 <p className="text-xs font-semibold uppercase opacity-75">{studentName}</p>
               </div>
-              <p className="mt-2 font-semibold">{getSideLabel(debate.studentSide)}</p>
+              <p className="mt-2 font-semibold">{sideLabelFor(debate.studentSide)}</p>
             </div>
             <div className={cn("rounded-lg border p-4", sideTone(debate.opponentSide))}>
               <div className="flex items-center gap-3">
                 <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="sm" />
                 <p className="text-xs font-semibold uppercase opacity-75">{opponentProfile ? aiName : "AI opponent"}</p>
               </div>
-              <p className="mt-2 font-semibold">{getSideLabel(debate.opponentSide)}</p>
+              <p className="mt-2 font-semibold">{sideLabelFor(debate.opponentSide)}</p>
             </div>
           </div>
 
@@ -701,16 +706,20 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-neutral-500">Current speaker</p>
-                <h2 className="mt-1 text-2xl font-bold">{currentSpeech ? currentSpeech.label : "Ready for judge"}</h2>
+                <p className="text-xs font-semibold uppercase text-neutral-500">{isModelUn ? "Current stage" : "Current speaker"}</p>
+                <h2 className="mt-1 text-2xl font-bold">
+                  {currentSpeech ? currentSpeech.label : isModelUn ? "Committee session complete" : "Ready for judge"}
+                </h2>
                 {currentSpeech ? <p className="mt-1 text-sm text-neutral-400">{currentSpeech.guidance}</p> : null}
               </div>
               {currentSpeech ? (
                 <Badge className={cn("border", sideTone(currentSpeech.side))}>
-                  {getSideLabel(currentSpeech.side)} · {formatDuration(currentSpeech.timeSeconds, currentSpeech.graceSeconds)}
+                  {sideLabelFor(currentSpeech.side)} · {formatDuration(currentSpeech.timeSeconds, currentSpeech.graceSeconds)}
                 </Badge>
               ) : (
-                <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-100">Judge ready</Badge>
+                <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-100">
+                  {isModelUn ? "Session complete" : "Judge ready"}
+                </Badge>
               )}
             </div>
             {currentSpeech?.isRebuttal ? (
@@ -857,6 +866,24 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
               Judge debate
             </Button>
           ) : null}
+
+          {isModelUn && sessionComplete && !currentSpeech ? (
+            <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-50">
+              <p className="font-semibold text-white">Committee session complete</p>
+              <p className="mt-1 leading-6">
+                You delivered all four delegate stages — opening speech, moderated caucus, negotiation, and resolution.
+                Review your transcript above, then return to your history or the Model UN hub to run it again.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href="/debates/history" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
+                  Practice history
+                </Link>
+                <Link href={"/training/model-un/practice" as Route} className={cn(buttonVariants({ variant: "outline" }), "border-white/20 bg-white/[0.03] text-neutral-100 hover:bg-white/10")}>
+                  New Model UN session
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </main>
 
         <aside className="space-y-3">
@@ -882,7 +909,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                       <span className="font-semibold">{speech.shortLabel}</span>
                       <span>{complete ? "Done" : active ? "Now" : formatDuration(speech.timeSeconds)}</span>
                     </div>
-                    <p className="mt-1 text-xs opacity-80">{getSideLabel(speech.side)}</p>
+                    <p className="mt-1 text-xs opacity-80">{sideLabelFor(speech.side)}</p>
                   </div>
                 );
               })}
@@ -890,15 +917,14 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
           </div>
 
           <div className="grid gap-2">
-            <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.03] p-4 text-sm text-neutral-300">
-              <p className="font-semibold text-white">Live students coming soon</p>
-              <p className="mt-1 leading-6">Future rooms will show opponent username, avatar, level, organization, online status, and invite links.</p>
-            </div>
-            <Link href="/debate" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
-              New debate
+            <Link
+              href={(isModelUn ? "/training/model-un/practice" : "/debate") as Route}
+              className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}
+            >
+              {isModelUn ? "New Model UN session" : "New debate"}
             </Link>
-            <Link href="/dashboard" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
-              End debate
+            <Link href="/debates/history" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
+              {isModelUn ? "End practice" : "End debate"}
             </Link>
           </div>
         </aside>

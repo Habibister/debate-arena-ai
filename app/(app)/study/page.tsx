@@ -5,11 +5,12 @@ import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deckSummaries, FLASHCARDS } from "@/lib/study-content";
-import { trackBySlug } from "@/lib/training-tracks";
+import { getActiveTrack } from "@/lib/track-server";
 
 export default function StudyPage({ searchParams }: { searchParams: { track?: string } }) {
-  // When arriving from a track (hub or sidebar), show only that track's decks — no cross-track content.
-  const activeTrack = trackBySlug(searchParams.track);
+  // Show only the active track's decks — no cross-track content. `?track=` wins on this route;
+  // otherwise the selected track (preference cookie) is used so the choice survives navigation.
+  const activeTrack = getActiveTrack(searchParams.track);
   const allDecks = deckSummaries();
   const decks = activeTrack ? allDecks.filter((d) => d.organization === activeTrack.organization) : allDecks;
 
@@ -77,7 +78,7 @@ export default function StudyPage({ searchParams }: { searchParams: { track?: st
         )}
       </Card>
 
-      <RecommendedVideos title="Video resource shelf" limit={6} />
+      <RecommendedVideos organization={activeTrack?.organization} title="Video resource shelf" limit={6} />
     </div>
   );
 }

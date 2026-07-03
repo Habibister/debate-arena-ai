@@ -15,6 +15,7 @@ import { getAssignedStudentIds, getCoachAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
 import { getLastActivityForUsers } from "@/lib/coach-progress";
 import { getTeamsForCoach } from "@/lib/teams";
+import { canAccessCoachTools } from "@/lib/roles";
 import { calculateDebateRating } from "@/lib/xp";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function CoachPage() {
   const role = session?.user?.role;
 
   // Only coaches (and admins) may see the coach dashboard — never a fake roster for students.
-  if (role !== "COACH" && role !== "ADMIN") {
+  if (!canAccessCoachTools(role)) {
     return (
       <div className="space-y-6">
         <div>

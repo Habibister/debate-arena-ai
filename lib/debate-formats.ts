@@ -71,13 +71,6 @@ export const FORMAT_CARDS: Array<{
     label: "Practice Rebuttal",
     summary: "Target one clash",
     detail: "A short drill built around answering an opponent's strongest point."
-  },
-  {
-    format: "CUSTOM",
-    label: "Custom format",
-    summary: "Coming soon",
-    detail: "Build your own speech order and timers.",
-    disabled: true
   }
 ];
 
@@ -202,6 +195,74 @@ export function buildDebateFormatConfig(format: DebateFormat, turnTimeSeconds = 
       speech("mo-constructive", "Member of Opposition constructive", "MO", "OPPOSITION", 4, 480, "Deepen clash, extend Opposition offense, and compare against the case."),
       speech("lo-rebuttal", "Leader of Opposition rebuttal", "LO Rebuttal", "OPPOSITION", 5, 240, "No new arguments. Collapse to the key voters and explain why Opposition wins.", true),
       speech("pm-rebuttal", "Prime Minister rebuttal", "PM Rebuttal", "GOVERNMENT", 6, 300, "No new arguments. Finalize the Government ballot story and weigh impacts.", true)
+    ]
+  };
+}
+
+// Stored event type for Model UN committee practice (drives the debate.eventType + rubric lookup).
+export const MODEL_UN_EVENT_TYPE = "MODEL_UN_COMMITTEE";
+
+// Model UN is a distinct experience, not parliamentary debate: a focused Student-Delegate speaking
+// practice through real committee stages. It reuses the shared arena (transcript, timers, audio,
+// autosave, accessibility) but never uses Government/Opposition, PM/LO/MG/MO, or "motion" language.
+// All stages belong to the Student Delegate, so the parliamentary AI opponent is never invoked; the
+// "AI Delegate / Chair" label presides but does not take debate turns. Uses PUBLIC_FORUM only as a
+// neutral carrier for the required DebateFormat enum column — the config below defines the real
+// experience and takes precedence via parseFormatConfig.
+export function buildModelUnFormatConfig(turnTimeSeconds?: number): DebateFormatConfig {
+  void turnTimeSeconds; // committee stages use their own fixed timings
+  return {
+    format: "PUBLIC_FORUM",
+    label: "Model UN Committee Session",
+    eventType: MODEL_UN_EVENT_TYPE,
+    description:
+      "A focused Model UN speaking practice: deliver your delegation's opening speech, moderated caucus response, negotiation, and resolution explanation as a Student Delegate.",
+    prepTimeSeconds: 0,
+    turnTimeSeconds: 90,
+    graceTimeSeconds: GRACE_SECONDS,
+    sides: {
+      affirmative: "FOR",
+      negative: "AGAINST",
+      affirmativeLabel: "Student Delegate",
+      negativeLabel: "AI Delegate / Chair"
+    },
+    speeches: [
+      speech(
+        "mun-opening",
+        "Opening Speech",
+        "Opening",
+        "FOR",
+        1,
+        90,
+        "Deliver your delegation's opening position on the agenda: your country's stance, priorities, and a proposed direction for the committee."
+      ),
+      speech(
+        "mun-caucus",
+        "Moderated Caucus Response",
+        "Caucus",
+        "FOR",
+        2,
+        60,
+        "Respond in a moderated caucus: address the current sub-topic, react to other delegations' points, and advance your country's interests concisely."
+      ),
+      speech(
+        "mun-negotiation",
+        "Negotiation Response",
+        "Negotiation",
+        "FOR",
+        3,
+        60,
+        "Negotiate toward a bloc position: name common ground, offer a compromise, and state what your delegation needs in return."
+      ),
+      speech(
+        "mun-resolution",
+        "Resolution Explanation",
+        "Resolution",
+        "FOR",
+        4,
+        90,
+        "Introduce and explain a draft resolution clause or amendment: what it does, why it serves the committee, and how it addresses the agenda."
+      )
     ]
   };
 }

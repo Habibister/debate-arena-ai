@@ -1226,7 +1226,11 @@ export function flashcardsForDeck(deckSlug: string) {
   return FLASHCARDS.filter((card) => card.deckSlug === deckSlug);
 }
 
-export function recommendedResources(input: { organization?: StudyOrganization; skillTags?: string[]; limit?: number }) {
+// `organization` accepts any track organization (e.g. MODEL_UN); tracks with no dedicated videos
+// surface only shared "GENERAL" foundations. When an organization filter is set we NEVER fall back to
+// the full list — an empty result is an honest empty state, not an excuse to leak another track's
+// resources. The all-videos fallback only applies to the no-organization browse-all case.
+export function recommendedResources(input: { organization?: string; skillTags?: string[]; limit?: number }) {
   const tags = (input.skillTags ?? []).map((tag) => tag.toLowerCase());
   const matches = RESOURCE_VIDEOS.filter((resource) => {
     const organizationMatches = !input.organization || resource.organization === input.organization || resource.organization === "GENERAL";
@@ -1237,7 +1241,8 @@ export function recommendedResources(input: { organization?: StudyOrganization; 
     return organizationMatches && tagMatches;
   });
 
-  return (matches.length > 0 ? matches : RESOURCE_VIDEOS).slice(0, input.limit ?? 3);
+  const pool = matches.length > 0 || input.organization ? matches : RESOURCE_VIDEOS;
+  return pool.slice(0, input.limit ?? 3);
 }
 
 export function studyDeckForSkill(skillTag: string, organization: "DECA" | "HOSA") {

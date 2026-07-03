@@ -65,6 +65,10 @@ export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
     setIsStarting(true);
     setError(null);
     try {
+      // Model UN is its own experience — the server keys its config off the MODEL_UN organization, so
+      // send a neutral (non-parliamentary) carrier format and the delegate side. Other tracks keep the
+      // existing parliamentary carrier used by the shared debate pipeline.
+      const isModelUn = track.id === "MODEL_UN";
       const createRes = await fetch("/api/debates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,12 +76,12 @@ export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
           organization: composed.organization,
           eventType: composed.eventType,
           practiceMode: composed.practiceMode,
-          format: "PARLIAMENTARY",
+          format: isModelUn ? "PUBLIC_FORUM" : "PARLIAMENTARY",
           category: track.short,
           level,
           topic: composed.topic,
           aiGeneratedTopic: true,
-          side: "GOVERNMENT",
+          side: isModelUn ? "FOR" : "GOVERNMENT",
           mode: "AI"
         })
       });

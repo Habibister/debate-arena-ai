@@ -11,14 +11,18 @@ import {
   DEFAULT_TRACK,
   normalizeTrack,
   PRACTICE_SOURCES,
+  resolveTrackFromSlugs,
+  TRACK_COOKIE,
   TRACKS,
   skillVisibleForTrack,
   trackByOrganization,
   trackBySlug,
   trackToOrganization
 } from "../lib/training-tracks";
-import { deckSummaries } from "../lib/study-content";
+import { deckSummaries, recommendedResources } from "../lib/study-content";
 import { EVENT_OPTIONS } from "../lib/rubrics";
+import { buildModelUnFormatConfig, FORMAT_CARDS, MODEL_UN_EVENT_TYPE } from "../lib/debate-formats";
+import { nextStepsForTrack, resourceOrgForTrack } from "../lib/dashboard-actions";
 
 function main() {
   // Four tracks, correct ids + slugs.
@@ -83,7 +87,7 @@ function main() {
 
   // Content filtering outside the hub: study page filters by ?track.
   const study = readFileSync("app/(app)/study/page.tsx", "utf8");
-  assert.ok(study.includes("activeTrack") && study.includes("trackBySlug"), "study page filters decks by the selected track");
+  assert.ok(study.includes("activeTrack") && study.includes("getActiveTrack"), "study page filters decks by the selected track (cookie-aware resolver)");
 
   // Dashboard uses the selected track; assignment form shows the track (from the team org, no schema).
   const dash = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
@@ -147,7 +151,101 @@ function main() {
   // Game entry points are per-deck, and deck listings are already track-filtered (study), so no leakage.
   assert.ok(readFileSync("app/(app)/study/page.tsx", "utf8").includes("activeTrack"), "study/deck (game entry) is track-filtered");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved.");
+  // ----------------------------------------------------------------------------------------------
+  // Phase-1 repair coverage: global track mode, Model UN practice, dashboard filtering, focus mode,
+  // accessibility overlay, and removed placeholders.
+  // ----------------------------------------------------------------------------------------------
+
+  // 1. Selected track survives navigation without relying only on ?track= — a preference cookie is the
+  // fallback, and the URL param overrides it on a track-specific route.
+  assert.equal(resolveTrackFromSlugs("hosa", undefined)?.id, "HOSA", "?track= resolves the track");
+  assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "HOSA stays HOSA via cookie when ?track= is absent");
+  assert.equal(resolveTrackFromSlugs("model-un", "hosa")?.id, "MODEL_UN", "URL track overrides the cookie on a track-specific route");
+  assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "no query + no cookie -> no track (browse-all allowed)");
+  assert.equal(resolveTrackFromSlugs(undefined, "garbage"), undefined, "unknown cookie slug -> no track (never a wrong track)");
+  assert.equal(TRACK_COOKIE, "debatearena_track", "track cookie name is stable");
+  const ctx = readFileSync("components/training/training-track-context.tsx", "utf8");
+  assert.ok(ctx.includes("TRACK_COOKIE") && ctx.includes("document.cookie"), "track context mirrors the selection into the server-readable cookie");
+
+  // 2 + 3. HOSA content isolation on the consuming pages (server components read the resolver).
+  const studyPage = readFileSync("app/(app)/study/page.tsx", "utf8");
+  assert.ok(studyPage.includes("getActiveTrack"), "study page resolves the active track (cookie fallback)");
+  assert.ok(studyPage.includes("organization={activeTrack?.organization}"), "study resource shelf is scoped to the track");
+  const hosaResources = recommendedResources({ organization: "HOSA" });
+  assert.ok(hosaResources.every((r) => r.organization !== "DECA"), "HOSA resources exclude DECA resources");
+  const decaResources = recommendedResources({ organization: "DECA" });
+  assert.ok(decaResources.every((r) => r.organization !== "HOSA"), "DECA resources exclude HOSA resources");
+  // No fallback-to-all when an organization filter yields nothing (honest empty state, no leakage).
+  const noneResources = recommendedResources({ organization: "MODEL_UN" });
+  assert.ok(noneResources.every((r) => r.organization !== "DECA" && r.organization !== "HOSA"), "Model UN never surfaces DECA/HOSA resources");
+
+  // 4. Model UN tests hide the DECA/HOSA generator (gated by track, honest empty state otherwise).
+  const testsPage = readFileSync("app/(app)/tests/page.tsx", "utf8");
+  assert.ok(testsPage.includes("showGenerator"), "tests page gates the generator by track");
+  assert.ok(testsPage.includes("showGenerator ?"), "generator is only rendered when the track supports tests");
+  assert.ok(testsPage.includes("lockedOrganization"), "generator organization is locked to the selected track");
+
+  // 5. Model UN practice uses Model UN terminology only — never parliamentary labels.
+  const mun = buildModelUnFormatConfig();
+  const munText = [
+    mun.label,
+    mun.description,
+    mun.sides.affirmativeLabel,
+    mun.sides.negativeLabel,
+    ...mun.speeches.flatMap((s) => [s.label, s.shortLabel, s.guidance])
+  ].join(" | ");
+  assert.ok(!/government|opposition|affirmative|negative|\bpm\b|\blo\b|\bmg\b|\bmo\b|motion/i.test(munText), "Model UN practice shows no Government/Opposition/PM-LO-MG-MO/motion labels");
+  assert.equal(mun.sides.affirmativeLabel, "Student Delegate", "Model UN uses Student Delegate");
+  assert.equal(mun.sides.negativeLabel, "AI Delegate / Chair", "Model UN uses AI Delegate / Chair");
+  assert.ok(mun.speeches.every((s) => s.side === "FOR"), "Model UN stages are all Student Delegate turns (no parliamentary AI opponent invoked)");
+  const munStages = mun.speeches.map((s) => s.label);
+  for (const stage of ["Opening Speech", "Moderated Caucus Response", "Negotiation Response", "Resolution Explanation"]) {
+    assert.ok(munStages.includes(stage), `Model UN includes the ${stage} activity`);
+  }
+  assert.equal(mun.eventType, MODEL_UN_EVENT_TYPE, "Model UN has its own event type");
+  assert.ok(!/PARLIAMENTARY/.test(mun.eventType), "Model UN is never labeled parliamentary");
+  // Server keys the Model UN config off the organization, not the parliamentary format enum.
+  const debatesApi = readFileSync("app/api/debates/route.ts", "utf8");
+  assert.ok(debatesApi.includes('input.organization === "MODEL_UN"') && debatesApi.includes("buildModelUnFormatConfig"), "debate API builds the Model UN config for the MODEL_UN organization");
+
+  // 6. Model UN practice receives committee, country, agenda, and activity context (composePractice).
+  const munCtx = composePractice("MODEL_UN", { committee: "ECOSOC", country: "Kenya", agenda: "water access", activity: "Negotiation" });
+  assert.ok(/ECOSOC/.test(munCtx.topic) && /Kenya/.test(munCtx.topic) && /water access/.test(munCtx.topic) && /Negotiation/.test(munCtx.topic), "Model UN carries committee + country + agenda + activity");
+
+  // 7. Model UN dashboard excludes DECA/HOSA actions and resources.
+  const munSteps = nextStepsForTrack(trackBySlug("model-un"));
+  assert.ok(munSteps.every((s) => s.key !== "tests" && s.key !== "study"), "Model UN dashboard omits the DECA/HOSA test + deck actions");
+  assert.ok(munSteps.some((s) => s.key === "practice" && s.href.includes("/training/model-un/practice")), "Model UN dashboard links to Model UN practice");
+  assert.ok(munSteps.every((s) => !/DECA|HOSA/.test(`${s.title} ${s.description}`)), "Model UN dashboard actions never mention DECA/HOSA");
+  assert.equal(resourceOrgForTrack(trackBySlug("model-un")), "MODEL_UN", "Model UN resource shelf is scoped to MODEL_UN");
+
+  // 8. General Debate excludes organization-specific content (no exam generator, no DECA/HOSA decks).
+  const gdSteps = nextStepsForTrack(trackBySlug("debate"));
+  assert.ok(gdSteps.every((s) => s.key !== "tests" && s.key !== "study"), "General Debate dashboard omits organization-specific exam/deck actions");
+  // DECA/HOSA keep their real activities.
+  const decaSteps = nextStepsForTrack(trackBySlug("deca"));
+  assert.ok(decaSteps.some((s) => s.key === "tests") && decaSteps.some((s) => s.key === "study"), "DECA keeps its test + study actions");
+
+  // 9 + 10. Starting an active practice activates full-screen focus mode that hides the app sidebar.
+  const shellSrc = readFileSync("components/app/app-shell.tsx", "utf8");
+  assert.ok(shellSrc.includes("focusMode"), "app shell computes a focus mode");
+  assert.ok(shellSrc.includes("/^\\/debate\\/[^/]+$/"), "focus mode triggers on an active debate/practice room route");
+  assert.ok(/if \(focusMode\)/.test(shellSrc), "focus mode short-circuits the normal shell (sidebar/nav hidden)");
+  assert.ok(shellSrc.includes("Exit practice") && shellSrc.includes("window.confirm"), "focus mode keeps a clear Exit control that confirms before leaving");
+
+  // 11 + 12. Accessibility controls are an overlay/drawer (never inline), and larger text is supported.
+  const a11yPanel = readFileSync("components/debate/accessibility/accessibility-panel.tsx", "utf8");
+  assert.ok(a11yPanel.includes("fixed") && a11yPanel.includes('aria-modal="true"'), "accessibility controls open as a fixed overlay/drawer (do not shrink the room)");
+  assert.ok(a11yPanel.includes("Larger text"), "larger text control remains available");
+  assert.ok(readFileSync("lib/accessibility.ts", "utf8").includes("largerText"), "larger text is still supported by the accessibility model");
+
+  // 15. Misleading placeholders removed from the production UI.
+  assert.ok(!FORMAT_CARDS.some((c) => c.format === "CUSTOM"), "Custom-format card is gone");
+  assert.ok(!FORMAT_CARDS.some((c) => /coming soon/i.test(`${c.label} ${c.summary} ${c.detail}`)), "no 'coming soon' format cards");
+  assert.ok(!/coming soon/i.test(readFileSync("components/debate/debate-room.tsx", "utf8")), "debate room shows no 'coming soon' placeholder");
+  assert.ok(!/Live students coming soon/.test(readFileSync("components/debate/debate-arena.tsx", "utf8")), "arena 'Live students coming soon' placeholder removed");
+
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice (terminology/stages/context, no parliamentary labels), Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, and removed placeholders.");
 }
 
 main();

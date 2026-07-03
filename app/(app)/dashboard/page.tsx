@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import type { Route } from "next";
 import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { StatCard } from "@/components/app/stat-card";
@@ -22,11 +23,27 @@ import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from 
 import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isUnfinished, sideLabel } from "@/lib/debate-history";
 import { trackByOrganization } from "@/lib/training-tracks";
+import { getActiveTrack } from "@/lib/track-server";
+import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
 import { getStudentTeams } from "@/lib/teams";
 import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
+
+// Icon/tone per track-aware dashboard action (data comes from nextStepsForTrack).
+const ACTION_ICON: Record<DashboardAction["key"], LucideIcon> = {
+  practice: MessageSquareText,
+  tests: ClipboardList,
+  skills: BookOpenCheck,
+  study: Layers3
+};
+const ACTION_TONE: Record<DashboardAction["key"], "primary" | "secondary" | "accent"> = {
+  practice: "primary",
+  tests: "secondary",
+  skills: "accent",
+  study: "secondary"
+};
 
 // Sample rows shown ONLY for demo accounts. Real users see their real data (zero until they train).
 const demoSampleLessons = [
@@ -97,6 +114,11 @@ export default async function DashboardPage() {
   const debateRating = calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount });
   const debateProgress = debateRatingProgress(debateRating);
   const recommendedBot = nearestAiPersona(debateRating);
+
+  // Track-aware quick actions + resources: honor the selected track (preference cookie) so Model UN /
+  // General Debate never see DECA/HOSA exam actions or another org's resource shelf.
+  const activeTrack = getActiveTrack();
+  const nextSteps = nextStepsForTrack(activeTrack);
 
   // Students join/leave coach teams from the dashboard. Coaches/admins manage teams on /coach.
   const role = session?.user?.role;
@@ -252,34 +274,17 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <NextStepCard
-          title="Start an AI round"
-          description="Get a topic, speak through three turns, and receive judge feedback."
-          href="/debate"
-          icon={MessageSquareText}
-        />
-        <NextStepCard
-          title="Generate a practice test"
-          description="Train DECA or HOSA with original questions and explanations."
-          href="/tests"
-          icon={ClipboardList}
-          tone="secondary"
-        />
-        <NextStepCard
-          title="Open mastery lessons"
-          description="Work through examples, guided practice, and a mastery check."
-          href="/skills"
-          icon={BookOpenCheck}
-          tone="accent"
-        />
-        <NextStepCard
-          title="Study weak terms"
-          description="Use flashcards and video resources before your next test."
-          href="/study"
-          icon={Layers3}
-          tone="secondary"
-        />
+      <div className={`grid gap-4 ${nextSteps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+        {nextSteps.map((action) => (
+          <NextStepCard
+            key={action.key}
+            title={action.title}
+            description={action.description}
+            href={action.href as Route}
+            icon={ACTION_ICON[action.key]}
+            tone={ACTION_TONE[action.key]}
+          />
+        ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -309,9 +314,13 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <RecommendedVideos skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]} title="Recommended video resources" />
+      <RecommendedVideos
+        organization={resourceOrgForTrack(activeTrack)}
+        skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]}
+        title="Recommended video resources"
+      />
 
-      {recentTests.length === 0 ? (
+      {recentTests.length === 0 && (!activeTrack || activeTrack.id === "DECA" || activeTrack.id === "HOSA") ? (
         <EmptyState
           icon={ClipboardList}
           title="No completed practice tests yet"

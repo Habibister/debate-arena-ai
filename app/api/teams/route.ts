@@ -3,13 +3,12 @@ import { NextResponse } from "next/server";
 import { apiError, forbidden, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { createTeam, getTeamsForCoach } from "@/lib/teams";
+import { canAccessCoachTools } from "@/lib/roles";
 import { teamCreateSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
 
-function isCoach(role?: string | null) {
-  return role === "COACH" || role === "ADMIN";
-}
+const isCoach = canAccessCoachTools;
 
 export async function GET() {
   try {

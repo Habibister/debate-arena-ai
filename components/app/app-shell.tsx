@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   BookOpenCheck,
   ClipboardList,
+  DoorOpen,
   FileCheck2,
   GraduationCap,
   History,
@@ -64,7 +65,11 @@ function roleLabel(role?: string | null) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [session, setSession] = useState<ShellSession | null>(null);
+  // Full-screen practice: an active debate/track-practice room (/debate/<id>) takes over the whole
+  // viewport — no app sidebar, no dashboard nav — so the room is the only primary interface.
+  const focusMode = /^\/debate\/[^/]+$/.test(pathname);
 
   useEffect(() => {
     let active = true;
@@ -106,6 +111,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const visibleNav = navItems.filter(
     (item) => !("requiresRole" in item) || (role ? (item.requiresRole as readonly string[]).includes(role) : false)
   );
+
+  function exitFocusMode() {
+    // Leaving an active room requires confirmation; end/return goes to practice history.
+    if (window.confirm("End this practice and leave the room? Your progress is saved to your history.")) {
+      router.push("/debates/history");
+    }
+  }
+
+  if (focusMode) {
+    return (
+      <div className="min-h-screen bg-background">
+        <button
+          type="button"
+          onClick={exitFocusMode}
+          className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-full border bg-card/95 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur hover:bg-muted"
+        >
+          <DoorOpen className="h-4 w-4" aria-hidden />
+          Exit practice
+        </button>
+        <main className="min-h-screen">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

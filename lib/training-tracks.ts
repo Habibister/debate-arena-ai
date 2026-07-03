@@ -52,6 +52,16 @@ export const TRACKS: TrackInfo[] = [
 
 export const DEFAULT_TRACK: TrainingTrack = "GENERAL_DEBATE";
 export const TRACK_STORAGE_KEY = "debatearena_training_track";
+// A non-auth preference cookie (slug value) written alongside localStorage so server components can
+// resolve the selected track when the `?track=` query param is absent. Never in the JWT/session.
+export const TRACK_COOKIE = "debatearena_track";
+
+// Resolve the active track for a page: an explicit `?track=` on a track-specific route wins (URL
+// override), otherwise fall back to the persisted selection (cookie). Returns undefined only when the
+// user truly has no selected track, which is the only case where "browse all" is allowed.
+export function resolveTrackFromSlugs(querySlug?: string | null, cookieSlug?: string | null): TrackInfo | undefined {
+  return trackBySlug(querySlug ?? undefined) ?? trackBySlug(cookieSlug ?? undefined);
+}
 
 export function trackById(id: TrainingTrack): TrackInfo {
   return TRACKS.find((t) => t.id === id) ?? TRACKS[0];

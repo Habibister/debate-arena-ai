@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { listAssignmentContentOptions } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { canAccessCoachTools } from "@/lib/roles";
 import { getTeamsForCoach } from "@/lib/teams";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function NewAssignmentPage() {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
 
-  if (!session?.user?.id || (role !== "COACH" && role !== "ADMIN")) {
+  if (!session?.user?.id || !canAccessCoachTools(role)) {
     return (
       <div className="space-y-6">
         <Badge variant="secondary">Coach Assignments</Badge>

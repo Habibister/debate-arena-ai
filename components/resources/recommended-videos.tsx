@@ -1,10 +1,11 @@
 import { ExternalLink, PlayCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { recommendedResources, type StudyOrganization } from "@/lib/study-content";
+import { recommendedResources } from "@/lib/study-content";
 
 type RecommendedVideosProps = {
-  organization?: StudyOrganization;
+  // Any track organization (DECA/HOSA/DEBATE/MODEL_UN/...); non-video tracks show shared foundations only.
+  organization?: string;
   skillTags?: string[];
   title?: string;
   limit?: number;

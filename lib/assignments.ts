@@ -3,6 +3,7 @@ import { HttpError } from "@/lib/api";
 import { ASSIGNMENT_TYPE_META, assignmentLaunchPath } from "@/lib/assignment-types";
 import { prisma } from "@/lib/prisma";
 import { deckSummaries } from "@/lib/study-content";
+import { canAccessCoachTools, isAdmin } from "@/lib/roles";
 import type { assignmentCreateSchema, assignmentSubmitSchema } from "@/lib/validators";
 import type { z } from "zod";
 
@@ -10,11 +11,11 @@ type CreateInput = z.infer<typeof assignmentCreateSchema>;
 type SubmitInput = z.infer<typeof assignmentSubmitSchema>;
 
 function canManageAll(role?: Role | string | null) {
-  return role === "ADMIN";
+  return isAdmin(role);
 }
 
 function isCoachRole(role?: Role | string | null) {
-  return role === "COACH" || role === "ADMIN";
+  return canAccessCoachTools(role);
 }
 
 function uniqueIds(ids: string[]) {

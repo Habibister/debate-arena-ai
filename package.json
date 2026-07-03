@@ -16,6 +16,7 @@
     "assignment:smoke": "tsx scripts/assignment-smoke.ts",
     "games:smoke": "tsx scripts/games-smoke.ts",
     "tracks:smoke": "tsx scripts/tracks-smoke.ts",
+    "learning-path:smoke": "tsx scripts/learning-path-smoke.ts",
     "avatar:smoke": "tsx scripts/avatar-smoke.ts",
     "auth:check": "tsx scripts/auth-users-check.ts",
     "db:generate": "prisma generate",

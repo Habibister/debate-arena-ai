@@ -26,7 +26,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
         </p>
       </div>
 
-      <SkillPath showSampleProgress={showSampleProgress} />
+      <SkillPath showSampleProgress={showSampleProgress} track={activeTrack?.id} />
 
       <Card>
         <CardHeader>

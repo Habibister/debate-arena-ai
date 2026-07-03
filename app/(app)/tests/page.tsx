@@ -51,14 +51,24 @@ export default function TestsPage({ searchParams }: { searchParams: { track?: st
           <CardTitle>Supported test tracks</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-lg border bg-background p-4">
-            <p className="text-sm font-semibold text-muted-foreground">DECA</p>
-            <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
-          </div>
-          <div className="rounded-lg border bg-background p-4">
-            <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
-            <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
-          </div>
+          {!activeTrack || activeTrack.id === "DECA" ? (
+            <div className="rounded-lg border bg-background p-4">
+              <p className="text-sm font-semibold text-muted-foreground">DECA</p>
+              <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
+            </div>
+          ) : null}
+          {!activeTrack || activeTrack.id === "HOSA" ? (
+            <div className="rounded-lg border bg-background p-4">
+              <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
+              <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
+            </div>
+          ) : null}
+          {activeTrack && activeTrack.id !== "DECA" && activeTrack.id !== "HOSA" ? (
+            <div className="rounded-lg border bg-background p-4 md:col-span-2">
+              <p className="text-sm font-semibold">Practice tests are available for DECA and HOSA.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Your {activeTrack.label} track uses debate/practice and study instead.</p>
+            </div>
+          ) : null}
           <div className="rounded-lg border bg-background p-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <CheckCircle2 className="h-4 w-4 text-accent" aria-hidden />

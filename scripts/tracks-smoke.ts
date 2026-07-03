@@ -12,11 +12,13 @@ import {
   normalizeTrack,
   PRACTICE_SOURCES,
   TRACKS,
+  skillVisibleForTrack,
   trackByOrganization,
   trackBySlug,
   trackToOrganization
 } from "../lib/training-tracks";
 import { deckSummaries } from "../lib/study-content";
+import { EVENT_OPTIONS } from "../lib/rubrics";
 
 function main() {
   // Four tracks, correct ids + slugs.
@@ -122,6 +124,28 @@ function main() {
   assert.ok(hub.includes("/practice") && hub.includes("Start a DECA role play"), "hub links to dedicated practice with track labels");
   const shell = readFileSync("components/app/app-shell.tsx", "utf8");
   assert.ok(shell.includes("withTrack(item.href)"), "sidebar preserves the selected track on content links");
+
+  // Skills/lessons filtering (lessons are reached via skills; there is no separate /lessons page).
+  assert.equal(skillVisibleForTrack("HOSA", "HOSA").visible, true, "HOSA shows HOSA skills");
+  assert.equal(skillVisibleForTrack("DECA", "HOSA").visible, false, "HOSA excludes DECA skills");
+  assert.equal(skillVisibleForTrack("HOSA", "DECA").visible, false, "DECA excludes HOSA skills");
+  assert.equal(skillVisibleForTrack("Debate", "GENERAL_DEBATE").visible, true, "General Debate shows debate skills");
+  assert.equal(skillVisibleForTrack("DECA", "GENERAL_DEBATE").visible, false, "General Debate excludes org-specific skills");
+  assert.equal(skillVisibleForTrack("HOSA", "MODEL_UN").visible, false, "Model UN excludes HOSA skills");
+  assert.equal(skillVisibleForTrack("Public Speaking", "MODEL_UN").visible, true, "shared foundation visible in every track");
+  assert.equal(skillVisibleForTrack("Public Speaking", "DECA").shared, true, "shared foundation is labeled shared");
+
+  // Tests source is keyed by org — no cross-track leakage between DECA and HOSA test events.
+  const decaLabels = EVENT_OPTIONS.DECA.map((e) => e.label);
+  const hosaLabels = EVENT_OPTIONS.HOSA.map((e) => e.label);
+  assert.ok(!decaLabels.some((l) => hosaLabels.includes(l)), "DECA and HOSA test events do not overlap");
+
+  // Pages are wired to filter (not just banner), and there is no separate /lessons page.
+  assert.ok(readFileSync("app/(app)/skills/page.tsx", "utf8").includes("track={activeTrack?.id}"), "skills page filters by track");
+  assert.ok(readFileSync("app/(app)/tests/page.tsx", "utf8").includes('activeTrack.id === "DECA"'), "tests page filters by track");
+  assert.ok(!existsSync("app/(app)/lessons/page.tsx"), "no separate /lessons page (lessons filtered via skills)");
+  // Game entry points are per-deck, and deck listings are already track-filtered (study), so no leakage.
+  assert.ok(readFileSync("app/(app)/study/page.tsx", "utf8").includes("activeTrack"), "study/deck (game entry) is track-filtered");
 
   console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved.");
 }

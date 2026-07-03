@@ -74,6 +74,21 @@ export function trackByOrganization(org: Organization | null | undefined): Track
   return TRACKS.find((t) => t.organization === org);
 }
 
+// Maps the existing skill "org" labels to a track (or SHARED). "Public Speaking" foundation skills
+// are genuinely universal and shown across every track, labeled "Shared foundation".
+const SKILL_ORG_TRACK: Record<string, TrainingTrack | "SHARED"> = {
+  Debate: "GENERAL_DEBATE",
+  DECA: "DECA",
+  HOSA: "HOSA",
+  "Public Speaking": "SHARED"
+};
+
+export function skillVisibleForTrack(skillOrg: string, track: TrainingTrack): { visible: boolean; shared: boolean } {
+  const mapped = SKILL_ORG_TRACK[skillOrg];
+  const shared = mapped === "SHARED";
+  return { visible: shared || mapped === track, shared };
+}
+
 // Honest content-source labels — never claim official/historical origin for unverified content.
 export type ContentSourceType = "OFFICIAL_PAST" | "OFFICIAL_SAMPLE" | "ADAPTED_FROM_PAST" | "AI_GENERATED" | "UNVERIFIED_EXISTING_CONTENT";
 

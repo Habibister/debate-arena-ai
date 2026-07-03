@@ -31,6 +31,7 @@ import { useAccessibility } from "@/components/debate/accessibility/accessibilit
 import { MessageContent } from "@/components/debate/accessibility/message-content";
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
+import { SideCoachPanel } from "@/components/debate/side-coach-panel";
 import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
 import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
 import {
@@ -323,6 +324,17 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const [isOpponentThinking, setIsOpponentThinking] = useState(false);
   const [isJudging, setIsJudging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Beginner Side Coach (private, separate role). Enabled via a localStorage flag set in debate setup.
+  const [coachEnabled, setCoachEnabled] = useState(false);
+  useEffect(() => {
+    try {
+      setCoachEnabled(window.localStorage.getItem("debatearena_side_coach") === "on");
+    } catch {
+      setCoachEnabled(false);
+    }
+  }, []);
+  const coachStudentSide: "AFFIRMATIVE" | "NEGATIVE" =
+    debate.studentSide === "OPPOSITION" || debate.studentSide === "AGAINST" ? "NEGATIVE" : "AFFIRMATIVE";
   const [prepRemaining, setPrepRemaining] = useState(initialDebate.prepTimeSeconds);
   const [turnRemaining, setTurnRemaining] = useState(initialDebate.turnTimeSeconds);
 
@@ -715,6 +727,16 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
               <Bot className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               {aiNotice}
             </div>
+          ) : null}
+
+          {coachEnabled && !judgeReport ? (
+            <SideCoachPanel
+              organization={debate.organization}
+              eventType={debate.eventType}
+              studentSide={coachStudentSide}
+              level={debate.level}
+              messages={messages}
+            />
           ) : null}
 
           {!judgeReport && currentSpeech ? (

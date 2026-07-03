@@ -27,7 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { AccessibilityPanel } from "@/components/debate/accessibility/accessibility-panel";
-import { AccessibilityProvider, useAccessibility } from "@/components/debate/accessibility/accessibility-context";
+import { useAccessibility } from "@/components/debate/accessibility/accessibility-context";
 import { MessageContent } from "@/components/debate/accessibility/message-content";
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
@@ -305,17 +305,9 @@ function profileHandle(profile: ParticipantProfile | null, fallback: string) {
   return profile?.username ?? profile?.displayName ?? fallback;
 }
 
-export function DebateArena(props: DebateArenaProps) {
-  // Provider (localStorage-backed) makes audio/accessibility settings available to every speak
-  // button, the panel, and the judge ballot without threading props through this large component.
-  return (
-    <AccessibilityProvider>
-      <DebateArenaInner {...props} />
-    </AccessibilityProvider>
-  );
-}
-
-function DebateArenaInner({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport }: DebateArenaProps) {
+// Accessibility settings come from the single sitewide AccessibilityProvider mounted in the root
+// layout, so the debate-room panel, /settings, and every speak button stay synchronized.
+export function DebateArena({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport }: DebateArenaProps) {
   const { settings: a11y } = useAccessibility();
   const spokenIdRef = useRef<string | null>(null);
   const [debate, setDebate] = useState(initialDebate);

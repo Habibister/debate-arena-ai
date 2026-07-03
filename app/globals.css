@@ -55,3 +55,77 @@ body {
 .focus-ring {
   @apply outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring;
 }
+
+/* ===== Sitewide accessibility settings (driven by <html data-*> from AccessibilityProvider) ===== */
+
+/* Eye comfort: warmer, softer surfaces; less harsh bright white / large blue. Keeps dark text readable. */
+html[data-eye-comfort] {
+  --background: 40 40% 96%;
+  --card: 42 46% 97%;
+  --popover: 42 46% 97%;
+  --muted: 40 26% 91%;
+  --border: 40 22% 85%;
+  --input: 40 22% 85%;
+}
+html[data-eye-comfort] .arena-grid {
+  background-image:
+    linear-gradient(rgba(120, 90, 40, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 90, 40, 0.06) 1px, transparent 1px);
+}
+
+/* Larger text: modest, rem-based so hierarchy and layout scale together. */
+html[data-large-text] {
+  font-size: 112.5%;
+}
+
+/* Increased spacing: more line height + breathing room; safe for dense tables (only text blocks). */
+html[data-increased-spacing] body {
+  line-height: 1.8;
+}
+html[data-increased-spacing] p {
+  margin-bottom: 0.6em;
+}
+
+/* High contrast: stronger borders, focus ring, and text. */
+html[data-high-contrast] {
+  --foreground: 224 60% 6%;
+  --muted-foreground: 222 32% 26%;
+  --border: 224 30% 38%;
+  --input: 224 30% 38%;
+  --ring: 224 90% 42%;
+}
+
+/* Color-blind friendly: never rely on color alone — strengthen borders + always-visible focus. */
+html[data-colorblind] {
+  --border: 224 26% 44%;
+}
+html[data-colorblind] :focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Dyslexia-friendly: gentle global spacing (transcript uses a stronger per-block treatment). */
+html[data-dyslexia] body {
+  letter-spacing: 0.01em;
+  word-spacing: 0.08em;
+}
+
+/* Reduced motion: honor the toggle AND the OS preference. Keeps loaders functional (near-instant). */
+html[data-reduced-motion] *,
+html[data-reduced-motion] *::before,
+html[data-reduced-motion] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

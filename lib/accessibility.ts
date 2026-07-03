@@ -38,6 +38,8 @@ export type AccessibilitySettings = {
   lineSpacing: boolean;
   reducedMotion: boolean;
   highContrast: boolean;
+  colorBlind: boolean;
+  eyeComfort: boolean;
   readAiAloud: boolean;
   readStudentAloud: boolean;
 };
@@ -52,6 +54,8 @@ export const DEFAULT_ACCESSIBILITY: AccessibilitySettings = {
   lineSpacing: false,
   reducedMotion: false,
   highContrast: false,
+  colorBlind: false,
+  eyeComfort: false,
   readAiAloud: true,
   readStudentAloud: false
 };
@@ -70,9 +74,24 @@ export function normalizeAccessibility(raw: unknown): AccessibilitySettings {
     lineSpacing: Boolean(input.lineSpacing ?? d.lineSpacing),
     reducedMotion: Boolean(input.reducedMotion ?? d.reducedMotion),
     highContrast: Boolean(input.highContrast ?? d.highContrast),
+    colorBlind: Boolean(input.colorBlind ?? d.colorBlind),
+    eyeComfort: Boolean(input.eyeComfort ?? d.eyeComfort),
     readAiAloud: Boolean(input.readAiAloud ?? d.readAiAloud),
     readStudentAloud: Boolean(input.readStudentAloud ?? d.readStudentAloud)
   };
+}
+
+// Root <html> data attributes so global CSS (globals.css) can apply sitewide accessibility styles.
+export function accessibilityDataAttributes(s: AccessibilitySettings): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  if (s.colorBlind) attrs["data-colorblind"] = "true";
+  if (s.eyeComfort) attrs["data-eye-comfort"] = "true";
+  if (s.reducedMotion) attrs["data-reduced-motion"] = "true";
+  if (s.largerText) attrs["data-large-text"] = "true";
+  if (s.lineSpacing) attrs["data-increased-spacing"] = "true";
+  if (s.highContrast) attrs["data-high-contrast"] = "true";
+  if (s.dyslexiaFont) attrs["data-dyslexia"] = "true";
+  return attrs;
 }
 
 // Classes for the arena root: high contrast + globally disabled transitions for reduced motion.

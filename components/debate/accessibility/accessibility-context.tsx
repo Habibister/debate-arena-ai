@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { DEFAULT_ACCESSIBILITY, normalizeAccessibility, type AccessibilitySettings } from "@/lib/accessibility";
+import { accessibilityDataAttributes, DEFAULT_ACCESSIBILITY, normalizeAccessibility, type AccessibilitySettings } from "@/lib/accessibility";
 
 const STORAGE_KEY = "debatearena-accessibility";
+const ROOT_ATTRS = ["data-colorblind", "data-eye-comfort", "data-reduced-motion", "data-large-text", "data-increased-spacing", "data-high-contrast", "data-dyslexia"];
 
 type AccessibilityContextValue = {
   settings: AccessibilitySettings;
@@ -27,6 +28,22 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
       // localStorage may be unavailable (private mode) — fall back to defaults, never crash.
     }
   }, []);
+
+  // Reflect settings onto <html> so global CSS applies sitewide (and stays in sync everywhere).
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const root = document.documentElement;
+    const attrs = accessibilityDataAttributes(settings);
+    for (const key of ROOT_ATTRS) {
+      if (attrs[key]) {
+        root.setAttribute(key, attrs[key]);
+      } else {
+        root.removeAttribute(key);
+      }
+    }
+  }, [settings]);
 
   const value = useMemo<AccessibilityContextValue>(
     () => ({

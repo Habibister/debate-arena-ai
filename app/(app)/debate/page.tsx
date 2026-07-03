@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { DebateRoom } from "@/components/debate/debate-room";
 
-export default function DebatePage() {
+export default function DebatePage({ searchParams }: { searchParams: { track?: string } }) {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
@@ -16,7 +16,7 @@ export default function DebatePage() {
         </p>
       </div>
 
-      <DebateRoom />
+      <DebateRoom track={searchParams.track} />
     </div>
   );
 }

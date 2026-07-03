@@ -46,14 +46,24 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
       {/* Practice */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {isDebate ? (
-          <Link href="/debate" className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+          <Link href={`/debate?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
             <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
             <span>
               <span className="block font-semibold">Start a debate round</span>
               <span className="mt-1 block text-sm text-muted-foreground">Choose a format and practice with an AI opponent and judge.</span>
             </span>
           </Link>
-        ) : null}
+        ) : (
+          <Link href={`/debate?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+            <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
+            <span>
+              <span className="block font-semibold">AI practice round</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                The AI judge uses {track.label} criteria. Full event-specific simulation is coming — this uses AI-generated practice for now.
+              </span>
+            </span>
+          </Link>
+        )}
         {hasTests ? (
           <Link href="/tests" className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
             <ClipboardList className="mt-0.5 h-5 w-5 text-primary" aria-hidden />

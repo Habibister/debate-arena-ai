@@ -69,6 +69,11 @@ export function trackToOrganization(id: TrainingTrack): Organization {
   return trackById(id).organization;
 }
 
+// Reverse lookup so a team/assignment's existing Organization maps to a track label (no schema needed).
+export function trackByOrganization(org: Organization | null | undefined): TrackInfo | undefined {
+  return TRACKS.find((t) => t.organization === org);
+}
+
 // Honest content-source labels — never claim official/historical origin for unverified content.
 export type ContentSourceType = "OFFICIAL_PAST" | "OFFICIAL_SAMPLE" | "ADAPTED_FROM_PAST" | "AI_GENERATED" | "UNVERIFIED_EXISTING_CONTENT";
 

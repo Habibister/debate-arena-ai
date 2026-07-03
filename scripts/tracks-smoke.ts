@@ -3,7 +3,7 @@
  * Run with: npm run tracks:smoke
  */
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import {
   CONTENT_SOURCE_LABEL,
   DEFAULT_CONTENT_SOURCE,
@@ -11,6 +11,7 @@ import {
   normalizeTrack,
   PRACTICE_SOURCES,
   TRACKS,
+  trackByOrganization,
   trackBySlug,
   trackToOrganization
 } from "../lib/training-tracks";
@@ -60,7 +61,35 @@ function main() {
     assert.ok(existsSync(p), `preserved: ${p}`);
   }
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping, safe normalize, org-based content filtering (no cross-track leakage, honest empty states), honest source labels, routes present, existing systems preserved.");
+  // Reverse mapping (team/assignment Organization -> track label).
+  assert.equal(trackByOrganization("HOSA")?.id, "HOSA");
+  assert.equal(trackByOrganization("DECA")?.id, "DECA");
+
+  // Propagation: debate creation uses the selected track's organization (not a hardcoded "DEBATE").
+  const room = readFileSync("components/debate/debate-room.tsx", "utf8");
+  assert.ok(room.includes("organization: trackOrganization"), "debate-room passes the track organization to the API");
+  assert.ok(!room.includes('organization: "DEBATE"'), "debate-room no longer hardcodes DEBATE");
+  assert.ok(room.includes("Switch track"), "debate-room shows the current track + switch");
+
+  // AI is organization-specific (opponent/judge/rubric branch by org), so passing the track org
+  // yields track-specific behavior.
+  const ai = readFileSync("lib/ai.ts", "utf8");
+  for (const org of ["MODEL_UN", "DECA", "HOSA"]) {
+    assert.ok(ai.includes(org), `AI rubric/categories branch on ${org}`);
+  }
+
+  // Content filtering outside the hub: study page filters by ?track.
+  const study = readFileSync("app/(app)/study/page.tsx", "utf8");
+  assert.ok(study.includes("activeTrack") && study.includes("trackBySlug"), "study page filters decks by the selected track");
+
+  // Dashboard uses the selected track; assignment form shows the track (from the team org, no schema).
+  const dash = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
+  assert.ok(dash.includes("TrackNextStep"), "dashboard shows a track-specific training path");
+  const form = readFileSync("components/assignments/create-assignment-form.tsx", "utf8");
+  assert.ok(form.includes("trackByOrganization"), "assignment form displays the track");
+  assert.ok(!form.includes("setTrack"), "opening/creating an assignment does not overwrite the student's preferred track");
+
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved.");
 }
 
 main();

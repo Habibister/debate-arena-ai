@@ -14,6 +14,7 @@
     "audio-debate:smoke": "tsx scripts/audio-debate-smoke.ts",
     "team:smoke": "tsx scripts/team-smoke.ts",
     "assignment:smoke": "tsx scripts/assignment-smoke.ts",
+    "games:smoke": "tsx scripts/games-smoke.ts",
     "avatar:smoke": "tsx scripts/avatar-smoke.ts",
     "auth:check": "tsx scripts/auth-users-check.ts",
     "db:generate": "prisma generate",

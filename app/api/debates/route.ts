@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
-import { buildDebateFormatConfig, buildModelUnFormatConfig, getOpponentSide, resolveDebateSide } from "@/lib/debate-formats";
+import { buildDebateFormatConfig, getOpponentSide, resolveDebateSide, trackPracticeConfigForOrganization } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
 import { debateCreateSchema } from "@/lib/validators";
 
@@ -56,12 +56,13 @@ export async function POST(request: Request) {
       throw new HttpError("Custom debate formats are coming soon. Choose one of the available formats for now.", 400);
     }
 
-    // Model UN is a Student-Delegate speaking practice, not parliamentary debate: its config (labels,
-    // stages, framing) is keyed off the organization, never the parliamentary format enum.
-    const isModelUn = input.organization === "MODEL_UN";
-    const formatConfig = isModelUn ? buildModelUnFormatConfig(input.turnTimeSeconds) : buildDebateFormatConfig(format, input.turnTimeSeconds);
-    const studentSide = isModelUn ? formatConfig.sides.affirmative : resolveDebateSide(format, side);
-    const opponentSide = isModelUn ? formatConfig.sides.negative : getOpponentSide(format, studentSide);
+    // Organization-based tracks (DECA role play, HOSA event practice, Model UN committee) are NOT
+    // parliamentary debate: their config (labels, stages, framing) is keyed off the organization, never
+    // the parliamentary format enum. Only General Debate uses the real debate formats.
+    const trackConfig = trackPracticeConfigForOrganization(input.organization, input.turnTimeSeconds);
+    const formatConfig = trackConfig ?? buildDebateFormatConfig(format, input.turnTimeSeconds);
+    const studentSide = trackConfig ? trackConfig.sides.affirmative : resolveDebateSide(format, side);
+    const opponentSide = trackConfig ? trackConfig.sides.negative : getOpponentSide(format, studentSide);
     const rubric = await prisma.rubric.findFirst({
       where: {
         organization: input.organization,

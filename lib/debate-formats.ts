@@ -1,4 +1,4 @@
-import type { DebateFormat, DebateSide, MessageRole } from "@prisma/client";
+import type { DebateFormat, DebateSide, MessageRole, Organization } from "@prisma/client";
 import { DEBATE_CATEGORY_OPTIONS } from "@/lib/debate-topics";
 
 export type DebateSideChoice = DebateSide | "RANDOM";
@@ -265,6 +265,77 @@ export function buildModelUnFormatConfig(turnTimeSeconds?: number): DebateFormat
       )
     ]
   };
+}
+
+// DECA is a role play (not parliamentary debate): review the scenario, deliver the role play against
+// the performance indicators, and give a recommendation. Uses PUBLIC_FORUM only as a neutral carrier
+// for the DebateFormat enum column; the stages/labels below are the real experience. eventType matches
+// the DECA "ROLEPLAY" rubric. All stages are the competitor's, so the parliamentary AI opponent is
+// never invoked and no Government/Opposition/PM/LO/MG/MO/motion language ever appears.
+export function buildDecaFormatConfig(turnTimeSeconds?: number): DebateFormatConfig {
+  void turnTimeSeconds;
+  return {
+    format: "PUBLIC_FORUM",
+    label: "DECA Role Play",
+    eventType: "ROLEPLAY",
+    description: "A focused DECA role play: review the scenario, deliver your role play against the performance indicators, and give a clear recommendation.",
+    prepTimeSeconds: 0,
+    turnTimeSeconds: 120,
+    graceTimeSeconds: GRACE_SECONDS,
+    sides: {
+      affirmative: "FOR",
+      negative: "AGAINST",
+      affirmativeLabel: "You (participant)",
+      negativeLabel: "AI Judge / Client"
+    },
+    speeches: [
+      speech("deca-scenario", "Scenario Review & Plan", "Scenario", "FOR", 1, 90, "Review the business scenario and identify the performance indicators. Plan how you'll greet the judge and structure your role play."),
+      speech("deca-presentation", "Role-Play Presentation", "Presentation", "FOR", 2, 150, "Deliver your role play: greet the judge/client, address the business situation, and apply each performance indicator with specifics."),
+      speech("deca-recommendation", "Recommendation & Close", "Recommendation", "FOR", 3, 90, "Give a clear recommendation with justification, then close professionally and invite questions.")
+    ]
+  };
+}
+
+// HOSA is a health-science event practice (not debate): review the prompt, deliver a prepared response
+// using correct terminology, and summarize the rationale. Same neutral-carrier approach as DECA.
+export function buildHosaFormatConfig(turnTimeSeconds?: number): DebateFormatConfig {
+  void turnTimeSeconds;
+  return {
+    format: "PUBLIC_FORUM",
+    label: "HOSA Event Practice",
+    eventType: "HEALTH_SCIENCE_EVENT",
+    description: "A focused HOSA event practice: review the prompt, deliver a prepared response using correct terminology, and summarize your rationale.",
+    prepTimeSeconds: 0,
+    turnTimeSeconds: 120,
+    graceTimeSeconds: GRACE_SECONDS,
+    sides: {
+      affirmative: "FOR",
+      negative: "AGAINST",
+      affirmativeLabel: "You (competitor)",
+      negativeLabel: "AI Evaluator"
+    },
+    speeches: [
+      speech("hosa-prompt", "Prompt Review", "Prompt", "FOR", 1, 90, "Review the scenario/prompt and identify the key health-science concepts and terminology it requires."),
+      speech("hosa-response", "Prepared Response", "Response", "FOR", 2, 150, "Work through the item using correct terminology and safe, role-appropriate reasoning."),
+      speech("hosa-summary", "Summary & Rationale", "Summary", "FOR", 3, 90, "Summarize your answer and explain the rationale, noting any safety or accuracy considerations.")
+    ]
+  };
+}
+
+// Single dispatcher: the correct non-parliamentary practice config for an organization-based track, or
+// null for General Debate (which uses the real debate formats). The debate API keys off this so DECA,
+// HOSA, and Model UN never fall through to the parliamentary format.
+export function trackPracticeConfigForOrganization(organization: Organization, turnTimeSeconds?: number): DebateFormatConfig | null {
+  if (organization === "MODEL_UN") {
+    return buildModelUnFormatConfig(turnTimeSeconds);
+  }
+  if (organization === "DECA") {
+    return buildDecaFormatConfig(turnTimeSeconds);
+  }
+  if (organization === "HOSA") {
+    return buildHosaFormatConfig(turnTimeSeconds);
+  }
+  return null;
 }
 
 export function parseFormatConfig(value: unknown, format: DebateFormat, turnTimeSeconds?: number): DebateFormatConfig {

@@ -22,7 +22,7 @@ import {
 } from "../lib/training-tracks";
 import { deckSummaries, recommendedResources } from "../lib/study-content";
 import { EVENT_OPTIONS } from "../lib/rubrics";
-import { buildModelUnFormatConfig, FORMAT_CARDS, MODEL_UN_EVENT_TYPE } from "../lib/debate-formats";
+import { buildDecaFormatConfig, buildHosaFormatConfig, buildModelUnFormatConfig, FORMAT_CARDS, MODEL_UN_EVENT_TYPE, trackPracticeConfigForOrganization } from "../lib/debate-formats";
 import { nextStepsForTrack, resourceOrgForTrack } from "../lib/dashboard-actions";
 
 function main() {
@@ -205,9 +205,10 @@ function main() {
   }
   assert.equal(mun.eventType, MODEL_UN_EVENT_TYPE, "Model UN has its own event type");
   assert.ok(!/PARLIAMENTARY/.test(mun.eventType), "Model UN is never labeled parliamentary");
-  // Server keys the Model UN config off the organization, not the parliamentary format enum.
+  // Server keys the practice config off the organization, not the parliamentary format enum.
   const debatesApi = readFileSync("app/api/debates/route.ts", "utf8");
-  assert.ok(debatesApi.includes('input.organization === "MODEL_UN"') && debatesApi.includes("buildModelUnFormatConfig"), "debate API builds the Model UN config for the MODEL_UN organization");
+  assert.ok(debatesApi.includes("trackPracticeConfigForOrganization"), "debate API builds an organization-specific (non-parliamentary) config for org-based tracks");
+  assert.equal(trackPracticeConfigForOrganization("DEBATE"), null, "General Debate uses the real debate formats (no track-practice override)");
 
   // 6. Model UN practice receives committee, country, agenda, and activity context (composePractice).
   const munCtx = composePractice("MODEL_UN", { committee: "ECOSOC", country: "Kenya", agenda: "water access", activity: "Negotiation" });
@@ -260,9 +261,25 @@ function main() {
   const deckGamesPage = readFileSync("app/(app)/study/[deck]/games/page.tsx", "utf8");
   assert.ok(deckGamesPage.includes("trackAllowsOrganization") && deckGamesPage.includes("redirect"), "study deck games route enforces the same isolation");
 
-  // A2. DECA (and other non-general tracks) must not route into parliamentary debate.
+  // A2. DECA (and other non-general tracks) must not route into or render parliamentary debate.
   const debatePage = readFileSync("app/(app)/debate/page.tsx", "utf8");
   assert.ok(debatePage.includes('activeTrack.id !== "GENERAL_DEBATE"') && debatePage.includes("/practice"), "debate page redirects non-general tracks to their real practice (no parliamentary debate as DECA/HOSA/MUN)");
+  // DECA practice is a role play with DECA labels/stages — never Government/Opposition/PM-LO-MG-MO/motion.
+  const decaConfig = buildDecaFormatConfig();
+  const decaText = [decaConfig.label, decaConfig.description, decaConfig.sides.affirmativeLabel, decaConfig.sides.negativeLabel, ...decaConfig.speeches.flatMap((s) => [s.label, s.shortLabel, s.guidance])].join(" | ");
+  assert.ok(!/government|opposition|affirmative|negative|\bpm\b|\blo\b|\bmg\b|\bmo\b|motion|parliamentary/i.test(decaText), "DECA role play shows no parliamentary labels");
+  assert.equal(decaConfig.sides.affirmativeLabel, "You (participant)", "DECA uses a participant label, not a debate side");
+  assert.ok(decaConfig.speeches.every((s) => s.side === "FOR"), "DECA stages are the competitor's (parliamentary AI opponent never invoked)");
+  assert.ok(decaConfig.speeches.some((s) => /role.?play/i.test(s.label)), "DECA includes a role-play presentation stage");
+  assert.equal(trackPracticeConfigForOrganization("DECA")?.eventType, "ROLEPLAY", "DECA practice uses the DECA role-play event type");
+  // HOSA practice is likewise a non-debate event practice.
+  const hosaConfig = buildHosaFormatConfig();
+  const hosaText = [hosaConfig.label, hosaConfig.description, ...hosaConfig.speeches.flatMap((s) => [s.label, s.shortLabel, s.guidance])].join(" | ");
+  assert.ok(!/government|opposition|\bpm\b|\blo\b|\bmg\b|\bmo\b|motion|parliamentary|rebuttal/i.test(hosaText), "HOSA event practice shows no debate labels");
+  // DECA dashboard routes to DECA role play, not the parliamentary debate room.
+  const decaPracticeAction = decaSteps.find((s) => s.key === "practice");
+  assert.ok(decaPracticeAction && decaPracticeAction.href.includes("/training/deca/practice") && !decaPracticeAction.href.includes("/debate"), "DECA dashboard practice action routes to the DECA role play, not /debate");
+  // (The DECA practice hub → /training/deca/practice with "Start a DECA role play" is asserted above.)
 
   // A3. Unfinished practice is filtered by the selected track (records still kept in history).
   const mixedDebates = [{ organization: "DEBATE" }, { organization: "MODEL_UN" }, { organization: "HOSA" }];

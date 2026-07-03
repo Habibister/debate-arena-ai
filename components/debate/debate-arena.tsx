@@ -43,6 +43,7 @@ import {
   type DebateSpeech
 } from "@/lib/debate-formats";
 import { cn, titleCase } from "@/lib/utils";
+import { trackByOrganization } from "@/lib/training-tracks";
 import { calculateDebateRating } from "@/lib/xp";
 import { assessStudentSpeech, SUBMIT_HELPER_TEXT } from "@/lib/speech-quality";
 
@@ -404,13 +405,15 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const currentSpeech = getNextSpeech(config, completedSpeechCount);
   const isStudentTurn = Boolean(currentSpeech && currentSpeech.side === debate.studentSide);
   const isOpponentTurn = Boolean(currentSpeech && currentSpeech.side === debate.opponentSide);
-  // Model UN is a Student-Delegate speaking practice: its side labels come from the (Model UN) config,
-  // and the parliamentary Government/Opposition ballot is intentionally not shown for it.
-  const isModelUn = debate.organization === "MODEL_UN";
+  // Organization-based tracks (DECA role play, HOSA event practice, Model UN committee) are practice
+  // experiences, not parliamentary debate: their side labels come from the track config, and the
+  // parliamentary Government/Opposition ballot is intentionally not shown for them.
+  const isTrackPractice = debate.organization !== "DEBATE";
+  const practiceTrack = isTrackPractice ? trackByOrganization(debate.organization) : undefined;
   const sideLabelFor = (side: typeof config.sides.affirmative) =>
     side === config.sides.affirmative ? config.sides.affirmativeLabel : config.sides.negativeLabel;
   const sessionComplete = completedSpeechCount >= config.speeches.length;
-  const canJudge = Boolean(!judgeReport && sessionComplete && debate.status !== "JUDGED" && !isModelUn);
+  const canJudge = Boolean(!judgeReport && sessionComplete && debate.status !== "JUDGED" && !isTrackPractice);
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
   // Signal for the voice input: only timed student turns "expire". Untimed/disabled turns (<=0s) and
@@ -706,9 +709,9 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-neutral-500">{isModelUn ? "Current stage" : "Current speaker"}</p>
+                <p className="text-xs font-semibold uppercase text-neutral-500">{isTrackPractice ? "Current stage" : "Current speaker"}</p>
                 <h2 className="mt-1 text-2xl font-bold">
-                  {currentSpeech ? currentSpeech.label : isModelUn ? "Committee session complete" : "Ready for judge"}
+                  {currentSpeech ? currentSpeech.label : isTrackPractice ? "Practice session complete" : "Ready for judge"}
                 </h2>
                 {currentSpeech ? <p className="mt-1 text-sm text-neutral-400">{currentSpeech.guidance}</p> : null}
               </div>
@@ -718,7 +721,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                 </Badge>
               ) : (
                 <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-100">
-                  {isModelUn ? "Session complete" : "Judge ready"}
+                  {isTrackPractice ? "Session complete" : "Judge ready"}
                 </Badge>
               )}
             </div>
@@ -867,20 +870,22 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
             </Button>
           ) : null}
 
-          {isModelUn && sessionComplete && !currentSpeech ? (
+          {isTrackPractice && sessionComplete && !currentSpeech ? (
             <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-50">
-              <p className="font-semibold text-white">Committee session complete</p>
+              <p className="font-semibold text-white">{practiceTrack?.label ?? "Practice"} session complete</p>
               <p className="mt-1 leading-6">
-                You delivered all four delegate stages — opening speech, moderated caucus, negotiation, and resolution.
-                Review your transcript above, then return to your history or the Model UN hub to run it again.
+                You worked through every stage of this {practiceTrack?.label ?? "practice"} session. Review your transcript above,
+                then return to your history or run it again from the {practiceTrack?.label ?? "track"} hub.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/debates/history" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
                   Practice history
                 </Link>
-                <Link href={"/training/model-un/practice" as Route} className={cn(buttonVariants({ variant: "outline" }), "border-white/20 bg-white/[0.03] text-neutral-100 hover:bg-white/10")}>
-                  New Model UN session
-                </Link>
+                {practiceTrack ? (
+                  <Link href={`/training/${practiceTrack.slug}/practice` as Route} className={cn(buttonVariants({ variant: "outline" }), "border-white/20 bg-white/[0.03] text-neutral-100 hover:bg-white/10")}>
+                    New {practiceTrack.short} session
+                  </Link>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -918,13 +923,13 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
           <div className="grid gap-2">
             <Link
-              href={(isModelUn ? "/training/model-un/practice" : "/debate") as Route}
+              href={(practiceTrack ? `/training/${practiceTrack.slug}/practice` : "/debate") as Route}
               className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}
             >
-              {isModelUn ? "New Model UN session" : "New debate"}
+              {practiceTrack ? `New ${practiceTrack.short} session` : "New debate"}
             </Link>
             <Link href="/debates/history" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
-              {isModelUn ? "End practice" : "End debate"}
+              {isTrackPractice ? "End practice" : "End debate"}
             </Link>
           </div>
         </aside>

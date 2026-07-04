@@ -1,8 +1,9 @@
 // Beginner Side Coach — a SEPARATE AI role from the opponent and judge. It privately helps the
 // student. It has its own system prompt (never the opponent's), receives only the public transcript
-// + the student's latest speech, and never sees judge scoring or future opponent speeches. On any
-// failure it returns a deterministic, track-aware fallback so the debate never breaks.
+// + the student's latest speech, and never sees judge scoring or future opponent speeches. Ordinary
+// provider outages return a deterministic fallback; safety/rate-limit hard failures are surfaced.
 import type { Organization } from "@prisma/client";
+import { shouldBypassAiFallback } from "@/lib/api";
 import { runProviderCompletion, extractJson } from "@/lib/ai-providers";
 
 export type SideCoachTranscriptLine = { role: string; content: string };
@@ -117,11 +118,14 @@ function normalize(parsed: Partial<SideCoachResponse>, input: SideCoachInput): S
 export async function generateSideCoachResponse(input: SideCoachInput): Promise<SideCoachResponse> {
   try {
     const { content } = await runProviderCompletion(
-      { system: buildSideCoachSystemPrompt(input), prompt: buildSideCoachUserPrompt(input), temperature: 0.5 },
+      { system: buildSideCoachSystemPrompt(input), prompt: buildSideCoachUserPrompt(input), temperature: 0.5, maxOutputTokens: 700 },
       "side-coach"
     );
     return normalize(extractJson<Partial<SideCoachResponse>>(content), input);
-  } catch {
+  } catch (error) {
+    if (shouldBypassAiFallback(error)) {
+      throw error;
+    }
     return sideCoachFallback(input);
   }
 }

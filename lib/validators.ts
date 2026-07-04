@@ -22,13 +22,57 @@ export const assignmentTypeSchema = z.enum([
   "LESSON"
 ]);
 
-const transcriptSchema = z.array(
-  z.object({
-    role: z.enum(["AFFIRMATIVE", "NEGATIVE", "MODERATOR", "JUDGE", "SYSTEM"]),
-    round: z.number().int().min(1),
-    content: z.string().min(1)
-  })
-);
+export const MAX_TRANSCRIPT_MESSAGES = 40;
+export const MAX_TRANSCRIPT_CONTENT_CHARS = 8_000;
+export const MAX_TRANSCRIPT_TOTAL_CHARS = 48_000;
+export const MAX_TOPIC_CHARS = 1_000;
+export const MAX_SCENARIO_CHARS = 4_000;
+
+function transcriptTotal(messages: Array<{ content: string }>) {
+  return messages.reduce((total, message) => total + message.content.length, 0);
+}
+
+function transcriptSchema(options?: { min?: number }) {
+  let schema = z
+    .array(
+      z.object({
+        role: z.enum(["AFFIRMATIVE", "NEGATIVE", "MODERATOR", "JUDGE", "SYSTEM"]),
+        round: z.number().int().min(1),
+        content: z.string().min(1).max(MAX_TRANSCRIPT_CONTENT_CHARS)
+      })
+    )
+    .max(MAX_TRANSCRIPT_MESSAGES);
+
+  if (options?.min) {
+    schema = schema.min(options.min);
+  }
+
+  return schema.superRefine((messages, ctx) => {
+    if (transcriptTotal(messages) > MAX_TRANSCRIPT_TOTAL_CHARS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Transcript is too large. Keep it under ${MAX_TRANSCRIPT_TOTAL_CHARS.toLocaleString()} characters.`
+      });
+    }
+  });
+}
+
+const sideCoachTranscriptSchema = z
+  .array(
+    z.object({
+      role: z.string().max(20),
+      content: z.string().min(1).max(MAX_TRANSCRIPT_CONTENT_CHARS)
+    })
+  )
+  .max(MAX_TRANSCRIPT_MESSAGES)
+  .superRefine((messages, ctx) => {
+    if (transcriptTotal(messages) > MAX_TRANSCRIPT_TOTAL_CHARS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Transcript is too large. Keep it under ${MAX_TRANSCRIPT_TOTAL_CHARS.toLocaleString()} characters.`
+      });
+    }
+  });
 
 export const topicRequestSchema = z.object({
   organization: organizationSchema,
@@ -44,10 +88,10 @@ export const opponentRequestSchema = z.object({
   level: levelSchema,
   eventType: z.string().min(2).max(120).optional(),
   practiceMode: practiceModeSchema.optional(),
-  topic: z.string().min(8),
+  topic: z.string().min(8).max(MAX_TOPIC_CHARS),
   side: z.enum(["AFFIRMATIVE", "NEGATIVE"]),
   round: z.number().int().min(1).max(10),
-  transcript: transcriptSchema
+  transcript: transcriptSchema()
 });
 
 export const sideCoachRequestSchema = z.object({
@@ -59,8 +103,8 @@ export const sideCoachRequestSchema = z.object({
   stage: z.string().max(120).optional(),
   level: levelSchema.optional(),
   // Public transcript only — never judge reasoning or private coaching.
-  transcript: z.array(z.object({ role: z.string().max(20), content: z.string().min(1).max(8000) })).max(40).default([]),
-  latestStudentSpeech: z.string().max(8000).optional(),
+  transcript: sideCoachTranscriptSchema.default([]),
+  latestStudentSpeech: z.string().max(MAX_TRANSCRIPT_CONTENT_CHARS).optional(),
   requestType: z.enum(["turn-feedback", "ask"]).default("turn-feedback"),
   askKind: z.string().max(80).optional(),
   guidanceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional()
@@ -70,16 +114,16 @@ export const judgeRequestSchema = z.object({
   organization: organizationSchema,
   level: levelSchema,
   eventType: z.string().min(2).max(120).default("PARLIAMENTARY_DEBATE"),
-  topic: z.string().min(8),
-  transcript: transcriptSchema.min(3)
+  topic: z.string().min(8).max(MAX_TOPIC_CHARS),
+  transcript: transcriptSchema({ min: 3 })
 });
 
 export const roleplayJudgeRequestSchema = z.object({
   organization: z.enum(["DECA", "HOSA"]),
   level: levelSchema,
   eventType: z.string().min(2).max(120),
-  scenario: z.string().min(8),
-  transcript: transcriptSchema.min(1)
+  scenario: z.string().min(8).max(MAX_SCENARIO_CHARS),
+  transcript: transcriptSchema({ min: 1 })
 });
 
 export const practiceQuestionRequestSchema = z.object({
@@ -99,22 +143,22 @@ export const lessonContentRequestSchema = z.object({
 export const recommendationRequestSchema = z.object({
   organization: organizationSchema,
   eventType: z.string().min(2).max(120).optional(),
-  weaknesses: z.array(z.string().min(2)).min(1),
+  weaknesses: z.array(z.string().min(2).max(500)).min(1).max(20),
   availableLessons: z.array(
     z.object({
-      slug: z.string(),
-      title: z.string(),
-      skill: z.string()
+      slug: z.string().min(1).max(120),
+      title: z.string().min(1).max(160),
+      skill: z.string().min(1).max(120)
     })
-  )
+  ).max(50)
 });
 
 export const readinessRequestSchema = z.object({
   organization: organizationSchema,
   eventType: z.string().min(2).max(120).optional(),
   currentLevel: levelSchema,
-  recentScores: z.array(z.number().min(0).max(100)).min(1),
-  weaknessSummary: z.array(z.string()).default([])
+  recentScores: z.array(z.number().min(0).max(100)).min(1).max(20),
+  weaknessSummary: z.array(z.string().max(500)).max(20).default([])
 });
 
 export const debateCreateSchema = z.object({
@@ -124,7 +168,7 @@ export const debateCreateSchema = z.object({
   format: debateFormatSchema.default("PARLIAMENTARY"),
   category: z.string().min(2).max(80).default("Global"),
   level: levelSchema,
-  topic: z.string().min(8),
+  topic: z.string().min(8).max(MAX_TOPIC_CHARS),
   aiGeneratedTopic: z.boolean().default(false),
   turnTimeSeconds: z.number().int().min(30).max(600).optional(),
   prepTimeSeconds: z.number().int().min(0).max(900).optional(),

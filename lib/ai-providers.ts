@@ -12,12 +12,19 @@
  * "[ai] <Provider> <label> failed because: <reason>." when a provider is skipped.
  */
 import { describeOpenAIError, getOpenAIClient, openAIModel } from "@/lib/openai";
+import { SafetyBlockedError } from "@/lib/api";
 
 export type ProviderName = "gemini" | "groq" | "openrouter" | "openai" | "fallback";
 export type CostMode = "free_only" | "allow_paid";
 
-export type CompletionRequest = { system: string; prompt: string; temperature?: number };
+// maxOutputTokens is a SERVER-SET cost cap. Callers may raise it for large JSON (judge/test), but a
+// client can never supply it. temperature/system/prompt are likewise server-controlled.
+export type CompletionRequest = { system: string; prompt: string; temperature?: number; maxOutputTokens?: number };
 export type CompletionResult = { content: string; provider: ProviderName };
+
+// Conservative default output cap; specific generators pass a higher documented value where needed.
+export const DEFAULT_MAX_OUTPUT_TOKENS = 1024;
+export const MAX_OUTPUT_TOKENS_HARD_CAP = 4096;
 
 const PROVIDER_LABEL: Record<ProviderName, string> = {
   gemini: "Gemini",
@@ -68,8 +75,8 @@ export class AllProvidersUnavailableError extends Error {
 
 class HttpStatusError extends Error {
   status: number;
-  constructor(status: number, body: string) {
-    super(`HTTP ${status}${body ? ` · ${body.slice(0, 200)}` : ""}`);
+  constructor(status: number) {
+    super(`HTTP ${status}`);
     this.status = status;
     this.name = "HttpStatusError";
   }
@@ -164,12 +171,23 @@ export async function runProviderCompletion(req: CompletionRequest, label: strin
       console.info(`[ai] Using ${PROVIDER_LABEL[provider.name]} ${label} (${providerModel(provider.name)}).`);
       return { content, provider: provider.name };
     } catch (error) {
+      // A content-safety block must NOT silently fall back to a (possibly less-safe) provider — surface
+      // it immediately so the caller can return a safe, user-friendly message.
+      if (error instanceof SafetyBlockedError) {
+        console.warn(`[ai] ${PROVIDER_LABEL[provider.name]} ${label} blocked by safety filter; not falling back.`);
+        throw error;
+      }
       lastReason = describeProviderError(error);
       console.warn(`[ai] ${PROVIDER_LABEL[provider.name]} ${label} failed because: ${lastReason}.`);
     }
   }
 
   throw new AllProvidersUnavailableError(lastReason);
+}
+
+function outputTokenCap(req: CompletionRequest): number {
+  const requested = req.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
+  return Math.max(1, Math.min(Math.floor(requested), MAX_OUTPUT_TOKENS_HARD_CAP));
 }
 
 // Models sometimes wrap JSON in code fences or add prose; recover the JSON object.
@@ -193,7 +211,8 @@ export function extractJson<T>(text: string): T {
 
 async function safeBody(res: Response): Promise<string> {
   try {
-    return (await res.text()).replace(/\s+/g, " ").trim();
+    await res.text();
+    return "";
   } catch {
     return "";
   }
@@ -201,27 +220,50 @@ async function safeBody(res: Response): Promise<string> {
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
+// Student-appropriate safety thresholds for a teen-facing education platform. Not client-configurable.
+const GEMINI_SAFETY_SETTINGS = [
+  { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+  { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+  { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+  { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
+];
+
 async function callGemini(apiKey: string, req: CompletionRequest): Promise<string> {
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  // Key travels in the x-goog-api-key header, never in the URL/query string (avoids key-in-logs).
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: req.system }] },
       contents: [{ role: "user", parts: [{ text: req.prompt }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: req.temperature ?? 0.7 }
+      safetySettings: GEMINI_SAFETY_SETTINGS,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: req.temperature ?? 0.7,
+        maxOutputTokens: outputTokenCap(req)
+      }
     })
   });
 
   if (!res.ok) {
-    throw new HttpStatusError(res.status, await safeBody(res));
+    await safeBody(res);
+    throw new HttpStatusError(res.status);
   }
 
   const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    promptFeedback?: { blockReason?: string };
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
   };
+
+  // A safety block surfaces as a prompt-level blockReason or a candidate finishReason of SAFETY. Throw
+  // a dedicated error so no cross-provider fallback happens and the client gets a safe message only.
+  if (data.promptFeedback?.blockReason || data.candidates?.[0]?.finishReason === "SAFETY") {
+    throw new SafetyBlockedError();
+  }
+
   return data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
 }
 
@@ -239,6 +281,7 @@ async function callOpenAICompatible(
     body: JSON.stringify({
       model,
       temperature: req.temperature ?? 0.7,
+      max_tokens: outputTokenCap(req),
       ...(options.jsonMode ? { response_format: { type: "json_object" } } : {}),
       messages: [
         { role: "system", content: req.system },
@@ -248,7 +291,8 @@ async function callOpenAICompatible(
   });
 
   if (!res.ok) {
-    throw new HttpStatusError(res.status, await safeBody(res));
+    await safeBody(res);
+    throw new HttpStatusError(res.status);
   }
 
   const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -274,6 +318,7 @@ async function callOpenAI(_apiKey: string, req: CompletionRequest): Promise<stri
   const response = await client.chat.completions.create({
     model: openAIModel,
     temperature: req.temperature ?? 0.7,
+    max_tokens: outputTokenCap(req),
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: req.system },

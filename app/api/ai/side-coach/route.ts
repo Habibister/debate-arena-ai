@@ -21,8 +21,8 @@ async function markAssisted(debateId: string, userId: string) {
 }
 
 // Separate role/path from the opponent and judge. Only ever returns private coaching text; the
-// caller keeps these messages out of the official transcript. generateSideCoachResponse never
-// throws (it falls back), so coaching failure cannot break the debate.
+// caller keeps these messages out of the official transcript. Ordinary provider failure falls back;
+// safety/rate-limit hard failures are surfaced instead of generating alternate content.
 export async function POST(request: Request) {
   try {
     const user = await requireUser();

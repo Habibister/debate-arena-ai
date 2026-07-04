@@ -15,6 +15,16 @@ export class HttpError extends Error {
   }
 }
 
+export class RateLimitError extends HttpError {
+  retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number, message = "Too many requests. Please slow down and try again shortly.") {
+    super(message, 429);
+    this.name = "RateLimitError";
+    this.retryAfterSeconds = Math.max(1, Math.ceil(retryAfterSeconds));
+  }
+}
+
 export async function parseJson<T>(request: Request, schema: ZodSchema<T>) {
   let body: unknown;
 
@@ -36,6 +46,13 @@ export function forbidden(message = "Forbidden") {
 }
 
 export function apiError(error: unknown) {
+  if (error instanceof RateLimitError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } }
+    );
+  }
+
   if (error instanceof OpenAIUnavailableError || isLikelyOpenAIUnavailableError(error)) {
     return NextResponse.json(
       {

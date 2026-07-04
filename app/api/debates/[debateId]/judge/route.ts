@@ -2,10 +2,12 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { generateJudgeDecision, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/openai-debate";
 import { apiError, HttpError, unauthorized } from "@/lib/api";
+import { clientIp } from "@/lib/api-auth";
 import { authOptions } from "@/lib/auth";
 import { nearestAiPersona } from "@/lib/ai-personas";
 import { getNextSpeech, isSpeechComplete, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { calculateDebateRating, calculateRank } from "@/lib/xp";
 import { XP_REWARDS } from "@/lib/constants";
 
@@ -216,13 +218,15 @@ async function runOrganizationJudge(debate: {
   });
 }
 
-export async function POST(_request: Request, { params }: { params: { debateId: string } }) {
+export async function POST(request: Request, { params }: { params: { debateId: string } }) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return unauthorized();
     }
+
+    await enforceRateLimit({ userId: session.user.id, ip: clientIp(request), workload: "heavy" });
 
     const debate = await prisma.debate.findFirst({
       where: {

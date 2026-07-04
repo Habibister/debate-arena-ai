@@ -13,6 +13,9 @@ export async function POST(request: Request) {
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     const input = await parseJson(request, topicRequestSchema);
     const topic = await generateTopic(input);
+    const selectedProvider =
+      topic && typeof topic === "object" && "aiProvider" in topic ? String((topic as Record<string, unknown>).aiProvider) : "unknown";
+    console.info(`[ai-diagnostics] label=topic generator stage=provider_selected selectedAfterward=${selectedProvider}`);
     return NextResponse.json(topic);
   } catch (error) {
     return apiError(error);

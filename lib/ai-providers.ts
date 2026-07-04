@@ -68,8 +68,8 @@ export class AllProvidersUnavailableError extends Error {
 
 class HttpStatusError extends Error {
   status: number;
-  constructor(status: number, body: string) {
-    super(`HTTP ${status}${body ? ` · ${body.slice(0, 200)}` : ""}`);
+  constructor(status: number) {
+    super(`HTTP ${status}`);
     this.status = status;
     this.name = "HttpStatusError";
   }
@@ -96,6 +96,44 @@ type Provider = {
   apiKey: string | null;
   run: (apiKey: string, req: CompletionRequest) => Promise<string>;
 };
+
+type DiagnosticStage = "attempt" | "http_request" | "http_response" | "empty_response" | "json_parse" | "provider_failure" | "provider_selected";
+type DiagnosticFields = {
+  label?: string;
+  provider?: ProviderName;
+  stage: DiagnosticStage;
+  geminiKeyPresent?: boolean;
+  geminiModel?: string;
+  httpStatus?: number;
+  errorClass?: string;
+  errorMessage?: string;
+  selectedAfterward?: ProviderName | "none" | "unknown";
+};
+
+function sanitizeDiagnosticMessage(message: string): string {
+  return message
+    .replace(/key=[^&\s]+/gi, "key=[redacted]")
+    .replace(/AIza[A-Za-z0-9_-]+/g, "AIza[redacted]")
+    .replace(/sk-[A-Za-z0-9_-]+/g, "sk-[redacted]")
+    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, "Bearer [redacted]");
+}
+
+function diagnosticErrorClass(error: unknown): string {
+  return error instanceof Error ? error.name : typeof error;
+}
+
+function diagnosticErrorMessage(error: unknown): string {
+  return sanitizeDiagnosticMessage(error instanceof Error ? error.message : String(error));
+}
+
+function logDiagnostic(fields: DiagnosticFields) {
+  console.info(
+    `[ai-diagnostics] ${Object.entries(fields)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .join(" ")}`
+  );
+}
 
 function allProviders(): Provider[] {
   return [
@@ -146,6 +184,13 @@ function describeProviderError(error: unknown): string {
 
 export async function runProviderCompletion(req: CompletionRequest, label: string): Promise<CompletionResult> {
   const chain = providerChain();
+  logDiagnostic({
+    label,
+    stage: "attempt",
+    geminiKeyPresent: Boolean(usableKey("GEMINI_API_KEY")),
+    geminiModel: providerModel("gemini"),
+    selectedAfterward: chain[0]?.name ?? "none"
+  });
 
   if (chain.length === 0) {
     const costMode = getCostMode();
@@ -155,17 +200,29 @@ export async function runProviderCompletion(req: CompletionRequest, label: strin
   }
 
   let lastReason = "no provider produced a response";
-  for (const provider of chain) {
+  for (let index = 0; index < chain.length; index += 1) {
+    const provider = chain[index];
+    logDiagnostic({ label, provider: provider.name, stage: "attempt" });
     try {
       const content = await provider.run(provider.apiKey as string, req);
       if (!content || !content.trim()) {
+        logDiagnostic({ label, provider: provider.name, stage: "empty_response", selectedAfterward: chain[index + 1]?.name ?? "none" });
         throw new Error("the model returned an empty response");
       }
       console.info(`[ai] Using ${PROVIDER_LABEL[provider.name]} ${label} (${providerModel(provider.name)}).`);
+      logDiagnostic({ label, provider: provider.name, stage: "provider_selected", selectedAfterward: provider.name });
       return { content, provider: provider.name };
     } catch (error) {
       lastReason = describeProviderError(error);
       console.warn(`[ai] ${PROVIDER_LABEL[provider.name]} ${label} failed because: ${lastReason}.`);
+      logDiagnostic({
+        label,
+        provider: provider.name,
+        stage: "provider_failure",
+        errorClass: diagnosticErrorClass(error),
+        errorMessage: diagnosticErrorMessage(error),
+        selectedAfterward: chain[index + 1]?.name ?? "none"
+      });
     }
   }
 
@@ -181,11 +238,17 @@ export function extractJson<T>(text: string): T {
 
   try {
     return JSON.parse(cleaned) as T;
-  } catch {
+  } catch (error) {
+    logDiagnostic({ stage: "json_parse", errorClass: diagnosticErrorClass(error), errorMessage: "model content was not valid JSON" });
     const start = cleaned.indexOf("{");
     const end = cleaned.lastIndexOf("}");
     if (start >= 0 && end > start) {
-      return JSON.parse(cleaned.slice(start, end + 1)) as T;
+      try {
+        return JSON.parse(cleaned.slice(start, end + 1)) as T;
+      } catch (recoveryError) {
+        logDiagnostic({ stage: "json_parse", errorClass: diagnosticErrorClass(recoveryError), errorMessage: "recovered model content was not valid JSON" });
+        throw recoveryError;
+      }
     }
     throw new Error("the model did not return valid JSON");
   }
@@ -204,24 +267,58 @@ const REQUEST_TIMEOUT_MS = 30_000;
 async function callGemini(apiKey: string, req: CompletionRequest): Promise<string> {
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: req.system }] },
-      contents: [{ role: "user", parts: [{ text: req.prompt }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: req.temperature ?? 0.7 }
-    })
-  });
+  let res: Response;
 
-  if (!res.ok) {
-    throw new HttpStatusError(res.status, await safeBody(res));
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: req.system }] },
+        contents: [{ role: "user", parts: [{ text: req.prompt }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: req.temperature ?? 0.7 }
+      })
+    });
+  } catch (error) {
+    logDiagnostic({
+      provider: "gemini",
+      stage: "http_request",
+      geminiKeyPresent: Boolean(apiKey),
+      geminiModel: model,
+      errorClass: diagnosticErrorClass(error),
+      errorMessage: diagnosticErrorMessage(error)
+    });
+    throw error;
   }
 
-  const data = (await res.json()) as {
+  logDiagnostic({ provider: "gemini", stage: "http_response", geminiKeyPresent: Boolean(apiKey), geminiModel: model, httpStatus: res.status });
+
+  if (!res.ok) {
+    await safeBody(res);
+    throw new HttpStatusError(res.status);
+  }
+
+  let data: {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
+
+  try {
+    data = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+  } catch (error) {
+    logDiagnostic({
+      provider: "gemini",
+      stage: "json_parse",
+      geminiKeyPresent: Boolean(apiKey),
+      geminiModel: model,
+      errorClass: diagnosticErrorClass(error),
+      errorMessage: "Gemini response envelope was not valid JSON"
+    });
+    throw error;
+  }
+
   return data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
 }
 
@@ -248,7 +345,8 @@ async function callOpenAICompatible(
   });
 
   if (!res.ok) {
-    throw new HttpStatusError(res.status, await safeBody(res));
+    await safeBody(res);
+    throw new HttpStatusError(res.status);
   }
 
   const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };

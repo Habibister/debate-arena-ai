@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, HttpError, parseJson, shouldBypassAiFallback, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -79,12 +79,9 @@ export async function POST(request: Request) {
         count: input.questionCount
       });
     } catch (generationError) {
-      if (shouldBypassAiFallback(generationError)) {
-        throw generationError;
-      }
-      // Resilience for ordinary provider outages/missing keys: fill from the local question bank.
-      // Safety, validation, and rate-limit failures are surfaced above and never become fallback content.
-      console.warn("[practice-test fallback] AI question generation failed. Using local question bank.");
+      // Development-only resilience: local demo tests must keep working when OpenAI is missing,
+      // invalid, rate-limited, or unreachable. Production still uses live AI whenever configured.
+      console.warn("[practice-test fallback] AI question generation failed. Using local question bank.", generationError);
       generated = { questions: [] };
     }
     const generatedQuestions = Array.isArray(generated.questions) ? generated.questions : [];

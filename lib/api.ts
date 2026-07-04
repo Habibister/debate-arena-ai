@@ -15,60 +15,16 @@ export class HttpError extends Error {
   }
 }
 
-// Thrown by the shared rate limiter. Carries the Retry-After hint so apiError can set the header.
-export class RateLimitError extends HttpError {
-  retryAfterSeconds: number;
-  constructor(retryAfterSeconds: number, message = "Too many requests. Please slow down and try again shortly.") {
-    super(message, 429);
-    this.name = "RateLimitError";
-    this.retryAfterSeconds = Math.max(1, Math.ceil(retryAfterSeconds));
-  }
-}
-
-// Thrown when a provider blocks generation for safety. Never carries the raw provider body, and never
-// triggers a cross-provider fallback (see runProviderCompletion).
-export class SafetyBlockedError extends HttpError {
-  constructor() {
-    super("This request was blocked by the content-safety filter. Please rephrase and try again.", 422);
-    this.name = "SafetyBlockedError";
-  }
-}
-
-// Hard ceiling on the serialized request body (defense-in-depth on top of per-field Zod limits) so an
-// oversized payload is rejected before any provider is invoked.
-export const MAX_REQUEST_BODY_BYTES = 100_000;
-
-export async function parseJson<T>(request: Request, schema: ZodSchema<T>, options?: { maxBytes?: number }) {
-  const maxBytes = options?.maxBytes ?? MAX_REQUEST_BODY_BYTES;
-  let raw: string;
-
-  try {
-    raw = await request.text();
-  } catch {
-    throw new HttpError("Invalid request body", 400);
-  }
-
-  if (Buffer.byteLength(raw, "utf8") > maxBytes) {
-    throw new HttpError(`Request body is too large (limit ${Math.floor(maxBytes / 1000)}KB).`, 413);
-  }
-
+export async function parseJson<T>(request: Request, schema: ZodSchema<T>) {
   let body: unknown;
+
   try {
-    body = raw ? JSON.parse(raw) : {};
+    body = await request.json();
   } catch {
     throw new HttpError("Invalid JSON body", 400);
   }
 
   return schema.parse(body);
-}
-
-export function shouldBypassAiFallback(error: unknown) {
-  return (
-    error instanceof RateLimitError ||
-    error instanceof SafetyBlockedError ||
-    error instanceof ZodError ||
-    (error instanceof HttpError && [400, 401, 403, 413, 422, 429].includes(error.status))
-  );
 }
 
 export function unauthorized() {
@@ -80,18 +36,6 @@ export function forbidden(message = "Forbidden") {
 }
 
 export function apiError(error: unknown) {
-  if (error instanceof RateLimitError) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } }
-    );
-  }
-
-  if (error instanceof SafetyBlockedError) {
-    // Safe, user-friendly message only; never the raw provider response.
-    return NextResponse.json({ error: error.message }, { status: 422 });
-  }
-
   if (error instanceof OpenAIUnavailableError || isLikelyOpenAIUnavailableError(error)) {
     return NextResponse.json(
       {
@@ -105,7 +49,7 @@ export function apiError(error: unknown) {
     return NextResponse.json(
       {
         error: error.message,
-        ...(process.env.NODE_ENV === "development" && error.details ? { details: error.details } : {})
+        details: error.details
       },
       { status: error.status }
     );

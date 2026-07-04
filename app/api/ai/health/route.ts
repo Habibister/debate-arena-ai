@@ -28,13 +28,13 @@ export async function GET(request: Request) {
     if (runLiveTest) {
       try {
         const { content, provider } = await runProviderCompletion(
-          { system: 'Reply with JSON only: {"ok": true}.', prompt: "Health check. Return the JSON.", temperature: 0, maxOutputTokens: 64 },
+          { system: 'Reply with JSON only: {"ok": true}.', prompt: "Health check. Return the JSON.", temperature: 0 },
           "health check"
         );
         extractJson(content);
         body.lastTest = { ok: true, provider };
-      } catch {
-        body.lastTest = { ok: false, reason: "provider unavailable" };
+      } catch (error) {
+        body.lastTest = { ok: false, reason: error instanceof Error ? error.message : String(error) };
       }
     }
 

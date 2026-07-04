@@ -1,5 +1,4 @@
 import type { Level, MessageRole, Organization, PracticeMode } from "@prisma/client";
-import { shouldBypassAiFallback } from "@/lib/api";
 import { OpenAIUnavailableError } from "@/lib/openai";
 import {
   AllProvidersUnavailableError,
@@ -180,17 +179,6 @@ type PerformanceJudgeResult = {
 };
 
 const DEV_AI_FALLBACK_NOTICE = "AI is temporarily unavailable, so we used a backup response.";
-const OUTPUT_TOKEN_CAPS = {
-  topic: 900,
-  opponent: 1_200,
-  judgeProse: 900,
-  performanceJudge: 3_000,
-  practiceQuestions: 4_096,
-  lesson: 2_000,
-  recommendations: 1_000,
-  readiness: 900,
-  modelRewrite: 500
-} as const;
 
 function compactRubric(categories: RubricCategorySeed[]) {
   return categories.map((category) => ({
@@ -934,24 +922,16 @@ async function jsonCompletion<T>(
   prompt: string,
   fallback?: () => T,
   label = "AI",
-  validate?: (value: T) => boolean,
-  options?: { maxOutputTokens?: number }
+  validate?: (value: T) => boolean
 ): Promise<T> {
   try {
-    const { content, provider } = await runProviderCompletion(
-      { system, prompt, temperature: 0.7, maxOutputTokens: options?.maxOutputTokens },
-      label
-    );
+    const { content, provider } = await runProviderCompletion({ system, prompt, temperature: 0.7 }, label);
     const parsed = extractJson<T>(content);
     if (validate && !validate(parsed)) {
       throw new Error("provider response failed structural validation (missing required fields)");
     }
     return tagProvider(parsed, provider);
   } catch (error) {
-    if (shouldBypassAiFallback(error)) {
-      throw error;
-    }
-
     const reason =
       error instanceof AllProvidersUnavailableError
         ? error.message
@@ -986,9 +966,7 @@ Optional focus area: ${input.focusArea ?? "none"}.
 Avoid repeating these previous topics from the current session: ${JSON.stringify(input.previousTopics ?? [])}.
 Return JSON with topic, background, affirmativePosition, negativePosition, and suggestedEvidenceAngles.`,
     () => fallbackTopic(input),
-    "topic generator",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.topic }
+    "topic generator"
   );
 }
 
@@ -1081,14 +1059,7 @@ Return JSON with:
 - "strategy": a short plain-English note on the line of attack you took (for the coach, not spoken).
 - "pressurePoints": 2-4 specific things the student must answer next.`;
 
-  let result = await jsonCompletion<OpponentResponse>(
-    systemPrompt,
-    userPrompt,
-    fallbackFn,
-    "opponent",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.opponent }
-  );
+  let result = await jsonCompletion<OpponentResponse>(systemPrompt, userPrompt, fallbackFn, "opponent");
 
   // Side-fidelity guardrail on live output: if a provider returned the wrong side, regenerate once,
   // then fall back to the deterministic (side-correct) opponent. The fallback is already side-correct.
@@ -1098,9 +1069,7 @@ Return JSON with:
       `${systemPrompt}\n\nIMPORTANT: your previous attempt argued the WRONG side. You are ${stanceLabel}; you MUST ${supportsMotion ? "DEFEND" : "OPPOSE"} the motion "${input.topic}". Rewrite so you clearly argue your assigned side.`,
       userPrompt,
       fallbackFn,
-      "opponent (side retry)",
-      undefined,
-      { maxOutputTokens: OUTPUT_TOKEN_CAPS.opponent }
+      "opponent (side retry)"
     );
 
     if (result.aiProvider && result.aiProvider !== "fallback" && arguesWrongSide(result.response, supportsMotion)) {
@@ -1179,9 +1148,7 @@ Return JSON with:
         fallbackNotice: DEV_AI_FALLBACK_NOTICE
       };
     },
-    "model rewrite",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.modelRewrite }
+    "model rewrite"
   );
 }
 
@@ -1294,16 +1261,13 @@ export async function judgeDebate(input: {
   let provider: ProviderName;
   try {
     const result = await runProviderCompletion(
-      { system: JUDGE_PROSE_SYSTEM, prompt: judgeProsePrompt(input, base), temperature: 0.5, maxOutputTokens: OUTPUT_TOKEN_CAPS.judgeProse },
+      { system: JUDGE_PROSE_SYSTEM, prompt: judgeProsePrompt(input, base), temperature: 0.5 },
       "judge"
     );
     content = result.content;
     provider = result.provider;
   } catch (error) {
-    if (shouldBypassAiFallback(error)) {
-      throw error;
-    }
-    // Provider HTTP failures/timeouts/all-providers-failed keep the local rubric judge available.
+    // 503 / 429 / timeout / network / all-providers-failed — never crash the route.
     console.warn(`[ai] judge provider failed because: ${errorMessage(error)}.`);
     console.info("[ai] Using local rubric judge fallback.");
     base.aiNotice = JUDGE_LOCAL_FALLBACK_NOTICE;
@@ -1366,8 +1330,7 @@ Focus on business scenario understanding, performance indicators, solution quali
 Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, judgeQuestionFeedback, and readinessForNextLevel.`,
     () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
     "DECA judge",
-    isValidPerformanceJudge,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.performanceJudge }
+    isValidPerformanceJudge
   );
 }
 
@@ -1391,8 +1354,7 @@ Focus on health science knowledge, medical/health accuracy, event task completio
 Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, accuracyFlags, and readinessForNextLevel.`,
     () => fallbackPerformanceJudge({ organization: "HOSA", eventType: input.eventType }),
     "HOSA judge",
-    isValidPerformanceJudge,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.performanceJudge }
+    isValidPerformanceJudge
   );
 }
 
@@ -1421,9 +1383,7 @@ DECA questions should align to career clusters, instructional areas, performance
 HOSA questions should be labeled as original practice inspired by public event guidelines and health science topics, not official HOSA practice tests.
 Questions should test transferable standards and concepts, not reproduce protected exam language.`,
     () => fallbackPracticeQuestions(input),
-    "practice questions",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.practiceQuestions }
+    "practice questions"
   );
 }
 
@@ -1443,9 +1403,7 @@ export async function generateLessonContent(input: {
     `Generate a ${input.level} lesson for ${input.organization} skill "${input.skillName}".
 Return lesson, examples, guidedPractice, independentPractice, and masteryQuiz.`,
     () => fallbackLessonContent(input),
-    "lesson content",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.lesson }
+    "lesson content"
   );
 }
 
@@ -1476,9 +1434,7 @@ Return JSON recommendations with lessonSlug, reason, and priority.`,
         priority: index === 0 ? "high" : index === 1 ? "medium" : "low"
       }))
     }),
-    "lesson recommendations",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.recommendations }
+    "lesson recommendations"
   );
 }
 
@@ -1519,8 +1475,6 @@ Return JSON with ready, confidence, rationale, and requiredEvidence.`,
         ]
       };
     },
-    "readiness evaluation",
-    undefined,
-    { maxOutputTokens: OUTPUT_TOKEN_CAPS.readiness }
+    "readiness evaluation"
   );
 }

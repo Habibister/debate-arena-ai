@@ -39,13 +39,6 @@ export function unusableKeyReason(): string | null {
 }
 
 // Turn an OpenAI/SDK error into a concise, log-friendly reason (status + message).
-function redactPotentialSecrets(value: string) {
-  return value
-    .replace(/sk-[A-Za-z0-9_-]+/g, "sk-[redacted]")
-    .replace(/AIza[A-Za-z0-9_-]+/g, "AIza[redacted]")
-    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, "Bearer [redacted]");
-}
-
 export function describeOpenAIError(error: unknown): string {
   if (error instanceof OpenAIUnavailableError) {
     return error.message;
@@ -55,7 +48,7 @@ export function describeOpenAIError(error: unknown): string {
     typeof error === "object" && error && "status" in error ? Number((error as { status?: unknown }).status) : undefined;
   const code =
     typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
-  const message = redactPotentialSecrets(error instanceof Error ? error.message : String(error));
+  const message = error instanceof Error ? error.message : String(error);
   const statusLabel = status ? `HTTP ${status}` : "";
   const codeLabel = code ? `${code}` : "";
 

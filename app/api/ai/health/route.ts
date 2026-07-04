@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api";
-import { requireUser } from "@/lib/api-auth";
+import { clientIp, requireUser } from "@/lib/api-auth";
 import { extractJson, getCostMode, getProviderOrder, providerModel, runProviderCompletion } from "@/lib/ai-providers";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -12,7 +13,8 @@ export const runtime = "nodejs";
  */
 export async function GET(request: Request) {
   try {
-    await requireUser();
+    const user = await requireUser();
+    await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     const order = getProviderOrder();
     const selected = order[0] ?? "fallback";
     const runLiveTest = new URL(request.url).searchParams.get("test") === "1";

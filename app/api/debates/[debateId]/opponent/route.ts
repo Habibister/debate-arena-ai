@@ -1,12 +1,10 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
-import { clientIp } from "@/lib/api-auth";
 import { generateOpponentSpeech } from "@/lib/openai-debate";
 import { authOptions } from "@/lib/auth";
 import { countDebateSpeeches, getNextSpeech, getSideLabel, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
-import { enforceRateLimit } from "@/lib/rate-limit";
 import { opponentTurnRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -18,8 +16,6 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     if (!session?.user?.id) {
       return unauthorized();
     }
-
-    await enforceRateLimit({ userId: session.user.id, ip: clientIp(request), workload: "turn" });
 
     const input = await parseJson(request, opponentTurnRequestSchema);
     const debate = await prisma.debate.findFirst({

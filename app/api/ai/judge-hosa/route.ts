@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson } from "@/lib/api";
-import { clientIp, requireUser } from "@/lib/api-auth";
+import { requireUser } from "@/lib/api-auth";
 import { judgeHosaPerformance } from "@/lib/ai";
-import { enforceRateLimit } from "@/lib/rate-limit";
 import { roleplayJudgeRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser();
-    await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "heavy" });
+    await requireUser();
     const input = await parseJson(request, roleplayJudgeRequestSchema);
 
     if (input.organization !== "HOSA") {

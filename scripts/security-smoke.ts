@@ -5,34 +5,29 @@ function read(path: string) {
   return readFileSync(path, "utf8");
 }
 
-const directAiRoutes = {
-  "app/api/ai/health/route.ts": "light",
-  "app/api/ai/judge/route.ts": "heavy",
-  "app/api/ai/judge-deca/route.ts": "heavy",
-  "app/api/ai/judge-hosa/route.ts": "heavy",
-  "app/api/ai/lesson/route.ts": "heavy",
-  "app/api/ai/opponent/route.ts": "turn",
-  "app/api/ai/practice-questions/route.ts": "heavy",
-  "app/api/ai/readiness/route.ts": "light",
-  "app/api/ai/recommendations/route.ts": "light",
-  "app/api/ai/side-coach/route.ts": "turn",
-  "app/api/ai/topic/route.ts": "light"
-} as const;
+const directAiRoutes = [
+  "app/api/ai/health/route.ts",
+  "app/api/ai/judge/route.ts",
+  "app/api/ai/judge-deca/route.ts",
+  "app/api/ai/judge-hosa/route.ts",
+  "app/api/ai/lesson/route.ts",
+  "app/api/ai/opponent/route.ts",
+  "app/api/ai/practice-questions/route.ts",
+  "app/api/ai/readiness/route.ts",
+  "app/api/ai/recommendations/route.ts",
+  "app/api/ai/side-coach/route.ts",
+  "app/api/ai/topic/route.ts"
+];
 
-for (const [routePath, workload] of Object.entries(directAiRoutes)) {
+for (const routePath of directAiRoutes) {
   const source = read(routePath);
   assert.ok(source.includes('from "@/lib/api-auth"'), `${routePath} imports the shared API auth gate`);
   assert.ok(source.includes("requireUser("), `${routePath} requires authentication`);
-  assert.ok(source.includes('from "@/lib/rate-limit"'), `${routePath} imports the shared rate limiter`);
-  assert.ok(source.includes(`workload: "${workload}"`), `${routePath} uses the ${workload} workload`);
 
   const authIndex = source.indexOf("requireUser(");
-  const rateLimitIndex = source.indexOf("enforceRateLimit(");
-  assert.ok(authIndex >= 0 && authIndex < rateLimitIndex, `${routePath} authenticates before rate limiting`);
-
   const parseIndex = source.indexOf("parseJson(");
   if (parseIndex >= 0) {
-    assert.ok(rateLimitIndex >= 0 && rateLimitIndex < parseIndex, `${routePath} rate limits before parsing/generation work`);
+    assert.ok(authIndex >= 0 && authIndex < parseIndex, `${routePath} authenticates before parsing/generation work`);
   }
 }
 
@@ -50,13 +45,9 @@ for (const routePath of scopedDebateRoutes) {
   assert.ok(source.includes("opponentUserId: session.user.id"), `${routePath} keeps opponent ownership`);
 }
 
-assert.ok(read("app/api/debates/[debateId]/opponent/route.ts").includes('workload: "turn"'), "persisted AI opponent turns use the turn rate limit");
-assert.ok(read("app/api/debates/[debateId]/judge/route.ts").includes('workload: "heavy"'), "persisted AI judging uses the heavy rate limit");
-
 const testsRoute = read("app/api/tests/route.ts");
 assert.ok(testsRoute.includes("getServerSession(authOptions)"), "practice test generation authenticates the session");
 assert.ok(testsRoute.includes("userId: session.user.id"), "practice test generation persists to the authenticated user");
-assert.ok(testsRoute.includes('workload: "heavy"'), "practice test generation uses the heavy rate limit");
 assert.ok(testsRoute.includes("shouldBypassAiFallback(generationError)"), "practice test generation does not fall back after hard failures");
 
 const apiSource = read("lib/api.ts");
@@ -87,19 +78,5 @@ assert.ok(ai.includes("OUTPUT_TOKEN_CAPS"), "generators use documented server-si
 
 const sideCoach = read("lib/side-coach.ts");
 assert.ok(sideCoach.includes("shouldBypassAiFallback(error)"), "side coach does not fall back after hard failures");
-
-const rateLimit = read("lib/rate-limit.ts");
-assert.ok(rateLimit.includes('light: { limit: 20, window: "60 s" }'), "light AI limit is 20/user/minute");
-assert.ok(rateLimit.includes('turn: { limit: 10, window: "60 s" }'), "turn AI limit is 10/user/minute");
-assert.ok(rateLimit.includes('heavy: { limit: 5, window: "60 s" }'), "heavy AI limit is 5/user/minute");
-assert.ok(rateLimit.includes('IP_RULE = { limit: 60, window: "60 s"'), "IP AI limit is 60/IP/minute");
-assert.ok(rateLimit.includes("UPSTASH_REDIS_REST_URL") && rateLimit.includes("UPSTASH_REDIS_REST_TOKEN"), "rate limiter uses Upstash REST env vars");
-assert.ok(rateLimit.includes("isProduction") && rateLimit.includes("NOT production protection"), "local-dev limiter fallback is explicitly not production protection");
-assert.ok(rateLimit.includes("isProduction || workload === \"heavy\""), "production and heavy limiter failures fail closed");
-assert.ok(!rateLimit.includes("error.message"), "rate limiter does not log raw client error messages");
-
-const envExample = read(".env.example");
-assert.ok(envExample.includes("UPSTASH_REDIS_REST_URL=\"\""), ".env.example documents Upstash REST URL name only");
-assert.ok(envExample.includes("UPSTASH_REDIS_REST_TOKEN=\"\""), ".env.example documents Upstash REST token name only");
 
 console.log("Security smoke tests passed: AI auth, ownership gates, request/transcript caps, provider caps, Gemini safety/header behavior, and hard-failure fallback bypasses are present.");

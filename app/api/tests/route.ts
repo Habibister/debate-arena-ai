@@ -1,11 +1,9 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, shouldBypassAiFallback, unauthorized } from "@/lib/api";
-import { clientIp } from "@/lib/api-auth";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { enforceRateLimit } from "@/lib/rate-limit";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 import { practiceTestCreateSchema } from "@/lib/validators";
 
@@ -61,8 +59,6 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       return unauthorized();
     }
-
-    await enforceRateLimit({ userId: session.user.id, ip: clientIp(request), workload: "heavy" });
 
     const input = await parseJson(request, practiceTestCreateSchema);
     const fallbackQuestions = buildFallbackPracticeQuestions({

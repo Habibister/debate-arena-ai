@@ -244,7 +244,7 @@ export function DebateRoom({ track }: { track?: string }) {
               <Swords className="h-5 w-5" aria-hidden />
             </span>
             <div>
-              <p className="text-sm font-semibold text-blue-200">DebateArena AI</p>
+              <p className="text-sm font-semibold text-blue-200">CompeteReady</p>
               <h2 className="text-xl font-bold">Create Debate Room</h2>
             </div>
           </div>

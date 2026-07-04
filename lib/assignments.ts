@@ -1,9 +1,10 @@
 import type { AssignmentType, Role } from "@prisma/client";
 import { HttpError } from "@/lib/api";
-import { ASSIGNMENT_TYPE_META, assignmentLaunchPath } from "@/lib/assignment-types";
+import { ASSIGNMENT_TYPE_META, assignmentLaunchPath, assignmentTypeLabel } from "@/lib/assignment-types";
 import { prisma } from "@/lib/prisma";
 import { deckSummaries } from "@/lib/study-content";
 import { canAccessCoachTools, isAdmin } from "@/lib/roles";
+import { assignmentTypeAllowedForOrganization, contentAllowedForOrganization } from "@/lib/track-content";
 import type { assignmentCreateSchema, assignmentSubmitSchema } from "@/lib/validators";
 import type { z } from "zod";
 
@@ -49,19 +50,23 @@ async function getTeamForAssignment(params: { teamId: string; coachUserId: strin
   return team;
 }
 
-async function resolveAssignmentTarget(type: AssignmentType, targetId?: string | null) {
+async function resolveAssignmentTarget(type: AssignmentType, teamOrganization: string, targetId?: string | null) {
   if (!ASSIGNMENT_TYPE_META[type]) {
     throw new HttpError("Invalid assignment type.", 400);
   }
 
   if (ASSIGNMENT_TYPE_META[type].requiresTarget && !targetId) {
-    throw new HttpError("Choose existing content for this assignment type.", 400);
+    throw new HttpError("targetId: Choose existing content for this assignment type.", 400);
   }
 
   if (type === "FLASHCARD_DECK" || type === "REVIEW_GAME") {
     const deck = deckSummaries().find((item) => item.deckSlug === targetId);
     if (!deck) {
       throw new HttpError("Flashcard deck not found.", 404);
+    }
+    // The deck must belong to the team's track (or a shared foundation) — never cross-track content.
+    if (!contentAllowedForOrganization(deck.organization, teamOrganization)) {
+      throw new HttpError(`targetId: "${deck.deck}" is not part of this ${teamOrganization} team's track.`, 400);
     }
     return {
       targetType: "FLASHCARD_DECK",
@@ -74,10 +79,13 @@ async function resolveAssignmentTarget(type: AssignmentType, targetId?: string |
   if (type === "LESSON") {
     const lesson = await prisma.lesson.findUnique({
       where: { slug: targetId ?? "" },
-      select: { slug: true, title: true }
+      select: { slug: true, title: true, skill: { select: { organization: true } } }
     });
     if (!lesson) {
       throw new HttpError("Lesson not found.", 404);
+    }
+    if (!contentAllowedForOrganization(lesson.skill.organization, teamOrganization)) {
+      throw new HttpError(`targetId: "${lesson.title}" is not part of this ${teamOrganization} team's track.`, 400);
     }
     return {
       targetType: "LESSON",
@@ -113,12 +121,15 @@ export async function listAssignmentContentOptions() {
     decks: deckSummaries().map((deck) => ({
       id: deck.deckSlug,
       label: deck.deck,
-      description: `${deck.organization} · ${deck.count} cards`
+      description: `${deck.organization} · ${deck.count} cards`,
+      // Organization drives team/track compatibility filtering in the form.
+      organization: deck.organization as string
     })),
     lessons: lessons.map((lesson) => ({
       id: lesson.slug,
       label: lesson.title,
-      description: `${lesson.skill.organization.replace("_", " ")} · ${lesson.skill.name}`
+      description: `${lesson.skill.organization.replace("_", " ")} · ${lesson.skill.name}`,
+      organization: lesson.skill.organization as string
     }))
   };
 }
@@ -139,7 +150,12 @@ export async function createAssignment(params: { coachUserId: string; role?: Rol
     }
   }
 
-  const target = await resolveAssignmentTarget(params.input.type, params.input.targetId);
+  // The team's track — not the coach's UI preference — decides which assignment types are valid.
+  if (!assignmentTypeAllowedForOrganization(params.input.type, team.organization)) {
+    throw new HttpError(`type: "${assignmentTypeLabel(params.input.type)}" is not available for this ${team.organization} team's track.`, 400);
+  }
+
+  const target = await resolveAssignmentTarget(params.input.type, team.organization, params.input.targetId);
   const assignment = await prisma.assignment.create({
     data: {
       coachId: params.coachUserId,

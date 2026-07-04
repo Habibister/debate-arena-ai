@@ -144,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
           <span>
             <span className="flex items-center gap-2 text-sm font-bold">
-              DebateArena AI
+              CompeteReady
               <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-semibold uppercase">
                 Beta
               </Badge>
@@ -212,7 +212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 font-bold">
               <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-              DebateArena AI
+              CompeteReady
             </Link>
             <Link href="/profile" className="flex items-center gap-2 rounded-md border bg-card px-2 py-1 text-sm font-semibold">
               <UserAvatar username={profileUsername} displayName={profileName} avatarUrl={profileAvatar} size="sm" />

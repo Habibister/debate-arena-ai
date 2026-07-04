@@ -47,7 +47,7 @@ export default async function NewAssignmentPage() {
           </Badge>
           <h1 className="mt-3 text-3xl font-bold">Create assignment</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
-            Assign an existing DebateArena activity to a whole team or selected students. Students must submit real completion evidence.
+            Assign an existing CompeteReady activity to a whole team or selected students. Students must submit real completion evidence.
           </p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Route } from "next";
 import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
@@ -21,7 +22,7 @@ import type { MasteryPoint } from "@/types/domain";
 import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
-import { getStudentDebates, isUnfinished, sideLabel } from "@/lib/debate-history";
+import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
 import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
@@ -76,6 +77,11 @@ function latestWeakAreas(tests: Array<{ weakAreas: string[] }>) {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
+  // The main dashboard is the student experience. A COACH gets the intentional Coach dashboard instead
+  // of a page labeled "Student dashboard". ADMIN behavior is intentionally unchanged.
+  if (session?.user?.role === "COACH") {
+    redirect("/coach");
+  }
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -126,23 +132,31 @@ export default async function DashboardPage() {
   const assignments = role === "STUDENT" && session?.user?.id ? await getStudentAssignments(session.user.id) : [];
   // Recovery: debates the student left mid-session (never submitted or scored).
   // Only surface unfinished sessions that match the selected track — never invite the user to resume
-  // an unrelated track's session from this dashboard. All sessions remain intact in /debates/history.
+  // an unrelated track's session. Legacy/inconsistent records (a track org carrying a parliamentary
+  // config) are NOT recommended as valid continuations; they remain visible under /debates/history.
+  // All sessions stay intact in history. Card metadata is user-facing (org + eventType), never the
+  // carrier DebateFormat enum or an opponent persona for solo practice.
   const unfinishedDebates: ResumeDebate[] =
     role === "STUDENT" && session?.user?.id
       ? (await getStudentDebates(session.user.id))
           .filter((debate) => isUnfinished(debate.status))
           .filter((debate) => trackAllowsOrganization(activeTrack, debate.organization))
+          .filter((debate) => !isLegacyPracticeRecord(debate))
           .slice(0, 4)
-          .map((debate) => ({
-            id: debate.id,
-            topic: debate.topic,
-            trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
-            formatLabel: `${debate.eventType} · ${debate.format}`,
-            sideLabel: sideLabel(debate.studentSide),
-            opponentLabel: debate.aiPersona ?? "AI opponent",
-            statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
-            updatedLabel: debate.updatedAt.toLocaleDateString()
-          }))
+          .map((debate) => {
+            const showOpponent = showsOpponentMeta(debate);
+            return {
+              id: debate.id,
+              topic: debate.topic,
+              trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
+              typeLabel: practiceTypeLabel(debate),
+              showOpponent,
+              sideLabel: showOpponent ? sideLabel(debate.studentSide) : "",
+              opponentLabel: showOpponent ? debate.aiPersona ?? "AI opponent" : "",
+              statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
+              updatedLabel: debate.updatedAt.toLocaleDateString()
+            };
+          })
       : [];
   // Real signals for the learning path (no fabricated progress).
   const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0;
@@ -158,7 +172,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {unfinishedDebates.length > 0 ? <ResumeDebatesCard debates={unfinishedDebates} /> : null}
+      {unfinishedDebates.length > 0 ? (
+        <ResumeDebatesCard debates={unfinishedDebates} isPractice={Boolean(activeTrack && activeTrack.id !== "GENERAL_DEBATE")} />
+      ) : null}
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="rounded-lg border bg-card p-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -258,7 +274,7 @@ export default async function DashboardPage() {
               <Badge variant="outline">Competitive ladder</Badge>
               <h2 className="mt-3 text-xl font-bold">{ratingLabel(debateRating)}</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                DebateArena rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
+                CompeteReady rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
               </p>
             </div>
             <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">

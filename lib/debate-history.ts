@@ -39,6 +39,55 @@ export function sideLabel(side: string): string {
   return map[side] ?? side;
 }
 
+// ---- User-facing session metadata (item: hide internal carrier format data) ----
+// Session/history/resume/replay UI must render the practice type from organization + stored eventType,
+// never the internal carrier DebateFormat enum (e.g. PARLIAMENTARY) or the opponent persona for a
+// non-debate practice.
+const DEBATE_ORG = "DEBATE";
+const PRACTICE_ORGS = ["MODEL_UN", "DECA", "HOSA"];
+// eventType values that only ever belong to a real debate. If a track org carries one of these, the
+// record predates the track configs (a legacy/inconsistent record) and is shown honestly, never as a
+// valid active-track continuation.
+const DEBATE_EVENT_TYPES = ["PARLIAMENTARY_DEBATE", "QUICK_1V1", "PUBLIC_FORUM", "PRACTICE_REBUTTAL"];
+const DEBATE_EVENT_LABELS: Record<string, string> = {
+  PARLIAMENTARY_DEBATE: "Parliamentary Debate",
+  QUICK_1V1: "Quick 1v1",
+  PUBLIC_FORUM: "Public Forum",
+  PRACTICE_REBUTTAL: "Practice Rebuttal"
+};
+const PRACTICE_LABEL_BY_ORG: Record<string, string> = {
+  MODEL_UN: "Model UN Committee Session",
+  DECA: "DECA Role Play",
+  HOSA: "HOSA Event Practice"
+};
+
+export function isPracticeOrganization(organization: string): boolean {
+  return organization !== DEBATE_ORG;
+}
+
+// A track-org record whose stored eventType is a debate event type is legacy/inconsistent (its config
+// is a parliamentary carrier). Never recommend it as an active-track continuation; label it honestly.
+export function isLegacyPracticeRecord(record: { organization: string; eventType: string }): boolean {
+  return PRACTICE_ORGS.includes(record.organization) && DEBATE_EVENT_TYPES.includes(record.eventType);
+}
+
+// The single user-facing "what is this session" label.
+export function practiceTypeLabel(record: { organization: string; eventType: string }): string {
+  if (isLegacyPracticeRecord(record)) {
+    return "Legacy practice";
+  }
+  if (record.organization === DEBATE_ORG) {
+    return DEBATE_EVENT_LABELS[record.eventType] ?? "Debate";
+  }
+  return PRACTICE_LABEL_BY_ORG[record.organization] ?? "Practice";
+}
+
+// Whether opponent/side metadata (vs persona, Government/Opposition) should be shown for a record.
+// Only real debates have an opponent + sides; solo track practice does not.
+export function showsOpponentMeta(record: { organization: string; eventType: string }): boolean {
+  return record.organization === DEBATE_ORG && !isLegacyPracticeRecord(record);
+}
+
 // Full official replay for one debate, with server-side access control:
 // the owning student, an ADMIN, or a coach who owns a team the student belongs to. Otherwise 403/404.
 // Returns ONLY official transcript messages + judge fields — private Side Coach messages are never

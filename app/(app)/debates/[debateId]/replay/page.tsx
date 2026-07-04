@@ -10,7 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
-import { getAttemptsForMotion, getDebateReplay, sideLabel } from "@/lib/debate-history";
+import { getAttemptsForMotion, getDebateReplay, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { trackByOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
@@ -100,13 +100,15 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Replay</Badge>
           <Badge variant="outline">{track?.label ?? debate.organization}</Badge>
-          <Badge variant="outline">{debate.eventType}</Badge>
+          <Badge variant="outline">{practiceTypeLabel(debate)}</Badge>
           {judged ? <Badge>Completed</Badge> : <Badge variant="outline">Not yet judged</Badge>}
           {debate.assistedPractice ? <Badge variant="outline">Assisted Practice</Badge> : null}
         </div>
         <h1 className="text-2xl font-bold">{debate.topic}</h1>
         <p className="text-sm text-muted-foreground">
-          Your side: {sideLabel(debate.studentSide)} · Opponent side: {sideLabel(debate.opponentSide)} · Opponent: {debate.aiPersona ?? "AI opponent"}
+          {showsOpponentMeta(debate)
+            ? `Your side: ${sideLabel(debate.studentSide)} · Opponent side: ${sideLabel(debate.opponentSide)} · Opponent: ${debate.aiPersona ?? "AI opponent"}`
+            : "Solo practice session"}
         </p>
       </div>
 

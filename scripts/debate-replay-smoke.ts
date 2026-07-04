@@ -90,10 +90,12 @@ function main() {
   assert.ok(/No improvement is calculated/.test(replay), "comparison explicitly avoids fabricated improvement");
   assert.ok(!/improved by|% better|delta/i.test(replay), "comparison shows no invented deltas");
 
-  // 13. Recovery shows side, opponent, track/format, and last-active date.
-  for (const token of ["sideLabel", "opponentLabel", "trackLabel", "formatLabel", "Last active"]) {
+  // 13. Recovery shows the user-facing type label + last-active date, and side/opponent only for real
+  // debates (solo track practice hides them, and never leaks the carrier DebateFormat enum).
+  for (const token of ["typeLabel", "trackLabel", "showOpponent", "sideLabel", "opponentLabel", "Last active"]) {
     assert.ok(card.includes(token), `recovery card shows ${token}`);
   }
+  assert.ok(!card.includes("formatLabel"), "recovery card no longer renders the carrier format label");
 
   // 14. Discard draft clears only the selected debate's draft (with confirm) and keeps the debate.
   assert.ok(card.includes("Discard draft"), "recovery uses the clear 'Discard draft' label");

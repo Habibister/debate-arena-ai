@@ -62,6 +62,7 @@ async function main() {
   const teams = await import("@/lib/teams");
   const assignments = await import("@/lib/assignments");
   const { completionStats } = await import("@/lib/assignment-types");
+  const { deckSummaries } = await import("@/lib/study-content");
 
   const stamp = Date.now();
   const short = stamp.toString(36);
@@ -93,6 +94,11 @@ async function main() {
     const team = await teams.createTeam({ userId: coach.id, role: "COACH", name: "Assignment Squad", organization: "DEBATE" });
     await teams.joinTeamByCode({ userId: student.id, joinCode: team.joinCode! });
     await teams.joinTeamByCode({ userId: teammate.id, joinCode: team.joinCode! });
+
+    // A DECA team for track-specific content (decks/tests) — track compatibility is enforced by team org.
+    const decaTeam = await teams.createTeam({ userId: coach.id, role: "COACH", name: "DECA Squad", organization: "DECA" });
+    await teams.joinTeamByCode({ userId: student.id, joinCode: decaTeam.joinCode! });
+    await teams.joinTeamByCode({ userId: teammate.id, joinCode: decaTeam.joinCode! });
 
     // 1. Coach creates an assignment for a team.
     const debateAssignment = await assignments.createAssignment({
@@ -147,7 +153,7 @@ async function main() {
       coachUserId: coach.id,
       role: "COACH",
       input: {
-        teamId: team.id,
+        teamId: decaTeam.id,
         type: "PRACTICE_TEST",
         title: "Selected test drill",
         instructions: "Complete one practice test.",
@@ -246,7 +252,7 @@ async function main() {
       coachUserId: coach.id,
       role: "COACH",
       input: {
-        teamId: team.id,
+        teamId: decaTeam.id,
         type: "FLASHCARD_DECK",
         title: "Study vocabulary",
         instructions: "Review the deck and submit a reflection.",
@@ -263,6 +269,43 @@ async function main() {
       input: { evidenceType: "MANUAL_REFLECTION", evidenceId: deckAssignment.id, notes: "I reviewed the deck and still need more practice with pricing terms." }
     });
     assert.equal(reflected.status, "COMPLETED", "Manual reflection should complete supported study assignments.");
+
+    // ---- Assignment track compatibility (server enforcement) ----
+    // The team's org — not the coach's preference — decides validity. A DEBATE team cannot be assigned
+    // a DECA/HOSA-only type, and a DECA team cannot be assigned HOSA content. Both are field-specific 400s.
+    await assert.rejects(
+      () =>
+        assignments.createAssignment({
+          coachUserId: coach.id,
+          role: "COACH",
+          input: { teamId: team.id, type: "FLASHCARD_DECK", title: "Bad type", instructions: "should be rejected", dueDate: null, targetAllTeam: true, studentIds: [], targetId: "deca-marketing", points: null }
+        }),
+      (error: unknown) => (error as { status?: number }).status === 400 && /type:/i.test((error as Error).message),
+      "A DEBATE team must not accept a DECA-only FLASHCARD_DECK assignment (field-specific 400)."
+    );
+
+    const hosaDeckSlug = deckSummaries().find((deck) => deck.organization === "HOSA")?.deckSlug;
+    if (hosaDeckSlug) {
+      await assert.rejects(
+        () =>
+          assignments.createAssignment({
+            coachUserId: coach.id,
+            role: "COACH",
+            input: { teamId: decaTeam.id, type: "FLASHCARD_DECK", title: "Cross-track", instructions: "should be rejected", dueDate: null, targetAllTeam: true, studentIds: [], targetId: hosaDeckSlug, points: null }
+          }),
+        (error: unknown) => (error as { status?: number }).status === 400 && /targetId:/i.test((error as Error).message),
+        "A DECA team must not accept a HOSA deck (field-specific 400 on targetId)."
+      );
+    }
+
+    // ---- Due date (item 6): overdue uses the stored value ----
+    const overdue = await assignments.createAssignment({
+      coachUserId: coach.id,
+      role: "COACH",
+      input: { teamId: team.id, type: "DEBATE_ROUND", title: "Overdue round", instructions: "This round is past due.", dueDate: new Date("2020-01-01T09:00:00"), targetAllTeam: true, studentIds: [], targetId: null, points: null }
+    });
+    const overdueSeen = (await assignments.getStudentAssignments(student.id)).find((assignment) => assignment.id === overdue.id);
+    assert.ok(overdueSeen?.dueDate && overdueSeen.dueDate.getTime() < Date.now(), "Overdue is computed from the stored past due date.");
 
     console.log(
       "Assignment smoke tests passed: creation, visibility, selected targets, coach isolation, start vs complete, evidence ownership, no-evidence rejection, roster denominator, and reflection completion."

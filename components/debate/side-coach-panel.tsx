@@ -17,13 +17,43 @@ type CoachEntry = {
   nextMove?: string;
 };
 
-const ASK_OPTIONS = [
+// Quick prompts are organization-specific: only General Debate talks about rebuttal/weighing/opponents.
+// Non-debate practices are solo delivery exercises, so their prompts match the real activity.
+const DEBATE_ASK_OPTIONS = [
   "What should I answer?",
   "Help me organize my rebuttal",
   "What argument did I miss?",
   "How should I weigh this?",
   "Explain the opponent's point simply"
 ];
+
+const ASK_OPTIONS_BY_ORG: Partial<Record<Organization, string[]>> = {
+  MODEL_UN: [
+    "Help organize my opening speech",
+    "Check whether I represented my country's position",
+    "Help prepare a moderated caucus response",
+    "What negotiation point should I emphasize?",
+    "Help explain my resolution or amendment"
+  ],
+  DECA: [
+    "Help organize my role-play response",
+    "Which performance indicator should I address?",
+    "Help identify the client's main need",
+    "Strengthen my recommendation",
+    "Help prepare my closing summary"
+  ],
+  HOSA: [
+    "Help organize my response",
+    "Which health-science concepts should I mention?",
+    "Check my terminology",
+    "Help make my explanation safe and role-appropriate",
+    "What important step did I miss?"
+  ]
+};
+
+function askOptionsForOrganization(organization: Organization): string[] {
+  return ASK_OPTIONS_BY_ORG[organization] ?? DEBATE_ASK_OPTIONS;
+}
 
 type Props = {
   debateId: string; // marks this debate assistedPractice when the coach is actually used
@@ -40,6 +70,8 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
   const coachedIdRef = useRef<string | null>(null);
   const seqRef = useRef(0);
   const guidanceLevel = level === "BEGINNER" ? 2 : 1;
+  const isPractice = organization !== "DEBATE";
+  const askOptions = askOptionsForOrganization(organization);
 
   // Official student speeches are the ones with an author. Coaching reads them but never writes back.
   const studentMessages = messages.filter((m) => Boolean(m.authorId) && (m.role === "AFFIRMATIVE" || m.role === "NEGATIVE"));
@@ -115,7 +147,9 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
         </span>
       </div>
       <p className="mt-1 text-xs text-emerald-100/70">
-        Assisted practice — these suggestions are private, are not sent to the opponent or judge, and do not count as your speech.
+        {isPractice
+          ? "Assisted practice — these suggestions are private and do not count as your submitted response."
+          : "Assisted practice — these suggestions are private, are not sent to the opponent or judge, and do not count as your speech."}
       </p>
 
       <div className="mt-3 space-y-2">
@@ -141,7 +175,7 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {ASK_OPTIONS.map((option) => (
+        {askOptions.map((option) => (
           <Button
             key={option}
             type="button"

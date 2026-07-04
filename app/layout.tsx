@@ -3,7 +3,7 @@ import "./globals.css";
 import { AccessibilityProvider } from "@/components/debate/accessibility/accessibility-context";
 
 export const metadata: Metadata = {
-  title: "DebateArena AI",
+  title: "CompeteReady",
   description: "AI-powered training for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking."
 };
 

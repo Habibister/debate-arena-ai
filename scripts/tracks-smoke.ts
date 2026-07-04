@@ -24,6 +24,8 @@ import { deckSummaries, recommendedResources } from "../lib/study-content";
 import { EVENT_OPTIONS } from "../lib/rubrics";
 import { buildDecaFormatConfig, buildHosaFormatConfig, buildModelUnFormatConfig, FORMAT_CARDS, MODEL_UN_EVENT_TYPE, trackPracticeConfigForOrganization } from "../lib/debate-formats";
 import { nextStepsForTrack, resourceOrgForTrack } from "../lib/dashboard-actions";
+import { isLegacyPracticeRecord, practiceTypeLabel, showsOpponentMeta } from "../lib/debate-history";
+import { assignmentTypeAllowedForOrganization, assignmentTypesForOrganization, contentAllowedForOrganization } from "../lib/track-content";
 
 function main() {
   // Four tracks, correct ids + slugs.
@@ -305,7 +307,81 @@ function main() {
   const coachPage = readFileSync("app/(app)/coach/page.tsx", "utf8");
   assert.ok(!/PracticeTestGenerator|RecommendedVideos/.test(coachPage), "coach page renders no organization-specific generator or resource shelf");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice (terminology/stages/context, no parliamentary labels), Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect, track-filtered unfinished sessions, HOSA mastery has no rebuttal text, and coach dashboard isolation.");
+  // ==============================================================================================
+  // QA completion pass coverage.
+  // ==============================================================================================
+
+  // C1. Study hero + totals are track-aware (computed from allowed content, no global "410+ cards").
+  const studySrc = readFileSync("app/(app)/study/page.tsx", "utf8");
+  assert.ok(studySrc.includes("cardCount") && studySrc.includes("heroDescription"), "study page computes track-aware totals + hero copy");
+  assert.ok(!studySrc.includes("FLASHCARDS.length") && !/\b410\b/.test(studySrc), "study page no longer advertises the global card total");
+  assert.ok(/does not use flashcard decks/.test(studySrc), "General Debate / Model UN get an honest empty-state study copy");
+  // General Debate + Model UN genuinely have zero decks (so their computed totals are 0).
+  const allStudyDecks = deckSummaries();
+  assert.equal(allStudyDecks.filter((d) => String(d.organization) === "DEBATE").length, 0, "General Debate has no decks (0-card hero)");
+  assert.equal(allStudyDecks.filter((d) => String(d.organization) === "MODEL_UN").length, 0, "Model UN has no decks (0-card hero)");
+
+  // C2. Non-debate practice shell hides debate-only UI; Side Coach prompts are organization-specific.
+  const arenaSrc = readFileSync("components/debate/debate-arena.tsx", "utf8");
+  assert.ok(arenaSrc.includes("isTrackPractice") && arenaSrc.includes("Practice context"), "arena shows a Practice Context card for non-debate practice");
+  assert.ok(arenaSrc.includes("!isTrackPractice ?"), "opponent side card is gated to real debates only");
+  const coachPanel = readFileSync("components/debate/side-coach-panel.tsx", "utf8");
+  assert.ok(coachPanel.includes("ASK_OPTIONS_BY_ORG") && coachPanel.includes("askOptionsForOrganization"), "Side Coach prompts are organization-specific");
+  for (const prompt of ["Help organize my opening speech", "Help organize my role-play response", "Which health-science concepts should I mention?"]) {
+    assert.ok(coachPanel.includes(prompt), `Side Coach includes the org-specific prompt: ${prompt}`);
+  }
+  // Non-debate configs contain none of the debate-only shell terms.
+  for (const cfg of [buildModelUnFormatConfig(), buildDecaFormatConfig(), buildHosaFormatConfig()]) {
+    const text = [cfg.label, cfg.description, cfg.sides.affirmativeLabel, cfg.sides.negativeLabel, ...cfg.speeches.flatMap((s) => [s.label, s.shortLabel, s.guidance])].join(" | ");
+    assert.ok(!/matchup|\bvs\b|rebuttal|weigh|government|opposition|\bpm\b|\blo\b|\bmg\b|\bmo\b/i.test(text), `${cfg.label} config has no debate-only shell terms`);
+  }
+
+  // C3. Session metadata is user-facing (org + eventType), never the carrier enum or opponent for practice.
+  assert.equal(practiceTypeLabel({ organization: "MODEL_UN", eventType: MODEL_UN_EVENT_TYPE }), "Model UN Committee Session", "Model UN session label");
+  assert.equal(practiceTypeLabel({ organization: "DECA", eventType: "ROLEPLAY" }), "DECA Role Play", "DECA session label");
+  assert.equal(practiceTypeLabel({ organization: "HOSA", eventType: "HEALTH_SCIENCE_EVENT" }), "HOSA Event Practice", "HOSA session label");
+  assert.equal(practiceTypeLabel({ organization: "DEBATE", eventType: "PARLIAMENTARY_DEBATE" }), "Parliamentary Debate", "Debate session label (readable, not the enum)");
+  // Legacy/conflicting record: MODEL_UN org but a parliamentary eventType -> honest "Legacy practice".
+  assert.equal(isLegacyPracticeRecord({ organization: "MODEL_UN", eventType: "PARLIAMENTARY_DEBATE" }), true, "legacy MUN record detected");
+  assert.equal(practiceTypeLabel({ organization: "MODEL_UN", eventType: "PARLIAMENTARY_DEBATE" }), "Legacy practice", "legacy record shown honestly");
+  assert.equal(isLegacyPracticeRecord({ organization: "MODEL_UN", eventType: MODEL_UN_EVENT_TYPE }), false, "a correct Model UN record is not legacy");
+  assert.equal(showsOpponentMeta({ organization: "DEBATE", eventType: "PARLIAMENTARY_DEBATE" }), true, "debates show opponent/side meta");
+  assert.equal(showsOpponentMeta({ organization: "MODEL_UN", eventType: MODEL_UN_EVENT_TYPE }), false, "solo practice hides opponent/side meta");
+  const resumeSrc = readFileSync("components/debate/resume-debates-card.tsx", "utf8");
+  assert.ok(resumeSrc.includes("typeLabel") && !resumeSrc.includes("formatLabel"), "resume card renders the user-facing type label, not the carrier format");
+  assert.ok(resumeSrc.includes("Continue unfinished practice"), "resume card uses practice wording for non-debate tracks");
+  assert.ok(dashSrc.includes("isLegacyPracticeRecord(debate)") && dashSrc.includes("practiceTypeLabel(debate)"), "dashboard excludes legacy records + renders user-facing labels");
+
+  // C4. A COACH landing on /dashboard goes to the Coach dashboard (never "Student dashboard").
+  assert.ok(dashSrc.includes('session?.user?.role === "COACH"') && dashSrc.includes('redirect("/coach")'), "coach is redirected off the student dashboard");
+  const coachPageSrc = readFileSync("app/(app)/coach/page.tsx", "utf8");
+  assert.ok(coachPageSrc.includes("Coach Dashboard") && !coachPageSrc.includes("Student dashboard"), "coach page is clearly a coach dashboard");
+
+  // C5. Assignment track compatibility (UI filters + server enforcement).
+  assert.deepEqual(assignmentTypesForOrganization("MODEL_UN"), ["LESSON"], "Model UN teams: lessons only");
+  assert.ok(!assignmentTypesForOrganization("DEBATE").includes("FLASHCARD_DECK") && !assignmentTypesForOrganization("DEBATE").includes("PRACTICE_TEST"), "General Debate teams get no decks/tests");
+  assert.ok(assignmentTypesForOrganization("DECA").includes("PRACTICE_TEST") && assignmentTypesForOrganization("DECA").includes("FLASHCARD_DECK"), "DECA teams keep tests + decks");
+  assert.equal(assignmentTypeAllowedForOrganization("FLASHCARD_DECK", "DEBATE"), false, "FLASHCARD_DECK invalid for a DEBATE team");
+  assert.equal(contentAllowedForOrganization("DECA", "HOSA"), false, "DECA content not allowed for a HOSA team");
+  assert.equal(contentAllowedForOrganization("HOSA", "DECA"), false, "HOSA content not allowed for a DECA team");
+  assert.equal(contentAllowedForOrganization("PUBLIC_SPEAKING", "MODEL_UN"), true, "shared foundation content allowed for any team");
+  const formSrc = readFileSync("components/assignments/create-assignment-form.tsx", "utf8");
+  assert.ok(formSrc.includes("assignmentTypesForOrganization") && formSrc.includes("contentAllowedForOrganization"), "assignment form filters types + content by the team's track");
+  assert.ok(formSrc.includes("noContentAvailable"), "assignment form shows an unavailable state + disables submit when the team's track has no content");
+  const assignLib = readFileSync("lib/assignments.ts", "utf8");
+  assert.ok(assignLib.includes("assignmentTypeAllowedForOrganization") && assignLib.includes("contentAllowedForOrganization"), "server enforces assignment track compatibility");
+  // Assigned activities open under the assignment's context, not the student's personal track.
+  assert.ok(deckPage.includes("searchParams.assignmentId"), "assigned deck activity bypasses the personal-track redirect");
+  assert.ok(testsPage.includes("assignmentId"), "assigned practice test always shows the generator");
+
+  // C7. CompeteReady branding replaces DebateArena AI in user-facing surfaces.
+  for (const file of ["components/app/app-shell.tsx", "app/(auth)/signin/page.tsx", "app/layout.tsx", "app/page.tsx"]) {
+    const src = readFileSync(file, "utf8");
+    assert.ok(!src.includes("DebateArena AI"), `no 'DebateArena AI' branding in ${file}`);
+  }
+  assert.ok(readFileSync("components/app/app-shell.tsx", "utf8").includes("CompeteReady"), "app shell uses the CompeteReady name");
+
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding.");
 }
 
 main();

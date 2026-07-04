@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { authOptions } from "@/lib/auth";
-import { getStudentDebates, isUnfinished, sideLabel } from "@/lib/debate-history";
+import { getStudentDebates, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { Badge } from "@/components/ui/badge";
 import { trackByOrganization } from "@/lib/training-tracks";
 
@@ -59,10 +59,10 @@ export default async function DebateHistoryPage() {
                 <CardContent className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0 space-y-1 text-sm text-muted-foreground">
                     <p>
-                      {track?.label ?? debate.organization} · {debate.eventType} · {debate.format}
+                      {track?.label ?? debate.organization} · {practiceTypeLabel(debate)}
                     </p>
                     <p>
-                      {sideLabel(debate.studentSide)} · vs {debate.aiPersona ?? "AI opponent"}
+                      {showsOpponentMeta(debate) ? <>{sideLabel(debate.studentSide)} · vs {debate.aiPersona ?? "AI opponent"}</> : "Solo practice"}
                       {debate.assistedPractice ? (
                         <Badge variant="outline" className="ml-2 align-middle text-[10px]">
                           Assisted Practice

@@ -10,16 +10,17 @@ import { flashcardsForDeck } from "@/lib/study-content";
 import { getActiveTrack } from "@/lib/track-server";
 import { trackAllowsOrganization } from "@/lib/training-tracks";
 
-export default function StudyDeckGamesPage({ params }: { params: { deck: string } }) {
+export default function StudyDeckGamesPage({ params, searchParams }: { params: { deck: string }; searchParams: { assignmentId?: string } }) {
   const cards = flashcardsForDeck(params.deck);
 
   if (cards.length === 0) {
     notFound();
   }
 
-  // Direct-URL isolation for the games route too (same rule as the deck page).
+  // Direct-URL isolation for the games route too (same rule as the deck page); assigned activities
+  // (?assignmentId=) open under the assignment's context and are exempt.
   const activeTrack = getActiveTrack();
-  if (!trackAllowsOrganization(activeTrack, cards[0].organization)) {
+  if (!searchParams.assignmentId && !trackAllowsOrganization(activeTrack, cards[0].organization)) {
     redirect("/study");
   }
 

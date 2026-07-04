@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import type { AssignmentType, Organization } from "@prisma/client";
 import { Loader2, Send } from "lucide-react";
 import { ASSIGNMENT_TYPE_META, assignmentTypeLabel } from "@/lib/assignment-types";
 import { trackByOrganization } from "@/lib/training-tracks";
+import { assignmentTypesForOrganization, contentAllowedForOrganization } from "@/lib/track-content";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,9 +31,10 @@ type ContentOption = {
   id: string;
   label: string;
   description: string;
+  organization: string;
 };
 
-const assignmentTypes = Object.keys(ASSIGNMENT_TYPE_META) as AssignmentType[];
+const ALL_ASSIGNMENT_TYPES = Object.keys(ASSIGNMENT_TYPE_META) as AssignmentType[];
 
 export function CreateAssignmentForm({
   teams,
@@ -53,16 +55,41 @@ export function CreateAssignmentForm({
   const [isSaving, setIsSaving] = useState(false);
 
   const selectedTeam = teams.find((team) => team.id === teamId);
+
+  // The selected team's track — not the coach's personal preference — controls valid types + content.
+  const availableTypes = useMemo(
+    () => (selectedTeam ? assignmentTypesForOrganization(selectedTeam.organization) : ALL_ASSIGNMENT_TYPES),
+    [selectedTeam]
+  );
+
   const targetOptions = useMemo(() => {
+    const teamOrg = selectedTeam?.organization;
+    const forOrg = (opts: ContentOption[]) => (teamOrg ? opts.filter((o) => contentAllowedForOrganization(o.organization, teamOrg)) : opts);
     if (type === "FLASHCARD_DECK" || type === "REVIEW_GAME") {
-      return decks;
+      return forOrg(decks);
     }
     if (type === "LESSON") {
-      return lessons;
+      return forOrg(lessons);
     }
     return [];
-  }, [decks, lessons, type]);
+  }, [decks, lessons, type, selectedTeam]);
+
+  // Changing teams clears an incompatible type and any previously-selected cross-track content.
+  useEffect(() => {
+    if (!availableTypes.includes(type)) {
+      setType(availableTypes[0] ?? "LESSON");
+      setTargetId("");
+    }
+  }, [availableTypes, type]);
+
+  useEffect(() => {
+    if (targetId && !targetOptions.some((option) => option.id === targetId)) {
+      setTargetId("");
+    }
+  }, [targetOptions, targetId]);
+
   const requiresTarget = ASSIGNMENT_TYPE_META[type].requiresTarget;
+  const noContentAvailable = requiresTarget && targetOptions.length === 0;
 
   function toggleStudent(studentId: string) {
     setSelectedStudents((current) =>
@@ -156,7 +183,7 @@ export function CreateAssignmentForm({
                 }}
                 className="mt-2 h-10 w-full rounded-md border bg-background px-3 text-sm"
               >
-                {assignmentTypes.map((option) => (
+                {availableTypes.map((option) => (
                   <option key={option} value={option}>
                     {assignmentTypeLabel(option)}
                   </option>
@@ -199,20 +226,26 @@ export function CreateAssignmentForm({
               <label className="text-sm font-semibold" htmlFor="targetId">
                 Existing content
               </label>
-              <select
-                id="targetId"
-                value={targetId}
-                onChange={(event) => setTargetId(event.target.value)}
-                className="mt-2 h-10 w-full rounded-md border bg-background px-3 text-sm"
-                required
-              >
-                <option value="">Choose content</option>
-                {targetOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label} — {option.description}
-                  </option>
-                ))}
-              </select>
+              {noContentAvailable ? (
+                <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-medium text-amber-700">
+                  No {selectedTeam ? trackByOrganization(selectedTeam.organization)?.label ?? selectedTeam.organization.replace("_", " ") : ""} content is available for this assignment type yet. Choose a different type or team.
+                </p>
+              ) : (
+                <select
+                  id="targetId"
+                  value={targetId}
+                  onChange={(event) => setTargetId(event.target.value)}
+                  className="mt-2 h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  required
+                >
+                  <option value="">Choose content</option>
+                  {targetOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label} — {option.description}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           ) : null}
         </CardContent>
@@ -266,7 +299,7 @@ export function CreateAssignmentForm({
 
       {error ? <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p> : null}
 
-      <Button type="submit" disabled={isSaving || teams.length === 0 || (requiresTarget && !targetId)}>
+      <Button type="submit" disabled={isSaving || teams.length === 0 || noContentAvailable || (requiresTarget && !targetId)}>
         {isSaving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />}
         Create assignment
       </Button>

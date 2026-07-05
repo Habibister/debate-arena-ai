@@ -15,6 +15,16 @@ export class HttpError extends Error {
   }
 }
 
+export class RateLimitError extends HttpError {
+  retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number, message = "Too many requests. Please slow down and try again shortly.") {
+    super(message, 429);
+    this.name = "RateLimitError";
+    this.retryAfterSeconds = Math.max(1, Math.ceil(retryAfterSeconds));
+  }
+}
+
 export async function parseJson<T>(request: Request, schema: ZodSchema<T>) {
   let body: unknown;
 
@@ -36,6 +46,14 @@ export function forbidden(message = "Forbidden") {
 }
 
 export function apiError(error: unknown) {
+  // RateLimitError extends HttpError, so it must be matched first to keep its Retry-After header.
+  if (error instanceof RateLimitError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } }
+    );
+  }
+
   // HttpError is thrown only by our own code (auth, validation, explicit route errors), so its
   // status is authoritative. It must be checked BEFORE the OpenAI-likeness sniffing below, which
   // treats any error carrying status 401/403/429 as a provider outage and would turn our own

@@ -1,9 +1,11 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
+import { clientIp, sessionUserId } from "@/lib/api-auth";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 import { practiceTestCreateSchema } from "@/lib/validators";
 
@@ -12,13 +14,14 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
+    const userId = sessionUserId(session);
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return unauthorized();
     }
 
     const tests = await prisma.practiceTest.findMany({
-      where: { userId: session.user.id },
+      where: { userId },
       orderBy: { createdAt: "desc" },
       take: 20,
       select: {
@@ -55,10 +58,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
+    const userId = sessionUserId(session);
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return unauthorized();
     }
+
+    await enforceRateLimit({ userId, ip: clientIp(request), workload: "heavy" });
 
     const input = await parseJson(request, practiceTestCreateSchema);
     const fallbackQuestions = buildFallbackPracticeQuestions({
@@ -119,7 +125,7 @@ export async function POST(request: Request) {
 
     const test = await prisma.practiceTest.create({
       data: {
-        userId: session.user.id,
+        userId,
         organization: input.organization,
         eventType: input.eventType,
         eventCluster: input.eventCluster,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
-import { requireUser } from "@/lib/api-auth";
+import { clientIp, requireUser } from "@/lib/api-auth";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { generateSideCoachResponse } from "@/lib/side-coach";
 import { sideCoachRequestSchema } from "@/lib/validators";
@@ -26,6 +27,7 @@ async function markAssisted(debateId: string, userId: string) {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "turn" });
     const input = await parseJson(request, sideCoachRequestSchema);
 
     // Actual coach use (this route is only called when the student invokes the coach) flags the debate.

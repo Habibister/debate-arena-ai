@@ -780,3 +780,21 @@ model SpecRubricCategory {
   @@unique([specId, order])
   @@index([specId])
 }
+
+// Spaced-reassessment schedule for a user's skill (Study Arcade "Reviews due"). Deliberately a
+// separate table from MasteryProgress so deploying code and pushing schema stay order-independent
+// (adding columns to MasteryProgress would break existing selects until db push). Simple expanding
+// intervals; a failed review resets the ladder. No SM-2 gold-plating.
+model SkillReviewSchedule {
+  id           String   @id @default(cuid())
+  userId       String
+  skillId      String
+  nextReviewAt DateTime
+  reviewCount  Int      @default(0) // consecutive passed reviews — indexes the interval ladder
+  lastOutcome  String? // "passed" | "failed"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, skillId])
+  @@index([userId, nextReviewAt])
+}

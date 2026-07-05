@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { countDueReviews } from "@/lib/spaced-review";
 import { deckSummaries } from "@/lib/study-content";
 import { getActiveTrack } from "@/lib/track-server";
 
@@ -25,13 +26,15 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
   const session = await getServerSession(authOptions);
   let practicedSkills = 0;
   let skillsInProgress = 0;
+  let reviewsDue = 0;
   if (session?.user?.id) {
     try {
-      [practicedSkills, skillsInProgress] = await Promise.all([
+      [practicedSkills, skillsInProgress, reviewsDue] = await Promise.all([
         prisma.masteryProgress.count({ where: { userId: session.user.id, lastPracticedAt: { not: null } } }),
         prisma.masteryProgress.count({
           where: { userId: session.user.id, lastPracticedAt: { not: null }, NOT: { masteryLevel: "MASTERED" } }
-        })
+        }),
+        countDueReviews(session.user.id)
       ]);
     } catch {
       // reviews tiles degrade to zero-state rather than breaking the page
@@ -57,15 +60,22 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
               <RotateCcw className="h-4 w-4 text-primary" aria-hidden />
               Reviews due
             </div>
-            {skillsInProgress > 0 ? (
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                <span className="text-lg font-bold text-foreground">{skillsInProgress}</span> practiced{" "}
-                {skillsInProgress === 1 ? "skill is" : "skills are"} not yet mastered — keep drilling them. Scheduled
-                spaced review arrives with Spaced Reassessment.
-              </p>
+            {reviewsDue > 0 ? (
+              <>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  <span className="text-lg font-bold text-foreground">{reviewsDue}</span>{" "}
+                  {reviewsDue === 1 ? "skill is" : "skills are"} due for review — mastery only counts if it survives the
+                  gap.
+                </p>
+                <Link href={"/study-arcade/review" as Route} className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
+                  Start review session
+                </Link>
+              </>
             ) : (
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                No reviews due yet — practice a skill or play a review game to start your mastery record.
+                {skillsInProgress > 0
+                  ? `Nothing due right now — ${skillsInProgress} practiced ${skillsInProgress === 1 ? "skill" : "skills"} will come up for review on schedule.`
+                  : "No reviews due yet — practice a skill to start your review schedule."}
               </p>
             )}
           </div>

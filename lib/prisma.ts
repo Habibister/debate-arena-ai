@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
@@ -22,8 +23,6 @@ if (process.env.NODE_ENV !== "production") {
   // schema it was built from; we snapshot it when the client is created and poll for divergence
   // every 30s. Divergence = loud, repeated, unmissable error until the server is restarted.
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { readFileSync } = require("node:fs") as typeof import("node:fs");
     const schemaPath = "node_modules/.prisma/client/schema.prisma";
     if (!globalForPrisma.prismaSchemaAtStartup) {
       globalForPrisma.prismaSchemaAtStartup = readFileSync(schemaPath, "utf8");

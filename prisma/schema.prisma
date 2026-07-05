@@ -750,9 +750,33 @@ model CompetitionSpec {
   verificationStatus SpecVerificationStatus @default(PLACEHOLDER)
   lastVerifiedAt     DateTime?
 
+  rubricCategories SpecRubricCategory[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([organization, eventName, season, version])
   @@index([organization, isActive])
+}
+
+// Structured, queryable rubric categories for a CompetitionSpec — the registry's rubric as data
+// rather than a Json blob. `provenance` keeps the sourced-vs-placeholder honesty per category.
+model SpecRubricCategory {
+  id          String  @id @default(cuid())
+  specId      String
+  order       Int
+  name        String
+  points      Int? // null = not point-based (e.g. holistic PF judging)
+  description String? @db.Text
+  // Performance-level descriptors: [{ level, description }]
+  descriptors Json?
+  provenance  String  @default("placeholder") // "sourced" | "placeholder"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  spec CompetitionSpec @relation(fields: [specId], references: [id], onDelete: Cascade)
+
+  @@unique([specId, order])
+  @@index([specId])
 }

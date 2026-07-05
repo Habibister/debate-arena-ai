@@ -2,6 +2,7 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { DebateRoom } from "@/components/debate/debate-room";
+import { RubricBreakdown } from "@/components/specs/rubric-breakdown";
 import { SpecBanner } from "@/components/specs/spec-banner";
 import { getActiveTrack } from "@/lib/track-server";
 
@@ -32,6 +33,8 @@ export default function DebatePage({ searchParams }: { searchParams: { track?: s
       </div>
 
       <DebateRoom track={searchParams.track} />
+
+      <RubricBreakdown organization="DEBATE" eventType="PUBLIC_FORUM" />
     </div>
   );
 }

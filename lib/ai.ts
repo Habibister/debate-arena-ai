@@ -11,6 +11,7 @@ import {
 } from "@/lib/ai-providers";
 import { getAiPersona } from "@/lib/ai-personas";
 import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
+import { findSpecForEvent, getSpecRubricBreakdown } from "@/lib/competition-specs";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
@@ -71,6 +72,7 @@ type OpponentResponse = {
 };
 
 type DebateJudgeResult = {
+  rubricSource?: RubricSourceTag;
   overallScore: number;
   categoryScores: CategoryScore[];
   sharedSpeaking: SharedSpeakingScores;
@@ -164,6 +166,49 @@ type TranscriptSideAnalysis = {
   hiddenAssumptionAttack: string;
 };
 
+
+// --- Competition Specification Registry integration -----------------------------------------
+// Judges reference the registry's rubric categories when an active spec covers the event, and
+// tag output with the spec attribution so students see WHICH season's guidelines scored them.
+export type RubricSourceTag = {
+  specId: string;
+  eventName: string;
+  season: string;
+  verificationStatus: string;
+  source: "registry";
+  categories: string[];
+};
+
+async function registryRubricForJudge(
+  organization: Organization,
+  eventType?: string
+): Promise<{ tag: RubricSourceTag; promptBlock: string } | null> {
+  try {
+    const spec = await findSpecForEvent(organization, eventType);
+    if (!spec) return null;
+    const breakdown = await getSpecRubricBreakdown(spec);
+    if (breakdown.categories.length === 0) return null;
+    const names = breakdown.categories.map((category) => category.name);
+    const promptBlock = `Official rubric categories from the ${spec.eventName} ${spec.season} specification (${spec.verificationStatus}): ${names.join(
+      "; "
+    )}.
+Tag EVERY item in strengths, weaknesses, and improvementAdvice with the single most relevant category above, prefixing the item text with "[<category name>] ". Use the category names EXACTLY as written.`;
+    return {
+      tag: {
+        specId: spec.id,
+        eventName: spec.eventName,
+        season: spec.season,
+        verificationStatus: spec.verificationStatus,
+        source: "registry",
+        categories: names
+      },
+      promptBlock
+    };
+  } catch {
+    return null;
+  }
+}
+
 type PerformanceJudgeResult = {
   overallScore: number;
   categoryScores: CategoryScore[];
@@ -176,6 +221,7 @@ type PerformanceJudgeResult = {
   accuracyFlags?: string[];
   readinessForNextLevel: ReadinessForNextLevel;
   fallbackNotice?: string;
+  rubricSource?: RubricSourceTag;
 };
 
 const DEV_AI_FALLBACK_NOTICE = "AI is temporarily unavailable, so we used a backup response.";
@@ -1250,6 +1296,12 @@ export async function judgeDebate(input: {
   aiPersona?: string | null;
 }): Promise<DebateJudgeResult> {
   const base = fallbackDebateJudge(input);
+  // Attribute the ballot to the registry spec covering this format (PF today); the score itself
+  // still comes from the local rubric ballot — the registry supplies season + verification context.
+  const registry = await registryRubricForJudge(input.organization, input.eventType ?? input.format);
+  if (registry) {
+    base.rubricSource = registry.tag;
+  }
 
   // No external provider configured -> keep the local ballot (already full rubric + side-correct).
   if (getProviderOrder().length === 0) {
@@ -1317,8 +1369,9 @@ export async function judgeDecaRoleplay(input: {
   transcript: DebateTranscriptMessage[];
 }) {
   const rubric = rubricFor("DECA", input.eventType);
+  const registry = await registryRubricForJudge("DECA", input.eventType);
 
-  return jsonCompletion<PerformanceJudgeResult>(
+  const result = await jsonCompletion<PerformanceJudgeResult>(
     "You are an educational DECA judge for original practice roleplays and case studies. Do not judge like debate. Return JSON only.",
     `Evaluate this ${input.level} DECA ${input.eventType} practice.
 Scenario: ${input.scenario}
@@ -1327,11 +1380,16 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Focus on business scenario understanding, performance indicators, solution quality, business reasoning, creativity, feasibility, professional communication, organization, judge questions, and delivery.
-Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, judgeQuestionFeedback, and readinessForNextLevel.`,
+Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, judgeQuestionFeedback, and readinessForNextLevel.
+${registry ? registry.promptBlock : ""}`,
     () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
     "DECA judge",
     isValidPerformanceJudge
   );
+  if (registry) {
+    result.rubricSource = registry.tag;
+  }
+  return result;
 }
 
 export async function judgeHosaPerformance(input: {
@@ -1341,8 +1399,9 @@ export async function judgeHosaPerformance(input: {
   transcript: DebateTranscriptMessage[];
 }) {
   const rubric = rubricFor("HOSA", input.eventType);
+  const registry = await registryRubricForJudge("HOSA", input.eventType);
 
-  return jsonCompletion<PerformanceJudgeResult>(
+  const result = await jsonCompletion<PerformanceJudgeResult>(
     "You are an educational HOSA judge for original health science practice. Do not judge like debate. Return JSON only.",
     `Evaluate this ${input.level} HOSA ${input.eventType} performance.
 Scenario: ${input.scenario}
@@ -1351,11 +1410,16 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Focus on health science knowledge, medical/health accuracy, event task completion, scenario response, communication, professionalism, presentation quality, and skill/performance quality when relevant.
-Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, accuracyFlags, and readinessForNextLevel.`,
+Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, accuracyFlags, and readinessForNextLevel.
+${registry ? registry.promptBlock : ""}`,
     () => fallbackPerformanceJudge({ organization: "HOSA", eventType: input.eventType }),
     "HOSA judge",
     isValidPerformanceJudge
   );
+  if (registry) {
+    result.rubricSource = registry.tag;
+  }
+  return result;
 }
 
 export async function generatePracticeQuestions(input: {

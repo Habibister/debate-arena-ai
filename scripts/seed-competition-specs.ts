@@ -246,8 +246,27 @@ async function main() {
       update: spec
     });
     console.log(`[specs] upserted ${result.organization} · ${result.eventName} · ${result.season} v${result.version} (${result.verificationStatus})`);
+
+    // Sync structured rubric rows from the spec's rubric categories. Provenance mirrors the
+    // category description: anything marked PLACEHOLDER stays flagged until verified.
+    const rubric = spec.rubric as { categories?: Array<{ name: string; points?: number | null; description?: string }> };
+    const categories = rubric.categories ?? [];
+    await prisma.specRubricCategory.deleteMany({ where: { specId: result.id } });
+    if (categories.length > 0) {
+      await prisma.specRubricCategory.createMany({
+        data: categories.map((category, index) => ({
+          specId: result.id,
+          order: index + 1,
+          name: category.name,
+          points: typeof category.points === "number" ? category.points : null,
+          description: category.description ?? null,
+          provenance: /placeholder/i.test(category.description ?? "") ? "placeholder" : "sourced"
+        }))
+      });
+      console.log(`[specs]   rubric: ${categories.length} structured categories`);
+    }
   }
-  console.log("Competition Specification Registry seeded: 4 specs.");
+  console.log("Competition Specification Registry seeded: 4 specs with structured rubric categories.");
 }
 
 main()

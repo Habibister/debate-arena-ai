@@ -2,6 +2,7 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { DebateRoom } from "@/components/debate/debate-room";
+import { SpecBanner } from "@/components/specs/spec-banner";
 import { getActiveTrack } from "@/lib/track-server";
 
 export default function DebatePage({ searchParams }: { searchParams: { track?: string } }) {
@@ -25,6 +26,9 @@ export default function DebatePage({ searchParams }: { searchParams: { track?: s
           Choose a motion, format, timer, and side. CompeteReady will create a dedicated arena page with turn order,
           AI opponent speeches, and a judge decision when the round is complete.
         </p>
+        <div className="mt-4">
+          <SpecBanner organization="DEBATE" />
+        </div>
       </div>
 
       <DebateRoom track={searchParams.track} />

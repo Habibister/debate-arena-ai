@@ -26,6 +26,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "specs:seed": "tsx scripts/seed-competition-specs.ts",
     "postinstall": "prisma generate"
   },
   "engines": {

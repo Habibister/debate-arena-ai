@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpenCheck, CheckCircle2, ClipboardList, Layers3, Sparkles } from "lucide-react";
 import { TestBuilderPreview } from "@/components/tests/test-builder-preview";
 import { PracticeTestGenerator } from "@/components/tests/practice-test-generator";
+import { SpecBanner } from "@/components/specs/spec-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
@@ -33,6 +34,11 @@ export default function TestsPage({ searchParams }: { searchParams: { track?: st
         <p className="mt-2 max-w-3xl text-muted-foreground">
           Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.
         </p>
+        {lockedOrganization ? (
+          <div className="mt-4">
+            <SpecBanner organization={lockedOrganization} />
+          </div>
+        ) : null}
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {testSteps.map((step) => {
             const Icon = step.icon;

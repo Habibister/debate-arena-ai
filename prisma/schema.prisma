@@ -138,98 +138,98 @@ enum AssignmentStatus {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String?   @unique
-  emailVerified  DateTime?
-  image          String?
-  passwordHash   String?
+  id                     String        @id @default(cuid())
+  name                   String?
+  email                  String?       @unique
+  emailVerified          DateTime?
+  image                  String?
+  passwordHash           String?
   resetPasswordTokenHash String?
   resetPasswordExpires   DateTime?
-  username       String?   @unique
-  displayName    String?
-  avatarUrl      String?
-  bio            String?   @db.Text
-  schoolOrClub   String?
-  preferredOrganization Organization?
-  role           Role      @default(STUDENT)
-  organization   Organization?
-  level          Level     @default(BEGINNER)
-  ageGroup       String?
-  xp             Int       @default(0)
-  streak         Int       @default(0)
-  wins           Int       @default(0)
-  rank           Rank      @default(BRONZE)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  username               String?       @unique
+  displayName            String?
+  avatarUrl              String?
+  bio                    String?       @db.Text
+  schoolOrClub           String?
+  preferredOrganization  Organization?
+  role                   Role          @default(STUDENT)
+  organization           Organization?
+  level                  Level         @default(BEGINNER)
+  ageGroup               String?
+  xp                     Int           @default(0)
+  streak                 Int           @default(0)
+  wins                   Int           @default(0)
+  rank                   Rank          @default(BRONZE)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
 
-  accounts          Account[]
-  sessions          Session[]
-  coachProfile      Coach?
-  teamMemberships   TeamMember[]
-  createdDebates    Debate[]           @relation("CreatedDebates")
-  studentDebates    Debate[]           @relation("StudentDebates")
-  opponentDebates   Debate[]           @relation("OpponentDebates")
-  debateMessages    DebateMessage[]
-  practiceTests     PracticeTest[]
-  practiceAnswers   PracticeAnswer[]
-  achievements      Achievement[]
-  xpLogs            XPLog[]
-  speakingSnapshots SpeakingSkillSnapshot[]
-  lessonAssignments LessonAssignment[] @relation("AssignedTo")
-  assignedLessons   LessonAssignment[] @relation("AssignedBy")
-  masteryProgresses MasteryProgress[]
-  practiceAttempts  PracticeAttempt[]
-  questionAttempts  QuestionAttempt[]
-  coachAssignments   Assignment[]       @relation("CoachAssignments")
-  assignmentTargets  AssignmentAssignee[]
+  accounts              Account[]
+  sessions              Session[]
+  coachProfile          Coach?
+  teamMemberships       TeamMember[]
+  createdDebates        Debate[]                @relation("CreatedDebates")
+  studentDebates        Debate[]                @relation("StudentDebates")
+  opponentDebates       Debate[]                @relation("OpponentDebates")
+  debateMessages        DebateMessage[]
+  practiceTests         PracticeTest[]
+  practiceAnswers       PracticeAnswer[]
+  achievements          Achievement[]
+  xpLogs                XPLog[]
+  speakingSnapshots     SpeakingSkillSnapshot[]
+  lessonAssignments     LessonAssignment[]      @relation("AssignedTo")
+  assignedLessons       LessonAssignment[]      @relation("AssignedBy")
+  masteryProgresses     MasteryProgress[]
+  practiceAttempts      PracticeAttempt[]
+  questionAttempts      QuestionAttempt[]
+  coachAssignments      Assignment[]            @relation("CoachAssignments")
+  assignmentTargets     AssignmentAssignee[]
   assignmentSubmissions AssignmentSubmission[]
 }
 
 model Debate {
-  id             String       @id @default(cuid())
-  organization   Organization
-  eventType      String       @default("PARLIAMENTARY_DEBATE")
-  practiceMode   PracticeMode @default(DEBATE)
-  format         DebateFormat @default(PARLIAMENTARY)
-  rubricId       String?
-  level          Level
-  topic          String
-  mode           DebateMode
-  status         DebateStatus @default(SETUP)
-  roundsMinimum  Int          @default(3)
-  studentSide    DebateSide   @default(GOVERNMENT)
-  opponentSide   DebateSide   @default(OPPOSITION)
-  turnTimeSeconds Int         @default(420)
-  prepTimeSeconds Int         @default(300)
-  graceTimeSeconds Int        @default(30)
-  formatConfig   Json?
-  aiPersona      String?
-  assistedPractice Boolean    @default(false)
-  createdById    String
-  studentId      String?
-  opponentUserId String?
-  logicScore     Int?
-  evidenceScore  Int?
-  rebuttalScore  Int?
-  persuasionScore Int?
-  clarityScore   Int?
+  id                 String       @id @default(cuid())
+  organization       Organization
+  eventType          String       @default("PARLIAMENTARY_DEBATE")
+  practiceMode       PracticeMode @default(DEBATE)
+  format             DebateFormat @default(PARLIAMENTARY)
+  rubricId           String?
+  level              Level
+  topic              String
+  mode               DebateMode
+  status             DebateStatus @default(SETUP)
+  roundsMinimum      Int          @default(3)
+  studentSide        DebateSide   @default(GOVERNMENT)
+  opponentSide       DebateSide   @default(OPPOSITION)
+  turnTimeSeconds    Int          @default(420)
+  prepTimeSeconds    Int          @default(300)
+  graceTimeSeconds   Int          @default(30)
+  formatConfig       Json?
+  aiPersona          String?
+  assistedPractice   Boolean      @default(false)
+  createdById        String
+  studentId          String?
+  opponentUserId     String?
+  logicScore         Int?
+  evidenceScore      Int?
+  rebuttalScore      Int?
+  persuasionScore    Int?
+  clarityScore       Int?
   communicationScore Int?
-  overallScore   Int?
-  strengths      String[]     @default([])
-  weaknesses     String[]     @default([])
-  recommendations String[]    @default([])
-  readiness      Json?
-  judgeReport    Json?
-  startedAt      DateTime?
-  completedAt    DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  overallScore       Int?
+  strengths          String[]     @default([])
+  weaknesses         String[]     @default([])
+  recommendations    String[]     @default([])
+  readiness          Json?
+  judgeReport        Json?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
-  createdBy    User             @relation("CreatedDebates", fields: [createdById], references: [id], onDelete: Cascade)
-  student      User?            @relation("StudentDebates", fields: [studentId], references: [id], onDelete: SetNull)
-  opponentUser User?            @relation("OpponentDebates", fields: [opponentUserId], references: [id], onDelete: SetNull)
-  rubric       Rubric?          @relation(fields: [rubricId], references: [id], onDelete: SetNull)
+  createdBy    User            @relation("CreatedDebates", fields: [createdById], references: [id], onDelete: Cascade)
+  student      User?           @relation("StudentDebates", fields: [studentId], references: [id], onDelete: SetNull)
+  opponentUser User?           @relation("OpponentDebates", fields: [opponentUserId], references: [id], onDelete: SetNull)
+  rubric       Rubric?         @relation(fields: [rubricId], references: [id], onDelete: SetNull)
   messages     DebateMessage[]
 
   @@index([organization, eventType, level, status])
@@ -254,18 +254,18 @@ model DebateMessage {
 }
 
 model Skill {
-  id          String       @id @default(cuid())
-  track       SkillTrack
-  organization Organization
-  name        String
-  slug        String       @unique
-  description String
-  order       Int          @default(0)
+  id             String       @id @default(cuid())
+  track          SkillTrack
+  organization   Organization
+  name           String
+  slug           String       @unique
+  description    String
+  order          Int          @default(0)
   masteryWeights Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  lessons Lesson[]
+  lessons           Lesson[]
   masteryProgresses MasteryProgress[]
   practiceAttempts  PracticeAttempt[]
   questionAttempts  QuestionAttempt[]
@@ -274,21 +274,21 @@ model Skill {
 }
 
 model Lesson {
-  id               String       @id @default(cuid())
+  id               String     @id @default(cuid())
   skillId          String
   title            String
-  slug             String       @unique
+  slug             String     @unique
   type             LessonType
   summary          String
   content          Json
-  xpReward         Int          @default(10)
-  estimatedMinutes Int          @default(8)
-  order            Int          @default(0)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  xpReward         Int        @default(10)
+  estimatedMinutes Int        @default(8)
+  order            Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
-  skill       Skill              @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  assignments LessonAssignment[]
+  skill            Skill              @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  assignments      LessonAssignment[]
   practiceAttempts PracticeAttempt[]
   questionAttempts QuestionAttempt[]
   recommendedFor   MasteryProgress[]
@@ -297,23 +297,23 @@ model Lesson {
 }
 
 model MasteryProgress {
-  id                String       @id @default(cuid())
-  userId            String
-  skillId           String
-  masteryLevel      MasteryLevel @default(NOT_STARTED)
-  masteryPercent    Int          @default(0)
-  xpEarned          Int          @default(0)
-  correctCount      Int          @default(0)
-  incorrectCount    Int          @default(0)
-  weakSkillCount    Int          @default(0)
+  id                  String       @id @default(cuid())
+  userId              String
+  skillId             String
+  masteryLevel        MasteryLevel @default(NOT_STARTED)
+  masteryPercent      Int          @default(0)
+  xpEarned            Int          @default(0)
+  correctCount        Int          @default(0)
+  incorrectCount      Int          @default(0)
+  weakSkillCount      Int          @default(0)
   recommendedLessonId String?
-  lastPracticedAt   DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  lastPracticedAt     DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill             Skill        @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  recommendedLesson Lesson?      @relation(fields: [recommendedLessonId], references: [id], onDelete: SetNull)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill             Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  recommendedLesson Lesson? @relation(fields: [recommendedLessonId], references: [id], onDelete: SetNull)
 
   @@unique([userId, skillId])
   @@index([userId, masteryLevel])
@@ -322,25 +322,25 @@ model MasteryProgress {
 }
 
 model PracticeAttempt {
-  id              String                @id @default(cuid())
-  userId          String
-  skillId         String
-  lessonId        String?
-  status          PracticeAttemptStatus @default(IN_PROGRESS)
-  score           Int?
-  correctCount    Int                   @default(0)
-  totalQuestions  Int                   @default(0)
-  weakSkills      String[]              @default([])
-  masteredConcepts String[]             @default([])
-  reviewConcepts  String[]              @default([])
-  startedAt       DateTime              @default(now())
-  completedAt     DateTime?
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id               String                @id @default(cuid())
+  userId           String
+  skillId          String
+  lessonId         String?
+  status           PracticeAttemptStatus @default(IN_PROGRESS)
+  score            Int?
+  correctCount     Int                   @default(0)
+  totalQuestions   Int                   @default(0)
+  weakSkills       String[]              @default([])
+  masteredConcepts String[]              @default([])
+  reviewConcepts   String[]              @default([])
+  startedAt        DateTime              @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill           Skill                 @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  lesson          Lesson?               @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill            Skill             @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  lesson           Lesson?           @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   questionAttempts QuestionAttempt[]
 
   @@index([userId, createdAt])
@@ -349,24 +349,24 @@ model PracticeAttempt {
 }
 
 model QuestionAttempt {
-  id              String   @id @default(cuid())
-  attemptId       String
-  userId          String
-  skillId         String
-  lessonId        String?
-  prompt          String   @db.Text
-  selectedAnswer  String
-  correctAnswer   String
-  isCorrect       Boolean
-  explanation     String   @db.Text
-  skillTag        String
-  retryPrompt     String?  @db.Text
-  createdAt       DateTime @default(now())
+  id             String   @id @default(cuid())
+  attemptId      String
+  userId         String
+  skillId        String
+  lessonId       String?
+  prompt         String   @db.Text
+  selectedAnswer String
+  correctAnswer  String
+  isCorrect      Boolean
+  explanation    String   @db.Text
+  skillTag       String
+  retryPrompt    String?  @db.Text
+  createdAt      DateTime @default(now())
 
-  attempt         PracticeAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill           Skill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  lesson          Lesson?         @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  attempt PracticeAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill   Skill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  lesson  Lesson?         @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 
   @@index([attemptId])
   @@index([userId, createdAt])
@@ -375,19 +375,19 @@ model QuestionAttempt {
 }
 
 model PracticeTest {
-  id             String       @id @default(cuid())
-  userId         String
-  organization   Organization
-  eventType      String       @default("GENERAL_TEST")
-  eventCluster   String?
-  difficulty     Level
-  questionCount  Int
-  status         TestStatus    @default(GENERATED)
-  score          Int?
-  weakAreas      String[]      @default([])
+  id              String       @id @default(cuid())
+  userId          String
+  organization    Organization
+  eventType       String       @default("GENERAL_TEST")
+  eventCluster    String?
+  difficulty      Level
+  questionCount   Int
+  status          TestStatus   @default(GENERATED)
+  score           Int?
+  weakAreas       String[]     @default([])
   recommendations Json?
-  createdAt      DateTime     @default(now())
-  completedAt    DateTime?
+  createdAt       DateTime     @default(now())
+  completedAt     DateTime?
 
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions PracticeQuestion[]
@@ -398,17 +398,17 @@ model PracticeTest {
 }
 
 model PracticeQuestion {
-  id            String       @id @default(cuid())
+  id            String   @id @default(cuid())
   testId        String
-  question      String       @db.Text
+  question      String   @db.Text
   choices       Json
   correctAnswer String
-  explanation   String       @db.Text
+  explanation   String   @db.Text
   skillTag      String
   difficulty    Level
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime @default(now())
 
-  test    PracticeTest    @relation(fields: [testId], references: [id], onDelete: Cascade)
+  test    PracticeTest     @relation(fields: [testId], references: [id], onDelete: Cascade)
   answers PracticeAnswer[]
 
   @@index([testId])
@@ -455,8 +455,8 @@ model Team {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  coach  Coach        @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  members TeamMember[]
+  coach       Coach        @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
   assignments Assignment[]
 
   @@unique([coachId, name])
@@ -464,11 +464,11 @@ model Team {
 }
 
 model TeamMember {
-  id        String   @id @default(cuid())
-  teamId    String
-  userId    String
-  role      Role     @default(STUDENT)
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  role     Role     @default(STUDENT)
+  joinedAt DateTime @default(now())
 
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -478,26 +478,26 @@ model TeamMember {
 }
 
 model Assignment {
-  id           String         @id @default(cuid())
-  coachId      String
-  teamId       String
-  title        String
-  instructions String         @db.Text
-  type         AssignmentType
-  dueDate      DateTime?
-  targetAllTeam Boolean       @default(true)
-  targetType   String?
-  targetId     String?
-  targetLabel  String?
-  targetHref   String?
-  points       Int?
-  isArchived   Boolean        @default(false)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  coachId       String
+  teamId        String
+  title         String
+  instructions  String         @db.Text
+  type          AssignmentType
+  dueDate       DateTime?
+  targetAllTeam Boolean        @default(true)
+  targetType    String?
+  targetId      String?
+  targetLabel   String?
+  targetHref    String?
+  points        Int?
+  isArchived    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  coach      User                   @relation("CoachAssignments", fields: [coachId], references: [id], onDelete: Cascade)
-  team       Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  assignees  AssignmentAssignee[]
+  coach       User                   @relation("CoachAssignments", fields: [coachId], references: [id], onDelete: Cascade)
+  team        Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignees   AssignmentAssignee[]
   submissions AssignmentSubmission[]
 
   @@index([coachId, createdAt])
@@ -642,21 +642,21 @@ model RubricDescriptor {
 }
 
 model SpeakingSkillSnapshot {
-  id              String       @id @default(cuid())
-  userId          String
-  organization    Organization
-  eventType       String
-  sourceType      String
-  sourceId        String?
-  clarity         Int?
-  confidence      Int?
-  pacing          Int?
-  volume          Int?
+  id                String       @id @default(cuid())
+  userId            String
+  organization      Organization
+  eventType         String
+  sourceType        String
+  sourceId          String?
+  clarity           Int?
+  confidence        Int?
+  pacing            Int?
+  volume            Int?
   organizationScore Int?
-  vocabulary      Int?
-  persuasion      Int?
-  professionalism Int?
-  createdAt       DateTime     @default(now())
+  vocabulary        Int?
+  persuasion        Int?
+  professionalism   Int?
+  createdAt         DateTime     @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -698,4 +698,61 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Competition Specification Registry
+//
+// Season-versioned, source-linked ground truth for how each competition event
+// actually runs (round structure, timing, rubric, penalties, AI-assistance
+// boundaries). Everything that simulates or scores an event should read from
+// the active spec instead of hardcoding times/rubrics, and the UI shows
+// "Using [Org] [Season] guidelines — last verified [date]" from this record.
+// ---------------------------------------------------------------------------
+
+enum SpecVerificationStatus {
+  VERIFIED // every load-bearing field checked against an official source
+  PARTIALLY_VERIFIED // core format sourced; some fields still placeholder (see fieldNotes)
+  PLACEHOLDER // structural stub only — do not present as official
+}
+
+model CompetitionSpec {
+  id           String       @id @default(cuid())
+  organization Organization
+  season       String // e.g. "2025-2026"
+  version      Int          @default(1) // bump within a season when an official update lands
+  isActive     Boolean      @default(true)
+
+  eventName String // e.g. "Public Forum Debate", "Hotel and Lodging Management Series"
+  eventCode String? // official short code, e.g. "HLM", "MT"
+  division  String? // e.g. "High School", "Secondary", "Postsecondary/Collegiate"
+
+  // Ordered speech/segment list: [{ order, name, speaker, minutes, notes? }]
+  roundStructure           Json
+  // Prep rules: { perTeamMinutes?, perCompetitorMinutes?, notes? }
+  prepTime                 Json?
+  // Rubric: { totalPoints?, categories: [{ name, points?, description? }], notes? }
+  rubric                   Json
+  // [{ name, description, consequence }]
+  penalties                Json?
+  // [{ name, format, requiredBy, notes? }] — e.g. position papers, evidence disclosures
+  requiredUploads          Json?
+  // What AI help is allowed/forbidden per the org (and how CompeteReady enforces it):
+  // { allowed: [...], forbidden: [...], notes?, enforcedInApp?: string }
+  aiAssistanceRestrictions Json?
+  // [{ scope: "state/conference", name, differsHow }]
+  stateVariations          Json?
+  // [{ label, url }] — official rules documents, event pages
+  officialReferences       Json
+  // Per-field provenance: { <fieldName>: "sourced" | "placeholder", ... } plus free-form notes
+  fieldNotes               Json?
+
+  verificationStatus SpecVerificationStatus @default(PLACEHOLDER)
+  lastVerifiedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organization, eventName, season, version])
+  @@index([organization, isActive])
 }

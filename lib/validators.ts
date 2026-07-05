@@ -351,3 +351,30 @@ export const signupSchema = z
     message: "Passwords must match.",
     path: ["confirmPassword"]
   });
+
+// --- Competition Specification Registry ---
+
+const specReferenceSchema = z.object({ label: z.string().min(1).max(200), url: z.string().url() });
+
+export const competitionSpecCreateSchema = z.object({
+  organization: organizationSchema,
+  season: z.string().min(4).max(20),
+  version: z.number().int().min(1).default(1),
+  isActive: z.boolean().default(true),
+  eventName: z.string().min(2).max(160),
+  eventCode: z.string().min(1).max(20).optional(),
+  division: z.string().min(2).max(80).optional(),
+  roundStructure: z.unknown(),
+  prepTime: z.unknown().optional(),
+  rubric: z.unknown(),
+  penalties: z.unknown().optional(),
+  requiredUploads: z.unknown().optional(),
+  aiAssistanceRestrictions: z.unknown().optional(),
+  stateVariations: z.unknown().optional(),
+  officialReferences: z.array(specReferenceSchema).min(1),
+  fieldNotes: z.unknown().optional(),
+  verificationStatus: z.enum(["VERIFIED", "PARTIALLY_VERIFIED", "PLACEHOLDER"]).default("PLACEHOLDER"),
+  lastVerifiedAt: z.coerce.date().optional()
+});
+
+export const competitionSpecUpdateSchema = competitionSpecCreateSchema.partial();

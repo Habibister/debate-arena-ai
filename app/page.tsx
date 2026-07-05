@@ -74,14 +74,26 @@ export default function HomePage() {
               Train students for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking with AI opponents,
               AI judging, adaptive lessons, practice tests, mastery tracking, and coach visibility.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard" className={buttonVariants({ size: "lg" })}>
-                <Sparkles className="h-5 w-5" aria-hidden />
-                Open dashboard
-              </Link>
-              <Link href="/debate" className={buttonVariants({ variant: "outline", size: "lg" })}>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/debate" className={buttonVariants({ size: "lg" })}>
                 <Bot className="h-5 w-5" aria-hidden />
-                Start AI debate
+                Practice Now
+              </Link>
+              <Link href="/training" className={buttonVariants({ variant: "outline", size: "lg" })}>
+                <Target className="h-5 w-5" aria-hidden />
+                Choose Your Competition
+              </Link>
+              <Link href="/dashboard" className={buttonVariants({ variant: "outline", size: "lg" })}>
+                <GraduationCap className="h-5 w-5" aria-hidden />
+                Continue Training
+              </Link>
+              <Link href="/study-arcade" className={buttonVariants({ variant: "outline", size: "lg" })}>
+                <ClipboardList className="h-5 w-5" aria-hidden />
+                Review Due
+              </Link>
+              <Link href="/teams" className={buttonVariants({ variant: "outline", size: "lg" })}>
+                <Users className="h-5 w-5" aria-hidden />
+                Join a Team
               </Link>
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">

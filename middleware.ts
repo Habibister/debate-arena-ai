@@ -1,7 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const protectedPrefixes = ["/dashboard", "/assignments", "/debate", "/skills", "/tests", "/study", "/coach", "/admin", "/profile"];
+const protectedPrefixes = [
+  "/dashboard",
+  "/assignments",
+  "/debate",
+  "/skills",
+  "/tests",
+  "/study",
+  "/study-arcade",
+  "/resources",
+  "/teams",
+  "/coach",
+  "/admin",
+  "/profile"
+];
 
 function isProtectedPath(pathname: string) {
   return protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -32,6 +45,9 @@ export const config = {
     "/skills/:path*",
     "/tests/:path*",
     "/study/:path*",
+    "/study-arcade/:path*",
+    "/resources/:path*",
+    "/teams/:path*",
     "/coach/:path*",
     "/admin/:path*",
     "/profile/:path*",

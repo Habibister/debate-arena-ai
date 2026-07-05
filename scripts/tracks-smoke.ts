@@ -89,8 +89,10 @@ function main() {
   }
 
   // Content filtering outside the hub: study page filters by ?track.
-  const study = readFileSync("app/(app)/study/page.tsx", "utf8");
-  assert.ok(study.includes("activeTrack") && study.includes("getActiveTrack"), "study page filters decks by the selected track (cookie-aware resolver)");
+  const study = readFileSync("app/(app)/study-arcade/page.tsx", "utf8");
+  assert.ok(study.includes("activeTrack") && study.includes("getActiveTrack"), "study arcade page filters decks by the selected track (cookie-aware resolver)");
+  const studyRedirect = readFileSync("app/(app)/study/page.tsx", "utf8");
+  assert.ok(studyRedirect.includes("redirect") && studyRedirect.includes("/study-arcade"), "old /study route redirects to /study-arcade (nothing breaks)");
 
   // Dashboard uses the selected track; assignment form shows the track (from the team org, no schema).
   const dash = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
@@ -152,7 +154,7 @@ function main() {
   assert.ok(readFileSync("app/(app)/tests/page.tsx", "utf8").includes('activeTrack.id === "DECA"'), "tests page filters by track");
   assert.ok(!existsSync("app/(app)/lessons/page.tsx"), "no separate /lessons page (lessons filtered via skills)");
   // Game entry points are per-deck, and deck listings are already track-filtered (study), so no leakage.
-  assert.ok(readFileSync("app/(app)/study/page.tsx", "utf8").includes("activeTrack"), "study/deck (game entry) is track-filtered");
+  assert.ok(readFileSync("app/(app)/study-arcade/page.tsx", "utf8").includes("activeTrack"), "study arcade (game entry) is track-filtered");
 
   // ----------------------------------------------------------------------------------------------
   // Phase-1 repair coverage: global track mode, Model UN practice, dashboard filtering, focus mode,
@@ -171,9 +173,9 @@ function main() {
   assert.ok(ctx.includes("TRACK_COOKIE") && ctx.includes("document.cookie"), "track context mirrors the selection into the server-readable cookie");
 
   // 2 + 3. HOSA content isolation on the consuming pages (server components read the resolver).
-  const studyPage = readFileSync("app/(app)/study/page.tsx", "utf8");
-  assert.ok(studyPage.includes("getActiveTrack"), "study page resolves the active track (cookie fallback)");
-  assert.ok(studyPage.includes("organization={activeTrack?.organization}"), "study resource shelf is scoped to the track");
+  const studyPage = readFileSync("app/(app)/study-arcade/page.tsx", "utf8");
+  assert.ok(studyPage.includes("getActiveTrack"), "study arcade resolves the active track (cookie fallback)");
+  assert.ok(studyPage.includes("organization={activeTrack?.organization}"), "study arcade resource shelf is scoped to the track");
   const hosaResources = recommendedResources({ organization: "HOSA" });
   assert.ok(hosaResources.every((r) => r.organization !== "DECA"), "HOSA resources exclude DECA resources");
   const decaResources = recommendedResources({ organization: "DECA" });
@@ -312,9 +314,9 @@ function main() {
   // ==============================================================================================
 
   // C1. Study hero + totals are track-aware (computed from allowed content, no global "410+ cards").
-  const studySrc = readFileSync("app/(app)/study/page.tsx", "utf8");
-  assert.ok(studySrc.includes("cardCount") && studySrc.includes("heroDescription"), "study page computes track-aware totals + hero copy");
-  assert.ok(!studySrc.includes("FLASHCARDS.length") && !/\b410\b/.test(studySrc), "study page no longer advertises the global card total");
+  const studySrc = readFileSync("app/(app)/study-arcade/page.tsx", "utf8");
+  assert.ok(studySrc.includes("cardCount") && studySrc.includes("activeTrack.label"), "study arcade computes track-aware totals + hero copy");
+  assert.ok(!studySrc.includes("FLASHCARDS.length") && !/\b410\b/.test(studySrc), "study arcade never advertises the global card total");
   assert.ok(/does not use flashcard decks/.test(studySrc), "General Debate / Model UN get an honest empty-state study copy");
   // General Debate + Model UN genuinely have zero decks (so their computed totals are 0).
   const allStudyDecks = deckSummaries();

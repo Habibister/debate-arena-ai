@@ -10,8 +10,10 @@ import {
   ClipboardList,
   DoorOpen,
   FileCheck2,
+  Gamepad2,
   GraduationCap,
   History,
+  Library,
   LayoutDashboard,
   Layers3,
   LogOut,
@@ -29,19 +31,26 @@ import { cn } from "@/lib/utils";
 import { useTrainingTrack } from "@/components/training/training-track-context";
 import { trackById } from "@/lib/training-tracks";
 
+// Primary navigation per the master plan IA. Old routes stay functional and reachable via the
+// "More" group below (desktop) and in-page links — nothing is orphaned by the rename.
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/debate", label: "Practice", icon: MessageSquareText },
   { href: "/training", label: "Training", icon: GraduationCap },
+  { href: "/study-arcade", label: "Study Arcade", icon: Gamepad2 },
+  { href: "/resources", label: "Resources", icon: Library },
+  { href: "/teams", label: "Teams", icon: Users },
+  { href: "/dashboard", label: "Progress", icon: LayoutDashboard },
+  { href: "/coach", label: "Coach", icon: ShieldCheck, requiresRole: ["COACH", "ADMIN"] },
+  { href: "/admin", label: "Admin", icon: ShieldCheck, requiresRole: ["ADMIN"] }
+] as const;
+
+// Secondary destinations kept out of the primary rail but still one click away on desktop.
+const moreItems = [
   { href: "/assignments", label: "Assignments", icon: FileCheck2 },
-  { href: "/debate", label: "Debate", icon: MessageSquareText },
   { href: "/debates/history", label: "History", icon: History },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
   { href: "/tests", label: "Tests", icon: ClipboardList },
-  { href: "/study", label: "Study", icon: Layers3 },
-  { href: "/profile", label: "Profile", icon: UserRound },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/coach", label: "Coach", icon: Users, requiresRole: ["COACH", "ADMIN"] },
-  { href: "/admin", label: "Admin", icon: ShieldCheck, requiresRole: ["ADMIN"] }
+  { href: "/settings", label: "Settings", icon: Settings }
 ] as const;
 
 type ShellSession = {
@@ -102,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { track } = useTrainingTrack();
   const trackSlug = trackById(track).slug;
   // Preserve the selected track when navigating to track-filterable content routes.
-  const TRACK_AWARE = ["/study", "/tests", "/skills", "/debate"];
+  const TRACK_AWARE = ["/study-arcade", "/tests", "/skills", "/debate"];
   const withTrack = (href: string) => (TRACK_AWARE.includes(href) ? `${href}?track=${trackSlug}` : href);
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
@@ -173,6 +182,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        <div className="mt-6">
+          <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">More</p>
+          <nav className="mt-1 space-y-1">
+            {moreItems.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={withTrack(item.href) as Route}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
         <div className="mt-8 rounded-lg border bg-background p-4">
           <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 transition hover:bg-muted">

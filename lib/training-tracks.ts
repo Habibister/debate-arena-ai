@@ -52,6 +52,16 @@ export const TRACKS: TrackInfo[] = [
 
 export const DEFAULT_TRACK: TrainingTrack = "GENERAL_DEBATE";
 export const TRACK_STORAGE_KEY = "debatearena_training_track";
+// A non-auth preference cookie (slug value) written alongside localStorage so server components can
+// resolve the selected track when the `?track=` query param is absent. Never in the JWT/session.
+export const TRACK_COOKIE = "debatearena_track";
+
+// Resolve the active track for a page: an explicit `?track=` on a track-specific route wins (URL
+// override), otherwise fall back to the persisted selection (cookie). Returns undefined only when the
+// user truly has no selected track, which is the only case where "browse all" is allowed.
+export function resolveTrackFromSlugs(querySlug?: string | null, cookieSlug?: string | null): TrackInfo | undefined {
+  return trackBySlug(querySlug ?? undefined) ?? trackBySlug(cookieSlug ?? undefined);
+}
 
 export function trackById(id: TrainingTrack): TrackInfo {
   return TRACKS.find((t) => t.id === id) ?? TRACKS[0];
@@ -67,6 +77,13 @@ export function normalizeTrack(value: unknown): TrainingTrack {
 
 export function trackToOrganization(id: TrainingTrack): Organization {
   return trackById(id).organization;
+}
+
+// Direct-URL isolation: is `contentOrg` (a deck/resource organization) allowed for the active track?
+// With no selected track the user is browsing broadly, so everything is allowed; otherwise the
+// content must belong to the selected track's organization — knowing a URL never exposes another org.
+export function trackAllowsOrganization(track: TrackInfo | null | undefined, contentOrg: string): boolean {
+  return !track || track.organization === contentOrg;
 }
 
 // Reverse lookup so a team/assignment's existing Organization maps to a track label (no schema needed).

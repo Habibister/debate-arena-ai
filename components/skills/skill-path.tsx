@@ -125,7 +125,7 @@ export function SkillPath({ showSampleProgress = false, track }: { showSamplePro
                 </div>
                 {status === "locked" ? (
                   <div className="mt-4 rounded-md border bg-muted px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
-                    Unlock after rebuttal
+                    Complete the earlier lessons to unlock
                   </div>
                 ) : (
                   <Link href={actionHref(skillForAction)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>

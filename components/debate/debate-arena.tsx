@@ -38,12 +38,12 @@ import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
 import {
   countDebateSpeeches,
   getNextSpeech,
-  getSideLabel,
   parseFormatConfig,
   type DebateFormatConfig,
   type DebateSpeech
 } from "@/lib/debate-formats";
 import { cn, titleCase } from "@/lib/utils";
+import { trackByOrganization } from "@/lib/training-tracks";
 import { calculateDebateRating } from "@/lib/xp";
 import { assessStudentSpeech, SUBMIT_HELPER_TEXT } from "@/lib/speech-quality";
 
@@ -405,7 +405,17 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const currentSpeech = getNextSpeech(config, completedSpeechCount);
   const isStudentTurn = Boolean(currentSpeech && currentSpeech.side === debate.studentSide);
   const isOpponentTurn = Boolean(currentSpeech && currentSpeech.side === debate.opponentSide);
-  const canJudge = Boolean(!judgeReport && completedSpeechCount >= config.speeches.length && debate.status !== "JUDGED");
+  // Organization-based tracks (DECA role play, HOSA event practice, Model UN committee) are practice
+  // experiences, not parliamentary debate: their side labels come from the track config, and the
+  // parliamentary Government/Opposition ballot is intentionally not shown for them.
+  const isTrackPractice = debate.organization !== "DEBATE";
+  const practiceTrack = isTrackPractice ? trackByOrganization(debate.organization) : undefined;
+  // Input guidance is activity-specific for non-debate practice (no claim/rebuttal framing, no opponent).
+  const submitHelper = isTrackPractice ? "Write a few clear, complete sentences for this stage." : SUBMIT_HELPER_TEXT;
+  const sideLabelFor = (side: typeof config.sides.affirmative) =>
+    side === config.sides.affirmative ? config.sides.affirmativeLabel : config.sides.negativeLabel;
+  const sessionComplete = completedSpeechCount >= config.speeches.length;
+  const canJudge = Boolean(!judgeReport && sessionComplete && debate.status !== "JUDGED" && !isTrackPractice);
   const prepActive = prepRemaining > 0 && completedSpeechCount === 0 && config.prepTimeSeconds > 0 && !judgeReport;
   const turnActive = Boolean(currentSpeech && !prepActive && !judgeReport);
   // Signal for the voice input: only timed student turns "expire". Untimed/disabled turns (<=0s) and
@@ -465,7 +475,8 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
     const assessment = assessStudentSpeech(studentInput, debate.level);
     if (!assessment.ok) {
-      setError(assessment.reason ?? "Write at least 2–3 sentences so the opponent has something real to answer.");
+      // Non-debate practice has no opponent, so avoid opponent-framed guidance.
+      setError(isTrackPractice ? submitHelper : (assessment.reason ?? "Write at least 2–3 sentences so the opponent has something real to answer."));
       return;
     }
 
@@ -605,7 +616,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
               <Swords className="h-5 w-5" aria-hidden />
             </span>
             <div>
-              <p className="text-sm font-semibold text-blue-200">DebateArena AI</p>
+              <p className="text-sm font-semibold text-blue-200">CompeteReady</p>
               <p className="text-xs text-neutral-400">Arena room {debate.id.slice(-6).toUpperCase()}</p>
             </div>
           </div>
@@ -620,32 +631,50 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
       <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[320px_1fr_340px]">
         <aside className="space-y-4">
-          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Matchup</p>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div className="min-w-0 text-center">
-                <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="lg" className="mx-auto border-white/20" />
-                <p className="mt-2 truncate text-sm font-bold">{studentName}</p>
-                <p className="truncate text-xs text-neutral-400">@{studentHandle}</p>
-                <p className="mt-1 text-xs font-semibold text-emerald-200">{studentRating} · {ratingLabel(studentRating)}</p>
+          {isTrackPractice ? (
+            // Solo track practice has no AI opponent — show the practice context, not a VS/matchup card.
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Practice context</p>
+              <div className="mt-3 flex items-center gap-3">
+                <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="lg" className="border-white/20" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold">{studentName}</p>
+                  <p className="truncate text-xs font-semibold text-emerald-200">{config.sides.affirmativeLabel}</p>
+                </div>
               </div>
-              <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-bold text-neutral-300">VS</span>
-              <div className="min-w-0 text-center">
-                <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="lg" className="mx-auto border-white/20" />
-                <p className="mt-2 truncate text-sm font-bold">{aiName}</p>
-                <p className="truncate text-xs text-neutral-400">@{aiHandle}</p>
-                <p className="mt-1 text-xs font-semibold text-rose-200">{aiRating} · {ratingLabel(aiRating)}</p>
+              <div className="mt-4 grid gap-2 text-xs font-semibold sm:grid-cols-2">
+                <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">{practiceTrack?.label ?? config.label}</span>
+                <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">Solo practice · {config.speeches.length} stages</span>
               </div>
             </div>
-            <div className="mt-4 grid gap-2 text-xs font-semibold sm:grid-cols-2">
-              <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
-                {aiNotice && /fallback/i.test(aiNotice) ? "Local AI opponent" : "AI opponent ready"}
-              </span>
-              <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
-                Strength: {opponentProfile ? "student" : persona.difficulty}
-              </span>
+          ) : (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Matchup</p>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <div className="min-w-0 text-center">
+                  <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="lg" className="mx-auto border-white/20" />
+                  <p className="mt-2 truncate text-sm font-bold">{studentName}</p>
+                  <p className="truncate text-xs text-neutral-400">@{studentHandle}</p>
+                  <p className="mt-1 text-xs font-semibold text-emerald-200">{studentRating} · {ratingLabel(studentRating)}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-bold text-neutral-300">VS</span>
+                <div className="min-w-0 text-center">
+                  <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="lg" className="mx-auto border-white/20" />
+                  <p className="mt-2 truncate text-sm font-bold">{aiName}</p>
+                  <p className="truncate text-xs text-neutral-400">@{aiHandle}</p>
+                  <p className="mt-1 text-xs font-semibold text-rose-200">{aiRating} · {ratingLabel(aiRating)}</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2 text-xs font-semibold sm:grid-cols-2">
+                <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
+                  {aiNotice && /fallback/i.test(aiNotice) ? "Local AI opponent" : "AI opponent ready"}
+                </span>
+                <span className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-neutral-300">
+                  Strength: {opponentProfile ? "student" : persona.difficulty}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <div className="flex flex-wrap gap-2">
@@ -662,15 +691,18 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                 <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="sm" />
                 <p className="text-xs font-semibold uppercase opacity-75">{studentName}</p>
               </div>
-              <p className="mt-2 font-semibold">{getSideLabel(debate.studentSide)}</p>
+              <p className="mt-2 font-semibold">{sideLabelFor(debate.studentSide)}</p>
             </div>
-            <div className={cn("rounded-lg border p-4", sideTone(debate.opponentSide))}>
-              <div className="flex items-center gap-3">
-                <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="sm" />
-                <p className="text-xs font-semibold uppercase opacity-75">{opponentProfile ? aiName : "AI opponent"}</p>
+            {/* No AI opponent in solo track practice — only real debates show the opponent side card. */}
+            {!isTrackPractice ? (
+              <div className={cn("rounded-lg border p-4", sideTone(debate.opponentSide))}>
+                <div className="flex items-center gap-3">
+                  <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="sm" />
+                  <p className="text-xs font-semibold uppercase opacity-75">{opponentProfile ? aiName : "AI opponent"}</p>
+                </div>
+                <p className="mt-2 font-semibold">{sideLabelFor(debate.opponentSide)}</p>
               </div>
-              <p className="mt-2 font-semibold">{getSideLabel(debate.opponentSide)}</p>
-            </div>
+            ) : null}
           </div>
 
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
@@ -701,16 +733,20 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-neutral-500">Current speaker</p>
-                <h2 className="mt-1 text-2xl font-bold">{currentSpeech ? currentSpeech.label : "Ready for judge"}</h2>
+                <p className="text-xs font-semibold uppercase text-neutral-500">{isTrackPractice ? "Current stage" : "Current speaker"}</p>
+                <h2 className="mt-1 text-2xl font-bold">
+                  {currentSpeech ? currentSpeech.label : isTrackPractice ? "Practice session complete" : "Ready for judge"}
+                </h2>
                 {currentSpeech ? <p className="mt-1 text-sm text-neutral-400">{currentSpeech.guidance}</p> : null}
               </div>
               {currentSpeech ? (
                 <Badge className={cn("border", sideTone(currentSpeech.side))}>
-                  {getSideLabel(currentSpeech.side)} · {formatDuration(currentSpeech.timeSeconds, currentSpeech.graceSeconds)}
+                  {sideLabelFor(currentSpeech.side)} · {formatDuration(currentSpeech.timeSeconds, currentSpeech.graceSeconds)}
                 </Badge>
               ) : (
-                <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-100">Judge ready</Badge>
+                <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-100">
+                  {isTrackPractice ? "Session complete" : "Judge ready"}
+                </Badge>
               )}
             </div>
             {currentSpeech?.isRebuttal ? (
@@ -811,7 +847,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                   <Textarea
                     value={studentInput}
                     onChange={(event) => setStudentInput(event.target.value)}
-                    placeholder={`Write or speak your ${currentSpeech.shortLabel} speech...`}
+                    placeholder={`Write or speak your ${currentSpeech.shortLabel} ${isTrackPractice ? "response" : "speech"}...`}
                     className="min-h-32 border-white/15 bg-neutral-900 text-white placeholder:text-neutral-500 focus-visible:ring-emerald-400"
                     disabled={isSubmitting || prepActive}
                   />
@@ -821,9 +857,9 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                     </p>
                   ) : null}
                   {studentInput.trim().length > 0 && !speechAssessment.ok ? (
-                    <p className="mt-2 text-sm font-medium text-amber-300">{speechAssessment.reason ?? SUBMIT_HELPER_TEXT}</p>
+                    <p className="mt-2 text-sm font-medium text-amber-300">{isTrackPractice ? submitHelper : (speechAssessment.reason ?? SUBMIT_HELPER_TEXT)}</p>
                   ) : (
-                    <p className="mt-2 text-sm text-neutral-500">{SUBMIT_HELPER_TEXT}</p>
+                    <p className="mt-2 text-sm text-neutral-500">{submitHelper}</p>
                   )}
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <Button type="button" onClick={submitStudentSpeech} disabled={isSubmitting || !canSubmitSpeech || prepActive} className="bg-emerald-500 text-white hover:bg-emerald-500/90">
@@ -857,6 +893,26 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
               Judge debate
             </Button>
           ) : null}
+
+          {isTrackPractice && sessionComplete && !currentSpeech ? (
+            <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-50">
+              <p className="font-semibold text-white">{practiceTrack?.label ?? "Practice"} session complete</p>
+              <p className="mt-1 leading-6">
+                You worked through every stage of this {practiceTrack?.label ?? "practice"} session. Review your transcript above,
+                then return to your history or run it again from the {practiceTrack?.label ?? "track"} hub.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href="/debates/history" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
+                  Practice history
+                </Link>
+                {practiceTrack ? (
+                  <Link href={`/training/${practiceTrack.slug}/practice` as Route} className={cn(buttonVariants({ variant: "outline" }), "border-white/20 bg-white/[0.03] text-neutral-100 hover:bg-white/10")}>
+                    New {practiceTrack.short} session
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </main>
 
         <aside className="space-y-3">
@@ -882,7 +938,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                       <span className="font-semibold">{speech.shortLabel}</span>
                       <span>{complete ? "Done" : active ? "Now" : formatDuration(speech.timeSeconds)}</span>
                     </div>
-                    <p className="mt-1 text-xs opacity-80">{getSideLabel(speech.side)}</p>
+                    <p className="mt-1 text-xs opacity-80">{sideLabelFor(speech.side)}</p>
                   </div>
                 );
               })}
@@ -890,15 +946,14 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
           </div>
 
           <div className="grid gap-2">
-            <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.03] p-4 text-sm text-neutral-300">
-              <p className="font-semibold text-white">Live students coming soon</p>
-              <p className="mt-1 leading-6">Future rooms will show opponent username, avatar, level, organization, online status, and invite links.</p>
-            </div>
-            <Link href="/debate" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
-              New debate
+            <Link
+              href={(practiceTrack ? `/training/${practiceTrack.slug}/practice` : "/debate") as Route}
+              className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}
+            >
+              {practiceTrack ? `New ${practiceTrack.short} session` : "New debate"}
             </Link>
-            <Link href="/dashboard" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
-              End debate
+            <Link href="/debates/history" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
+              {isTrackPractice ? "End practice" : "End debate"}
             </Link>
           </div>
         </aside>

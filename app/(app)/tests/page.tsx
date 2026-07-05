@@ -5,7 +5,7 @@ import { PracticeTestGenerator } from "@/components/tests/practice-test-generato
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
-import { trackBySlug } from "@/lib/training-tracks";
+import { getActiveTrack } from "@/lib/track-server";
 
 const testSteps = [
   { title: "Generate", detail: "Choose 10, 25, 50, or a 100-question mixed exam.", icon: Sparkles },
@@ -13,8 +13,15 @@ const testSteps = [
   { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
 ];
 
-export default function TestsPage({ searchParams }: { searchParams: { track?: string } }) {
-  const activeTrack = trackBySlug(searchParams.track);
+export default function TestsPage({ searchParams }: { searchParams: { track?: string; assignmentId?: string } }) {
+  // `?track=` wins; otherwise fall back to the selected track (cookie).
+  const activeTrack = getActiveTrack(searchParams.track);
+  // The DECA/HOSA test generator is only shown when it is actually relevant. Model UN and General
+  // Debate get an honest empty state instead of another organization's generator. An assigned test
+  // (?assignmentId=) always shows the generator so a valid assignment never lands on an empty page.
+  const isAssignment = Boolean(searchParams.assignmentId);
+  const lockedOrganization = activeTrack?.id === "DECA" ? "DECA" : activeTrack?.id === "HOSA" ? "HOSA" : undefined;
+  const showGenerator = isAssignment || !activeTrack || activeTrack.id === "DECA" || activeTrack.id === "HOSA";
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
@@ -42,9 +49,25 @@ export default function TestsPage({ searchParams }: { searchParams: { track?: st
         </div>
       </div>
 
-      <PracticeTestGenerator />
-
-      <TestBuilderPreview />
+      {showGenerator ? (
+        <>
+          <PracticeTestGenerator lockedOrganization={lockedOrganization} />
+          <TestBuilderPreview />
+        </>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>No practice tests for {activeTrack?.label}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p className="font-semibold text-foreground">Practice tests are available for DECA and HOSA only.</p>
+            <p>
+              Your {activeTrack?.label} track uses debate/practice and skill lessons instead of an exam generator. Switch to
+              DECA or HOSA from the Training page to generate practice tests.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

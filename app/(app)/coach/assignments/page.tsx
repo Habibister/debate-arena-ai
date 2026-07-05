@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { assignmentTypeLabel, completionStats } from "@/lib/assignment-types";
 import { getAssignedStudentIds, getCoachAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { canAccessCoachTools } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function CoachAssignmentsPage() {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
 
-  if (!session?.user?.id || (role !== "COACH" && role !== "ADMIN")) {
+  if (!session?.user?.id || !canAccessCoachTools(role)) {
     return (
       <div className="space-y-6">
         <Badge variant="secondary">Coach Assignments</Badge>

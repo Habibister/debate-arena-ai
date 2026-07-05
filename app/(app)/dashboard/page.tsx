@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Route } from "next";
 import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { StatCard } from "@/components/app/stat-card";
@@ -20,13 +22,29 @@ import type { MasteryPoint } from "@/types/domain";
 import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
-import { getStudentDebates, isUnfinished, sideLabel } from "@/lib/debate-history";
-import { trackByOrganization } from "@/lib/training-tracks";
+import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
+import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
+import { getActiveTrack } from "@/lib/track-server";
+import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
 import { getStudentTeams } from "@/lib/teams";
 import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
+
+// Icon/tone per track-aware dashboard action (data comes from nextStepsForTrack).
+const ACTION_ICON: Record<DashboardAction["key"], LucideIcon> = {
+  practice: MessageSquareText,
+  tests: ClipboardList,
+  skills: BookOpenCheck,
+  study: Layers3
+};
+const ACTION_TONE: Record<DashboardAction["key"], "primary" | "secondary" | "accent"> = {
+  practice: "primary",
+  tests: "secondary",
+  skills: "accent",
+  study: "secondary"
+};
 
 // Sample rows shown ONLY for demo accounts. Real users see their real data (zero until they train).
 const demoSampleLessons = [
@@ -59,6 +77,11 @@ function latestWeakAreas(tests: Array<{ weakAreas: string[] }>) {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
+  // The main dashboard is the student experience. A COACH gets the intentional Coach dashboard instead
+  // of a page labeled "Student dashboard". ADMIN behavior is intentionally unchanged.
+  if (session?.user?.role === "COACH") {
+    redirect("/coach");
+  }
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -98,26 +121,42 @@ export default async function DashboardPage() {
   const debateProgress = debateRatingProgress(debateRating);
   const recommendedBot = nearestAiPersona(debateRating);
 
+  // Track-aware quick actions + resources: honor the selected track (preference cookie) so Model UN /
+  // General Debate never see DECA/HOSA exam actions or another org's resource shelf.
+  const activeTrack = getActiveTrack();
+  const nextSteps = nextStepsForTrack(activeTrack);
+
   // Students join/leave coach teams from the dashboard. Coaches/admins manage teams on /coach.
   const role = session?.user?.role;
   const studentTeamRows = role === "STUDENT" && session?.user?.id ? await getStudentTeams(session.user.id) : [];
   const assignments = role === "STUDENT" && session?.user?.id ? await getStudentAssignments(session.user.id) : [];
   // Recovery: debates the student left mid-session (never submitted or scored).
+  // Only surface unfinished sessions that match the selected track — never invite the user to resume
+  // an unrelated track's session. Legacy/inconsistent records (a track org carrying a parliamentary
+  // config) are NOT recommended as valid continuations; they remain visible under /debates/history.
+  // All sessions stay intact in history. Card metadata is user-facing (org + eventType), never the
+  // carrier DebateFormat enum or an opponent persona for solo practice.
   const unfinishedDebates: ResumeDebate[] =
     role === "STUDENT" && session?.user?.id
       ? (await getStudentDebates(session.user.id))
           .filter((debate) => isUnfinished(debate.status))
+          .filter((debate) => trackAllowsOrganization(activeTrack, debate.organization))
+          .filter((debate) => !isLegacyPracticeRecord(debate))
           .slice(0, 4)
-          .map((debate) => ({
-            id: debate.id,
-            topic: debate.topic,
-            trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
-            formatLabel: `${debate.eventType} · ${debate.format}`,
-            sideLabel: sideLabel(debate.studentSide),
-            opponentLabel: debate.aiPersona ?? "AI opponent",
-            statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
-            updatedLabel: debate.updatedAt.toLocaleDateString()
-          }))
+          .map((debate) => {
+            const showOpponent = showsOpponentMeta(debate);
+            return {
+              id: debate.id,
+              topic: debate.topic,
+              trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
+              typeLabel: practiceTypeLabel(debate),
+              showOpponent,
+              sideLabel: showOpponent ? sideLabel(debate.studentSide) : "",
+              opponentLabel: showOpponent ? debate.aiPersona ?? "AI opponent" : "",
+              statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
+              updatedLabel: debate.updatedAt.toLocaleDateString()
+            };
+          })
       : [];
   // Real signals for the learning path (no fabricated progress).
   const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0;
@@ -133,7 +172,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {unfinishedDebates.length > 0 ? <ResumeDebatesCard debates={unfinishedDebates} /> : null}
+      {unfinishedDebates.length > 0 ? (
+        <ResumeDebatesCard debates={unfinishedDebates} isPractice={Boolean(activeTrack && activeTrack.id !== "GENERAL_DEBATE")} />
+      ) : null}
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="rounded-lg border bg-card p-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -233,7 +274,7 @@ export default async function DashboardPage() {
               <Badge variant="outline">Competitive ladder</Badge>
               <h2 className="mt-3 text-xl font-bold">{ratingLabel(debateRating)}</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                DebateArena rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
+                CompeteReady rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
               </p>
             </div>
             <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">
@@ -252,34 +293,17 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <NextStepCard
-          title="Start an AI round"
-          description="Get a topic, speak through three turns, and receive judge feedback."
-          href="/debate"
-          icon={MessageSquareText}
-        />
-        <NextStepCard
-          title="Generate a practice test"
-          description="Train DECA or HOSA with original questions and explanations."
-          href="/tests"
-          icon={ClipboardList}
-          tone="secondary"
-        />
-        <NextStepCard
-          title="Open mastery lessons"
-          description="Work through examples, guided practice, and a mastery check."
-          href="/skills"
-          icon={BookOpenCheck}
-          tone="accent"
-        />
-        <NextStepCard
-          title="Study weak terms"
-          description="Use flashcards and video resources before your next test."
-          href="/study"
-          icon={Layers3}
-          tone="secondary"
-        />
+      <div className={`grid gap-4 ${nextSteps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+        {nextSteps.map((action) => (
+          <NextStepCard
+            key={action.key}
+            title={action.title}
+            description={action.description}
+            href={action.href as Route}
+            icon={ACTION_ICON[action.key]}
+            tone={ACTION_TONE[action.key]}
+          />
+        ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -309,9 +333,13 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <RecommendedVideos skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]} title="Recommended video resources" />
+      <RecommendedVideos
+        organization={resourceOrgForTrack(activeTrack)}
+        skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]}
+        title="Recommended video resources"
+      />
 
-      {recentTests.length === 0 ? (
+      {recentTests.length === 0 && (!activeTrack || activeTrack.id === "DECA" || activeTrack.id === "HOSA") ? (
         <EmptyState
           icon={ClipboardList}
           title="No completed practice tests yet"

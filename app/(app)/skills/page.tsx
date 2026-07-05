@@ -4,14 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
-import { trackBySlug } from "@/lib/training-tracks";
+import { getActiveTrack } from "@/lib/track-server";
 
 const lessonStructure = ["Lesson", "Examples", "Guided practice", "Independent practice", "Mastery quiz"];
 
 export default async function SkillsPage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
   const showSampleProgress = isDemoUser(session?.user?.email);
-  const activeTrack = trackBySlug(searchParams.track);
+  // `?track=` wins; otherwise fall back to the selected track (cookie) so skills stay track-scoped.
+  const activeTrack = getActiveTrack(searchParams.track);
 
   return (
     <div className="space-y-6">

@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { listAssignmentContentOptions } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { canAccessCoachTools } from "@/lib/roles";
 import { getTeamsForCoach } from "@/lib/teams";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function NewAssignmentPage() {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
 
-  if (!session?.user?.id || (role !== "COACH" && role !== "ADMIN")) {
+  if (!session?.user?.id || !canAccessCoachTools(role)) {
     return (
       <div className="space-y-6">
         <Badge variant="secondary">Coach Assignments</Badge>
@@ -46,7 +47,7 @@ export default async function NewAssignmentPage() {
           </Badge>
           <h1 className="mt-3 text-3xl font-bold">Create assignment</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
-            Assign an existing DebateArena activity to a whole team or selected students. Students must submit real completion evidence.
+            Assign an existing CompeteReady activity to a whole team or selected students. Students must submit real completion evidence.
           </p>
         </div>
       </div>

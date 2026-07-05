@@ -46,11 +46,15 @@ async function createPracticeTest(input: {
   return payload.test;
 }
 
-export function PracticeTestGenerator() {
+// `lockedOrganization` pins the generator to the selected track's organization (DECA or HOSA) so a
+// HOSA user can never switch to DECA content, and vice versa. Omitted → the user may choose (used only
+// on the no-track browse-all tests page).
+export function PracticeTestGenerator({ lockedOrganization }: { lockedOrganization?: TestingOrganization }) {
   const router = useRouter();
-  const [organization, setOrganization] = useState<TestingOrganization>("DECA");
-  const [eventType, setEventType] = useState(EVENT_OPTIONS.DECA[0].value);
-  const [eventCluster, setEventCluster] = useState(testingClustersForOrganization("DECA")[0]);
+  const initialOrg: TestingOrganization = lockedOrganization ?? "DECA";
+  const [organization, setOrganization] = useState<TestingOrganization>(initialOrg);
+  const [eventType, setEventType] = useState(EVENT_OPTIONS[initialOrg][0].value);
+  const [eventCluster, setEventCluster] = useState(testingClustersForOrganization(initialOrg)[0]);
   const [difficulty, setDifficulty] = useState<Level>("BEGINNER");
   const [questionCount, setQuestionCount] = useState<QuestionCount>(10);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,6 +65,9 @@ export function PracticeTestGenerator() {
   const generationProgress = isLoading ? 66 : 0;
 
   function updateOrganization(nextOrganization: TestingOrganization) {
+    if (lockedOrganization) {
+      return; // organization is pinned to the selected track
+    }
     setOrganization(nextOrganization);
     setEventType(EVENT_OPTIONS[nextOrganization][0].value);
     setEventCluster(testingClustersForOrganization(nextOrganization)[0]);
@@ -104,6 +111,12 @@ export function PracticeTestGenerator() {
           <LoadingState title="Generating your practice set" description="Creating original questions, answer choices, explanations, and skill tags." />
         ) : null}
 
+        {lockedOrganization ? (
+          <div className="rounded-md border bg-background p-3 text-sm">
+            <span className="font-semibold">Organization</span>
+            <span className="ml-2 text-muted-foreground">{lockedOrganization} · matched to your selected track</span>
+          </div>
+        ) : (
         <div>
           <p className="mb-3 text-sm font-semibold">Organization</p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -126,6 +139,7 @@ export function PracticeTestGenerator() {
             ))}
           </div>
         </div>
+        )}
 
         <div>
           <p className="mb-3 text-sm font-semibold">Event type</p>

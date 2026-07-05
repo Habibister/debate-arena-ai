@@ -19,9 +19,9 @@ export async function sendPasswordResetEmail({ to, resetUrl }: { to: string; res
       await resend.emails.send({
         from,
         to,
-        subject: "Reset your DebateArena AI password",
-        text: `We received a request to reset your DebateArena AI password.\n\nReset it here (link expires in 45 minutes):\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
-        html: `<p>We received a request to reset your DebateArena AI password.</p>
+        subject: "Reset your CompeteReady password",
+        text: `We received a request to reset your CompeteReady password.\n\nReset it here (link expires in 45 minutes):\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
+        html: `<p>We received a request to reset your CompeteReady password.</p>
 <p><a href="${resetUrl}">Reset your password</a> (link expires in 45 minutes).</p>
 <p>If you did not request this, you can safely ignore this email.</p>`
       });

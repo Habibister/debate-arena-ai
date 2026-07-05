@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { assignmentStatusLabel, assignmentTypeLabel, completionStats } from "@/lib/assignment-types";
 import { getAssignedStudentIds, getCoachAssignmentDetail } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { canAccessCoachTools } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function CoachAssignmentDetailPage({ params }: { params: { 
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
 
-  if (!session?.user?.id || (role !== "COACH" && role !== "ADMIN")) {
+  if (!session?.user?.id || !canAccessCoachTools(role)) {
     return (
       <div className="space-y-6">
         <Badge variant="secondary">Coach Assignments</Badge>

@@ -1,4 +1,4 @@
-import type { DebateFormat, DebateSide, MessageRole } from "@prisma/client";
+import type { DebateFormat, DebateSide, MessageRole, Organization } from "@prisma/client";
 import { DEBATE_CATEGORY_OPTIONS } from "@/lib/debate-topics";
 
 export type DebateSideChoice = DebateSide | "RANDOM";
@@ -71,13 +71,6 @@ export const FORMAT_CARDS: Array<{
     label: "Practice Rebuttal",
     summary: "Target one clash",
     detail: "A short drill built around answering an opponent's strongest point."
-  },
-  {
-    format: "CUSTOM",
-    label: "Custom format",
-    summary: "Coming soon",
-    detail: "Build your own speech order and timers.",
-    disabled: true
   }
 ];
 
@@ -204,6 +197,145 @@ export function buildDebateFormatConfig(format: DebateFormat, turnTimeSeconds = 
       speech("pm-rebuttal", "Prime Minister rebuttal", "PM Rebuttal", "GOVERNMENT", 6, 300, "No new arguments. Finalize the Government ballot story and weigh impacts.", true)
     ]
   };
+}
+
+// Stored event type for Model UN committee practice (drives the debate.eventType + rubric lookup).
+export const MODEL_UN_EVENT_TYPE = "MODEL_UN_COMMITTEE";
+
+// Model UN is a distinct experience, not parliamentary debate: a focused Student-Delegate speaking
+// practice through real committee stages. It reuses the shared arena (transcript, timers, audio,
+// autosave, accessibility) but never uses Government/Opposition, PM/LO/MG/MO, or "motion" language.
+// All stages belong to the Student Delegate, so the parliamentary AI opponent is never invoked; the
+// "AI Delegate / Chair" label presides but does not take debate turns. Uses PUBLIC_FORUM only as a
+// neutral carrier for the required DebateFormat enum column — the config below defines the real
+// experience and takes precedence via parseFormatConfig.
+export function buildModelUnFormatConfig(turnTimeSeconds?: number): DebateFormatConfig {
+  void turnTimeSeconds; // committee stages use their own fixed timings
+  return {
+    format: "PUBLIC_FORUM",
+    label: "Model UN Committee Session",
+    eventType: MODEL_UN_EVENT_TYPE,
+    description:
+      "A focused Model UN speaking practice: deliver your delegation's opening speech, moderated caucus response, negotiation, and resolution explanation as a Student Delegate.",
+    prepTimeSeconds: 0,
+    turnTimeSeconds: 90,
+    graceTimeSeconds: GRACE_SECONDS,
+    sides: {
+      affirmative: "FOR",
+      negative: "AGAINST",
+      affirmativeLabel: "Student Delegate",
+      negativeLabel: "AI Delegate / Chair"
+    },
+    speeches: [
+      speech(
+        "mun-opening",
+        "Opening Speech",
+        "Opening",
+        "FOR",
+        1,
+        90,
+        "Deliver your delegation's opening position on the agenda: your country's stance, priorities, and a proposed direction for the committee."
+      ),
+      speech(
+        "mun-caucus",
+        "Moderated Caucus Response",
+        "Caucus",
+        "FOR",
+        2,
+        60,
+        "Respond in a moderated caucus: address the current sub-topic, react to other delegations' points, and advance your country's interests concisely."
+      ),
+      speech(
+        "mun-negotiation",
+        "Negotiation Response",
+        "Negotiation",
+        "FOR",
+        3,
+        60,
+        "Negotiate toward a bloc position: name common ground, offer a compromise, and state what your delegation needs in return."
+      ),
+      speech(
+        "mun-resolution",
+        "Resolution Explanation",
+        "Resolution",
+        "FOR",
+        4,
+        90,
+        "Introduce and explain a draft resolution clause or amendment: what it does, why it serves the committee, and how it addresses the agenda."
+      )
+    ]
+  };
+}
+
+// DECA is a role play (not parliamentary debate): review the scenario, deliver the role play against
+// the performance indicators, and give a recommendation. Uses PUBLIC_FORUM only as a neutral carrier
+// for the DebateFormat enum column; the stages/labels below are the real experience. eventType matches
+// the DECA "ROLEPLAY" rubric. All stages are the competitor's, so the parliamentary AI opponent is
+// never invoked and no Government/Opposition/PM/LO/MG/MO/motion language ever appears.
+export function buildDecaFormatConfig(turnTimeSeconds?: number): DebateFormatConfig {
+  void turnTimeSeconds;
+  return {
+    format: "PUBLIC_FORUM",
+    label: "DECA Role Play",
+    eventType: "ROLEPLAY",
+    description: "A focused DECA role play: review the scenario, deliver your role play against the performance indicators, and give a clear recommendation.",
+    prepTimeSeconds: 0,
+    turnTimeSeconds: 120,
+    graceTimeSeconds: GRACE_SECONDS,
+    sides: {
+      affirmative: "FOR",
+      negative: "AGAINST",
+      affirmativeLabel: "You (participant)",
+      negativeLabel: "AI Judge / Client"
+    },
+    speeches: [
+      speech("deca-scenario", "Scenario Review & Plan", "Scenario", "FOR", 1, 90, "Review the business scenario and identify the performance indicators. Plan how you'll greet the judge and structure your role play."),
+      speech("deca-presentation", "Role-Play Presentation", "Presentation", "FOR", 2, 150, "Deliver your role play: greet the judge/client, address the business situation, and apply each performance indicator with specifics."),
+      speech("deca-recommendation", "Recommendation & Close", "Recommendation", "FOR", 3, 90, "Give a clear recommendation with justification, then close professionally and invite questions.")
+    ]
+  };
+}
+
+// HOSA is a health-science event practice (not debate): review the prompt, deliver a prepared response
+// using correct terminology, and summarize the rationale. Same neutral-carrier approach as DECA.
+export function buildHosaFormatConfig(turnTimeSeconds?: number): DebateFormatConfig {
+  void turnTimeSeconds;
+  return {
+    format: "PUBLIC_FORUM",
+    label: "HOSA Event Practice",
+    eventType: "HEALTH_SCIENCE_EVENT",
+    description: "A focused HOSA event practice: review the prompt, deliver a prepared response using correct terminology, and summarize your rationale.",
+    prepTimeSeconds: 0,
+    turnTimeSeconds: 120,
+    graceTimeSeconds: GRACE_SECONDS,
+    sides: {
+      affirmative: "FOR",
+      negative: "AGAINST",
+      affirmativeLabel: "You (competitor)",
+      negativeLabel: "AI Evaluator"
+    },
+    speeches: [
+      speech("hosa-prompt", "Prompt Review", "Prompt", "FOR", 1, 90, "Review the scenario/prompt and identify the key health-science concepts and terminology it requires."),
+      speech("hosa-response", "Prepared Response", "Response", "FOR", 2, 150, "Work through the item using correct terminology and safe, role-appropriate reasoning."),
+      speech("hosa-summary", "Summary & Rationale", "Summary", "FOR", 3, 90, "Summarize your answer and explain the rationale, noting any safety or accuracy considerations.")
+    ]
+  };
+}
+
+// Single dispatcher: the correct non-parliamentary practice config for an organization-based track, or
+// null for General Debate (which uses the real debate formats). The debate API keys off this so DECA,
+// HOSA, and Model UN never fall through to the parliamentary format.
+export function trackPracticeConfigForOrganization(organization: Organization, turnTimeSeconds?: number): DebateFormatConfig | null {
+  if (organization === "MODEL_UN") {
+    return buildModelUnFormatConfig(turnTimeSeconds);
+  }
+  if (organization === "DECA") {
+    return buildDecaFormatConfig(turnTimeSeconds);
+  }
+  if (organization === "HOSA") {
+    return buildHosaFormatConfig(turnTimeSeconds);
+  }
+  return null;
 }
 
 export function parseFormatConfig(value: unknown, format: DebateFormat, turnTimeSeconds?: number): DebateFormatConfig {

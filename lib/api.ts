@@ -78,9 +78,14 @@ export function apiError(error: unknown) {
   }
 
   if (error instanceof ZodError) {
+    // Surface the first field-level problem (e.g. "dueDate: Enter a valid due date.") instead of a
+    // generic "Invalid request body", so the form can show the user what to fix.
+    const first = error.issues[0];
+    const field = first?.path.filter((segment) => typeof segment === "string").join(".");
+    const message = first ? (field ? `${field}: ${first.message}` : first.message) : "Invalid request body";
     return NextResponse.json(
       {
-        error: "Invalid request body",
+        error: message,
         issues: error.issues
       },
       { status: 400 }

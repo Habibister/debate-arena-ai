@@ -14,7 +14,7 @@ export default function SignInPage() {
       <div className="w-full max-w-md">
         <Link href="/" className="mb-6 flex items-center justify-center gap-2 font-bold">
           <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-          DebateArena AI
+          CompeteReady
         </Link>
         <Card>
           <CardHeader>
@@ -33,7 +33,7 @@ export default function SignInPage() {
               </Link>
             </p>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              New to DebateArena AI?{" "}
+              New to CompeteReady?{" "}
               <Link href="/signup" className="font-semibold text-primary hover:underline">
                 Create an account
               </Link>

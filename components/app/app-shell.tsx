@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   BookOpenCheck,
   ClipboardList,
+  DoorOpen,
   FileCheck2,
   GraduationCap,
   History,
@@ -64,7 +65,11 @@ function roleLabel(role?: string | null) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [session, setSession] = useState<ShellSession | null>(null);
+  // Full-screen practice: an active debate/track-practice room (/debate/<id>) takes over the whole
+  // viewport — no app sidebar, no dashboard nav — so the room is the only primary interface.
+  const focusMode = /^\/debate\/[^/]+$/.test(pathname);
 
   useEffect(() => {
     let active = true;
@@ -107,6 +112,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     (item) => !("requiresRole" in item) || (role ? (item.requiresRole as readonly string[]).includes(role) : false)
   );
 
+  function exitFocusMode() {
+    // Leaving an active room requires confirmation; end/return goes to practice history.
+    if (window.confirm("End this practice and leave the room? Your progress is saved to your history.")) {
+      router.push("/debates/history");
+    }
+  }
+
+  if (focusMode) {
+    return (
+      <div className="min-h-screen bg-background">
+        <button
+          type="button"
+          onClick={exitFocusMode}
+          className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-full border bg-card/95 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur hover:bg-muted"
+        >
+          <DoorOpen className="h-4 w-4" aria-hidden />
+          Exit practice
+        </button>
+        <main className="min-h-screen">{children}</main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r bg-card px-4 py-5 lg:block">
@@ -116,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
           <span>
             <span className="flex items-center gap-2 text-sm font-bold">
-              DebateArena AI
+              CompeteReady
               <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-semibold uppercase">
                 Beta
               </Badge>
@@ -184,7 +212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 font-bold">
               <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-              DebateArena AI
+              CompeteReady
             </Link>
             <Link href="/profile" className="flex items-center gap-2 rounded-md border bg-card px-2 py-1 text-sm font-semibold">
               <UserAvatar username={profileUsername} displayName={profileName} avatarUrl={profileAvatar} size="sm" />

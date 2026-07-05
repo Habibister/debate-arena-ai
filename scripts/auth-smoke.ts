@@ -14,6 +14,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { signupSchema } from "../lib/validators";
+import { canAccessCoachTools, isAdmin } from "../lib/roles";
 
 // Load DB env from .env files (without printing anything from them) so the roundtrip can connect.
 function loadEnv(file: string) {
@@ -130,7 +131,24 @@ async function offlineChecks() {
     else process.env.EMAIL_FROM = savedFrom;
   }
 
-  console.log("Part A (offline) passed: hashing, validation, normalization, 431 avatar guard, forgot-password link, email-config (prod not-configured + dev fallback).");
+
+  // 6. Coach access is server-authoritative and centralized. An actual COACH (and ADMIN) may reach
+  // coach tools; a STUDENT may not. No hardcoded coach email — the decision is role-only.
+  assert.equal(canAccessCoachTools("COACH"), true, "A COACH may access coach pages.");
+  assert.equal(canAccessCoachTools("ADMIN"), true, "An ADMIN may access coach pages (intentional).");
+  assert.equal(canAccessCoachTools("STUDENT"), false, "A STUDENT may NOT access coach pages.");
+  assert.equal(canAccessCoachTools(null), false, "A missing role may NOT access coach pages.");
+  assert.equal(canAccessCoachTools(undefined), false, "An undefined role may NOT access coach pages.");
+  assert.equal(isAdmin("ADMIN"), true, "ADMIN is admin.");
+  assert.equal(isAdmin("COACH"), false, "COACH is not admin (admin-only actions stay admin-only).");
+
+  // The coach page guard uses the shared helper (single source of truth), and the session role is
+  // resolved server-authoritatively (narrow role fetch) so a real coach is never denied by a stale JWT.
+  assert.ok(readFileSync("app/(app)/coach/page.tsx", "utf8").includes("canAccessCoachTools"), "coach page uses the shared coach-access guard.");
+  const authSource = readFileSync("lib/auth.ts", "utf8");
+  assert.ok(authSource.includes("authoritativeRole") && authSource.includes("select: { role: true"), "session role is refreshed server-authoritatively (resilient to profile-read failure).");
+
+  console.log("Part A (offline) passed: hashing, validation, normalization, 431 avatar guard, forgot-password link, email-config (prod not-configured + dev fallback), coach-access role gate, server-authoritative role.");
 }
 
 async function signupViaRoute(payload: Record<string, unknown>) {

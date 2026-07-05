@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
+import { canAccessCoachTools } from "@/lib/roles";
 import { getCoachStudentProgress } from "@/lib/coach-progress";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
   const role = session?.user?.role;
 
   // First gate: only coaches/admins reach this page at all.
-  if (!session?.user?.id || (role !== "COACH" && role !== "ADMIN")) {
+  if (!session?.user?.id || !canAccessCoachTools(role)) {
     return <PermissionDenied />;
   }
 

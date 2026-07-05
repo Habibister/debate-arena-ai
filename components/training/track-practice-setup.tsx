@@ -65,6 +65,10 @@ export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
     setIsStarting(true);
     setError(null);
     try {
+      // Every track handled here (DECA role play, HOSA event practice, Model UN committee) is an
+      // organization-based practice, NOT parliamentary debate. The server builds the correct config
+      // from the organization, so we send a neutral (non-parliamentary) carrier format and the
+      // participant side — never a parliamentary role.
       const createRes = await fetch("/api/debates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,12 +76,12 @@ export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
           organization: composed.organization,
           eventType: composed.eventType,
           practiceMode: composed.practiceMode,
-          format: "PARLIAMENTARY",
+          format: "PUBLIC_FORUM",
           category: track.short,
           level,
           topic: composed.topic,
           aiGeneratedTopic: true,
-          side: "GOVERNMENT",
+          side: "FOR",
           mode: "AI"
         })
       });

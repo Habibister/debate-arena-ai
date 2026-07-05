@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import type { Organization } from "@prisma/client";
 import { HttpError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import { canAccessCoachTools } from "@/lib/roles";
 
 // Unambiguous alphabet (no 0/O/1/I/L) so join codes are easy to read aloud and type.
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -53,7 +54,7 @@ async function generateUniqueJoinCode(organization?: string | null) {
 }
 
 function assertCoach(role?: string | null) {
-  if (role !== "COACH" && role !== "ADMIN") {
+  if (!canAccessCoachTools(role)) {
     throw new HttpError("You need a coach account to manage teams.", 403);
   }
 }

@@ -25,8 +25,8 @@ function getDevDemoStudent() {
     username: "demo_student",
     displayName: "Demo Student",
     avatarUrl: null,
-    bio: "Local demo competitor for testing DebateArena AI without a seeded database user.",
-    schoolOrClub: "DebateArena Demo Lab",
+    bio: "Local demo competitor for testing CompeteReady AI without a seeded database user.",
+    schoolOrClub: "CompeteReady Demo Lab",
     preferredOrganization: "DEBATE" as const,
     role: "STUDENT" as const,
     organization: "DEBATE" as const,
@@ -146,6 +146,13 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       let latestUser: ReturnType<typeof serializeUserProfile> | null = null;
+      // Role is authorization-critical, so it must be SERVER-AUTHORITATIVE and resilient. If the full
+      // profile read fails (e.g. Prisma schema/DB drift from a field added without `db push`), we do
+      // NOT fall back to the possibly-stale JWT role — a coach promoted after their token was issued
+      // would then be wrongly denied. Instead we re-fetch just role/organization with a narrow select
+      // that survives drift. Only if that also fails do we use the JWT claim as a last resort.
+      let authoritativeRole = token.role;
+      let authoritativeOrg = token.organization;
 
       if (token.id === "dev-demo-student") {
         latestUser = getDevDemoStudent();
@@ -157,14 +164,27 @@ export const authOptions: NextAuthOptions = {
 
           latestUser = dbUser ? serializeUserProfile(dbUser) : null;
         } catch (error) {
-          console.warn("[auth] Could not refresh session profile from database. Falling back to JWT values.", error);
+          console.warn("[auth] Could not refresh full session profile from database.", error);
+          try {
+            const roleRow = await prisma.user.findUnique({
+              where: { id: token.id },
+              select: { role: true, organization: true }
+            });
+            if (roleRow) {
+              authoritativeRole = roleRow.role;
+              authoritativeOrg = roleRow.organization;
+            }
+          } catch (roleError) {
+            console.warn("[auth] Could not refresh role from database. Falling back to JWT role.", roleError);
+          }
         }
       }
 
       if (session.user) {
         // The JWT only carries minimal identity (see jwt callback). When the
         // database profile is unavailable we fall back to those few claims and
-        // leave the richer fields null rather than bloating the cookie.
+        // leave the richer fields null rather than bloating the cookie. The role/organization use the
+        // server-authoritative values resolved above.
         const profile = latestUser ?? {
           id: token.id,
           name: token.name,
@@ -175,9 +195,9 @@ export const authOptions: NextAuthOptions = {
           avatarUrl: null,
           bio: null,
           schoolOrClub: null,
-          preferredOrganization: token.organization ?? null,
-          role: token.role,
-          organization: token.organization,
+          preferredOrganization: authoritativeOrg ?? null,
+          role: authoritativeRole,
+          organization: authoritativeOrg,
           level: undefined,
           rank: undefined,
           xp: undefined

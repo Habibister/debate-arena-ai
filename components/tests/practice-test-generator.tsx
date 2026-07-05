@@ -16,6 +16,14 @@ import { testingClustersForOrganization } from "@/lib/testing";
 import { cn } from "@/lib/utils";
 
 type TestingOrganization = "DECA" | "HOSA";
+
+export type OfficialTestFormatProps = {
+  questionCount: number;
+  minutes: number;
+  eventName: string;
+  season: string;
+  verificationStatus: string;
+};
 type QuestionCount = 10 | 25 | 50 | 100;
 
 type CreatedTestResponse = {
@@ -49,7 +57,7 @@ async function createPracticeTest(input: {
 // `lockedOrganization` pins the generator to the selected track's organization (DECA or HOSA) so a
 // HOSA user can never switch to DECA content, and vice versa. Omitted → the user may choose (used only
 // on the no-track browse-all tests page).
-export function PracticeTestGenerator({ lockedOrganization }: { lockedOrganization?: TestingOrganization }) {
+export function PracticeTestGenerator({ lockedOrganization , officialFormat }: { lockedOrganization?: TestingOrganization ; officialFormat?: OfficialTestFormatProps | null }) {
   const router = useRouter();
   const initialOrg: TestingOrganization = lockedOrganization ?? "DECA";
   const [organization, setOrganization] = useState<TestingOrganization>(initialOrg);
@@ -57,6 +65,7 @@ export function PracticeTestGenerator({ lockedOrganization }: { lockedOrganizati
   const [eventCluster, setEventCluster] = useState(testingClustersForOrganization(initialOrg)[0]);
   const [difficulty, setDifficulty] = useState<Level>("BEGINNER");
   const [questionCount, setQuestionCount] = useState<QuestionCount>(10);
+  const [useOfficial, setUseOfficial] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,6 +82,9 @@ export function PracticeTestGenerator({ lockedOrganization }: { lockedOrganizati
     setEventCluster(testingClustersForOrganization(nextOrganization)[0]);
   }
 
+  const officialAvailable = Boolean(officialFormat && [10, 25, 50, 100].includes(officialFormat.questionCount));
+  const officialSelected = Boolean(officialAvailable && officialFormat && questionCount === officialFormat.questionCount && useOfficial);
+
   async function onGenerate() {
     setIsLoading(true);
     setError(null);
@@ -85,7 +97,7 @@ export function PracticeTestGenerator({ lockedOrganization }: { lockedOrganizati
         difficulty,
         questionCount
       });
-      router.push(`/tests/${test.id}` as Route);
+      router.push((officialSelected && officialFormat ? `/tests/${test.id}?officialMinutes=${officialFormat.minutes}` : `/tests/${test.id}`) as Route);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to generate practice test.");
     } finally {
@@ -206,13 +218,38 @@ export function PracticeTestGenerator({ lockedOrganization }: { lockedOrganizati
           </div>
 
           <div>
+            {officialAvailable && officialFormat ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setUseOfficial(true);
+                  setQuestionCount(officialFormat.questionCount as QuestionCount);
+                }}
+                aria-pressed={officialSelected}
+                className={cn(
+                  "mb-3 block w-full rounded-md border p-3 text-left text-sm",
+                  officialSelected ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"
+                )}
+              >
+                <span className="font-semibold">
+                  Match official format: {officialFormat.questionCount} questions · {officialFormat.minutes}-minute timer
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Per the {officialFormat.eventName} {officialFormat.season} specification
+                  {officialFormat.verificationStatus !== "VERIFIED" ? " (partially verified)" : ""}.
+                </span>
+              </button>
+            ) : null}
             <p className="mb-3 text-sm font-semibold">Question count</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {([10, 25, 50, 100] as const).map((count) => (
                 <button
                   key={count}
                   type="button"
-                  onClick={() => setQuestionCount(count)}
+                  onClick={() => {
+                    setUseOfficial(false);
+                    setQuestionCount(count);
+                  }}
                   className={cn(
                     "focus-ring rounded-md border px-3 py-2 text-left text-sm font-semibold transition-colors",
                     questionCount === count ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"

@@ -7,6 +7,7 @@ import { SpecBanner } from "@/components/specs/spec-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
+import { getOfficialTestFormat } from "@/lib/competition-specs";
 import { getActiveTrack } from "@/lib/track-server";
 
 const testSteps = [
@@ -15,7 +16,7 @@ const testSteps = [
   { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
 ];
 
-export default function TestsPage({ searchParams }: { searchParams: { track?: string; assignmentId?: string } }) {
+export default async function TestsPage({ searchParams }: { searchParams: { track?: string; assignmentId?: string } }) {
   // `?track=` wins; otherwise fall back to the selected track (cookie).
   const activeTrack = getActiveTrack(searchParams.track);
   // The DECA/HOSA test generator is only shown when it is actually relevant. Model UN and General
@@ -24,6 +25,9 @@ export default function TestsPage({ searchParams }: { searchParams: { track?: st
   const isAssignment = Boolean(searchParams.assignmentId);
   const lockedOrganization = activeTrack?.id === "DECA" ? "DECA" : activeTrack?.id === "HOSA" ? "HOSA" : undefined;
   const showGenerator = isAssignment || !activeTrack || activeTrack.id === "DECA" || activeTrack.id === "HOSA";
+  // Registry-driven official test shape (HOSA MT: 50 questions / 60 minutes). Null when the
+  // registry has no timed multiple-choice round for the organization — generator is unchanged.
+  const officialFormat = lockedOrganization ? await getOfficialTestFormat(lockedOrganization) : null;
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
@@ -59,7 +63,7 @@ export default function TestsPage({ searchParams }: { searchParams: { track?: st
 
       {showGenerator ? (
         <>
-          <PracticeTestGenerator lockedOrganization={lockedOrganization} />
+          <PracticeTestGenerator lockedOrganization={lockedOrganization} officialFormat={officialFormat} />
           <TestBuilderPreview />
         </>
       ) : (

@@ -253,7 +253,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {visibleNav.map((item) => {
+            {[...visibleNav, ...moreItems].map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (

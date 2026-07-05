@@ -142,3 +142,77 @@ export async function findSpecForEvent(organization: Organization, eventType?: s
   }
   return getActiveSpec(organization);
 }
+
+// --- Official practice formats (registry-driven simulations) ---------------
+
+export type OfficialPrepFormat = {
+  prepMinutes: number;
+  performMinutes: number | null;
+  eventName: string;
+  season: string;
+  verificationStatus: CompetitionSpec["verificationStatus"];
+};
+
+type PrepTimeJson = { perCompetitorMinutes?: number; perTeamMinutes?: number; notes?: string };
+type RoundSegment = { order?: number; name?: string; minutes?: number | null; notes?: string };
+
+// Prep-clock settings for role-play style practice (DECA today). Null when the registry has no
+// structured prep rule for the organization/event — callers must degrade to current behavior.
+export async function getOfficialPrepFormat(organization: Organization, eventType?: string): Promise<OfficialPrepFormat | null> {
+  try {
+    const spec = await findSpecForEvent(organization, eventType);
+    if (!spec) return null;
+    const prep = (spec.prepTime ?? null) as PrepTimeJson | null;
+    const prepMinutes = prep?.perCompetitorMinutes ?? prep?.perTeamMinutes;
+    if (typeof prepMinutes !== "number" || prepMinutes <= 0) return null;
+
+    const segments = (Array.isArray(spec.roundStructure) ? spec.roundStructure : []) as RoundSegment[];
+    const performSegment = segments.find(
+      (segment) => typeof segment.minutes === "number" && /role-play with judge|interaction|perform/i.test(segment.name ?? "")
+    );
+
+    return {
+      prepMinutes,
+      performMinutes: typeof performSegment?.minutes === "number" ? performSegment.minutes : null,
+      eventName: spec.eventName,
+      season: spec.season,
+      verificationStatus: spec.verificationStatus
+    };
+  } catch {
+    return null;
+  }
+}
+
+export type OfficialTestFormat = {
+  questionCount: number;
+  minutes: number;
+  eventName: string;
+  season: string;
+  verificationStatus: CompetitionSpec["verificationStatus"];
+};
+
+// Official written-test shape (HOSA Medical Terminology today: 50 items / 60 minutes). Derived
+// from the registry round structure; null when no spec describes a timed multiple-choice round.
+export async function getOfficialTestFormat(organization: Organization): Promise<OfficialTestFormat | null> {
+  try {
+    const spec = await getActiveSpec(organization);
+    if (!spec) return null;
+    const segments = (Array.isArray(spec.roundStructure) ? spec.roundStructure : []) as RoundSegment[];
+    for (const segment of segments) {
+      if (typeof segment.minutes !== "number" || segment.minutes <= 0) continue;
+      const match = /(\d+)\s+multiple-choice/i.exec(segment.notes ?? "");
+      if (match) {
+        return {
+          questionCount: Number(match[1]),
+          minutes: segment.minutes,
+          eventName: spec.eventName,
+          season: spec.season,
+          verificationStatus: spec.verificationStatus
+        };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

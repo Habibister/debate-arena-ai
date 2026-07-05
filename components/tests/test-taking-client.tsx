@@ -18,6 +18,7 @@ type TestQuestion = {
 };
 
 type TestTakingClientProps = {
+  officialMinutes?: number | null;
   test: {
     id: string;
     organization: string;
@@ -42,7 +43,7 @@ function formatElapsed(seconds: number) {
   return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-export function TestTakingClient({ test }: TestTakingClientProps) {
+export function TestTakingClient({ test, officialMinutes }: TestTakingClientProps) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,9 +125,25 @@ export function TestTakingClient({ test }: TestTakingClientProps) {
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Timer className="h-4 w-4 text-primary" aria-hidden />
-              Practice timer
+              {officialMinutes ? `Official time — ${officialMinutes} min` : "Practice timer"}
             </div>
-            <p className="font-mono text-lg font-bold tabular-nums">{formatElapsed(elapsedSeconds)}</p>
+            {officialMinutes ? (
+              (() => {
+                const remaining = Math.max(0, officialMinutes * 60 - elapsedSeconds);
+                return (
+                  <div className="flex items-center gap-2">
+                    <p className={`font-mono text-lg font-bold tabular-nums ${remaining === 0 ? "text-destructive" : remaining <= 300 ? "text-amber-600" : ""}`}>
+                      {formatElapsed(remaining)}
+                    </p>
+                    {remaining === 0 ? (
+                      <span className="text-xs font-semibold text-destructive">Official time expired — finish and submit.</span>
+                    ) : null}
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="font-mono text-lg font-bold tabular-nums">{formatElapsed(elapsedSeconds)}</p>
+            )}
           </div>
 
           <div>

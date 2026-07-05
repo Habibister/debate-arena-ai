@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -40,7 +40,15 @@ function Select({ label, value, options, onChange }: { label: string; value: str
   );
 }
 
-export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
+export type OfficialPrepProps = {
+  prepMinutes: number;
+  performMinutes: number | null;
+  eventName: string;
+  season: string;
+  verificationStatus: string;
+};
+
+export function TrackPracticeSetup({ track, officialPrep }: { track: TrackInfo; officialPrep?: OfficialPrepProps | null }) {
   const router = useRouter();
   const [fields, setFields] = useState<PracticeFields>({
     category: HOSA_CATEGORIES[0],
@@ -52,9 +60,20 @@ export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
   const [level, setLevel] = useState<Level>("BEGINNER");
   const [source, setSource] = useState<PracticeSource>("AI");
   const [isStarting, setIsStarting] = useState(false);
+  // Official prep clock (registry-driven, e.g. DECA 10-minute prep). Counts down; purely a
+  // student-side tool — practice can start whenever they are ready.
+  const [prepSecondsLeft, setPrepSecondsLeft] = useState((officialPrep?.prepMinutes ?? 0) * 60);
+  const [prepRunning, setPrepRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const set = (patch: Partial<PracticeFields>) => setFields((c) => ({ ...c, ...patch }));
+
+  const prepExpired = prepSecondsLeft <= 0;
+  useEffect(() => {
+    if (!prepRunning || prepExpired) return;
+    const timer = window.setInterval(() => setPrepSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [prepRunning, prepExpired]);
   const composed = composePractice(track.id, fields);
   const pastBlocked = source === "PAST";
 
@@ -164,6 +183,44 @@ export function TrackPracticeSetup({ track }: { track: TrackInfo }) {
           <span className="mb-1 block font-semibold">Scenario / focus (optional)</span>
           <Textarea value={fields.scenario ?? ""} onChange={(e) => set({ scenario: e.target.value })} placeholder="Describe the situation or leave blank to let the AI generate one." className="min-h-20" />
         </label>
+
+        {officialPrep ? (
+          <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold">
+                Official prep clock — {officialPrep.prepMinutes} min
+                {officialPrep.performMinutes ? ` prep, up to ${officialPrep.performMinutes} min with the judge` : ""}
+              </p>
+              <p className="font-mono text-lg font-bold tabular-nums">
+                {String(Math.floor(prepSecondsLeft / 60)).padStart(2, "0")}:{String(prepSecondsLeft % 60).padStart(2, "0")}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPrepRunning((r) => !r)}
+                className={cn("focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold", prepRunning ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground")}
+              >
+                {prepRunning ? "Pause" : prepSecondsLeft === officialPrep.prepMinutes * 60 ? "Start prep" : "Resume"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPrepRunning(false);
+                  setPrepSecondsLeft(officialPrep.prepMinutes * 60);
+                }}
+                className="focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold text-muted-foreground"
+              >
+                Reset
+              </button>
+              {prepSecondsLeft === 0 ? <span className="text-sm font-semibold text-destructive">Prep time is up — start your practice.</span> : null}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Per the {officialPrep.eventName} {officialPrep.season} specification
+              {officialPrep.verificationStatus !== "VERIFIED" ? " (partially verified)" : ""}.
+            </p>
+          </div>
+        ) : null}
 
         {/* Practice source */}
         <div className="space-y-2 rounded-lg border bg-muted/30 p-3">

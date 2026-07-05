@@ -6,7 +6,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export default async function PracticeTestPage({ params }: { params: { testId: string } }) {
+export default async function PracticeTestPage({
+  params,
+  searchParams
+}: {
+  params: { testId: string };
+  searchParams: { officialMinutes?: string };
+}) {
+  // Official-format countdown (registry-driven, carried from the generator). Clamped and optional —
+  // an absent/invalid value means the normal untimed practice experience.
+  const officialMinutesRaw = Number(searchParams.officialMinutes);
+  const officialMinutes =
+    Number.isInteger(officialMinutesRaw) && officialMinutesRaw >= 1 && officialMinutesRaw <= 240 ? officialMinutesRaw : null;
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -65,6 +77,7 @@ export default async function PracticeTestPage({ params }: { params: { testId: s
       </div>
 
       <TestTakingClient
+        officialMinutes={officialMinutes}
         test={{
           id: test.id,
           organization: test.organization,

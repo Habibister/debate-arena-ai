@@ -91,14 +91,7 @@ Each stage builds on the previous one's data.
 6. **Live Matchmaking** — student-vs-student rounds with the same round structures and rubrics;
    the existing `api/matchmaking` stub becomes real once simulations and rubrics are trustworthy.
 
-## 5. Known gaps (parked deliberately)
-
-- **Mobile secondary navigation** _(noted 2026-07-05)_: the IA rebuild put Assignments / History /
-  Skills / Tests / Settings in a "More" group that renders on the desktop sidebar only. On mobile
-  these pages remain reachable through in-page links but are absent from the nav bar. Pick up when
-  the mobile shell gets its next pass.
-
-## 6. Current state anchors (2026-07-05)
+## 5. Current state anchors (2026-07-05)
 
 - AI: Gemini → Groq chain, all AI routes require sign-in, distributed per-user rate limiting live.
 - Tracks: isolation enforced and smoke-tested; CompeteReady branding shipped.

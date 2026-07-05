@@ -5,13 +5,18 @@ import { DebateRoom } from "@/components/debate/debate-room";
 import { TrackPracticeSetup } from "@/components/training/track-practice-setup";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { trackBySlug } from "@/lib/training-tracks";
+import { getOfficialPrepFormat } from "@/lib/competition-specs";
+import { trackToOrganization, trackBySlug } from "@/lib/training-tracks";
 
-export default function TrackPracticePage({ params }: { params: { track: string } }) {
+export default async function TrackPracticePage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
   if (!track) {
     notFound();
   }
+
+  // Registry-driven prep clock (e.g. DECA's official 10-minute prep). Null when the registry has
+  // no structured prep rule for this organization — the setup renders exactly as before.
+  const officialPrep = track.id === "GENERAL_DEBATE" ? null : await getOfficialPrepFormat(trackToOrganization(track.id));
 
   return (
     <div className="space-y-6">
@@ -30,7 +35,7 @@ export default function TrackPracticePage({ params }: { params: { track: string 
           <DebateRoom track={track.slug} />
         </>
       ) : (
-        <TrackPracticeSetup track={track} />
+        <TrackPracticeSetup track={track} officialPrep={officialPrep} />
       )}
     </div>
   );

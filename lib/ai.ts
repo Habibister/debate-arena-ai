@@ -1380,7 +1380,14 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Focus on business scenario understanding, performance indicators, solution quality, business reasoning, creativity, feasibility, professional communication, organization, judge questions, and delivery.
-Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, judgeQuestionFeedback, and readinessForNextLevel.
+Return a single JSON object with EXACTLY these fields:
+- overallScore: number 0-100
+- categoryScores: an ARRAY (not an object) with one entry per rubric category above, each shaped {"key": "<rubric key>", "label": "<rubric label>", "score": <number within that category's scoreMin-scoreMax>, "reason": "<one sentence>"}
+- sharedSpeaking: object with numeric 0-100 values for exactly: clarity, confidence, pacing, volume, organization, vocabulary, persuasion, professionalism
+- strengths, weaknesses, improvementAdvice: arrays of strings
+- recommendedLessons: array of {"lessonSlug": string, "reason": string, "priority": "high" | "medium" | "low"}
+- judgeQuestionFeedback: array of strings
+- readinessForNextLevel: {"ready": boolean, "rationale": string, "nextMilestone": string}
 ${registry ? registry.promptBlock : ""}`,
     () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
     "DECA judge",
@@ -1410,7 +1417,14 @@ Rubric JSON: ${JSON.stringify(rubric)}
 Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}.
 
 Focus on health science knowledge, medical/health accuracy, event task completion, scenario response, communication, professionalism, presentation quality, and skill/performance quality when relevant.
-Return JSON with overallScore, categoryScores, sharedSpeaking, strengths, weaknesses, improvementAdvice, recommendedLessons, accuracyFlags, and readinessForNextLevel.
+Return a single JSON object with EXACTLY these fields:
+- overallScore: number 0-100
+- categoryScores: an ARRAY (not an object) with one entry per rubric category above, each shaped {"key": "<rubric key>", "label": "<rubric label>", "score": <number within that category's scoreMin-scoreMax>, "reason": "<one sentence>"}
+- sharedSpeaking: object with numeric 0-100 values for exactly: clarity, confidence, pacing, volume, organization, vocabulary, persuasion, professionalism
+- strengths, weaknesses, improvementAdvice: arrays of strings
+- recommendedLessons: array of {"lessonSlug": string, "reason": string, "priority": "high" | "medium" | "low"}
+- accuracyFlags: array of strings
+- readinessForNextLevel: {"ready": boolean, "rationale": string, "nextMilestone": string}
 ${registry ? registry.promptBlock : ""}`,
     () => fallbackPerformanceJudge({ organization: "HOSA", eventType: input.eventType }),
     "HOSA judge",

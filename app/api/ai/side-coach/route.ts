@@ -1,7 +1,6 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { requireUser } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { generateSideCoachResponse } from "@/lib/side-coach";
 import { sideCoachRequestSchema } from "@/lib/validators";
@@ -26,15 +25,13 @@ async function markAssisted(debateId: string, userId: string) {
 // throws (it falls back), so coaching failure cannot break the debate.
 export async function POST(request: Request) {
   try {
+    const user = await requireUser();
     const input = await parseJson(request, sideCoachRequestSchema);
 
     // Actual coach use (this route is only called when the student invokes the coach) flags the debate.
     // Merely rendering the toggle never reaches here, so it never marks a debate assisted.
     if (input.debateId) {
-      const session = await getServerSession(authOptions);
-      if (session?.user?.id) {
-        await markAssisted(input.debateId, session.user.id);
-      }
+      await markAssisted(input.debateId, user.id);
     }
 
     const response = await generateSideCoachResponse({

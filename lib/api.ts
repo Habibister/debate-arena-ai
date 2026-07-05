@@ -36,15 +36,10 @@ export function forbidden(message = "Forbidden") {
 }
 
 export function apiError(error: unknown) {
-  if (error instanceof OpenAIUnavailableError || isLikelyOpenAIUnavailableError(error)) {
-    return NextResponse.json(
-      {
-        error: "AI is temporarily unavailable. Please try again in a moment."
-      },
-      { status: 503 }
-    );
-  }
-
+  // HttpError is thrown only by our own code (auth, validation, explicit route errors), so its
+  // status is authoritative. It must be checked BEFORE the OpenAI-likeness sniffing below, which
+  // treats any error carrying status 401/403/429 as a provider outage and would turn our own
+  // 401 "sign in required" into a misleading 503.
   if (error instanceof HttpError) {
     return NextResponse.json(
       {
@@ -52,6 +47,15 @@ export function apiError(error: unknown) {
         details: error.details
       },
       { status: error.status }
+    );
+  }
+
+  if (error instanceof OpenAIUnavailableError || isLikelyOpenAIUnavailableError(error)) {
+    return NextResponse.json(
+      {
+        error: "AI is temporarily unavailable. Please try again in a moment."
+      },
+      { status: 503 }
     );
   }
 

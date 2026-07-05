@@ -11,6 +11,7 @@
     "validate": "npm run lint && npm run typecheck",
     "judge:smoke": "tsx scripts/judge-quality-smoke.ts",
     "auth:smoke": "tsx scripts/auth-smoke.ts",
+    "security:smoke": "tsx scripts/security-smoke.ts",
     "audio-debate:smoke": "tsx scripts/audio-debate-smoke.ts",
     "team:smoke": "tsx scripts/team-smoke.ts",
     "assignment:smoke": "tsx scripts/assignment-smoke.ts",

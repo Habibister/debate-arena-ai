@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { Suspense } from "react";
 import { Sparkles } from "lucide-react";
 import { SignInForm } from "@/components/auth/sign-in-form";
@@ -26,7 +27,12 @@ export default function SignInPage() {
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading sign-in form...</p>}>
               <SignInForm showDemoLogin={showDemoLogin} />
             </Suspense>
-            <p className="mt-5 text-center text-sm text-muted-foreground">
+            <p className="mt-5 text-center text-sm">
+              <Link href={"/forgot-password" as Route} className="font-semibold text-primary hover:underline">
+                Forgot password?
+              </Link>
+            </p>
+            <p className="mt-2 text-center text-sm text-muted-foreground">
               New to DebateArena AI?{" "}
               <Link href="/signup" className="font-semibold text-primary hover:underline">
                 Create an account

@@ -11,7 +11,7 @@
  * Run with: npm run auth:smoke
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { signupSchema } from "../lib/validators";
 
@@ -90,7 +90,47 @@ async function offlineChecks() {
     "Oversized avatar URLs must be rejected."
   );
 
-  console.log("Part A (offline) passed: hashing, validation, normalization, 431 avatar guard.");
+  // 5. Password-reset discoverability + email-config UX (offline).
+  // Test 1: signin links to /forgot-password.
+  const signinSource = readFileSync("app/(auth)/signin/page.tsx", "utf8");
+  const signinFormSource = readFileSync("components/auth/sign-in-form.tsx", "utf8");
+  assert.ok(
+    signinSource.includes("/forgot-password") || signinFormSource.includes("/forgot-password"),
+    "Signin must show a link to /forgot-password."
+  );
+  // Test 2: the forgot-password page exists.
+  assert.ok(existsSync("app/(auth)/forgot-password/page.tsx"), "Forgot-password page must exist.");
+
+  const { sendPasswordResetEmail, isEmailConfigured } = await import("../lib/email");
+  const savedNode = process.env.NODE_ENV;
+  const savedKey = process.env.RESEND_API_KEY;
+  const savedFrom = process.env.EMAIL_FROM;
+  const setNodeEnv = (value: string) => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = value;
+  };
+  try {
+    // Test 3: production with missing email config does not crash and reports not-configured.
+    setNodeEnv("production");
+    delete process.env.RESEND_API_KEY;
+    delete process.env.EMAIL_FROM;
+    assert.equal(isEmailConfigured(), false, "Missing provider env must report not configured.");
+    const prod = await sendPasswordResetEmail({ to: "nobody@example.com", resetUrl: "https://app.example/reset?token=x" });
+    assert.equal(prod.status, "not-configured", "Production without a provider must not crash and report not-configured.");
+
+    // Test 4: local development fallback still works (link logged).
+    setNodeEnv("development");
+    const dev = await sendPasswordResetEmail({ to: "nobody@example.com", resetUrl: "https://app.example/reset?token=x" });
+    assert.equal(dev.status, "dev-logged", "Development without a provider must log the link.");
+  } finally {
+    if (savedNode === undefined) delete (process.env as Record<string, string | undefined>).NODE_ENV;
+    else setNodeEnv(savedNode);
+    if (savedKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = savedKey;
+    if (savedFrom === undefined) delete process.env.EMAIL_FROM;
+    else process.env.EMAIL_FROM = savedFrom;
+  }
+
+  console.log("Part A (offline) passed: hashing, validation, normalization, 431 avatar guard, forgot-password link, email-config (prod not-configured + dev fallback).");
 }
 
 async function signupViaRoute(payload: Record<string, unknown>) {

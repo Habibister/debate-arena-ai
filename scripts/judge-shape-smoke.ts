@@ -54,7 +54,9 @@ async function main() {
 
   // 3. Live: a real judge call returns the correct shape.
   const { judgeDecaRoleplay } = await import("../lib/ai");
-  let live: Awaited<ReturnType<typeof judgeDecaRoleplay>> | null = null;
+  // aiProvider is attached to results dynamically by tagProvider, so it is not on the declared type.
+  type LiveJudgeResult = Awaited<ReturnType<typeof judgeDecaRoleplay>> & { aiProvider?: string };
+  let live: LiveJudgeResult | null = null;
   for (let attempt = 1; attempt <= 4; attempt++) {
     const result = await judgeDecaRoleplay({
       level: "BEGINNER",
@@ -64,8 +66,9 @@ async function main() {
         { role: "AFFIRMATIVE", round: 1, content: "I would apologize, upgrade them to the best available room, comp the night, and follow up personally in the morning." }
       ]
     });
-    if (result.aiProvider && result.aiProvider !== "fallback") {
-      live = result;
+    const tagged = result as LiveJudgeResult;
+    if (tagged.aiProvider && tagged.aiProvider !== "fallback") {
+      live = tagged;
       break;
     }
     console.warn(`[judge-shape] attempt ${attempt}: providers unavailable (got fallback), retrying...`);

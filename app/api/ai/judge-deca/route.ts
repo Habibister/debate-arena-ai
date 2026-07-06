@@ -21,7 +21,8 @@ export async function POST(request: Request) {
       level: input.level,
       eventType: input.eventType,
       scenario: input.scenario,
-      transcript: input.transcript
+      transcript: input.transcript,
+      hasObjectionRound: input.hasObjectionRound
     });
 
     return NextResponse.json(result);

@@ -222,6 +222,9 @@ type PerformanceJudgeResult = {
   readinessForNextLevel: ReadinessForNextLevel;
   fallbackNotice?: string;
   rubricSource?: RubricSourceTag;
+  // Present only when an objection round was judged: prepared pitch vs. unscripted Q&A (0-100 each).
+  presentationScore?: number;
+  questioningScore?: number;
 };
 
 const DEV_AI_FALLBACK_NOTICE = "AI is temporarily unavailable, so we used a backup response.";
@@ -1362,14 +1365,165 @@ function isValidPerformanceJudge(result: PerformanceJudgeResult): boolean {
   );
 }
 
+// --- DECA role-play: registry-sourced scenarios + in-character objection judging ---------------
+// All of this reuses the same jsonCompletion path as judgeDecaRoleplay (same providers, same
+// fallback, same registry rubric helpers) — no new AI pipeline.
+
+export type RoleplayScenario = {
+  scenario: string; // the business situation the student must handle
+  judgeCharacter: string; // who the AI plays and how they behave in the interaction
+  performanceIndicators: string[]; // what the student is evaluated on
+  piSource: "registry" | "generic"; // registry = pulled from the spec's rubric categories
+  rubricSource?: RubricSourceTag;
+  eventName?: string;
+  season?: string;
+  verificationStatus?: string;
+  fallbackNotice?: string;
+};
+
+function fallbackRoleplayScenario(input: { cluster: string; studentRole: string; judgeRole: string }): RoleplayScenario {
+  return {
+    scenario: `You are the ${input.studentRole} for a ${input.cluster} business. The ${input.judgeRole} presents a common operational challenge and asks how you would handle it. Analyze the situation, recommend a professional course of action, and be ready to defend your reasoning.`,
+    judgeCharacter: `The AI plays the ${input.judgeRole}, speaking and reacting as that person naturally would in a real business meeting.`,
+    performanceIndicators: [
+      "Understanding of the business scenario",
+      "Quality and feasibility of the recommendation",
+      "Professional communication"
+    ],
+    piSource: "generic",
+    fallbackNotice: "No competition specification was found for this event, so this is generic practice — performance indicators are not sourced from official guidelines."
+  };
+}
+
+// Generate a role-play scenario. Performance indicators come from the registry's rubric categories
+// (not invented) when a spec covers the event; otherwise the scenario is clearly labeled generic.
+export async function generateDecaRoleplayScenario(input: {
+  level: Level;
+  eventType: string; // e.g. "DECA Business Management Role Play" or the HLM event name
+  cluster: string;
+  instructionalArea?: string;
+  studentRole: string;
+  judgeRole: string;
+}): Promise<RoleplayScenario> {
+  // Only attribute to a registry spec when the selected cluster matches the domain that spec
+  // actually covers. The seeded HLM spec is Hospitality & Tourism; a Finance role-play has no spec,
+  // so it must degrade to generic rather than borrow HLM's event name and categories.
+  const clusterMatchesSpec = /hospitality|tourism|lodging|hotel/i.test(input.cluster);
+  const spec = clusterMatchesSpec ? await findSpecForEvent("DECA", "ROLEPLAY") : null;
+  const registryPis = spec ? (await getSpecRubricBreakdown(spec)).categories.map((category) => category.name) : [];
+  const hasRegistry = registryPis.length > 0;
+
+  const fallback = () =>
+    fallbackRoleplayScenario({ cluster: input.cluster, studentRole: input.studentRole, judgeRole: input.judgeRole });
+
+  const piInstruction = hasRegistry
+    ? `The student is evaluated ONLY on these official rubric categories from the ${spec?.eventName} ${spec?.season} specification — use them verbatim as the performanceIndicators, do NOT invent official indicators: ${registryPis
+        .map((pi) => `"${pi}"`)
+        .join(", ")}.`
+    : `No official specification covers this event. Propose 3 reasonable practice performance indicators and understand they are GENERIC, not official.`;
+
+  const result = await jsonCompletion<RoleplayScenario>(
+    // In-character enforcement lives in the system prompt so it applies to the whole interaction.
+    `You author authentic DECA role-play scenarios. The interlocutor (the "${input.judgeRole}") is a REAL business character, never an AI assistant: they have a role, a goal, and a personality, and everything they say sounds like that person in a real meeting — not like a helpful chatbot. Return JSON only.`,
+    `Create a ${input.level} DECA role-play.
+Event: ${input.eventType}
+Career cluster: ${input.cluster}
+Instructional area: ${input.instructionalArea ?? "general to the cluster"}
+Student plays: ${input.studentRole}
+The AI plays (in character): ${input.judgeRole}
+${piInstruction}
+
+Return a single JSON object with EXACTLY these fields:
+- scenario: 3-5 sentences describing the business situation the student must handle, specific to the cluster and instructional area
+- judgeCharacter: 1-2 sentences describing who the ${input.judgeRole} is and how they behave in this interaction (their goal, tone, and what would make them skeptical)
+- performanceIndicators: array of strings ${hasRegistry ? "(use the official categories above VERBATIM)" : "(generic, clearly not official)"}`,
+    fallback,
+    "DECA roleplay scenario"
+  ) as RoleplayScenario;
+
+  if (hasRegistry && spec) {
+    // Trust the registry categories over anything the model returned for the scored dimensions.
+    result.performanceIndicators = registryPis;
+    result.piSource = "registry";
+    result.eventName = spec.eventName;
+    result.season = spec.season;
+    result.verificationStatus = spec.verificationStatus;
+    const tag = await registryRubricForJudge("DECA", "ROLEPLAY");
+    if (tag) result.rubricSource = tag.tag;
+  } else if (result.piSource !== "generic") {
+    result.piSource = "generic";
+    result.fallbackNotice =
+      "No competition specification was found for this event, so performance indicators are generic practice, not official.";
+  }
+
+  return result;
+}
+
+export type JudgeObjections = {
+  objections: string[]; // 2-3 in-character follow-up questions
+  judgeCharacter: string;
+  fallbackNotice?: string;
+};
+
+function fallbackObjections(judgeRole: string): JudgeObjections {
+  return {
+    judgeCharacter: `The ${judgeRole}, pressing for specifics.`,
+    objections: [
+      "That sounds good, but what does it actually cost us, and how soon do we see a return?",
+      "How would you measure whether this is working after 90 days?",
+      "We tried something like this before and it stalled — why is your approach different?"
+    ],
+    fallbackNotice: "AI is temporarily unavailable, so these are generic backup objections."
+  };
+}
+
+// After the student's pitch, the in-character judge raises 2-3 realistic objections. Reuses the
+// same completion path — this is the "judge questions" phase of the same role-play, not a new AI.
+export async function generateDecaJudgeObjections(input: {
+  level: Level;
+  eventType: string;
+  scenario: string;
+  judgeRole: string;
+  studentPitch: string;
+}): Promise<JudgeObjections> {
+  return jsonCompletion<JudgeObjections>(
+    `You ARE the ${input.judgeRole} in a DECA role-play — a real business person, not an AI assistant. Stay fully in character: your questions sound like this specific person under real business pressure, using first person ("I", "we", "our"). Never break character, never mention being an AI or a judge. Return JSON only.`,
+    `The role-play scenario: ${input.scenario}
+You are the ${input.judgeRole}. The student (playing their business role) just told you:
+"${input.studentPitch}"
+
+As the ${input.judgeRole}, ask 2-3 pointed follow-up questions that a real ${input.judgeRole} would ask before deciding — probe at least two of: cost/ROI, feasibility/implementation, measurement/metrics, and alternatives already tried. Each question must be in your voice and specific to what the student actually said.
+
+Return a single JSON object with EXACTLY these fields:
+- objections: array of 2-3 strings, each a first-person in-character question
+- judgeCharacter: 1 sentence describing your character and current mood`,
+    () => fallbackObjections(input.judgeRole),
+    "DECA judge objections"
+  );
+}
+
 export async function judgeDecaRoleplay(input: {
   level: Level;
   eventType: string;
   scenario: string;
   transcript: DebateTranscriptMessage[];
+  // When true, the transcript contains an objection round (judge questions + student answers) after
+  // the opening pitch, so the judge scores prepared vs. unscripted performance separately.
+  hasObjectionRound?: boolean;
 }) {
   const rubric = rubricFor("DECA", input.eventType);
   const registry = await registryRubricForJudge("DECA", input.eventType);
+
+  // DECA's real judging distinguishes the prepared presentation from unscripted questioning. The
+  // registry rubric does not yet encode a point split for this, so we surface it as a labeled,
+  // structure-based split (not an official point weighting) only when an objection round happened.
+  const splitInstruction = input.hasObjectionRound
+    ? `
+This role-play included an OBJECTION ROUND: after the opening pitch, the ${"judge"} asked follow-up questions and the student answered under pressure. DECA judging weighs prepared presentation and unscripted questioning separately. Also return:
+- presentationScore: number 0-100 for the prepared opening pitch
+- questioningScore: number 0-100 for how the student handled the unscripted follow-up questions
+(This prepared-vs-unscripted split reflects standard DECA role-play structure; the exact point weighting is not encoded in the registry, so treat both as 0-100 sub-scores, not official points.)`
+    : "";
 
   const result = await jsonCompletion<PerformanceJudgeResult>(
     "You are an educational DECA judge for original practice roleplays and case studies. Do not judge like debate. Return JSON only.",
@@ -1387,7 +1541,7 @@ Return a single JSON object with EXACTLY these fields:
 - strengths, weaknesses, improvementAdvice: arrays of strings
 - recommendedLessons: array of {"lessonSlug": string, "reason": string, "priority": "high" | "medium" | "low"}
 - judgeQuestionFeedback: array of strings
-- readinessForNextLevel: {"ready": boolean, "rationale": string, "nextMilestone": string}
+- readinessForNextLevel: {"ready": boolean, "rationale": string, "nextMilestone": string}${splitInstruction}
 ${registry ? registry.promptBlock : ""}`,
     () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
     "DECA judge",

@@ -79,7 +79,8 @@ export const roleplayJudgeRequestSchema = z.object({
   level: levelSchema,
   eventType: z.string().min(2).max(120),
   scenario: z.string().min(8),
-  transcript: transcriptSchema.min(1)
+  transcript: transcriptSchema.min(1),
+  hasObjectionRound: z.boolean().optional()
 });
 
 export const practiceQuestionRequestSchema = z.object({
@@ -378,3 +379,22 @@ export const competitionSpecCreateSchema = z.object({
 });
 
 export const competitionSpecUpdateSchema = competitionSpecCreateSchema.partial();
+
+// --- DECA role-play: scenario generation + in-character objection round ---
+
+export const decaScenarioRequestSchema = z.object({
+  level: levelSchema,
+  eventType: z.string().min(2).max(160),
+  cluster: z.string().min(2).max(120),
+  instructionalArea: z.string().min(2).max(160).optional(),
+  studentRole: z.string().min(2).max(120),
+  judgeRole: z.string().min(2).max(120)
+});
+
+export const decaObjectionsRequestSchema = z.object({
+  level: levelSchema,
+  eventType: z.string().min(2).max(160),
+  scenario: z.string().min(8).max(4000),
+  judgeRole: z.string().min(2).max(120),
+  studentPitch: z.string().min(8).max(8000)
+});

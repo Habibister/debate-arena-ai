@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplay } from "@/components/training/deca-roleplay";
 import { HosaEventPrep } from "@/components/training/hosa-event-prep";
+import { MunConference } from "@/components/training/mun-conference";
 import { TrackPracticeSetup } from "@/components/training/track-practice-setup";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -35,6 +36,14 @@ export default async function TrackPracticePage({ params }: { params: { track: s
             <p className="mt-2 text-sm text-muted-foreground">Choose a format, then practice with an AI opponent and judge.</p>
           </div>
           <DebateRoom track={track.slug} />
+        </>
+      ) : track.id === "MODEL_UN" ? (
+        <>
+          <div>
+            <Badge variant="secondary">Training in: {track.label}</Badge>
+            <h1 className="mt-3 text-2xl font-bold">Model UN practice</h1>
+          </div>
+          <MunConference />
         </>
       ) : (
         <>

@@ -420,3 +420,20 @@ export const medTermSubmitRequestSchema = z.object({
     .min(1)
     .max(100)
 });
+
+// --- Model UN practice sandbox ---
+
+export const munPolicyBriefRequestSchema = z.object({
+  country: z.string().min(2).max(80),
+  topic: z.string().min(3).max(200),
+  committee: z.string().min(2).max(120),
+  level: levelSchema
+});
+
+export const munJudgeRequestSchema = z.object({
+  level: levelSchema,
+  committee: z.string().min(2).max(120),
+  country: z.string().min(2).max(80),
+  topic: z.string().min(3).max(200),
+  transcript: transcriptSchema.min(1)
+});

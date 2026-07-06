@@ -14,6 +14,13 @@ import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
 import { findSpecForEvent, getSpecRubricBreakdown } from "@/lib/competition-specs";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
+import {
+  MUN_DIMENSIONS,
+  fallbackCountryPolicyBrief,
+  fallbackMunJudge,
+  type CountryPolicyBrief,
+  type MunJudgeResult
+} from "@/lib/model-un";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 import { assessStudentSpeech, OPPONENT_COACHING_RESPONSE } from "@/lib/speech-quality";
 
@@ -1587,6 +1594,80 @@ ${registry ? registry.promptBlock : ""}`,
   if (registry) {
     result.rubricSource = registry.tag;
   }
+  return result;
+}
+
+// --- Model UN practice sandbox (no sourced conference spec — everything AI-inferred) -----------
+
+const MUN_INFERENCE_LABEL = "AI-inferred practice brief — not based on verified voting records or official policy.";
+
+// Country policy brief. We have NO sourced UN voting-record data, so the model is instructed to
+// clearly separate what it INFERS about a country's documented position (labeled inference) from
+// realistic negotiation stances, and to never assert either as verified fact.
+export async function generateCountryPolicyBrief(input: {
+  country: string;
+  topic: string;
+  committee: string;
+  level: Level;
+}): Promise<CountryPolicyBrief> {
+  const result = await jsonCompletion<CountryPolicyBrief>(
+    "You brief a student delegate for Model UN PRACTICE. You have no access to verified voting records or official policy documents, so everything you produce is an INFERENCE for practice, never a verified fact. Be explicit about that. Return JSON only.",
+    `Assigned country: ${input.country}
+Committee: ${input.committee}
+Topic: ${input.topic}
+Delegate level: ${input.level}
+
+Produce a practice country-policy brief. Clearly SEPARATE inferred documented position from realistic negotiation stances. Do NOT claim any of this is verified — it is reasoning a student can use as a starting point and should confirm against real sources.
+
+Return a single JSON object with EXACTLY these fields:
+- country: string (echo the country)
+- topic: string (echo the topic)
+- inferredPosition: array of strings — what this country's documented position on the topic is LIKELY to be, each phrased as inference ("likely...", "would probably...")
+- negotiationStances: array of strings — realistic postures the delegate could take in committee
+- likelyAllies: array of strings
+- likelyOpposition: array of strings
+- talkingPoints: array of 2-4 short strings the delegate can use in a speech`,
+    () => fallbackCountryPolicyBrief(input.country, input.topic),
+    "MUN country policy brief"
+  );
+  // Force the honesty label regardless of what the model returns.
+  result.country = result.country || input.country;
+  result.topic = result.topic || input.topic;
+  result.disclaimer = MUN_INFERENCE_LABEL;
+  return result;
+}
+
+// Rapporteur-style practice feedback scored on the four MUN performance dimensions from the plan —
+// NOT DECA/debate rubric categories, and NOT an official conference rubric. Reuses jsonCompletion.
+export async function judgeModelUn(input: {
+  level: Level;
+  committee: string;
+  country: string;
+  topic: string;
+  transcript: DebateTranscriptMessage[];
+}): Promise<MunJudgeResult> {
+  const dimensionList = MUN_DIMENSIONS.map((d) => `"${d.key}" (${d.label}: ${d.description})`).join("; ");
+  const result = await jsonCompletion<MunJudgeResult>(
+    "You are a Model UN rapporteur giving PRACTICE feedback. This is not an official conference and there is no certified rubric — score only on the four practice dimensions provided. Return JSON only.",
+    `Committee: ${input.committee}
+Delegate represents: ${input.country}
+Topic: ${input.topic}
+Level: ${input.level}
+Transcript JSON: ${JSON.stringify(input.transcript)}
+
+Score ONLY these four Model UN practice dimensions (0-100 each): ${dimensionList}.
+
+Return a single JSON object with EXACTLY these fields:
+- overallScore: number 0-100
+- dimensionScores: an ARRAY with one entry per dimension above, each shaped {"key": "<dimension key>", "label": "<dimension label>", "score": <0-100>, "reason": "<one sentence>"}
+- strengths: array of strings
+- weaknesses: array of strings
+- improvementAdvice: array of strings`,
+    () => fallbackMunJudge(),
+    "MUN rapporteur",
+    (value) => Array.isArray(value?.dimensionScores) && value.dimensionScores.length > 0 && typeof value?.overallScore === "number"
+  );
+  result.disclaimer = "Practice-mode feedback on Model UN dimensions — not an official conference rubric or score.";
   return result;
 }
 

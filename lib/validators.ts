@@ -398,3 +398,25 @@ export const decaObjectionsRequestSchema = z.object({
   judgeRole: z.string().min(2).max(120),
   studentPitch: z.string().min(8).max(8000)
 });
+
+// --- HOSA Medical Terminology knowledge engine ---
+
+const medTermAreaSchema = z.enum(["word-roots", "prefixes", "suffixes", "anatomy", "physiology", "pathophysiology"]);
+
+export const medTermSessionRequestSchema = z.object({
+  count: z.number().int().min(1).max(100),
+  areas: z.array(medTermAreaSchema).max(6).optional()
+});
+
+export const medTermSubmitRequestSchema = z.object({
+  answers: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(20),
+        selected: z.string().min(1).max(300),
+        confidence: z.enum(["low", "medium", "high"]).optional()
+      })
+    )
+    .min(1)
+    .max(100)
+});

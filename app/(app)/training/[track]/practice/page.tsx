@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplay } from "@/components/training/deca-roleplay";
+import { HosaEventPrep } from "@/components/training/hosa-event-prep";
 import { TrackPracticeSetup } from "@/components/training/track-practice-setup";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export default async function TrackPracticePage({ params }: { params: { track: s
       ) : (
         <>
           {track.id === "DECA" ? <DecaRoleplay /> : null}
+          {track.id === "HOSA" ? <HosaEventPrep /> : null}
           <TrackPracticeSetup track={track} officialPrep={officialPrep} />
         </>
       )}

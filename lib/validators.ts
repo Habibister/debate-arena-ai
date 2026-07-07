@@ -437,3 +437,9 @@ export const munJudgeRequestSchema = z.object({
   topic: z.string().min(3).max(200),
   transcript: transcriptSchema.min(1)
 });
+
+// --- Debate argument-flow analyzer ---
+
+export const argumentFlowRequestSchema = z.object({
+  debateId: z.string().min(1).max(60)
+});

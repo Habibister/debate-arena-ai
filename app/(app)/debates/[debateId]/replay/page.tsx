@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { Gavel, Lock, ShieldAlert } from "lucide-react";
+import { ArgumentFlow } from "@/components/debate/argument-flow";
 import { RetryMotionButton } from "@/components/debate/retry-motion-button";
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { Badge } from "@/components/ui/badge";
@@ -138,6 +139,10 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
           </p>
         </CardContent>
       </Card>
+
+      {/* Argument-flow analyzer — only for real debate rounds (claim/warrant/evidence clash); solo
+          track practice (DECA role play, HOSA, MUN) has its own feedback and is not mapped here. */}
+      {showsOpponentMeta(debate) && debate.messages.length > 0 ? <ArgumentFlow debateId={debate.id} /> : null}
 
       <Card>
         <CardHeader className="pb-2">

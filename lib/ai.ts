@@ -1291,6 +1291,111 @@ export function mergeJudgeEnhancement(base: DebateJudgeResult, raw: JudgeEnhance
 
 const JUDGE_LOCAL_FALLBACK_NOTICE = "Live AI judge unavailable — showing the local rubric judge.";
 
+// --- Argument-flow analyzer (debate replay) ---------------------------------------------------
+// Converts a completed transcript into an argument map. Reuses jsonCompletion (same AI path as the
+// judge). Honest degradation: too-short/malformed transcripts return { mappable: false } with a
+// reason, so the UI shows a clear message instead of a fake or empty graph.
+
+export type ArgumentFlowStatus = "extended" | "survived" | "abandoned" | "unaddressed";
+
+export type ArgumentFlowNode = {
+  claim: string;
+  warrant: string;
+  evidence: string;
+  opponentResponse: string;
+  studentResponse: string;
+  survived: boolean;
+  extended: boolean;
+  weighed: boolean;
+  status: ArgumentFlowStatus;
+};
+
+export type ArgumentFlowResult = {
+  mappable: boolean;
+  reason?: string; // set when mappable is false — the honest "why not"
+  arguments: ArgumentFlowNode[];
+  aiProvider?: ProviderName;
+  aiNotice?: string | null;
+};
+
+const VALID_FLOW_STATUS: ArgumentFlowStatus[] = ["extended", "survived", "abandoned", "unaddressed"];
+
+// Count substantive (non-moderator) speeches to decide whether a real map is even possible.
+function substantiveSpeechCount(transcript: DebateTranscriptMessage[]): number {
+  return transcript.filter((m) => m.role !== "MODERATOR" && m.role !== "SYSTEM" && m.content.trim().length >= 15).length;
+}
+
+export async function analyzeArgumentFlow(input: {
+  topic: string;
+  studentSide?: string;
+  transcript: DebateTranscriptMessage[];
+}): Promise<ArgumentFlowResult> {
+  // Honest degradation BEFORE spending a provider call: a map needs at least a couple of real
+  // speeches with clash. One speech (or none) cannot produce claim -> response -> resolution.
+  if (substantiveSpeechCount(input.transcript) < 2) {
+    return {
+      mappable: false,
+      reason: "This debate is too short to map — an argument flow needs at least two substantive speeches with clash between the sides.",
+      arguments: []
+    };
+  }
+
+  const result = await jsonCompletion<ArgumentFlowResult>(
+    "You analyze a completed debate transcript into an argument map for a student's review. Only map arguments the transcript actually contains — never invent claims, evidence, or responses that are not there. If the transcript is too thin or garbled to map honestly, say so. Return JSON only.",
+    `Motion: ${input.topic}
+Student side: ${input.studentSide ?? "unknown"}
+Transcript JSON: ${JSON.stringify(input.transcript)}
+
+Build the student's argument flow. For EACH distinct argument the student advanced, trace it through the round.
+
+Return a single JSON object with EXACTLY these fields:
+- mappable: boolean — false ONLY if the transcript genuinely cannot be mapped (too short, off-topic, or garbled)
+- reason: string — if mappable is false, one honest sentence why; otherwise ""
+- arguments: array (empty if mappable is false), each entry EXACTLY:
+  - claim: string (the student's claim, quoted or closely paraphrased from the transcript)
+  - warrant: string (the reasoning given, or "" if none was given)
+  - evidence: string (evidence cited, or "" if none)
+  - opponentResponse: string (how the opponent answered it, or "" if they did not)
+  - studentResponse: string (how the student defended it later, or "" if they dropped it)
+  - survived: boolean (did the argument withstand the opponent's response?)
+  - extended: boolean (did the student carry/rebuild it in a later speech?)
+  - weighed: boolean (did the student explain why it matters / weigh it in the round?)
+  - status: one of "extended" (built on and carried), "survived" (held up but not extended), "abandoned" (contested then dropped), "unaddressed" (opponent never engaged it)
+Base every field ONLY on what the transcript says.`,
+    // No deterministic map is possible without the transcript's semantics — the honest fallback is
+    // to say we could not analyze it, not to fabricate a graph.
+    () => ({
+      mappable: false,
+      reason: "The argument-flow analyzer is temporarily unavailable. Your transcript and ballot are unaffected — try again in a moment.",
+      arguments: []
+    }),
+    "argument flow",
+    (value) => typeof value?.mappable === "boolean" && Array.isArray(value?.arguments)
+  );
+
+  // Normalize/guard the AI output so the UI can trust it: clamp status, drop empty claims.
+  const cleaned: ArgumentFlowNode[] = (Array.isArray(result.arguments) ? result.arguments : [])
+    .filter((node) => node && typeof node.claim === "string" && node.claim.trim().length > 0)
+    .map((node) => ({
+      claim: String(node.claim),
+      warrant: String(node.warrant ?? ""),
+      evidence: String(node.evidence ?? ""),
+      opponentResponse: String(node.opponentResponse ?? ""),
+      studentResponse: String(node.studentResponse ?? ""),
+      survived: Boolean(node.survived),
+      extended: Boolean(node.extended),
+      weighed: Boolean(node.weighed),
+      status: VALID_FLOW_STATUS.includes(node.status) ? node.status : "survived"
+    }));
+
+  // If the model claimed mappable but produced nothing usable, degrade honestly.
+  if (result.mappable && cleaned.length === 0) {
+    return { mappable: false, reason: "No distinct arguments could be traced in this transcript.", arguments: [], aiProvider: result.aiProvider, aiNotice: result.aiNotice };
+  }
+
+  return { ...result, arguments: cleaned };
+}
+
 // Crash-proof judge. The deterministic local rubric judge is the SOURCE OF TRUTH (full 12-dimension
 // ballot, winner, scores, side fidelity). A provider (Gemini first) is used ONLY to improve the
 // compact prose. Any provider/JSON/structure failure keeps the complete local ballot — never a 500.

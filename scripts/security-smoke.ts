@@ -93,27 +93,41 @@ async function main() {
   );
 
   // --- static check: every AI route requires auth, before reading the request body ---
+  // Walk recursively — AI routes are nested at varying depths (e.g. app/api/ai/mun/judge/route.ts
+  // and app/api/ai/debate/argument-flow/route.ts), so a one-level scan would miss them.
   const aiRoutesDir = join(process.cwd(), "app", "api", "ai");
-  const routeDirs = readdirSync(aiRoutesDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
-  assert.ok(routeDirs.length >= 10, `expected at least 10 AI routes, found ${routeDirs.length}`);
+  function findRouteFiles(dir: string): string[] {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    const files: string[] = [];
+    for (const entry of entries) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...findRouteFiles(full));
+      } else if (entry.name === "route.ts") {
+        files.push(full);
+      }
+    }
+    return files;
+  }
+  const routeFiles = findRouteFiles(aiRoutesDir);
+  assert.ok(routeFiles.length >= 12, `expected at least 12 AI routes, found ${routeFiles.length}`);
 
-  for (const dir of routeDirs) {
-    const source = readFileSync(join(aiRoutesDir, dir, "route.ts"), "utf8");
-    assert.ok(source.includes("await requireUser();"), `app/api/ai/${dir} requires a signed-in user`);
-    assert.ok(source.includes("await enforceRateLimit("), `app/api/ai/${dir} enforces the rate limit`);
+  for (const file of routeFiles) {
+    const rel = file.slice(aiRoutesDir.length + 1);
+    const source = readFileSync(file, "utf8");
+    assert.ok(source.includes("await requireUser();"), `app/api/ai/${rel} requires a signed-in user`);
+    assert.ok(source.includes("await enforceRateLimit("), `app/api/ai/${rel} enforces the rate limit`);
     const authIndex = source.indexOf("await requireUser();");
     const limitIndex = source.indexOf("await enforceRateLimit(");
     const parseIndex = source.indexOf("parseJson(");
-    assert.ok(authIndex < limitIndex, `app/api/ai/${dir} authenticates BEFORE rate limiting (limits are per-user)`);
+    assert.ok(authIndex < limitIndex, `app/api/ai/${rel} authenticates BEFORE rate limiting (limits are per-user)`);
     if (parseIndex !== -1) {
-      assert.ok(limitIndex < parseIndex, `app/api/ai/${dir} rate-limits BEFORE parsing the request body`);
+      assert.ok(limitIndex < parseIndex, `app/api/ai/${rel} rate-limits BEFORE parsing the request body`);
     }
   }
 
   console.log(
-    `Security smoke tests passed: session-id handling, IP fallback, 401 mapping regression pin, provider-outage mapping, limiter config validation, production fail-closed 429, dev fail-open, and auth + rate-limit coverage across ${routeDirs.length} AI routes.`
+    `Security smoke tests passed: session-id handling, IP fallback, 401 mapping regression pin, provider-outage mapping, limiter config validation, production fail-closed 429, dev fail-open, and auth + rate-limit coverage across ${routeFiles.length} AI routes (recursive).`
   );
 }
 

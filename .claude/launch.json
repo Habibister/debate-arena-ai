@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "cd '/Users/tunaakdemir/Documents/Codex/2026-06-13/you-are-a-senior-startup-engineer' && exec npm run dev"],
+      "port": 3000
+    }
+  ]
+}

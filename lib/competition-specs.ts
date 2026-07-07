@@ -216,3 +216,37 @@ export async function getOfficialTestFormat(organization: Organization): Promise
     return null;
   }
 }
+
+// --- Registry-driven weighted scoring (Rubric Engine stage 2) ------------------------------------
+
+export type WeightedRubricCategory = { name: string; points: number };
+export type WeightedScoringRubric = {
+  eventName: string;
+  season: string;
+  verificationStatus: CompetitionSpec["verificationStatus"];
+  categories: WeightedRubricCategory[];
+  totalPoints: number;
+};
+
+// Returns a weighted rubric ONLY when every category carries a real point value (a genuine point
+// split we can compute a weighted sum from). Specs with any point-less category — e.g. Public Forum,
+// whose win is holistic — return null, so the judge keeps its existing behavior instead of faking a
+// weighted score. DECA HLM (5 PIs x 18 + Overall 10 = 100) qualifies; MT (single 50-pt category) does too.
+export async function getWeightedScoringRubric(organization: Organization, eventType?: string): Promise<WeightedScoringRubric | null> {
+  try {
+    const spec = await findSpecForEvent(organization, eventType);
+    if (!spec) return null;
+    const breakdown = await getSpecRubricBreakdown(spec);
+    if (breakdown.categories.length === 0) return null;
+    // Every category must have a positive point value, and all must be sourced (never weight a
+    // score with placeholder numbers).
+    const allPointed = breakdown.categories.every((c) => typeof c.points === "number" && c.points > 0 && c.provenance === "sourced");
+    if (!allPointed) return null;
+    const categories = breakdown.categories.map((c) => ({ name: c.name, points: c.points as number }));
+    const totalPoints = categories.reduce((sum, c) => sum + c.points, 0);
+    if (totalPoints <= 0) return null;
+    return { eventName: spec.eventName, season: spec.season, verificationStatus: spec.verificationStatus, categories, totalPoints };
+  } catch {
+    return null;
+  }
+}

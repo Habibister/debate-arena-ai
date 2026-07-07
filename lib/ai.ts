@@ -11,7 +11,7 @@ import {
 } from "@/lib/ai-providers";
 import { getAiPersona } from "@/lib/ai-personas";
 import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
-import { findSpecForEvent, getSpecRubricBreakdown } from "@/lib/competition-specs";
+import { findSpecForEvent, getSpecRubricBreakdown, getWeightedScoringRubric } from "@/lib/competition-specs";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
 import {
@@ -232,9 +232,26 @@ type PerformanceJudgeResult = {
   // Present only when an objection round was judged: prepared pitch vs. unscripted Q&A (0-100 each).
   presentationScore?: number;
   questioningScore?: number;
+  // "registry-weighted" = overallScore was computed in code as a weighted sum of the registry's
+  // sourced category points; "seed" = the built-in rubric engine produced it. Lets the UI say which.
+  scoringMode?: "registry-weighted" | "seed";
+  scoringBreakdown?: { category: string; score: number; points: number }[];
 };
 
 const DEV_AI_FALLBACK_NOTICE = "AI is temporarily unavailable, so we used a backup response.";
+
+// Pure, deterministic weighted average: overall (0-100) = sum(score_i * points_i) / sum(points_i),
+// with each category score clamped to 0-100. This is the Rubric Engine stage-2 math — exported so a
+// smoke test can assert internal consistency without a database or a provider.
+export function computeWeightedOverall(items: Array<{ score: number; points: number }>): number {
+  const totalPoints = items.reduce((sum, item) => sum + (item.points > 0 ? item.points : 0), 0);
+  if (totalPoints <= 0) return 0;
+  const weighted = items.reduce((sum, item) => {
+    const clamped = Math.max(0, Math.min(100, item.score));
+    return sum + clamped * (item.points > 0 ? item.points : 0);
+  }, 0);
+  return Math.round(weighted / totalPoints);
+}
 
 function compactRubric(categories: RubricCategorySeed[]) {
   return categories.map((category) => ({
@@ -1625,17 +1642,25 @@ export async function judgeDecaRoleplay(input: {
 }) {
   const rubric = rubricFor("DECA", input.eventType);
   const registry = await registryRubricForJudge("DECA", input.eventType);
+  // Rubric Engine stage 2: when the registry has a fully-sourced point split for this event, the AI
+  // scores each official category 0-100 and we compute the overall as a genuine weighted sum in code.
+  const weighted = await getWeightedScoringRubric("DECA", input.eventType);
 
-  // DECA's real judging distinguishes the prepared presentation from unscripted questioning. The
-  // registry rubric does not yet encode a point split for this, so we surface it as a labeled,
-  // structure-based split (not an official point weighting) only when an objection round happened.
   const splitInstruction = input.hasObjectionRound
     ? `
-This role-play included an OBJECTION ROUND: after the opening pitch, the ${"judge"} asked follow-up questions and the student answered under pressure. DECA judging weighs prepared presentation and unscripted questioning separately. Also return:
+This role-play included an OBJECTION ROUND: after the opening pitch, the judge asked follow-up questions and the student answered under pressure. DECA judging weighs prepared presentation and unscripted questioning separately. Also return:
 - presentationScore: number 0-100 for the prepared opening pitch
 - questioningScore: number 0-100 for how the student handled the unscripted follow-up questions
-(This prepared-vs-unscripted split reflects standard DECA role-play structure; the exact point weighting is not encoded in the registry, so treat both as 0-100 sub-scores, not official points.)`
+(This prepared-vs-unscripted split reflects standard DECA role-play structure; treat both as 0-100 sub-scores.)`
     : "";
+
+  // In weighted mode, the AI scores the exact official categories 0-100 and the code owns the
+  // overall. Otherwise it uses the built-in seed rubric and returns its own overall.
+  const categoryInstruction = weighted
+    ? `- categoryScores: an ARRAY with EXACTLY one entry per official rubric category below, each {"key": "<category name>", "label": "<category name>", "score": <0-100, how well the student met THIS category>, "reason": "<one sentence>"}. Use these category names verbatim: ${weighted.categories
+        .map((c) => `"${c.name}" (worth ${c.points} pts)`)
+        .join(", ")}. Score each 0-100 as a percentage of that category; do NOT compute an overall — the system computes it from your category scores and the official point weights.`
+    : `- categoryScores: an ARRAY (not an object) with one entry per rubric category above, each shaped {"key": "<rubric key>", "label": "<rubric label>", "score": <number within that category's scoreMin-scoreMax>, "reason": "<one sentence>"}`;
 
   const result = await jsonCompletion<PerformanceJudgeResult>(
     "You are an educational DECA judge for original practice roleplays and case studies. Do not judge like debate. Return JSON only.",
@@ -1647,18 +1672,36 @@ Shared speaking skills to score from 0-100: ${SHARED_SPEAKING_SKILLS.join(", ")}
 
 Focus on business scenario understanding, performance indicators, solution quality, business reasoning, creativity, feasibility, professional communication, organization, judge questions, and delivery.
 Return a single JSON object with EXACTLY these fields:
-- overallScore: number 0-100
-- categoryScores: an ARRAY (not an object) with one entry per rubric category above, each shaped {"key": "<rubric key>", "label": "<rubric label>", "score": <number within that category's scoreMin-scoreMax>, "reason": "<one sentence>"}
+- overallScore: number 0-100${weighted ? " (provisional — the system overrides this with the weighted sum)" : ""}
+${categoryInstruction}
 - sharedSpeaking: object with numeric 0-100 values for exactly: clarity, confidence, pacing, volume, organization, vocabulary, persuasion, professionalism
 - strengths, weaknesses, improvementAdvice: arrays of strings
 - recommendedLessons: array of {"lessonSlug": string, "reason": string, "priority": "high" | "medium" | "low"}
 - judgeQuestionFeedback: array of strings
 - readinessForNextLevel: {"ready": boolean, "rationale": string, "nextMilestone": string}${splitInstruction}
-${registry ? registry.promptBlock : ""}`,
+${!weighted && registry ? registry.promptBlock : ""}`,
     () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
     "DECA judge",
     isValidPerformanceJudge
   );
+
+  if (weighted) {
+    // Match each official category to its sourced point weight, then compute the overall in code.
+    const pointsByName = new Map(weighted.categories.map((c) => [c.name.toLowerCase(), c.points]));
+    const items = result.categoryScores
+      .map((cs) => ({ category: cs.label || cs.key, score: cs.score, points: pointsByName.get((cs.label || cs.key).toLowerCase()) ?? 0 }))
+      .filter((item) => item.points > 0);
+    if (items.length > 0) {
+      result.overallScore = computeWeightedOverall(items);
+      result.scoringMode = "registry-weighted";
+      result.scoringBreakdown = items;
+    } else {
+      result.scoringMode = "seed";
+    }
+  } else {
+    result.scoringMode = "seed";
+  }
+
   if (registry) {
     result.rubricSource = registry.tag;
   }

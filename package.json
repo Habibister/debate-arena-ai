@@ -13,6 +13,7 @@
     "security:smoke": "tsx scripts/security-smoke.ts",
     "judge:smoke": "tsx scripts/judge-quality-smoke.ts",
     "judge-shape:smoke": "tsx scripts/judge-shape-smoke.ts",
+    "rubric-scoring:smoke": "tsx scripts/rubric-scoring-smoke.ts",
     "auth:smoke": "tsx scripts/auth-smoke.ts",
     "audio-debate:smoke": "tsx scripts/audio-debate-smoke.ts",
     "team:smoke": "tsx scripts/team-smoke.ts",

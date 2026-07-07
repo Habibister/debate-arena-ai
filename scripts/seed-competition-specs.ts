@@ -64,7 +64,7 @@ const specs: SpecSeed[] = [
       totalPoints: null,
       categories: [
         { name: "Win/Loss decision", description: "Holistic judge decision on the resolution — no fixed public point rubric" },
-        { name: "Speaker points", points: 30, description: "PLACEHOLDER: common 20-30 scale; varies by tournament/ballot" }
+        { name: "Speaker points", points: 30, description: "Sourced: 0-30 speaker-point scale (in practice ~25-30, 27.5 an average speech). This is the per-speaker quality dimension; it does NOT determine the win, which is holistic." }
       ],
       notes: "PF is judged holistically. Do not present a point rubric as official NSDA scoring."
     },
@@ -82,12 +82,13 @@ const specs: SpecSeed[] = [
     ],
     officialReferences: [
       { label: "NSDA Competition Events (governing org for PF)", url: "https://www.speechanddebate.org/topics/" },
+      { label: "NSDA Public Forum Debate Ballot", url: "https://www.speechanddebate.org/public-forum-debate-ballot/" },
       { label: "Public Forum structure overview", url: "https://en.wikipedia.org/wiki/Public_forum_debate" }
     ],
     fieldNotes: {
       roundStructure: "sourced (speech order + times cross-checked against NSDA-aligned references, 2025-26 format with 3-min summaries)",
       prepTime: "sourced (3 minutes per team is the NSDA standard)",
-      rubric: "placeholder (PF has no fixed public point rubric; speaker-point scale varies)",
+      rubric: "partly sourced (speaker points 0-30 scale is sourced; the WIN is holistic with no public point rubric — deliberately not a weighted sum)",
       penalties: "sourced (no-new-arguments-in-Final-Focus is standard)",
       aiAssistanceRestrictions: "placeholder (verify current NSDA AI policy)",
       stateVariations: "sourced (tournament variance is well documented)"

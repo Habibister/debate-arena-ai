@@ -54,6 +54,14 @@ const skillCatalog: Array<{
     lessons: ["Flowing attacks", "Answering turns", "Collapsing to winning issues"]
   },
   {
+    organization: "DEBATE",
+    track: "DEBATE",
+    name: "Weighing",
+    slug: "debate-weighing",
+    description: "Compare impacts (magnitude, probability, timeframe, reversibility) and tell the judge which should decide the round.",
+    lessons: ["Magnitude vs. probability", "Timeframe and reversibility", "Framework before impacts"]
+  },
+  {
     organization: "MODEL_UN",
     track: "MODEL_UN",
     name: "Resolution Writing",

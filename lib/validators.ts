@@ -443,3 +443,19 @@ export const munJudgeRequestSchema = z.object({
 export const argumentFlowRequestSchema = z.object({
   debateId: z.string().min(1).max(60)
 });
+
+// --- General Debate concept drills ---
+
+const drillAreaSchema = z.enum(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing"]);
+
+export const debateDrillSessionRequestSchema = z.object({
+  count: z.number().int().min(1).max(40),
+  areas: z.array(drillAreaSchema).max(4).optional()
+});
+
+export const debateDrillSubmitRequestSchema = z.object({
+  answers: z
+    .array(z.object({ id: z.string().min(1).max(20), selected: z.string().min(1).max(400) }))
+    .min(1)
+    .max(40)
+});

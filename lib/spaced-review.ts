@@ -117,3 +117,71 @@ export async function getDueReviews(userId: string): Promise<DueReview[]> {
     return [];
   }
 }
+
+// --- Drill mastery write (shared by concept-drill submit routes) ------------------------------
+// Writes real MasteryProgress AND spaced review for one skill, consistently and honestly:
+// - masteryPercent rises toward the demonstrated score, but a FAILED due review knocks it DOWN to
+//   what was actually shown (mastery must survive review — no ratcheting past a failed reassessment)
+// - resolves the skill by slug and no-ops gracefully if the skill isn't seeded yet (never fakes it)
+// Returns whether it actually wrote (skill existed), so callers can report honestly.
+
+function masteryLevelFor(score: number): "MASTERED" | "PRACTICING" | "LEARNING" {
+  if (score >= 85) return "MASTERED";
+  if (score >= 70) return "PRACTICING";
+  return "LEARNING";
+}
+
+export async function recordDrillMastery(params: {
+  userId: string;
+  skillSlug: string;
+  scorePercent: number;
+  passed: boolean;
+}): Promise<boolean> {
+  const { userId, skillSlug, scorePercent, passed } = params;
+  try {
+    const skill = await prisma.skill.findUnique({ where: { slug: skillSlug }, select: { id: true } });
+    if (!skill) return false; // skill not seeded — do not fabricate progress
+
+    const dueForReview = await isReviewDue(userId, skill.id);
+    const existing = await prisma.masteryProgress.findUnique({
+      where: { userId_skillId: { userId, skillId: skill.id } },
+      select: { id: true, masteryPercent: true }
+    });
+    // Failed DUE review => honest knock-down to the demonstrated score; otherwise ratchet up.
+    const nextMastery =
+      dueForReview && !passed
+        ? Math.min(existing?.masteryPercent ?? 0, scorePercent)
+        : Math.min(100, Math.max(existing?.masteryPercent ?? 0, scorePercent));
+
+    if (existing) {
+      await prisma.masteryProgress.update({
+        where: { id: existing.id },
+        data: {
+          masteryLevel: masteryLevelFor(nextMastery),
+          masteryPercent: nextMastery,
+          correctCount: { increment: passed ? 1 : 0 },
+          incorrectCount: { increment: passed ? 0 : 1 },
+          lastPracticedAt: new Date()
+        }
+      });
+    } else {
+      await prisma.masteryProgress.create({
+        data: {
+          userId,
+          skillId: skill.id,
+          masteryLevel: masteryLevelFor(nextMastery),
+          masteryPercent: nextMastery,
+          correctCount: passed ? 1 : 0,
+          incorrectCount: passed ? 0 : 1,
+          lastPracticedAt: new Date()
+        }
+      });
+    }
+
+    await recordPracticeOutcome({ userId, skillId: skill.id, passed });
+    return true;
+  } catch {
+    // never break practice if the write fails
+    return false;
+  }
+}

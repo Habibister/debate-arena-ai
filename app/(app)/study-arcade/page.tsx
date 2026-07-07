@@ -3,6 +3,7 @@ import type { Route } from "next";
 import { getServerSession } from "next-auth";
 import { BookOpenCheck, Gamepad2, Layers3, PlayCircle, RotateCcw, Sparkles } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
+import { DebateDrills } from "@/components/training/debate-drills";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
@@ -112,6 +113,10 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
           </div>
         </div>
       </div>
+
+      {/* General Debate has no flashcard decks; its drills are the argument/rebuttal/evidence/weighing
+          concept reps that feed mastery + spaced review. */}
+      {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills /> : null}
 
       <Card>
         <CardHeader>

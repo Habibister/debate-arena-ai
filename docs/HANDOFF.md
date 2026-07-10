@@ -19,19 +19,23 @@ detail genuinely worth keeping.
 
 ## Latest handoff
 
-- **Task attempted:** Create the compact Claude project operating system (docs + agents + commands). No
-  application code changed.
+- **Task attempted:** Study Arcade depth — General Debate concept-drill bank wired to mastery + spaced
+  review.
 - **Branch:** `main`
-- **Starting commit:** `af75a82`
-- **Ending commit:** _(this commit: "Add compact Claude project operating system")_
-- **Files changed:** `CLAUDE.md` (new); `docs/` MASTER_PLAN (rewritten), CURRENT_STATE, DECISIONS,
-  NEXT_TASK, HANDOFF, CONTEXT_INDEX, FABLE_WORKFLOW (new); `.claude/agents/*` (5), `.claude/commands/*` (6),
-  `.claude/launch.json`.
-- **Behavior changed:** None — documentation and agent/command config only.
-- **Tests run:** None required (no app code changed), per task scope. Build/smoke unchanged from `af75a82`.
-- **Browser/preview checks:** None (no runtime change).
-- **Unresolved issues:** None from this task.
-- **Known risks:** None to runtime. Future sessions must actually follow `CONTEXT_INDEX.md` routing to get
-  the token savings.
-- **Next exact step:** Execute `docs/NEXT_TASK.md` (source DECA's current per-category point split, or
-  confirm it stays blocked).
+- **Starting commit:** `987f171`
+- **Ending commit:** `4fdacc3` (+ docs refresh commit)
+- **Files changed:** `lib/debate-drills.ts` (new bank), `lib/spaced-review.ts` (`recordDrillMastery`),
+  `app/api/debate/drills/{session,submit}/route.ts`, `components/training/debate-drills.tsx`,
+  `app/(app)/study-arcade/page.tsx`, `lib/validators.ts`, `prisma/seed.ts` (debate-weighing skill),
+  `scripts/debate-drills-smoke.ts`, `package.json`.
+- **Behavior changed:** General Debate now has 36 original drill questions across 4 skills in the Study
+  Arcade; each session writes real MasteryProgress + SkillReviewSchedule per skill (no fake progress).
+- **Tests run:** `npm run build` (pass); all 15 `*:smoke` suites (pass), incl. new `debate-drills:smoke`.
+- **Browser/preview checks:** Verified live in prod — mixed + weighing-only drills; all 4 skills write
+  mastery (MASTERED) + review (ladder advances). Auth gate: 401 unauthenticated. Arcade shows drills for
+  General Debate only, not other tracks.
+- **Unresolved issues:** None. `debate-weighing` was seeded surgically (idempotent upsert), not via full
+  `db:seed` (which non-idempotently creates demo PracticeTests).
+- **Known risks:** None to runtime.
+- **Next exact step:** `docs/NEXT_TASK.md` still holds the DECA per-category point-split sourcing milestone
+  (blocked pending a current authoritative source).

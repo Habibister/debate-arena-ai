@@ -2,10 +2,10 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-07-07_
+_Last updated: 2026-07-08_
 
 - **Branch:** `main`
-- **Latest relevant commit:** `af75a82` — registry-driven weighted-scoring engine (Rubric Engine stage 2)
+- **Latest relevant commit:** `4fdacc3` — General Debate concept-drill bank wired to mastery + spaced review
 
 ## Working features (verified this week)
 
@@ -17,16 +17,26 @@ _Last updated: 2026-07-07_
   spaced-review wiring.
 - Model UN: practice sandbox (committee mechanics + AI-inferred policy brief + 4-dimension rapporteur),
   labeled non-official.
+- General Debate drill depth: 36 original concept questions across 4 skills (claim/warrant/impact,
+  rebuttal, evidence evaluation, weighing) in the Study Arcade; each writes real MasteryProgress +
+  spaced review per skill. All 4 skills seeded and verified live.
 - Spaced reassessment, Study Arcade, nav IA, coach teams/assignments.
 - Rubric Engine: weighted-scoring engine built + smoke-tested; wired live for HOSA MT (registry-normalized
   points). Dormant for DECA (see blockers).
+
+## Track drill depth (real content feeding MasteryProgress)
+
+- **HOSA MT:** real — 54-question bank + spaced review.
+- **General Debate:** real — 36-question concept bank across 4 seeded skills + written-response drill.
+- **DECA:** thin — role-play judging writes no drill mastery; sourcing blocked (see below).
+- **Model UN:** empty — placeholder sandbox, no drills.
 
 ## Known broken / partial
 
 - **Model UN registry spec is PLACEHOLDER** — sandbox only, no sourced conference.
 - **DECA non-Hospitality clusters** degrade to labeled generic practice (no sourced PIs).
 - **DECA HLM per-category point split is placeholder** — weighted scoring dormant until sourced.
-- No unit-test runner; safety net is `*:smoke` scripts.
+- No unit-test runner; safety net is `*:smoke` scripts (15 suites).
 
 ## Gemini status
 
@@ -52,9 +62,9 @@ All AI routes gated (auth + rate-limit, auth-before-limit-before-parse); `apiErr
 
 ## Tests known to pass
 
-`npm run build`, `typecheck`, `lint`, and all 14 `*:smoke` suites (security, judge, judge-shape,
-rubric-scoring, auth, audio-debate, team, assignment, games, tracks, side-coach, debate-replay,
-learning-path, avatar).
+`npm run build`, `typecheck`, `lint`, and all 15 `*:smoke` suites (security, judge, judge-shape,
+rubric-scoring, debate-drills, auth, audio-debate, team, assignment, games, tracks, side-coach,
+debate-replay, learning-path, avatar).
 
 ## Immediate next task
 

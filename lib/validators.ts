@@ -459,3 +459,16 @@ export const debateDrillSubmitRequestSchema = z.object({
     .min(1)
     .max(40)
 });
+
+// --- DECA concept drills (concept-level only; NOT role-play scoring) ---
+
+const decaDrillAreaSchema = z.enum(["performance-indicators", "business-reasoning", "customer-relations", "marketing-fundamentals"]);
+
+export const decaDrillSessionRequestSchema = z.object({
+  count: z.number().int().min(1).max(40),
+  areas: z.array(decaDrillAreaSchema).max(4).optional()
+});
+
+export const decaDrillSubmitRequestSchema = z.object({
+  answers: z.array(z.object({ id: z.string().min(1).max(20), selected: z.string().min(1).max(400) })).min(1).max(40)
+});

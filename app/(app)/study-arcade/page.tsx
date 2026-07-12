@@ -3,7 +3,9 @@ import type { Route } from "next";
 import { getServerSession } from "next-auth";
 import { BookOpenCheck, Gamepad2, Layers3, PlayCircle, RotateCcw, Sparkles } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
+import { ConceptDrills } from "@/components/training/concept-drills";
 import { DebateDrills } from "@/components/training/debate-drills";
+import { DECA_DRILL_AREAS } from "@/lib/deca-drills";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
@@ -117,6 +119,18 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
       {/* General Debate has no flashcard decks; its drills are the argument/rebuttal/evidence/weighing
           concept reps that feed mastery + spaced review. */}
       {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills /> : null}
+
+      {/* DECA concept drills (performance indicators, business reasoning, customer relations, marketing)
+          — concept-level practice that feeds mastery + spaced review, separate from role-play judging. */}
+      {!activeTrack || activeTrack.id === "DECA" ? (
+        <ConceptDrills
+          sessionEndpoint="/api/deca/drills/session"
+          submitEndpoint="/api/deca/drills/submit"
+          areas={DECA_DRILL_AREAS.map((a) => ({ id: a.id, label: a.label }))}
+          title="DECA concept drills"
+          blurb="Original multiple-choice reps on core DECA concepts — performance indicators, business reasoning, customer relations, and marketing. Every answer gets an explanation, and your real scores feed mastery + spaced review."
+        />
+      ) : null}
 
       <Card>
         <CardHeader>

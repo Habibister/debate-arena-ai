@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Level } from "@prisma/client";
-import { CircleAlert, Loader2, MessageSquareQuote, ShieldCheck, Sparkles } from "lucide-react";
+import { CircleAlert, Clock, Loader2, MessageSquareQuote, PlayCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { DECA_CLUSTERS } from "@/lib/training-tracks";
+import type { OfficialPrepProps } from "./track-practice-setup";
 
 const LEVELS: Level[] = ["BEGINNER", "INTERMEDIATE", "ELITE"];
 
@@ -39,7 +41,7 @@ type JudgeResult = {
 
 const EVENT_NAME = "Hotel and Lodging Management Series";
 
-export function DecaRoleplay() {
+export function DecaRoleplay({ mode = "practice", officialPrep }: { mode?: "practice" | "simulation"; officialPrep?: OfficialPrepProps | null }) {
   const [level, setLevel] = useState<Level>("BEGINNER");
   const [cluster, setCluster] = useState("Hospitality & Tourism");
   const [studentRole, setStudentRole] = useState("front desk manager");
@@ -53,6 +55,56 @@ export function DecaRoleplay() {
 
   const [busy, setBusy] = useState<null | "scenario" | "objections" | "judge">(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Full Simulation mode chains the same three AI calls into one timed round: official prep clock →
+  // pitch → objections → ballot. Both clocks are registry-driven (officialPrep comes from the HLM spec).
+  // When the registry has no prep data we degrade to an untimed flow rather than inventing a fake clock.
+  const isSim = mode === "simulation";
+  const prepTotal = (officialPrep?.prepMinutes ?? 0) * 60;
+  const performTotal = (officialPrep?.performMinutes ?? 0) * 60;
+  const hasPrepClock = isSim && prepTotal > 0;
+  const [prepSecondsLeft, setPrepSecondsLeft] = useState(prepTotal);
+  const [prepRunning, setPrepRunning] = useState(false);
+  const [prepDone, setPrepDone] = useState(false);
+  const [performSecondsLeft, setPerformSecondsLeft] = useState(performTotal);
+  const [performRunning, setPerformRunning] = useState(false);
+
+  const pitchUnlocked = !hasPrepClock || prepDone;
+  const clock = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  function beginPerformance() {
+    setPrepRunning(false);
+    setPrepDone(true);
+    if (performTotal > 0) setPerformRunning(true);
+  }
+
+  function resetClocks() {
+    setPrepSecondsLeft(prepTotal);
+    setPrepRunning(false);
+    setPrepDone(false);
+    setPerformSecondsLeft(performTotal);
+    setPerformRunning(false);
+  }
+
+  useEffect(() => {
+    if (!prepRunning || prepSecondsLeft <= 0) return;
+    const timer = window.setInterval(() => setPrepSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [prepRunning, prepSecondsLeft]);
+
+  // Prep hitting zero auto-advances into the performance phase (unlocks the pitch), mirroring a real round.
+  useEffect(() => {
+    if (!(hasPrepClock && prepRunning && prepSecondsLeft === 0)) return;
+    setPrepRunning(false);
+    setPrepDone(true);
+    if (performTotal > 0) setPerformRunning(true);
+  }, [hasPrepClock, prepRunning, prepSecondsLeft, performTotal]);
+
+  useEffect(() => {
+    if (!performRunning || performSecondsLeft <= 0) return;
+    const timer = window.setInterval(() => setPerformSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [performRunning, performSecondsLeft]);
 
   async function call<T>(url: string, body: unknown): Promise<T> {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -68,6 +120,7 @@ export function DecaRoleplay() {
     setObjections(null);
     setResult(null);
     setPitch("");
+    resetClocks();
     try {
       const data = await call<Scenario>("/api/ai/deca-scenario", {
         level,
@@ -143,11 +196,22 @@ export function DecaRoleplay() {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
-            <MessageSquareQuote className="h-5 w-5 text-primary" aria-hidden />
-            Guided role-play with objection round
+            {isSim ? (
+              <PlayCircle className="h-5 w-5 text-primary" aria-hidden />
+            ) : (
+              <MessageSquareQuote className="h-5 w-5 text-primary" aria-hidden />
+            )}
+            {isSim ? "DECA Full Simulation — timed round" : "Guided role-play with objection round"}
           </CardTitle>
-          <Badge variant="secondary">DECA</Badge>
+          <Badge variant="secondary">{isSim ? "Full Simulation" : "DECA"}</Badge>
         </div>
+        {isSim ? (
+          <p className="mt-1 text-sm text-muted-foreground">
+            One continuous timed round: official prep clock → opening pitch → the judge&apos;s objection round → scored
+            ballot. It chains the same registry-backed scenario, questions, and rubric as guided practice — no separate
+            AI path.
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -218,7 +282,52 @@ export function DecaRoleplay() {
           </div>
         ) : null}
 
-        {scenario && !result ? (
+        {hasPrepClock && scenario && !prepDone && !result ? (
+          <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <Clock className="h-4 w-4 text-primary" aria-hidden />
+                Official prep — {officialPrep?.prepMinutes} min
+              </p>
+              <p className="font-mono text-lg font-bold tabular-nums" aria-live="polite">{clock(prepSecondsLeft)}</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Plan your pitch. It unlocks when prep runs out — or start early when you&apos;re ready.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPrepRunning((r) => !r)}
+                className={cn(
+                  "focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold",
+                  prepRunning ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                )}
+              >
+                {prepRunning ? "Pause prep" : prepSecondsLeft === prepTotal ? "Start prep" : "Resume prep"}
+              </button>
+              <Button type="button" variant="outline" onClick={beginPerformance}>
+                <PlayCircle className="h-4 w-4" aria-hidden />
+                Begin pitch now
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Per the {officialPrep?.eventName} {officialPrep?.season} specification
+              {officialPrep?.verificationStatus !== "VERIFIED" ? " (partially verified)" : ""}.
+            </p>
+          </div>
+        ) : null}
+
+        {isSim && prepDone && !result && performTotal > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Clock className="h-4 w-4 text-primary" aria-hidden />
+              Performance time with the judge
+            </p>
+            <p className="font-mono text-lg font-bold tabular-nums" aria-live="polite">{clock(performSecondsLeft)}</p>
+          </div>
+        ) : null}
+
+        {scenario && !result && pitchUnlocked ? (
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Your opening pitch</span>
             <Textarea
@@ -231,7 +340,7 @@ export function DecaRoleplay() {
           </label>
         ) : null}
 
-        {scenario && !objections && !result ? (
+        {scenario && !objections && !result && pitchUnlocked ? (
           <Button type="button" variant="outline" onClick={askObjections} disabled={busy !== null || pitch.trim().length < 8}>
             {busy === "objections" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquareQuote className="h-4 w-4" aria-hidden />}
             {busy === "objections" ? "The judge is thinking..." : "Submit pitch — face the judge's questions"}

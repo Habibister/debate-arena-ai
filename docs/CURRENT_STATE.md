@@ -2,10 +2,11 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-07-08_
+_Last updated: 2026-07-11_
 
 - **Branch:** `main`
-- **Latest relevant commit:** `4fdacc3` — General Debate concept-drill bank wired to mastery + spaced review
+- **Latest relevant commit:** DECA Full Simulation (this milestone); preceding `baba32c` — DECA concept-drill
+  bank wired to mastery + spaced review
 
 ## Working features (verified this week)
 
@@ -13,6 +14,13 @@ _Last updated: 2026-07-08_
 - Competition Specification Registry: schema, APIs, attribution banners, 4 seeded specs.
 - Debate: AI opponent + judge (registry-attributed) + argument-flow analyzer in replay.
 - DECA: registry-sourced role-play scenarios, in-character objection rounds, split scoring.
+- DECA concept drills: 36 original questions across 4 areas (performance indicators, business reasoning,
+  customer relations, marketing) in the Study Arcade; graded server-side, writes real MasteryProgress +
+  spaced review per skill (only `deca-marketing` is seeded today, so the other 3 skip honestly).
+- DECA Full Simulation: one timed end-to-end round in the Study Arcade (official prep clock → pitch →
+  objection round → scored ballot) chaining the existing registry role-play AI + rubric — no new AI path.
+  Provenance honest: registry attribution only on the Hospitality/HLM path; weighted scoring stays dormant
+  (HLM point split placeholder), ballot degrades to seed mode.
 - HOSA Medical Terminology: 54 original questions, official 50q/60min mode, confidence + explanations,
   spaced-review wiring.
 - Model UN: practice sandbox (committee mechanics + AI-inferred policy brief + 4-dimension rapporteur),
@@ -28,7 +36,10 @@ _Last updated: 2026-07-08_
 
 - **HOSA MT:** real — 54-question bank + spaced review.
 - **General Debate:** real — 36-question concept bank across 4 seeded skills + written-response drill.
-- **DECA:** thin — role-play judging writes no drill mastery; sourcing blocked (see below).
+- **DECA:** real concept bank — 36 questions across 4 areas + Full Simulation timed round. Mastery
+  writes for `deca-marketing` today; the other 3 skills (`deca-performance-indicators`,
+  `deca-business-reasoning`, `deca-customer-relations`) skip honestly until seeded (surgical upsert
+  pending). Role-play judging still writes no drill mastery; point-split sourcing blocked (see below).
 - **Model UN:** empty — placeholder sandbox, no drills.
 
 ## Known broken / partial
@@ -36,7 +47,7 @@ _Last updated: 2026-07-08_
 - **Model UN registry spec is PLACEHOLDER** — sandbox only, no sourced conference.
 - **DECA non-Hospitality clusters** degrade to labeled generic practice (no sourced PIs).
 - **DECA HLM per-category point split is placeholder** — weighted scoring dormant until sourced.
-- No unit-test runner; safety net is `*:smoke` scripts (15 suites).
+- No unit-test runner; safety net is `*:smoke` scripts (16 suites).
 
 ## Gemini status
 
@@ -62,13 +73,17 @@ All AI routes gated (auth + rate-limit, auth-before-limit-before-parse); `apiErr
 
 ## Tests known to pass
 
-`npm run build`, `typecheck`, `lint`, and all 15 `*:smoke` suites (security, judge, judge-shape,
-rubric-scoring, debate-drills, auth, audio-debate, team, assignment, games, tracks, side-coach,
-debate-replay, learning-path, avatar).
+`npm run build`, `typecheck`, `lint`, and all 16 `*:smoke` suites (security, judge, judge-shape,
+rubric-scoring, debate-drills, deca-drills, auth, audio-debate, team, assignment, games, tracks,
+side-coach, debate-replay, learning-path, avatar).
 
 ## Immediate next task
 
-See `docs/NEXT_TASK.md` — Rubric Engine stage 2: source DECA's current per-category point split.
+Track Simulations, remaining tracks (sequenced follow-ups to the DECA Full Simulation):
+**HOSA Medical Terminology** — client-timed official 50-item/60-min exam round (no DB change); and
+**Public Forum** — surface the existing debate chain as a registry-attributed Full Simulation (no
+crossfire modeling). Also still open: `docs/NEXT_TASK.md` — Rubric Engine stage 2 (source DECA's current
+per-category point split) and the surgical seed of the 3 unseeded DECA drill skills.
 
 ## Blockers
 

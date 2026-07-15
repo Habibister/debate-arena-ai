@@ -1708,6 +1708,57 @@ ${!weighted && registry ? registry.promptBlock : ""}`,
   return result;
 }
 
+function fallbackHosaScenario(input: { category: string; studentRole: string; characterRole: string }): RoleplayScenario {
+  return {
+    scenario: `You are the ${input.studentRole} in a ${input.category.toLowerCase()} situation. The ${input.characterRole} presents a common health-science concern and asks how you would respond. Communicate clearly, use correct terminology, and keep your response safe and role-appropriate.`,
+    judgeCharacter: `The AI plays the ${input.characterRole}, reacting as that person naturally would in a real health-science setting.`,
+    performanceIndicators: [
+      "Accuracy of health-science knowledge and terminology",
+      "Safe, appropriate, and professional response",
+      "Clear communication and empathy"
+    ],
+    piSource: "generic",
+    fallbackNotice: "No competition specification covers this interactive event, so this is generic practice — focus points are not official."
+  };
+}
+
+// Generate a HOSA health-science role-play scenario for PRACTICE. HOSA's only verified spec is Medical
+// Terminology, which is a written exam — so these interactive scenarios have NO official spec and are
+// ALWAYS generic practice, clearly labeled and never presented as official. (Contrast the DECA HLM path,
+// which can attribute to a real spec.)
+export async function generateHosaScenario(input: {
+  level: Level;
+  category: string; // a HOSA practice category (e.g. "Case-study practice")
+  studentRole: string;
+  characterRole: string; // who the AI plays (patient, family member, client, panel)
+}): Promise<RoleplayScenario> {
+  const fallback = () =>
+    fallbackHosaScenario({ category: input.category, studentRole: input.studentRole, characterRole: input.characterRole });
+
+  const result = (await jsonCompletion<RoleplayScenario>(
+    `You author authentic HOSA health-science practice role-plays. The interlocutor (the "${input.characterRole}") is a real person in a health-science setting (patient, family member, client, or panel), never an AI assistant — they have a goal, a tone, and human context. Health and safety accuracy matters. Return JSON only.`,
+    `Create a ${input.level} HOSA health-science practice role-play.
+Practice category: ${input.category}
+Student plays: ${input.studentRole}
+The AI plays (in character): ${input.characterRole}
+No official HOSA specification covers this interactive event, so propose 3 reasonable GENERIC practice focus points — they are NOT official evaluation criteria.
+
+Return a single JSON object with EXACTLY these fields:
+- scenario: 3-5 sentences describing the health-science situation the student must handle, appropriate and safe
+- judgeCharacter: 1-2 sentences describing who the ${input.characterRole} is and how they behave (their goal, tone, and what would concern them)
+- performanceIndicators: array of 3 GENERIC practice focus points (clearly not official)`,
+    fallback,
+    "HOSA roleplay scenario"
+  )) as RoleplayScenario;
+
+  // HOSA interactive scenarios never have a verified spec — always generic, never official.
+  result.piSource = "generic";
+  result.fallbackNotice =
+    result.fallbackNotice ??
+    "No official HOSA specification covers this interactive event, so this is generic practice — focus points are not official evaluation criteria.";
+  return result;
+}
+
 export async function judgeHosaPerformance(input: {
   level: Level;
   eventType: string;

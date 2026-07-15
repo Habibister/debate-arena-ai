@@ -185,7 +185,7 @@ export function composePractice(
       eventType: `DECA ${cluster} Role Play`,
       practiceMode: "ROLEPLAY",
       sourceLabel,
-      topic: `${sourceLabel} — ${cluster} role play. You are the ${role}; the AI plays the ${participant}. Objective/scenario: ${scenario || "respond to the business situation and make a recommendation."}${pis}`
+      topic: `${sourceLabel} — ${cluster} role play (you: ${role}; AI: ${participant})${scenario ? `: ${scenario}` : ""}${pis}`
     };
   }
 
@@ -210,7 +210,7 @@ export function composePractice(
       eventType: `HOSA — ${category}`,
       practiceMode: "DEBATE",
       sourceLabel,
-      topic: `${sourceLabel} — ${category}. ${scenario || "Work through this health-science practice item using correct terminology and safe, role-appropriate reasoning."}`
+      topic: `${sourceLabel} — ${category} practice${scenario ? `: ${scenario}` : ""}`
     };
   }
 

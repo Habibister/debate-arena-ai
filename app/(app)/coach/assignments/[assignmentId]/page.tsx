@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocalDate } from "@/components/ui/local-date";
 import { Progress } from "@/components/ui/progress";
 import { assignmentStatusLabel, assignmentTypeLabel, completionStats } from "@/lib/assignment-types";
 import { getAssignedStudentIds, getCoachAssignmentDetail } from "@/lib/assignments";
@@ -27,7 +28,7 @@ function evidenceHref(evidenceType?: string | null, evidenceId?: string | null) 
 
 function dateLabel(date?: Date | null) {
   if (!date) return "No due date";
-  return date.toLocaleString();
+  return <LocalDate value={date} mode="datetime" />;
 }
 
 export default async function CoachAssignmentDetailPage({ params }: { params: { assignmentId: string } }) {
@@ -134,7 +135,7 @@ export default async function CoachAssignmentDetailPage({ params }: { params: { 
                       <Badge variant={status === "COMPLETED" ? "secondary" : status === "IN_PROGRESS" ? "accent" : "outline"}>
                         {assignmentStatusLabel(status)}
                       </Badge>
-                      {submission?.completedAt ? <Badge variant="outline">Completed {submission.completedAt.toLocaleDateString()}</Badge> : null}
+                      {submission?.completedAt ? <Badge variant="outline">Completed <LocalDate value={submission.completedAt} /></Badge> : null}
                     </div>
                   </div>
                   {submission?.notes ? <p className="mt-3 rounded-md border bg-muted/40 p-3 text-sm leading-6 text-muted-foreground">{submission.notes}</p> : null}

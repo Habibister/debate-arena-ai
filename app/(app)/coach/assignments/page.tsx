@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocalDate } from "@/components/ui/local-date";
 import { assignmentTypeLabel, completionStats } from "@/lib/assignment-types";
 import { getAssignedStudentIds, getCoachAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 function dueLabel(date?: Date | null) {
   if (!date) return "No due date";
-  return `Due ${date.toLocaleDateString()}`;
+  return <>Due <LocalDate value={date} /></>;
 }
 
 export default async function CoachAssignmentsPage() {

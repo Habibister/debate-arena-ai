@@ -6,6 +6,7 @@ import type { Route } from "next";
 import { History, PlayCircle, X } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LocalDate } from "@/components/ui/local-date";
 import { draftKey } from "@/lib/debate-drafts";
 
 export type ResumeDebate = {
@@ -19,7 +20,7 @@ export type ResumeDebate = {
   sideLabel: string;
   opponentLabel: string;
   statusLabel: string;
-  updatedLabel: string;
+  updatedIso: string;
 };
 
 // Dashboard recovery prompt for debates that were left mid-session (SETUP/ACTIVE). Continue reopens the
@@ -68,7 +69,7 @@ export function ResumeDebatesCard({ debates, isPractice = false }: { debates: Re
                 {debate.showOpponent ? ` · ${debate.sideLabel} · vs ${debate.opponentLabel}` : ""}
               </p>
               <p className="text-xs text-muted-foreground">
-                {debate.statusLabel} · Last active {debate.updatedLabel}
+                {debate.statusLabel} · Last active <LocalDate value={debate.updatedIso} />
               </p>
             </div>
             <div className="flex items-center gap-2">

@@ -47,9 +47,11 @@ _Last updated: 2026-07-11_
 - **Model UN registry spec is PLACEHOLDER** — sandbox only, no sourced conference.
 - **DECA non-Hospitality clusters** degrade to labeled generic practice (no sourced PIs).
 - **DECA HLM per-category point split is placeholder** — weighted scoring dormant until sourced.
-- **HOSA/MUN still route through the legacy generic debate room; HOSA needs the DECA-style guided
-  treatment** (parity work queued next). DECA no longer renders the generic `TrackPracticeSetup`
-  launcher — it is fully served by DecaRoleplay + Full Simulation.
+- **Non-MT HOSA categories are generic (labeled) practice** — only Medical Terminology is verified. The
+  new interactive health-science role-play (`HosaRoleplay` + `/api/ai/hosa-scenario`) is AI-generated
+  generic practice, clearly labeled, never scored as official. DECA, HOSA, and MUN no longer route into
+  the legacy generic `/debate` room (MUN never did — it uses its committee sandbox); that room is
+  General-Debate-only. The generic `TrackPracticeSetup` launcher is no longer rendered for any track.
 - No unit-test runner; safety net is `*:smoke` scripts (16 suites).
 
 ## Gemini status

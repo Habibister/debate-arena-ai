@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocalDate } from "@/components/ui/local-date";
 import { Progress } from "@/components/ui/progress";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
@@ -62,7 +63,7 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
 
   const { student, membership, debate, skills, tests, study, recommendations } = data;
   const masteryDisplay = data.masteryPercent === 0 && !data.hasAnyActivity ? "Not started" : `${data.masteryPercent}%`;
-  const joinedLabel = membership.joinedAt ? new Date(membership.joinedAt).toLocaleDateString() : "—";
+  const joinedLabel = membership.joinedAt ? <LocalDate value={membership.joinedAt} /> : "—";
 
   return (
     <div className="space-y-6">
@@ -131,7 +132,7 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{round.topic}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(round.createdAt).toLocaleDateString()} · {round.status.toLowerCase()}
+                            <LocalDate value={round.createdAt} /> · {round.status.toLowerCase()}
                           </p>
                         </div>
                         <span className="text-sm font-semibold">{round.overallScore !== null ? `${round.overallScore}` : "—"}</span>

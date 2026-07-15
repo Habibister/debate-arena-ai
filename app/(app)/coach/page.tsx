@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocalDate } from "@/components/ui/local-date";
 import { ratingLabel } from "@/lib/ai-personas";
 import { completionStats } from "@/lib/assignment-types";
 import { getAssignedStudentIds, getCoachAssignments } from "@/lib/assignments";
@@ -174,8 +175,8 @@ export default async function CoachPage() {
                           <div>
                             <p className="font-semibold">{u.displayName ?? u.name ?? u.username ?? "Student"}</p>
                             <p className="text-xs text-muted-foreground">
-                              @{u.username ?? "student"} · joined {new Date(member.joinedAt).toLocaleDateString()}
-                              {lastSeen ? <> · active {new Date(lastSeen).toLocaleDateString()}</> : null}
+                              @{u.username ?? "student"} · joined <LocalDate value={member.joinedAt} />
+                              {lastSeen ? <> · active <LocalDate value={lastSeen} /></> : null}
                             </p>
                           </div>
                         </div>

@@ -4,22 +4,17 @@ import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplay } from "@/components/training/deca-roleplay";
 import { HosaEventPrep } from "@/components/training/hosa-event-prep";
+import { HosaRoleplay } from "@/components/training/hosa-roleplay";
 import { MunConference } from "@/components/training/mun-conference";
-import { TrackPracticeSetup } from "@/components/training/track-practice-setup";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getOfficialPrepFormat } from "@/lib/competition-specs";
-import { trackToOrganization, trackBySlug } from "@/lib/training-tracks";
+import { trackBySlug } from "@/lib/training-tracks";
 
 export default async function TrackPracticePage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
   if (!track) {
     notFound();
   }
-
-  // Registry-driven prep clock (e.g. DECA's official 10-minute prep). Null when the registry has
-  // no structured prep rule for this organization — the setup renders exactly as before.
-  const officialPrep = track.id === "GENERAL_DEBATE" ? null : await getOfficialPrepFormat(trackToOrganization(track.id));
 
   return (
     <div className="space-y-6">
@@ -48,11 +43,15 @@ export default async function TrackPracticePage({ params }: { params: { track: s
       ) : (
         <>
           {track.id === "DECA" ? <DecaRoleplay /> : null}
-          {track.id === "HOSA" ? <HosaEventPrep /> : null}
-          {/* DECA is now fully served by DecaRoleplay + the Full Simulation, so it no longer renders the
-              generic TrackPracticeSetup launcher (which routes into the legacy /debate/[id] room). HOSA
-              keeps it until its guided flow lands (see CURRENT_STATE known gaps). */}
-          {track.id === "HOSA" ? <TrackPracticeSetup track={track} officialPrep={officialPrep} /> : null}
+          {/* HOSA guided flow: the verified Medical Terminology exam (HosaEventPrep) is the flagship,
+              plus a clearly-labeled generic health-science role-play for the other categories. Neither
+              routes into the legacy /debate/[id] room — the generic TrackPracticeSetup launcher is gone. */}
+          {track.id === "HOSA" ? (
+            <>
+              <HosaEventPrep />
+              <HosaRoleplay />
+            </>
+          ) : null}
         </>
       )}
     </div>

@@ -154,7 +154,7 @@ export default async function DashboardPage() {
               sideLabel: showOpponent ? sideLabel(debate.studentSide) : "",
               opponentLabel: showOpponent ? debate.aiPersona ?? "AI opponent" : "",
               statusLabel: debate.status === "ACTIVE" ? "In progress" : "Not started",
-              updatedLabel: debate.updatedAt.toLocaleDateString()
+              updatedIso: debate.updatedAt.toISOString()
             };
           })
       : [];

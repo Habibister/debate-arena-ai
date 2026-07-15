@@ -9,6 +9,7 @@ import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LocalDate } from "@/components/ui/local-date";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { getAttemptsForMotion, getDebateReplay, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
@@ -224,7 +225,7 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
                 <div key={attempt.id} className="space-y-2 rounded-md border bg-background p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold">
-                      {attempt.createdAt.toLocaleDateString()} · {sideLabel(attempt.studentSide)}
+                      <LocalDate value={attempt.createdAt} /> · {sideLabel(attempt.studentSide)}
                       {typeof attempt.overallScore === "number" ? ` · Overall ${attempt.overallScore}` : ""}
                       {attempt.assistedPractice ? (
                         <Badge variant="outline" className="ml-2 align-middle text-[10px]">

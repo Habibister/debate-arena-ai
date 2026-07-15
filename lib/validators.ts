@@ -83,6 +83,15 @@ export const roleplayJudgeRequestSchema = z.object({
   hasObjectionRound: z.boolean().optional()
 });
 
+// HOSA interactive practice scenario (generic — never an official spec). Mirrors the DECA scenario
+// request shape but with a health-science character rather than a business judge.
+export const hosaScenarioRequestSchema = z.object({
+  level: levelSchema,
+  category: z.string().min(2).max(120),
+  studentRole: z.string().min(2).max(120),
+  characterRole: z.string().min(2).max(120)
+});
+
 export const practiceQuestionRequestSchema = z.object({
   organization: z.enum(["DECA", "HOSA"]),
   eventType: z.string().min(2).max(120),

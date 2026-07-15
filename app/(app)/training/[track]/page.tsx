@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, BookOpenCheck, ClipboardList, Gamepad2, Layers3, MessageSquareText } from "lucide-react";
 import { TrackControls } from "@/components/training/track-controls";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { deckSummaries } from "@/lib/study-content";
-import { CONTENT_SOURCE_LABEL, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
+import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
 
 const PRACTICE_ACTION: Record<TrainingTrack, string> = {
   GENERAL_DEBATE: "Start a debate practice",
@@ -21,6 +21,10 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
   const track = trackBySlug(params.track);
   if (!track) {
     notFound();
+  }
+  // Soft-removed tracks (Model UN) redirect to the track chooser instead of rendering a hidden page.
+  if (isTrackRetired(track.id)) {
+    redirect("/training");
   }
 
   // Reuse existing org-tagged content; only show this track's decks.

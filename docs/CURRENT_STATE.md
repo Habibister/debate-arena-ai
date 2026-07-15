@@ -23,8 +23,11 @@ _Last updated: 2026-07-11_
   (HLM point split placeholder), ballot degrades to seed mode.
 - HOSA Medical Terminology: 54 original questions, official 50q/60min mode, confidence + explanations,
   spaced-review wiring.
-- Model UN: practice sandbox (committee mechanics + AI-inferred policy brief + 4-dimension rapporteur),
-  labeled non-official.
+- Model UN: **soft-removed from the active product** — hidden from all navigation/selection surfaces
+  (Training hub, onboarding, signup, profile/team org pickers); code, `/api/ai/mun/*` routes,
+  `MunConference`, skills/specs, and user data fully retained. `/training/model-un/*` redirects to
+  `/training`; stale MUN track cookies/localStorage fall back gracefully (browse-all / default track).
+  Revival requires a real sourced conference.
 - General Debate drill depth: 36 original concept questions across 4 skills (claim/warrant/impact,
   rebuttal, evidence evaluation, weighing) in the Study Arcade; each writes real MasteryProgress +
   spaced review per skill. All 4 skills seeded and verified live.
@@ -40,11 +43,12 @@ _Last updated: 2026-07-11_
   writes for `deca-marketing` today; the other 3 skills (`deca-performance-indicators`,
   `deca-business-reasoning`, `deca-customer-relations`) skip honestly until seeded (surgical upsert
   pending). Role-play judging still writes no drill mastery; point-split sourcing blocked (see below).
-- **Model UN:** empty — placeholder sandbox, no drills.
+- **Model UN:** soft-removed from the product (code/data retained; no user-facing entry).
 
 ## Known broken / partial
 
-- **Model UN registry spec is PLACEHOLDER** — sandbox only, no sourced conference.
+- **Model UN registry spec is PLACEHOLDER** — the unsourced sandbox is why MUN is soft-removed; revival
+  requires picking a real conference and sourcing it.
 - **DECA non-Hospitality clusters** degrade to labeled generic practice (no sourced PIs).
 - **DECA HLM per-category point split is placeholder** — weighted scoring dormant until sourced.
 - **Non-MT HOSA categories are generic (labeled) practice** — only Medical Terminology is verified. The

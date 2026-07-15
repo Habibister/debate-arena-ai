@@ -50,6 +50,16 @@ export const TRACKS: TrackInfo[] = [
   }
 ];
 
+// Soft-removed tracks: hidden from every user-facing selection surface but fully retained in code and
+// data (components, /api/ai/mun/* routes, skills, specs, user history). Reversible — revival requires
+// picking a real conference and sourcing it. Lookups by id/slug/organization still resolve so existing
+// records (history, dashboards, coach views) keep honest labels.
+export const RETIRED_TRACKS: TrainingTrack[] = ["MODEL_UN"];
+export const ACTIVE_TRACKS: TrackInfo[] = TRACKS.filter((t) => !RETIRED_TRACKS.includes(t.id));
+export function isTrackRetired(id: TrainingTrack): boolean {
+  return RETIRED_TRACKS.includes(id);
+}
+
 export const DEFAULT_TRACK: TrainingTrack = "GENERAL_DEBATE";
 export const TRACK_STORAGE_KEY = "debatearena_training_track";
 // A non-auth preference cookie (slug value) written alongside localStorage so server components can
@@ -60,7 +70,10 @@ export const TRACK_COOKIE = "debatearena_track";
 // override), otherwise fall back to the persisted selection (cookie). Returns undefined only when the
 // user truly has no selected track, which is the only case where "browse all" is allowed.
 export function resolveTrackFromSlugs(querySlug?: string | null, cookieSlug?: string | null): TrackInfo | undefined {
-  return trackBySlug(querySlug ?? undefined) ?? trackBySlug(cookieSlug ?? undefined);
+  // A retired track slug never resolves as the active selection: a stale retired URL falls back to the
+  // cookie, and a stale retired cookie falls back to browse-all — never a soft-removed track's content.
+  const activeOnly = (t: TrackInfo | undefined) => (t && !isTrackRetired(t.id) ? t : undefined);
+  return activeOnly(trackBySlug(querySlug ?? undefined)) ?? activeOnly(trackBySlug(cookieSlug ?? undefined));
 }
 
 export function trackById(id: TrainingTrack): TrackInfo {
@@ -72,7 +85,10 @@ export function trackBySlug(slug: string | undefined): TrackInfo | undefined {
 }
 
 export function normalizeTrack(value: unknown): TrainingTrack {
-  return TRACKS.some((t) => t.id === value) ? (value as TrainingTrack) : DEFAULT_TRACK;
+  // Retired tracks (e.g. a stored MODEL_UN selection) fall back to the default instead of resolving,
+  // so users whose saved track was soft-removed land on a working track, never a hidden/broken state.
+  const match = TRACKS.some((t) => t.id === value) ? (value as TrainingTrack) : DEFAULT_TRACK;
+  return isTrackRetired(match) ? DEFAULT_TRACK : match;
 }
 
 export function trackToOrganization(id: TrainingTrack): Organization {

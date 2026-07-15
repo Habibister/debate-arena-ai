@@ -23,9 +23,10 @@ type ProfileFormUser = {
   level: Level;
 };
 
+// MODEL_UN is soft-removed from the product (code/data retained) — not selectable here. Existing
+// profiles that already have it keep their data untouched.
 const organizations: Array<{ value: Organization; label: string }> = [
   { value: "DEBATE", label: "Debate" },
-  { value: "MODEL_UN", label: "Model UN" },
   { value: "DECA", label: "DECA" },
   { value: "HOSA", label: "HOSA" },
   { value: "MOCK_TRIAL", label: "Mock Trial" },

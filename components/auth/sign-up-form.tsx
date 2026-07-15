@@ -9,11 +9,11 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+// MODEL_UN is soft-removed from the product (code/data retained) — not offered at signup.
 const organizations: Array<{ value: Organization; label: string }> = [
   { value: "DEBATE", label: "Debate" },
   { value: "DECA", label: "DECA" },
   { value: "HOSA", label: "HOSA" },
-  { value: "MODEL_UN", label: "Model UN" },
   { value: "PUBLIC_SPEAKING", label: "Public Speaking" }
 ];
 

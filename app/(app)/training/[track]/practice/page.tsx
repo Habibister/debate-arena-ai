@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplay } from "@/components/training/deca-roleplay";
@@ -8,12 +8,16 @@ import { HosaRoleplay } from "@/components/training/hosa-roleplay";
 import { MunConference } from "@/components/training/mun-conference";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { trackBySlug } from "@/lib/training-tracks";
+import { isTrackRetired, trackBySlug } from "@/lib/training-tracks";
 
 export default async function TrackPracticePage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
   if (!track) {
     notFound();
+  }
+  // Soft-removed tracks (Model UN) redirect to the track chooser instead of rendering a hidden page.
+  if (isTrackRetired(track.id)) {
+    redirect("/training");
   }
 
   return (

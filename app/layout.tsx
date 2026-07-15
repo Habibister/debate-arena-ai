@@ -4,7 +4,7 @@ import { AccessibilityProvider } from "@/components/debate/accessibility/accessi
 
 export const metadata: Metadata = {
   title: "CompeteReady",
-  description: "AI-powered training for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking."
+  description: "AI-powered training for Debate, DECA, and HOSA — AI opponents, AI judging, and mastery tracking."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

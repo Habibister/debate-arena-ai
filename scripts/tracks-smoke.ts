@@ -165,7 +165,14 @@ function main() {
   // fallback, and the URL param overrides it on a track-specific route.
   assert.equal(resolveTrackFromSlugs("hosa", undefined)?.id, "HOSA", "?track= resolves the track");
   assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "HOSA stays HOSA via cookie when ?track= is absent");
-  assert.equal(resolveTrackFromSlugs("model-un", "hosa")?.id, "MODEL_UN", "URL track overrides the cookie on a track-specific route");
+  assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "URL track overrides the cookie on a track-specific route");
+  // Soft-removed (retired) tracks: MUN never resolves as the active selection — a stale retired URL
+  // falls back to the cookie, a stale retired cookie falls back to browse-all, and a stored retired
+  // track normalizes to the default. Code and data stay retained; only the selection is refused.
+  assert.equal(resolveTrackFromSlugs("model-un", "hosa")?.id, "HOSA", "retired URL track falls back to the cookie");
+  assert.equal(resolveTrackFromSlugs("model-un", "model-un"), undefined, "retired URL + retired cookie -> browse-all");
+  assert.equal(resolveTrackFromSlugs(undefined, "model-un"), undefined, "stale retired cookie -> browse-all, never MUN content");
+  assert.equal(normalizeTrack("MODEL_UN"), "GENERAL_DEBATE", "stored retired track falls back to the default track");
   assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "no query + no cookie -> no track (browse-all allowed)");
   assert.equal(resolveTrackFromSlugs(undefined, "garbage"), undefined, "unknown cookie slug -> no track (never a wrong track)");
   assert.equal(TRACK_COOKIE, "debatearena_track", "track cookie name is stable");

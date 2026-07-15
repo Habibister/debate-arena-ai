@@ -7,7 +7,7 @@ import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { TRACKS, type TrainingTrack } from "@/lib/training-tracks";
+import { ACTIVE_TRACKS, type TrainingTrack } from "@/lib/training-tracks";
 import { useTrainingTrack } from "@/components/training/training-track-context";
 import {
   CONFIDENCE_QUESTIONS,
@@ -63,7 +63,7 @@ export function DiagnosticForm() {
           onChange={(e) => set({ track: e.target.value as TrainingTrack })}
           className="h-10 w-full rounded-md border bg-background px-3 text-sm"
         >
-          {TRACKS.map((t) => (
+          {ACTIVE_TRACKS.map((t) => (
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
         </select>

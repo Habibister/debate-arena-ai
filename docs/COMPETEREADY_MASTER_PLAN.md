@@ -5,8 +5,13 @@ not repeated here. Current status lives in `CURRENT_STATE.md`; the active task i
 
 ## Mission
 
-Train students for real competitive events — General Debate, DECA, HOSA, Model UN — with practice that
+Train students for real competitive events — General Debate, DECA, HOSA — with practice that
 mirrors how each event is actually run and scored, and never shows fake progress.
+
+**Model UN is soft-removed from the active product (2026-07):** hidden from all navigation and selection
+surfaces; code, routes (`/api/ai/mun/*`), components (`MunConference`), skills/specs, and user data are
+fully retained. Revival requires picking a real conference and sourcing its rules — until then it stays
+out of the product rather than shipping an unsourced sandbox.
 
 ## Target users
 
@@ -28,7 +33,8 @@ progress. Classrooms/coach enrollment are **optional** — a student can practic
   rubric categories/points, provenance, and attribution banners.
 - **Per-track practice:** debate rooms with AI opponent + judge + argument-flow analysis; DECA role-play
   with in-character objection rounds and split scoring; HOSA Medical Terminology knowledge engine
-  (timed/untimed, spaced review); Model UN practice sandbox (committee mechanics + AI-inferred briefs).
+  (timed/untimed, spaced review) plus a labeled-generic health-science role-play. (Model UN sandbox
+  retained in code but soft-removed from the product — see Mission.)
 - **Learning system:** skills, mastery, spaced reassessment, Study Arcade, practice tests, replay/retry.
 - **Coach tools:** teams, join codes, assignments, progress views.
 

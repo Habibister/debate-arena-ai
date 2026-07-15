@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const steps = [
-  { title: "Choose organization", detail: "Debate, Model UN, DECA, HOSA, Mock Trial, or Public Speaking." },
+  { title: "Choose organization", detail: "Debate, DECA, HOSA, Mock Trial, or Public Speaking." },
   { title: "Pick level", detail: "Beginner, Intermediate, or Elite pacing and rubric expectations." },
   { title: "Generate topic", detail: "Original prompt with background and evidence angles." },
   { title: "Start debate", detail: "AI opponent immediately, real student matchmaking when available." },

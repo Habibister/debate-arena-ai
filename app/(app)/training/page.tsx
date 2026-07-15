@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TRACKS, TRACK_DISCLAIMER, type TrainingTrack } from "@/lib/training-tracks";
+import { ACTIVE_TRACKS, TRACK_DISCLAIMER, type TrainingTrack } from "@/lib/training-tracks";
 
 const ICONS: Record<TrainingTrack, typeof GraduationCap> = {
   GENERAL_DEBATE: GraduationCap,
@@ -28,7 +28,7 @@ export default function TrainingPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {TRACKS.map((track) => {
+        {ACTIVE_TRACKS.map((track) => {
           const Icon = ICONS[track.id];
           return (
             <Card key={track.id}>

@@ -71,8 +71,8 @@ export default function HomePage() {
             <Badge variant="secondary">Mastery learning for competitive speaking</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">CompeteReady</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Train students for Debate, Model UN, DECA, HOSA, Mock Trial, and public speaking with AI opponents,
-              AI judging, adaptive lessons, practice tests, mastery tracking, and coach visibility.
+              Train students for Debate, DECA, and HOSA with AI opponents, AI judging, adaptive lessons,
+              practice tests, mastery tracking, and coach visibility.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/debate" className={buttonVariants({ size: "lg" })}>

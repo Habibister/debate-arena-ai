@@ -49,7 +49,10 @@ export default async function TrackPracticePage({ params }: { params: { track: s
         <>
           {track.id === "DECA" ? <DecaRoleplay /> : null}
           {track.id === "HOSA" ? <HosaEventPrep /> : null}
-          <TrackPracticeSetup track={track} officialPrep={officialPrep} />
+          {/* DECA is now fully served by DecaRoleplay + the Full Simulation, so it no longer renders the
+              generic TrackPracticeSetup launcher (which routes into the legacy /debate/[id] room). HOSA
+              keeps it until its guided flow lands (see CURRENT_STATE known gaps). */}
+          {track.id === "HOSA" ? <TrackPracticeSetup track={track} officialPrep={officialPrep} /> : null}
         </>
       )}
     </div>

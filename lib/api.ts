@@ -45,6 +45,10 @@ export function forbidden(message = "Forbidden") {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
+// Prisma error codes for transient connectivity/pool problems that are safe to retry (common on
+// serverless: cold connections, pool timeouts, dropped DB connections). Mapped to a retryable 503.
+const TRANSIENT_DB_ERROR_CODES = new Set(["P1001", "P1002", "P1008", "P1017", "P2024", "P2028"]);
+
 export function apiError(error: unknown) {
   // RateLimitError extends HttpError, so it must be matched first to keep its Retry-After header.
   if (error instanceof RateLimitError) {
@@ -100,9 +104,30 @@ export function apiError(error: unknown) {
     if (error.code === "P2025") {
       return NextResponse.json({ error: "Record not found" }, { status: 404 });
     }
+
+    // Transient connectivity/pool errors — the request can safely be retried.
+    if (TRANSIENT_DB_ERROR_CODES.has(error.code)) {
+      console.error("[api] Transient database error:", error.code, error.message);
+      return NextResponse.json(
+        { error: "The service is briefly unavailable. Please try again in a moment." },
+        { status: 503 }
+      );
+    }
+  }
+
+  // Database could not be reached or initialized (connection refused, bad pool) — retryable.
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    console.error("[api] Database initialization error:", error.message);
+    return NextResponse.json(
+      { error: "The service is briefly unavailable. Please try again in a moment." },
+      { status: 503 }
+    );
   }
 
   const message = error instanceof Error ? error.message : "Unknown server issue";
+
+  // Log the real, unmatched exception so production 500s are diagnosable (previously invisible).
+  console.error("[api] Unhandled error:", error);
 
   return NextResponse.json(
     {

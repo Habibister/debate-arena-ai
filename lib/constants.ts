@@ -10,11 +10,7 @@ export const ORGANIZATIONS: Array<{
     label: "Debate",
     description: "Case writing, clash, weighing, cross examination, and judge persuasion."
   },
-  {
-    value: "MODEL_UN",
-    label: "Model UN",
-    description: "Diplomacy, position papers, resolutions, caucus strategy, and speeches."
-  },
+  // MODEL_UN is soft-removed from the product (code/data retained) — not marketed on the homepage.
   {
     value: "DECA",
     label: "DECA",

@@ -20,7 +20,7 @@ import {
   MessageSquareText,
   Settings,
   ShieldCheck,
-  Sparkles,
+  Swords,
   UserRound,
   Users
 } from "lucide-react";
@@ -130,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (focusMode) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" data-track={trackSlug}>
         <button
           type="button"
           onClick={exitFocusMode}
@@ -145,20 +145,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    // data-track retints --track-accent for the whole shell (debate=gold, deca=emerald, hosa=red).
+    <div className="min-h-screen bg-background" data-track={trackSlug}>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r bg-card px-4 py-5 lg:block">
         <Link href="/" className="flex items-center gap-3 px-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-5 w-5" aria-hidden />
+          <span className="flex h-10 w-10 items-center justify-center rounded-md border border-track/40 bg-track/15 text-track">
+            <Swords className="h-5 w-5" aria-hidden />
           </span>
           <span>
-            <span className="flex items-center gap-2 text-sm font-bold">
-              CompeteReady
+            <span className="flex items-center gap-2">
+              <span className="font-display text-lg font-bold uppercase leading-none tracking-wide">CompeteReady</span>
               <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-semibold uppercase">
                 Beta
               </Badge>
             </span>
-            <span className="block text-xs text-muted-foreground">Training OS</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">Competitive training</span>
           </span>
         </Link>
 
@@ -171,12 +172,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={withTrack(item.href) as Route}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "border-track bg-track/10 text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
                 aria-current={active ? "page" : undefined}
               >
-                <Icon className="h-4 w-4" aria-hidden />
+                <Icon className={cn("h-4 w-4", active && "text-track")} aria-hidden />
                 {item.label}
               </Link>
             );
@@ -184,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="mt-6">
-          <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">More</p>
+          <p className="eyebrow px-3">More</p>
           <nav className="mt-1 space-y-1">
             {moreItems.map((item) => {
               const Icon = item.icon;
@@ -194,8 +197,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={withTrack(item.href) as Route}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                    active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    "flex items-center gap-3 rounded-md border-l-2 px-3 py-1.5 text-xs font-medium transition-colors",
+                    active
+                      ? "border-track bg-track/10 text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                   aria-current={active ? "page" : undefined}
                 >
@@ -219,9 +224,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Badge variant="secondary">{roleLabel(role)}</Badge>
             <span className="text-xs font-semibold text-muted-foreground">{rank} · {xp} XP</span>
           </div>
-          <Link href={"/training" as Route} className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-background px-2 py-1 text-xs">
-            <span className="font-semibold text-muted-foreground">Track: {trackById(track).short}</span>
-            <span className="font-semibold text-primary">Switch</span>
+          <Link href={"/training" as Route} className="mt-2 flex items-center justify-between gap-2 rounded-md border border-track/30 bg-track/10 px-2 py-1 text-xs">
+            <span className="font-semibold text-track">Track: {trackById(track).short}</span>
+            <span className="font-semibold text-muted-foreground">Switch</span>
           </Link>
           <Button type="button" variant="outline" size="sm" className="mt-3 w-full" onClick={() => signOut({ callbackUrl: "/signin" })}>
             <LogOut className="h-4 w-4" aria-hidden />
@@ -243,9 +248,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="pb-16 lg:pb-0 lg:pl-64">
         <header className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 font-bold">
-              <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-              CompeteReady
+            <Link href="/" className="flex items-center gap-2">
+              <Swords className="h-5 w-5 text-track" aria-hidden />
+              <span className="font-display text-base font-bold uppercase tracking-wide">CompeteReady</span>
             </Link>
             <Link href="/profile" className="flex items-center gap-2 rounded-md border bg-card px-2 py-1 text-sm font-semibold">
               <UserAvatar username={profileUsername} displayName={profileName} avatarUrl={profileAvatar} size="sm" />
@@ -262,7 +267,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href={withTrack(item.href) as Route}
                   className={cn(
                     "flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold",
-                    active ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+                    active ? "border-track/50 bg-track/15 text-foreground" : "bg-card text-muted-foreground"
                   )}
                   aria-current={active ? "page" : undefined}
                 >
@@ -285,8 +290,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={withTrack(item.href) as Route}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
-                active ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                "flex flex-col items-center gap-1 rounded-md border-t-2 px-2 py-1.5 text-[11px] font-semibold transition-colors",
+                active ? "border-track text-track" : "border-transparent text-muted-foreground"
               )}
               aria-current={active ? "page" : undefined}
             >

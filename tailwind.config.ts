@@ -45,7 +45,19 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
+        },
+        // Track identity accent — resolves through --track-accent, which a data-track wrapper
+        // retints (debate=gold, deca=emerald, hosa=red). Use for anything track-scoped.
+        track: {
+          DEFAULT: "hsl(var(--track-accent))",
+          debate: "hsl(var(--track-debate))",
+          deca: "hsl(var(--track-deca))",
+          hosa: "hsl(var(--track-hosa))"
         }
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -53,7 +65,8 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)"
       },
       boxShadow: {
-        soft: "0 18px 70px rgba(20, 31, 62, 0.11)"
+        // Dark-ground ambient shadow (replaces the light-theme blue glow).
+        soft: "0 12px 40px rgba(0, 0, 0, 0.45)"
       }
     }
   },

@@ -2,27 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================================================
+   CompeteReady design system — stage 1 foundation.
+   Dark competitive ground (Linear polish x Chess.com energy x Khan clarity), defined as
+   tokens so every surface inherits it. Track accents are data-attribute driven: any
+   wrapper with data-track="debate|deca|hosa" retints --track-accent for its subtree.
+   ===================================================================================== */
+
 :root {
-  --background: 220 33% 98%;
-  --foreground: 224 42% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 224 42% 12%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 224 42% 12%;
-  --primary: 224 88% 58%;
+  /* Ground: blue-biased near-black — chosen, not default. Cards sit slightly raised. */
+  --background: 227 30% 7%;
+  --foreground: 220 30% 93%;
+  --card: 227 25% 10%;
+  --card-foreground: 220 30% 93%;
+  --popover: 227 25% 10%;
+  --popover-foreground: 220 30% 93%;
+  /* Action color: electric blue, kept from the brand but tuned for dark ground. */
+  --primary: 217 91% 60%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 266 83% 62%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 220 22% 94%;
-  --muted-foreground: 222 16% 42%;
-  --accent: 187 82% 42%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 78% 56%;
+  --secondary: 266 70% 68%;
+  --secondary-foreground: 227 30% 7%;
+  --muted: 227 20% 15%;
+  --muted-foreground: 222 12% 64%;
+  --accent: 187 82% 46%;
+  --accent-foreground: 227 30% 7%;
+  --destructive: 0 72% 58%;
   --destructive-foreground: 0 0% 100%;
-  --border: 222 21% 88%;
-  --input: 222 21% 88%;
-  --ring: 224 88% 58%;
-  --radius: 0.5rem;
+  --border: 227 16% 20%;
+  --input: 227 16% 20%;
+  --ring: 217 91% 60%;
+  /* Sharper corners than the stock template — Linear-adjacent, not pill-soft. */
+  --radius: 0.375rem;
+
+  /* Track identity accents — used wherever a track appears, consistently. */
+  --track-debate: 43 96% 56%; /* podium gold */
+  --track-deca: 152 66% 46%; /* commerce emerald */
+  --track-hosa: 350 80% 60%; /* medical red */
+  /* Default accent when no track context applies (falls back to the action blue). */
+  --track-accent: var(--primary);
+}
+
+/* Track context: any subtree wrapped in data-track picks up its accent. */
+[data-track="debate"] {
+  --track-accent: var(--track-debate);
+}
+[data-track="deca"] {
+  --track-accent: var(--track-deca);
+}
+[data-track="hosa"] {
+  --track-accent: var(--track-hosa);
 }
 
 * {
@@ -35,9 +63,28 @@ html {
 
 body {
   @apply bg-background text-foreground antialiased;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: var(--font-sans, Inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+/* Display face for competitive headings/wordmark (Barlow Condensed via next/font). */
+.font-display {
+  font-family: var(--font-display, var(--font-sans, Inter)), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Type scale primitives — deliberate hierarchy, applied by the shell now and pages in stage 2. */
+@layer components {
+  .display-title {
+    @apply font-display text-3xl font-bold uppercase leading-none tracking-wide sm:text-4xl;
+    text-wrap: balance;
+  }
+  .page-title {
+    @apply font-display text-2xl font-bold uppercase leading-tight tracking-wide sm:text-3xl;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
 }
 
 ::selection {
@@ -47,8 +94,8 @@ body {
 
 .arena-grid {
   background-image:
-    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(96, 145, 250, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96, 145, 250, 0.09) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
@@ -56,21 +103,23 @@ body {
   @apply outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring;
 }
 
-/* ===== Sitewide accessibility settings (driven by <html data-*> from AccessibilityProvider) ===== */
+/* ===== Sitewide accessibility settings (driven by <html data-*> from AccessibilityProvider) =====
+   Redesigned coherently for the dark foundation: each toggle overrides TOKENS, never components. */
 
-/* Eye comfort: warmer, softer surfaces; less harsh bright white / large blue. Keeps dark text readable. */
+/* Eye comfort: warmer, softer dark surfaces — takes the blue bias (and its glare) out of the ground. */
 html[data-eye-comfort] {
-  --background: 40 40% 96%;
-  --card: 42 46% 97%;
-  --popover: 42 46% 97%;
-  --muted: 40 26% 91%;
-  --border: 40 22% 85%;
-  --input: 40 22% 85%;
+  --background: 30 16% 8%;
+  --card: 30 14% 11%;
+  --popover: 30 14% 11%;
+  --muted: 30 12% 16%;
+  --border: 30 10% 23%;
+  --input: 30 10% 23%;
+  --foreground: 35 25% 90%;
 }
 html[data-eye-comfort] .arena-grid {
   background-image:
-    linear-gradient(rgba(120, 90, 40, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 90, 40, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(214, 178, 110, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(214, 178, 110, 0.07) 1px, transparent 1px);
 }
 
 /* Larger text: modest, rem-based so hierarchy and layout scale together. */
@@ -86,18 +135,19 @@ html[data-increased-spacing] p {
   margin-bottom: 0.6em;
 }
 
-/* High contrast: stronger borders, focus ring, and text. */
+/* High contrast on the dark ground: brighter text, stronger borders, hotter focus ring. */
 html[data-high-contrast] {
-  --foreground: 224 60% 6%;
-  --muted-foreground: 222 32% 26%;
-  --border: 224 30% 38%;
-  --input: 224 30% 38%;
-  --ring: 224 90% 42%;
+  --background: 228 30% 4%;
+  --foreground: 0 0% 100%;
+  --muted-foreground: 220 16% 82%;
+  --border: 222 24% 56%;
+  --input: 222 24% 56%;
+  --ring: 217 100% 72%;
 }
 
 /* Color-blind friendly: never rely on color alone — strengthen borders + always-visible focus. */
 html[data-colorblind] {
-  --border: 224 26% 44%;
+  --border: 222 20% 52%;
 }
 html[data-colorblind] :focus-visible {
   outline: 2px solid hsl(var(--ring));

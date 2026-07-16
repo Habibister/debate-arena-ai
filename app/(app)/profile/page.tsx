@@ -125,7 +125,7 @@ export default async function ProfilePage() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="rounded-md border bg-background p-3">
                   <Flame className="mb-2 h-4 w-4 text-accent" aria-hidden />
-                  <p className="font-bold">{user.streak} day streak</p>
+                  <p className="font-bold">{user.streak} practice sessions</p>
                 </div>
                 <div className="rounded-md border bg-background p-3">
                   <Trophy className="mb-2 h-4 w-4 text-accent" aria-hidden />

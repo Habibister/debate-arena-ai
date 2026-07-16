@@ -25,7 +25,8 @@ const ROSTER_USER_SELECT = {
   image: true,
   level: true,
   xp: true,
-  wins: true
+  wins: true,
+  rank: true
 } as const;
 
 function randomSegment(length: number) {

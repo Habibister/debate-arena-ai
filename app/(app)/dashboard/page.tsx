@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import type { MasteryPoint } from "@/types/domain";
-import { nearestAiPersona, ratingLabel } from "@/lib/ai-personas";
+import { nearestAiPersona } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
@@ -30,7 +30,7 @@ import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
 import { getStudentTeams } from "@/lib/teams";
-import { calculateDebateRating, debateRatingProgress } from "@/lib/xp";
+import { calculateDebateRating } from "@/lib/xp";
 
 // Icon/tone per track-aware dashboard action (data comes from nextStepsForTrack).
 const ACTION_ICON: Record<DashboardAction["key"], LucideIcon> = {
@@ -101,6 +101,17 @@ export default async function DashboardPage() {
         }
       })
     : 0;
+  // Real evidence for the dashboard: the average judge score across this student's judged rounds.
+  // Null (shown as "—") until at least one round has actually been judged — never a synthetic number.
+  const avgJudgeScoreRaw = session?.user?.id
+    ? (
+        await prisma.debate.aggregate({
+          _avg: { overallScore: true },
+          where: { studentId: session.user.id, status: "JUDGED", overallScore: { not: null } }
+        })
+      )._avg.overallScore
+    : null;
+  const avgJudgeScore = typeof avgJudgeScoreRaw === "number" ? Math.round(avgJudgeScoreRaw) : null;
 
   const demo = isDemoUser(user?.email ?? session?.user?.email);
   const fullDisplayName = user?.displayName ?? user?.name ?? session?.user?.displayName ?? "Debater";
@@ -116,10 +127,12 @@ export default async function DashboardPage() {
   const mastery = masteryFromTests(recentTests);
   const weakAreas = latestWeakAreas(recentTests);
   const masteryData: MasteryPoint[] = demo ? demoSampleMastery : [];
-  const recommendedRows = weakAreas.length > 0 ? weakAreas.map((area, index) => [area, Math.max(45, 76 - index * 9)] as const) : demo ? demoSampleLessons : [];
-  const debateRating = calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount });
-  const debateProgress = debateRatingProgress(debateRating);
-  const recommendedBot = nearestAiPersona(debateRating);
+  // Weak areas are real (from graded tests); we show their NAMES only — no invented percentages.
+  // Demo accounts may show sample numbers (allowed for seeded demo data only).
+  const recommendedRows: ReadonlyArray<readonly [string, number | null]> =
+    weakAreas.length > 0 ? weakAreas.map((area) => [area, null] as const) : demo ? demoSampleLessons : [];
+  // Internal difficulty heuristic ONLY (bot matching). Never displayed as a rating or progress claim.
+  const recommendedBot = nearestAiPersona(calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount }));
 
   // Track-aware quick actions + resources: honor the selected track (preference cookie) so Model UN /
   // General Debate never see DECA/HOSA exam actions or another org's resource shelf.
@@ -211,13 +224,13 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Debate rating"
-          value={String(debateRating)}
-          detail={`${ratingLabel(debateRating)} · ${debateProgress.pointsToNext} points to next band.`}
+          label="Judged rounds"
+          value={String(judgedDebateCount)}
+          detail={`${wins} ${wins === 1 ? "win" : "wins"} · avg judge score ${avgJudgeScore ?? "—"}.`}
           icon={Trophy}
         />
         <StatCard label="XP" value={String(xp)} detail="Earn XP from debates, lessons, and generated practice tests." icon={Medal} />
-        <StatCard label="Streak" value={`${streak} days`} detail="Complete one drill today to keep it alive." icon={Flame} />
+        <StatCard label="Practice sessions" value={String(streak)} detail="Completed debates and graded tests, counted as they happen." icon={Flame} />
         <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
       </div>
 
@@ -271,24 +284,19 @@ export default async function DashboardPage() {
         <CardContent className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <Badge variant="outline">Competitive ladder</Badge>
-              <h2 className="mt-3 text-xl font-bold">{ratingLabel(debateRating)}</h2>
+              <Badge variant="outline">Debate record</Badge>
+              <h2 className="mt-3 text-xl font-bold">
+                {judgedDebateCount > 0 ? `${judgedDebateCount} judged ${judgedDebateCount === 1 ? "round" : "rounds"}` : "No judged rounds yet"}
+              </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                CompeteReady rating is derived from judged debates, wins, and XP. Quality ballots matter more than long vague speeches.
+                {judgedDebateCount > 0
+                  ? "Every number here comes from real judged rounds — quality ballots matter more than long vague speeches."
+                  : "Finish a debate and get it judged — your record starts with the first real ballot."}
               </p>
             </div>
             <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">
-              {wins} wins · {judgedDebateCount} judged rounds
+              {wins} {wins === 1 ? "win" : "wins"} · avg judge score {avgJudgeScore ?? "—"}
             </div>
-          </div>
-          <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="font-semibold">{debateProgress.currentLabel}</span>
-              <span className="text-muted-foreground">
-                Next: {debateProgress.nextLabel} ({debateProgress.pointsToNext} pts)
-              </span>
-            </div>
-            <Progress value={debateProgress.percent} />
           </div>
         </CardContent>
       </Card>
@@ -316,11 +324,13 @@ export default async function DashboardPage() {
             {recommendedRows.length > 0 ? (
               recommendedRows.map(([lesson, value]) => (
                 <div key={lesson.toString()} className="rounded-lg border bg-background p-4">
-                  <div className="mb-3 flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm">
                     <span className="font-semibold">{lesson}</span>
-                    <span className="text-muted-foreground">{value}%</span>
+                    {/* A number renders only for seeded demo data; real weak areas show the NAME only —
+                        no invented percentages. */}
+                    {typeof value === "number" ? <span className="text-muted-foreground">{value}%</span> : null}
                   </div>
-                  <Progress value={Number(value)} />
+                  {typeof value === "number" ? <Progress value={value} className="mt-3" /> : null}
                 </div>
               ))
             ) : (

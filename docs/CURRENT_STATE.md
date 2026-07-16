@@ -32,6 +32,11 @@ _Last updated: 2026-07-11_
   rebuttal, evidence evaluation, weighing) in the Study Arcade; each writes real MasteryProgress +
   spaced review per skill. All 4 skills seeded and verified live.
 - Spaced reassessment, Study Arcade, nav IA, coach teams/assignments.
+- Gamification audit enforced (2026-07): synthetic debate rating + bands removed from dashboard, arena
+  matchup, ballot ("+N Debate Rating"), and coach views — replaced with real evidence (judged rounds,
+  wins, avg judge score). The `streak` field is displayed honestly as "practice sessions" (it counts
+  completed activities, not days; a real date-based streak is future work). Fabricated recommended-lesson
+  percentages removed (weak-area names only). XP, rank, and mastery verified honest and kept.
 - Rubric Engine: weighted-scoring engine built + smoke-tested; wired live for HOSA MT (registry-normalized
   points). Dormant for DECA (see blockers).
 

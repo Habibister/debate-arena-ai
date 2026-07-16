@@ -1,7 +1,5 @@
 import { HttpError } from "@/lib/api";
-import { ratingLabel } from "@/lib/ai-personas";
 import { prisma } from "@/lib/prisma";
-import { calculateDebateRating } from "@/lib/xp";
 
 function average(values: number[]) {
   if (values.length === 0) {
@@ -186,8 +184,6 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
       ? average(skills.map((s) => s.masteryPercent)) ?? 0
       : testAverage ?? 0;
 
-  const rating = calculateDebateRating({ xp: student.xp, wins: student.wins, judgedDebates: judgedRounds });
-
   const hasAnyActivity =
     judgedRounds > 0 || recentDebates.length > 0 || skills.length > 0 || completedTests.length > 0 || (student.xp ?? 0) > 0;
 
@@ -213,8 +209,6 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
       rank: student.rank ?? "BRONZE"
     },
     membership: { teamName: membership?.team.name ?? null, joinedAt: membership?.joinedAt ?? null },
-    rating,
-    ratingLabel: ratingLabel(rating),
     masteryPercent,
     hasAnyActivity,
     debate: {

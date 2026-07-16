@@ -92,14 +92,14 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
             </div>
           </div>
 
+          {/* Real evidence only: judged rounds, XP, rank, sessions, mastery — no synthetic rating. */}
           <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            <StatChip label="Debate rating" value={`${data.rating}`} />
+            <StatChip label="Judged rounds" value={`${data.debate.judgedRounds}`} />
             <StatChip label="XP" value={`${student.xp}`} />
             <StatChip label="Rank" value={`${student.rank}`.replace("_", " ")} />
-            <StatChip label="Streak" value={`${student.streak} days`} />
+            <StatChip label="Practice sessions" value={String(student.streak)} />
             <StatChip label="Mastery" value={masteryDisplay} />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{data.ratingLabel}</p>
         </CardContent>
       </Card>
 

@@ -10,14 +10,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LocalDate } from "@/components/ui/local-date";
-import { ratingLabel } from "@/lib/ai-personas";
 import { completionStats } from "@/lib/assignment-types";
 import { getAssignedStudentIds, getCoachAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
 import { getLastActivityForUsers } from "@/lib/coach-progress";
 import { getTeamsForCoach } from "@/lib/teams";
 import { canAccessCoachTools } from "@/lib/roles";
-import { calculateDebateRating } from "@/lib/xp";
 
 export const dynamic = "force-dynamic";
 
@@ -161,8 +159,6 @@ export default async function CoachPage() {
                   {team.members.map((member) => {
                     const u = member.user;
                     const hasActivity = u.xp > 0 || u.wins > 0;
-                    const rating = calculateDebateRating({ xp: u.xp, wins: u.wins });
-                    const mastery = hasActivity ? ratingLabel(rating) : "Not started";
                     const lastSeen = lastActivity.get(u.id);
                     return (
                       <Link
@@ -182,8 +178,9 @@ export default async function CoachPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right text-sm">
-                            <p className="font-semibold">{hasActivity ? `${rating} · ${u.xp} XP` : "Not started"}</p>
-                            <p className="text-xs text-muted-foreground">{mastery}</p>
+                            {/* Real evidence only: XP and wins from recorded activity — no synthetic rating bands. */}
+                            <p className="font-semibold">{hasActivity ? `${u.xp} XP · ${u.wins} ${u.wins === 1 ? "win" : "wins"}` : "Not started"}</p>
+                            <p className="text-xs text-muted-foreground">{hasActivity ? String(u.rank).replace("_", " ").toLowerCase() : ""}</p>
                           </div>
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
                             View progress

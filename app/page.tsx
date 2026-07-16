@@ -144,7 +144,7 @@ export default function HomePage() {
           {[
             { title: "Practice", detail: "Debate AI opponents, take original tests, or open a mastery lesson.", icon: MessageSquareText },
             { title: "Get judged", detail: "Receive organization-specific scoring, explanations, and weak skill detection.", icon: Medal },
-            { title: "Level up", detail: "Follow next steps, XP progress, streaks, and mastery bars.", icon: Target }
+            { title: "Level up", detail: "Follow next steps, XP progress, practice records, and mastery bars.", icon: Target }
           ].map((item) => {
             const Icon = item.icon;
             return (

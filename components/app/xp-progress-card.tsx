@@ -41,7 +41,9 @@ export function XpProgressCard({ xp, rank, streak }: XpProgressCardProps) {
         </div>
         <div className="mt-4 flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
           <Sparkles className="h-4 w-4 text-accent" aria-hidden />
-          {streak > 0 ? `${streak}-day streak. Finish one practice task today to keep momentum.` : "Start a streak with one debate, test, or lesson."}
+          {streak > 0
+            ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — debates, tests, and lessons.`
+            : "Complete a debate, test, or lesson to start your record."}
         </div>
       </CardContent>
     </Card>

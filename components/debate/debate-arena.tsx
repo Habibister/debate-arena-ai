@@ -34,7 +34,7 @@ import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel } from "@/components/debate/side-coach-panel";
 import { draftKey } from "@/lib/debate-drafts";
 import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
-import { getAiPersona, ratingLabel } from "@/lib/ai-personas";
+import { getAiPersona } from "@/lib/ai-personas";
 import {
   countDebateSpeeches,
   getNextSpeech,
@@ -44,7 +44,6 @@ import {
 } from "@/lib/debate-formats";
 import { cn, titleCase } from "@/lib/utils";
 import { trackByOrganization } from "@/lib/training-tracks";
-import { calculateDebateRating } from "@/lib/xp";
 import { assessStudentSpeech, SUBMIT_HELPER_TEXT } from "@/lib/speech-quality";
 
 type ArenaDebate = {
@@ -427,18 +426,10 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const canSubmitSpeech = studentInput.trim().length > 0 && speechAssessment.ok;
   const progress = Math.round((Math.min(completedSpeechCount, config.speeches.length) / Math.max(config.speeches.length, 1)) * 100);
   const persona = getAiPersona(debate.aiPersona);
-  const studentRating = calculateDebateRating({
-    xp: studentProfile?.xp,
-    wins: studentProfile?.wins,
-    judgedDebates: studentProfile?.judgedDebates
-  });
   const studentName = profileLabel(studentProfile, "Student");
   const studentHandle = profileHandle(studentProfile, "student");
   const aiName = opponentProfile ? profileLabel(opponentProfile, "Opponent") : persona.name;
   const aiHandle = opponentProfile ? profileHandle(opponentProfile, "opponent") : persona.id;
-  const aiRating = opponentProfile
-    ? calculateDebateRating({ xp: opponentProfile.xp, wins: opponentProfile.wins, judgedDebates: opponentProfile.judgedDebates })
-    : persona.rating;
 
   useEffect(() => {
     setTurnRemaining(currentSpeech?.timeSeconds ?? debate.turnTimeSeconds);
@@ -655,14 +646,16 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
                   <UserAvatar username={studentHandle} displayName={studentName} avatarUrl={studentProfile?.avatarUrl} size="lg" className="mx-auto border-white/20" />
                   <p className="mt-2 truncate text-sm font-bold">{studentName}</p>
                   <p className="truncate text-xs text-neutral-400">@{studentHandle}</p>
-                  <p className="mt-1 text-xs font-semibold text-emerald-200">{studentRating} · {ratingLabel(studentRating)}</p>
+                  <p className="mt-1 text-xs font-semibold text-emerald-200">{config.sides.affirmativeLabel}</p>
                 </div>
                 <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-bold text-neutral-300">VS</span>
                 <div className="min-w-0 text-center">
                   <UserAvatar username={aiHandle} displayName={aiName} avatarUrl={opponentProfile?.avatarUrl ?? null} size="lg" className="mx-auto border-white/20" />
                   <p className="mt-2 truncate text-sm font-bold">{aiName}</p>
                   <p className="truncate text-xs text-neutral-400">@{aiHandle}</p>
-                  <p className="mt-1 text-xs font-semibold text-rose-200">{aiRating} · {ratingLabel(aiRating)}</p>
+                  {/* Persona difficulty tier is a configured bot setting (honest); no synthetic user
+                      "rating" is shown for either side — real records live on the dashboard. */}
+                  <p className="mt-1 text-xs font-semibold text-rose-200">{opponentProfile ? config.sides.negativeLabel : `${persona.difficulty} difficulty`}</p>
                 </div>
               </div>
               <div className="mt-4 grid gap-2 text-xs font-semibold sm:grid-cols-2">
@@ -1028,13 +1021,9 @@ function JudgeDecisionModal({
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5 text-center">
               <p className="text-sm font-semibold text-neutral-400">Overall score</p>
               <p className="mt-3 text-6xl font-bold">{overallScore ?? report.overallScore}</p>
+              {/* XP is real (earned this round). The synthetic "Debate Rating" delta is no longer
+                  shown — per-skill deltas below derive from real judge category scores and stay. */}
               <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned</p>
-              {report.ratingChange ? (
-                <p className="mt-2 text-sm font-semibold text-emerald-200">
-                  {report.ratingChange.overall >= 0 ? "+" : ""}
-                  {report.ratingChange.overall} Debate Rating
-                </p>
-              ) : null}
             </div>
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
               <div className="flex items-center justify-between gap-2">

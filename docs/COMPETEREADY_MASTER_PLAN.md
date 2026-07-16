@@ -21,6 +21,9 @@ progress. Classrooms/coach enrollment are **optional** — a student can practic
 ## Product principles
 
 - Honesty over polish: real structure, sourced rubrics, labeled provenance.
+- Gamification is evidence-only (enforced 2026-07): no synthetic ratings or bands, no fake "day streak"
+  units, no loss-framed pressure copy, no invented percentages. XP/rank derive solely from real recorded
+  activity; the activity counter is labeled "practice sessions" until a real date-based streak exists.
 - Track isolation: each organization's training is separate and never cross-contaminated.
 - AI assists, never impersonates authority: generated content is labeled; official claims require sources.
 - Availability: AI never hard-fails the product; deterministic fallbacks keep practice working.

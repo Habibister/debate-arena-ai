@@ -10,6 +10,13 @@ import { cn } from "@/lib/utils";
 import { deckSummaries } from "@/lib/study-content";
 import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
 
+// Event HQ pages exist only for events with real registry data — no placeholder HQs.
+const EVENT_HQ_SLUG: Partial<Record<TrainingTrack, string>> = {
+  GENERAL_DEBATE: "public-forum",
+  DECA: "hotel-lodging-management",
+  HOSA: "medical-terminology"
+};
+
 const PRACTICE_ACTION: Record<TrainingTrack, string> = {
   GENERAL_DEBATE: "Start a debate practice",
   HOSA: "Start HOSA practice",
@@ -56,6 +63,20 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
 
       {/* Practice */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {EVENT_HQ_SLUG[track.id] ? (
+          <Link
+            href={`/training/${track.slug}/event/${EVENT_HQ_SLUG[track.id]}` as Route}
+            className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10"
+          >
+            <Layers3 className="mt-0.5 h-5 w-5 text-track" aria-hidden />
+            <span>
+              <span className="block font-semibold">Event HQ</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                Everything for your event in one place — rules, practice, drills, and simulations.
+              </span>
+            </span>
+          </Link>
+        ) : null}
         <Link href={`/training/${track.slug}/practice` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
           <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
           <span>

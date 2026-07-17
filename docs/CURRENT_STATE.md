@@ -31,7 +31,14 @@ _Last updated: 2026-07-11_
 - General Debate drill depth: 36 original concept questions across 4 skills (claim/warrant/impact,
   rebuttal, evidence evaluation, weighing) in the Study Arcade; each writes real MasteryProgress +
   spaced review per skill. All 4 skills seeded and verified live.
-- Spaced reassessment, Study Arcade, nav IA, coach teams/assignments.
+- Spaced reassessment, Study Arcade, coach teams/assignments.
+- Design/IA stage 2 (2026-07): light + dark themes (token sets; System/Dark/Light in settings; all 7
+  accessibility modes have light variants); primary nav = Home | Train | Compete | Resources | Teams
+  (mobile bottom bar: Home/Train/Compete/Teams; Progress/Study Arcade/etc. in the More group — all old
+  URLs still work); post-login lands on /home (continue-where-you-left-off from real unfinished
+  sessions, honest recommended-next from graded weak areas, quick actions, honest stat trio);
+  Event HQ pages for the three real-data events (/training/{hosa,deca,debate}/event/...) gathering
+  registry rules, practice, drills, and simulations with honest empty states.
 - Gamification audit enforced (2026-07): synthetic debate rating + bands removed from dashboard, arena
   matchup, ballot ("+N Debate Rating"), and coach views — replaced with real evidence (judged rounds,
   wins, avg judge score). The `streak` field is displayed honestly as "practice sessions" (it counts

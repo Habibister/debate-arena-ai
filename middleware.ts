@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const protectedPrefixes = [
+  "/home",
+  "/compete",
   "/dashboard",
   "/assignments",
   "/debate",
@@ -31,7 +33,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (token && (pathname === "/signin" || pathname === "/signup")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/home", request.url));
   }
 
   return NextResponse.next();
@@ -39,6 +41,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/home/:path*",
+    "/home",
+    "/compete/:path*",
+    "/compete",
     "/dashboard/:path*",
     "/assignments/:path*",
     "/debate/:path*",

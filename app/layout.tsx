@@ -20,7 +20,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${barlow.variable}`}>
+    <html lang="en" className={`${inter.variable} ${barlow.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Pre-paint theme application: reads the stored accessibility settings and stamps
+            data-theme before first paint so an explicit dark/light choice never flashes.
+            "system" (or no storage) sets nothing — the prefers-color-scheme CSS decides. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var s=JSON.parse(localStorage.getItem("debatearena-accessibility")||"{}");if(s.theme==="dark"||s.theme==="light"){document.documentElement.setAttribute("data-theme",s.theme);}}catch(e){}`
+          }}
+        />
+      </head>
       <body>
         {/* Single sitewide accessibility provider — applies settings to <html> and shares state with
             the debate-room panel and /settings so everything stays synchronized. */}

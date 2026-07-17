@@ -29,7 +29,11 @@ export function resolveSpeechParams(style: VoiceStyle, rate: SpeechRate): { rate
   };
 }
 
+export type ThemePreference = "system" | "dark" | "light";
+export const THEME_PREFERENCES: ThemePreference[] = ["system", "dark", "light"];
+
 export type AccessibilitySettings = {
+  theme: ThemePreference;
   audioAutoplay: boolean;
   speechRate: SpeechRate;
   voiceStyle: VoiceStyle;
@@ -44,8 +48,10 @@ export type AccessibilitySettings = {
   readStudentAloud: boolean;
 };
 
-// Calm defaults: no autoplay, normal rate, AI read-aloud available but manual.
+// Calm defaults: no autoplay, normal rate, AI read-aloud available but manual. Theme follows the
+// system preference until the user explicitly picks dark or light.
 export const DEFAULT_ACCESSIBILITY: AccessibilitySettings = {
+  theme: "system",
   audioAutoplay: false,
   speechRate: "normal",
   voiceStyle: "calm-coach",
@@ -66,6 +72,7 @@ export function normalizeAccessibility(raw: unknown): AccessibilitySettings {
   const input = (raw ?? {}) as Partial<AccessibilitySettings>;
   const d = DEFAULT_ACCESSIBILITY;
   return {
+    theme: THEME_PREFERENCES.includes(input.theme as ThemePreference) ? (input.theme as ThemePreference) : d.theme,
     audioAutoplay: Boolean(input.audioAutoplay ?? d.audioAutoplay),
     speechRate: RATES.includes(input.speechRate as SpeechRate) ? (input.speechRate as SpeechRate) : d.speechRate,
     voiceStyle: VOICE_STYLES.some((v) => v.id === input.voiceStyle) ? (input.voiceStyle as VoiceStyle) : d.voiceStyle,
@@ -84,6 +91,8 @@ export function normalizeAccessibility(raw: unknown): AccessibilitySettings {
 // Root <html> data attributes so global CSS (globals.css) can apply sitewide accessibility styles.
 export function accessibilityDataAttributes(s: AccessibilitySettings): Record<string, string> {
   const attrs: Record<string, string> = {};
+  // "system" sets no attribute — the prefers-color-scheme media query decides; explicit wins.
+  if (s.theme !== "system") attrs["data-theme"] = s.theme;
   if (s.colorBlind) attrs["data-colorblind"] = "true";
   if (s.eyeComfort) attrs["data-eye-comfort"] = "true";
   if (s.reducedMotion) attrs["data-reduced-motion"] = "true";

@@ -42,6 +42,60 @@
   --track-accent: var(--primary);
 }
 
+/* ---------- Light theme: the same token contract on a blue-biased paper ground. ----------
+   Applied when the user explicitly picks light (data-theme="light"), or when the OS prefers
+   light and the user hasn't chosen ("system"). Track accents darken to hold contrast on paper. */
+html[data-theme="light"] {
+  --background: 220 30% 97%;
+  --foreground: 227 35% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 227 35% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 227 35% 12%;
+  --primary: 217 91% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 266 70% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 22% 92%;
+  --muted-foreground: 224 14% 40%;
+  --accent: 187 82% 34%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 18% 85%;
+  --input: 220 18% 85%;
+  --ring: 217 91% 52%;
+  --track-debate: 40 92% 42%;
+  --track-deca: 152 66% 32%;
+  --track-hosa: 350 75% 44%;
+}
+@media (prefers-color-scheme: light) {
+  html:not([data-theme]) {
+    --background: 220 30% 97%;
+    --foreground: 227 35% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 227 35% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 227 35% 12%;
+    --primary: 217 91% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 266 70% 52%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 22% 92%;
+    --muted-foreground: 224 14% 40%;
+    --accent: 187 82% 34%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 18% 85%;
+    --input: 220 18% 85%;
+    --ring: 217 91% 52%;
+    --track-debate: 40 92% 42%;
+    --track-deca: 152 66% 32%;
+    --track-hosa: 350 75% 44%;
+  }
+}
+
 /* Track context: any subtree wrapped in data-track picks up its accent. */
 [data-track="debate"] {
   --track-accent: var(--track-debate);
@@ -122,6 +176,28 @@ html[data-eye-comfort] .arena-grid {
     linear-gradient(90deg, rgba(214, 178, 110, 0.07) 1px, transparent 1px);
 }
 
+/* Light-theme eye comfort: the warm-paper treatment (this was the original light-base design). */
+html[data-theme="light"][data-eye-comfort] {
+  --background: 40 40% 96%;
+  --card: 42 46% 97%;
+  --popover: 42 46% 97%;
+  --muted: 40 26% 91%;
+  --border: 40 22% 85%;
+  --input: 40 22% 85%;
+  --foreground: 30 30% 14%;
+}
+@media (prefers-color-scheme: light) {
+  html:not([data-theme])[data-eye-comfort] {
+    --background: 40 40% 96%;
+    --card: 42 46% 97%;
+    --popover: 42 46% 97%;
+    --muted: 40 26% 91%;
+    --border: 40 22% 85%;
+    --input: 40 22% 85%;
+    --foreground: 30 30% 14%;
+  }
+}
+
 /* Larger text: modest, rem-based so hierarchy and layout scale together. */
 html[data-large-text] {
   font-size: 112.5%;
@@ -143,6 +219,36 @@ html[data-high-contrast] {
   --border: 222 24% 56%;
   --input: 222 24% 56%;
   --ring: 217 100% 72%;
+}
+
+/* Light-theme high contrast: darker text, stronger borders, deeper ring on paper. */
+html[data-theme="light"][data-high-contrast] {
+  --background: 0 0% 100%;
+  --foreground: 224 60% 4%;
+  --muted-foreground: 222 32% 22%;
+  --border: 224 32% 34%;
+  --input: 224 32% 34%;
+  --ring: 217 100% 38%;
+}
+@media (prefers-color-scheme: light) {
+  html:not([data-theme])[data-high-contrast] {
+    --background: 0 0% 100%;
+    --foreground: 224 60% 4%;
+    --muted-foreground: 222 32% 22%;
+    --border: 224 32% 34%;
+    --input: 224 32% 34%;
+    --ring: 217 100% 38%;
+  }
+}
+
+/* Light-theme color-blind borders: darker instead of brighter. */
+html[data-theme="light"][data-colorblind] {
+  --border: 224 26% 40%;
+}
+@media (prefers-color-scheme: light) {
+  html:not([data-theme])[data-colorblind] {
+    --border: 224 26% 40%;
+  }
 }
 
 /* Color-blind friendly: never rely on color alone — strengthen borders + always-visible focus. */

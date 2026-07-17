@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { accessibilityDataAttributes, DEFAULT_ACCESSIBILITY, normalizeAccessibility, type AccessibilitySettings } from "@/lib/accessibility";
 
 const STORAGE_KEY = "debatearena-accessibility";
-const ROOT_ATTRS = ["data-colorblind", "data-eye-comfort", "data-reduced-motion", "data-large-text", "data-increased-spacing", "data-high-contrast", "data-dyslexia"];
+const ROOT_ATTRS = ["data-theme", "data-colorblind", "data-eye-comfort", "data-reduced-motion", "data-large-text", "data-increased-spacing", "data-high-contrast", "data-dyslexia"];
 
 type AccessibilityContextValue = {
   settings: AccessibilitySettings;

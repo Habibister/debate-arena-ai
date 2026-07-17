@@ -11,13 +11,14 @@ import {
   DoorOpen,
   FileCheck2,
   Gamepad2,
+  Gavel,
   GraduationCap,
   History,
+  Home as HomeIcon,
   Library,
   LayoutDashboard,
   Layers3,
   LogOut,
-  MessageSquareText,
   Settings,
   ShieldCheck,
   Swords,
@@ -31,26 +32,30 @@ import { cn } from "@/lib/utils";
 import { useTrainingTrack } from "@/components/training/training-track-context";
 import { trackById } from "@/lib/training-tracks";
 
-// Primary navigation per the master plan IA. Old routes stay functional and reachable via the
-// "More" group below (desktop) and in-page links — nothing is orphaned by the rename.
+// Primary IA: Home | Train | Compete | Resources | Teams. Every old route stays functional —
+// Progress, Study Arcade, tests, skills, history live in the secondary group or inside sections.
 const navItems = [
-  { href: "/debate", label: "Practice", icon: MessageSquareText },
-  { href: "/training", label: "Training", icon: GraduationCap },
-  { href: "/study-arcade", label: "Study Arcade", icon: Gamepad2 },
+  { href: "/home", label: "Home", icon: HomeIcon },
+  { href: "/training", label: "Train", icon: GraduationCap },
+  { href: "/compete", label: "Compete", icon: Gavel },
   { href: "/resources", label: "Resources", icon: Library },
-  { href: "/teams", label: "Teams", icon: Users },
-  { href: "/dashboard", label: "Progress", icon: LayoutDashboard },
-  { href: "/coach", label: "Coach", icon: ShieldCheck, requiresRole: ["COACH", "ADMIN"] },
-  { href: "/admin", label: "Admin", icon: ShieldCheck, requiresRole: ["ADMIN"] }
+  { href: "/teams", label: "Teams", icon: Users }
 ] as const;
+
+// Mobile bottom bar shows exactly these four (Resources rides the scroll header).
+const BOTTOM_BAR_HREFS = ["/home", "/training", "/compete", "/teams"] as const;
 
 // Secondary destinations kept out of the primary rail but still one click away on desktop.
 const moreItems = [
+  { href: "/dashboard", label: "Progress", icon: LayoutDashboard },
+  { href: "/study-arcade", label: "Study Arcade", icon: Gamepad2 },
   { href: "/assignments", label: "Assignments", icon: FileCheck2 },
   { href: "/debates/history", label: "History", icon: History },
   { href: "/skills", label: "Skills", icon: BookOpenCheck },
   { href: "/tests", label: "Tests", icon: ClipboardList },
-  { href: "/settings", label: "Settings", icon: Settings }
+  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/coach", label: "Coach", icon: ShieldCheck, requiresRole: ["COACH", "ADMIN"] },
+  { href: "/admin", label: "Admin", icon: ShieldCheck, requiresRole: ["ADMIN"] }
 ] as const;
 
 type ShellSession = {
@@ -111,15 +116,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { track } = useTrainingTrack();
   const trackSlug = trackById(track).slug;
   // Preserve the selected track when navigating to track-filterable content routes.
-  const TRACK_AWARE = ["/study-arcade", "/tests", "/skills", "/debate"];
+  const TRACK_AWARE = ["/home", "/compete", "/study-arcade", "/tests", "/skills", "/debate"];
   const withTrack = (href: string) => (TRACK_AWARE.includes(href) ? `${href}?track=${trackSlug}` : href);
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
   const rank = (session?.user?.rank ?? "BRONZE").replace("_", " ");
   // Only show role-restricted links once we know the role. Students never see Coach/Admin.
-  const visibleNav = navItems.filter(
-    (item) => !("requiresRole" in item) || (role ? (item.requiresRole as readonly string[]).includes(role) : false)
-  );
+  const roleAllows = (item: { requiresRole?: readonly string[] }) =>
+    !item.requiresRole || (role ? item.requiresRole.includes(role) : false);
+  const visibleNav = navItems.filter((item) => roleAllows(item as { requiresRole?: readonly string[] }));
+  const visibleMore = moreItems.filter((item) => roleAllows(item as { requiresRole?: readonly string[] }));
+  const bottomBarNav = visibleNav.filter((item) => (BOTTOM_BAR_HREFS as readonly string[]).includes(item.href));
 
   function exitFocusMode() {
     // Leaving an active room requires confirmation; end/return goes to practice history.
@@ -189,7 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mt-6">
           <p className="eyebrow px-3">More</p>
           <nav className="mt-1 space-y-1">
-            {moreItems.map((item) => {
+            {visibleMore.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -258,7 +265,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {[...visibleNav, ...moreItems].map((item) => {
+            {[...visibleNav, ...visibleMore].map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -282,7 +289,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-card/95 px-2 py-2 backdrop-blur lg:hidden">
-        {visibleNav.slice(0, 4).map((item) => {
+        {bottomBarNav.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (

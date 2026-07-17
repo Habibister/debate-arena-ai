@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Level } from "@prisma/client";
-import { CircleAlert, Clock, Loader2, MessageSquareQuote, PlayCircle, ShieldCheck, Sparkles } from "lucide-react";
+import { CircleAlert, Clock, Dices, Loader2, MessageSquareQuote, PlayCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,21 @@ type JudgeResult = {
 };
 
 const EVENT_NAME = "Hotel and Lodging Management Series";
+
+// "Surprise me" role pairs — varied matchups so repeat sessions don't anchor on one plot.
+// Both fields stay fully editable; these are just quick-start combinations.
+const ROLE_PAIRS: Array<{ student: string; judge: string }> = [
+  { student: "front desk manager", judge: "hotel guest whose reserved suite was given away" },
+  { student: "assistant restaurant manager", judge: "diner whose allergy request was mishandled" },
+  { student: "event coordinator", judge: "corporate client whose budget was just cut" },
+  { student: "marketing associate", judge: "skeptical small-business owner" },
+  { student: "customer-service lead", judge: "regular customer demanding a policy exception" },
+  { student: "retail floor supervisor", judge: "vendor rep pushing an aggressive restock deal" },
+  { student: "operations intern", judge: "department head questioning your cost estimate" },
+  { student: "franchise trainee", judge: "mystery shopper revealing their findings" },
+  { student: "guest-services agent", judge: "wedding planner with last-minute changes" },
+  { student: "night-shift duty manager", judge: "tour-group leader whose rooms aren't ready" }
+];
 
 export function DecaRoleplay({ mode = "practice", officialPrep }: { mode?: "practice" | "simulation"; officialPrep?: OfficialPrepProps | null }) {
   const [level, setLevel] = useState<Level>("BEGINNER");
@@ -232,19 +247,36 @@ export function DecaRoleplay({ mode = "practice", officialPrep }: { mode?: "prac
             </select>
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold">Your role</span>
+            <span className="mb-1 block font-semibold">Your role <span className="font-normal text-muted-foreground">(editable — type any role)</span></span>
             <Input value={studentRole} onChange={(e) => setStudentRole(e.target.value)} placeholder="e.g. front desk manager" />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold">AI plays (in character)</span>
+            <span className="mb-1 block font-semibold">AI plays <span className="font-normal text-muted-foreground">(editable — type any character)</span></span>
             <Input value={judgeRole} onChange={(e) => setJudgeRole(e.target.value)} placeholder="e.g. frustrated hotel guest" />
           </label>
         </div>
 
-        <Button type="button" onClick={generateScenario} disabled={busy !== null}>
-          {busy === "scenario" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
-          {busy === "scenario" ? "Generating..." : "Generate scenario"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" onClick={generateScenario} disabled={busy !== null}>
+            {busy === "scenario" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
+            {busy === "scenario" ? "Generating..." : "Generate scenario"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy !== null}
+            onClick={() => {
+              // Surprise me: pick a different role pair than the current one, then let the user generate.
+              const options = ROLE_PAIRS.filter((p) => p.student !== studentRole || p.judge !== judgeRole);
+              const pick = options[Math.floor(Math.random() * options.length)] ?? ROLE_PAIRS[0];
+              setStudentRole(pick.student);
+              setJudgeRole(pick.judge);
+            }}
+          >
+            <Dices className="h-4 w-4" aria-hidden />
+            Surprise me
+          </Button>
+        </div>
 
         {error ? (
           <p className="flex items-center gap-2 text-sm font-semibold text-destructive">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Level } from "@prisma/client";
-import { CircleAlert, HeartPulse, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { CircleAlert, Dices, HeartPulse, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,20 @@ const LEVELS: Level[] = ["BEGINNER", "INTERMEDIATE", "ELITE"];
 // Non-exam HOSA categories: Medical Terminology is the verified written exam (its own flagship room),
 // so it is intentionally excluded here — this component is the generic interactive role-play.
 const ROLEPLAY_CATEGORIES = HOSA_CATEGORIES.filter((c) => !/medical terminology/i.test(c));
+
+// "Surprise me" role pairs — varied matchups so repeat sessions don't anchor on one plot.
+const ROLE_PAIRS: Array<{ student: string; character: string }> = [
+  { student: "health science student", character: "patient who is anxious about a new diagnosis" },
+  { student: "clinic volunteer", character: "parent worried about a child's fever" },
+  { student: "pharmacy technician trainee", character: "senior confused about a dosing schedule" },
+  { student: "nursing assistant student", character: "post-op patient afraid to start walking" },
+  { student: "EMT trainee", character: "shaken bystander at a minor accident" },
+  { student: "school health aide", character: "teen embarrassed to describe symptoms" },
+  { student: "community-health presenter", character: "audience member citing online misinformation" },
+  { student: "dental assistant student", character: "patient with severe dental anxiety" },
+  { student: "physical-therapy aide", character: "athlete pushing to return too soon" },
+  { student: "telehealth support trainee", character: "caller unsure whether symptoms are urgent" }
+];
 
 type Scenario = {
   scenario: string;
@@ -130,19 +144,35 @@ export function HosaRoleplay() {
             </select>
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold">Your role</span>
+            <span className="mb-1 block font-semibold">Your role <span className="font-normal text-muted-foreground">(editable — type any role)</span></span>
             <Input value={studentRole} onChange={(e) => setStudentRole(e.target.value)} placeholder="e.g. health science student" />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold">AI plays (in character)</span>
+            <span className="mb-1 block font-semibold">AI plays <span className="font-normal text-muted-foreground">(editable — type any character)</span></span>
             <Input value={characterRole} onChange={(e) => setCharacterRole(e.target.value)} placeholder="e.g. anxious patient" />
           </label>
         </div>
 
-        <Button type="button" onClick={generateScenario} disabled={busy !== null}>
-          {busy === "scenario" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
-          {busy === "scenario" ? "Generating..." : "Generate scenario"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" onClick={generateScenario} disabled={busy !== null}>
+            {busy === "scenario" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
+            {busy === "scenario" ? "Generating..." : "Generate scenario"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy !== null}
+            onClick={() => {
+              const options = ROLE_PAIRS.filter((p) => p.student !== studentRole || p.character !== characterRole);
+              const pick = options[Math.floor(Math.random() * options.length)] ?? ROLE_PAIRS[0];
+              setStudentRole(pick.student);
+              setCharacterRole(pick.character);
+            }}
+          >
+            <Dices className="h-4 w-4" aria-hidden />
+            Surprise me
+          </Button>
+        </div>
 
         {error ? (
           <p className="flex items-center gap-2 text-sm font-semibold text-destructive">

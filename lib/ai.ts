@@ -1510,9 +1510,78 @@ export type RoleplayScenario = {
   fallbackNotice?: string;
 };
 
-function fallbackRoleplayScenario(input: { cluster: string; studentRole: string; judgeRole: string }): RoleplayScenario {
+// --- Scenario variety rotation -----------------------------------------------------------------
+// With identical inputs and a fixed temperature, consecutive generations converge on one archetype
+// (e.g. "overbooked hotel suite"). Each generation draws a random setting + pressure and injects
+// them into the prompt (and the deterministic fallback), so repeat runs differ meaningfully.
+// These are GENERIC practice dimensions, never presented as official content.
+function pickOne<T>(items: readonly T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+const DECA_SCENARIO_SETTINGS = [
+  "a new-employee onboarding gap that just surfaced",
+  "a peak-demand day stretching the team thin",
+  "a vendor contract renewal negotiation",
+  "a loyalty-program change customers dislike",
+  "a budget review meeting with leadership",
+  "a service-recovery follow-up after last week's failure",
+  "a new technology rollout that staff resist",
+  "a compliance or safety audit happening this week",
+  "a social-media complaint gaining attention",
+  "a large group/bulk client request outside normal policy",
+  "a staffing shortage during a major event",
+  "a pricing or promotion decision due today"
+] as const;
+
+const DECA_SCENARIO_PRESSURES = [
+  "an unhappy repeat customer weighing whether to leave",
+  "a cost overrun that must be explained and fixed",
+  "a teammate's mistake that must be resolved professionally",
+  "a skeptical senior stakeholder questioning your judgment",
+  "two customers with directly competing needs",
+  "a tight deadline forcing a visible trade-off",
+  "a policy the customer believes is unfair",
+  "a measurable performance target now at risk",
+  "an ethical gray area with no obvious rule",
+  "a communication breakdown between two departments"
+] as const;
+
+const HOSA_SCENARIO_SETTINGS = [
+  "a clinic intake desk during a busy morning",
+  "a pharmacy counter at pickup time",
+  "a school health office between class periods",
+  "a community health-fair booth",
+  "a post-procedure discharge conversation",
+  "a physical-therapy session midway through recovery",
+  "a telehealth call with spotty audio",
+  "a long-term-care facility visit",
+  "a lab draw station with a nervous patient",
+  "a health-class presentation with open Q&A"
+] as const;
+
+const HOSA_SCENARIO_CONCERNS = [
+  "confusion about a medication schedule",
+  "a first visit and visible anxiety",
+  "a plain-language barrier — medical terms aren't landing",
+  "a family member asking questions on the patient's behalf",
+  "beliefs from conflicting online health information",
+  "fear of needles that is delaying care",
+  "a symptom that may need escalation versus reassurance",
+  "a privacy question about who can know what",
+  "a possible infection-control lapse just observed",
+  "worry about cost and what insurance covers"
+] as const;
+
+function fallbackRoleplayScenario(input: {
+  cluster: string;
+  studentRole: string;
+  judgeRole: string;
+  setting?: string;
+  pressure?: string;
+}): RoleplayScenario {
   return {
-    scenario: `You are the ${input.studentRole} for a ${input.cluster} business. The ${input.judgeRole} presents a common operational challenge and asks how you would handle it. Analyze the situation, recommend a professional course of action, and be ready to defend your reasoning.`,
+    scenario: `You are the ${input.studentRole} for a ${input.cluster} business during ${input.setting ?? "a normal business day"}. The ${input.judgeRole} brings you ${input.pressure ?? "a common operational challenge"} and asks how you would handle it. Analyze the situation, recommend a professional course of action, and be ready to defend your reasoning.`,
     judgeCharacter: `The AI plays the ${input.judgeRole}, speaking and reacting as that person naturally would in a real business meeting.`,
     performanceIndicators: [
       "Understanding of the business scenario",
@@ -1542,8 +1611,12 @@ export async function generateDecaRoleplayScenario(input: {
   const registryPis = spec ? (await getSpecRubricBreakdown(spec)).categories.map((category) => category.name) : [];
   const hasRegistry = registryPis.length > 0;
 
+  // Variety seed: a random setting + pressure per generation so identical inputs still produce
+  // meaningfully different scenarios (and the deterministic fallback varies the same way).
+  const setting = pickOne(DECA_SCENARIO_SETTINGS);
+  const pressure = pickOne(DECA_SCENARIO_PRESSURES);
   const fallback = () =>
-    fallbackRoleplayScenario({ cluster: input.cluster, studentRole: input.studentRole, judgeRole: input.judgeRole });
+    fallbackRoleplayScenario({ cluster: input.cluster, studentRole: input.studentRole, judgeRole: input.judgeRole, setting, pressure });
 
   const piInstruction = hasRegistry
     ? `The student is evaluated ONLY on these official rubric categories from the ${spec?.eventName} ${spec?.season} specification — use them verbatim as the performanceIndicators, do NOT invent official indicators: ${registryPis
@@ -1562,8 +1635,13 @@ Student plays: ${input.studentRole}
 The AI plays (in character): ${input.judgeRole}
 ${piInstruction}
 
+Variety requirements (make this scenario clearly different from a typical one):
+- Anchor the situation in this specific business moment: ${setting}.
+- Center the conflict on: ${pressure}.
+- Do NOT default to an overbooked-room or generic complaint plot unless the pressure above demands it.
+
 Return a single JSON object with EXACTLY these fields:
-- scenario: 3-5 sentences describing the business situation the student must handle, specific to the cluster and instructional area
+- scenario: 3-5 sentences describing the business situation the student must handle, specific to the cluster, instructional area, and the variety requirements above
 - judgeCharacter: 1-2 sentences describing who the ${input.judgeRole} is and how they behave in this interaction (their goal, tone, and what would make them skeptical)
 - performanceIndicators: array of strings ${hasRegistry ? "(use the official categories above VERBATIM)" : "(generic, clearly not official)"}`,
     fallback,
@@ -1708,9 +1786,15 @@ ${!weighted && registry ? registry.promptBlock : ""}`,
   return result;
 }
 
-function fallbackHosaScenario(input: { category: string; studentRole: string; characterRole: string }): RoleplayScenario {
+function fallbackHosaScenario(input: {
+  category: string;
+  studentRole: string;
+  characterRole: string;
+  setting?: string;
+  concern?: string;
+}): RoleplayScenario {
   return {
-    scenario: `You are the ${input.studentRole} in a ${input.category.toLowerCase()} situation. The ${input.characterRole} presents a common health-science concern and asks how you would respond. Communicate clearly, use correct terminology, and keep your response safe and role-appropriate.`,
+    scenario: `You are the ${input.studentRole} at ${input.setting ?? "a health-science setting"}. The ${input.characterRole} comes to you with ${input.concern ?? "a common health-science concern"} (${input.category.toLowerCase()} practice). Communicate clearly, use correct terminology, and keep your response safe and role-appropriate.`,
     judgeCharacter: `The AI plays the ${input.characterRole}, reacting as that person naturally would in a real health-science setting.`,
     performanceIndicators: [
       "Accuracy of health-science knowledge and terminology",
@@ -1732,8 +1816,11 @@ export async function generateHosaScenario(input: {
   studentRole: string;
   characterRole: string; // who the AI plays (patient, family member, client, panel)
 }): Promise<RoleplayScenario> {
+  // Variety seed (same rationale as DECA): random setting + concern per generation.
+  const setting = pickOne(HOSA_SCENARIO_SETTINGS);
+  const concern = pickOne(HOSA_SCENARIO_CONCERNS);
   const fallback = () =>
-    fallbackHosaScenario({ category: input.category, studentRole: input.studentRole, characterRole: input.characterRole });
+    fallbackHosaScenario({ category: input.category, studentRole: input.studentRole, characterRole: input.characterRole, setting, concern });
 
   const result = (await jsonCompletion<RoleplayScenario>(
     `You author authentic HOSA health-science practice role-plays. The interlocutor (the "${input.characterRole}") is a real person in a health-science setting (patient, family member, client, or panel), never an AI assistant — they have a goal, a tone, and human context. Health and safety accuracy matters. Return JSON only.`,
@@ -1743,8 +1830,12 @@ Student plays: ${input.studentRole}
 The AI plays (in character): ${input.characterRole}
 No official HOSA specification covers this interactive event, so propose 3 reasonable GENERIC practice focus points — they are NOT official evaluation criteria.
 
+Variety requirements (make this scenario clearly different from a typical one):
+- Set it at: ${setting}.
+- Center it on: ${concern}.
+
 Return a single JSON object with EXACTLY these fields:
-- scenario: 3-5 sentences describing the health-science situation the student must handle, appropriate and safe
+- scenario: 3-5 sentences describing the health-science situation the student must handle, appropriate and safe, matching the variety requirements above
 - judgeCharacter: 1-2 sentences describing who the ${input.characterRole} is and how they behave (their goal, tone, and what would concern them)
 - performanceIndicators: array of 3 GENERIC practice focus points (clearly not official)`,
     fallback,

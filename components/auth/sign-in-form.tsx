@@ -18,7 +18,8 @@ type SignInFormProps = {
 
 function safeCallbackUrl(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/dashboard";
+    // Post-login landing is Home (the action-first page); full stats live under Progress.
+    return "/home";
   }
 
   return value;

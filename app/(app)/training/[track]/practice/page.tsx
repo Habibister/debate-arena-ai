@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { HosaEventPrep } from "@/components/training/hosa-event-prep";
-import { HosaRoleplay } from "@/components/training/hosa-roleplay";
+import { HosaRoleplaySetup } from "@/components/training/hosa-roleplay-setup";
 import { MunConference } from "@/components/training/mun-conference";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default async function TrackPracticePage({ params }: { params: { track: s
           {track.id === "HOSA" ? (
             <>
               <HosaEventPrep />
-              <HosaRoleplay />
+              <HosaRoleplaySetup />
             </>
           ) : null}
         </>

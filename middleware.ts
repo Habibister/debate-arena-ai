@@ -4,6 +4,7 @@ import { getToken } from "next-auth/jwt";
 const protectedPrefixes = [
   "/home",
   "/compete",
+  "/training",
   "/dashboard",
   "/assignments",
   "/debate",
@@ -45,6 +46,8 @@ export const config = {
     "/home",
     "/compete/:path*",
     "/compete",
+    "/training/:path*",
+    "/training",
     "/dashboard/:path*",
     "/assignments/:path*",
     "/debate/:path*",

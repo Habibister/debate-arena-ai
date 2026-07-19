@@ -81,9 +81,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [session, setSession] = useState<ShellSession | null>(null);
-  // Full-screen practice: an active debate/track-practice room (/debate/<id>) takes over the whole
-  // viewport — no app sidebar, no dashboard nav — so the room is the only primary interface.
-  const focusMode = /^\/debate\/[^/]+$/.test(pathname);
+  // Full-screen practice: an active debate room (/debate/<id>) OR a role-play session room
+  // (/training/<track>/room) takes over the whole viewport — no sidebar, no nav — so the room is the
+  // only primary interface.
+  const isDebateRoom = /^\/debate\/[^/]+$/.test(pathname);
+  const roomMatch = pathname.match(/^\/training\/([^/]+)\/room$/);
+  const focusMode = isDebateRoom || Boolean(roomMatch);
 
   useEffect(() => {
     let active = true;
@@ -129,7 +132,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const bottomBarNav = visibleNav.filter((item) => (BOTTOM_BAR_HREFS as readonly string[]).includes(item.href));
 
   function exitFocusMode() {
-    // Leaving an active room requires confirmation; end/return goes to practice history.
+    if (roomMatch) {
+      // Role-play rooms are client-state only (not persisted yet) — be honest and return to setup.
+      if (window.confirm("Leave this role-play? It isn't saved yet, so you'll start a new one next time.")) {
+        router.push(`/training/${roomMatch[1]}/practice`);
+      }
+      return;
+    }
+    // Debate rooms persist — leaving goes to history.
     if (window.confirm("End this practice and leave the room? Your progress is saved to your history.")) {
       router.push("/debates/history");
     }

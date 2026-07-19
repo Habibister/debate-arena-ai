@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
-import { DecaRoleplay } from "@/components/training/deca-roleplay";
+import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { HosaEventPrep } from "@/components/training/hosa-event-prep";
 import { HosaRoleplay } from "@/components/training/hosa-roleplay";
 import { MunConference } from "@/components/training/mun-conference";
@@ -46,7 +46,7 @@ export default async function TrackPracticePage({ params }: { params: { track: s
         </>
       ) : (
         <>
-          {track.id === "DECA" ? <DecaRoleplay /> : null}
+          {track.id === "DECA" ? <DecaRoleplaySetup /> : null}
           {/* HOSA guided flow: the verified Medical Terminology exam (HosaEventPrep) is the flagship,
               plus a clearly-labeled generic health-science role-play for the other categories. Neither
               routes into the legacy /debate/[id] room — the generic TrackPracticeSetup launcher is gone. */}

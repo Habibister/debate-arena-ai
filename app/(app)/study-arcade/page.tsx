@@ -5,12 +5,11 @@ import { BookOpenCheck, Gamepad2, Layers3, PlayCircle, RotateCcw, Sparkles } fro
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { ConceptDrills } from "@/components/training/concept-drills";
 import { DebateDrills } from "@/components/training/debate-drills";
-import { DecaRoleplay } from "@/components/training/deca-roleplay";
+import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { DECA_DRILL_AREAS } from "@/lib/deca-drills";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
-import { getOfficialPrepFormat } from "@/lib/competition-specs";
 import { prisma } from "@/lib/prisma";
 import { countDueReviews } from "@/lib/spaced-review";
 import { deckSummaries } from "@/lib/study-content";
@@ -30,7 +29,6 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
   // DECA Full Simulation entry point: fetch the registry-driven prep format only when DECA is in view.
   // Null (no spec) makes the simulation degrade to an untimed flow with no fake "official" clock.
   const showDeca = !activeTrack || activeTrack.id === "DECA";
-  const decaPrep = showDeca ? await getOfficialPrepFormat("DECA") : null;
 
   // Real practice signals for the review tiles (0 for a brand-new account; never sample data).
   const session = await getServerSession(authOptions);
@@ -142,7 +140,7 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
       {/* DECA Full Simulation — one timed end-to-end round (prep clock → pitch → objections → scored
           ballot), distinct from the isolated concept drills above. Reuses the registry-backed role-play
           AI + rubric; provenance stays honest (official only on the Hospitality/HLM path). */}
-      {showDeca ? <DecaRoleplay mode="simulation" officialPrep={decaPrep} /> : null}
+      {showDeca ? <DecaRoleplaySetup mode="simulation" /> : null}
 
       <Card>
         <CardHeader>

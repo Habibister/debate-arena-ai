@@ -84,6 +84,9 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
   const [performLeft, setPerformLeft] = useState(0);
   const [performRunning, setPerformRunning] = useState(false);
   const pitchUnlocked = !isSim || prepDone;
+  // Performance clock reached zero (DECA simulation only). Informational — like a real round you can
+  // finish your thought, but the mic stops and we nudge you to wrap up (debate-room turn-expiry parity).
+  const performExpired = isSim && prepDone && performTotal > 0 && performLeft === 0;
 
   const generatedRef = useRef(false);
 
@@ -339,9 +342,12 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         </section>
       ) : null}
       {isSim && prepDone && !result && performTotal > 0 ? (
-        <section className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-track/30 bg-track/5 p-4">
-          <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />Performance time with the judge</p>
-          <p className="font-mono text-xl font-bold tabular-nums" aria-live="polite">{clockLabel(performLeft)}</p>
+        <section className={cn("mt-4 rounded-lg border p-4", performExpired ? "border-destructive/40 bg-destructive/10" : "border-track/30 bg-track/5")}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />Performance time with the judge</p>
+            <p className="font-mono text-xl font-bold tabular-nums" aria-live="polite">{clockLabel(performLeft)}</p>
+          </div>
+          {performExpired ? <p className="mt-1 text-xs font-semibold text-destructive" aria-live="polite">Time&apos;s up — finish your thought and end the round for your ballot.</p> : null}
         </section>
       ) : null}
 
@@ -373,7 +379,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
             disabled={busy !== null}
           />
           <div className="mt-2">
-            <SpeechInput onAppend={(t) => setDraft((p) => (p ? `${p} ${t}` : t))} disabled={busy !== null} turnKey={`turn-${turns.length}`} />
+            <SpeechInput onAppend={(t) => setDraft((p) => (p ? `${p} ${t}` : t))} disabled={busy !== null} timeUp={performExpired} turnKey={`turn-${turns.length}`} />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {!started ? (

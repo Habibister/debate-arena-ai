@@ -32,6 +32,14 @@ _Last updated: 2026-07-11_
   rebuttal, evidence evaluation, weighing) in the Study Arcade; each writes real MasteryProgress +
   spaced review per skill. All 4 skills seeded and verified live.
 - Spaced reassessment, Study Arcade, coach teams/assignments.
+- DECA/HOSA session rooms at debate-room parity (2026-07): dedicated focus-mode rooms
+  (/training/[track]/room) with real multi-turn back-and-forth (new /api/ai/roleplay-turn — the AI
+  character reacts to each student turn, capped at 4 exchanges then a ballot), the reused Side Coach
+  (private, never in the judge transcript), difficulty depth (Beginner/Elite visibly change character
+  toughness and the judge's scoring bar — same vague answer scored 85 vs 35), reused read-aloud/speech
+  input, and registry-driven DECA prep/performance clocks (HOSA untimed — no fabricated timer). Honesty
+  unchanged: DECA registry-attributed only when backed; HOSA generic/non-official. Sessions are
+  client-state only ("not saved yet") — persistence still deferred with the retry-loop schema.
 - Design/IA stage 2 (2026-07): light + dark themes (token sets; System/Dark/Light in settings; all 7
   accessibility modes have light variants); primary nav = Home | Train | Compete | Resources | Teams
   (mobile bottom bar: Home/Train/Compete/Teams; Progress/Study Arcade/etc. in the More group — all old

@@ -12,7 +12,7 @@ import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel, type OfficialMessage } from "@/components/debate/side-coach-panel";
 import { cn } from "@/lib/utils";
-import { readRoleplayConfig, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
+import { readRoleplayConfig, roleplayTurnCap, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
 
 type OfficialPrep = { prepMinutes: number; performMinutes: number | null; eventName: string; season: string; verificationStatus: string } | null;
 
@@ -25,6 +25,9 @@ type Scenario = {
   season?: string;
   verificationStatus?: string;
   fallbackNotice?: string;
+  goals?: string[];
+  keyTerms?: Array<{ term: string; definition: string }>;
+  suggestedOpening?: string;
 };
 type Turn = { speaker: "student" | "character"; content: string; character?: string };
 type JudgeResult = {
@@ -40,7 +43,6 @@ type JudgeResult = {
 };
 
 const DECA_EVENT_NAME = "Hotel and Lodging Management Series";
-const MAX_EXCHANGES = 4; // how many reactive character turns before the round wraps to the ballot
 
 async function call<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -72,7 +74,9 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
   const isDeca = track === "deca";
   const characterRole = config ? (isDeca ? (config as DecaRoomConfig).judgeRole : (config as HosaRoomConfig).characterRole) : "";
   const exchanges = turns.filter((t) => t.speaker === "character").length;
-  const atCap = exchanges >= MAX_EXCHANGES;
+  // Difficulty sets how many reactive turns the round runs (Beginner short, Elite longer).
+  const maxExchanges = roleplayTurnCap(config?.level ?? "BEGINNER");
+  const atCap = exchanges >= maxExchanges;
 
   // Clocks (DECA simulation only).
   const isSim = config?.track === "deca" && config.simulation && Boolean(officialPrep?.prepMinutes);
@@ -180,7 +184,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         characterRole,
         transcript: buildTranscript(list),
         exchangesSoFar: list.filter((t) => t.speaker === "character").length,
-        maxExchanges: MAX_EXCHANGES
+        maxExchanges
       });
       setTurns((cur) => [...cur, { speaker: "character", content: turn.line, character: turn.character }]);
     } catch (e) {
@@ -204,7 +208,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
     const next: Turn[] = [...turns, { speaker: "student", content: draft.trim() }];
     setTurns(next);
     setDraft("");
-    if (next.filter((t) => t.speaker === "character").length < MAX_EXCHANGES) {
+    if (next.filter((t) => t.speaker === "character").length < maxExchanges) {
       await requestCharacterTurn(next);
     }
   }
@@ -298,7 +302,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
             aria-current={i === stageIndex ? "step" : undefined}
           >
             {i + 1}. {s}
-            {i === 1 && started && !result ? ` · ${exchanges}/${MAX_EXCHANGES}` : ""}
+            {i === 1 && started && !result ? ` · Turn ${exchanges} of ${maxExchanges}` : ""}
           </li>
         ))}
       </ol>
@@ -322,6 +326,22 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           </div>
           <p className="mt-3 text-base leading-7">{scenario.scenario}</p>
           <p className="mt-2 text-sm text-muted-foreground"><span className="font-semibold">In character:</span> {scenario.judgeCharacter}</p>
+          {scenario.goals && scenario.goals.length > 0 ? (
+            <div className="mt-3 rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold">Your goals</p>
+              <ul className="mt-2 list-decimal space-y-1 pl-5 text-xs text-muted-foreground">{scenario.goals.map((g, i) => <li key={i}>{g}</li>)}</ul>
+            </div>
+          ) : null}
+          {scenario.keyTerms && scenario.keyTerms.length > 0 ? (
+            <div className="mt-3 rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold">Key terms</p>
+              <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
+                {scenario.keyTerms.map((k, i) => (
+                  <div key={i}><dt className="inline font-semibold text-foreground">{k.term}:</dt> <dd className="inline">{k.definition}</dd></div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
           <div className="mt-3 rounded-md border bg-background p-3">
             <p className="flex items-center gap-2 text-xs font-semibold"><ShieldCheck className="h-3.5 w-3.5 text-track" aria-hidden />Evaluated on</p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">{scenario.performanceIndicators.map((pi) => <li key={pi}>{pi}</li>)}</ul>
@@ -377,6 +397,12 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
       {scenario && !result && pitchUnlocked ? (
         <section className="mt-4 rounded-lg border bg-card p-5">
           <p className="eyebrow">{!started ? (isDeca ? "Your opening pitch" : "Your response") : "Your reply"}</p>
+          {!started && scenario.suggestedOpening ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-track/25 bg-track/5 p-3 text-sm">
+              <span className="text-muted-foreground">Suggested opening: <span className="italic text-foreground">“{scenario.suggestedOpening}”</span></span>
+              <Button type="button" variant="outline" size="sm" onClick={() => setDraft((d) => (d ? d : scenario.suggestedOpening ?? ""))}>Use this opener</Button>
+            </div>
+          ) : null}
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

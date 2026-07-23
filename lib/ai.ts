@@ -1508,7 +1508,42 @@ export type RoleplayScenario = {
   season?: string;
   verificationStatus?: string;
   fallbackNotice?: string;
+  // Difficulty-shaped scaffolding: what the student should accomplish, plain-language term definitions,
+  // and a suggested opening (Beginner only). Elite scenarios omit the opening and most definitions.
+  goals?: string[];
+  keyTerms?: Array<{ term: string; definition: string }>;
+  suggestedOpening?: string;
 };
+
+// Difficulty changes the CONTENT the student receives, not just tone. Shared by both scenario
+// generators so DECA and HOSA scale identically.
+function roleplayContentSpec(level: Level): string {
+  switch (level) {
+    case "BEGINNER":
+      return `BEGINNER content — make it approachable and well-scaffolded:
+- Keep the scenario SHORT: 60-100 words, ONE clear issue to handle (no competing subplots).
+- goals: exactly 3 short, concrete things the student should accomplish.
+- keyTerms: define every specialized/technical term used, in plain language.
+- suggestedOpening: one natural sentence the student could open with.`;
+    case "ELITE":
+      return `ELITE content — make it demanding and realistic:
+- A longer scenario: 180-240 words with genuine ambiguity and MULTIPLE COMPETING PRIORITIES that trade off against each other.
+- goals: exactly 3, framed as high-level objectives, not step-by-step.
+- keyTerms: leave EMPTY ([]) — do not hand-hold with definitions.
+- suggestedOpening: leave EMPTY ("") — the student must open on their own.`;
+    default:
+      return `INTERMEDIATE content — a moderate step up:
+- A medium scenario: roughly 120-170 words with 2-3 intertwined issues.
+- goals: exactly 3 concrete objectives.
+- keyTerms: optional — define only genuinely obscure terms.
+- suggestedOpening: leave EMPTY ("") — the student should start on their own.`;
+  }
+}
+
+// Difficulty-appropriate JSON fields appended to both scenario prompts (kept identical across tracks).
+const ROLEPLAY_SCAFFOLD_FIELDS = `- goals: array of exactly 3 short strings (what the student should accomplish)
+- keyTerms: array of {"term": string, "definition": string} — plain-language definitions (empty [] when the level says not to define terms)
+- suggestedOpening: a single sentence the student could open with, or "" when the level says the student opens on their own`;
 
 // --- Scenario variety rotation -----------------------------------------------------------------
 // With identical inputs and a fixed temperature, consecutive generations converge on one archetype
@@ -1573,7 +1608,24 @@ const HOSA_SCENARIO_CONCERNS = [
   "worry about cost and what insurance covers"
 ] as const;
 
+// Deterministic difficulty scaffolding for the fallback scenarios (used when AI is down), so a
+// Beginner still gets goals + a suggested opening even offline.
+function fallbackScaffold(level: Level, kind: "deca" | "hosa"): Pick<RoleplayScenario, "goals" | "keyTerms" | "suggestedOpening"> {
+  const goals =
+    kind === "deca"
+      ? ["Acknowledge the situation and the other person's concern", "Make a clear, feasible recommendation", "Back it with a reason — and a number where you can"]
+      : ["Communicate clearly and use correct terminology", "Keep your response safe and role-appropriate", "Address the person's main concern with empathy"];
+  const suggestedOpening =
+    level === "BEGINNER"
+      ? kind === "deca"
+        ? "Thank you for raising this — let me walk you through how I'd handle it."
+        : "I hear you, and I want to help — let me explain clearly what's going on."
+      : "";
+  return { goals, keyTerms: [], suggestedOpening };
+}
+
 function fallbackRoleplayScenario(input: {
+  level: Level;
   cluster: string;
   studentRole: string;
   judgeRole: string;
@@ -1589,7 +1641,8 @@ function fallbackRoleplayScenario(input: {
       "Professional communication"
     ],
     piSource: "generic",
-    fallbackNotice: "No competition specification was found for this event, so this is generic practice — performance indicators are not sourced from official guidelines."
+    fallbackNotice: "No competition specification was found for this event, so this is generic practice — performance indicators are not sourced from official guidelines.",
+    ...fallbackScaffold(input.level, "deca")
   };
 }
 
@@ -1616,7 +1669,7 @@ export async function generateDecaRoleplayScenario(input: {
   const setting = pickOne(DECA_SCENARIO_SETTINGS);
   const pressure = pickOne(DECA_SCENARIO_PRESSURES);
   const fallback = () =>
-    fallbackRoleplayScenario({ cluster: input.cluster, studentRole: input.studentRole, judgeRole: input.judgeRole, setting, pressure });
+    fallbackRoleplayScenario({ level: input.level, cluster: input.cluster, studentRole: input.studentRole, judgeRole: input.judgeRole, setting, pressure });
 
   const piInstruction = hasRegistry
     ? `The student is evaluated ONLY on these official rubric categories from the ${spec?.eventName} ${spec?.season} specification — use them verbatim as the performanceIndicators, do NOT invent official indicators: ${registryPis
@@ -1640,10 +1693,13 @@ Variety requirements (make this scenario clearly different from a typical one):
 - Center the conflict on: ${pressure}.
 - Do NOT default to an overbooked-room or generic complaint plot unless the pressure above demands it.
 
+${roleplayContentSpec(input.level)}
+
 Return a single JSON object with EXACTLY these fields:
-- scenario: 3-5 sentences describing the business situation the student must handle, specific to the cluster, instructional area, and the variety requirements above
+- scenario: the business situation the student must handle, at the length and complexity the difficulty above requires
 - judgeCharacter: 1-2 sentences describing who the ${input.judgeRole} is and how they behave in this interaction (their goal, tone, and what would make them skeptical)
-- performanceIndicators: array of strings ${hasRegistry ? "(use the official categories above VERBATIM)" : "(generic, clearly not official)"}`,
+- performanceIndicators: array of strings ${hasRegistry ? "(use the official categories above VERBATIM)" : "(generic, clearly not official)"}
+${ROLEPLAY_SCAFFOLD_FIELDS}`,
     fallback,
     "DECA roleplay scenario"
   ) as RoleplayScenario;
@@ -1788,6 +1844,7 @@ ${!weighted && registry ? registry.promptBlock : ""}`,
 }
 
 function fallbackHosaScenario(input: {
+  level: Level;
   category: string;
   studentRole: string;
   characterRole: string;
@@ -1803,7 +1860,8 @@ function fallbackHosaScenario(input: {
       "Clear communication and empathy"
     ],
     piSource: "generic",
-    fallbackNotice: "No competition specification covers this interactive event, so this is generic practice — focus points are not official."
+    fallbackNotice: "No competition specification covers this interactive event, so this is generic practice — focus points are not official.",
+    ...fallbackScaffold(input.level, "hosa")
   };
 }
 
@@ -1821,7 +1879,7 @@ export async function generateHosaScenario(input: {
   const setting = pickOne(HOSA_SCENARIO_SETTINGS);
   const concern = pickOne(HOSA_SCENARIO_CONCERNS);
   const fallback = () =>
-    fallbackHosaScenario({ category: input.category, studentRole: input.studentRole, characterRole: input.characterRole, setting, concern });
+    fallbackHosaScenario({ level: input.level, category: input.category, studentRole: input.studentRole, characterRole: input.characterRole, setting, concern });
 
   const result = (await jsonCompletion<RoleplayScenario>(
     `You author authentic HOSA health-science practice role-plays. The interlocutor (the "${input.characterRole}") is a real person in a health-science setting (patient, family member, client, or panel), never an AI assistant — they have a goal, a tone, and human context. Health and safety accuracy matters. Return JSON only.`,
@@ -1835,10 +1893,13 @@ Variety requirements (make this scenario clearly different from a typical one):
 - Set it at: ${setting}.
 - Center it on: ${concern}.
 
+${roleplayContentSpec(input.level)}
+
 Return a single JSON object with EXACTLY these fields:
-- scenario: 3-5 sentences describing the health-science situation the student must handle, appropriate and safe, matching the variety requirements above
+- scenario: the health-science situation the student must handle, appropriate and safe, at the length and complexity the difficulty above requires
 - judgeCharacter: 1-2 sentences describing who the ${input.characterRole} is and how they behave (their goal, tone, and what would concern them)
-- performanceIndicators: array of 3 GENERIC practice focus points (clearly not official)`,
+- performanceIndicators: array of 3 GENERIC practice focus points (clearly not official)
+${ROLEPLAY_SCAFFOLD_FIELDS}`,
     fallback,
     "HOSA roleplay scenario"
   )) as RoleplayScenario;

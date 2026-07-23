@@ -24,6 +24,12 @@ export type HosaRoomConfig = {
 
 export type RoleplayConfig = DecaRoomConfig | HosaRoomConfig;
 
+// Difficulty changes the number of back-and-forth turns (Beginner is short, Elite is a longer grind).
+// Client-safe (no server imports) so both the room and setup can use it.
+export function roleplayTurnCap(level: Level): number {
+  return level === "BEGINNER" ? 4 : level === "ELITE" ? 8 : 6;
+}
+
 export function writeRoleplayConfig(config: RoleplayConfig) {
   try {
     window.sessionStorage.setItem(ROLEPLAY_CONFIG_KEY, JSON.stringify(config));

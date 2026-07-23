@@ -278,13 +278,18 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         <div>
           <p className="eyebrow">Session room</p>
           <h1 className="page-title mt-1">{eventTitle}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            You: <span className="font-semibold text-foreground">{config.studentRole}</span>
+            <span className="mx-2 text-muted-foreground/60">vs</span>
+            <span className="font-semibold text-foreground">{characterRole}</span>
+          </p>
         </div>
         <AccessibilityPanel />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="Stage progress">
+      <ol className="mt-4 flex flex-wrap items-center gap-2" aria-label="Stage progress">
         {stages.map((s, i) => (
-          <span
+          <li
             key={s}
             className={cn(
               "rounded-md border px-2.5 py-1 text-xs font-semibold",
@@ -294,9 +299,9 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           >
             {i + 1}. {s}
             {i === 1 && started && !result ? ` · ${exchanges}/${MAX_EXCHANGES}` : ""}
-          </span>
+          </li>
         ))}
-      </div>
+      </ol>
       <p className="mt-2 text-xs text-muted-foreground">This session isn&apos;t saved yet — finish it in one sitting. (Saved history is coming.)</p>
 
       {error ? <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p> : null}
@@ -351,13 +356,14 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         </section>
       ) : null}
 
-      {/* Conversation transcript (the real back-and-forth). */}
+      {/* Conversation transcript (the real back-and-forth). role=log + aria-live so screen readers
+          announce each new character turn as it arrives. */}
       {started ? (
-        <section className="mt-4 space-y-3">
+        <section className="mt-4 space-y-3" role="log" aria-live="polite" aria-label="Conversation">
           {turns.map((t, i) => (
-            <div key={i} className={cn("rounded-lg border p-3", t.speaker === "character" ? "bg-card" : "bg-muted/40")}>
+            <div key={i} className={cn("rounded-lg border p-3", t.speaker === "character" ? "border-track/25 bg-card" : "bg-muted/40")}>
               <div className="flex items-start justify-between gap-2">
-                <p className="text-xs font-semibold text-muted-foreground">{t.speaker === "character" ? t.character ?? characterRole : "You"}</p>
+                <p className={cn("text-xs font-semibold", t.speaker === "character" ? "text-track" : "text-muted-foreground")}>{t.speaker === "character" ? t.character ?? characterRole : "You"}</p>
                 {t.speaker === "character" ? <SpeakButton text={t.content} label="Read" className="shrink-0" /> : null}
               </div>
               <p className="mt-1 text-sm leading-6">{t.content}</p>

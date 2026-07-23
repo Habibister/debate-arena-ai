@@ -1743,6 +1743,7 @@ This role-play included an OBJECTION ROUND: after the opening pitch, the judge a
   const result = await jsonCompletion<PerformanceJudgeResult>(
     "You are an educational DECA judge for original practice roleplays and case studies. Do not judge like debate. Return JSON only.",
     `Evaluate this ${input.level} DECA ${input.eventType} practice.
+${roleplayScoringBar(input.level)}
 Scenario: ${input.scenario}
 Transcript JSON: ${JSON.stringify(input.transcript)}
 Rubric JSON: ${JSON.stringify(rubric)}
@@ -1850,6 +1851,20 @@ Return a single JSON object with EXACTLY these fields:
   return result;
 }
 
+// Shared difficulty expectation for the role-play judges — makes Beginner/Intermediate/Elite visibly
+// change the SCORING BAR for the same answer, without touching the registry/weighted/honesty logic
+// (it changes how strictly categories are scored, not what the rubric is or how the overall is computed).
+function roleplayScoringBar(level: Level): string {
+  switch (level) {
+    case "BEGINNER":
+      return "DIFFICULTY: BEGINNER. Grade encouragingly — reward clear, safe, on-topic effort. A solid answer that covers the essentials should score high (roughly 78-92). Only truly off-target or unsafe answers score low.";
+    case "ELITE":
+      return "DIFFICULTY: ELITE — a competitive-round bar. Grade strictly: demand precise, quantified, well-justified reasoning that anticipates objections. Penalize vagueness, missing specifics, and unaddressed risks hard. A merely-okay answer must score MEANINGFULLY LOWER here than it would at beginner level; only a genuinely strong, complete performance earns a high score.";
+    default:
+      return "DIFFICULTY: INTERMEDIATE. Expect specifics, clear structure, and at least one strong supporting point. Reasonable answers land mid-range; reward the ones that go further.";
+  }
+}
+
 export type RoleplayTurn = { line: string; character: string; fallbackNotice?: string };
 
 function fallbackRoleplayTurn(organization: "DECA" | "HOSA", characterRole: string): RoleplayTurn {
@@ -1880,10 +1895,10 @@ export async function generateRoleplayTurn(input: {
     : `You ARE the ${input.characterRole} in a HOSA health-science practice scenario — a real person (patient, family member, or client), never an AI assistant. First person, in character, reacting with real feelings and follow-up concerns.`;
   const levelLine =
     input.level === "BEGINNER"
-      ? "Keep it fair and clear — one concern at a time."
+      ? "Keep it gentle and clear — raise ONE concern at a time, in plain language, and accept a reasonable answer."
       : input.level === "ELITE"
-        ? "Be sharp and hard to satisfy — expose gaps and never let a vague answer slide."
-        : "Press reasonably on the weakest point of the answer.";
+        ? "Be sharp, skeptical, and hard to satisfy — expose gaps, demand specifics and numbers, stack a second concern when the answer is thin, and never let a vague answer slide."
+        : "Press on the weakest point with a pointed follow-up; expect specifics before you're satisfied.";
 
   return jsonCompletion<RoleplayTurn>(
     `${persona} ${levelLine} Return JSON only.`,
@@ -1917,6 +1932,7 @@ export async function judgeHosaPerformance(input: {
   const result = await jsonCompletion<PerformanceJudgeResult>(
     "You are an educational HOSA judge for original health science practice. Do not judge like debate. Return JSON only.",
     `Evaluate this ${input.level} HOSA ${input.eventType} performance.
+${roleplayScoringBar(input.level)}
 Scenario: ${input.scenario}
 Transcript JSON: ${JSON.stringify(input.transcript)}
 Rubric JSON: ${JSON.stringify(rubric)}

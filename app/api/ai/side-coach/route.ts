@@ -27,7 +27,7 @@ async function markAssisted(debateId: string, userId: string) {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "turn" });
+    await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "conversation" });
     const input = await parseJson(request, sideCoachRequestSchema);
 
     // Actual coach use (this route is only called when the student invokes the coach) flags the debate.

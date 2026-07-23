@@ -1850,6 +1850,61 @@ Return a single JSON object with EXACTLY these fields:
   return result;
 }
 
+export type RoleplayTurn = { line: string; character: string; fallbackNotice?: string };
+
+function fallbackRoleplayTurn(organization: "DECA" | "HOSA", characterRole: string): RoleplayTurn {
+  const line =
+    organization === "DECA"
+      ? "That's a start, but I'm not sold yet — what does this actually cost me, and how will I know it's working?"
+      : "Okay... I think I follow, but I'm still worried. Can you explain what happens next in plain terms?";
+  return { line, character: `The ${characterRole}`, fallbackNotice: "AI is temporarily unavailable, so this is a generic in-character reply." };
+}
+
+// One reactive in-character turn for a multi-turn role-play: the AI character (DECA judge/client, or
+// HOSA patient/family) responds to what the student just said and the conversation continues. This is
+// the real back-and-forth engine — not a fixed list of questions. Honesty is unchanged: DECA scoring
+// still attributes to the registry only at judge time; HOSA stays generic/non-official.
+export async function generateRoleplayTurn(input: {
+  organization: "DECA" | "HOSA";
+  level: Level;
+  scenario: string;
+  characterRole: string;
+  transcript: DebateTranscriptMessage[];
+  exchangesSoFar: number;
+  maxExchanges: number;
+}): Promise<RoleplayTurn> {
+  const isDeca = input.organization === "DECA";
+  const near = input.exchangesSoFar >= input.maxExchanges - 1;
+  const persona = isDeca
+    ? `You ARE the ${input.characterRole} in a DECA business role-play — a real person in a real meeting, never an AI assistant. First person, fully in character, and you press the student on the weakest part of what they just said.`
+    : `You ARE the ${input.characterRole} in a HOSA health-science practice scenario — a real person (patient, family member, or client), never an AI assistant. First person, in character, reacting with real feelings and follow-up concerns.`;
+  const levelLine =
+    input.level === "BEGINNER"
+      ? "Keep it fair and clear — one concern at a time."
+      : input.level === "ELITE"
+        ? "Be sharp and hard to satisfy — expose gaps and never let a vague answer slide."
+        : "Press reasonably on the weakest point of the answer.";
+
+  return jsonCompletion<RoleplayTurn>(
+    `${persona} ${levelLine} Return JSON only.`,
+    `Scenario: ${input.scenario}
+Conversation so far (JSON, oldest first): ${JSON.stringify(input.transcript)}
+
+Respond to the student's LAST message with exactly ONE turn.
+${isDeca
+      ? "Probe the weakest point — cost/ROI, feasibility, measurement, or an alternative you're skeptical about. Do not accept vague answers."
+      : "React naturally, and add one realistic follow-up concern if it fits."}
+${near ? "This is near the end — make it a final, decisive reaction." : ""}
+Keep it to 1-3 sentences, in your own voice.
+
+Return a single JSON object with EXACTLY these fields:
+- line: your next spoken line (first person, in character)
+- character: 3-6 words naming who you are and your current mood`,
+    () => fallbackRoleplayTurn(input.organization, input.characterRole),
+    "roleplay turn"
+  );
+}
+
 export async function judgeHosaPerformance(input: {
   level: Level;
   eventType: string;

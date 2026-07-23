@@ -92,6 +92,18 @@ export const hosaScenarioRequestSchema = z.object({
   characterRole: z.string().min(2).max(120)
 });
 
+// One reactive in-character turn in a multi-turn role-play (the AI character responding to what the
+// student just said). Used by both DECA (judge/client interrogation) and HOSA (patient conversation).
+export const roleplayTurnRequestSchema = z.object({
+  organization: z.enum(["DECA", "HOSA"]),
+  level: levelSchema,
+  scenario: z.string().min(8).max(4000),
+  characterRole: z.string().min(2).max(160),
+  transcript: transcriptSchema.min(1).max(40),
+  exchangesSoFar: z.number().int().min(0).max(12),
+  maxExchanges: z.number().int().min(1).max(12)
+});
+
 export const practiceQuestionRequestSchema = z.object({
   organization: z.enum(["DECA", "HOSA"]),
   eventType: z.string().min(2).max(120),

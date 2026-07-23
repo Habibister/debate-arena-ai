@@ -2,12 +2,15 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { RateLimitError } from "@/lib/api";
 
-export type Workload = "light" | "turn" | "heavy";
+export type Workload = "light" | "turn" | "conversation" | "heavy";
 export type RateLimitConfigStatus = "missing" | "malformed" | "valid";
 
 const USER_RULES: Record<Workload, { limit: number; window: `${number} s` }> = {
   light: { limit: 20, window: "60 s" },
   turn: { limit: 10, window: "60 s" },
+  // Real-time back-and-forth (role-play turns + Side Coach) fires more often than a single graded
+  // action, so it gets a higher ceiling while generation routes stay strict.
+  conversation: { limit: 20, window: "60 s" },
   heavy: { limit: 5, window: "60 s" }
 };
 

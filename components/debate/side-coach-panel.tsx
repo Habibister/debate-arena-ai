@@ -5,7 +5,7 @@ import type { Organization } from "@prisma/client";
 import { LifeBuoy, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type OfficialMessage = { id: string; role: string; authorId?: string | null; content: string };
+export type OfficialMessage = { id: string; role: string; authorId?: string | null; content: string };
 
 type CoachEntry = {
   id: string;
@@ -56,7 +56,9 @@ function askOptionsForOrganization(organization: Organization): string[] {
 }
 
 type Props = {
-  debateId: string; // marks this debate assistedPractice when the coach is actually used
+  // Marks a persisted debate assistedPractice when the coach is used. Optional: client-state rooms
+  // (DECA/HOSA role-play) have no debate record, so it's omitted and assisted-flagging simply no-ops.
+  debateId?: string;
   organization: Organization;
   eventType?: string;
   studentSide?: "AFFIRMATIVE" | "NEGATIVE";

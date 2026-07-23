@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AccessibilityPanel } from "@/components/debate/accessibility/accessibility-panel";
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
+import { SideCoachPanel, type OfficialMessage } from "@/components/debate/side-coach-panel";
 import { cn } from "@/lib/utils";
 import { readRoleplayConfig, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
 
@@ -246,6 +247,17 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
   const stages = ["Brief", isDeca ? "Interrogation" : "Conversation", isDeca ? "Ballot" : "Feedback"];
   const stageIndex = result ? 2 : started ? 1 : 0;
+  // Read-only copy of the conversation for the Side Coach. Coach output lives in the panel's own state
+  // and is NEVER written back here — endAndJudge() only ever sends `turns`, so coaching cannot leak
+  // into the judge transcript or count as the student's response.
+  const coachMessages: OfficialMessage[] = turns.map((t, i) => ({
+    id: `${t.speaker}-${i}`,
+    role: t.speaker === "student" ? "AFFIRMATIVE" : "JUDGE",
+    authorId: t.speaker === "student" ? "student" : null,
+    content: t.content
+  }));
+  const coachEventType = isDeca ? DECA_EVENT_NAME : (config as HosaRoomConfig).category;
+
   const eventTitle = isDeca ? "DECA Role-Play" : "HOSA Health-Science Role-Play";
   const officialPill =
     scenario?.piSource === "registry" ? (
@@ -387,6 +399,14 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
             )}
           </div>
         </section>
+      ) : null}
+
+      {/* Side Coach — private in-room help while responding. Its text is never sent to the judge and
+          never counts as the response (see coachMessages note above). */}
+      {scenario && !result ? (
+        <div className="mt-4">
+          <SideCoachPanel organization={isDeca ? "DECA" : "HOSA"} eventType={coachEventType} level={config.level} messages={coachMessages} />
+        </div>
       ) : null}
 
       {/* Ballot / Feedback. */}

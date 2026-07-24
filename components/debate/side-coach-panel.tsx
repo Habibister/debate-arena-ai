@@ -15,6 +15,7 @@ type CoachEntry = {
   strength?: string;
   improvement?: string;
   nextMove?: string;
+  example?: string;
 };
 
 // Quick prompts are organization-specific: only General Debate talks about rebuttal/weighing/opponents.
@@ -27,6 +28,10 @@ const DEBATE_ASK_OPTIONS = [
   "Explain the opponent's point simply"
 ];
 
+// Role-play rooms (DECA/HOSA) share scenario-grounded controls; "Show a sample response" is
+// Beginner-only and added at render time.
+const ROLEPLAY_ASK_OPTIONS = ["Give me a hint", "Help me start", "What am I missing?", "Simplify this situation"];
+
 const ASK_OPTIONS_BY_ORG: Partial<Record<Organization, string[]>> = {
   MODEL_UN: [
     "Help organize my opening speech",
@@ -35,20 +40,8 @@ const ASK_OPTIONS_BY_ORG: Partial<Record<Organization, string[]>> = {
     "What negotiation point should I emphasize?",
     "Help explain my resolution or amendment"
   ],
-  DECA: [
-    "Help organize my role-play response",
-    "Which performance indicator should I address?",
-    "Help identify the client's main need",
-    "Strengthen my recommendation",
-    "Help prepare my closing summary"
-  ],
-  HOSA: [
-    "Help organize my response",
-    "Which health-science concepts should I mention?",
-    "Check my terminology",
-    "Help make my explanation safe and role-appropriate",
-    "What important step did I miss?"
-  ]
+  DECA: ROLEPLAY_ASK_OPTIONS,
+  HOSA: ROLEPLAY_ASK_OPTIONS
 };
 
 function askOptionsForOrganization(organization: Organization): string[] {
@@ -63,17 +56,26 @@ type Props = {
   eventType?: string;
   studentSide?: "AFFIRMATIVE" | "NEGATIVE";
   level?: "BEGINNER" | "INTERMEDIATE" | "ELITE";
+  // Scenario + goals + a stage label so coaching references the actual situation (role-play rooms).
+  scenario?: string;
+  goals?: string[];
+  stageLabel?: string;
   messages: OfficialMessage[]; // read-only official transcript; the coach NEVER mutates it
 };
 
-export function SideCoachPanel({ debateId, organization, eventType, studentSide, level, messages }: Props) {
+export function SideCoachPanel({ debateId, organization, eventType, studentSide, level, scenario, goals, stageLabel, messages }: Props) {
   const [entries, setEntries] = useState<CoachEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const coachedIdRef = useRef<string | null>(null);
   const seqRef = useRef(0);
   const guidanceLevel = level === "BEGINNER" ? 2 : 1;
   const isPractice = organization !== "DEBATE";
-  const askOptions = askOptionsForOrganization(organization);
+  const baseAskOptions = askOptionsForOrganization(organization);
+  // "Show a sample response" is Beginner-only, and only for the role-play rooms.
+  const askOptions =
+    level === "BEGINNER" && (organization === "DECA" || organization === "HOSA")
+      ? [...baseAskOptions, "Show a sample response"]
+      : baseAskOptions;
 
   // Official student speeches are the ones with an author. Coaching reads them but never writes back.
   const studentMessages = messages.filter((m) => Boolean(m.authorId) && (m.role === "AFFIRMATIVE" || m.role === "NEGATIVE"));
@@ -92,7 +94,9 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
           eventType,
           studentSide,
           level,
-          stage: `Turn ${studentMessages.length || 1}`,
+          scenario,
+          goals,
+          stage: stageLabel ?? `Turn ${studentMessages.length || 1}`,
           transcript: messages.map((m) => ({ role: m.role, content: m.content })),
           latestStudentSpeech: options?.latestStudentSpeech,
           requestType,
@@ -103,7 +107,7 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
       if (!response.ok) {
         throw new Error("coach unavailable");
       }
-      const data = (await response.json()) as { message?: string; strength?: string; improvement?: string; nextMove?: string };
+      const data = (await response.json()) as { message?: string; strength?: string; improvement?: string; nextMove?: string; example?: string };
       setEntries((current) => [
         ...current,
         {
@@ -113,7 +117,8 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
           message: data.message,
           strength: data.strength,
           improvement: data.improvement,
-          nextMove: data.nextMove
+          nextMove: data.nextMove,
+          example: data.example
         }
       ]);
     } catch {
@@ -166,6 +171,11 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
             {entry.improvement ? <p className="mt-1"><span className="font-semibold text-emerald-200">Improve:</span> {entry.improvement}</p> : null}
             {entry.nextMove ? <p className="mt-1"><span className="font-semibold text-emerald-200">Next move:</span> {entry.nextMove}</p> : null}
             {entry.kind === "ask" && entry.message ? <p className="mt-1">{entry.message}</p> : null}
+            {entry.example ? (
+              <p className="mt-2 rounded border border-emerald-400/20 bg-emerald-500/10 p-2 text-emerald-50">
+                <span className="font-semibold text-emerald-200">Example:</span> <span className="italic">{entry.example}</span>
+              </p>
+            ) : null}
           </div>
         ))}
         {loading ? (

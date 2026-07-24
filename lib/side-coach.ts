@@ -13,6 +13,10 @@ export type SideCoachInput = {
   studentSide?: "AFFIRMATIVE" | "NEGATIVE";
   stage?: string;
   level?: "BEGINNER" | "INTERMEDIATE" | "ELITE";
+  // The actual scenario the student is working (role-play rooms) + their goals — so coaching is
+  // specific to THIS situation, not generic advice.
+  scenario?: string;
+  goals?: string[];
   transcript: SideCoachTranscriptLine[];
   latestStudentSpeech?: string;
   requestType: "turn-feedback" | "ask";
@@ -25,6 +29,9 @@ export type SideCoachResponse = {
   strength?: string;
   improvement?: string;
   nextMove?: string;
+  // One concrete example/model sentence (an improved version of the learner's wording, an opener, or
+  // a short sample response). Kept separate so the UI can label it as an example, not the submission.
+  example?: string;
   unavailable?: boolean;
 };
 
@@ -60,20 +67,37 @@ export function buildSideCoachSystemPrompt(input: SideCoachInput): string {
     "Be encouraging, direct, specific, patient, and honest. Never insulting, never fake praise, never shaming.",
     "Explain debate terms in plain words when you use them (warrant = why your claim is true; impact = why it matters; weighing = why your impact matters more).",
     "Teach; do not do the whole task for them. " + guidanceRule(input.guidanceLevel),
-    'Respond ONLY as compact JSON. For turn feedback use {"strength": string, "improvement": string, "nextMove": string}. For a question use {"message": string}. Keep each field to 1-2 sentences.'
+    "ALWAYS ground your help in THIS specific scenario and the student's actual words — quote or closely paraphrase what they wrote. Reference the concrete situation, their stated goals, and unanswered questions. NEVER give generic advice like 'be clear and professional' or 'stay confident'.",
+    'Respond ONLY as compact JSON. For turn feedback use {"strength": string, "improvement": string, "nextMove": string, "example": string} where example is ONE improved version of their weakest sentence. For a question use {"message": string, "example": string} where example is optional (an opener or short model line). Keep each field to 1-2 sentences.'
   ].join(" ");
 }
 
 export function buildSideCoachUserPrompt(input: SideCoachInput): string {
   const transcript = input.transcript.map((l) => `${l.role}: ${l.content}`).join("\n").slice(0, 6000);
+  const scenario = input.scenario ? input.scenario.slice(0, 2000) : "";
+  const goals = input.goals && input.goals.length > 0 ? input.goals.map((g, i) => `${i + 1}. ${g}`).join("\n") : "";
   const parts = [
     `Event/format: ${input.eventType ?? "general"}. Student side: ${input.studentSide ?? "unknown"}. Stage: ${input.stage ?? "in progress"}. Level: ${input.level ?? "BEGINNER"}.`,
-    `Public transcript so far (official debate only):\n${transcript || "(no speeches yet)"}`
-  ];
+    scenario ? `THE SCENARIO the student is handling:\n${scenario}` : "",
+    goals ? `The student's goals:\n${goals}` : "",
+    `Conversation so far:\n${transcript || "(the student hasn't responded yet)"}`
+  ].filter(Boolean);
+
   if (input.requestType === "ask") {
-    parts.push(`The student asked for help: "${input.askKind ?? "What should I do next?"}". Guide them without writing a finished speech.`);
+    const kind = (input.askKind ?? "").toLowerCase();
+    if (/start|begin/.test(kind)) {
+      parts.push("The student wants help STARTING. In one or two sentences, summarize what they need to accomplish in THIS scenario, then suggest one concrete opening approach. Put a single example opening line in `example`.");
+    } else if (/missing|what am i/.test(kind)) {
+      parts.push("Name ONE specific requirement, goal, or question from this scenario that the student has NOT yet addressed. Be concrete — point at the exact gap, not a general reminder.");
+    } else if (/simplif/.test(kind)) {
+      parts.push("Re-explain THIS scenario in plain, simpler language (as if to a younger student): who wants what, and the one main thing to handle. Do not add new facts.");
+    } else if (/sample|example response|show a sample/.test(kind)) {
+      parts.push("Provide ONE short model response to the character's latest message (2-4 sentences) that a strong student might give in THIS scenario. Put it in `example`, and in `message` say one sentence about why it works. Make clear this is an example to learn from, not their submission.");
+    } else {
+      parts.push("Give the student one specific hint for the current stage of THIS scenario — reference the actual situation and their goals, not generic advice.");
+    }
   } else {
-    parts.push(`The student's latest speech was:\n"${input.latestStudentSpeech ?? ""}"\nGive one specific strength (quote or closely reference their words), one specific improvement, and one recommended next move.`);
+    parts.push(`The student's latest response was:\n"${input.latestStudentSpeech ?? ""}"\nGive: one specific strength that QUOTES their words; one specific weakness that quotes the exact wording that's weak; a recommended next move; and in \`example\`, an improved rewrite of their weakest sentence.`);
   }
   return parts.join("\n\n");
 }
@@ -102,7 +126,7 @@ export function sideCoachFallback(input: SideCoachInput): SideCoachResponse {
 }
 
 function normalize(parsed: Partial<SideCoachResponse>, input: SideCoachInput): SideCoachResponse {
-  const has = parsed && (parsed.message || parsed.strength || parsed.improvement || parsed.nextMove);
+  const has = parsed && (parsed.message || parsed.strength || parsed.improvement || parsed.nextMove || parsed.example);
   if (!has) {
     return sideCoachFallback(input);
   }
@@ -110,7 +134,8 @@ function normalize(parsed: Partial<SideCoachResponse>, input: SideCoachInput): S
     message: parsed.message ?? "",
     strength: parsed.strength,
     improvement: parsed.improvement,
-    nextMove: parsed.nextMove
+    nextMove: parsed.nextMove,
+    example: parsed.example
   };
 }
 

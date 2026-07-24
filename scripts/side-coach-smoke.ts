@@ -34,7 +34,7 @@ function main() {
 
   // User prompt carries ONLY the public transcript + latest speech (no judge scoring is ever passed).
   const user = buildSideCoachUserPrompt(base);
-  assert.ok(/official debate only/i.test(user), "user prompt is scoped to the public transcript");
+  assert.ok(/conversation so far/i.test(user), "user prompt is scoped to the public transcript");
   assert.ok(user.includes("Financial literacy prevents future debt."), "references the student's actual latest speech");
   assert.ok(!/score|ballot|verdict/i.test(user), "no judge scoring leaks into the coach prompt");
 

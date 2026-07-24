@@ -336,7 +336,7 @@ function main() {
   assert.ok(arenaSrc.includes("!isTrackPractice ?"), "opponent side card is gated to real debates only");
   const coachPanel = readFileSync("components/debate/side-coach-panel.tsx", "utf8");
   assert.ok(coachPanel.includes("ASK_OPTIONS_BY_ORG") && coachPanel.includes("askOptionsForOrganization"), "Side Coach prompts are organization-specific");
-  for (const prompt of ["Help organize my opening speech", "Help organize my role-play response", "Which health-science concepts should I mention?"]) {
+  for (const prompt of ["Help organize my opening speech", "What am I missing?", "Show a sample response"]) {
     assert.ok(coachPanel.includes(prompt), `Side Coach includes the org-specific prompt: ${prompt}`);
   }
   // Non-debate configs contain none of the debate-only shell terms.

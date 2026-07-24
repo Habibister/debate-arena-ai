@@ -58,6 +58,9 @@ export const sideCoachRequestSchema = z.object({
   studentSide: z.enum(["AFFIRMATIVE", "NEGATIVE"]).optional(),
   stage: z.string().max(120).optional(),
   level: levelSchema.optional(),
+  // The role-play scenario + goals, so coaching is specific to the actual situation (not generic).
+  scenario: z.string().max(4000).optional(),
+  goals: z.array(z.string().max(300)).max(6).optional(),
   // Public transcript only — never judge reasoning or private coaching.
   transcript: z.array(z.object({ role: z.string().max(20), content: z.string().min(1).max(8000) })).max(40).default([]),
   latestStudentSpeech: z.string().max(8000).optional(),

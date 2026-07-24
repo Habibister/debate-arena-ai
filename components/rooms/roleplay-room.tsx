@@ -443,7 +443,15 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           never counts as the response (see coachMessages note above). */}
       {scenario && !result ? (
         <div className="mt-4">
-          <SideCoachPanel organization={isDeca ? "DECA" : "HOSA"} eventType={coachEventType} level={config.level} messages={coachMessages} />
+          <SideCoachPanel
+            organization={isDeca ? "DECA" : "HOSA"}
+            eventType={coachEventType}
+            level={config.level}
+            scenario={scenario.scenario}
+            goals={scenario.goals}
+            stageLabel={!started ? "Before responding" : isDeca ? "Interrogation" : "Conversation"}
+            messages={coachMessages}
+          />
         </div>
       ) : null}
 

@@ -80,6 +80,11 @@ function main() {
   assert.ok(room.includes("organization: trackOrganization"), "debate-room passes the track organization to the API");
   assert.ok(!room.includes('organization: "DEBATE"'), "debate-room no longer hardcodes DEBATE");
   assert.ok(room.includes("Switch track"), "debate-room shows the current track + switch");
+  // Progressive disclosure: a Quick start / Customize toggle gates the advanced controls, but the
+  // motion + create-room path and every advanced default stay intact (additive only).
+  assert.ok(room.includes("Quick start") && room.includes("Customize"), "debate-room offers Quick start + Customize");
+  assert.ok(room.includes('setupMode === "custom"') && room.includes('useState<"quick" | "custom">("quick")'), "advanced setup is gated behind Customize, defaulting to Quick start");
+  assert.ok(room.includes("startDebate") && room.includes("Generate motion"), "the motion + create-room path is always available (not hidden by the toggle)");
 
   // AI is organization-specific (opponent/judge/rubric branch by org), so passing the track org
   // yields track-specific behavior.

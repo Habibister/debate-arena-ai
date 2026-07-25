@@ -80,6 +80,10 @@ export function DebateRoom({ track }: { track?: string }) {
   const [isStarting, setIsStarting] = useState(false);
   const [audioMode, setAudioMode] = useState(false);
   const [beginnerCoach, setBeginnerCoach] = useState(false);
+  // Progressive disclosure: "quick" shows only the motion + recommended defaults (fastest path to a
+  // room); "custom" reveals the full setup. Purely presentational — every advanced control and its
+  // default is unchanged, so Quick start creates a room with exactly the same defaults as before.
+  const [setupMode, setSetupMode] = useState<"quick" | "custom">("quick");
 
   // Default beginner coaching ON for new/beginner students (from the learning profile), and persist
   // the choice so the arena can read it. Recommended-on, but the student can turn it off before start.
@@ -252,6 +256,38 @@ export function DebateRoom({ track }: { track?: string }) {
         </div>
       </div>
 
+      <div className="border-b border-white/10 px-4 py-3 sm:px-6">
+        <div
+          role="tablist"
+          aria-label="Setup mode"
+          className="inline-flex rounded-lg border border-white/10 bg-white/[0.03] p-1 text-sm font-semibold"
+        >
+          {([
+            { value: "quick", label: "Quick start", detail: "Recommended defaults — start fast" },
+            { value: "custom", label: "Customize", detail: "Choose format, side, opponent, timing" }
+          ] as const).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={setupMode === option.value}
+              onClick={() => setSetupMode(option.value)}
+              className={cn(
+                "focus-ring rounded-md px-4 py-2 transition",
+                setupMode === option.value ? "bg-emerald-500/15 text-emerald-100" : "text-neutral-300 hover:text-white"
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-sm text-neutral-400">
+          {setupMode === "quick"
+            ? "We'll use recommended settings. Switch to Customize to change format, side, opponent, or timing."
+            : "Fine-tune every part of the room. All your choices are shown in the preview."}
+        </p>
+      </div>
+
       <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[1fr_0.72fr]">
         <div className="space-y-6">
           <section className="space-y-3">
@@ -324,6 +360,8 @@ export function DebateRoom({ track }: { track?: string }) {
             ) : null}
           </section>
 
+          {setupMode === "custom" ? (
+            <>
           <section className="space-y-3 border-t border-white/10 pt-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Debate format</p>
             <div className="grid gap-3 md:grid-cols-2">
@@ -521,6 +559,8 @@ export function DebateRoom({ track }: { track?: string }) {
               ))}
             </div>
           </section>
+            </>
+          ) : null}
         </div>
 
         <aside className="space-y-4">

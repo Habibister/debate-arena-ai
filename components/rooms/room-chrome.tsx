@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { ChevronRight, Clock, DoorOpen } from "lucide-react";
+import { ArrowLeft, ChevronRight, Clock, DoorOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type Crumb = { label: string; href?: string };
@@ -51,6 +51,53 @@ export function RoomChrome({
         </div>
       </div>
     </header>
+  );
+}
+
+// Additive orientation strip for rooms that keep their own header (the debate arena). It only adds a
+// way to get your bearings — a breadcrumb plus an explicit "Back to track" — without touching the
+// room's internals or palette. `tone="arena"` matches the debate arena's dark panel.
+export function RoomOrientation({
+  crumbs,
+  backHref,
+  backLabel,
+  tone = "arena"
+}: {
+  crumbs: Crumb[];
+  backHref: string;
+  backLabel: string;
+  tone?: "app" | "arena";
+}) {
+  const arena = tone === "arena";
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-2 sm:px-6",
+        arena ? "border-white/10 bg-black/40" : "border-border bg-muted/40"
+      )}
+    >
+      <nav aria-label="Breadcrumb" className={cn("flex min-w-0 flex-wrap items-center gap-1 text-xs", arena ? "text-neutral-400" : "text-muted-foreground")}>
+        {crumbs.map((c, i) => (
+          <span key={i} className="flex items-center gap-1">
+            {i > 0 ? <ChevronRight className="h-3 w-3 shrink-0" aria-hidden /> : null}
+            {c.href ? (
+              <Link href={c.href as Route} className={cn("truncate", arena ? "hover:text-white" : "hover:text-foreground")}>{c.label}</Link>
+            ) : (
+              <span className={cn("truncate font-semibold", arena ? "text-white" : "text-foreground")} aria-current="page">{c.label}</span>
+            )}
+          </span>
+        ))}
+      </nav>
+      <Link
+        href={backHref as Route}
+        className={cn(
+          "focus-ring flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold",
+          arena ? "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10" : "hover:bg-muted"
+        )}
+      >
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />{backLabel}
+      </Link>
+    </div>
   );
 }
 

@@ -32,6 +32,7 @@ import { MessageContent } from "@/components/debate/accessibility/message-conten
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel } from "@/components/debate/side-coach-panel";
+import { RoomOrientation } from "@/components/rooms/room-chrome";
 import { draftKey } from "@/lib/debate-drafts";
 import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
 import { getAiPersona } from "@/lib/ai-personas";
@@ -594,8 +595,24 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
     }
   }
 
+  // Additive orientation strip (breadcrumb + Back to track). The arena keeps its own header and
+  // internals below; this only adds a clear way back to the track the room belongs to. General Debate
+  // resolves for real debates too, so both real debates and solo track practice get a track home.
+  const orientationTrack = trackByOrganization(debate.organization);
+  // Real debates label the leaf with the friendly format name (config.label, e.g. "Quick 1v1"); solo
+  // track practice carries its specific event/category in eventType, which is more meaningful there.
+  const orientationLeaf = isTrackPractice ? debate.eventType || config.label : config.label;
+  const orientationCrumbs = [
+    { label: "Train", href: "/training" },
+    ...(orientationTrack ? [{ label: orientationTrack.label, href: `/training/${orientationTrack.slug}` }] : []),
+    { label: orientationLeaf }
+  ];
+  const backHref = orientationTrack ? `/training/${orientationTrack.slug}` : "/training";
+  const backLabel = orientationTrack ? `Back to ${orientationTrack.label}` : "Back to Train";
+
   return (
     <div className={cn("min-h-[calc(100vh-9rem)] overflow-hidden rounded-lg border border-white/10 bg-neutral-950 text-white shadow-2xl", accessibilityFrameClass(a11y))}>
+      <RoomOrientation crumbs={orientationCrumbs} backHref={backHref} backLabel={backLabel} tone="arena" />
       <div className="border-b border-white/10 bg-black/30 px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/debate" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-neutral-300 hover:bg-white/10")}>

@@ -245,6 +245,13 @@ function main() {
   assert.ok(shellSrc.includes("/^\\/debate\\/[^/]+$/"), "focus mode triggers on an active debate/practice room route");
   assert.ok(/if \(focusMode\)/.test(shellSrc), "focus mode short-circuits the normal shell (sidebar/nav hidden)");
   assert.ok(shellSrc.includes("Exit practice") && shellSrc.includes("window.confirm"), "focus mode keeps a clear Exit control that confirms before leaving");
+  // The debate arena keeps its own header but adds an orientation strip (breadcrumb + Back to track) so
+  // a learner always knows where they are and how to get back to their track.
+  const arenaOrient = readFileSync("components/debate/debate-arena.tsx", "utf8");
+  assert.ok(arenaOrient.includes("<RoomOrientation"), "debate arena mounts the additive orientation strip");
+  assert.ok(arenaOrient.includes("backLabel") && arenaOrient.includes("orientationCrumbs"), "orientation strip supplies a breadcrumb + Back-to-track");
+  const orientSrc = readFileSync("components/rooms/room-chrome.tsx", "utf8");
+  assert.ok(orientSrc.includes("RoomOrientation") && orientSrc.includes('aria-label="Breadcrumb"'), "RoomOrientation renders an accessible breadcrumb");
 
   // 11 + 12. Accessibility controls are an overlay/drawer (never inline), and larger text is supported.
   const a11yPanel = readFileSync("components/debate/accessibility/accessibility-panel.tsx", "utf8");

@@ -12,7 +12,8 @@ import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel, type OfficialMessage } from "@/components/debate/side-coach-panel";
 import { cn } from "@/lib/utils";
-import { readRoleplayConfig, roleplayTurnCap, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
+import { readRoleplayConfig, roleplayEstimatedMinutes, roleplayTurnCap, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
+import { RoomChrome, StageRail } from "./room-chrome";
 
 type OfficialPrep = { prepMinutes: number; performMinutes: number | null; eventName: string; season: string; verificationStatus: string } | null;
 
@@ -276,37 +277,44 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
       <Badge variant="outline" className="border-amber-500/40 text-amber-500">generic practice — not official</Badge>
     );
 
-  return (
-    <div className="mx-auto min-h-screen max-w-3xl px-4 py-6 sm:px-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow">Session room</p>
-          <h1 className="page-title mt-1">{eventTitle}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            You: <span className="font-semibold text-foreground">{config.studentRole}</span>
-            <span className="mx-2 text-muted-foreground/60">vs</span>
-            <span className="font-semibold text-foreground">{characterRole}</span>
-          </p>
-        </div>
-        <AccessibilityPanel />
-      </div>
+  const crumbs = [
+    { label: "Train", href: "/training" },
+    { label: isDeca ? "DECA" : "HOSA", href: `/training/${track}` },
+    { label: eventTitle }
+  ];
+  const stageProgress = started && !result ? `Turn ${exchanges} of ${maxExchanges}` : stages[stageIndex];
+  function handleExit() {
+    if (window.confirm("Leave this role-play? It isn't saved yet — you'll start a new one next time.")) {
+      router.push(`/training/${track}/practice` as Route);
+    }
+  }
 
-      <ol className="mt-4 flex flex-wrap items-center gap-2" aria-label="Stage progress">
-        {stages.map((s, i) => (
-          <li
-            key={s}
-            className={cn(
-              "rounded-md border px-2.5 py-1 text-xs font-semibold",
-              i === stageIndex ? "border-track bg-track/15 text-track" : "border-border text-muted-foreground"
-            )}
-            aria-current={i === stageIndex ? "step" : undefined}
-          >
-            {i + 1}. {s}
-            {i === 1 && started && !result ? ` · Turn ${exchanges} of ${maxExchanges}` : ""}
-          </li>
-        ))}
-      </ol>
-      <p className="mt-2 text-xs text-muted-foreground">This session isn&apos;t saved yet — finish it in one sitting. (Saved history is coming.)</p>
+  return (
+    <div className="min-h-screen">
+      <RoomChrome
+        crumbs={crumbs}
+        difficulty={config.level}
+        stageProgress={stageProgress}
+        estMinutes={roleplayEstimatedMinutes(config.level)}
+        exitLabel="Exit"
+        onExit={handleExit}
+      />
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="eyebrow">Session room</p>
+            <h1 className="page-title mt-1">{eventTitle}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You: <span className="font-semibold text-foreground">{config.studentRole}</span>
+              <span className="mx-2 text-muted-foreground/60">vs</span>
+              <span className="font-semibold text-foreground">{characterRole}</span>
+            </p>
+          </div>
+          <AccessibilityPanel />
+        </div>
+
+        <div className="mt-4"><StageRail stages={stages} activeIndex={stageIndex} /></div>
+        <p className="mt-2 text-xs text-muted-foreground">This session isn&apos;t saved yet — finish it in one sitting. (Saved history is coming.)</p>
 
       {error ? <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p> : null}
 
@@ -483,6 +491,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           </div>
         </section>
       ) : null}
+      </div>
     </div>
   );
 }

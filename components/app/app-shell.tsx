@@ -131,15 +131,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const visibleMore = moreItems.filter((item) => roleAllows(item as { requiresRole?: readonly string[] }));
   const bottomBarNav = visibleNav.filter((item) => (BOTTOM_BAR_HREFS as readonly string[]).includes(item.href));
 
+  // Only the debate room uses this floating exit now (role-play rooms exit via their own RoomChrome).
+  // Debate rooms persist — leaving goes to history.
   function exitFocusMode() {
-    if (roomMatch) {
-      // Role-play rooms are client-state only (not persisted yet) — be honest and return to setup.
-      if (window.confirm("Leave this role-play? It isn't saved yet, so you'll start a new one next time.")) {
-        router.push(`/training/${roomMatch[1]}/practice`);
-      }
-      return;
-    }
-    // Debate rooms persist — leaving goes to history.
     if (window.confirm("End this practice and leave the room? Your progress is saved to your history.")) {
       router.push("/debates/history");
     }
@@ -148,14 +142,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (focusMode) {
     return (
       <div className="min-h-screen bg-background" data-track={trackSlug}>
-        <button
-          type="button"
-          onClick={exitFocusMode}
-          className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-full border bg-card/95 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur hover:bg-muted"
-        >
-          <DoorOpen className="h-4 w-4" aria-hidden />
-          Exit practice
-        </button>
+        {/* Role-play rooms render their own in-room exit (RoomChrome); only the debate room still
+            needs this floating control until it migrates onto the shared shell. */}
+        {isDebateRoom ? (
+          <button
+            type="button"
+            onClick={exitFocusMode}
+            className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-full border bg-card/95 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur hover:bg-muted"
+          >
+            <DoorOpen className="h-4 w-4" aria-hidden />
+            Exit practice
+          </button>
+        ) : null}
         <main className="min-h-screen">{children}</main>
       </div>
     );

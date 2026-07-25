@@ -30,6 +30,11 @@ export function roleplayTurnCap(level: Level): number {
   return level === "BEGINNER" ? 4 : level === "ELITE" ? 8 : 6;
 }
 
+// Rough time estimate shown in the room's orientation bar (scenario + a few turns + feedback).
+export function roleplayEstimatedMinutes(level: Level): number {
+  return level === "BEGINNER" ? 5 : level === "ELITE" ? 12 : 8;
+}
+
 export function writeRoleplayConfig(config: RoleplayConfig) {
   try {
     window.sessionStorage.setItem(ROLEPLAY_CONFIG_KEY, JSON.stringify(config));

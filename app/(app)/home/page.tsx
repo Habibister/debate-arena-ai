@@ -11,18 +11,11 @@ import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLa
 import { prisma } from "@/lib/prisma";
 import { countDueReviews } from "@/lib/spaced-review";
 import { getActiveTrack } from "@/lib/track-server";
+import { weakAreasForTrack } from "@/lib/track-recommendations";
 import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-// Latest weak areas from real graded tests (same honest source the dashboard uses).
-function latestWeakAreas(tests: Array<{ weakAreas: string[] }>): string[] {
-  for (const test of tests) {
-    if (test.weakAreas.length > 0) return test.weakAreas.slice(0, 3);
-  }
-  return [];
-}
 
 // Home — the post-login landing. One obvious next action (continue a real unfinished session, or
 // start practicing), one honest recommendation, quick actions, and the audited-honest stat trio.
@@ -30,25 +23,27 @@ function latestWeakAreas(tests: Array<{ weakAreas: string[] }>): string[] {
 export default async function HomePage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
   const activeTrack = getActiveTrack(searchParams.track);
+  const activeOrg = activeTrack?.organization;
   const trackSlug = activeTrack?.slug ?? "debate";
 
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: {
-          displayName: true,
-          name: true,
-          streak: true,
-          wins: true,
-          practiceTests: {
-            where: { status: "COMPLETED" },
-            orderBy: { completedAt: "desc" },
-            take: 5,
-            select: { score: true, weakAreas: true }
-          }
-        }
+        select: { displayName: true, name: true, streak: true, wins: true }
       })
     : null;
+
+  // C5B1: the "Recommended next" weak area comes ONLY from the resolved track's own graded tests.
+  // No resolved track -> none (fail closed), so a prior HOSA test can never surface on Debate Home.
+  const practiceTests =
+    activeOrg && session?.user?.id
+      ? await prisma.practiceTest.findMany({
+          where: { userId: session.user.id, status: "COMPLETED", organization: activeOrg },
+          orderBy: { completedAt: "desc" },
+          take: 5,
+          select: { score: true, weakAreas: true, organization: true }
+        })
+      : [];
 
   const [judgedDebateCount, reviewsDue] = session?.user?.id
     ? await Promise.all([
@@ -57,9 +52,9 @@ export default async function HomePage({ searchParams }: { searchParams: { track
       ])
     : [0, 0];
 
-  const completedScores = (user?.practiceTests ?? []).map((t) => t.score).filter((s): s is number => typeof s === "number");
+  const completedScores = practiceTests.map((t) => t.score).filter((s): s is number => typeof s === "number");
   const mastery = completedScores.length > 0 ? Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length) : 0;
-  const weakAreas = latestWeakAreas(user?.practiceTests ?? []);
+  const weakAreas = weakAreasForTrack(practiceTests, activeOrg);
   const sessions = user?.streak ?? 0;
 
   // Real unfinished sessions for the selected track — the same honest filters the dashboard uses.

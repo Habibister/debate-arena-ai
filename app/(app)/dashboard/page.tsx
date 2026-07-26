@@ -25,6 +25,7 @@ import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
+import { weakAreasForTrack } from "@/lib/track-recommendations";
 import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
@@ -71,10 +72,6 @@ function masteryFromTests(tests: Array<{ score: number | null }>) {
   return Math.round(completedScores.reduce((total, score) => total + score, 0) / completedScores.length);
 }
 
-function latestWeakAreas(tests: Array<{ weakAreas: string[] }>) {
-  return Array.from(new Set(tests.flatMap((test) => test.weakAreas))).slice(0, 3);
-}
-
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   // The main dashboard is the student experience. A COACH gets the intentional Coach dashboard instead
@@ -82,17 +79,23 @@ export default async function DashboardPage() {
   if (session?.user?.role === "COACH") {
     redirect("/coach");
   }
+  // C5B1: resolve the active track BEFORE reading tests so weak-area recommendations are track-scoped.
+  const activeTrack = getActiveTrack();
+  const activeOrg = activeTrack?.organization;
   const user = session?.user?.id
-    ? await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: {
-          practiceTests: {
-            orderBy: { createdAt: "desc" },
-            take: 5
-          }
-        }
-      })
+    ? await prisma.user.findUnique({ where: { id: session.user.id } })
     : null;
+  // Only this track's own graded tests inform the "weak area" recommendation. No resolved track ->
+  // none (fail closed), so a prior HOSA test never becomes a Debate/DECA recommendation.
+  const recentTests =
+    activeOrg && session?.user?.id
+      ? await prisma.practiceTest.findMany({
+          where: { userId: session.user.id, status: "COMPLETED", organization: activeOrg },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { score: true, weakAreas: true, organization: true }
+        })
+      : [];
   const judgedDebateCount = session?.user?.id
     ? await prisma.debate.count({
         where: {
@@ -123,9 +126,8 @@ export default async function DashboardPage() {
   const streak = user?.streak ?? 0;
   const wins = user?.wins ?? 0;
   const rank = user?.rank ?? "BRONZE";
-  const recentTests = user?.practiceTests ?? [];
   const mastery = masteryFromTests(recentTests);
-  const weakAreas = latestWeakAreas(recentTests);
+  const weakAreas = weakAreasForTrack(recentTests, activeOrg);
   const masteryData: MasteryPoint[] = demo ? demoSampleMastery : [];
   // Weak areas are real (from graded tests); we show their NAMES only — no invented percentages.
   // Demo accounts may show sample numbers (allowed for seeded demo data only).
@@ -135,8 +137,8 @@ export default async function DashboardPage() {
   const recommendedBot = nearestAiPersona(calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount }));
 
   // Track-aware quick actions + resources: honor the selected track (preference cookie) so Model UN /
-  // General Debate never see DECA/HOSA exam actions or another org's resource shelf.
-  const activeTrack = getActiveTrack();
+  // General Debate never see DECA/HOSA exam actions or another org's resource shelf. (activeTrack was
+  // resolved above so weak-area recommendations are track-scoped.)
   const nextSteps = nextStepsForTrack(activeTrack);
 
   // Students join/leave coach teams from the dashboard. Coaches/admins manage teams on /coach.

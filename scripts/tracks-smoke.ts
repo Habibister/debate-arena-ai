@@ -31,6 +31,8 @@ import { isLegacyPracticeRecord, practiceTypeLabel, showsOpponentMeta } from "..
 import { assignmentTypeAllowedForOrganization, assignmentTypesForOrganization, contentAllowedForOrganization } from "../lib/track-content";
 import { AUTHORED_LESSONS, getLesson } from "../lib/lessons";
 import { DRILL_AREAS } from "../lib/debate-drills";
+import { weakAreasForTrack } from "../lib/track-recommendations";
+import type { Organization } from "@prisma/client";
 
 function main() {
   // Four tracks, correct ids + slugs.
@@ -289,6 +291,28 @@ function main() {
   // Hardcoded mixed-track fallback removed and NOT replaced by another broad list.
   const dashIsolationSrc = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
   assert.ok(!dashIsolationSrc.includes('"Medical Terminology"') && !dashIsolationSrc.includes('"Finance"'), "dashboard no longer hardcodes a mixed-track recommendation fallback");
+
+  // C5B1 regression: the exact production failure — a prior HOSA Medical Terminology test must NOT
+  // become the "Recommended next" weak area when the active track is Debate. Weak-area recommendations
+  // are scoped to the resolved track's own graded tests; an unresolved track surfaces none.
+  const priorTests = [
+    { organization: "HOSA" as Organization, weakAreas: ["Medical Terminology", "Patient Communication"] },
+    { organization: "DECA" as Organization, weakAreas: ["Finance"] }
+  ];
+  assert.deepEqual(weakAreasForTrack(priorTests, "DEBATE"), [], "Debate Home never recommends a HOSA/DECA weak area (Medical Terminology leak fixed)");
+  assert.deepEqual(weakAreasForTrack(priorTests, "HOSA"), ["Medical Terminology", "Patient Communication"], "HOSA shows its own weak areas");
+  assert.deepEqual(weakAreasForTrack(priorTests, "DECA"), ["Finance"], "DECA shows its own weak areas");
+  assert.deepEqual(weakAreasForTrack(priorTests, undefined), [], "unresolved track surfaces no weak-area recommendation (fail closed)");
+  assert.deepEqual(weakAreasForTrack(priorTests, null), [], "null track surfaces no weak-area recommendation (fail closed)");
+  // The DB query itself must fail closed: an unresolved track runs NO practiceTest query (never an
+  // all-org fetch that gets filtered afterward). Assert the guarded ternary on both surfaces.
+  const homeSrc = readFileSync("app/(app)/home/page.tsx", "utf8");
+  const failClosedQuery = /activeOrg && session[\s\S]*?\? await prisma\.practiceTest\.findMany\([\s\S]*?organization: activeOrg[\s\S]*?: \[\]/;
+  assert.ok(failClosedQuery.test(homeSrc), "Home only queries practiceTests when a track is resolved (fail-closed query, not post-filter)");
+  assert.ok(failClosedQuery.test(dashIsolationSrc), "Dashboard only queries practiceTests when a track is resolved (fail-closed query, not post-filter)");
+  // No unscoped nested include may remain, and both keep weakAreasForTrack as display-layer defense.
+  assert.ok(!/practiceTests: \{/.test(homeSrc) && !/practiceTests: \{/.test(dashIsolationSrc), "no unscoped practiceTests include remains on Home or Dashboard");
+  assert.ok(homeSrc.includes("weakAreasForTrack") && dashIsolationSrc.includes("weakAreasForTrack"), "both surfaces use weakAreasForTrack as defense-in-depth at the display layer");
 
   // Preservation: approved lesson + Debate internals untouched by C5B1.
   assert.equal(getLesson("claim-warrant-impact")?.skillSlug, "debate-claim-building", "CWI lesson + mastery slug unchanged");

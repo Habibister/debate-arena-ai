@@ -343,9 +343,11 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* C5B1: no cross-track fallback tags. Scope strictly to the resolved track (fail-closed when
+          unresolved); only the learner's real weak areas refine it. */}
       <RecommendedVideos
         organization={resourceOrgForTrack(activeTrack)}
-        skillTags={weakAreas.length > 0 ? weakAreas : ["Refutation", "Finance", "Medical Terminology"]}
+        skillTags={weakAreas.length > 0 ? weakAreas : undefined}
         title="Recommended video resources"
       />
 

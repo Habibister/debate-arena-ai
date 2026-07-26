@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { skillVisibleForTrack, type TrainingTrack } from "@/lib/training-tracks";
+import { skillSharedOnly, skillVisibleForTrack, type TrainingTrack } from "@/lib/training-tracks";
 
 const skills: Array<{
   name: string;
@@ -77,8 +77,11 @@ function actionIcon(skill: (typeof skills)[number]) {
 // showSampleProgress is true only for demo accounts. Real users have not earned mastery yet, so we
 // show "Not started" at 0% instead of fake percentages.
 export function SkillPath({ showSampleProgress = false, track }: { showSampleProgress?: boolean; track?: TrainingTrack }) {
-  // When a track is active, show only that track's skills plus shared-foundation skills.
-  const visibleSkills = track ? skills.filter((skill) => skillVisibleForTrack(skill.org, track).visible) : skills;
+  // When a track is active, show that track's skills plus shared foundations. C5B1 fail-closed: when
+  // NO track is resolved, show shared foundations ONLY — never every track's skills.
+  const visibleSkills = track
+    ? skills.filter((skill) => skillVisibleForTrack(skill.org, track).visible)
+    : skills.filter((skill) => skillSharedOnly(skill.org));
 
   return (
     <Card>

@@ -122,6 +122,29 @@ export function skillVisibleForTrack(skillOrg: string, track: TrainingTrack): { 
   return { visible: shared || mapped === track, shared };
 }
 
+// Fail-closed default for skills when NO track is resolved: show only explicitly shared foundations,
+// never every track's skills. (C5B1 track-isolation contract.)
+export function skillSharedOnly(skillOrg: string): boolean {
+  return SKILL_ORG_TRACK[skillOrg] === "SHARED";
+}
+
+// --- Cross-track content tagging (C5B1) --------------------------------------------------------
+// Cross-track material must be EXPLICITLY tagged shared. For organization-tagged content (resources,
+// decks) the shared tag is "GENERAL"; for skills it is "SHARED" (see SKILL_ORG_TRACK). An unresolved
+// track shows shared-only — an absent track NEVER means "show every track".
+export const SHARED_ORG_TAGS = new Set(["GENERAL", "SHARED"]);
+
+export function isSharedOrgTag(org?: string | null): boolean {
+  return Boolean(org && SHARED_ORG_TAGS.has(org));
+}
+
+// The single fail-closed predicate every org-tagged filter should use. `resolvedOrg` is the active
+// track's organization, or undefined/null when the track is unresolved (then only shared shows).
+export function orgVisibleForResolvedTrack(contentOrg: string, resolvedOrg?: string | null): boolean {
+  if (isSharedOrgTag(contentOrg)) return true;
+  return Boolean(resolvedOrg) && contentOrg === resolvedOrg;
+}
+
 // Honest content-source labels — never claim official/historical origin for unverified content.
 export type ContentSourceType = "OFFICIAL_PAST" | "OFFICIAL_SAMPLE" | "ADAPTED_FROM_PAST" | "AI_GENERATED" | "UNVERIFIED_EXISTING_CONTENT";
 

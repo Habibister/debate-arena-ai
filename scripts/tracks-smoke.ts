@@ -14,6 +14,9 @@ import {
   resolveTrackFromSlugs,
   TRACK_COOKIE,
   TRACKS,
+  isSharedOrgTag,
+  orgVisibleForResolvedTrack,
+  skillSharedOnly,
   skillVisibleForTrack,
   trackAllowsOrganization,
   trackByOrganization,
@@ -246,6 +249,51 @@ function main() {
   // No fallback-to-all when an organization filter yields nothing (honest empty state, no leakage).
   const noneResources = recommendedResources({ organization: "MODEL_UN" });
   assert.ok(noneResources.every((r) => r.organization !== "DECA" && r.organization !== "HOSA"), "Model UN never surfaces DECA/HOSA resources");
+
+  // ===== C5B1: fail-closed track-context & isolation foundation =====
+  // Recommendations never leak across tracks, and an UNRESOLVED track shows shared-only (never all).
+  const decaShelf = recommendedResources({ organization: "DECA", limit: 50 });
+  assert.ok(decaShelf.length > 0 && decaShelf.every((r) => r.organization === "DECA" || isSharedOrgTag(r.organization)), "DECA shelf is DECA/shared only");
+  assert.ok(!decaShelf.some((r) => r.organization === "HOSA"), "DECA never surfaces HOSA (e.g. Medical Terminology) resources");
+  const hosaShelf = recommendedResources({ organization: "HOSA", limit: 50 });
+  assert.ok(!hosaShelf.some((r) => r.organization === "DECA"), "HOSA never surfaces DECA finance/PI resources");
+  const debateShelf = recommendedResources({ organization: "DEBATE", limit: 50 });
+  assert.ok(!debateShelf.some((r) => r.organization === "DECA" || r.organization === "HOSA"), "Debate never surfaces DECA/HOSA resources");
+  // The old fail-open: NO organization used to return every track's resources. Now it fails closed.
+  const unresolvedShelf = recommendedResources({ limit: 50 });
+  assert.ok(unresolvedShelf.every((r) => isSharedOrgTag(r.organization)), "unresolved track shows shared-only resources");
+  assert.ok(!unresolvedShelf.some((r) => ["DECA", "HOSA", "DEBATE"].includes(r.organization)), "unresolved track never leaks track-specific resources (fail-open removed)");
+
+  // The single fail-closed predicate.
+  assert.ok(orgVisibleForResolvedTrack("GENERAL", undefined) && orgVisibleForResolvedTrack("DECA", "DECA"), "shared shows everywhere; own-track content shows in its track");
+  assert.ok(!orgVisibleForResolvedTrack("HOSA", "DECA") && !orgVisibleForResolvedTrack("DECA", undefined) && !orgVisibleForResolvedTrack("DECA", null), "cross-track hidden; unresolved hides track-specific content");
+  assert.ok(isSharedOrgTag("GENERAL") && isSharedOrgTag("SHARED") && !isSharedOrgTag("DECA"), "only GENERAL/SHARED are shared tags");
+
+  // Skills: DECA hides Debate/HOSA skills; shared foundation shows everywhere; no-track = shared only.
+  assert.ok(!skillVisibleForTrack("Debate", "DECA").visible && !skillVisibleForTrack("HOSA", "DECA").visible, "DECA hides Debate-only and HOSA-only skills");
+  assert.ok(skillVisibleForTrack("Public Speaking", "DECA").visible, "shared foundation shows in DECA");
+  assert.ok(skillSharedOnly("Public Speaking") && !skillSharedOnly("HOSA") && !skillSharedOnly("Debate"), "no-track skill list fails closed to shared foundations only");
+
+  // Resolution priority + deep-link-vs-preference separation.
+  assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "explicit route track wins over saved preference (deep link controls context)");
+  assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "saved preference used when no route track");
+  assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "unresolved when neither route nor preference (caller fails closed / onboarding)");
+
+  // Contract centralized in one resolver that only READS the preference cookie (deep link cannot overwrite it).
+  const trackServer = readFileSync("lib/track-server.ts", "utf8");
+  assert.ok(trackServer.includes("export function resolveActiveTrack") && /getActiveTrack[\s\S]*resolveActiveTrack\(/.test(trackServer), "getActiveTrack delegates to the single resolveActiveTrack contract");
+  assert.ok(trackServer.includes("cookies().get(TRACK_COOKIE)") && !trackServer.includes(".set("), "resolver only reads the preference cookie, never writes it");
+  const trackCtx = readFileSync("components/training/training-track-context.tsx", "utf8");
+  assert.ok(trackCtx.includes("writeTrackCookie") && trackCtx.includes("setTrack"), "the saved track preference is owned solely by the explicit switcher");
+
+  // Hardcoded mixed-track fallback removed and NOT replaced by another broad list.
+  const dashIsolationSrc = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
+  assert.ok(!dashIsolationSrc.includes('"Medical Terminology"') && !dashIsolationSrc.includes('"Finance"'), "dashboard no longer hardcodes a mixed-track recommendation fallback");
+
+  // Preservation: approved lesson + Debate internals untouched by C5B1.
+  assert.equal(getLesson("claim-warrant-impact")?.skillSlug, "debate-claim-building", "CWI lesson + mastery slug unchanged");
+  assert.ok(!readFileSync("components/debate/debate-arena.tsx", "utf8").includes("orgVisibleForResolvedTrack"), "Debate arena internals untouched by the isolation change");
+  // ===== end C5B1 =====
 
   // 4. Model UN tests hide the DECA/HOSA generator (gated by track, honest empty state otherwise).
   const testsPage = readFileSync("app/(app)/tests/page.tsx", "utf8");

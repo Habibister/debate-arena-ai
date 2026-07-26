@@ -1,3 +1,5 @@
+import { orgVisibleForResolvedTrack } from "@/lib/training-tracks";
+
 export type StudyOrganization = "DECA" | "HOSA" | "DEBATE";
 
 export type Flashcard = {
@@ -1233,7 +1235,9 @@ export function flashcardsForDeck(deckSlug: string) {
 export function recommendedResources(input: { organization?: string; skillTags?: string[]; limit?: number }) {
   const tags = (input.skillTags ?? []).map((tag) => tag.toLowerCase());
   const matches = RESOURCE_VIDEOS.filter((resource) => {
-    const organizationMatches = !input.organization || resource.organization === input.organization || resource.organization === "GENERAL";
+    // C5B1 fail-closed: with a resolved org, show that org + explicitly shared (GENERAL) only; with an
+    // UNRESOLVED org (undefined), show shared-only. An absent org never means "match every track".
+    const organizationMatches = orgVisibleForResolvedTrack(resource.organization, input.organization);
     const tagMatches =
       tags.length === 0 ||
       resource.skillTags.some((tag) => tags.some((requested) => tag.toLowerCase().includes(requested) || requested.includes(tag.toLowerCase())));
@@ -1241,8 +1245,9 @@ export function recommendedResources(input: { organization?: string; skillTags?:
     return organizationMatches && tagMatches;
   });
 
-  const pool = matches.length > 0 || input.organization ? matches : RESOURCE_VIDEOS;
-  return pool.slice(0, input.limit ?? 3);
+  // Never fall back to all resources — a track view showing nothing is honest; showing other tracks
+  // is the cross-track leak we are removing.
+  return matches.slice(0, input.limit ?? 3);
 }
 
 export function studyDeckForSkill(skillTag: string, organization: "DECA" | "HOSA") {

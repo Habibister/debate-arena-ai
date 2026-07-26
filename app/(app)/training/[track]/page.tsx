@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, BookOpenCheck, ClipboardList, Gamepad2, Layers3, MessageSquareText } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, ClipboardList, Gamepad2, GraduationCap, Layers3, MessageSquareText } from "lucide-react";
 import { TrackControls } from "@/components/training/track-controls";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { lessonsForTrack } from "@/lib/lessons";
 import { deckSummaries } from "@/lib/study-content";
 import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
 
@@ -38,6 +39,8 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
   const decks = deckSummaries().filter((d) => d.organization === track.organization);
   const hasTests = track.organization === "DECA" || track.organization === "HOSA";
   const isDebate = track.id === "GENERAL_DEBATE";
+  // Guided lessons are authored per skill; only surface the entry when this track actually has one.
+  const hasGuidedLessons = lessonsForTrack(track.slug).length > 0;
 
   return (
     <div className="space-y-6">
@@ -92,6 +95,15 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             <span>
               <span className="block font-semibold">Practice tests</span>
               <span className="mt-1 block text-sm text-muted-foreground">Generate a {track.short} practice set with explanations.</span>
+            </span>
+          </Link>
+        ) : null}
+        {hasGuidedLessons ? (
+          <Link href={`/lessons?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10">
+            <GraduationCap className="mt-0.5 h-5 w-5 text-track" aria-hidden />
+            <span>
+              <span className="block font-semibold">Guided lessons</span>
+              <span className="mt-1 block text-sm text-muted-foreground">Learn a skill with worked weak-vs-strong examples, then practice it.</span>
             </span>
           </Link>
         ) : null}

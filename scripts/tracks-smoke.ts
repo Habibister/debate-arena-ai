@@ -26,6 +26,8 @@ import { buildDecaFormatConfig, buildHosaFormatConfig, buildModelUnFormatConfig,
 import { nextStepsForTrack, resourceOrgForTrack } from "../lib/dashboard-actions";
 import { isLegacyPracticeRecord, practiceTypeLabel, showsOpponentMeta } from "../lib/debate-history";
 import { assignmentTypeAllowedForOrganization, assignmentTypesForOrganization, contentAllowedForOrganization } from "../lib/track-content";
+import { AUTHORED_LESSONS, getLesson } from "../lib/lessons";
+import { DRILL_AREAS } from "../lib/debate-drills";
 
 function main() {
   // Four tracks, correct ids + slugs.
@@ -85,6 +87,52 @@ function main() {
   assert.ok(room.includes("Quick start") && room.includes("Customize"), "debate-room offers Quick start + Customize");
   assert.ok(room.includes('setupMode === "custom"') && room.includes('useState<"quick" | "custom">("quick")'), "advanced setup is gated behind Customize, defaulting to Quick start");
   assert.ok(room.includes("startDebate") && room.includes("Generate motion"), "the motion + create-room path is always available (not hidden by the toggle)");
+
+  // Guided lessons: authored teaching content with a weak-vs-strong contrast, real mistakes, and
+  // practice wired to the EXISTING mastery pipeline (never a parallel scorekeeper).
+  const cwi = getLesson("claim-warrant-impact");
+  assert.ok(cwi, "the Claim/Warrant/Impact lesson exists");
+  if (cwi) {
+    // Practice maps to a real, seeded skill via the drill-area map (so recordDrillMastery can write).
+    const area = DRILL_AREAS.find((a) => a.id === cwi.drillArea);
+    assert.ok(area, "lesson drillArea resolves to a real drill area");
+    assert.equal(area?.skillSlug, cwi.skillSlug, "lesson skillSlug matches the drill area's mastery skill");
+    assert.equal(cwi.skillSlug, "debate-claim-building", "CWI maps to the seeded debate-claim-building skill");
+    // Weak vs strong is a real contrast on the same claim, with reasons for each.
+    assert.ok(cwi.weak.text.trim() !== cwi.strong.text.trim(), "weak and strong examples are genuinely different");
+    assert.ok(cwi.weak.reasons.length >= 2 && cwi.strong.reasons.length >= 2, "each example explains why it fails/works");
+    assert.ok(cwi.commonMistakes.length >= 2 && cwi.commonMistakes.length <= 3, "2-3 real common mistakes");
+    assert.ok(cwi.commonMistakes.every((m) => m.fix.trim().length > 0), "every mistake has a concrete fix");
+    // Incremental revision: at least three distinct passes, each with its own warrant + note.
+    assert.ok(cwi.revisionLadder.steps.length >= 3, "revision ladder shows the warrant improving incrementally");
+    assert.ok(cwi.revisionLadder.steps.every((s) => s.warrant.trim().length > 0 && s.note.trim().length > 0), "each revision step has a warrant and a note");
+    assert.ok(cwi.revisionLadder.steps[0].warrant.trim() !== cwi.revisionLadder.steps[cwi.revisionLadder.steps.length - 1].warrant.trim(), "the first and last drafts genuinely differ");
+    // Show, don't tell: a vague stat becomes a specific one, with what changed + an honesty note.
+    assert.ok(cwi.evidenceUpgrade.vague.trim() !== cwi.evidenceUpgrade.specific.trim(), "evidence upgrade shows vague vs specific, not the same line twice");
+    assert.ok(cwi.evidenceUpgrade.whatChanged.length >= 3, "evidence upgrade explains what made it specific");
+    assert.ok(/illustrat/i.test(cwi.evidenceUpgrade.honestyNote), "illustrative figures are labeled honestly, not presented as verified");
+    // Misconception repair: names the wrong model and corrects it (not just a restated tip).
+    assert.ok(cwi.misconception.name.trim().length > 0 && cwi.misconception.wrongModel.trim().length > 0, "misconception is named with its wrong mental model");
+    assert.ok(cwi.misconception.rightModel.trim().length > 0 && cwi.misconception.wrongModel.trim() !== cwi.misconception.rightModel.trim(), "misconception is corrected with a different, right model");
+    // Optional video slot is an EMPTY placeholder — never a fake embed.
+    assert.equal(cwi.video.url, null, "video slot is an empty placeholder, not a fake embed");
+    // Honest framing: it explicitly disclaims official status (never presents teaching as official rules).
+    assert.ok(/not official/i.test(cwi.provenanceNote), "lesson explicitly disclaims being official competition content");
+  }
+  assert.ok(AUTHORED_LESSONS.every((l) => l.track === "debate"), "authored lessons are General Debate only for now (honest scope)");
+  // Practice reuses the existing drills endpoints + pipeline; it never re-implements mastery writes.
+  const practice = readFileSync("components/lessons/lesson-practice.tsx", "utf8");
+  assert.ok(practice.includes("/api/debate/drills/session") && practice.includes("/api/debate/drills/submit"), "lesson practice reuses the existing drills endpoints");
+  // It must not import the mastery-writing lib or prisma directly — mastery is written only server-side
+  // by the existing submit route. (Mentioning recordDrillMastery in a comment is fine; importing isn't.)
+  assert.ok(!/from \"@\/lib\/spaced-review\"/.test(practice) && !/from \"@\/lib\/prisma\"/.test(practice), "lesson practice does not build a parallel mastery scorekeeper");
+  assert.ok(practice.includes("wroteSkills"), "lesson practice reports mastery honestly from the server's confirmation");
+  // Entry point lives under Train.
+  const trackHub = readFileSync("app/(app)/training/[track]/page.tsx", "utf8");
+  assert.ok(trackHub.includes("/lessons?track=") && trackHub.includes("Guided lessons"), "Train hub links to guided lessons");
+  // Guided lessons live in the authenticated app group — the middleware must gate them like /skills.
+  const middleware = readFileSync("middleware.ts", "utf8");
+  assert.ok(middleware.includes('"/lessons"') && middleware.includes('"/lessons/:path*"'), "middleware gates /lessons behind auth");
 
   // AI is organization-specific (opponent/judge/rubric branch by org), so passing the track org
   // yields track-specific behavior.
@@ -154,10 +202,13 @@ function main() {
   const hosaLabels = EVENT_OPTIONS.HOSA.map((e) => e.label);
   assert.ok(!decaLabels.some((l) => hosaLabels.includes(l)), "DECA and HOSA test events do not overlap");
 
-  // Pages are wired to filter (not just banner), and there is no separate /lessons page.
+  // Pages are wired to filter (not just banner). The guided-lessons index is its own /lessons page now,
+  // but it stays track-scoped (lessonsForTrack) with an honest empty state for tracks without lessons.
   assert.ok(readFileSync("app/(app)/skills/page.tsx", "utf8").includes("track={activeTrack?.id}"), "skills page filters by track");
   assert.ok(readFileSync("app/(app)/tests/page.tsx", "utf8").includes('activeTrack.id === "DECA"'), "tests page filters by track");
-  assert.ok(!existsSync("app/(app)/lessons/page.tsx"), "no separate /lessons page (lessons filtered via skills)");
+  const lessonsIndex = readFileSync("app/(app)/lessons/page.tsx", "utf8");
+  assert.ok(lessonsIndex.includes("lessonsForTrack") && lessonsIndex.includes("getActiveTrack"), "guided-lessons index is track-scoped");
+  assert.ok(lessonsIndex.includes("No guided lessons here yet"), "guided-lessons index has an honest empty state for tracks without lessons");
   // Game entry points are per-deck, and deck listings are already track-filtered (study), so no leakage.
   assert.ok(readFileSync("app/(app)/study-arcade/page.tsx", "utf8").includes("activeTrack"), "study arcade (game entry) is track-filtered");
 

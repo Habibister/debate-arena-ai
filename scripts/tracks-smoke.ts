@@ -319,6 +319,26 @@ function main() {
   assert.ok(!readFileSync("components/debate/debate-arena.tsx", "utf8").includes("orgVisibleForResolvedTrack"), "Debate arena internals untouched by the isolation change");
   // ===== end C5B1 =====
 
+  // ===== C5B2A: Debate launches directly to /debate; Compete is track-aware =====
+  // Every "start debating" action opens /debate directly (no General Debate hub in between).
+  assert.ok(homeSrc.includes('label: "Debate Now"') && homeSrc.includes("/debate?track="), "Home 'Debate Now' -> /debate");
+  assert.ok(/GENERAL_DEBATE" \? `\/debate/.test(homeSrc), "Home 'Practice' launches Debate straight into /debate");
+  const hubSrc2 = readFileSync("app/(app)/training/[track]/page.tsx", "utf8");
+  assert.ok(/isDebate \? "\/debate"/.test(hubSrc2), "Training hub Debate start-action -> /debate directly");
+  assert.ok(readFileSync("lib/dashboard-actions.ts", "utf8").includes('href: "/debate"'), "dashboard next-step for Debate -> /debate");
+  // Compete is track-aware: Debate gets a direct /debate round; DECA/HOSA never see 'Debate Now'.
+  const competeSrc = readFileSync("app/(app)/compete/page.tsx", "utf8");
+  assert.ok(!competeSrc.includes('"Debate Now"'), "Compete no longer shows a track-generic 'Debate Now'");
+  assert.ok(/GENERAL_DEBATE[\s\S]*?Full Debate Round[\s\S]*?\/debate\?track=/.test(competeSrc), "Compete Debate -> Full Debate Round at /debate");
+  assert.ok(/DECA[\s\S]*?Guided DECA Role-Play[\s\S]*?\/training\/deca\/practice/.test(competeSrc), "Compete DECA opens the DECA role-play setup (not /debate)");
+  assert.ok(/HOSA[\s\S]*?Guided HOSA Role-Play[\s\S]*?\/training\/hosa\/practice/.test(competeSrc), "Compete HOSA opens the HOSA role-play setup (not /debate)");
+  assert.ok(/Full HOSA Simulation[\s\S]*?comingSoon: true/.test(competeSrc), "HOSA Full Simulation is an honest coming-soon (it does not exist yet)");
+  assert.ok(competeSrc.includes("Choose your track first"), "Compete fails closed to a track picker when no track is resolved");
+  // The persistent track switcher only changes the active track — it never launches an activity/room.
+  const switcherSrc = readFileSync("components/training/track-controls.tsx", "utf8");
+  assert.ok(switcherSrc.includes("setTrack") && !/router\.(push|replace)/.test(switcherSrc), "track switcher changes context only — it does not launch a room");
+  // ===== end C5B2A =====
+
   // 4. Model UN tests hide the DECA/HOSA generator (gated by track, honest empty state otherwise).
   const testsPage = readFileSync("app/(app)/tests/page.tsx", "utf8");
   assert.ok(testsPage.includes("showGenerator"), "tests page gates the generator by track");

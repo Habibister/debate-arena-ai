@@ -83,9 +83,12 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   const firstName = (user?.name ?? user?.displayName)?.split(" ")[0] ?? "there";
   const hasContinue = unfinished.length > 0;
 
+  // Debate start-actions launch straight into /debate (no General Debate hub in between); non-debate
+  // tracks open their own role-play setup.
+  const practiceHref = activeTrack?.id === "GENERAL_DEBATE" ? `/debate?track=${trackSlug}` : `/training/${trackSlug}/practice`;
   const quickActions = [
     { href: `/debate?track=${trackSlug}`, label: "Debate Now", detail: "A full round with an AI opponent and judge", icon: Gavel },
-    { href: `/training/${trackSlug}/practice`, label: "Practice 10 minutes", detail: "One focused rep in your track", icon: Timer },
+    { href: practiceHref, label: "Practice 10 minutes", detail: "One focused rep in your track", icon: Timer },
     { href: `/tests?track=${trackSlug}`, label: "Take a test", detail: "An original practice set with explanations", icon: ClipboardList },
     { href: "/study-arcade/review", label: "Review missed terms", detail: reviewsDue > 0 ? `${reviewsDue} ${reviewsDue === 1 ? "skill is" : "skills are"} due for review` : "Nothing due — reviews appear as you practice", icon: RotateCcw }
   ] as const;

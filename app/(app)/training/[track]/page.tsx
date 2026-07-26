@@ -80,7 +80,9 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             </span>
           </Link>
         ) : null}
-        <Link href={`/training/${track.slug}/practice` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+        {/* Start-a-round action launches directly: Debate -> /debate (no hub in between), matching how
+            DECA/HOSA open their setup. Non-debate tracks open their own role-play setup. */}
+        <Link href={(isDebate ? "/debate" : `/training/${track.slug}/practice`) as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
           <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
           <span>
             <span className="block font-semibold">{PRACTICE_ACTION[track.id]}</span>

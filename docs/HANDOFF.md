@@ -24,10 +24,18 @@ detail genuinely worth keeping.
   coaching-feedback labeling, required first response, HOSA multi-format reframing, cautious privacy
   copy, honest score-sheet/feedback wording); then C5C1a — production-found feedback-quality patch
   (coach evaluates BOTH responses against every rubric item; honest no-strength line; 8-word
-  meaningful-response gate on both boxes). Client-side only; Side Coach server untouched.
+  meaningful-response gate on both boxes); then C5C1b — narrowly scoped Side Coach turn-feedback
+  contract patch (honesty rule + exact no-strength line, rubric completeness with per-item
+  fully/partially/missing status, combined-evidence rule, labeled INITIAL/FOLLOW-UP two-part
+  revision example, calibration against overcorrection). Contract-verified on Groq
+  (llama-3.3-70b-versatile) across both test cases; **Gemini untested — free-tier quota exhausted
+  (429) throughout testing**. Ask-type and `unavailable` fallback behavior unchanged; the rules
+  intentionally apply to all turn feedback including debate. Open curriculum decision recorded:
+  whether "Implementation" becomes a fifth scored item in the DECA Lesson-0 practice rubric.
 - **Branch:** `main`
 - **Starting commit:** `74cbeec`
-- **Ending commit:** `2926765` (C5C1, pushed + production-verified) → C5C1a commit (this handoff).
+- **Ending commit:** `2926765` (C5C1, pushed + production-verified) → `45b5ff7` (C5C1a, pushed) →
+  C5C1b commit (this handoff).
 - **Files changed:** `lib/roleplay-lessons.ts` (new authored content library),
   `components/lessons/roleplay-lesson-view.tsx` + `roleplay-lesson-practice.tsx` (new),
   `app/(app)/lessons/[slug]/page.tsx`, `app/(app)/lessons/page.tsx`,

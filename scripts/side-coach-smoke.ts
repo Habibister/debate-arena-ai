@@ -38,7 +38,36 @@ function main() {
   assert.ok(user.includes("Financial literacy prevents future debt."), "references the student's actual latest speech");
   assert.ok(!/score|ballot|verdict/i.test(user), "no judge scoring leaks into the coach prompt");
 
+  // ===== C5C1b: turn-feedback honesty + rubric-completeness contract =====
+  // 1) The exact no-strength fallback line is in the turn-feedback prompt.
+  assert.ok(user.includes('set strength to exactly: "No rubric-aligned strength is demonstrated yet."'), "turn-feedback prompt contains the exact no-strength fallback");
+  // 2) It forbids praise for effort, attempting, participation, or typing.
+  assert.ok(user.includes("Never praise effort, attempting, participation, or merely typing something."), "turn-feedback prompt forbids invented effort-praise");
+  // 3) It requires evaluation against every supplied rubric item.
+  assert.ok(user.includes("against every supplied rubric item"), "turn-feedback prompt requires evaluation against every supplied rubric item");
+  // 4) It requires all missing rubric items to be named.
+  assert.ok(user.includes("Explicitly name every missing or insufficient rubric item"), "turn-feedback prompt requires naming every missing rubric item");
+  // 5) It requires the revision example to improve the entire exchange.
+  assert.ok(user.includes("The revision example must improve the complete exchange"), "turn-feedback prompt requires the revision to improve the whole exchange");
+  // 5b) Calibration: the no-strength line is a floor for genuinely empty work, not a default —
+  // genuine partial strengths must still be named (prevents overcorrection on weak-but-real answers).
+  assert.ok(user.includes("reserved for responses where NO rubric item is genuinely met"), "turn-feedback prompt calibrates the no-strength line against overcorrection");
+  // 5c) Combined evidence: both responses are judged as ONE attempt.
+  assert.ok(user.includes("Judge the initial response and follow-up as one complete attempt"), "turn-feedback prompt requires combined-evidence evaluation");
+  // 5d) An item demonstrated in EITHER response is never marked missing.
+  assert.ok(user.includes("do not mark an item missing merely because it is absent from the follow-up"), "turn-feedback prompt forbids marking items missing when demonstrated in either response");
+  // 5e) Fully / partially / missing distinction is required — and must be stated per item by name.
+  assert.ok(user.includes("fully demonstrated, partially demonstrated, and missing"), "turn-feedback prompt requires the fully/partially/missing distinction");
+  assert.ok(user.includes("state the status of EVERY supplied rubric item by name"), "turn-feedback prompt requires a per-item status statement, including in-character items");
+  // 5f) The complete-exchange example must contain labeled revised initial + follow-up responses.
+  assert.ok(user.includes("a revised initial response AND a revised follow-up response, clearly labeled") && user.includes('"INITIAL RESPONSE:" and "FOLLOW-UP RESPONSE:"'), "turn-feedback prompt requires labeled revised initial + follow-up in the example");
+  // 6) Other request types are unchanged — the rules apply to turn-feedback only.
+  const askPrompt = buildSideCoachUserPrompt({ ...base, requestType: "ask", askKind: "help me start" });
+  assert.ok(!askPrompt.includes("HONESTY RULE") && !askPrompt.includes("RUBRIC COMPLETENESS RULE"), "ask-type prompts are unchanged by C5C1b");
+  // ===== end C5C1b =====
+
   // Deterministic, track-aware fallback so coaching failure never blocks the debate.
+  // 7) `unavailable: true` fallback behavior is unchanged by C5C1b.
   const fb = sideCoachFallback(base);
   assert.ok(fb.unavailable === true && fb.nextMove, "fallback returns usable guidance");
   assert.ok(/recommendation/i.test(sideCoachFallback({ ...base, organization: "DECA" }).nextMove ?? ""), "DECA fallback is business-flavored");

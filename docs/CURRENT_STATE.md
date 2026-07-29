@@ -40,6 +40,12 @@ _Last updated: 2026-07-29_
   C5C1a (follow-up patch): the coach evaluates BOTH learner responses against every rubric item
   (both travel in the evaluated field), may honestly report "No rubric-aligned strength is
   demonstrated yet.", and an 8-word meaningful-response gate blocks blank/nonsense submissions.
+  C5C1b (server contract patch): the Side Coach turn-feedback prompt enforces honest strengths
+  (no praise for effort/word salad; exact no-strength line), rubric completeness with per-item
+  fully/partially/missing status, combined-evidence judging of both responses as one attempt, a
+  labeled INITIAL/FOLLOW-UP two-part revision example, and anti-overcorrection calibration.
+  Verified on Groq (contract tests); Gemini untested (429 quota). Ask-type + unavailable fallback
+  unchanged; applies to all turn feedback including debate (general honesty rules).
 - Spaced reassessment, Study Arcade, coach teams/assignments.
 - DECA/HOSA session rooms at debate-room parity (2026-07): dedicated focus-mode rooms
   (/training/[track]/room) with real multi-turn back-and-forth (new /api/ai/roleplay-turn — the AI

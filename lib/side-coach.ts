@@ -98,6 +98,13 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
     }
   } else {
     parts.push(`The student's latest response was:\n"${input.latestStudentSpeech ?? ""}"\nGive: one specific strength that QUOTES their words; one specific weakness that quotes the exact wording that's weak; a recommended next move; and in \`example\`, an improved rewrite of their weakest sentence.`);
+    // C5C1b feedback-quality contract (applies to ALL turn feedback, incl. debate — these are
+    // general honesty/completeness rules, consistent with the system prompt's "never fake praise").
+    parts.push('HONESTY RULE: A strength must be a genuine, rubric-aligned quality demonstrated by the content itself. If the learner’s responses demonstrate no genuine rubric-aligned strength—for example, filler, word salad, unrelated language, or empty effort—set strength to exactly: "No rubric-aligned strength is demonstrated yet." Never praise effort, attempting, participation, or merely typing something.');
+    parts.push("RUBRIC COMPLETENESS RULE: Evaluate the learner’s initial response and follow-up response against every supplied rubric item. Explicitly name every missing or insufficient rubric item in the improvement or nextMove feedback. The revision example must improve the complete exchange and address all identified missing rubric items, not only the final response.");
+    parts.push("COMBINED-EVIDENCE RULE: Judge the initial response and follow-up as one complete attempt. A rubric item is satisfied if it is genuinely demonstrated in either response; do not mark an item missing merely because it is absent from the follow-up. Distinguish between fully demonstrated, partially demonstrated, and missing items. In `improvement` or `nextMove`, state the status of EVERY supplied rubric item by name — fully demonstrated, partially demonstrated, or missing — including any tone or in-character item.");
+    parts.push('When two learner responses are supplied, the `example` must contain a revised initial response AND a revised follow-up response, clearly labeled, so the full exchange is improved. Label them exactly "INITIAL RESPONSE:" and "FOLLOW-UP RESPONSE:".');
+    parts.push("CALIBRATION: The no-strength line is reserved for responses where NO rubric item is genuinely met. If at least one rubric item IS genuinely demonstrated (for example a real recommendation or a real reason), name that item as the strength and quote the learner's words — do not use the no-strength line.");
   }
   return parts.join("\n\n");
 }

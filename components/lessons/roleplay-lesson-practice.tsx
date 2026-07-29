@@ -9,6 +9,19 @@ import type { RoleplayLesson } from "@/lib/roleplay-lessons";
 
 type Feedback = { strength?: string; improvement?: string; example?: string; unavailable?: boolean };
 
+// Lightweight meaningful-response gate: blocks blank/obvious-nonsense submissions while still
+// allowing genuinely weak answers (which are exactly what coaching is for).
+const MIN_RESPONSE_WORDS = 8;
+const SHORT_RESPONSE_HINT = "Write at least one complete sentence so the coach has something meaningful to evaluate.";
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+// Appended to the authored rubric in `goals` so the coach evaluates the WHOLE exchange against
+// every rubric item — and never invents praise for empty-quality responses. (≤300 chars, schema cap.)
+const COACH_NOTE =
+  "Evaluate BOTH responses against every rubric item above; name any item the learner missed explicitly; give ONE revised example that improves the whole exchange; if no item is genuinely met, say exactly: No rubric-aligned strength is demonstrated yet. Typing alone is not a strength.";
+
 // Interactive practice for a role-play lesson. The lesson is authored & deterministic: it owns the
 // scenario, roles, rubric, and the in-character follow-up. The AI (existing Side Coach route) is used
 // ONLY to give short feedback on the learner's own words, validated against the authored rubric
@@ -58,18 +71,20 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
           eventType: lesson.eventType,
           level: "BEGINNER",
           // Authored scenario + rubric drive the feedback; the AI validates the learner against these.
-          // The coach analyzes the learner's response to the AUTHORED follow-up (it never role-plays
-          // the character): the turn-feedback contract returns one strength, one improvement, and one
-          // concise revision example, each referencing the learner's actual wording.
+          // The coach analyzes the learner's work (it never role-plays the character). BOTH responses
+          // travel in latestStudentSpeech — the field the coach is explicitly instructed to evaluate —
+          // so feedback covers the initial answer AND the follow-up, not just the last thing typed
+          // (C5C1a). The COACH_NOTE rides with the rubric to require every category + honest
+          // no-strength handling.
           scenario: lesson.scenario.text,
-          goals: p.write.rubric,
-          stage: "Guided lesson practice — analyze the learner's response to the authored follow-up using the lesson rubric",
+          goals: [...p.write.rubric, COACH_NOTE],
+          stage: "Guided lesson practice — evaluate the learner's initial response AND follow-up against every lesson-rubric item.",
           transcript: [
             { role: "MODERATOR", content: `Scenario: ${lesson.scenario.title}` },
             { role: "AFFIRMATIVE", content: writeText.trim() },
             { role: "MODERATOR", content: `${p.followUp.speaker}: ${p.followUp.question}` }
           ],
-          latestStudentSpeech: followText.trim(),
+          latestStudentSpeech: `INITIAL RESPONSE:\n${writeText.trim()}\n\nRESPONSE TO FOLLOW-UP:\n${followText.trim()}`,
           requestType: "turn-feedback"
         })
       });
@@ -166,13 +181,16 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
             className="mt-2 min-h-24"
             disabled={busy}
           />
+          {wordCount(writeText) < MIN_RESPONSE_WORDS ? (
+            <p className="mt-2 text-xs text-muted-foreground">{SHORT_RESPONSE_HINT}</p>
+          ) : null}
           {!followUnlocked ? (
             <Button
               type="button"
               size="sm"
               className="mt-2"
               onClick={() => setFollowUnlocked(true)}
-              disabled={writeText.trim().length === 0}
+              disabled={wordCount(writeText) < MIN_RESPONSE_WORDS}
             >
               Continue to the follow-up
             </Button>
@@ -191,6 +209,9 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
             className="mt-2 min-h-20"
             disabled={busy}
           />
+          {wordCount(followText) < MIN_RESPONSE_WORDS ? (
+            <p className="mt-2 text-xs text-muted-foreground">{SHORT_RESPONSE_HINT}</p>
+          ) : null}
         </div>
         ) : null}
 
@@ -214,7 +235,7 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
         ) : null}
 
         {followUnlocked ? (
-        <Button type="button" onClick={getFeedback} disabled={busy || writeText.trim().length === 0 || followText.trim().length === 0}>
+        <Button type="button" onClick={getFeedback} disabled={busy || wordCount(writeText) < MIN_RESPONSE_WORDS || wordCount(followText) < MIN_RESPONSE_WORDS}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
           {feedback ? "Get coaching feedback again" : "Get coaching feedback"}
         </Button>

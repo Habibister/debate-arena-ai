@@ -22,10 +22,12 @@ detail genuinely worth keeping.
 - **Task attempted:** C5C1 — DECA/HOSA beginner guided pilot lessons ("How a DECA Role-Play Works",
   "How a HOSA Scenario Interaction Works") + an approved correction round (Side Coach integrity,
   coaching-feedback labeling, required first response, HOSA multi-format reframing, cautious privacy
-  copy, honest score-sheet/feedback wording).
+  copy, honest score-sheet/feedback wording); then C5C1a — production-found feedback-quality patch
+  (coach evaluates BOTH responses against every rubric item; honest no-strength line; 8-word
+  meaningful-response gate on both boxes). Client-side only; Side Coach server untouched.
 - **Branch:** `main`
 - **Starting commit:** `74cbeec`
-- **Ending commit:** C5C1 commit (this handoff; held for explicit approval before committing).
+- **Ending commit:** `2926765` (C5C1, pushed + production-verified) → C5C1a commit (this handoff).
 - **Files changed:** `lib/roleplay-lessons.ts` (new authored content library),
   `components/lessons/roleplay-lesson-view.tsx` + `roleplay-lesson-practice.tsx` (new),
   `app/(app)/lessons/[slug]/page.tsx`, `app/(app)/lessons/page.tsx`,

@@ -384,7 +384,24 @@ function main() {
   const rpPractice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
   assert.ok(rpPractice.includes("/api/ai/side-coach"), "role-play practice reuses the existing Side Coach route");
   assert.ok(!/recordDrillMastery|from \"@\/lib\/prisma\"|from \"@\/lib\/spaced-review\"/.test(rpPractice), "role-play practice records no mastery/competition result");
-  assert.ok(rpPractice.includes("Retry") && rpPractice.includes("goals: p.write.rubric"), "role-play practice retries on failure and validates against the authored rubric");
+  assert.ok(rpPractice.includes("Retry") && rpPractice.includes("goals: [...p.write.rubric, COACH_NOTE]"), "role-play practice retries on failure and validates against the authored rubric (+ coach note)");
+  // ===== C5C1a: feedback evaluates BOTH responses; nonsense can't unlock coaching =====
+  // Both learner responses travel in the field the coach is explicitly instructed to evaluate.
+  assert.ok(rpPractice.includes("INITIAL RESPONSE:") && rpPractice.includes("RESPONSE TO FOLLOW-UP:") && /latestStudentSpeech: `INITIAL RESPONSE:/.test(rpPractice), "both initial + follow-up responses are included in the evaluation input");
+  // The stage explicitly requests evaluation of both against every rubric item.
+  assert.ok(rpPractice.includes("evaluate the learner's initial response AND follow-up against every lesson-rubric item"), "stage explicitly requests evaluation of both responses");
+  // Honest no-strength handling: never invent praise for empty-quality responses.
+  assert.ok(rpPractice.includes("No rubric-aligned strength is demonstrated yet."), "coach note forbids invented praise and provides the honest no-strength line");
+  // Meaningful-response gate on BOTH the continue and feedback actions (blocks blank/nonsense, allows weak answers).
+  assert.ok(rpPractice.includes("MIN_RESPONSE_WORDS = 8") && rpPractice.includes("Write at least one complete sentence so the coach has something meaningful to evaluate."), "8-word meaningful-response gate + learner-facing hint exist");
+  assert.ok(/disabled=\{wordCount\(writeText\) < MIN_RESPONSE_WORDS\}/.test(rpPractice) && /disabled=\{busy \|\| wordCount\(writeText\) < MIN_RESPONSE_WORDS \|\| wordCount\(followText\) < MIN_RESPONSE_WORDS\}/.test(rpPractice), "short/nonsense responses cannot unlock the follow-up or coaching");
+  // The authored DECA/HOSA rubrics themselves are unchanged by C5C1a.
+  if (decaLesson && hosaLesson) {
+    assert.equal(decaLesson.practice.write.rubric.length, 4, "DECA rubric still has its 4 authored items");
+    assert.equal(hosaLesson.practice.write.rubric.length, 5, "HOSA rubric still has its 5 authored items");
+    assert.ok(decaLesson.practice.write.rubric[0].includes("specific recommendation") && hosaLesson.practice.write.rubric[0].includes("Acknowledges the patient's concern"), "rubric content passed through unchanged");
+  }
+  // ===== end C5C1a =====
   // Integrity: a 200-with-fallback (`unavailable: true`) is treated as a FAILED coaching request —
   // canned text is never shown as feedback on the learner's words.
   assert.ok(rpPractice.includes("data.unavailable") && /if \(data\.unavailable\) throw/.test(rpPractice), "role-play practice rejects the unavailable fallback instead of displaying it");

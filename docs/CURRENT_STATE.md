@@ -37,6 +37,9 @@ _Last updated: 2026-07-29_
   content; interactive practice reuses the Side Coach for coaching feedback only (no character
   role-play, `unavailable: true` treated as failure with honest retry, first response required),
   writes no mastery/XP/rating/record. Debate CWI lesson + `debate-claim-building` wiring unchanged.
+  C5C1a (follow-up patch): the coach evaluates BOTH learner responses against every rubric item
+  (both travel in the evaluated field), may honestly report "No rubric-aligned strength is
+  demonstrated yet.", and an 8-word meaningful-response gate blocks blank/nonsense submissions.
 - Spaced reassessment, Study Arcade, coach teams/assignments.
 - DECA/HOSA session rooms at debate-room parity (2026-07): dedicated focus-mode rooms
   (/training/[track]/room) with real multi-turn back-and-forth (new /api/ai/roleplay-turn — the AI

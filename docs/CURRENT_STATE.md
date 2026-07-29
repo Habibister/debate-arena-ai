@@ -2,11 +2,11 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-07-11_
+_Last updated: 2026-07-29_
 
 - **Branch:** `main`
-- **Latest relevant commit:** DECA Full Simulation (this milestone); preceding `baba32c` — DECA concept-drill
-  bank wired to mastery + spaced review
+- **Latest relevant commit:** C5C1 (this milestone) — DECA/HOSA guided pilot lessons; preceding
+  `74cbeec` (C5B2A track-aware launch surfaces) and `303a552` (guided-lesson system + CWI lesson)
 
 ## Working features (verified this week)
 
@@ -31,6 +31,12 @@ _Last updated: 2026-07-11_
 - General Debate drill depth: 36 original concept questions across 4 skills (claim/warrant/impact,
   rebuttal, evidence evaluation, weighing) in the Study Arcade; each writes real MasteryProgress +
   spaced review per skill. All 4 skills seeded and verified live.
+- Guided lessons (C5C1, 2026-07): authored pilot lessons for DECA ("How a DECA Role-Play Works") and
+  HOSA ("How a HOSA Scenario Interaction Works", explicitly scoped to scenario-type events beneath a
+  future Event Navigator; HOSA is never presented as one universal role-play format). Fully authored
+  content; interactive practice reuses the Side Coach for coaching feedback only (no character
+  role-play, `unavailable: true` treated as failure with honest retry, first response required),
+  writes no mastery/XP/rating/record. Debate CWI lesson + `debate-claim-building` wiring unchanged.
 - Spaced reassessment, Study Arcade, coach teams/assignments.
 - DECA/HOSA session rooms at debate-room parity (2026-07): dedicated focus-mode rooms
   (/training/[track]/room) with real multi-turn back-and-forth (new /api/ai/roleplay-turn — the AI

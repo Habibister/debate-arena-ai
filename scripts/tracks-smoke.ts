@@ -32,6 +32,7 @@ import { assignmentTypeAllowedForOrganization, assignmentTypesForOrganization, c
 import { AUTHORED_LESSONS, getLesson } from "../lib/lessons";
 import { DRILL_AREAS } from "../lib/debate-drills";
 import { weakAreasForTrack } from "../lib/track-recommendations";
+import { getRoleplayLesson } from "../lib/roleplay-lessons";
 import type { Organization } from "@prisma/client";
 
 function main() {
@@ -338,6 +339,62 @@ function main() {
   const switcherSrc = readFileSync("components/training/track-controls.tsx", "utf8");
   assert.ok(switcherSrc.includes("setTrack") && !/router\.(push|replace)/.test(switcherSrc), "track switcher changes context only — it does not launch a room");
   // ===== end C5B2A =====
+
+  // ===== C5C1: DECA/HOSA beginner role-play lessons =====
+  const decaLesson = getRoleplayLesson("how-deca-roleplay-works");
+  const hosaLesson = getRoleplayLesson("how-hosa-scenario-interaction-works");
+  assert.ok(decaLesson && hosaLesson, "both pilot role-play lessons exist");
+  if (decaLesson && hosaLesson) {
+    assert.equal(decaLesson.organization, "DECA", "DECA lesson is DECA");
+    assert.equal(hosaLesson.organization, "HOSA", "HOSA lesson is HOSA");
+    // DECA Learn begins with lesson 0; HOSA sits BENEATH the Event Navigator (no universal
+    // role-play claim — HOSA has many event formats).
+    assert.ok(decaLesson.courseMap[0].includes("How a DECA Role-Play Works"), "DECA Performance Course begins with 'How a DECA Role-Play Works'");
+    assert.equal(hosaLesson.title, "How a HOSA Scenario Interaction Works", "HOSA pilot renamed — scenario interaction, not universal role-play");
+    assert.ok(hosaLesson.courseMap[0].includes("HOSA Event Navigator"), "HOSA course map begins with the Event Navigator");
+    assert.ok(hosaLesson.courseMap[1].includes("How a HOSA Scenario Interaction Works"), "HOSA pilot sits beneath the Event Navigator");
+    assert.equal(hosaLesson.courseMapCurrentIndex, 1, "HOSA pilot marks itself (not the Navigator) as the current lesson");
+    assert.ok(hosaLesson.intro[0].includes("written tests, presentations, clinical skill performances"), "HOSA lesson opens by naming HOSA's many event formats");
+    for (const l of [decaLesson, hosaLesson]) {
+      // A complete worked role-play (weak + strong, annotated) — not only definitions.
+      assert.ok(l.weakExample.lines.length >= 3 && l.strongExample.lines.length >= 4, "complete weak + strong worked role-play");
+      assert.ok(l.strongExample.lines.filter((ln) => ln.note).length >= 3, "worked role-play has line-by-line annotations");
+      // Interactive learner responses (identify + a written response + an in-character follow-up).
+      assert.ok(l.practice.identify.length >= 3 && l.practice.write.rubric.length >= 3 && l.practice.followUp.question.length > 0, "interactive practice: identify + write + follow-up");
+      // Ends with exactly one clear next lesson, and it is NOT terminology.
+      assert.ok(l.nextLesson.label.length > 0 && !/terminolog/i.test(l.nextLesson.label), "ends with one next lesson that is not terminology");
+      assert.ok(!l.supportingLink || /optional/i.test(l.supportingLink.note), "terminology (if present) is optional support, not the required path");
+    }
+    // Track-specific method + vocabulary — no generic cross-track language.
+    const decaText = JSON.stringify(decaLesson).toLowerCase();
+    const hosaText = JSON.stringify(hosaLesson).toLowerCase();
+    assert.ok(decaText.includes("performance indicator") && decaText.includes("recommendation") && !decaText.includes("patient"), "DECA lesson uses DECA method (PIs/recommendations), never patient language");
+    assert.ok(hosaText.includes("patient") && hosaText.includes("empathy") && !hosaText.includes("performance indicator"), "HOSA lesson uses HOSA method (patient/empathy/boundaries), never DECA PI language");
+    // DECA content fixes: the weak-example typo is gone; timing defers to the selected event.
+    assert.ok(decaText.includes("late checkout") && !decaText.includes("a later start would really help"), "DECA weak example uses a relevant intentionally weak line (typo fixed)");
+    assert.ok(decaText.includes("depends on the selected deca event"), "DECA timing defers to the selected event's current official timing");
+    // HOSA privacy honesty: the strong example gives no absolute legal assurances and refers
+    // case-specific rules to qualified staff; the rubric scores exactly that.
+    const hosaStrong = JSON.stringify(hosaLesson.strongExample).toLowerCase();
+    assert.ok(!hosaStrong.includes("only with the care team") && !hosaStrong.includes("without your written permission") && !hosaStrong.includes("doesn't get reported"), "HOSA strong example makes no absolute privacy guarantees");
+    assert.ok(hosaStrong.includes("generally protected") && hosaStrong.includes("privacy officer"), "HOSA strong example explains generally and refers specifics to qualified staff");
+    assert.ok(hosaLesson.practice.write.rubric.some((r) => /absolute promises/i.test(r)) && hosaLesson.practice.write.rubric.some((r) => /qualified staff/i.test(r)), "HOSA rubric scores avoiding absolute promises + referring to qualified staff");
+  }
+  // Interactive practice reuses the Side Coach route; no mastery/record/scoring pipeline; retries on failure.
+  const rpPractice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
+  assert.ok(rpPractice.includes("/api/ai/side-coach"), "role-play practice reuses the existing Side Coach route");
+  assert.ok(!/recordDrillMastery|from \"@\/lib\/prisma\"|from \"@\/lib\/spaced-review\"/.test(rpPractice), "role-play practice records no mastery/competition result");
+  assert.ok(rpPractice.includes("Retry") && rpPractice.includes("goals: p.write.rubric"), "role-play practice retries on failure and validates against the authored rubric");
+  // Integrity: a 200-with-fallback (`unavailable: true`) is treated as a FAILED coaching request —
+  // canned text is never shown as feedback on the learner's words.
+  assert.ok(rpPractice.includes("data.unavailable") && /if \(data\.unavailable\) throw/.test(rpPractice), "role-play practice rejects the unavailable fallback instead of displaying it");
+  // The coach is labeled as coaching feedback, never as live character role-play.
+  assert.ok(rpPractice.includes("Get coaching feedback") && !rpPractice.includes("reaction") && !rpPractice.includes("react as"), "practice is labeled coaching feedback; the coach is never asked to role-play the character");
+  // The main written response is required before the follow-up unlocks; no placeholder submission.
+  assert.ok(rpPractice.includes("Continue to the follow-up") && rpPractice.includes("followUnlocked") && !rpPractice.includes("(no first response)"), "first written response is required before the follow-up; no placeholder submission");
+  // Debate concept lesson + its mastery wiring remain unchanged.
+  assert.equal(getLesson("claim-warrant-impact")?.skillSlug, "debate-claim-building", "CWI lesson + mastery slug unchanged by C5C1");
+  // ===== end C5C1 =====
 
   // 4. Model UN tests hide the DECA/HOSA generator (gated by track, honest empty state otherwise).
   const testsPage = readFileSync("app/(app)/tests/page.tsx", "utf8");

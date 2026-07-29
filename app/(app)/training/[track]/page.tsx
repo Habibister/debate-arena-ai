@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { lessonsForTrack } from "@/lib/lessons";
+import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
 import { deckSummaries } from "@/lib/study-content";
 import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
 
@@ -39,8 +40,9 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
   const decks = deckSummaries().filter((d) => d.organization === track.organization);
   const hasTests = track.organization === "DECA" || track.organization === "HOSA";
   const isDebate = track.id === "GENERAL_DEBATE";
-  // Guided lessons are authored per skill; only surface the entry when this track actually has one.
-  const hasGuidedLessons = lessonsForTrack(track.slug).length > 0;
+  // Guided lessons are authored per track; surface the entry when this track has any (Debate concept
+  // lessons or the DECA/HOSA role-play course).
+  const hasGuidedLessons = lessonsForTrack(track.slug).length > 0 || roleplayLessonsForTrack(track.slug).length > 0;
 
   return (
     <div className="space-y-6">

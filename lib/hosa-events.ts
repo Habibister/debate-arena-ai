@@ -139,8 +139,11 @@ export const HOSA_FAMILIES: HosaFamilyInfo[] = [
     id: "knowledge-test",
     label: "Knowledge test",
     summary: "A timed written exam. Trained with question banks, the official test plan, and spaced review — not with scenario conversations.",
-    branchLabel: "Branch A — knowledge and test-plan study",
-    branchHref: "/training/hosa/event/medical-terminology"
+    branchLabel: "Branch A — knowledge and test-plan study"
+    // M11R5: no `branchHref`. This family's destination is DERIVED from registry membership by
+    // `resolveHosaFamilyDestination`. It used to hardcode Medical Terminology's slug, which is
+    // correct only while that is the family's sole listed event — the moment a second knowledge-test
+    // event is listed, every one of those competitors would have landed on another event's page.
   },
   {
     id: "clinical-skill",
@@ -173,6 +176,53 @@ export const HOSA_FAMILIES: HosaFamilyInfo[] = [
 
 export function hosaFamily(id: HosaTrainingFamily): HosaFamilyInfo | undefined {
   return HOSA_FAMILIES.find((f) => f.id === id);
+}
+
+/**
+ * Where a family's "where to train" link should go.
+ *
+ * `event` names the single listed event it resolves to; `events-hub` is the fail-closed landing when
+ * the registry cannot identify one; `branch` is a family whose destination is a fixed CompeteReady
+ * surface rather than an event (clinical-skill communication).
+ */
+export type HosaFamilyDestination =
+  | { kind: "event"; href: string; eventName: string }
+  | { kind: "branch"; href: string }
+  | { kind: "none"; reason: "no-listed-events" | "multiple-listed-events" };
+
+/**
+ * An event is a candidate destination only if it carries its own route. A record without one is
+ * either not yet built out or malformed, and either way it must never become a link target.
+ */
+function listedEventsForFamily(family: HosaTrainingFamily, events: HosaEventRecord[]): HosaEventRecord[] {
+  return events.filter((e) => e.family === family && typeof e.routeTarget === "string" && e.routeTarget.trim().length > 0);
+}
+
+/**
+ * Resolves a family's destination from ACTUAL registry membership (M11R5).
+ *
+ * Pure, order-independent and non-mutating. The multi-member case deliberately does NOT pick a
+ * winner: with two listed events there is no honest basis for choosing one. Reversing the registry
+ * order cannot change that.
+ *
+ * M11R5A: the unresolved variant carries NO href. It previously pointed at the events hub, which is
+ * the very page the family list renders on — a self-link dressed up as recovery. Having no href at
+ * all makes that structurally impossible instead of merely unrendered; the caller must supply its
+ * own honest recovery for the surface it is on.
+ */
+export function resolveHosaFamilyDestination(
+  familyId: HosaTrainingFamily,
+  events: HosaEventRecord[] = HOSA_EVENTS
+): HosaFamilyDestination {
+  const info = hosaFamily(familyId);
+  // A family pointing at a fixed CompeteReady surface (the communication lesson) is not event-derived.
+  if (info?.branchHref) return { kind: "branch", href: info.branchHref };
+  const listed = listedEventsForFamily(familyId, events);
+  if (listed.length === 1) {
+    const only = listed[0];
+    return { kind: "event", href: only.routeTarget as string, eventName: only.name };
+  }
+  return { kind: "none", reason: listed.length === 0 ? "no-listed-events" : "multiple-listed-events" };
 }
 
 // ---- the registry -----------------------------------------------------------------------------

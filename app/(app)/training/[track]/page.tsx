@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, BookOpenCheck, ClipboardList, Compass, Gamepad2, GraduationCap, Layers3, MessageSquareText } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, ClipboardList, Compass, Gamepad2, GraduationCap, Info, Layers3, MessageSquareText } from "lucide-react";
 import { TrackControls } from "@/components/training/track-controls";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
 import { deckSummaries } from "@/lib/study-content";
+import { hosaEventById } from "@/lib/hosa-events";
 import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
 
 // Event HQ pages exist only for events with real registry data — no placeholder HQs.
@@ -47,6 +48,13 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
   // Guided lessons are authored per track; surface the entry when this track has any (Debate concept
   // lessons or the DECA/HOSA role-play course).
   const hasGuidedLessons = lessonsForTrack(track.slug).length > 0 || roleplayLessonsForTrack(track.slug).length > 0;
+  // M11R5A: the HOSA hub sends learners through their event instead of a generic room. The lesson it
+  // offers instead, and whether that lesson's own interactive scenario is withdrawn, are READ from
+  // the lesson registry — never asserted here. The hub must not claim anything about the state of
+  // /training/hosa/practice, which is a separate surface this page does not own.
+  const hosaLesson = track.id === "HOSA" ? roleplayLessonsForTrack(track.slug)[0] : undefined;
+  // The verified event's NAME is read from the registry — this page asserts no event facts of its own.
+  const hosaEventHqName = track.id === "HOSA" ? hosaEventById(EVENT_HQ_SLUG.HOSA ?? "")?.name : undefined;
 
   return (
     <div className="space-y-6">
@@ -104,17 +112,66 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             </span>
           </Link>
         ) : null}
-        {/* Start-a-round action launches directly: Debate -> /debate (no hub in between), matching how
-            DECA/HOSA open their setup. Non-debate tracks open their own role-play setup. */}
-        <Link href={(isDebate ? "/debate" : `/training/${track.slug}/practice`) as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-          <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
-          <span>
-            <span className="block font-semibold">{PRACTICE_ACTION[track.id]}</span>
-            <span className="mt-1 block text-sm text-muted-foreground">
-              {isDebate ? "Choose a format and practice with an AI opponent and judge." : `A ${track.label}-specific setup — the AI uses ${track.label} criteria. AI-generated practice.`}
+        {/* M11R5/M11R5A: a generic "Start HOSA practice" CTA sent learners into one room for events
+            that differ completely, so it is gone. What replaces it is a NON-INTERACTIVE statement of
+            where to go instead — and deliberately NOT a claim that HOSA practice is unavailable,
+            because /training/hosa/practice is still live and reachable from Event HQ. The only
+            unavailability stated here is the lesson's own, read from the lesson's status.
+            Debate and DECA are untouched. */}
+        {track.id === "HOSA" ? (
+          <div className="flex items-start gap-3 rounded-lg border border-dashed bg-card p-4">
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+            <span>
+              <span className="block font-semibold">Start from your event, not a generic room</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                HOSA events differ enough that one generic practice room can&apos;t stand in for yours, so this hub
+                routes you through your event instead.
+                {hosaEventHqName ? <>{" "}{hosaEventHqName} practice is available from its Event HQ page.</> : null}
+                {hosaLesson ? (
+                  <>
+                    {" "}
+                    The communication lesson covers one layer inside applicable clinical-skill events
+                    {hosaLesson.practiceStatus !== "available" ? " — its interactive scenario is temporarily unavailable, and it" : " — it"}
+                    {" "}never teaches or scores hands-on procedures.
+                  </>
+                ) : null}
+              </span>
+              {/* M11R5A: these two are the only way out of this state on mobile, so they are real
+                  targets — buttonVariants gives the project's focus ring, and min-h-11 (44px) with
+                  h-auto lets the label wrap without dropping below the touch minimum. */}
+              <span className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={"/training/hosa/events" as Route}
+                  data-hosa-recovery="events"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 whitespace-normal px-4 py-2 text-center")}
+                >
+                  Find your HOSA event
+                </Link>
+                {hosaLesson ? (
+                  <Link
+                    href={`/lessons/${hosaLesson.slug}` as Route}
+                    data-hosa-recovery="lesson"
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 whitespace-normal px-4 py-2 text-center")}
+                  >
+                    Read the communication lesson
+                  </Link>
+                ) : null}
+              </span>
             </span>
-          </span>
-        </Link>
+          </div>
+        ) : (
+          /* Start-a-round action launches directly: Debate -> /debate (no hub in between). Non-debate
+             tracks open their own role-play setup. */
+          <Link href={(isDebate ? "/debate" : `/training/${track.slug}/practice`) as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+            <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
+            <span>
+              <span className="block font-semibold">{PRACTICE_ACTION[track.id]}</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                {isDebate ? "Choose a format and practice with an AI opponent and judge." : `A ${track.label}-specific setup — the AI uses ${track.label} criteria. AI-generated practice.`}
+              </span>
+            </span>
+          </Link>
+        )}
         {hasTests ? (
           <Link href={`/tests?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
             <ClipboardList className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
@@ -128,8 +185,15 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
           <Link href={`/lessons?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10">
             <GraduationCap className="mt-0.5 h-5 w-5 text-track" aria-hidden />
             <span>
-              <span className="block font-semibold">Guided lessons</span>
-              <span className="mt-1 block text-sm text-muted-foreground">Learn a skill with worked weak-vs-strong examples, then practice it.</span>
+              {/* M11R5C: HOSA's only lesson is informational and carries no worked examples and no
+                  active practice, so the generic "weak-vs-strong examples, then practice it" promise
+                  is false there. Debate and DECA keep it, where it remains accurate. */}
+              <span className="block font-semibold">{track.id === "HOSA" ? "Guided information" : "Guided lessons"}</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                {track.id === "HOSA"
+                  ? "Learn the communication layer, then check your current event guideline for event-specific requirements."
+                  : "Learn a skill with worked weak-vs-strong examples, then practice it."}
+              </span>
             </span>
           </Link>
         ) : null}

@@ -26,7 +26,8 @@ import {
   trackAllowsOrganization,
   trackByOrganization,
   trackBySlug,
-  trackToOrganization
+  trackToOrganization,
+  type TrainingTrack
 } from "../lib/training-tracks";
 import { deckSummaries, recommendedResources } from "../lib/study-content";
 import { EVENT_OPTIONS } from "../lib/rubrics";
@@ -38,6 +39,12 @@ import { AUTHORED_LESSONS, getLesson } from "../lib/lessons";
 import { DRILL_AREAS } from "../lib/debate-drills";
 import { weakAreasForTrack } from "../lib/track-recommendations";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
+import React, { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import TrackHubPage from "../app/(app)/training/[track]/page";
+import { HosaEventNavigator, unresolvedHosaFamilyState } from "../components/training/hosa-event-navigator";
+import LessonsIndexPage from "../app/(app)/lessons/page";
+import { resolveHosaFamilyDestination } from "../lib/hosa-events";
 import type { AvailableRoleplayLesson, UnavailableRoleplayLesson } from "../lib/roleplay-lessons";
 import type { Organization } from "@prisma/client";
 
@@ -366,7 +373,10 @@ function main() {
     assert.ok(hosaLesson.intro[0].includes("written tests, clinical skill performances"), "HOSA lesson opens by naming HOSA's many event formats");
     // The lesson is scoped to the communication LAYER and disclaims complete-event readiness.
     const hosaIntro = hosaLesson.intro.join(" ");
-    assert.ok(/no separate 'patient conversation' event/i.test(hosaIntro), "HOSA lesson states there is no standalone patient-conversation event");
+    assert.ok(/approved research record did not identify a standalone 'patient conversation' event/i.test(hosaIntro),
+      "HOSA lesson scopes the missing patient-conversation event to what CompeteReady reviewed");
+    assert.ok(/not a permanent claim about every HOSA season/i.test(hosaIntro),
+      "and does not generalize that finding to all of HOSA");
     assert.ok(/does not teach the physical clinical skill/i.test(hosaIntro) && /does not make you ready for your complete event/i.test(hosaIntro), "HOSA lesson disclaims teaching the physical skill and complete-event readiness");
     for (const l of [decaLesson, hosaLesson]) {
       // Ends with exactly one clear next lesson, and it is NOT terminology.
@@ -969,7 +979,217 @@ function main() {
   }
   assert.ok(readFileSync("components/app/app-shell.tsx", "utf8").includes("CompeteReady"), "app shell uses the CompeteReady name");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect).");
+  const visibleTextOf = (html: string) =>
+    html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+
+  // ============ M11R5: HOSA availability, scope honesty, and browsing recovery ============
+  // Source scans strip comments first — the M11R5 comments deliberately quote the very strings
+  // these checks forbid, so an un-stripped scan would be worthless in both directions.
+  const m11r5Strip = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+
+  // ---- Finding 2: the lesson scopes an absence to what we reviewed, not to reality ----
+  const m11r5Lesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
+  assert.equal(m11r5Lesson.practiceStatus, "temporarily-unavailable", "the HOSA communication lesson is still the unavailable one");
+  const m11r5LessonText = JSON.stringify(m11r5Lesson);
+  for (const absolute of ["There is no ", "there is no ", "does not exist", "HOSA has no ", "no such event"]) {
+    assert.ok(!m11r5LessonText.includes(absolute),
+      `the HOSA lesson never states an event's absence as fact ("${absolute.trim()}")`);
+  }
+  // Positive controls: the qualified version and the teaching point both survive.
+  assert.ok(m11r5LessonText.includes("approved research record"), "the absence is scoped to CompeteReady's research record");
+  assert.ok(m11r5LessonText.includes("not a permanent claim"), "and is explicitly not asserted as permanent");
+  // M11R5A: the record supports communication as one LAYER inside applicable clinical-skill events.
+  // It does not establish a universal scored communication row, so no categorical scoring claim may
+  // survive anywhere in the rendered lesson.
+  assert.ok(m11r5LessonText.includes("one layer inside applicable clinical-skill events"),
+    "the lesson states the supported 'one layer' scope");
+  assert.ok(m11r5LessonText.includes("Your current event guideline and rating sheet determine how communication is evaluated, if applicable"),
+    "and names the learner's own guideline and rating sheet as controlling");
+  for (const categorical of [
+    "scored on WHILE performing a clinical skill", "One scored layer", "communication is scored",
+    "is scored within clinical", "the scored step well", "patient is scored",
+    "every clinical skill event", "communication rubric", "communication score"
+  ]) {
+    assert.ok(!m11r5LessonText.includes(categorical),
+      `the lesson makes no universal communication-scoring claim ("${categorical}")`);
+  }
+  // Nothing was replaced with a differently-worded universal claim. Every sentence that mentions
+  // BOTH a communication behaviour and scoring must hedge it to particular sheets, defer to the
+  // learner's own sheet, or deny scoring outright.
+  const m11r5CommScoring = m11r5LessonText
+    .split(/(?<=\.)\s+/)
+    .filter((x) => /scored|scores\b/.test(x))
+    .filter((x) => /communicat|greeting|introducing|explaining|reporting|verbaliz|aloud|out loud/i.test(x));
+  assert.ok(m11r5CommScoring.length > 0, "the lesson still discusses communication and scoring at all");
+  for (const sentence of m11r5CommScoring) {
+    assert.ok(/\bsome\b|\bmany\b|\bmost\b|applicable|your sheet|your own|if applicable|only partly|those sheets|never scored|current .{0,20}(guideline|rating sheet)/i.test(sentence),
+      `every communication-scoring sentence stays hedged or defers: ${JSON.stringify(sentence.slice(0, 130))}`);
+  }
+  assert.ok(!/\b\d+\s*(points?|%)/.test(m11r5LessonText), "and the reword added no scoring numbers");
+
+  (globalThis as { React?: unknown }).React = React;
+
+  // ---- Finding 3 / M11R5C item D: the lessons index promises nothing on a lesson's behalf ----
+  // RENDERED, because the defect was a universal promise in prose, not a missing flag.
+  const m11r5IndexHosa = visibleTextOf(renderToStaticMarkup(
+    createElement(LessonsIndexPage as never, { searchParams: { track: "hosa" } } as never) as never));
+  for (const universal of [
+    "shows a weak example next to a strong one", "worked weak-vs-strong", "then practice it",
+    "end with hands-on practice", "ends with hands-on practice", "Most end with written practice"
+  ]) {
+    assert.ok(!m11r5IndexHosa.includes(universal),
+      `the lessons index makes no universal promise about every lesson ("${universal}")`);
+  }
+  assert.ok(m11r5IndexHosa.includes("shows the learning activities available for that topic"),
+    "it describes what it actually does instead");
+  // The HOSA card says what its own lesson is, using the LESSON'S authored note.
+  const m11r5IndexLesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
+  assert.notEqual(m11r5IndexLesson.practiceStatus, "available", "the HOSA lesson is the withdrawn-practice one");
+  const m11r5CardNote = m11r5IndexLesson.practiceStatus === "available" ? "" : m11r5IndexLesson.practiceUnavailable.cardNote;
+  assert.ok(m11r5CardNote.length > 0 && m11r5IndexHosa.includes(m11r5CardNote),
+    "the card renders the lesson's own authored note, not a page-level guess");
+  for (const required of ["communication-only", "interactive scenario is temporarily unavailable",
+                          "never teaches or scores hands-on procedures"]) {
+    assert.ok(m11r5CardNote.includes(required), `the HOSA card note states "${required}"`);
+  }
+  const m11r5IndexSrc = m11r5Strip(readFileSync("app/(app)/lessons/page.tsx", "utf8"));
+  assert.ok(/<Info /.test(m11r5IndexSrc), "the notice pairs its text with an icon rather than relying on color");
+  assert.ok(!m11r5IndexSrc.includes("how-hosa-scenario-interaction-works"),
+    "and the index hardcodes no lesson slug to decide it");
+  // Control: the available DECA lesson carries no note at all, so the notice is not universal.
+  const m11r5IndexDeca = visibleTextOf(renderToStaticMarkup(
+    createElement(LessonsIndexPage as never, { searchParams: { track: "deca" } } as never) as never));
+  assert.equal(getRoleplayLesson("how-deca-roleplay-works")!.practiceStatus, "available", "the DECA lesson is available");
+  assert.ok(!m11r5IndexDeca.includes("temporarily unavailable"), "so its card shows no unavailable note");
+  assert.ok(m11r5IndexHosa.includes(m11r5IndexLesson.slug === "how-hosa-scenario-interaction-works" ? "Patient Communication" : ""),
+    "the HOSA card itself is still listed");
+
+  // ---- M11R5A Issue 2: no self-link out of a fail-closed family state ----
+  (globalThis as { React?: unknown }).React = React;
+  const m11r5Nav = renderToStaticMarkup(
+    createElement(HosaEventNavigator as never, { initialEventId: null, unknownEventId: null } as never) as never
+  );
+  assert.ok(!m11r5Nav.includes('href="/training/hosa/events"'),
+    "the events navigator never links back to the page it is rendered on");
+  assert.ok(!m11r5Nav.includes("/training/hosa/practice"), "and never links into the withdrawn practice");
+  // The zero-member state renders for real today (interview/presentation/team have no routed events).
+  const m11r5Interview = resolveHosaFamilyDestination("interview");
+  assert.equal(m11r5Interview.kind, "none", "the interview family resolves to nothing today");
+  assert.ok(m11r5Nav.includes('data-hosa-family-recovery="no-listed-events"'),
+    "so its rendered row carries the unresolved recovery link");
+  assert.ok(m11r5Nav.includes('href="/training/hosa"'), "which points at the HOSA training hub, not this page");
+  // Both branches of the unresolved copy come from ONE pure helper, so the multi-member branch —
+  // which today's registry cannot produce without mutation — is provable directly.
+  const m11r5Zero = unresolvedHosaFamilyState("Branch C", "no-listed-events");
+  const m11r5Multi = unresolvedHosaFamilyState("Branch C", "multiple-listed-events");
+  assert.notEqual(m11r5Zero.message, m11r5Multi.message, "the two unresolved states stay distinguishable");
+  for (const state of [m11r5Zero, m11r5Multi]) {
+    assert.equal(state.recoveryHref, "/training/hosa", "both offer the same non-self recovery route");
+    assert.ok(state.recoveryLabel.trim().length > 0, "and label it");
+  }
+  assert.ok(m11r5Zero.message.includes("no event in this group has its own CompeteReady training page yet"),
+    "the zero-member wording is the corrected one");
+  assert.ok(!m11r5Zero.message.includes("can't name an event"), "and the withdrawn wording never returns");
+  assert.ok(/search for your event by name above/.test(m11r5Multi.message),
+    "the multi-member wording sends the learner to the search rather than picking for them");
+  assert.ok(m11r5Nav.includes("Medical Terminology"), "Medical Terminology stays directly reachable");
+
+  // ---- Finding 4: the HOSA hub offers no practice it cannot deliver (RENDERED, not scanned) ----
+  // The page is a server component rendered outside Next, so give it the classic React global.
+  (globalThis as { React?: unknown }).React = React;
+  const m11r5Hub = (slug: string) =>
+    renderToStaticMarkup(createElement(TrackHubPage as never, { params: { track: slug } } as never) as never);
+  const m11r5SlugOf = (id: TrainingTrack) => {
+    const found = TRACKS.find((t) => t.id === id);
+    assert.ok(found, `the ${id} track is registered`);
+    return found!.slug;
+  };
+  const m11r5Hosa = m11r5Hub(m11r5SlugOf("HOSA"));
+  assert.ok(!m11r5Hosa.includes("/training/hosa/practice"), "the HOSA hub does not route into the generic practice room");
+  assert.ok(!m11r5Hosa.includes("Start HOSA practice"), "and offers no generic HOSA practice CTA");
+  assert.ok(m11r5Hosa.includes("Start from your event, not a generic room"),
+    "it states in words where it sends learners instead, rather than leaving a gap");
+  const m11r5HosaText = m11r5Hosa.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
+  assert.ok(!/<(a|button)\b[^>]*>(?:(?!<\/(?:a|button)>)[\s\S])*Start from your event, not a generic room/.test(m11r5Hosa),
+    "and that statement is not itself clickable");
+  // M11R5A — THE honesty contract for this card. /training/hosa/practice is a SEPARATE surface this
+  // page does not own: it still mounts real HOSA practice and is reachable from Event HQ. So while
+  // that is true, the hub must not tell learners HOSA practice is unavailable or unrecorded. If the
+  // practice room is ever genuinely withdrawn, this check stops applying on its own.
+  const m11r5PracticeRoute = m11r5Strip(readFileSync("app/(app)/training/[track]/practice/page.tsx", "utf8"));
+  const m11r5PracticeLives = /HosaEventPrep|HosaRoleplaySetup/.test(m11r5PracticeRoute);
+  if (m11r5PracticeLives) {
+    for (const falseClaim of [
+      "Interactive HOSA practice is temporarily unavailable",
+      "HOSA practice is temporarily unavailable",
+      "Nothing is recorded",
+      "no part of this counts as completed"
+    ]) {
+      assert.ok(!m11r5HosaText.includes(falseClaim),
+        `while /training/hosa/practice still mounts practice, the hub must not claim "${falseClaim}"`);
+    }
+  }
+  // The one unavailability the hub DOES state is the lesson's own, and it must match the registry.
+  const m11r5HubLesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
+  assert.equal(
+    m11r5HosaText.includes("its interactive scenario is temporarily unavailable"),
+    m11r5HubLesson.practiceStatus !== "available",
+    "the hub states the lesson's scenario as unavailable exactly when the registry says it is"
+  );
+  assert.ok(m11r5Hosa.includes('href="/training/hosa/events"'), "the hub offers event browsing as recovery");
+  assert.ok(m11r5Hosa.includes(`href="/lessons/${m11r5HubLesson.slug}"`), "and the informational lesson, by its own slug");
+  assert.ok(existsSync("app/(app)/training/[track]/events/page.tsx"), "the event-browsing recovery route exists");
+  // M11R5A Issue 3: both NEW recovery links are structurally identifiable and carry a >=44px target.
+  const m11r5Recovery = [...m11r5Hosa.matchAll(/<a\b[^>]*data-hosa-recovery="(events|lesson)"[^>]*>/g)];
+  assert.equal(m11r5Recovery.length, 2, "both hub recovery links are structurally identifiable");
+  for (const [tag, which] of m11r5Recovery.map((m) => [m[0], m[1]] as const)) {
+    assert.ok(/min-h-11/.test(tag), `the ${which} recovery link carries the 44px minimum height`);
+    assert.ok(/h-auto/.test(tag), `and lets its label wrap without shrinking below it (${which})`);
+    assert.ok(/focus-ring/.test(tag), `and keeps a visible keyboard focus treatment (${which})`);
+    assert.ok(/href="\/(training\/hosa\/events|lessons\/how-hosa-scenario-interaction-works)"/.test(tag),
+      `and stays track-internal (${which})`);
+  }
+  assert.ok(!/<a\b[^>]*data-hosa-recovery[^>]*>(?:(?!<\/a>)[\s\S])*<(?:a|button)\b/.test(m11r5Hosa),
+    "neither recovery link nests another interactive element");
+  assert.ok(!m11r5Hosa.includes("/training/deca/"), "and the HOSA hub still leaks no DECA surface");
+  // ---- M11R5C item E: the hub promises nothing HOSA's only lesson cannot deliver ----
+  for (const universal of ["worked weak-vs-strong examples, then practice it", "then practice it"]) {
+    assert.ok(!m11r5HosaText.includes(universal),
+      `the HOSA hub makes no universal lesson-practice promise ("${universal}")`);
+  }
+  assert.ok(m11r5HosaText.includes("Guided information"), "HOSA's lessons entry is labelled as information");
+  assert.ok(/check your current event guideline for event-specific requirements/.test(m11r5HosaText),
+    "and points at the learner's own guideline for what their event requires");
+  assert.ok(m11r5Hosa.includes(`/lessons?track=${m11r5SlugOf("HOSA")}`), "while still linking to the lessons index");
+  // The verified event named on the hub comes from the registry, not from this page.
+  const m11r5HubEvent = hosaEventById("medical-terminology")!;
+  assert.ok(m11r5HosaText.includes(`${m11r5HubEvent.name} practice is available from its Event HQ page`),
+    "the hub says where the verified event's practice actually is");
+  // Other tracks are untouched — the control that proves the checks above are HOSA-specific.
+  const m11r5Deca = m11r5Hub(m11r5SlugOf("DECA"));
+  assert.ok(m11r5Deca.includes("/training/deca/practice") && m11r5Deca.includes("Start a DECA role play"),
+    "DECA keeps its practice CTA");
+  assert.ok(!m11r5Deca.includes("temporarily unavailable"), "and shows no unavailable state");
+  const m11r5Debate = m11r5Hub(m11r5SlugOf("GENERAL_DEBATE"));
+  assert.ok(m11r5Debate.includes('href="/debate"') && m11r5Debate.includes("Start a debate practice"),
+    "General Debate keeps its practice CTA");
+  assert.ok(!m11r5Debate.includes("temporarily unavailable"), "and shows no unavailable state");
+  // Debate and DECA keep the promise where it is still accurate — the control for the checks above.
+  for (const [label, markup] of [["DECA", m11r5Deca], ["Debate", m11r5Debate]] as const) {
+    const text = visibleTextOf(markup);
+    assert.ok(text.includes("Guided lessons") && text.includes("worked weak-vs-strong examples, then practice it"),
+      `${label} keeps its accurate guided-lessons wording`);
+    assert.ok(!text.includes("Guided information"), `${label} is not relabelled`);
+  }
+  // No new persistence, interactivity, or network work was added to the hub.
+  const m11r5HubSrc = m11r5Strip(readFileSync("app/(app)/training/[track]/page.tsx", "utf8"));
+  assert.ok(!m11r5HubSrc.includes(m11r5HubEvent.name),
+    "the hub does not hardcode the verified event's name — it reads it from the registry");
+  for (const forbidden of ["fetch(", "prisma", "useState", "onClick"]) {
+    assert.ok(!m11r5HubSrc.includes(forbidden), `the track hub adds no ${forbidden}`);
+  }
+
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect), PLUS M11R5 (HOSA lesson absence scoped to our research record, lessons index promising only what exists via a status-derived per-card notice, and a HOSA hub that states unavailability non-interactively with real event-browsing and lesson recovery while Debate and DECA keep their practice CTAs).");
 }
 
 main();

@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   findHosaEvents,
   hosaEventById,
+  hosaSourceMetadata,
   hosaEventsByFamily,
   hosaFamily,
   hosaStatusLabel,
@@ -13,6 +14,7 @@ import {
   HOSA_CURRENT_SEASON,
   HOSA_EVENTS,
   HOSA_FAMILIES,
+  resolveHosaFamilyDestination,
   HOSA_REVALIDATION_NOTE,
   type HosaEventRecord
 } from "../lib/hosa-events";
@@ -207,6 +209,74 @@ function main() {
   const badFixture = { id: "x", label: "X", summary: "s", branchLabel: "b", branchHref: "/training/hosa/practice" };
   assert.ok(/\/(practice|room)(\/|$)/.test(badFixture.branchHref),
     "negative control: the rule DOES fire on a branch that routes into interactive practice");
+
+  // ============ M11R5: family routing is DERIVED, never a hardcoded slug ============
+  // 1/2/4/10. One listed member -> that specific event, named, from ITS OWN registry record.
+  const mt2 = hosaEventById("medical-terminology")!;
+  const knowledge = HOSA_EVENTS.filter((e) => e.family === "knowledge-test");
+  assert.deepEqual(knowledge.map((e) => e.id), ["medical-terminology"], "Medical Terminology is the only current knowledge-test member");
+  const current = resolveHosaFamilyDestination("knowledge-test");
+  assert.equal(current.kind, "event", "one listed member resolves to a direct event destination");
+  if (current.kind === "event") {
+    assert.equal(current.href, mt2.routeTarget, "the destination comes from that member's own record");
+    assert.equal(current.eventName, "Medical Terminology", "and names the event rather than the family");
+  }
+  // 3. the slug is not duplicated inside the routing decision. Scan the ROUTING FUNCTIONS' own
+  // bodies — the registry data lives in the same module, so a whole-file scan would be vacuous.
+  const routingSource = ["listedEventsForFamily", "resolveHosaFamilyDestination"]
+    .map((fn) => {
+      const body = new RegExp(`^(?:export )?function ${fn}\\([\\s\\S]*?^}`, "m").exec(stripComments(registry))?.[0];
+      assert.ok(body && body.length > 40, `the ${fn} routing function body was found to scan`);
+      return body as string;
+    })
+    .join("\n");
+  assert.ok(/family|routeTarget/.test(routingSource), "the routing bodies really are the routing logic");
+  for (const slug of HOSA_EVENTS.map((e) => e.id)) {
+    assert.ok(!routingSource.includes(slug), `the routing logic does not hardcode the ${slug} slug`);
+  }
+  assert.equal(hosaFamily("knowledge-test")!.branchHref, undefined, "the knowledge-test family carries no hardcoded branch href");
+  // 5/6/7. zero and multi-member fixtures fail closed, order-independently. Fixtures only — the
+  // production registry is never mutated.
+  const zero = resolveHosaFamilyDestination("knowledge-test", []);
+  assert.equal(zero.kind, "none", "zero listed members expose NO destination at all");
+  if (zero.kind === "none") assert.equal(zero.reason, "no-listed-events", "and say why");
+  assert.ok(!("href" in zero), "an unresolved family carries no href to link to (M11R5A)");
+  const second: HosaEventRecord = { ...mt2, id: "second-knowledge-test", name: "Second Knowledge Test",
+    routeTarget: "/training/hosa/event/second-knowledge-test" };
+  const orderings: [string, HosaEventRecord[]][] = [["registry order", [mt2, second]], ["reversed order", [second, mt2]]];
+  for (const [label, fixture] of orderings) {
+    const multi = resolveHosaFamilyDestination("knowledge-test", fixture);
+    assert.equal(multi.kind, "none", `two listed members expose no destination (${label})`);
+    if (multi.kind === "none") assert.equal(multi.reason, "multiple-listed-events", `and say why (${label})`);
+    assert.ok(!("href" in multi), `and carry no href (${label})`);
+  }
+  assert.deepEqual(HOSA_EVENTS.map((e) => e.id).slice(0, 1), ["medical-terminology"], "the production registry was not mutated by the fixtures");
+  // 9. a member without its own route can never become a direct destination.
+  const routeless: HosaEventRecord = { ...mt2, id: "routeless", routeTarget: undefined };
+  assert.equal(resolveHosaFamilyDestination("knowledge-test", [routeless]).kind, "none",
+    "an event with no route of its own is not a direct destination");
+  // 8. unknown and malformed family input fails closed the same way — never a branch, never an event.
+  for (const bogus of ["", "   ", "not-a-family", "knowledge-test ", "KNOWLEDGE-TEST", "__proto__"]) {
+    const out = resolveHosaFamilyDestination(bogus as never);
+    assert.equal(out.kind, "none", `malformed family input ${JSON.stringify(bogus)} resolves to nothing`);
+    assert.ok(!("href" in out), `malformed family input ${JSON.stringify(bogus)} exposes no href`);
+  }
+  // 10. Medical Terminology's own facts and provenance are untouched by any of this.
+  const mtNow = hosaEventById("medical-terminology")!;
+  assert.equal(mtNow.name, "Medical Terminology", "the event name is unchanged");
+  assert.equal(mtNow.family, "knowledge-test", "its family is unchanged");
+  assert.equal(mtNow.routeTarget, "/training/hosa/event/medical-terminology", "its route is unchanged");
+  assert.equal(mtNow.sourceStatus, "verified-current", "its source status is unchanged");
+  assert.equal(mtNow.season, "2025-26", "its season is unchanged");
+  const mtMeta = hosaSourceMetadata(mtNow);
+  assert.equal(mtMeta.authority, "official", "its provenance authority is unchanged");
+  assert.equal(mtMeta.sourceLabel, "HOSA 2025-26 competitive event guidelines", "its source label is unchanged");
+  assert.equal(mtMeta.lastVerified, "2026-07-05", "its last-verified date is unchanged");
+  // A family whose destination is a fixed CompeteReady surface still resolves to it.
+  const clinical2 = resolveHosaFamilyDestination("clinical-skill");
+  assert.equal(clinical2.kind, "branch", "the clinical-skill family still resolves to its fixed branch");
+  if (clinical2.kind === "branch") assert.equal(clinical2.href, "/lessons/how-hosa-scenario-interaction-works",
+    "which remains the communication-only lesson");
 
   // ---- 18. the unavailable practice still initializes nothing -----------------------------------------
   const practice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");

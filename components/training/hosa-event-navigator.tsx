@@ -15,12 +15,39 @@ import {
   hosaFamily,
   hosaSourceMetadata,
   hosaStatusLabel,
+  resolveHosaFamilyDestination,
   presentHosaEvent,
   HOSA_FAMILIES,
   HOSA_ASSOCIATION_NOTE,
   HOSA_SUPERVISION_POLICY_NOTE,
   type HosaEventRecord
 } from "@/lib/hosa-events";
+
+// The HOSA training hub. This component renders ON /training/hosa/events, so the events hub can
+// never be its own recovery destination — the hub above it is the honest one.
+const HOSA_TRAINING_HUB = "/training/hosa";
+
+/**
+ * The learner-facing copy for a family that resolves to no destination (M11R5A). Pure and exported
+ * so both branches are testable — the multi-member branch cannot be produced by today's registry
+ * without mutating it, which tests must never do.
+ *
+ * The recovery route is the same for both: the HOSA training hub. It is deliberately NOT the events
+ * hub, because this component renders on the events hub.
+ */
+export function unresolvedHosaFamilyState(
+  branchLabel: string,
+  reason: "no-listed-events" | "multiple-listed-events"
+): { message: string; recoveryHref: string; recoveryLabel: string } {
+  return {
+    message:
+      reason === "multiple-listed-events"
+        ? `${branchLabel} — more than one event in this group has its own CompeteReady training page, so search for your event by name above and open yours rather than one we picked.`
+        : `${branchLabel} — no event in this group has its own CompeteReady training page yet, so we won't point you at another event's training in the meantime.`,
+    recoveryHref: HOSA_TRAINING_HUB,
+    recoveryLabel: "Back to HOSA training"
+  };
+}
 
 // HOSA Event Navigator (M8A). Orientation and routing only.
 //
@@ -56,6 +83,10 @@ function StatusLine({ record }: { record: HosaEventRecord }) {
 function EventDetail({ record }: { record: HosaEventRecord }) {
   const { verified, facts, degraded } = presentHosaEvent(record);
   const family = hosaFamily(record.family);
+  // The event's own route wins; otherwise its family may still resolve to a real destination. An
+  // unresolved family (`none`) yields nothing to link to — never a link back to this same page.
+  const familyDestination = resolveHosaFamilyDestination(record.family);
+  const detailDestination = record.routeTarget ?? (familyDestination.kind === "none" ? null : familyDestination.href);
 
   return (
     <Card>
@@ -152,9 +183,9 @@ function EventDetail({ record }: { record: HosaEventRecord }) {
                 {family.branchCaution} {HOSA_SUPERVISION_POLICY_NOTE}
               </p>
             ) : null}
-            {family.branchHref ? (
+            {detailDestination ? (
               <Link
-                href={(record.routeTarget ?? family.branchHref) as Route}
+                href={detailDestination as Route}
                 className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
               >
                 Go to {family.branchLabel}
@@ -308,20 +339,45 @@ export function HosaEventNavigator({
                     {family.branchCaution} {HOSA_SUPERVISION_POLICY_NOTE}
                   </p>
                 ) : null}
-                {family.branchHref ? (
-                  <Link
-                    href={family.branchHref as Route}
-                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-                  >
-                    {family.branchLabel}
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </Link>
-                ) : (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {family.branchLabel} — not built yet. We won&apos;t point you at another event&apos;s training in the
-                    meantime.
-                  </p>
-                )}
+                {/* M11R5: derived from registry membership, never a hardcoded event slug. One listed
+                    event links straight to it BY NAME; zero or several fail closed to the events hub
+                    rather than guessing which event the learner means. */}
+                {(() => {
+                  const destination = resolveHosaFamilyDestination(family.id);
+                  if (destination.kind === "branch") {
+                    return (
+                      <Link href={destination.href as Route} className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                        {family.branchLabel}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </Link>
+                    );
+                  }
+                  if (destination.kind === "event") {
+                    return (
+                      <Link href={destination.href as Route} className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                        {family.branchLabel} — {destination.eventName}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </Link>
+                    );
+                  }
+                  // M11R5A: unresolved families get a NON-INTERACTIVE statement plus recovery that
+                  // leads somewhere else. Linking to the events hub here would link to this very
+                  // page, so the only link offered is back to the HOSA training hub.
+                  const unresolved = unresolvedHosaFamilyState(family.branchLabel, destination.reason);
+                  return (
+                    <>
+                      <p className="mt-2 text-xs text-muted-foreground">{unresolved.message}</p>
+                      <Link
+                        href={unresolved.recoveryHref as Route}
+                        data-hosa-family-recovery={destination.reason}
+                        className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                      >
+                        {unresolved.recoveryLabel}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </Link>
+                    </>
+                  );
+                })()}
               </li>
             ))}
           </ul>

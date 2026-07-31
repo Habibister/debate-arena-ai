@@ -85,7 +85,9 @@ export type AvailableRoleplayLesson = RoleplayLessonBase & {
 // can linger in the data and no code path can reach it.
 export type UnavailableRoleplayLesson = RoleplayLessonBase & {
   practiceStatus: "temporarily-unavailable";
-  practiceUnavailable: { title: string; message: string };
+  // `cardNote` is the SHORT form shown on the lessons index. It is authored per lesson so the index
+  // never has to guess what a withdrawn lesson still offers (M11R5C).
+  practiceUnavailable: { title: string; message: string; cardNote: string };
   scenario?: never;
   prepOutline?: never;
   weakExample?: never;
@@ -259,26 +261,30 @@ const hosaScenarioInteraction: UnavailableRoleplayLesson = {
   practiceStatus: "temporarily-unavailable",
   // Slug intentionally UNCHANGED (existing lesson ID / deep links preserved) even though the title
   // was corrected in M3. The lesson is now scoped to the communication layer inside clinical skill
-  // events, per the approved official finding that no standalone patient-conversation event exists
-  // in the reviewed corpus.
+  // events. M11R5: our research record did not IDENTIFY a standalone patient-conversation event —
+  // that is a result about what we reviewed, never a claim that none exists or ever could.
+  // M11R5A: the record supports communication as one LAYER inside applicable clinical-skill events.
+  // It does NOT establish a universal scored communication row, so no sentence here may say one
+  // always exists. Where scoring is mentioned it is hedged to the sheets we actually reviewed, and
+  // the learner's own current guideline and rating sheet are named as controlling.
   slug: "how-hosa-scenario-interaction-works",
   track: "hosa",
   organization: "HOSA",
   title: "Patient Communication in HOSA Clinical Skill Events",
-  subtitle: "One scored layer inside a clinical skill event — not the skill itself.",
+  subtitle: "One layer inside applicable clinical-skill events — not the skill itself.",
   estimatedMinutes: 12,
   eventType: "HOSA clinical skill event (patient-communication layer)",
 
   intro: [
-    "HOSA includes written tests, clinical skill performances, presentations, interview events, team events, and emergency-preparedness events. This lesson teaches one specific thing: the patient-communication layer that some clinical skill events score as rows on their rating sheet.",
-    "That scoping matters, because there is no separate 'patient conversation' event to sign up for. In the current official guidelines reviewed for this lesson, communication with a patient is something you are scored on WHILE performing a clinical skill — and separately in the interview events, which work differently. Your exact event's current official guideline and rating sheet remain the source of truth for what is scored and how.",
+    "HOSA includes written tests, clinical skill performances, presentations, interview events, team events, and emergency-preparedness events. This lesson teaches one specific thing: the patient-communication layer inside applicable clinical-skill events.",
+    "That scoping matters. CompeteReady's approved research record did not identify a standalone 'patient conversation' event to sign up for — that is a research finding about the guidelines we reviewed, not a permanent claim about every HOSA season or publication. In what we reviewed, communication with a patient is one layer inside applicable clinical-skill events — something you are doing while you perform the skill — and it also comes up in the interview events, which work differently. Your current event guideline and rating sheet determine how communication is evaluated, if applicable; they remain the source of truth for what is scored and how.",
     "Two honest boundaries before you start. This lesson does not teach the physical clinical skill, and finishing it does not make you ready for your complete event — the hands-on portion needs in-person practice with your instructor. And the interaction framework taught here is CompeteReady's teaching method, not something HOSA publishes or requires."
   ],
   keyIdeas: [
     { term: "Communication is one layer, not the event", plain: "In a clinical skill round you are performing a skill AND talking while you do it. Some rating sheets score steps like greeting and introducing yourself, explaining what you are doing, and reporting concerns to the right professional. Those rows are what this lesson trains — the skill itself is trained in a lab, with an instructor." },
     { term: "Who is in the room", plain: "More people than beginners expect, and the roles are distinct. The judge is frequently playing the professional you report to — when a sheet says 'reported concerns to the nurse,' the nurse is the judge. Some events provide a live patient or an actor for noninvasive components where the guideline and equipment list specify one. For invasive, medication, blood-draw, injection, and resuscitation components, the specified simulation equipment is used — manikins, training arms, or medication trainers. Some events mix these within one skill, and where a guideline does not say, it is simply unspecified. Your event's current guideline and equipment list are the only place to find out which applies to you." },
     { term: "Your assigned role and its limits", plain: "You can only do what your assigned role is allowed to do. Identify a concern, stay inside the role, report to the designated professional, and avoid diagnosing or claiming a treatment decision that isn't yours. Saying 'I'm not able to assess that — let me get the nurse right now' is the professional move, not a failure." },
-    { term: "Verbalizing, with the nuance", plain: "Some rating sheets require you to state actions or observations aloud — do that, because it is a scored step. But saying a step out loud does not replace performing it when the required equipment is present and the action has to actually happen. The community shorthand 'just say everything out loud' oversimplifies the rule. Your current event guideline and rating sheet decide which steps require what." },
+    { term: "Verbalizing, with the nuance", plain: "Some rating sheets require you to state actions or observations aloud — do that, because on those sheets it is a step you are evaluated on. But saying a step out loud does not replace performing it when the required equipment is present and the action has to actually happen. The community shorthand 'just say everything out loud' oversimplifies the rule. Your current event guideline and rating sheet decide which steps require what." },
     { term: "What the rating sheet actually says", plain: "For most clinical skill events the sheet is a step-by-step checklist with points attached, and often a threshold you have to clear. It is literally the list of what earns points, which makes it your practice plan. Read your own event's current sheet — do not infer it from another event or from someone else's description." }
   ],
   // M11R3 — this is CompeteReady's LEARNING order, not an official HOSA event timeline.
@@ -315,13 +321,13 @@ const hosaScenarioInteraction: UnavailableRoleplayLesson = {
       "Check understanding — make sure it landed",
       "Next step — report to the designated professional, or give a sound action inside your role"
     ],
-    note: "This five-move sequence is CompeteReady's teaching method. HOSA does not publish or require it. Its steps line up only partly with official scored steps: greeting and introducing yourself is scored on many sheets, explaining the skill to the patient is scored, and reporting concerns to the professional is scored. Acknowledging someone's feelings and checking their understanding are our standards for doing those scored steps well — you will not find them as their own rows. Beginners jump straight to 'Respond'; professionals acknowledge and clarify first."
+    note: "This five-move sequence is CompeteReady's teaching method. HOSA does not publish or require it. Its steps line up only partly with official scored steps: greeting and introducing yourself, explaining the skill to the patient, and reporting concerns to the professional appear as scored steps on many sheets. Acknowledging someone's feelings and checking their understanding are our standards for doing those steps well where your sheet has them — you will not find them as their own rows. Beginners jump straight to 'Respond'; professionals acknowledge and clarify first."
   },
 
   commonMistakes: [
     { title: "Treating it as a speech", explanation: "Delivering health facts AT a person instead of responding to what they actually said. Leave room for them to talk back." },
     { title: "Explaining before acknowledging", explanation: "Jumping to information before naming the person's feeling makes an anxious person more anxious. Acknowledge first." },
-    { title: "Sounding robotic", explanation: "A flat, recited tone reads as uncaring — and a checklist delivered like a checklist is still a checklist. Warmth is how you perform the scored step well." },
+    { title: "Sounding robotic", explanation: "A flat, recited tone reads as uncaring — and a checklist delivered like a checklist is still a checklist. Warmth is how you perform that step well." },
     { title: "Using unexplained medical terminology", explanation: "Precise terms belong in your report to the professional. With the person in front of you, translate — jargon they can't follow doesn't inform anyone." },
     { title: "Stepping outside your assigned role", explanation: "Diagnosing, promising an outcome, or making a decision that belongs to licensed staff. Observe, stay in role, and hand off what isn't yours." },
     { title: "Verbalizing instead of performing", explanation: "Narrating a step you were supposed to actually do, when the equipment is right there. Say what your sheet requires — and still do the action." },
@@ -343,6 +349,7 @@ const hosaScenarioInteraction: UnavailableRoleplayLesson = {
   // medical/privacy/legal content requires clinical and legal review; even a clearly non-medical,
   // non-legal administrative scenario requires advisor, safety, and product review.
   practiceUnavailable: {
+    cardNote: "Informational, communication-only — its interactive scenario is temporarily unavailable, and it never teaches or scores hands-on procedures.",
     title: "This practice scenario is temporarily unavailable",
     message: "The interactive scenario that used to sit here is being reviewed, so it has been taken down for now. Nothing above it has changed — the lesson content, the framework, and the common mistakes are all still here to read. Your event's current official guideline and rating sheet remain the place to check what your event actually scores."
   },

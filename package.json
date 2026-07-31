@@ -25,6 +25,7 @@
     "side-coach:smoke": "tsx scripts/side-coach-smoke.ts",
     "debate-side-coach:smoke": "tsx scripts/debate-side-coach-smoke.ts",
     "deca-rubric:smoke": "tsx scripts/deca-rubric-smoke.ts",
+    "hosa-navigator:smoke": "tsx scripts/hosa-navigator-smoke.ts",
     "lesson-progress:smoke": "tsx scripts/lesson-progress-smoke.ts",
     "debate-replay:smoke": "tsx scripts/debate-replay-smoke.ts",
     "learning-path:smoke": "tsx scripts/learning-path-smoke.ts",

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, BookOpenCheck, ClipboardList, Gamepad2, GraduationCap, Layers3, MessageSquareText } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, ClipboardList, Compass, Gamepad2, GraduationCap, Layers3, MessageSquareText } from "lucide-react";
 import { TrackControls } from "@/components/training/track-controls";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +68,24 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
 
       {/* Practice */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Navigator-first: HOSA spans written tests, clinical skills, interviews, presentations and
+            team events, so the exact event must be identified before any training is recommended.
+            HOSA only in M8A — the DECA Navigator is M8B. */}
+        {track.id === "HOSA" ? (
+          <Link
+            href={`/training/${track.slug}/events` as Route}
+            className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10"
+          >
+            <Compass className="mt-0.5 h-5 w-5 text-track" aria-hidden />
+            <span>
+              <span className="block font-semibold">Event Navigator</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                Start here. Find your exact event, see what we&apos;ve actually verified about it, and go to the right
+                training.
+              </span>
+            </span>
+          </Link>
+        ) : null}
         {EVENT_HQ_SLUG[track.id] ? (
           <Link
             href={`/training/${track.slug}/event/${EVENT_HQ_SLUG[track.id]}` as Route}

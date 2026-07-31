@@ -4,6 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { hosaEventById, hosaEventsByFamily, presentHosaEvent, HOSA_EVENTS } from "../lib/hosa-events";
 import {
   composePractice,
   CONTENT_SOURCE_LABEL,
@@ -691,6 +692,29 @@ function main() {
   assert.ok(deckPage.includes("searchParams.assignmentId"), "assigned deck activity bypasses the personal-track redirect");
   assert.ok(testsPage.includes("assignmentId"), "assigned practice test always shows the generator");
 
+  // C8 (M8A). HOSA Event Navigator: track-scoped and fail-closed.
+  const navPage = readFileSync("app/(app)/training/[track]/events/page.tsx", "utf8");
+  assert.ok(existsSync("app/(app)/training/[track]/events/page.tsx"), "the Event Navigator route exists");
+  assert.ok(navPage.includes('if (track.id !== "HOSA") notFound()'), "the Navigator is HOSA-only — DECA and Debate 404 exactly as before");
+  // An unknown or absent event never resolves to a real event, and never to the first entry.
+  for (const bad of ["", "  ", "unknown-event", "deca-hotel-lodging", "public-forum"]) {
+    assert.equal(hosaEventById(bad), undefined, `Navigator fails closed on "${bad}"`);
+  }
+  assert.equal(hosaEventById(undefined), undefined, "a missing event id selects nothing at all");
+  assert.notEqual(hosaEventById("unknown-event"), HOSA_EVENTS[0], "an unknown id never falls through to the first event");
+  // Exactly one event may show official structure; every other event shows an honest partial card.
+  const verifiedEvents = HOSA_EVENTS.filter((e) => presentHosaEvent(e).verified);
+  assert.deepEqual(verifiedEvents.map((e) => e.id), ["medical-terminology"], "only the sourced event shows official structure");
+  for (const e of HOSA_EVENTS.filter((e) => e.id !== "medical-terminology")) {
+    assert.deepEqual(presentHosaEvent(e).facts, {}, `${e.name} shows no borrowed structural detail`);
+  }
+  // Track isolation: the Navigator carries HOSA events only, and no other track's content.
+  const navSrc = readFileSync("components/training/hosa-event-navigator.tsx", "utf8");
+  assert.ok(!/Public Forum|Hotel and Lodging|performance indicator/i.test(navSrc), "the Navigator surfaces no Debate or DECA event content");
+  assert.ok(hosaEventsByFamily().every((g) => g.events.every((e) => e.family === g.family.id)), "events never appear under another family");
+  // The withdrawn HOSA practice is never reachable as available through the Navigator.
+  assert.ok(!navSrc.includes("/training/hosa/practice"), "the Navigator never routes to the withdrawn interactive practice");
+
   // C7. CompeteReady branding replaces DebateArena AI in user-facing surfaces.
   for (const file of ["components/app/app-shell.tsx", "app/(auth)/signin/page.tsx", "app/layout.tsx", "app/page.tsx"]) {
     const src = readFileSync(file, "utf8");
@@ -698,7 +722,7 @@ function main() {
   }
   assert.ok(readFileSync("components/app/app-shell.tsx", "utf8").includes("CompeteReady"), "app shell uses the CompeteReady name");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding.");
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage).");
 }
 
 main();

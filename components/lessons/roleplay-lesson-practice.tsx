@@ -1,23 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowLeft, CheckCircle2, Info, Loader2, MessageSquare, RefreshCw, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Info, Loader2, MessageSquare, RefreshCw, RotateCcw, XCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import type { AvailableRoleplayLesson, RoleplayLesson } from "@/lib/roleplay-lessons";
+import {
+  clearAuthoredLessonProgress,
+  countResponseWords,
+  loadAuthoredLessonProgress,
+  MAX_STORED_RESPONSE_CHARS,
+  MIN_MEANINGFUL_RESPONSE_WORDS,
+  normalizeRestoredProgress,
+  saveAuthoredLessonProgress
+} from "@/lib/authored-lesson-progress";
 
 type Feedback = { strength?: string; improvement?: string; example?: string; unavailable?: boolean };
 
 // Lightweight meaningful-response gate: blocks blank/obvious-nonsense submissions while still
 // allowing genuinely weak answers (which are exactly what coaching is for).
-const MIN_RESPONSE_WORDS = 8;
+// Shared with resume normalization so a restored state can never satisfy one gate and violate the
+// other (lib/authored-lesson-progress.ts is the single source of truth).
+const MIN_RESPONSE_WORDS = MIN_MEANINGFUL_RESPONSE_WORDS;
 const SHORT_RESPONSE_HINT = "Write at least one complete sentence so the coach has something meaningful to evaluate.";
-function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
+const wordCount = countResponseWords;
 
 // Appended to the authored rubric in `goals` so the coach evaluates the WHOLE exchange against
 // every rubric item — and never invents praise for empty-quality responses. (≤300 chars, schema cap.)
@@ -31,11 +40,13 @@ const COACH_NOTE =
 // Entry point. Branches on the explicit `practiceStatus` discriminant — never on missing data — so a
 // deliberately withdrawn lesson and an accidentally malformed one can never be confused: the latter
 // fails type checking at the data layer instead of reaching here.
-export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
+export function RoleplayLessonPractice({ lesson, userScope }: { lesson: RoleplayLesson; userScope?: string | null }) {
   if (lesson.practiceStatus !== "available") {
+    // An unavailable lesson never mounts the active practice, so it initializes NO practice state,
+    // runs NO persistence hooks, and performs NO localStorage read or write.
     return <PracticeUnavailable notice={lesson.practiceUnavailable} />;
   }
-  return <ActiveRoleplayPractice lesson={lesson} />;
+  return <ActiveRoleplayPractice lesson={lesson} userScope={userScope ?? null} />;
 }
 
 // Honest learner-facing state for a lesson whose interactive practice has been withdrawn. Renders no
@@ -65,10 +76,63 @@ function PracticeUnavailable({ notice }: { notice: { title: string; message: str
   );
 }
 
+// Honest persistence status + the local reset control. Status is conveyed by TEXT (never colour
+// alone) and only changes when the persistence state materially changes — not on every keystroke.
+function PracticeStatusBar({
+  saveState,
+  confirmingReset,
+  onAskReset,
+  onCancelReset,
+  onConfirmReset
+}: {
+  saveState: "unknown" | "saved" | "unavailable";
+  confirmingReset: boolean;
+  onAskReset: () => void;
+  onCancelReset: () => void;
+  onConfirmReset: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 border-t pt-3">
+      <div role="status" aria-live="polite" className="text-xs text-muted-foreground">
+        {saveState === "saved" ? (
+          <>
+            <span className="font-semibold text-foreground">Saved on this device</span>
+            <span className="block">
+              Your answers stay in this browser only — they are not synced to your account or another
+              device, and this is not a score, a competition result, or mastery.
+            </span>
+          </>
+        ) : saveState === "unavailable" ? (
+          <>
+            <span className="font-semibold text-foreground">Progress is not being saved on this device</span>
+            <span className="block">
+              You can keep working normally — just avoid reloading, because your answers won&apos;t come back.
+            </span>
+          </>
+        ) : (
+          <span>Checking whether this browser can save your progress…</span>
+        )}
+      </div>
+      {confirmingReset ? (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Clear your answers for this lesson?</span>
+          <Button type="button" size="sm" variant="outline" onClick={onConfirmReset}>Yes, start over</Button>
+          <Button type="button" size="sm" variant="ghost" onClick={onCancelReset}>Cancel</Button>
+        </div>
+      ) : (
+        <Button type="button" size="sm" variant="ghost" onClick={onAskReset}>
+          <RotateCcw className="h-4 w-4" aria-hidden />
+          Start this practice over
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // The live practice. Typed to the AVAILABLE variant, so scenario/practice/rubric are guaranteed
 // present at compile time — no runtime fallbacks, no optional chaining, no way to reach the Side
 // Coach without the authored scenario the request depends on.
-function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson }) {
+function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRoleplayLesson; userScope: string | null }) {
   const p = lesson.practice;
   const scenario = lesson.scenario;
   const [phase, setPhase] = useState<"identify" | "respond">("identify");
@@ -84,6 +148,79 @@ function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson })
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  // ---- Device-local resume (M5 Phase A) ------------------------------------------------------
+  // Persist ONLY the learner's own work and their position. Never feedback, never correctness
+  // totals, never completion. Nothing leaves the browser.
+  //
+  // `hydrated` is the gate that stops the initial empty React state from overwriting saved work:
+  // no save effect may run until a load attempt has finished. Without it, the first render's empty
+  // strings would race the restore and wipe the entry.
+  const canPersist = Boolean(userScope);
+  const [hydrated, setHydrated] = useState(false);
+  const [saveState, setSaveState] = useState<"unknown" | "saved" | "unavailable">("unknown");
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!userScope) {
+      // No stable per-account namespace: do not persist at all rather than risk one account
+      // resuming another account's writing on a shared browser.
+      setHydrated(true);
+      setSaveState("unavailable");
+      return;
+    }
+    const restored = loadAuthoredLessonProgress(userScope, lesson.slug);
+    if (restored) {
+      // Normalize before applying: a stored phase that depends on non-persisted data (coaching
+      // feedback, results, submission) is mapped to the latest safe AUTHORING phase, the identify
+      // index is clamped to the current question count, and a follow-up unlock is honoured only when
+      // the first response actually earns it. Both learner responses always survive verbatim.
+      const safe = normalizeRestoredProgress(restored, p.identify.length);
+      setPhase(safe.phase);
+      setIdx(safe.identifyIndex);
+      setWriteText(safe.writeText);
+      setFollowText(safe.followText);
+      setFollowUnlocked(safe.followUnlocked);
+      // Feedback is deliberately NOT restored — the learner asks for fresh coaching after a reload,
+      // and nothing here issues that request automatically.
+    }
+    setHydrated(true);
+  }, [userScope, lesson.slug, p.identify.length]);
+
+  useEffect(() => {
+    if (!hydrated || !userScope) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    // Light debounce so typing never blocks on a write; no network, no server request.
+    saveTimer.current = setTimeout(() => {
+      const ok = saveAuthoredLessonProgress(userScope, lesson.slug, {
+        phase,
+        identifyIndex: idx,
+        writeText,
+        followText,
+        followUnlocked
+      });
+      setSaveState(ok ? "saved" : "unavailable");
+    }, 400);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [hydrated, userScope, lesson.slug, phase, idx, writeText, followText, followUnlocked]);
+
+  const resetPractice = useCallback(() => {
+    if (userScope) clearAuthoredLessonProgress(userScope, lesson.slug);
+    setPhase("identify");
+    setIdx(0);
+    setSelected(null);
+    setRevealed(false);
+    setCorrectCount(0);
+    setWriteText("");
+    setFollowText("");
+    setFollowUnlocked(false);
+    setFeedback(null);
+    setError(null);
+    setConfirmingReset(false);
+  }, [userScope, lesson.slug]);
 
   const current = p.identify[idx];
 
@@ -195,6 +332,13 @@ function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson })
           ) : (
             <Button type="button" size="sm" onClick={nextIdentify}>{idx + 1 < p.identify.length ? "Next" : "Now try it in your own words"}</Button>
           )}
+          <PracticeStatusBar
+            saveState={saveState}
+            confirmingReset={confirmingReset}
+            onAskReset={() => setConfirmingReset(true)}
+            onCancelReset={() => setConfirmingReset(false)}
+            onConfirmReset={resetPractice}
+          />
         </CardContent>
       </Card>
     );
@@ -222,6 +366,7 @@ function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson })
             onChange={(e) => setWriteText(e.target.value)}
             placeholder={p.write.placeholder}
             className="mt-2 min-h-24"
+            maxLength={MAX_STORED_RESPONSE_CHARS}
             disabled={busy}
           />
           {wordCount(writeText) < MIN_RESPONSE_WORDS ? (
@@ -250,6 +395,7 @@ function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson })
             onChange={(e) => setFollowText(e.target.value)}
             placeholder="Your response…"
             className="mt-2 min-h-20"
+            maxLength={MAX_STORED_RESPONSE_CHARS}
             disabled={busy}
           />
           {wordCount(followText) < MIN_RESPONSE_WORDS ? (
@@ -280,9 +426,25 @@ function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson })
         {followUnlocked ? (
         <Button type="button" onClick={getFeedback} disabled={busy || wordCount(writeText) < MIN_RESPONSE_WORDS || wordCount(followText) < MIN_RESPONSE_WORDS}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
-          {feedback ? "Get coaching feedback again" : "Get coaching feedback"}
+          {feedback ? "Revise and get feedback again" : "Get coaching feedback"}
         </Button>
         ) : null}
+
+        {feedback ? (
+          <p className="text-xs text-muted-foreground">
+            Now revise your answers above using that feedback, then get feedback again — the revision
+            is the part that builds the skill. Feedback itself isn&apos;t saved, so after a reload
+            you&apos;ll have your own writing back but will need to ask for coaching again.
+          </p>
+        ) : null}
+
+        <PracticeStatusBar
+          saveState={saveState}
+          confirmingReset={confirmingReset}
+          onAskReset={() => setConfirmingReset(true)}
+          onCancelReset={() => setConfirmingReset(false)}
+          onConfirmReset={resetPractice}
+        />
       </CardContent>
     </Card>
   );

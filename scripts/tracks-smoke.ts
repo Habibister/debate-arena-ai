@@ -434,6 +434,19 @@ function main() {
     // Verbalization nuance is taught, not the community oversimplification.
     assert.ok(/does not replace performing it/i.test(hosaText), "HOSA lesson teaches that verbalization does not replace required action");
   }
+  // ===== M5: device-local resume is scoped to AVAILABLE lessons only =====
+  {
+    const rp = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
+    // Only the available lesson mounts persistence; the unavailable branch touches no storage.
+    const unavailable = rp.slice(rp.indexOf("function PracticeUnavailable"), rp.indexOf("function ActiveRoleplayPractice"));
+    assert.ok(!/localStorage|AuthoredLessonProgress/.test(unavailable), "the unavailable HOSA practice performs no device-local storage access");
+    // Local resume never becomes progress data.
+    assert.ok(!/recordDrillMastery|@\/lib\/prisma|@\/lib\/spaced-review|completedAt/.test(rp), "device-local resume writes no mastery, DB record, or completion fact");
+    // Honest, text-based labelling (never colour alone).
+    assert.ok(rp.includes("Saved on this device") && rp.includes("Progress is not being saved on this device"), "both honest persistence labels exist");
+    assert.ok(rp.includes("Start this practice over"), "a local reset action exists for the available lesson");
+  }
+
   // Interactive practice reuses the Side Coach route; no mastery/record/scoring pipeline; retries on failure.
   const rpPractice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
   assert.ok(rpPractice.includes("/api/ai/side-coach"), "role-play practice reuses the existing Side Coach route");
@@ -447,7 +460,13 @@ function main() {
   // Honest no-strength handling: never invent praise for empty-quality responses.
   assert.ok(rpPractice.includes("No rubric-aligned strength is demonstrated yet."), "coach note forbids invented praise and provides the honest no-strength line");
   // Meaningful-response gate on BOTH the continue and feedback actions (blocks blank/nonsense, allows weak answers).
-  assert.ok(rpPractice.includes("MIN_RESPONSE_WORDS = 8") && rpPractice.includes("Write at least one complete sentence so the coach has something meaningful to evaluate."), "8-word meaningful-response gate + learner-facing hint exist");
+  // The 8-word gate now lives in lib/authored-lesson-progress.ts so the practice UI and resume
+  // normalization share one source of truth — a restored state can never satisfy one and break the other.
+  const progressHelper = readFileSync("lib/authored-lesson-progress.ts", "utf8");
+  assert.ok(progressHelper.includes("MIN_MEANINGFUL_RESPONSE_WORDS = 8"), "the 8-word meaningful-response gate is defined once, in the shared helper");
+  assert.ok(rpPractice.includes("MIN_RESPONSE_WORDS = MIN_MEANINGFUL_RESPONSE_WORDS"), "the practice UI consumes the shared gate rather than redefining it");
+  assert.ok(rpPractice.includes("Write at least one complete sentence so the coach has something meaningful to evaluate."), "learner-facing short-response hint exists");
+  assert.ok(rpPractice.includes("normalizeRestoredProgress"), "restored progress is normalized before it is applied");
   assert.ok(/disabled=\{wordCount\(writeText\) < MIN_RESPONSE_WORDS\}/.test(rpPractice) && /disabled=\{busy \|\| wordCount\(writeText\) < MIN_RESPONSE_WORDS \|\| wordCount\(followText\) < MIN_RESPONSE_WORDS\}/.test(rpPractice), "short/nonsense responses cannot unlock the follow-up or coaching");
   // The authored DECA/HOSA rubrics themselves are unchanged by C5C1a.
   if (decaLesson && hosaLesson) {

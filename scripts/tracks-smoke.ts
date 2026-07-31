@@ -4,8 +4,10 @@
  */
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { hosaEventById, hosaEventsByFamily, presentHosaEvent, HOSA_EVENTS } from "../lib/hosa-events";
+import { hosaEventById, hosaEventsByFamily, hosaFamily, hosaSourceMetadata, presentHosaEvent, HOSA_EVENTS, HOSA_FAMILIES } from "../lib/hosa-events";
 import { decaFamilyById, decaFamiliesByScope, presentDecaFamily, DECA_FAMILIES } from "../lib/deca-events";
+import { presentSourceFreshness } from "../lib/source-freshness";
+import { decaSourceMetadata } from "../lib/deca-events";
 import {
   composePractice,
   CONTENT_SOURCE_LABEL,
@@ -17,6 +19,7 @@ import {
   TRACK_COOKIE,
   TRACKS,
   isSharedOrgTag,
+  isTrackRetired,
   orgVisibleForResolvedTrack,
   skillSharedOnly,
   skillVisibleForTrack,
@@ -739,6 +742,161 @@ function main() {
   assert.ok(!/HOSA|Medical Terminology|patient/i.test(decaNavSrc), "the DECA Navigator surfaces no HOSA content");
   assert.ok(!/DECA|Performance Indicator/i.test(navSrc), "the HOSA Navigator surfaces no DECA content");
 
+  // ===================== M10: track isolation + navigation regression =====================
+  //
+  // Runtime invariants first; source inspection only for structure that cannot be exercised.
+  const stripTs = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/(^|\s)\/\/.*$/, "")).join("\n");
+
+  // ---- 1/2/3/4. canonical hubs, Start Debate, Navigator reachability, Debate stays closed ----------
+  for (const slug of ["debate", "deca", "hosa"]) {
+    assert.ok(trackBySlug(slug), `canonical hub slug resolves: ${slug}`);
+  }
+  const hubSrc = readFileSync("app/(app)/training/[track]/page.tsx", "utf8");
+  assert.ok(hubSrc.includes('isDebate ? "/debate"'), "Start Debate still points at /debate");
+  assert.ok(hubSrc.includes('NAVIGATOR_TRACKS: TrainingTrack[] = ["HOSA", "DECA"]'), "only HOSA and DECA hubs surface a Navigator");
+  assert.ok(!stripTs(hubSrc).includes('"GENERAL_DEBATE"') || !/NAVIGATOR_TRACKS[^\]]*GENERAL_DEBATE/.test(stripTs(hubSrc)),
+    "Debate did not acquire a Navigator entry point");
+  const evSrc = readFileSync("app/(app)/training/[track]/events/page.tsx", "utf8");
+  assert.ok(evSrc.includes('if (track.id !== "HOSA" && track.id !== "DECA") notFound()'), "/training/debate/events stays closed");
+
+  // ---- 5/6. each track selects through its OWN parameter only ---------------------------------------
+  assert.ok(evSrc.includes("singleParam(searchParams?.event)") && evSrc.includes("singleParam(searchParams?.family)"),
+    "HOSA reads ?event=, DECA reads ?family=");
+  assert.ok(evSrc.includes("hosaEventById(requested) : decaFamilyById(requested)"), "each track resolves via its own registry");
+
+  // ---- 7/8. cross-track identifiers fail closed, WITH positive controls ------------------------------
+  assert.ok(hosaEventById("medical-terminology"), "positive control: a real HOSA id resolves in HOSA");
+  assert.ok(decaFamilyById("individual-series"), "positive control: a real DECA id resolves in DECA");
+  assert.equal(decaFamilyById("medical-terminology"), undefined, "a HOSA event id cannot resolve in DECA");
+  assert.equal(hosaEventById("individual-series"), undefined, "a DECA family id cannot resolve in HOSA");
+  for (const other of DECA_FAMILIES) assert.equal(hosaEventById(other.id), undefined, `HOSA rejects DECA id ${other.id}`);
+  for (const other of HOSA_EVENTS) assert.equal(decaFamilyById(other.id), undefined, `DECA rejects HOSA id ${other.id}`);
+
+  // ---- 9-13. missing, repeated, unknown, malformed, and no first-record fallback ----------------------
+  const MALFORMED = ["", "   ", "\t", "unknown", "../medical-terminology", "individual series", "0", "1", "%20", "null", "undefined"];
+  for (const bad of MALFORMED) {
+    assert.equal(hosaEventById(bad), undefined, `HOSA fails closed on ${JSON.stringify(bad)}`);
+    assert.equal(decaFamilyById(bad), undefined, `DECA fails closed on ${JSON.stringify(bad)}`);
+  }
+  for (const missing of [undefined, null]) {
+    assert.equal(hosaEventById(missing), undefined, "a missing HOSA id selects nothing");
+    assert.equal(decaFamilyById(missing), undefined, "a missing DECA id selects nothing");
+  }
+  // Repeated params arrive as arrays; the route treats anything non-string as absent.
+  assert.ok(evSrc.includes('if (typeof value !== "string") return undefined'), "a repeated query parameter selects nothing");
+  assert.notEqual(hosaEventById("unknown"), HOSA_EVENTS[0], "no HOSA first-record fallback");
+  assert.notEqual(decaFamilyById("unknown"), DECA_FAMILIES[0], "no DECA first-record fallback");
+  for (const src of [readFileSync("lib/hosa-events.ts", "utf8"), readFileSync("lib/deca-events.ts", "utf8")]) {
+    assert.ok(!/_EVENTS\[0\]|_FAMILIES\[0\]/.test(stripTs(src)), "no registry indexes into its own list as a fallback");
+  }
+
+  // ---- 14/15/16. active-track resolution contract ------------------------------------------------------
+  // Route context wins over an incompatible saved track (positive AND negative control).
+  assert.equal(resolveTrackFromSlugs("hosa", "deca")?.id, "HOSA", "explicit route track beats an incompatible saved track");
+  assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "and in the other direction");
+  assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "saved track is used only when the route says nothing");
+  assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "no context resolves to nothing at all");
+  // Unresolved never silently becomes a real track.
+  for (const bogus of ["", "nope", "model-un"]) {
+    const r = resolveTrackFromSlugs(bogus, undefined);
+    assert.ok(r === undefined || !isTrackRetired(r.id), `unresolved/retired route track never yields a live track: ${bogus}`);
+  }
+  assert.notEqual(resolveTrackFromSlugs("nope", undefined)?.id, TRACKS[0].id, "unresolved context never defaults to the first configured track");
+  // Track-scoped filtering is only permissive when there is genuinely NO selected track.
+  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "DECA"), false, "a selected track blocks another org's content");
+  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "HOSA"), true, "positive control: its own org is allowed");
+  assert.equal(trackAllowsOrganization(undefined, "DECA"), true, "browse-all is reserved for genuinely no selection");
+
+  // ---- 17/18. lesson + Navigator fact isolation ----------------------------------------------------------
+  assert.equal(getRoleplayLesson("how-deca-roleplay-works")?.organization, "DECA", "the DECA lesson is DECA");
+  assert.equal(getRoleplayLesson("how-hosa-scenario-interaction-works")?.organization, "HOSA", "the HOSA lesson is HOSA");
+  assert.ok(!JSON.stringify(getRoleplayLesson("how-deca-roleplay-works")).toLowerCase().includes("patient"), "no HOSA vocabulary in the DECA lesson");
+  assert.ok(!JSON.stringify(getRoleplayLesson("how-hosa-scenario-interaction-works")).toLowerCase().includes("performance indicator"), "no DECA vocabulary in the HOSA lesson");
+
+  // ---- 19/20. HOSA verified set and non-inheritance --------------------------------------------------------
+  assert.deepEqual(HOSA_EVENTS.filter((e) => presentHosaEvent(e).verified).map((e) => e.id), ["medical-terminology"],
+    "Medical Terminology is still the only verified HOSA event");
+  const mtFacts = presentHosaEvent(hosaEventById("medical-terminology")!).facts;
+  assert.equal(mtFacts.questionCount, 50, "positive control: MT still carries its sourced facts");
+  for (const e of HOSA_EVENTS.filter((e) => e.id !== "medical-terminology")) {
+    assert.deepEqual(presentHosaEvent(e).facts, {}, `${e.name} inherits no MT facts`);
+    const p = presentSourceFreshness(hosaSourceMetadata(e));
+    assert.equal(p.sourceLabel, null, `${e.name} inherits no MT source label`);
+    assert.equal(p.verifiedLabel, null, `${e.name} inherits no MT verification date`);
+    assert.equal(p.revalidationLabel, null, `${e.name} inherits no MT revalidation gate`);
+  }
+
+  // ---- 21/22/23/24/25/26. DECA family isolation and HOSA clinical routing -------------------------------------
+  const seriesFacts = presentDecaFamily(decaFamilyById("individual-series")!).facts;
+  assert.equal(seriesFacts.examQuestionCount, 100, "positive control: Series still carries its sourced facts");
+  for (const f of DECA_FAMILIES.filter((f) => f.id !== "individual-series")) {
+    const facts = presentDecaFamily(f).facts;
+    for (const key of ["examQuestionCount", "rolePlayMinutes", "preparationMaterialsNote", "visualAidNote", "examWeightingNote"] as const) {
+      assert.equal(facts[key], undefined, `${f.name} does not inherit Series' ${key}`);
+    }
+  }
+  const tdmRec = decaFamilyById("team-decision-making")!;
+  assert.equal(presentDecaFamily(tdmRec).facts.examWeightingNote, undefined, "TDM weighting stays absent");
+  assert.ok(tdmRec.unresolvedFields?.some((f) => /weighting/i.test(f)), "TDM weighting stays visibly unresolved");
+  const pscRec = decaFamilyById("professional-selling-and-consulting")!;
+  assert.equal(pscRec.sourceStatus, "unresolved", "PSC stays unresolved");
+  assert.equal(pscRec.routeTarget, "/training/deca", "PSC routes to the DECA hub, not the role-play lesson");
+  for (const id of ["prepared-events", "written-events", "online-events"]) {
+    const f = decaFamilyById(id)!;
+    assert.notEqual(f.routeTarget, "/lessons/how-deca-roleplay-works", `${id} stays outside role-play practice`);
+    assert.deepEqual(presentDecaFamily(f).facts, {}, `${id} borrows no role-play facts`);
+  }
+  const clinical = hosaFamily("clinical-skill")!;
+  assert.equal(clinical.branchHref, "/lessons/how-hosa-scenario-interaction-works", "clinical routing is communication-only");
+  assert.equal(getRoleplayLesson("how-hosa-scenario-interaction-works")?.practiceStatus, "temporarily-unavailable",
+    "HOSA practice remains temporarily unavailable");
+
+  // ---- 28. no cross-track link in either Navigator detail card -------------------------------------------------
+  const m10HosaNav = readFileSync("components/training/hosa-event-navigator.tsx", "utf8");
+  const m10DecaNav = readFileSync("components/training/deca-event-navigator.tsx", "utf8");
+  for (const e of HOSA_EVENTS) {
+    if (e.routeTarget) assert.ok(/^\/(training\/hosa|lessons\/how-hosa)/.test(e.routeTarget), `${e.name} link stays inside HOSA`);
+  }
+  for (const f of DECA_FAMILIES) {
+    if (f.routeTarget) assert.ok(/^\/(training\/deca|lessons\/how-deca)/.test(f.routeTarget), `${f.name} link stays inside DECA`);
+  }
+  for (const info of HOSA_FAMILIES) {
+    if (info.branchHref) assert.ok(/^\/(training\/hosa|lessons\/how-hosa)/.test(info.branchHref), `${info.label} branch stays inside HOSA`);
+  }
+  assert.ok(!/\/training\/deca|how-deca/.test(stripTs(m10HosaNav)), "the HOSA Navigator links nowhere in DECA");
+  assert.ok(!/\/training\/hosa|how-hosa/.test(stripTs(m10DecaNav)), "the DECA Navigator links nowhere in HOSA");
+
+  // ---- 29/30/31. desktop AND mobile navigation reach every approved destination ---------------------------------
+  const m10Shell = readFileSync("components/app/app-shell.tsx", "utf8");
+  assert.ok(m10Shell.includes('BOTTOM_BAR_HREFS = ["/home", "/training", "/compete", "/teams"]'), "the mobile bottom bar exists and includes /training");
+  assert.ok(/lg:hidden/.test(m10Shell), "the mobile bar is a real mobile region, not a desktop-only control");
+  assert.ok(m10Shell.includes('{ href: "/training"'), "desktop navigation reaches /training");
+  // Both Navigators hang off /training/<slug>, which both navigations reach.
+  assert.ok(hubSrc.includes("`/training/${track.slug}/events`"), "each hub links to its own Navigator by canonical path");
+  assert.ok(!/onMouseOver|onMouseEnter|hover:block|group-hover:(block|flex)/.test(stripTs(m10Shell)), "no navigation depends on hover");
+  const controls = readFileSync("components/training/track-controls.tsx", "utf8");
+  assert.ok(/<Link href=\{"\/training"/.test(controls) || controls.includes('href={"/training" as Route}'), "track switching is a real link, not hover-only");
+
+  // ---- 42/43/44. stable slugs, Event HQ, and no new redirects ------------------------------------------------------
+  assert.ok(getRoleplayLesson("how-deca-roleplay-works") && getRoleplayLesson("how-hosa-scenario-interaction-works"),
+    "both stable role-play lesson slugs still resolve");
+  assert.ok(getLesson("debate-claim-warrant-impact") ?? getLesson("claim-warrant-impact"), "the Debate lesson slug still resolves");
+  assert.ok(hubSrc.includes('HOSA: "medical-terminology"') && hubSrc.includes('DECA: "hotel-lodging-management"') && hubSrc.includes('GENERAL_DEBATE: "public-forum"'),
+    "existing Event HQ routes are unchanged");
+  assert.ok(!/redirect\(/.test(stripTs(evSrc).replace('redirect("/training")', "")), "the Navigator route adds no new redirect beyond the retired-track guard");
+
+  // ---- 45. no persistence, API, schema or learner write was added ----------------------------------------------------
+  for (const file of ["lib/hosa-events.ts", "lib/deca-events.ts", "lib/source-freshness.ts",
+                      "components/training/hosa-event-navigator.tsx", "components/training/deca-event-navigator.tsx",
+                      "components/source/source-freshness-note.tsx", "app/(app)/training/[track]/events/page.tsx"]) {
+    const code = stripTs(readFileSync(file, "utf8"));
+    for (const banned of ["@/lib/prisma", "prisma.", "localStorage", "sessionStorage", "NextResponse",
+                          "recordDrillMastery", "@/lib/spaced-review", "@/lib/xp", "ballot", "competitionResult"]) {
+      assert.ok(!code.includes(banned), `${file} performs no ${banned}`);
+    }
+  }
+
   // C7. CompeteReady branding replaces DebateArena AI in user-facing surfaces.
   for (const file of ["components/app/app-shell.tsx", "app/(auth)/signin/page.tsx", "app/layout.tsx", "app/page.tsx"]) {
     const src = readFileSync(file, "utf8");
@@ -746,7 +904,7 @@ function main() {
   }
   assert.ok(readFileSync("components/app/app-shell.tsx", "utf8").includes("CompeteReady"), "app shell uses the CompeteReady name");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson).");
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect).");
 }
 
 main();

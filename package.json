@@ -22,6 +22,7 @@
     "assignment:smoke": "tsx scripts/assignment-smoke.ts",
     "games:smoke": "tsx scripts/games-smoke.ts",
     "tracks:smoke": "tsx scripts/tracks-smoke.ts",
+    "hosa-practice-scope:smoke": "tsx scripts/hosa-practice-scope-smoke.ts",
     "side-coach:smoke": "tsx scripts/side-coach-smoke.ts",
     "debate-side-coach:smoke": "tsx scripts/debate-side-coach-smoke.ts",
     "deca-rubric:smoke": "tsx scripts/deca-rubric-smoke.ts",

@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { HosaEventPrep } from "@/components/training/hosa-event-prep";
-import { HosaRoleplaySetup } from "@/components/training/hosa-roleplay-setup";
 import { MunConference } from "@/components/training/mun-conference";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -47,15 +46,11 @@ export default async function TrackPracticePage({ params }: { params: { track: s
       ) : (
         <>
           {track.id === "DECA" ? <DecaRoleplaySetup /> : null}
-          {/* HOSA guided flow: the verified Medical Terminology exam (HosaEventPrep) is the flagship,
-              plus a clearly-labeled generic health-science role-play for the other categories. Neither
-              routes into the legacy /debate/[id] room — the generic TrackPracticeSetup launcher is gone. */}
-          {track.id === "HOSA" ? (
-            <>
-              <HosaEventPrep />
-              <HosaRoleplaySetup />
-            </>
-          ) : null}
+          {/* M11R6: HOSA practice here is the verified Medical Terminology exam and nothing else. The
+              generic health-science role-play that used to sit beside it invented patient scenarios
+              and scored them against no sourced rubric, so it was withdrawn. Events HOSA runs that
+              CompeteReady has not verified are NOT represented here — the Event Navigator says so. */}
+          {track.id === "HOSA" ? <HosaEventPrep /> : null}
         </>
       )}
     </div>

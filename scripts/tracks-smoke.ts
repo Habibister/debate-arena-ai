@@ -345,7 +345,17 @@ function main() {
   assert.ok(!competeSrc.includes('"Debate Now"'), "Compete no longer shows a track-generic 'Debate Now'");
   assert.ok(/GENERAL_DEBATE[\s\S]*?Full Debate Round[\s\S]*?\/debate\?track=/.test(competeSrc), "Compete Debate -> Full Debate Round at /debate");
   assert.ok(/DECA[\s\S]*?Guided DECA Role-Play[\s\S]*?\/training\/deca\/practice/.test(competeSrc), "Compete DECA opens the DECA role-play setup (not /debate)");
-  assert.ok(/HOSA[\s\S]*?Guided HOSA Role-Play[\s\S]*?\/training\/hosa\/practice/.test(competeSrc), "Compete HOSA opens the HOSA role-play setup (not /debate)");
+  // M11R6: the generic "Guided HOSA Role-Play" arena was withdrawn (it generated and scored patient
+  // interactions against no sourced rubric), so Compete now sends HOSA to its Event Navigator.
+  // Scan comment-stripped source: the comment explaining the withdrawal quotes the very strings
+  // these checks forbid, so an un-stripped scan would fail on the explanation itself.
+  const competeCode = competeSrc.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  assert.ok(!competeCode.includes("Guided HOSA Role-Play"), "Compete no longer offers a generic HOSA role-play arena");
+  assert.ok(!/coached patient interaction/i.test(competeCode), "and makes no coached-patient-interaction promise");
+  assert.ok(/HOSA[\s\S]*?Find your HOSA event[\s\S]*?\/training\/hosa\/events/.test(competeCode),
+    "Compete HOSA opens the HOSA Event Navigator instead");
+  assert.ok(/DECA[\s\S]*?Guided DECA Role-Play[\s\S]*?\/training\/deca\/practice/.test(competeCode),
+    "while DECA's own role-play arena is untouched");
   assert.ok(/Full HOSA Simulation[\s\S]*?comingSoon: true/.test(competeSrc), "HOSA Full Simulation is an honest coming-soon (it does not exist yet)");
   assert.ok(competeSrc.includes("Choose your track first"), "Compete fails closed to a track picker when no track is resolved");
   // The persistent track switcher only changes the active track — it never launches an activity/room.
@@ -1117,7 +1127,9 @@ function main() {
   // that is true, the hub must not tell learners HOSA practice is unavailable or unrecorded. If the
   // practice room is ever genuinely withdrawn, this check stops applying on its own.
   const m11r5PracticeRoute = m11r5Strip(readFileSync("app/(app)/training/[track]/practice/page.tsx", "utf8"));
-  const m11r5PracticeLives = /HosaEventPrep|HosaRoleplaySetup/.test(m11r5PracticeRoute);
+  // M11R6 narrowed this route to the verified Medical Terminology exam; that practice is still live
+  // and still recorded, so the hub's honesty contract below still applies.
+  const m11r5PracticeLives = /HosaEventPrep/.test(m11r5PracticeRoute);
   if (m11r5PracticeLives) {
     for (const falseClaim of [
       "Interactive HOSA practice is temporarily unavailable",

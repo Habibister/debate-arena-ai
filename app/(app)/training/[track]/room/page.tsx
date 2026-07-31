@@ -5,16 +5,24 @@ import { trackBySlug } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
-// Dedicated session room. Only the two role-play tracks have rooms; everyone else configures on the
-// practice page. DECA fetches its registry prep format for the simulation clocks. The actual session
-// config arrives client-side via sessionStorage (RoleplayRoom redirects back to setup if it's absent).
+// Dedicated session room. DECA is the ONLY track with a room: it fetches its registry prep format
+// for the simulation clocks, and the session config arrives client-side via sessionStorage
+// (RoleplayRoom redirects back to setup if it's absent).
+//
+// M11R6: HOSA is deliberately excluded. Its generic health-science role-play generated and scored
+// patient interactions with no sourced rubric behind them, so it was withdrawn. A direct hit on
+// /training/hosa/room must therefore fail CLOSED — before RoleplayRoom mounts, before any scenario,
+// turn or judging request, and without writing anything. HOSA lands on its Event Navigator, which
+// is a different route than this one, so no redirect loop is possible.
+const HOSA_ROOM_FALLBACK = "/training/hosa/events";
+
 export default async function RoleplayRoomPage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
   if (!track) notFound();
-  if (track.id !== "DECA" && track.id !== "HOSA") redirect(`/training/${params.track}/practice`);
+  if (track.id === "HOSA") redirect(HOSA_ROOM_FALLBACK);
+  if (track.id !== "DECA") redirect(`/training/${params.track}/practice`);
 
-  const kind = track.id === "DECA" ? "deca" : "hosa";
-  const officialPrep = kind === "deca" ? await getOfficialPrepFormat("DECA") : null;
+  const officialPrep = await getOfficialPrepFormat("DECA");
 
-  return <RoleplayRoom track={kind} officialPrep={officialPrep} />;
+  return <RoleplayRoom track="deca" officialPrep={officialPrep} />;
 }

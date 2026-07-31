@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { Gavel, History, MessageSquareText, PlayCircle, type LucideIcon } from "lucide-react";
+import { Compass, Gavel, History, MessageSquareText, PlayCircle, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -28,8 +28,11 @@ function competeDestinations(track: TrackInfo): Destination[] {
     ];
   }
   if (track.id === "HOSA") {
+    // M11R6: the generic "coached patient interaction" was withdrawn — it invented and scored patient
+    // scenarios with no sourced rubric behind them. HOSA now enters through its Event Navigator, and
+    // the verified event's own practice lives on that event's page rather than as a track-level CTA.
     return [
-      { label: "Guided HOSA Role-Play", detail: "A coached patient interaction: scenario → your response → feedback. Retry freely.", icon: MessageSquareText, href: "/training/hosa/practice" },
+      { label: "Find your HOSA event", detail: "HOSA events differ too much for one arena. Start from your exact event and train what it actually contains.", icon: Compass, href: "/training/hosa/events" },
       { label: "Full HOSA Simulation", detail: "A timed, scored professional interaction. Not built yet — coming soon.", icon: PlayCircle, comingSoon: true },
       { label: "History", detail: "Your past sessions and feedback.", icon: History, href: "/debates/history" }
     ];

@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import React, { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { HosaEventNavigator } from "../components/training/hosa-event-navigator";
 import { readFileSync } from "node:fs";
 // THE PRODUCTION REGISTRY — the same module the route and component import. No mirrored copy.
 import {
@@ -339,6 +342,32 @@ function main() {
   assert.equal(findHosaEvents("interview").length, 2, "search matches the family label too");
   assert.equal(findHosaEvents("zzzz").length, 0, "a no-match query returns nothing rather than a fallback");
   assert.equal(hosaEventsByFamily(findHosaEvents("zzzz")).length, 0, "and produces no family groups, so the empty state shows");
+
+  // ============ M11R7: the grouping shown while browsing is OURS, and says so there ============
+  {
+    (globalThis as { React?: unknown }).React = React;
+    const html = renderToStaticMarkup(createElement(HosaEventNavigator as never, {} as never) as never);
+    const text = html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
+    assert.ok(text.includes("CompeteReady training groups"),
+      "the browsing surface names its grouping as CompeteReady's");
+    assert.ok(/current official event guideline controls/.test(text),
+      "and says the learner's own guideline controls classification and requirements");
+    assert.ok(/not by HOSA(&#x27;|')?s own classification/.test(text.replace(/&#x27;/g, "'")),
+      "and disclaims HOSA's own taxonomy");
+    for (const officialLabel of ["Official category", "Official family", "HOSA category"]) {
+      assert.ok(!text.includes(officialLabel), `the grouping is never called "${officialLabel}"`);
+    }
+    // It must sit WITH the groups it describes, as rendered text — not metadata, not a tooltip.
+    const qualifierAt = html.indexOf("CompeteReady training groups");
+    const groupAt = html.indexOf("Knowledge test");
+    assert.ok(qualifierAt !== -1 && groupAt !== -1, "both the qualifier and its first group render");
+    assert.ok(qualifierAt < groupAt, "the qualifier renders immediately before the group list");
+    assert.ok(/>[^<]*CompeteReady training groups/.test(html), "and is visible text content");
+    // Non-vacuous control: the same scan rejects a fixture without the qualifier, and one that
+    // calls the grouping official.
+    assert.ok(!"Grouped for you".includes("CompeteReady training groups"), "control: a fixture missing the qualifier is rejected");
+    assert.ok("Official category — Knowledge test".includes("Official category"), "control: an official-category label is detected");
+  }
 
   console.log(
     "HOSA Navigator smoke passed: the HOSA branch of the shared Navigator route resolves only ?event= through the HOSA registry and fails closed. Exactly one event (Medical Terminology) is displayable as verified, carrying only the two facts the approved local record sources — 50 questions and 60 minutes, season 2025-26, verified 2026-07-05 — and every other field stays absent rather than defaulted. The other seven events are identity-only partial cards that expose no facts at all, and no Medical Terminology value reaches them. Unknown, blank, or malformed identifiers resolve to nothing: never the first entry, never a silent redirect, never another event. A record claiming verification without season, date, source label and at least one real fact degrades to partial. No room layout, patient portrayal, team size, timing, question count, round count, equipment list, tiebreaker, advancement rule or results timing is invented anywhere; families are labeled as CompeteReady's grouping, not an official taxonomy; association variation is stated for every event; and the September 1, 2026 gate is preserved as one dated expectation rather than an annual rule. The clinical-skill family routes only to the informational communication lesson with its scope statement, whose practice remains unavailable and mounts no hooks, storage or request. Debate and DECA are untouched, status is always words plus an icon, search is labeled and keyboard-operable, and nothing writes to a schema, API, mastery, progress, XP, rating or ballot."

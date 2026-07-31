@@ -115,7 +115,7 @@ const decaRoleplay: AvailableRoleplayLesson = {
     "It is NOT a speech and it is NOT a quiz. You are not reciting terms. You are advising a person, in character, and defending your advice when they push back. By the end of this lesson you'll know every step, the structure of a strong recommendation, and what your event's evaluation form is actually looking for."
   ],
   keyIdeas: [
-    { term: "Preparation time", plain: "A short window (often ~10 minutes) after you receive the scenario to plan before you meet the judge. You use it to find the problem and draft your recommendations — not to memorize a script. Exact preparation and presentation time depends on the selected DECA event; CompeteReady shows the current official timing for your event where it is sourced." },
+    { term: "Preparation time", plain: "The window after you receive the scenario to plan before you meet the judge. You use it to find the problem and draft your recommendations — not to memorize a script. How long it lasts is family-specific: 10 minutes in Individual Series, 30 minutes of team preparation in Team Decision Making, and other families differ. Your current official guideline for YOUR family controls the timing; CompeteReady shows it only where we have sourced it." },
     { term: "The participant (you)", plain: "The role you are told to play — e.g. the front-desk manager. Everything you say should sound like that person doing that job, not like a student giving a presentation." },
     { term: "The judge's role", plain: "The judge plays an assigned character (a guest, an owner, your boss). Speak TO that character. Read who they are before you plan what to say." },
     { term: "Performance indicators (PIs)", plain: "The specific skills the scenario says you must demonstrate — e.g. 'explain the nature of customer service' or 'handle guest complaints.' You must SHOW each one in action, not just name it. They are on your card; they are not announced ahead of time." },
@@ -139,6 +139,10 @@ const decaRoleplay: AvailableRoleplayLesson = {
     "Close persuasively",
     "Receive your score sheet"
   ],
+  // M11R7: this sequence stays UNLABELLED and un-caveated — M11R3 established it as the sourced event
+  // structure rather than CompeteReady's teaching order, and gave it no note. It carries no minutes,
+  // so four families can share it honestly; the timing itself is scoped where it is stated, in the
+  // "Preparation time" key idea and in the Individual Series prep example below.
   framework: {
     name: "CompeteReady's five-part recommendation scaffold",
     steps: [
@@ -155,8 +159,8 @@ const decaRoleplay: AvailableRoleplayLesson = {
     text: "You are the front-desk manager at a busy hotel. A loyalty-program guest reserved a specific suite months ago for an anniversary, but the hotel overbooked and the suite is no longer available tonight. The judge is playing that guest, who has just arrived and is upset. Recommend how to handle this guest AND how to reduce overbooking problems going forward. Performance indicators: handle a guest complaint; explain the role of customer service in retention."
   },
   prepOutline: {
-    title: "What a 10-minute prep looks like",
-    note: "Budget the time before you use it, and write cues rather than sentences — usually a few words per cue. You cannot read an essay while holding a conversation, and note bloat (not misunderstanding the card) is the usual reason a prep period runs out. This layout is CompeteReady's habit, not a format DECA requires.",
+    title: "What a 10-minute prep looks like — Individual Series",
+    note: "The 10 minutes budgeted here are the Individual Series preparation period — the only role-play family our record sources a 10-minute prep for. Team Decision Making prepares for 30 minutes; Principles of Business Administration and Personal Financial Literacy timing is not in our record at all. Read the shape, not the clock, unless you compete in Individual Series. Budget the time before you use it, and write cues rather than sentences — usually a few words per cue. You cannot read an essay while holding a conversation, and note bloat (not misunderstanding the card) is the usual reason a prep period runs out. This layout is CompeteReady's habit, not a format DECA requires.",
     items: [
       "0–2 min — read and mark the card. Role: front-desk manager. Judge: the upset anniversary guest. (Speak to HER, warmly.)",
       "2–4 min — problem in one sentence + PIs as actions. Problem: loyalty guest's promised suite gone — service failure, retention at risk. PI cues: 'recover THIS guest' · 'service → retention'.",

@@ -310,6 +310,17 @@ export function DecaEventNavigator({
             </p>
           </div>
 
+          {/* M11R7: the scope headings below (role-play / prepared / written / online) are OURS — a
+              training sort, not DECA's published taxonomy. Say so where the learner is browsing. */}
+          <div>
+            <p className="rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+              The headings below are{" "}
+              <span className="font-medium text-foreground">CompeteReady training groups</span> — we sort families by
+              how they are trained, not by DECA&apos;s own classification. Your current official event guideline controls
+              your event&apos;s official classification and its requirements.
+            </p>
+          </div>
+
           {groups.length === 0 ? (
             <EmptyState
               icon={Search}

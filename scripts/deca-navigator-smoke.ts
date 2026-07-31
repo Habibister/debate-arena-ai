@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { DecaEventNavigator } from "../components/training/deca-event-navigator";
 import { readFileSync } from "node:fs";
 // THE PRODUCTION REGISTRIES — the same modules the route and components import. No mirrored copy.
 import {
@@ -26,7 +27,7 @@ import {
 import { hosaEventById, presentHosaEvent, HOSA_EVENTS } from "../lib/hosa-events";
 import { formatVerifiedDate, presentSourceFreshness } from "../lib/source-freshness";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
-import React from "react";
+import React, { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 // Renders the REAL route so the absence contract is checked against learner-facing output, not only
@@ -392,6 +393,32 @@ function main() {
   }
   for (const f of DECA_FAMILIES) assert.ok(decaScope(f.scope), `${f.name} maps to a declared scope`);
   assert.equal(DECA_SCOPES.length, 5, "all five scopes are declared");
+
+  // ============ M11R7: the grouping shown while browsing is OURS, and says so there ============
+  {
+    (globalThis as { React?: unknown }).React = React;
+    const html = renderToStaticMarkup(createElement(DecaEventNavigator as never, {} as never) as never);
+    const text = html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
+    assert.ok(text.includes("CompeteReady training groups"),
+      "the browsing surface names its grouping as CompeteReady's");
+    assert.ok(/current official event guideline controls/.test(text),
+      "and says the learner's own guideline controls classification and requirements");
+    assert.ok(/not by DECA(&#x27;|')?s own classification/.test(text.replace(/&#x27;/g, "'")),
+      "and disclaims DECA's own taxonomy");
+    for (const officialLabel of ["Official category", "Official family", "DECA category"]) {
+      assert.ok(!text.includes(officialLabel), `the grouping is never called "${officialLabel}"`);
+    }
+    // It must sit WITH the groups it describes, as rendered text — not metadata, not a tooltip.
+    const qualifierAt = html.indexOf("CompeteReady training groups");
+    const groupAt = html.indexOf("Role-play");
+    assert.ok(qualifierAt !== -1 && groupAt !== -1, "both the qualifier and its first group render");
+    assert.ok(qualifierAt < groupAt, "the qualifier renders immediately before the group list");
+    assert.ok(/>[^<]*CompeteReady training groups/.test(html), "and is visible text content");
+    // Non-vacuous control: the same scan rejects a fixture without the qualifier, and one that
+    // calls the grouping official.
+    assert.ok(!"Grouped for you".includes("CompeteReady training groups"), "control: a fixture missing the qualifier is rejected");
+    assert.ok("Official category — Role-play".includes("Official category"), "control: an official-category label is detected");
+  }
 
   console.log(
     "DECA Navigator smoke passed: /training/deca/events renders its own registry and component, /training/hosa/events is unchanged, and every other track still 404s — HOSA reads ?event=, DECA reads ?family=, and neither identifier resolves in the other. Individual Series' 100q/10/10, five PIs, materials and visual-aid rules stay Series facts and reach no other family; PBA carries only its four Business Administration Core PIs and its eligibility wording, with 'recommended beginner pathway' labeled as CompeteReady's inference; TDM shows 30/15, both members speaking and averaged exams while displaying NO weighting and naming the unresolved Guide-versus-sample conflict; PSC's no-scripted-questions wording is exact and it is not routed into the role-play course while our record places it both ways. No one-third formula, no percentage weighting, no 'conversational questions', no universal interruption or question penalty, no instruction to say PI names aloud, no claim that woven delivery is superior, and no D-E-C-A framework. Prepared, written and online families carry no role-play facts and route to the DECA hub, never the lesson. Unknown, blank, repeated and malformed identifiers select nothing; a record claiming verification without full provenance degrades and leaks nothing. Association variation is stated for every family, status is words plus an icon, search is labeled and keyboard-operable, every fact renders from the registry, and nothing writes to a schema, API, storage, mastery, XP, rating or ballot. HOSA's single verified event, fail-closed lookups and withdrawn practice are all intact."

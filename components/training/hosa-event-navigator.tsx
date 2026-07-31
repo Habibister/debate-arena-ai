@@ -276,6 +276,17 @@ export function HosaEventNavigator({
             </p>
           </div>
 
+          {/* M11R7: the group headings below are OURS. That qualifier previously lived only on the
+              selected-event card, which a learner browsing the list may never open — so it now sits
+              directly above the groups it describes. */}
+          <div>
+            <p className="rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+              The groups below are <span className="font-medium text-foreground">CompeteReady training groups</span> —
+              we group events by how they are trained, not by HOSA&apos;s own classification. Your current official event
+              guideline controls your event&apos;s official classification and its requirements.
+            </p>
+          </div>
+
           {groups.length === 0 ? (
             <EmptyState
               icon={Search}

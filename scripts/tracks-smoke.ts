@@ -43,6 +43,7 @@ import React, { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import TrackHubPage from "../app/(app)/training/[track]/page";
 import { HosaEventNavigator, unresolvedHosaFamilyState } from "../components/training/hosa-event-navigator";
+import { DecaEventNavigator } from "../components/training/deca-event-navigator";
 import LessonsIndexPage from "../app/(app)/lessons/page";
 import { resolveHosaFamilyDestination } from "../lib/hosa-events";
 import type { AvailableRoleplayLesson, UnavailableRoleplayLesson } from "../lib/roleplay-lessons";
@@ -414,7 +415,12 @@ function main() {
     assert.ok(hosaText.includes("patient") && hosaText.includes("rating sheet") && !hosaText.includes("performance indicator"), "HOSA lesson uses HOSA method (patient/rating sheet/boundaries), never DECA PI language");
     // DECA content fixes: the weak-example typo is gone; timing defers to the selected event.
     assert.ok(decaText.includes("late checkout") && !decaText.includes("a later start would really help"), "DECA weak example uses a relevant intentionally weak line (typo fixed)");
-    assert.ok(decaText.includes("depends on the selected deca event"), "DECA timing defers to the selected event's current official timing");
+    // M11R7 strengthened this: deferring to "the selected DECA event" was true but unlabeled, so the
+    // shared lesson now names WHICH family each sourced clock belongs to and defers to the learner's
+    // own family guideline. The assertion follows the stronger wording.
+    assert.ok(decaText.includes("family-specific"), "DECA timing is presented as family-specific");
+    assert.ok(decaText.includes("your current official guideline for your family controls the timing"),
+      "DECA timing defers to the learner's own family guideline");
     // ===== M3: HOSA clinic-privacy scenario DISABLED BY DEFAULT (no clinical/legal approval) =====
     // Everything the scenario carried is gone together — nothing orphaned, nothing reachable.
     assert.equal(hosaLesson.practiceStatus, "temporarily-unavailable", "HOSA lesson is explicitly marked temporarily unavailable (not merely missing content)");
@@ -1201,7 +1207,119 @@ function main() {
     assert.ok(!m11r5HubSrc.includes(forbidden), `the track hub adds no ${forbidden}`);
   }
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect), PLUS M11R5 (HOSA lesson absence scoped to our research record, lessons index promising only what exists via a status-derived per-card notice, and a HOSA hub that states unavailability non-interactively with real event-browsing and lesson recovery while Debate and DECA keep their practice CTAs).");
+  // ============ M11R7: DECA timing scope and training-grouping honesty ============
+  // ---- Finding 1: no unlabeled ten-minute claim in a lesson four families share ----
+  const m11r7Lesson = getRoleplayLesson("how-deca-roleplay-works")!;
+  const m11r7Families = DECA_FAMILIES.filter((f) => f.routeTarget === `/lessons/${m11r7Lesson.slug}`);
+  assert.equal(m11r7Families.length, 4, "1. four DECA families still route to this shared lesson");
+  // Only Individual Series carries a sourced 10-minute preparation; the others must not inherit it.
+  const m11r7Series = decaFamilyById("individual-series")!;
+  assert.equal((m11r7Series.verifiedFacts as { preparationMinutes?: number }).preparationMinutes, 10,
+    "4. Individual Series is the family our record sources a 10-minute prep for");
+  for (const id of ["principles-of-business-administration", "personal-financial-literacy"]) {
+    const facts = decaFamilyById(id)!.verifiedFacts as { preparationMinutes?: number };
+    assert.equal(facts.preparationMinutes, undefined, `6/7. ${id} carries no preparation timing`);
+  }
+  assert.equal((decaFamilyById("team-decision-making")!.verifiedFacts as { preparationMinutes?: number }).preparationMinutes, 30,
+    "5. Team Decision Making keeps its own sourced 30-minute preparation");
+  // Every rendered ten-minute statement must sit next to an Individual Series label.
+  const m11r7Text = JSON.stringify(m11r7Lesson);
+  const m11r7TenMinute = m11r7Text.split(/(?<=\.)\s+/).filter((x) => /\b10[- ]minute|\b10 minutes|8–10 min|~10 min/.test(x));
+  assert.ok(m11r7TenMinute.length > 0, "2a. the lesson still teaches a preparation budget at all");
+  assert.ok(m11r7Lesson.practiceStatus === "available" && m11r7Lesson.prepOutline.title.includes("Individual Series"),
+    "3. the ten-minute prep outline is labelled Individual Series in its own title");
+  assert.ok(/Individual Series/.test(m11r7Lesson.prepOutline.note ?? ""),
+    "3b. and its note repeats which family that clock belongs to");
+  assert.ok(/Team Decision Making prepares for 30 minutes/.test(m11r7Lesson.prepOutline.note ?? ""),
+    "5b. while naming TDM's own sourced timing rather than implying it matches");
+  assert.ok(/not in our record/.test(m11r7Lesson.prepOutline.note ?? ""),
+    "9. and saying plainly where we have no timing");
+  // 2 — the shared step list carries no minutes at all, and says timing varies.
+  for (const step of m11r7Lesson.timeline) {
+    assert.ok(!/\d+\s*(min|minute)/i.test(step), `2b. no shared timeline step states minutes ("${step}")`);
+  }
+  // The DECA sequence itself stays sourced, unlabelled and un-caveated (M11R3), so the "timing
+  // varies" statement lives where the timing is actually stated: the Preparation time key idea.
+  assert.equal(m11r7Lesson.timelineNote, undefined, "2c. the sourced DECA sequence still carries no caveat");
+  const m11r7PrepIdea = m11r7Lesson.keyIdeas.find((k) => /preparation time/i.test(k.term));
+  assert.ok(m11r7PrepIdea, "10a. the lesson still defines preparation time");
+  assert.ok(/family-specific/.test(m11r7PrepIdea!.plain), "10. the lesson says timing is family-specific");
+  assert.ok(/Your current official guideline for YOUR family controls the timing/.test(m11r7PrepIdea!.plain),
+    "10b. and names the controlling source");
+  assert.ok(/10 minutes in Individual Series/.test(m11r7PrepIdea!.plain) &&
+    /30 minutes of team preparation in Team Decision Making/.test(m11r7PrepIdea!.plain),
+    "4b/5c. naming each sourced clock with its own family");
+  // 8 — PSC gets no timing anywhere, and stays unresolved.
+  const m11r7Psc = decaFamilyById("professional-selling-and-consulting")!;
+  assert.equal(m11r7Psc.sourceStatus, "unresolved", "8. PSC remains unresolved");
+  assert.equal((m11r7Psc.verifiedFacts as { preparationMinutes?: number }).preparationMinutes, undefined,
+    "8b. and carries no preparation timing");
+  assert.ok(!/Professional Selling[^"]{0,90}minute/i.test(m11r7Text), "8c. and the lesson claims none for it");
+  // 11/12/13 — the supported facts this pass must not disturb.
+  assert.ok(/present uninterrupted/i.test(JSON.stringify(m11r7Series.verifiedFacts)), "11. question-flow facts intact");
+  assert.ok(/Five Performance Indicators per role-play/.test(JSON.stringify(m11r7Series.verifiedFacts)),
+    "12. performance-indicator facts intact");
+  assert.ok((decaFamilyById("team-decision-making")!.unresolvedFields ?? []).some((f) => /Exam weighting/i.test(f)),
+    "13. TDM weighting remains unresolved");
+  assert.ok(!/examWeighting.{0,10}:\s*\d/.test(JSON.stringify(decaFamilyById("team-decision-making")!.verifiedFacts)),
+    "13b. and absent as a figure");
+
+  // ---- Finding 2: both browsing surfaces name the grouping as ours, where it is browsed ----
+  const m11r7Browse = (Nav: unknown) =>
+    visibleTextOf(renderToStaticMarkup(createElement(Nav as never, {} as never) as never));
+  const m11r7Deca = m11r7Browse(DecaEventNavigator);
+  const m11r7Hosa = m11r7Browse(HosaEventNavigator);
+  for (const [label, text, other] of [["DECA", m11r7Deca, "DECA"], ["HOSA", m11r7Hosa, "HOSA"]] as const) {
+    assert.ok(text.includes("CompeteReady training groups"), `14/15. the ${label} browsing surface names the grouping as ours`);
+    assert.ok(/current official event guideline controls/.test(text),
+      `16. and says the ${label} learner's own guideline controls classification and requirements`);
+    assert.ok(new RegExp(`not by ${other}(&#x27;|')?s own classification`).test(text.replace(/&#x27;/g, "'")),
+      `17a. and disclaims ${label}'s own taxonomy explicitly`);
+    for (const officialLabel of ["Official category", "Official family", "DECA category", "HOSA category"]) {
+      assert.ok(!text.includes(officialLabel), `17. the ${label} surface never calls the grouping "${officialLabel}"`);
+    }
+  }
+  // 18/19 — the qualifier is in the rendered browsing content, not metadata, and sits with the groups.
+  const m11r7DecaHtml = renderToStaticMarkup(createElement(DecaEventNavigator as never, {} as never) as never);
+  const m11r7HosaHtml = renderToStaticMarkup(createElement(HosaEventNavigator as never, {} as never) as never);
+  for (const [label, html, firstGroup] of [
+    ["DECA", m11r7DecaHtml, "Role-play"], ["HOSA", m11r7HosaHtml, "Knowledge test"]
+  ] as const) {
+    const qualifierAt = html.indexOf("CompeteReady training groups");
+    const groupAt = html.indexOf(firstGroup);
+    assert.ok(qualifierAt !== -1 && groupAt !== -1, `18a. ${label}: both the qualifier and its groups render`);
+    assert.ok(qualifierAt < groupAt, `18. ${label}: the qualifier renders immediately before the group list`);
+    assert.ok(!/aria-label="[^"]*CompeteReady training groups/.test(html) || html.split("CompeteReady training groups").length > 2,
+      `19. ${label}: the qualifier is visible text, not only an aria-label`);
+    assert.ok(/>[^<]*CompeteReady training groups/.test(html), `19b. ${label}: it is rendered as text content`);
+  }
+  // 20/21 — nothing about identity or membership moved.
+  assert.deepEqual(DECA_FAMILIES.map((f) => f.id).slice(0, 4),
+    ["individual-series", "principles-of-business-administration", "personal-financial-literacy", "team-decision-making"],
+    "20/21. DECA registry ids and ordering are unchanged");
+  assert.equal(hosaEventById("medical-terminology")!.routeTarget, "/training/hosa/event/medical-terminology",
+    "23. Medical Terminology remains directly reachable");
+  assert.equal(decaFamilyById("professional-selling-and-consulting")!.routeTarget, "/training/deca",
+    "24. PSC still routes to the hub rather than the role-play lesson");
+  for (const id of ["prepared-events", "written-events", "online-events"]) {
+    assert.notEqual(decaFamilyById(id)!.routeTarget, `/lessons/${m11r7Lesson.slug}`,
+      `25. ${id} stays out of role-play scope`);
+  }
+
+  // ---- Non-vacuous controls: each check must reject the pre-fix shape ----
+  assert.ok("What a 10-minute prep looks like".includes("10-minute") &&
+    !"What a 10-minute prep looks like".includes("Individual Series"),
+    "control: an unlabeled shared ten-minute title is detectable as unlabeled");
+  assert.ok(m11r7Lesson.prepOutline.title.includes("10-minute") && m11r7Lesson.prepOutline.title.includes("Individual Series"),
+    "control: the same timing labelled Individual Series is accepted");
+  assert.ok(["Official category", "Official family"].some((l) => "Official category — Role-play".includes(l)),
+    "control: a grouping called an official category is rejected");
+  assert.ok(!"Role-play families sorted for you".includes("CompeteReady training groups"),
+    "control: removing the qualifier from a fixture trips the check");
+  assert.ok(decaFamilyById("individual-series") && hosaEventById("medical-terminology"),
+    "control: a known DECA family and a known HOSA event still resolve");
+
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect), PLUS M11R7 (DECA timing scoped to the family our record sources it for, with a clock-free shared timeline, and both browsing surfaces naming their groupings as CompeteReady training groups), PLUS M11R5 (HOSA lesson absence scoped to our research record, lessons index promising only what exists via a status-derived per-card notice, and a HOSA hub that states unavailability non-interactively with real event-browsing and lesson recovery while Debate and DECA keep their practice CTAs).");
 }
 
 main();

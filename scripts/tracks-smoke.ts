@@ -33,6 +33,7 @@ import { AUTHORED_LESSONS, getLesson } from "../lib/lessons";
 import { DRILL_AREAS } from "../lib/debate-drills";
 import { weakAreasForTrack } from "../lib/track-recommendations";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
+import type { AvailableRoleplayLesson, UnavailableRoleplayLesson } from "../lib/roleplay-lessons";
 import type { Organization } from "@prisma/client";
 
 function main() {
@@ -350,35 +351,88 @@ function main() {
     // DECA Learn begins with lesson 0; HOSA sits BENEATH the Event Navigator (no universal
     // role-play claim — HOSA has many event formats).
     assert.ok(decaLesson.courseMap[0].includes("How a DECA Role-Play Works"), "DECA Performance Course begins with 'How a DECA Role-Play Works'");
-    assert.equal(hosaLesson.title, "How a HOSA Scenario Interaction Works", "HOSA pilot renamed — scenario interaction, not universal role-play");
+    // M3: HOSA lesson retitled to the corrected scope. Slug/lesson ID deliberately UNCHANGED.
+    assert.equal(hosaLesson.title, "Patient Communication in HOSA Clinical Skill Events", "HOSA lesson retitled — communication layer inside clinical skill events");
+    assert.equal(hosaLesson.slug, "how-hosa-scenario-interaction-works", "HOSA lesson ID (slug) preserved across the M3 retitle");
+    assert.ok(!/scenario interaction/i.test(hosaLesson.title) && !/scenario interaction/i.test(hosaLesson.subtitle), "the withdrawn 'scenario interaction' framing is gone from the learner-facing title/subtitle");
     assert.ok(hosaLesson.courseMap[0].includes("HOSA Event Navigator"), "HOSA course map begins with the Event Navigator");
-    assert.ok(hosaLesson.courseMap[1].includes("How a HOSA Scenario Interaction Works"), "HOSA pilot sits beneath the Event Navigator");
-    assert.equal(hosaLesson.courseMapCurrentIndex, 1, "HOSA pilot marks itself (not the Navigator) as the current lesson");
-    assert.ok(hosaLesson.intro[0].includes("written tests, presentations, clinical skill performances"), "HOSA lesson opens by naming HOSA's many event formats");
+    assert.ok(hosaLesson.courseMap[1].includes("Patient Communication in HOSA Clinical Skill Events"), "HOSA lesson sits beneath the Event Navigator under its corrected title");
+    assert.equal(hosaLesson.courseMapCurrentIndex, 1, "HOSA lesson marks itself (not the Navigator) as the current lesson");
+    assert.ok(hosaLesson.intro[0].includes("written tests, clinical skill performances"), "HOSA lesson opens by naming HOSA's many event formats");
+    // The lesson is scoped to the communication LAYER and disclaims complete-event readiness.
+    const hosaIntro = hosaLesson.intro.join(" ");
+    assert.ok(/no separate 'patient conversation' event/i.test(hosaIntro), "HOSA lesson states there is no standalone patient-conversation event");
+    assert.ok(/does not teach the physical clinical skill/i.test(hosaIntro) && /does not make you ready for your complete event/i.test(hosaIntro), "HOSA lesson disclaims teaching the physical skill and complete-event readiness");
     for (const l of [decaLesson, hosaLesson]) {
-      // A complete worked role-play (weak + strong, annotated) — not only definitions.
-      assert.ok(l.weakExample.lines.length >= 3 && l.strongExample.lines.length >= 4, "complete weak + strong worked role-play");
-      assert.ok(l.strongExample.lines.filter((ln) => ln.note).length >= 3, "worked role-play has line-by-line annotations");
-      // Interactive learner responses (identify + a written response + an in-character follow-up).
-      assert.ok(l.practice.identify.length >= 3 && l.practice.write.rubric.length >= 3 && l.practice.followUp.question.length > 0, "interactive practice: identify + write + follow-up");
       // Ends with exactly one clear next lesson, and it is NOT terminology.
       assert.ok(l.nextLesson.label.length > 0 && !/terminolog/i.test(l.nextLesson.label), "ends with one next lesson that is not terminology");
       assert.ok(!l.supportingLink || /optional/i.test(l.supportingLink.note), "terminology (if present) is optional support, not the required path");
+      // A lesson may never define interactive practice without the scenario its payload depends on.
+      assert.ok(!l.practice || !!l.scenario, "practice is never defined without the scenario its Side Coach payload requires");
+    }
+    // ===== M3A: practice availability is an EXPLICIT, discriminated state =====
+    // DECA is explicitly available, and the discriminant narrows the type so every scenario-dependent
+    // field is reachable without a non-null assertion — that is the point of the union.
+    assert.equal(decaLesson.practiceStatus, "available", "DECA lesson is explicitly marked available");
+    if (decaLesson.practiceStatus === "available") {
+      assert.ok(decaLesson.scenario.title.length > 0 && decaLesson.scenario.text.length > 0, "DECA retains its complete scenario");
+      assert.ok(decaLesson.prepOutline.items.length >= 3, "DECA retains its preparation outline");
+      assert.ok(decaLesson.weakExample.lines.length >= 3 && decaLesson.strongExample.lines.length >= 4, "DECA retains a complete weak + strong worked role-play");
+      assert.ok(decaLesson.strongExample.lines.filter((ln) => ln.note).length >= 3, "DECA worked role-play has line-by-line annotations");
+      assert.ok(decaLesson.practice.identify.length >= 3 && decaLesson.practice.write.rubric.length >= 3 && decaLesson.practice.followUp.question.length > 0, "DECA retains dual-response practice: identify + write + follow-up");
+      assert.equal(decaLesson.practiceUnavailable, undefined, "an available lesson carries no unavailable notice");
     }
     // Track-specific method + vocabulary — no generic cross-track language.
     const decaText = JSON.stringify(decaLesson).toLowerCase();
     const hosaText = JSON.stringify(hosaLesson).toLowerCase();
     assert.ok(decaText.includes("performance indicator") && decaText.includes("recommendation") && !decaText.includes("patient"), "DECA lesson uses DECA method (PIs/recommendations), never patient language");
-    assert.ok(hosaText.includes("patient") && hosaText.includes("empathy") && !hosaText.includes("performance indicator"), "HOSA lesson uses HOSA method (patient/empathy/boundaries), never DECA PI language");
+    assert.ok(hosaText.includes("patient") && hosaText.includes("rating sheet") && !hosaText.includes("performance indicator"), "HOSA lesson uses HOSA method (patient/rating sheet/boundaries), never DECA PI language");
     // DECA content fixes: the weak-example typo is gone; timing defers to the selected event.
     assert.ok(decaText.includes("late checkout") && !decaText.includes("a later start would really help"), "DECA weak example uses a relevant intentionally weak line (typo fixed)");
     assert.ok(decaText.includes("depends on the selected deca event"), "DECA timing defers to the selected event's current official timing");
-    // HOSA privacy honesty: the strong example gives no absolute legal assurances and refers
-    // case-specific rules to qualified staff; the rubric scores exactly that.
-    const hosaStrong = JSON.stringify(hosaLesson.strongExample).toLowerCase();
-    assert.ok(!hosaStrong.includes("only with the care team") && !hosaStrong.includes("without your written permission") && !hosaStrong.includes("doesn't get reported"), "HOSA strong example makes no absolute privacy guarantees");
-    assert.ok(hosaStrong.includes("generally protected") && hosaStrong.includes("privacy officer"), "HOSA strong example explains generally and refers specifics to qualified staff");
-    assert.ok(hosaLesson.practice.write.rubric.some((r) => /absolute promises/i.test(r)) && hosaLesson.practice.write.rubric.some((r) => /qualified staff/i.test(r)), "HOSA rubric scores avoiding absolute promises + referring to qualified staff");
+    // ===== M3: HOSA clinic-privacy scenario DISABLED BY DEFAULT (no clinical/legal approval) =====
+    // Everything the scenario carried is gone together — nothing orphaned, nothing reachable.
+    assert.equal(hosaLesson.practiceStatus, "temporarily-unavailable", "HOSA lesson is explicitly marked temporarily unavailable (not merely missing content)");
+    assert.equal(hosaLesson.scenario, undefined, "HOSA clinic-privacy scenario is removed");
+    assert.equal(hosaLesson.prepOutline, undefined, "HOSA scenario prep outline is removed with it");
+    assert.equal(hosaLesson.weakExample, undefined, "HOSA privacy weak worked example is removed");
+    assert.equal(hosaLesson.strongExample, undefined, "HOSA privacy strong worked example is removed");
+    assert.equal(hosaLesson.practice, undefined, "HOSA interactive practice (identify/write/follow-up/rubric) is removed");
+    // No privacy/legal content survives anywhere in the lesson payload.
+    for (const banned of ["privacy officer", "generally protected", "hipaa", "covered entit", "employer finding out", "medical information"]) {
+      assert.ok(!hosaText.includes(banned), `withdrawn privacy content absent from the HOSA lesson: ${banned}`);
+    }
+    // The learner sees an honest unavailable state that claims no completion.
+    if (hosaLesson.practiceStatus === "temporarily-unavailable") {
+      assert.ok(/temporarily unavailable/i.test(hosaLesson.practiceUnavailable.title), "unavailable notice is stated plainly to the learner");
+      assert.ok(!/legal|lawyer|counsel|liabilit/i.test(hosaLesson.practiceUnavailable.message), "unavailable notice does not expose internal review details");
+    }
+    // ===== M3A compile-time guarantee =====
+    // These are checked by `tsc --noEmit`, not at runtime. Each @ts-expect-error FAILS THE BUILD if
+    // the annotated line stops being an error — i.e. if the type ever starts accepting a malformed
+    // lesson. That is what makes "incomplete available lesson" a compile error rather than something
+    // that silently renders like an intentionally withdrawn one.
+    {
+      // An "available" lesson missing its scenario/examples/practice must NOT type-check.
+      // @ts-expect-error - an available lesson requires scenario, prepOutline, weakExample, strongExample and practice
+      const missingContent: AvailableRoleplayLesson = { ...hosaLesson, practiceStatus: "available" as const, practiceUnavailable: undefined };
+      void missingContent;
+      // A withdrawn lesson must NOT be able to carry scenario content.
+      // @ts-expect-error - scenario is forbidden on the temporarily-unavailable variant
+      const withdrawnWithScenario: UnavailableRoleplayLesson = { ...hosaLesson, scenario: { title: "x", text: "y" } };
+      void withdrawnWithScenario;
+      // A withdrawn lesson must carry a learner-facing message (it is required, not optional).
+      // @ts-expect-error - practiceUnavailable is required on the temporarily-unavailable variant
+      const withdrawnWithoutNotice: UnavailableRoleplayLesson = { ...hosaLesson, practiceUnavailable: undefined };
+      void withdrawnWithoutNotice;
+    }
+    // Corrected HOSA safety wording: the rejected sentence never appears; the official distinction does.
+    assert.ok(!/never real procedures on real people/i.test(hosaText), "rejected HOSA safety sentence is absent");
+    assert.ok(hosaText.includes("manikins, training arms, or medication trainers") && hosaText.includes("live patient or an actor"), "HOSA lesson states the official simulation-equipment vs live-patient distinction");
+    assert.ok(/policy, not a hosa rule/i.test(hosaText), "supervision guidance is labelled CompeteReady policy, not a HOSA rule");
+    assert.ok(/does not create clinical readiness/i.test(hosaText) || /not create clinical readiness/i.test(hosaText), "HOSA lesson denies that app practice creates clinical readiness");
+    // Verbalization nuance is taught, not the community oversimplification.
+    assert.ok(/does not replace performing it/i.test(hosaText), "HOSA lesson teaches that verbalization does not replace required action");
   }
   // Interactive practice reuses the Side Coach route; no mastery/record/scoring pipeline; retries on failure.
   const rpPractice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
@@ -397,9 +451,12 @@ function main() {
   assert.ok(/disabled=\{wordCount\(writeText\) < MIN_RESPONSE_WORDS\}/.test(rpPractice) && /disabled=\{busy \|\| wordCount\(writeText\) < MIN_RESPONSE_WORDS \|\| wordCount\(followText\) < MIN_RESPONSE_WORDS\}/.test(rpPractice), "short/nonsense responses cannot unlock the follow-up or coaching");
   // The authored DECA/HOSA rubrics themselves are unchanged by C5C1a.
   if (decaLesson && hosaLesson) {
-    assert.equal(decaLesson.practice.write.rubric.length, 4, "DECA rubric still has its 4 authored items");
-    assert.equal(hosaLesson.practice.write.rubric.length, 5, "HOSA rubric still has its 5 authored items");
-    assert.ok(decaLesson.practice.write.rubric[0].includes("specific recommendation") && hosaLesson.practice.write.rubric[0].includes("Acknowledges the patient's concern"), "rubric content passed through unchanged");
+    if (decaLesson.practiceStatus === "available") {
+      assert.equal(decaLesson.practice.write.rubric.length, 4, "DECA rubric still has its 4 authored items");
+      assert.ok(decaLesson.practice.write.rubric[0].includes("specific recommendation"), "DECA rubric content passed through unchanged");
+    }
+    // M3: the HOSA rubric is withdrawn with its scenario — no orphaned rubric remains active.
+    assert.equal(hosaLesson.practice, undefined, "no HOSA rubric remains active after the scenario withdrawal");
   }
   // ===== end C5C1a =====
   // Integrity: a 200-with-fallback (`unavailable: true`) is treated as a FAILED coaching request —

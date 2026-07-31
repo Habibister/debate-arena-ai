@@ -11,7 +11,8 @@
 
 export type RolePlayLine = { speaker: string; text: string; note?: string };
 
-export type RoleplayLesson = {
+// Teaching content every role-play lesson has, whether or not its interactive practice is live.
+type RoleplayLessonBase = {
   slug: string;
   track: "deca" | "hosa";
   organization: "DECA" | "HOSA";
@@ -25,24 +26,7 @@ export type RoleplayLesson = {
   keyIdeas: Array<{ term: string; plain: string }>;
   timeline: string[];
   framework: { name: string; steps: string[]; note: string };
-  scenario: { title: string; text: string };
-  prepOutline: { title: string; note: string; items: string[] };
-
-  weakExample: { title: string; lines: RolePlayLine[] };
-  strongExample: { title: string; lines: RolePlayLine[] };
-
   commonMistakes: Array<{ title: string; explanation: string }>;
-
-  // Interactive practice. `identify` steps are deterministic (authored answers). `write` collects the
-  // learner's own sentence; `followUp` is the authored in-character question they then answer. The
-  // rubric is what the Side Coach validates the learner's wording against. The coach analyzes the
-  // learner's response — it never role-plays the character (that stays authored).
-  practice: {
-    intro: string;
-    identify: Array<{ prompt: string; choices: string[]; correct: string; explanation: string }>;
-    write: { instruction: string; placeholder: string; rubric: string[] };
-    followUp: { speaker: string; question: string; note: string };
-  };
 
   provenanceNote: string;
   supportingLink?: { label: string; note: string };
@@ -53,7 +37,51 @@ export type RoleplayLesson = {
   courseMapCurrentIndex?: number;
 };
 
-const decaRoleplay: RoleplayLesson = {
+// Interactive practice. `identify` steps are deterministic (authored answers). `write` collects the
+// learner's own sentence; `followUp` is the authored in-character question they then answer. The
+// rubric is what the Side Coach validates the learner's wording against. The coach analyzes the
+// learner's response — it never role-plays the character (that stays authored).
+type RoleplayPractice = {
+  intro: string;
+  identify: Array<{ prompt: string; choices: string[]; correct: string; explanation: string }>;
+  write: { instruction: string; placeholder: string; rubric: string[] };
+  followUp: { speaker: string; question: string; note: string };
+};
+
+// A lesson whose interactive practice is LIVE. Every scenario-dependent piece is REQUIRED here, so
+// an incomplete "available" lesson is a compile error — it can never silently degrade into the
+// unavailable state, which is reserved for a deliberate editorial decision.
+export type AvailableRoleplayLesson = RoleplayLessonBase & {
+  practiceStatus: "available";
+  scenario: { title: string; text: string };
+  prepOutline: { title: string; note: string; items: string[] };
+  weakExample: { title: string; lines: RolePlayLine[] };
+  strongExample: { title: string; lines: RolePlayLine[] };
+  practice: RoleplayPractice;
+  // Forbidden on this variant: an available lesson has no unavailable notice to show.
+  practiceUnavailable?: never;
+};
+
+// A lesson whose interactive practice has been deliberately WITHDRAWN (e.g. pending clinical and
+// legal review). The learner-facing message is REQUIRED — an unavailable lesson must always be able
+// to say so honestly. The scenario-dependent fields are forbidden outright, so no withdrawn content
+// can linger in the data and no code path can reach it.
+export type UnavailableRoleplayLesson = RoleplayLessonBase & {
+  practiceStatus: "temporarily-unavailable";
+  practiceUnavailable: { title: string; message: string };
+  scenario?: never;
+  prepOutline?: never;
+  weakExample?: never;
+  strongExample?: never;
+  practice?: never;
+};
+
+// Discriminated on `practiceStatus`. Components branch on the discriminant — never on missing data —
+// so a malformed lesson fails type checking instead of impersonating an intentionally disabled one.
+export type RoleplayLesson = AvailableRoleplayLesson | UnavailableRoleplayLesson;
+
+const decaRoleplay: AvailableRoleplayLesson = {
+  practiceStatus: "available",
   slug: "how-deca-roleplay-works",
   track: "deca",
   organization: "DECA",
@@ -64,14 +92,18 @@ const decaRoleplay: RoleplayLesson = {
 
   intro: [
     "A DECA role-play is a short business meeting you perform out loud. You are handed a business situation, given a few minutes to prepare, and then you meet a judge who is playing a specific character — your manager, a client, a franchise owner. Your job is to walk in, understand their problem, and recommend what the business should do, out loud, as if it were really happening.",
-    "It is NOT a speech and it is NOT a quiz. You are not reciting terms. You are advising a person, in character, and defending your advice when they push back. By the end of this lesson you'll know every step, the exact structure of a strong recommendation, and what the judge is actually scoring."
+    "This lesson teaches the foundations shared across DECA's role-play and case-study events — Individual Series, Principles of Business Administration, Personal Financial Literacy, and Team Decision Making. The exact structure, timing, and question flow differ by family, so confirm yours in your event's current official guide. DECA's prepared, written, and online events work differently and are outside this lesson's scope. Not every chartered association offers every event.",
+    "It is NOT a speech and it is NOT a quiz. You are not reciting terms. You are advising a person, in character, and defending your advice when they push back. By the end of this lesson you'll know every step, the structure of a strong recommendation, and what your event's evaluation form is actually looking for."
   ],
   keyIdeas: [
     { term: "Preparation time", plain: "A short window (often ~10 minutes) after you receive the scenario to plan before you meet the judge. You use it to find the problem and draft your recommendations — not to memorize a script. Exact preparation and presentation time depends on the selected DECA event; CompeteReady shows the current official timing for your event where it is sourced." },
     { term: "The participant (you)", plain: "The role you are told to play — e.g. the front-desk manager. Everything you say should sound like that person doing that job, not like a student giving a presentation." },
     { term: "The judge's role", plain: "The judge plays an assigned character (a guest, an owner, your boss). Speak TO that character. Read who they are before you plan what to say." },
-    { term: "Performance indicators (PIs)", plain: "The specific skills the scenario says you must demonstrate — e.g. 'explain the nature of customer service' or 'handle guest complaints.' You must SHOW each one in action, not just name it." },
-    { term: "The score sheet", plain: "Your event's current official evaluation form is the authority. Role-play events commonly score how well you demonstrate the required Performance Indicators along with event-specific communication and presentation criteria." }
+    { term: "Performance indicators (PIs)", plain: "The specific skills the scenario says you must demonstrate — e.g. 'explain the nature of customer service' or 'handle guest complaints.' You must SHOW each one in action, not just name it. They are on your card; they are not announced ahead of time." },
+    { term: "Naming a PI vs. weaving it in", plain: "Competitors disagree about whether to say a PI's title out loud before you address it, or to cover it naturally without announcing it. Both are in common use and each has a tradeoff: announcing makes your coverage unmissable but can sound mechanical; weaving sounds natural but risks a judge not registering that you covered it. The official rule is that you must DEMONSTRATE the indicator — it says nothing about announcing. This is an open judgment call, not a settled rule, so pick deliberately and stay consistent." },
+    { term: "Behavior-type PIs", plain: "Some indicators start with 'Demonstrate…' — an action rather than a concept, like demonstrating active listening or a professional greeting. There's no definition to recite, so plan the observable moment instead: what will you actually DO that a judge could point at? (Teaching support from limited evidence — treat it as a planning habit, not an official delivery rule.)" },
+    { term: "How your scores combine", plain: "Weighting differs by event family — some combine an exam with your presentation, some don't, and the proportions are not the same across families. There is no single universal formula, so read your own event's current guide rather than applying a number you heard somewhere else." },
+    { term: "The score sheet", plain: "Your event's current official evaluation form is the authority. Role-play events commonly score how well you demonstrate the required Performance Indicators along with event-specific criteria — typically including whether your solution is accurate and original, practical, and effective, plus communication skills. When you practice, map the feedback you get back to those official categories rather than to a general impression." }
   ],
   timeline: [
     "Receive the scenario card",
@@ -84,12 +116,12 @@ const decaRoleplay: RoleplayLesson = {
     "Present specific recommendations",
     "Explain why each recommendation works (business reasoning)",
     "Cover implementation, cost, and how you'd measure success",
-    "Answer the judge's questions without collapsing",
+    "Present without being interrupted, then take the judge's questions",
     "Close persuasively",
-    "Receive the ballot"
+    "Receive your score sheet"
   ],
   framework: {
-    name: "The recommendation structure",
+    name: "CompeteReady's five-part recommendation scaffold",
     steps: [
       "Problem — name the business problem in one sentence",
       "Recommendation — say exactly what you'd do",
@@ -97,7 +129,7 @@ const decaRoleplay: RoleplayLesson = {
       "Implementation — who does what, and by when",
       "Measurement — the number you'd watch to know it worked"
     ],
-    note: "Every recommendation you make should hit all five. Beginners stop after 'Recommendation'; strong competitors always land the reason, the implementation, and the metric."
+    note: "This five-part shape is CompeteReady's teaching scaffold — it is not official DECA terminology, and you won't find these five words on an evaluation form. We use it because it lines up with what official forms ask about a solution: whether it is accurate and original (your recommendation), effective (your business reason), and practical and testable (your implementation and measurement). Implementation and measurement are concrete ways to make a recommendation more practical and testable and better aligned with those criteria, so they may well strengthen your answer — but we have not established that they reliably separate top scores, and we're not going to promise you a higher score. Beginners stop after 'Recommendation'; the remaining three parts are where most of the substance lives.\n\nYou may hear other competitors use a D-E-C-A-style mnemonic for handling an indicator. The expansions differ from place to place and none of them is official — it's mentioned here only so the term isn't unfamiliar. It is separate from this scaffold, and nothing here assesses you on it."
   },
   scenario: {
     title: "Scenario: the overbooked suite",
@@ -105,14 +137,14 @@ const decaRoleplay: RoleplayLesson = {
   },
   prepOutline: {
     title: "What a 10-minute prep looks like",
-    note: "Don't script every word — plan the spine, then talk like a manager.",
+    note: "Budget the time before you use it, and write cues rather than sentences — usually a few words per cue. You cannot read an essay while holding a conversation, and note bloat (not misunderstanding the card) is the usual reason a prep period runs out. This layout is CompeteReady's habit, not a format DECA requires.",
     items: [
-      "Role: front-desk manager. Judge: the upset anniversary guest. (Speak to HER, warmly.)",
-      "Problem: a loyalty guest's promised suite is gone — a service failure that threatens retention.",
-      "PIs to show: (1) handle the complaint, (2) explain customer service's role in keeping guests.",
-      "Recommendation 1 (tonight): recover THIS guest — acknowledge, upgrade + comp, make the anniversary special.",
-      "Recommendation 2 (going forward): fix the cause — an overbooking buffer for loyalty reservations.",
-      "For each: reason → implementation → the metric I'd watch."
+      "0–2 min — read and mark the card. Role: front-desk manager. Judge: the upset anniversary guest. (Speak to HER, warmly.)",
+      "2–4 min — problem in one sentence + PIs as actions. Problem: loyalty guest's promised suite gone — service failure, retention at risk. PI cues: 'recover THIS guest' · 'service → retention'.",
+      "4–8 min — two recommendations. Rec 1 (tonight): recover the guest — acknowledge, upgrade + comp, anniversary setup. Rec 2 (forward): loyalty-suite buffer.",
+      "4–8 min — for each, three short cues: reason → implementation → metric.",
+      "8–10 min — opening line, two or three likely questions, closing line.",
+      "Materials are provided at the event and the notes you make in preparation are yours to use in the meeting — check your event's current guide for the specifics, and note that role-play events do not let you bring visual aids in."
     ]
   },
 
@@ -143,7 +175,10 @@ const decaRoleplay: RoleplayLesson = {
     { title: "Recommendations with no business reason", explanation: "A recommendation without a 'because it drives retention/revenue/loyalty' is just an opinion the judge can dismiss." },
     { title: "Ignoring implementation, cost, or measurement", explanation: "Skipping who-does-what, what it costs, or how you'd know it worked leaves the recommendation half-built." },
     { title: "Talking to a generic audience", explanation: "Speaking like you're presenting to a class instead of TO the assigned character (the guest, the owner) breaks the role-play." },
-    { title: "Collapsing when questioned", explanation: "The judge WILL push. Folding ('that's all I can do') loses the poise-under-questioning score. Defend your reasoning or adapt it — don't surrender it." }
+    { title: "Expecting to be interrupted", explanation: "You present without being cut off; questions come after. What kind depends on your family: Individual Series, Principles, and Personal Financial Literacy use scripted standard questions that are the same for every competitor in the event, followed by any clarifications — so you can prepare for them directly. Team Decision Making uses its own arrangement per the current guide. Professional Selling and Consulting has no scripted standard questions; the judge may ask if time remains, so don't build your plan around a question round that may not happen." },
+    { title: "Collapsing when questioned", explanation: "Folding ('that's all I can do') abandons the plan at the first push. Defend your reasoning or adapt it — don't surrender it." },
+    { title: "Inventing an answer you don't have", explanation: "There's popular advice that says make something up and say it confidently. Don't — an invented number is exactly what falls apart under one follow-up. Instead: say what you do know, state your assumption plainly, name how you'd verify it, and return to the recommendation. 'I don't have our current no-show rate in front of me. I'm assuming it's in the normal range for a property this size — I'd pull the last two quarters before committing to a buffer size, and I'd bring you that number Monday.' That's a competent professional answer, and it has the advantage of being true." },
+    { title: "Building for one imagined judge", explanation: "The business role the judge plays is part of the simulation. The people who actually evaluate differ in experience and in how much they engage — some ask a lot, some barely react. Build a meeting that stays clear and well supported either way: state your structure out loud, keep your reasoning explicit rather than implied, and don't rely on the evaluator prompting you to make your best point." }
   ],
 
   practice: {
@@ -189,147 +224,103 @@ const decaRoleplay: RoleplayLesson = {
   ]
 };
 
-const hosaScenarioInteraction: RoleplayLesson = {
+const hosaScenarioInteraction: UnavailableRoleplayLesson = {
+  // Interactive practice is WITHDRAWN by editorial decision, not missing by accident. The
+  // discriminant says so explicitly; the type then forbids scenario/examples/practice outright.
+  practiceStatus: "temporarily-unavailable",
+  // Slug intentionally UNCHANGED (existing lesson ID / deep links preserved) even though the title
+  // was corrected in M3. The lesson is now scoped to the communication layer inside clinical skill
+  // events, per the approved official finding that no standalone patient-conversation event exists
+  // in the reviewed corpus.
   slug: "how-hosa-scenario-interaction-works",
   track: "hosa",
   organization: "HOSA",
-  title: "How a HOSA Scenario Interaction Works",
-  subtitle: "A real professional conversation with a patient — not a speech, not a quiz.",
-  estimatedMinutes: 15,
-  eventType: "HOSA scenario interaction (patient-facing communication practice)",
+  title: "Patient Communication in HOSA Clinical Skill Events",
+  subtitle: "One scored layer inside a clinical skill event — not the skill itself.",
+  estimatedMinutes: 12,
+  eventType: "HOSA clinical skill event (patient-communication layer)",
 
   intro: [
-    "HOSA includes written tests, presentations, clinical skill performances, team events, and scenario-based events. This lesson teaches the communication foundation used in applicable patient-facing and scenario events. Your exact official event guideline remains the source of truth.",
-    "A HOSA scenario interaction is a short professional conversation. You're given a health-science situation and a role — a clinic volunteer, a nursing assistant, a pharmacy tech — and you talk with a person (the judge) who has a real concern. Your job is to handle that conversation the way a caring, careful professional would: listen, understand the concern, explain clearly, and give an appropriate next step.",
-    "The single biggest shift for beginners: this is a CONVERSATION, not a speech. You are not delivering facts at someone. You are talking WITH a worried person, staying inside what your role is actually allowed to do. By the end you'll know the whole interaction, a simple framework for every reply, and what the feedback in these events often rewards: empathy, clarity, boundaries, and responsiveness — alongside the accurate terminology and event-specific rubric steps your event may also score."
+    "HOSA includes written tests, clinical skill performances, presentations, interview events, team events, and emergency-preparedness events. This lesson teaches one specific thing: the patient-communication layer that some clinical skill events score as rows on their rating sheet.",
+    "That scoping matters, because there is no separate 'patient conversation' event to sign up for. In the current official guidelines reviewed for this lesson, communication with a patient is something you are scored on WHILE performing a clinical skill — and separately in the interview events, which work differently. Your exact event's current official guideline and rating sheet remain the source of truth for what is scored and how.",
+    "Two honest boundaries before you start. This lesson does not teach the physical clinical skill, and finishing it does not make you ready for your complete event — the hands-on portion needs in-person practice with your instructor. And the interaction framework taught here is CompeteReady's teaching method, not something HOSA publishes or requires."
   ],
   keyIdeas: [
-    { term: "Scenario interaction", plain: "You perform a workplace conversation in a specific health role. The point is HOW you interact — warmth, clarity, and safe, appropriate help — not how many facts you recite." },
-    { term: "Conversation vs. speech", plain: "A speech talks AT someone; a conversation responds TO them. You listen, acknowledge, ask, and adapt to what the person actually said." },
-    { term: "Your assigned role", plain: "You can only do what that role is allowed to do. A volunteer or aide explains and reassures and refers — they don't diagnose or promise medical outcomes." },
-    { term: "Professional boundaries", plain: "Staying inside your scope: no diagnosing, no guaranteeing results, no sharing what you shouldn't. Knowing your limits is itself scored." },
-    { term: "The feedback", plain: "In applicable patient-facing scenario events, feedback may reward empathy, clarity, professional boundaries, responsiveness, and an appropriate next step. It is not based on vocabulary alone; accurate terminology and event-specific rubric steps may also matter, depending on the event. The current official rating sheet remains the authority." }
+    { term: "Communication is one layer, not the event", plain: "In a clinical skill round you are performing a skill AND talking while you do it. Some rating sheets score steps like greeting and introducing yourself, explaining what you are doing, and reporting concerns to the right professional. Those rows are what this lesson trains — the skill itself is trained in a lab, with an instructor." },
+    { term: "Who is in the room", plain: "More people than beginners expect, and the roles are distinct. The judge is frequently playing the professional you report to — when a sheet says 'reported concerns to the nurse,' the nurse is the judge. Some events provide a live patient or an actor for noninvasive components where the guideline and equipment list specify one. For invasive, medication, blood-draw, injection, and resuscitation components, the specified simulation equipment is used — manikins, training arms, or medication trainers. Some events mix these within one skill, and where a guideline does not say, it is simply unspecified. Your event's current guideline and equipment list are the only place to find out which applies to you." },
+    { term: "Your assigned role and its limits", plain: "You can only do what your assigned role is allowed to do. Identify a concern, stay inside the role, report to the designated professional, and avoid diagnosing or claiming a treatment decision that isn't yours. Saying 'I'm not able to assess that — let me get the nurse right now' is the professional move, not a failure." },
+    { term: "Verbalizing, with the nuance", plain: "Some rating sheets require you to state actions or observations aloud — do that, because it is a scored step. But saying a step out loud does not replace performing it when the required equipment is present and the action has to actually happen. The community shorthand 'just say everything out loud' oversimplifies the rule. Your current event guideline and rating sheet decide which steps require what." },
+    { term: "What the rating sheet actually says", plain: "For most clinical skill events the sheet is a step-by-step checklist with points attached, and often a threshold you have to clear. It is literally the list of what earns points, which makes it your practice plan. Read your own event's current sheet — do not infer it from another event or from someone else's description." }
   ],
   timeline: [
-    "Read the scenario",
-    "Identify your role",
-    "Identify the other person and who they are to you",
-    "Identify their main concern",
-    "Identify your professional boundaries",
-    "Open professionally and warmly",
-    "Acknowledge the concern before explaining anything",
-    "Ask one useful clarifying question",
-    "Respond in plain language",
-    "Handle a follow-up worry",
-    "Check that they understood",
-    "Give an appropriate next step",
+    "Read the scenario and the rating sheet for your event",
+    "Identify your assigned role and what it permits",
+    "Identify who each person in the room is playing",
+    "Greet and introduce yourself",
+    "Explain what you are about to do, in plain language",
+    "Perform the skill (trained in a lab, with your instructor — not here)",
+    "Verbalize the actions or observations your rating sheet requires",
+    "Identify any concern you notice",
+    "Report that concern to the designated professional",
+    "Check that the person understood you",
     "Close professionally",
-    "Receive feedback",
+    "Receive your score sheet"
   ],
   framework: {
-    name: "The interaction framework",
+    name: "CompeteReady's interaction framework",
     steps: [
       "Acknowledge — name and validate the person's feeling first",
       "Clarify — ask one question to understand what they actually mean",
       "Respond safely — explain in plain language, inside your role",
       "Check understanding — make sure it landed",
-      "Next step — give a sound, appropriate action"
+      "Next step — report to the designated professional, or give a sound action inside your role"
     ],
-    note: "Run this loop for each concern. Beginners jump straight to 'Respond' with facts; professionals always Acknowledge and Clarify first."
-  },
-  scenario: {
-    title: "Scenario: who can see my records?",
-    text: "You are a clinic volunteer helping at the front desk. A patient checking in is visibly anxious and says, 'I don't want my family or my employer finding out what I'm here for — who can actually see my medical information?' The judge is playing that patient. Reassure them appropriately and explain, in plain language, without promising anything outside your role.",
-  },
-  prepOutline: {
-    title: "Plan the interaction (quick)",
-    note: "You're planning how to be with this person — not a script to recite.",
-    items: [
-      "Role: clinic volunteer. The person: an anxious patient. Their concern: privacy of their records.",
-      "Boundary check: I can reassure and explain general privacy practice + point them to the right staff. I CANNOT promise specifics about their case or access their record.",
-      "Acknowledge the fear first ('That's a really understandable thing to worry about').",
-      "Clarify what they're most worried about (family? employer? something specific?).",
-      "Explain generally in plain language — protected, not automatically shared — without absolute promises.",
-      "Check understanding, then next step: connect them to the nurse or privacy officer for specifics."
-    ]
-  },
-
-  weakExample: {
-    title: "Ineffective interaction",
-    lines: [
-      { speaker: "You", text: "Under HIPAA, protected health information is restricted to covered entities and their business associates per the minimum necessary standard.", note: "A speech, not a conversation. Recites jargon before even acknowledging the person — the anxious patient is more scared, not less." },
-      { speaker: "Patient", text: "…I don't know what any of that means. I just don't want my job finding out." },
-      { speaker: "You", text: "Don't worry, no one will ever see anything, I promise.", note: "Over-promises outside the volunteer's role — a boundary violation — and still hasn't answered the real worry (the employer)." },
-      { speaker: "You", text: "Anyway, you can go sit down.", note: "Ends with no check for understanding and no appropriate next step. The patient leaves unsure and unheard." }
-    ]
-  },
-  strongExample: {
-    title: "Effective interaction",
-    lines: [
-      { speaker: "You", text: "That's a really understandable thing to be worried about — a lot of people ask this, and it's good that you did.", note: "Acknowledges and validates the feeling FIRST. The patient feels heard before any information arrives." },
-      { speaker: "You", text: "Can I ask — is there someone in particular you're worried might find out, like your employer or a family member?", note: "One useful clarifying question. Now the response can target the ACTUAL worry instead of a generic lecture." },
-      { speaker: "Patient", text: "My employer. I don't want work knowing I was here." },
-      { speaker: "You", text: "Okay. In plain terms: your medical information is generally protected, and it is not automatically shared with your employer simply because you received care here. There are specific situations where information may legally be shared, so I don't want to make an overly broad promise.", note: "Plain language that answers the employer worry generally — and honestly names its own limits instead of making an absolute guarantee a volunteer can't make." },
-      { speaker: "Patient", text: "But what if someone I know works here and sees my file?" },
-      { speaker: "You", text: "That's a fair question, and I don't want to guess at the specifics. I can bring over our privacy officer or another qualified staff member right now — they can explain exactly how the rules apply to your situation, including who can access your record and when.", note: "Refers case-specific rules to qualified staff instead of improvising them — knowing what is NOT yours to answer is itself the professional skill." },
-      { speaker: "You", text: "Would that help? I want to make sure you're comfortable before you go in.", note: "Checks understanding instead of assuming, keeping it a two-way conversation." },
-      { speaker: "You", text: "You're in good hands — I'll go get them now so you can ask anything else directly.", note: "Closes warmly with a concrete, appropriate next step within the volunteer role." }
-    ]
+    note: "This five-move sequence is CompeteReady's teaching method. HOSA does not publish or require it. Its steps line up only partly with official scored steps: greeting and introducing yourself is scored on many sheets, explaining the skill to the patient is scored, and reporting concerns to the professional is scored. Acknowledging someone's feelings and checking their understanding are our standards for doing those scored steps well — you will not find them as their own rows. Beginners jump straight to 'Respond'; professionals acknowledge and clarify first."
   },
 
   commonMistakes: [
-    { title: "Delivering a speech instead of having a conversation", explanation: "Talking AT the patient with a block of facts. Respond to what THEY said; leave room for them to talk back." },
-    { title: "Reciting facts before acknowledging the person", explanation: "Jumping to information before naming their feeling makes an anxious person more anxious. Acknowledge first, always." },
-    { title: "Sounding robotic", explanation: "A flat, textbook tone reads as uncaring. Warmth is part of the score." },
-    { title: "Asking irrelevant questions", explanation: "Clarify to understand the real worry — don't ask questions that don't move the conversation." },
-    { title: "Using unexplained medical terminology", explanation: "Jargon like 'covered entity' without plain-language translation confuses the person you're trying to help." },
-    { title: "Making promises outside your role", explanation: "'No one will ever see anything, I promise' oversteps a volunteer's scope. Reassure honestly, avoid absolute guarantees, and refer case-specific rules to qualified staff — never state legal specifics you're not qualified to give." },
-    { title: "Not answering the actual concern", explanation: "Giving a generic privacy talk when the person is specifically worried about their employer misses the point." },
-    { title: "Ending without checking understanding", explanation: "Closing without confirming it landed — and without a next step — leaves the patient unsure and unheard." }
+    { title: "Treating it as a speech", explanation: "Delivering health facts AT a person instead of responding to what they actually said. Leave room for them to talk back." },
+    { title: "Explaining before acknowledging", explanation: "Jumping to information before naming the person's feeling makes an anxious person more anxious. Acknowledge first." },
+    { title: "Sounding robotic", explanation: "A flat, recited tone reads as uncaring — and a checklist delivered like a checklist is still a checklist. Warmth is how you perform the scored step well." },
+    { title: "Using unexplained medical terminology", explanation: "Precise terms belong in your report to the professional. With the person in front of you, translate — jargon they can't follow doesn't inform anyone." },
+    { title: "Stepping outside your assigned role", explanation: "Diagnosing, promising an outcome, or making a decision that belongs to licensed staff. Observe, stay in role, and hand off what isn't yours." },
+    { title: "Verbalizing instead of performing", explanation: "Narrating a step you were supposed to actually do, when the equipment is right there. Say what your sheet requires — and still do the action." },
+    { title: "Not reporting the concern", explanation: "Noticing something and keeping it to yourself. On many sheets, reporting it to the designated professional is its own scored step." },
+    { title: "Closing without checking understanding", explanation: "Ending without confirming it landed leaves the person unsure, and skips a move that costs you nothing." }
   ],
 
-  practice: {
-    intro: "Now hold the conversation. Read the situation, make the right early moves, then respond in your OWN words — a coach will give you feedback on exactly what you write, judged against the rubric below.",
-    identify: [
-      { prompt: "What is your ROLE here?", choices: ["The patient's doctor", "A clinic volunteer at the front desk", "A hospital administrator", "The patient's family member"], correct: "A clinic volunteer at the front desk", explanation: "You're a volunteer — you can reassure, explain generally, and refer, but not diagnose or promise specifics." },
-      { prompt: "What is the patient's MAIN concern?", choices: ["The cost of the visit", "That their medical information could reach their employer or family", "How long the wait is", "Which medication to take"], correct: "That their medical information could reach their employer or family", explanation: "Their worry is privacy — specifically who can see their information. Answer THAT, not a generic topic." },
-      { prompt: "Which OPENING is stronger?", choices: ["\"Under HIPAA, protected health information is restricted to covered entities.\"", "\"That's a really understandable thing to worry about — can I ask who you're most concerned might find out?\"", "\"Don't worry, no one will ever see anything, I promise.\"", "\"You can just go sit down, it's fine.\""], correct: "\"That's a really understandable thing to worry about — can I ask who you're most concerned might find out?\"", explanation: "It acknowledges the feeling first and clarifies the real worry — and it stays inside the volunteer's role." },
-      { prompt: "Which is INSIDE a volunteer's professional boundaries?", choices: ["Promising the record will never be seen by anyone", "Diagnosing why they're anxious", "Explaining general privacy practice and offering to bring the nurse or privacy officer", "Telling them their employer definitely already knows"], correct: "Explaining general privacy practice and offering to bring the nurse or privacy officer", explanation: "Reassure honestly within general practice and refer to the right person for specifics — that's the volunteer's lane." }
-    ],
-    write: {
-      instruction: "The patient says they're worried their EMPLOYER might find out they were here. Write your response using the framework: acknowledge → explain generally in plain language (no absolute promises) → offer an appropriate next step. Stay in your role.",
-      placeholder: "I can understand why that worries you… In general terms… If it would help, I can…",
-      rubric: [
-        "Acknowledges the patient's concern before explaining",
-        "Explains generally in plain language (no unexplained jargon)",
-        "Avoids absolute promises (no 'never', 'no one will ever', or guarantees)",
-        "Stays within the volunteer role (no diagnosing, no legal specifics)",
-        "Refers case-specific details to qualified staff (privacy officer or nurse)"
-      ]
-    },
-    followUp: {
-      speaker: "Patient",
-      question: "But what if someone I know works here and looks at my file out of curiosity?",
-      note: "A harder follow-up. Answer honestly, avoid absolute promises, and refer the case-specific details to qualified staff — that referral is the professional move."
-    }
+  // ===== M3: interactive practice WITHDRAWN =====
+  // The previous practice was built entirely on a clinic-privacy scenario that carries medical,
+  // privacy, and legal implications and has NO clinical or legal approval. Per the approved decision
+  // it is disabled by default rather than left live through an open-ended interim period.
+  //
+  // Removed together, so nothing is orphaned: the scenario, its preparation outline, both worked
+  // examples, all four identify questions, the written prompt, the follow-up prompt, and the
+  // five-item rubric that only made sense for that scenario. No Side Coach path remains for this
+  // lesson — the request payload required `scenario`, which no longer exists here.
+  //
+  // No replacement is authored in M3. Replacement authoring is M4 and is separately gated:
+  // medical/privacy/legal content requires clinical and legal review; even a clearly non-medical,
+  // non-legal administrative scenario requires advisor, safety, and product review.
+  practiceUnavailable: {
+    title: "This practice scenario is temporarily unavailable",
+    message: "The interactive scenario that used to sit here is being reviewed, so it has been taken down for now. Nothing above it has changed — the lesson content, the framework, and the common mistakes are all still here to read. Your event's current official guideline and rating sheet remain the place to check what your event actually scores."
   },
 
-  provenanceNote: "Teaching lesson — original instruction, not official HOSA material. The scenario and examples are illustrative and generic; they are never scored as official. Privacy explanations are illustrative communication practice, not legal guidance.",
-  supportingLink: { label: "Need help with a medical term?", note: "Optional: review the related medical-terminology cards. This is support — the role-play is the lesson." },
-  nextLesson: { label: "Reading and Decoding a HOSA Scenario", note: "Next you'll learn to pull your role, the person, their concern, and your boundaries out of a fresh scenario fast." },
+  provenanceNote: "Teaching lesson — original instruction, not official HOSA material. Examples are illustrative and generic; they are never scored as official. CompeteReady never teaches, scores, or simulates hands-on clinical procedures, and practising here does not create clinical readiness. Guidance about practising with supervision is CompeteReady's own policy, not a HOSA rule.",
+  supportingLink: { label: "Need help with a medical term?", note: "Optional: review the related medical-terminology cards. This is support — the communication layer is the lesson." },
+  nextLesson: { label: "Reading Your Event's Rating Sheet", note: "Next you'll learn to pull the scored steps out of your own event's current rating sheet — the list of what actually earns points." },
   courseMap: [
     "0. HOSA Event Navigator — identify your exact event and what it contains",
-    "1. How a HOSA Scenario Interaction Works",
-    "2. Reading and Decoding the Scenario",
-    "3. Planning the Interaction",
-    "4. Opening Professionally",
-    "5. Empathy and Active Listening",
-    "6. Clarifying Questions",
-    "7. Plain-Language Explanations",
-    "8. Professional Boundaries",
-    "9. Handling Follow-Up Concerns",
-    "10. Checking Understanding and Closing",
-    "11. Guided Full Scenario"
+    "1. Patient Communication in HOSA Clinical Skill Events",
+    "2. Reading Your Event's Rating Sheet",
+    "3. Your Assigned Role and Its Boundaries",
+    "4. Plain-Language Explanation",
+    "5. Verbalizing What You Observe and Do",
+    "6. Reporting Concerns to the Designated Professional",
+    "7. Checking Understanding",
+    "8. Closing Professionally",
+    "9. Guided Communication Scenario"
   ],
   courseMapCurrentIndex: 1
 };

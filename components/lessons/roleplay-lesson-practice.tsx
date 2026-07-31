@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, MessageSquare, RefreshCw, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import type { Route } from "next";
+import { ArrowLeft, CheckCircle2, Info, Loader2, MessageSquare, RefreshCw, XCircle } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import type { RoleplayLesson } from "@/lib/roleplay-lessons";
+import type { AvailableRoleplayLesson, RoleplayLesson } from "@/lib/roleplay-lessons";
 
 type Feedback = { strength?: string; improvement?: string; example?: string; unavailable?: boolean };
 
@@ -26,8 +28,49 @@ const COACH_NOTE =
 // scenario, roles, rubric, and the in-character follow-up. The AI (existing Side Coach route) is used
 // ONLY to give short feedback on the learner's own words, validated against the authored rubric
 // (passed as `goals`). It never invents the lesson or scores anything — no rating, record, or mastery.
+// Entry point. Branches on the explicit `practiceStatus` discriminant — never on missing data — so a
+// deliberately withdrawn lesson and an accidentally malformed one can never be confused: the latter
+// fails type checking at the data layer instead of reaching here.
 export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
+  if (lesson.practiceStatus !== "available") {
+    return <PracticeUnavailable notice={lesson.practiceUnavailable} />;
+  }
+  return <ActiveRoleplayPractice lesson={lesson} />;
+}
+
+// Honest learner-facing state for a lesson whose interactive practice has been withdrawn. Renders no
+// question, no textarea and no submit control; makes no Side Coach request; records no progress,
+// completion or mastery; and claims no completion of any kind. It holds no hooks and no state, so
+// there is nothing here that could produce or persist a result.
+function PracticeUnavailable({ notice }: { notice: { title: string; message: string } }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Info className="h-5 w-5 text-muted-foreground" aria-hidden />
+          {notice.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm leading-6 text-muted-foreground">{notice.message}</p>
+        <p className="text-xs text-muted-foreground">
+          Nothing is recorded for this lesson, and no part of it counts as completed.
+        </p>
+        <Link href={"/lessons" as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back to lessons
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+// The live practice. Typed to the AVAILABLE variant, so scenario/practice/rubric are guaranteed
+// present at compile time — no runtime fallbacks, no optional chaining, no way to reach the Side
+// Coach without the authored scenario the request depends on.
+function ActiveRoleplayPractice({ lesson }: { lesson: AvailableRoleplayLesson }) {
   const p = lesson.practice;
+  const scenario = lesson.scenario;
   const [phase, setPhase] = useState<"identify" | "respond">("identify");
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -44,12 +87,12 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
 
   const current = p.identify[idx];
 
-  function checkIdentify() {
+  const checkIdentify = () => {
     if (selected === null) return;
     if (selected === current.correct) setCorrectCount((c) => c + 1);
     setRevealed(true);
   }
-  function nextIdentify() {
+  const nextIdentify = () => {
     if (idx + 1 < p.identify.length) {
       setIdx((i) => i + 1);
       setSelected(null);
@@ -59,7 +102,7 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
     }
   }
 
-  async function getFeedback() {
+  const getFeedback = async () => {
     setBusy(true);
     setError(null);
     try {
@@ -76,11 +119,11 @@ export function RoleplayLessonPractice({ lesson }: { lesson: RoleplayLesson }) {
           // so feedback covers the initial answer AND the follow-up, not just the last thing typed
           // (C5C1a). The COACH_NOTE rides with the rubric to require every category + honest
           // no-strength handling.
-          scenario: lesson.scenario.text,
+          scenario: scenario.text,
           goals: [...p.write.rubric, COACH_NOTE],
           stage: "Guided lesson practice — evaluate the learner's initial response AND follow-up against every lesson-rubric item.",
           transcript: [
-            { role: "MODERATOR", content: `Scenario: ${lesson.scenario.title}` },
+            { role: "MODERATOR", content: `Scenario: ${scenario.title}` },
             { role: "AFFIRMATIVE", content: writeText.trim() },
             { role: "MODERATOR", content: `${p.followUp.speaker}: ${p.followUp.question}` }
           ],

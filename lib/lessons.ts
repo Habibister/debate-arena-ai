@@ -91,7 +91,7 @@ const claimWarrantImpact: AuthoredLesson = {
       }
     ],
     closer:
-      "A claim with no warrant is just an assertion — the judge could assert the opposite just as easily. A claim and warrant with no impact proves the point is true but never says why it should decide the round. You need all three: a position, a reason it’s true, and a reason it matters."
+      "A claim with no warrant is just an assertion — the judge could assert the opposite just as easily. A claim and warrant with no impact proves the point is true but never says why it should decide the round. You need all three: a position, a reason it’s true, and a reason it matters.\n\nQuick self-check on anything you write: are all of your sentences claims, or did you explain why one claim leads to the next? If every sentence could stand alone as its own assertion, the connecting reasoning is still missing."
   },
 
   sharedClaim: "Schools should start the day after 8:30 a.m.",
@@ -162,7 +162,7 @@ const claimWarrantImpact: AuthoredLesson = {
     whyWrong:
       "A judge is required to stay neutral: they will not fill in the reasoning you left out. And the same fact usually fits both sides — “teens are tired in the morning” can support your claim OR the reply “so teach them better time management.” The fact just sits there; it doesn’t pick a side. Whoever supplies the warrant gets to decide what the fact means.",
     rightModel:
-      "An argument is claim → warrant → impact, and the warrant is the part YOU have to say out loud. Treat every fact as raw material and the warrant as the sentence that turns it into a reason for YOUR side: “which means ___, therefore ___.” If you can’t say that step, you haven’t argued yet — you’ve only pointed at something true."
+      "An argument is claim → warrant → impact, and the warrant is the part YOU have to say out loud. Treat every fact as raw material and the warrant as the sentence that turns it into a reason for YOUR side: “which means ___, therefore ___.” If you can’t say that step, you haven’t argued yet — you’ve only pointed at something true.\n\nYou will hear a warrant described two ways: as the reasoning that proves the claim is true, and as the bridge that connects your evidence to your claim. These are two angles on the same job, not competing rules — one starts from the claim, the other starts from the evidence, and both end at the sentence that makes the connection explicit."
   },
 
   commonMistakes: [
@@ -181,8 +181,8 @@ const claimWarrantImpact: AuthoredLesson = {
     {
       title: "Confusing evidence with a warrant",
       explanation:
-        "Dropping a statistic or a source and assuming it argues for you. A stat is only as strong as the reasoning that connects it to your claim; left “naked,” it can support either side.",
-      fix: "Never leave evidence unexplained — add the one sentence that says what it proves and why that supports your side."
+        "Dropping a statistic or a source and assuming it argues for you. A stat is only as strong as the reasoning that connects it to your claim; left “naked,” it can support either side.\n\nThe harder version of this sounds prepared, which is why it survives: a claim, then a source, over and over. “Later start times improve outcomes — Smith 2021 finds this. Attendance rises — Lee 2022 confirms it.” Fluent, well researched, and the judge still hasn’t been told HOW a later bell produces any of it. Naming a source is not the same move as explaining the mechanism. The study may well contain that reasoning — but the judge only has what you said out loud, and citation density doesn’t substitute for the connecting step.",
+      fix: "Never leave evidence unexplained — add the one sentence that says what it proves and why that supports your side. If you’re citing several sources, take the load-bearing one and put its mechanism in your own words: “…because the body clock shift means an earlier bedtime doesn’t work, so the lost sleep can’t be recovered.” One explained source beats three announced ones."
     }
   ],
 
@@ -198,7 +198,7 @@ const claimWarrantImpact: AuthoredLesson = {
   },
 
   provenanceNote:
-    "Teaching lesson — original instruction, not official competition rules. Examples are illustrative; verify your own evidence before using it in a round."
+    "Teaching lesson — original instruction, not official competition rules. Claim/Warrant/Impact is an officially supported beginner model in the NSDA's Debate Training Guide, and CompeteReady uses it as its beginner teaching model; compatible four-part presentations (Claim/Data/Warrant/Impact) also appear in official material, so this is one supported formulation rather than the only one. Examples are illustrative; verify your own evidence before using it in a round."
 };
 
 export const AUTHORED_LESSONS: AuthoredLesson[] = [claimWarrantImpact];

@@ -96,48 +96,55 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
         <p className="mt-4 rounded-md border bg-muted/40 p-3 text-sm leading-6 text-muted-foreground">{lesson.framework.note}</p>
       </section>
 
-      {/* Scenario */}
-      <section aria-labelledby="scenario" className="rounded-lg border border-primary/30 bg-primary/5 p-6">
-        <h2 id="scenario" className="text-xl font-bold">{lesson.scenario.title}</h2>
-        <p className="mt-2 leading-7">{lesson.scenario.text}</p>
-        <div className="mt-4 rounded-md border bg-card p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{lesson.prepOutline.title}</p>
-          <p className="mt-1 text-sm italic text-muted-foreground">{lesson.prepOutline.note}</p>
-          <ul className="mt-2 space-y-1.5">
-            {lesson.prepOutline.items.map((item) => (
-              <li key={item} className="flex gap-2 text-sm leading-6 text-muted-foreground">
-                <span aria-hidden className="text-primary">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {/* Scenario + worked examples render ONLY for an explicitly available lesson. The branch is on
+          the `practiceStatus` discriminant, never on missing data — a lesson whose practice was
+          deliberately withdrawn omits these sections entirely, and an incomplete "available" lesson
+          is a compile error rather than something that silently renders like a withdrawn one. */}
+      {lesson.practiceStatus === "available" ? (
+        <section aria-labelledby="scenario" className="rounded-lg border border-primary/30 bg-primary/5 p-6">
+          <h2 id="scenario" className="text-xl font-bold">{lesson.scenario.title}</h2>
+          <p className="mt-2 leading-7">{lesson.scenario.text}</p>
+          <div className="mt-4 rounded-md border bg-card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{lesson.prepOutline.title}</p>
+            <p className="mt-1 text-sm italic text-muted-foreground">{lesson.prepOutline.note}</p>
+            <ul className="mt-2 space-y-1.5">
+              {lesson.prepOutline.items.map((item) => (
+                <li key={item} className="flex gap-2 text-sm leading-6 text-muted-foreground">
+                  <span aria-hidden className="text-primary">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      ) : null}
 
-      {/* Weak vs strong worked role-play */}
-      <section aria-labelledby="worked" className="rounded-lg border bg-card p-6">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="worked" className="text-xl font-bold">One scenario, performed two ways</h2>
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">Same situation, same role. Read the annotations under each line — that&apos;s where the skill is.</p>
-        <div className="mt-4 grid gap-5 lg:grid-cols-2">
-          <div>
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-              <ThumbsDown className="h-4 w-4" aria-hidden />
-              <h3 className="text-sm font-bold uppercase tracking-wide">{lesson.weakExample.title}</h3>
-            </div>
-            <Transcript lines={lesson.weakExample.lines} tone="weak" />
+      {/* Weak vs strong worked role-play — required on an available lesson, so no per-field guard. */}
+      {lesson.practiceStatus === "available" ? (
+        <section aria-labelledby="worked" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="worked" className="text-xl font-bold">One scenario, performed two ways</h2>
           </div>
-          <div>
-            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-              <ThumbsUp className="h-4 w-4" aria-hidden />
-              <h3 className="text-sm font-bold uppercase tracking-wide">{lesson.strongExample.title}</h3>
+          <p className="mt-2 text-sm text-muted-foreground">Same situation, same role. Read the annotations under each line — that&apos;s where the skill is.</p>
+          <div className="mt-4 grid gap-5 lg:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <ThumbsDown className="h-4 w-4" aria-hidden />
+                <h3 className="text-sm font-bold uppercase tracking-wide">{lesson.weakExample.title}</h3>
+              </div>
+              <Transcript lines={lesson.weakExample.lines} tone="weak" />
             </div>
-            <Transcript lines={lesson.strongExample.lines} tone="strong" />
+            <div>
+              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                <ThumbsUp className="h-4 w-4" aria-hidden />
+                <h3 className="text-sm font-bold uppercase tracking-wide">{lesson.strongExample.title}</h3>
+              </div>
+              <Transcript lines={lesson.strongExample.lines} tone="strong" />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Common mistakes */}
       <section aria-labelledby="mistakes" className="rounded-lg border bg-card p-6">

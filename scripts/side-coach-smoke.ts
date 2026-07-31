@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { buildSideCoachSystemPrompt, buildSideCoachUserPrompt, sideCoachFallback, type SideCoachInput } from "../lib/side-coach";
+import { buildSideCoachSystemPrompt, buildSideCoachUserPrompt, sideCoachUnavailable, type SideCoachInput } from "../lib/side-coach";
 import { sideCoachRequestSchema } from "../lib/validators";
 
 const base: SideCoachInput = {
@@ -66,15 +66,32 @@ function main() {
   assert.ok(!askPrompt.includes("HONESTY RULE") && !askPrompt.includes("RUBRIC COMPLETENESS RULE"), "ask-type prompts are unchanged by C5C1b");
   // ===== end C5C1b =====
 
-  // Deterministic, track-aware fallback so coaching failure never blocks the debate.
-  // 7) `unavailable: true` fallback behavior is unchanged by C5C1b.
-  const fb = sideCoachFallback(base);
-  assert.ok(fb.unavailable === true && fb.nextMove, "fallback returns usable guidance");
-  assert.ok(/recommendation/i.test(sideCoachFallback({ ...base, organization: "DECA" }).nextMove ?? ""), "DECA fallback is business-flavored");
-  assert.ok(/country/i.test(sideCoachFallback({ ...base, organization: "MODEL_UN" }).nextMove ?? ""), "Model UN fallback is diplomacy-flavored");
-  // No shaming language in coach fallback.
-  const text = Object.values(sideCoachFallback(base)).join(" ");
-  assert.ok(!/fail|terrible|stupid|dumb/i.test(text), "coach copy is never shaming");
+  // ===== M6: an unavailable coach carries NO learner feedback =====
+  // Previously this returned a "deterministic, track-aware fallback" that manufactured a strength,
+  // an improvement and a next move — a provider outage rendered as praise about the learner's own
+  // speech. The unavailable result now carries nothing that could impersonate evaluation.
+  const un = sideCoachUnavailable("provider-error");
+  assert.equal(un.unavailable, true, "an unavailable result is explicitly flagged");
+  assert.equal(un.reason, "provider-error", "an unavailable result carries a machine-readable reason");
+  assert.equal(un.message, "", "an unavailable result carries no learner-facing prose");
+  for (const field of ["strength", "improvement", "nextMove", "example"] as const) {
+    assert.equal(un[field], undefined, `an unavailable result invents no ${field}`);
+  }
+  // Nothing in it can read as praise or as a next step derived from the learner's work.
+  const unText = Object.values(un).filter((v) => typeof v === "string").join(" ");
+  assert.ok(!/good start|nice|great|well done|clear point/i.test(unText), "an unavailable result contains no canned praise");
+  assert.ok(!/fail|terrible|stupid|dumb/i.test(unText), "coach copy is never shaming");
+  // Every unavailable reason behaves identically — none of them leaks feedback-shaped content.
+  for (const reason of ["provider-error", "empty-response", "incomplete-turn-feedback"] as const) {
+    const r = sideCoachUnavailable(reason);
+    assert.ok(r.unavailable === true && !r.strength && !r.improvement && !r.nextMove && !r.example, `reason "${reason}" carries no feedback fields`);
+  }
+  // The old manufactured-feedback helper is gone from the module surface.
+  const coachSrc = readFileSync("lib/side-coach.ts", "utf8");
+  assert.ok(!coachSrc.includes("sideCoachFallback"), "the manufactured-feedback fallback no longer exists");
+  for (const canned of ["You put a clear point on the table", "good start", "Here's a quick read on your last point"]) {
+    assert.ok(!coachSrc.includes(canned), `canned feedback string removed: "${canned}"`);
+  }
 
   // Schema: public transcript only; validates ask + turn-feedback.
   const parsed = sideCoachRequestSchema.parse({ organization: "DECA", requestType: "ask", askKind: "What should I answer?", transcript: [] });

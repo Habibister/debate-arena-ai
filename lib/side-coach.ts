@@ -32,8 +32,17 @@ export type SideCoachResponse = {
   // One concrete example/model sentence (an improved version of the learner's wording, an opener, or
   // a short sample response). Kept separate so the UI can label it as an example, not the submission.
   example?: string;
+  // `true` means NO evaluation happened. When set, this response carries NO learner-specific
+  // feedback whatsoever — the caller must render an honest unavailable state, never a coaching card.
   unavailable?: boolean;
+  // Short, non-sensitive machine-readable cause, for logs and tests. Never learner-facing prose.
+  reason?: SideCoachUnavailableReason;
 };
+
+export type SideCoachUnavailableReason =
+  | "provider-error"
+  | "empty-response"
+  | "incomplete-turn-feedback";
 
 // Track-specific framing so coaching matches the event, not a generic debate.
 function trackFraming(org: Organization): string {
@@ -109,36 +118,45 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
   return parts.join("\n\n");
 }
 
-// Deterministic, track-aware fallback — used when the AI is unavailable so the debate continues.
-export function sideCoachFallback(input: SideCoachInput): SideCoachResponse {
-  const org = input.organization;
-  const nextMove =
-    org === "DECA"
-      ? "State your recommendation clearly, then back it with a reason and a number."
-      : org === "MODEL_UN"
-        ? "Restate your country's position, then propose one concrete next step."
-        : org === "HOSA"
-          ? "Define the key term in plain words, then choose the safe, role-appropriate action."
-          : "Answer their strongest point first, then add a clear impact (why it matters).";
-  if (input.requestType === "ask") {
-    return { message: `Start with your main claim, then add one reason and why it matters. ${nextMove}`, unavailable: true };
-  }
-  return {
-    message: "Here's a quick read on your last point.",
-    strength: "You put a clear point on the table — good start.",
-    improvement: "Add the reasoning and why it matters, so it's not just a claim.",
-    nextMove,
-    unavailable: true
-  };
+/**
+ * The ONLY result returned when evaluation did not happen.
+ *
+ * M6: this used to be a "deterministic, track-aware fallback" that manufactured a strength, an
+ * improvement and a next move so the debate could continue. That was the standing defect — a
+ * provider outage rendered as green coaching praise attributed to the learner's own speech.
+ *
+ * It now carries NO learner-specific content of any kind: no message, no strength, no improvement,
+ * no next move, no example. The caller renders an honest unavailable state and offers a retry.
+ * A provider outage is never encoded as a successful evaluation.
+ */
+export function sideCoachUnavailable(reason: SideCoachUnavailableReason): SideCoachResponse {
+  return { message: "", unavailable: true, reason };
 }
 
-function normalize(parsed: Partial<SideCoachResponse>, input: SideCoachInput): SideCoachResponse {
-  const has = parsed && (parsed.message || parsed.strength || parsed.improvement || parsed.nextMove || parsed.example);
-  if (!has) {
-    return sideCoachFallback(input);
+/**
+ * Accepts a provider payload only when it can actually be rendered as evaluation.
+ *
+ * `turn-feedback` drives a coaching card built from strength / improvement / nextMove / example, so a
+ * payload with none of those is incomplete — previously it could produce an empty card. `ask` drives
+ * a prose answer, so it requires a non-empty message. Anything else is unavailable, not partial.
+ */
+function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input: SideCoachInput): SideCoachResponse {
+  if (!parsed || typeof parsed !== "object") {
+    return sideCoachUnavailable("empty-response");
+  }
+  const message = typeof parsed.message === "string" ? parsed.message : "";
+
+  if (input.requestType === "ask") {
+    if (!message.trim()) return sideCoachUnavailable("empty-response");
+    return { message };
+  }
+
+  const hasFeedbackField = Boolean(parsed.strength || parsed.improvement || parsed.nextMove || parsed.example);
+  if (!hasFeedbackField) {
+    return sideCoachUnavailable("incomplete-turn-feedback");
   }
   return {
-    message: parsed.message ?? "",
+    message,
     strength: parsed.strength,
     improvement: parsed.improvement,
     nextMove: parsed.nextMove,
@@ -154,6 +172,8 @@ export async function generateSideCoachResponse(input: SideCoachInput): Promise<
     );
     return normalize(extractJson<Partial<SideCoachResponse>>(content), input);
   } catch {
-    return sideCoachFallback(input);
+    // Provider quota, auth/config failure, network error, timeout, or unparseable output — all of
+    // them mean the learner was NOT evaluated, and all of them say so.
+    return sideCoachUnavailable("provider-error");
   }
 }

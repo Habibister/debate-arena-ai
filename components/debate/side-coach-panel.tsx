@@ -2,21 +2,42 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Organization } from "@prisma/client";
-import { LifeBuoy, Loader2, Lock } from "lucide-react";
+import { AlertTriangle, LifeBuoy, Loader2, Lock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type OfficialMessage = { id: string; role: string; authorId?: string | null; content: string };
 
+type CoachRequest = {
+  requestType: "turn-feedback" | "ask";
+  askKind?: string;
+  latestStudentSpeech?: string;
+};
+
 type CoachEntry = {
   id: string;
-  kind: "turn" | "ask" | "error";
+  kind: "turn" | "ask" | "unavailable";
   label?: string;
   message?: string;
   strength?: string;
   improvement?: string;
   nextMove?: string;
   example?: string;
+  // Present only on an `unavailable` entry: the exact request to re-issue if the learner retries.
+  // Retry is always an explicit learner action — nothing here ever fires on its own.
+  retry?: CoachRequest;
 };
+
+// A payload may render as coaching ONLY if it can actually be shown as evaluation. `turn-feedback`
+// builds its card from these four fields, so a payload with none of them is incomplete — rendering
+// it would produce an empty card that looks like feedback. `ask` needs prose.
+function isRenderableCoaching(
+  data: { message?: string; strength?: string; improvement?: string; nextMove?: string; example?: string; unavailable?: boolean },
+  requestType: "turn-feedback" | "ask"
+): boolean {
+  if (data.unavailable === true) return false;
+  if (requestType === "ask") return Boolean(data.message && data.message.trim());
+  return Boolean(data.strength || data.improvement || data.nextMove || data.example);
+}
 
 // Quick prompts are organization-specific: only General Debate talks about rebuttal/weighing/opponents.
 // Non-debate practices are solo delivery exercises, so their prompts match the real activity.
@@ -81,9 +102,20 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
   const studentMessages = messages.filter((m) => Boolean(m.authorId) && (m.role === "AFFIRMATIVE" || m.role === "NEGATIVE"));
   const latestStudent = studentMessages[studentMessages.length - 1];
 
-  async function askCoach(requestType: "turn-feedback" | "ask", options?: { askKind?: string; latestStudentSpeech?: string }) {
+  // `replaceEntryId` is set only by an explicit retry: the unavailable entry is replaced in place, so
+  // a retry never stacks duplicate cards and never duplicates round state.
+  async function askCoach(
+    requestType: "turn-feedback" | "ask",
+    options?: { askKind?: string; latestStudentSpeech?: string },
+    replaceEntryId?: string
+  ) {
     setLoading(true);
-    const localId = `coach-${(seqRef.current += 1)}`;
+    const localId = replaceEntryId ?? `coach-${(seqRef.current += 1)}`;
+    const request: CoachRequest = { requestType, askKind: options?.askKind, latestStudentSpeech: options?.latestStudentSpeech };
+    // Replaces an existing entry when retrying, otherwise appends. The official transcript (`messages`)
+    // is a read-only prop and is never touched by any of this.
+    const upsert = (entry: CoachEntry) =>
+      setEntries((current) => (current.some((e) => e.id === entry.id) ? current.map((e) => (e.id === entry.id ? entry : e)) : [...current, entry]));
     try {
       const response = await fetch("/api/ai/side-coach", {
         method: "POST",
@@ -107,25 +139,31 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
       if (!response.ok) {
         throw new Error("coach unavailable");
       }
-      const data = (await response.json()) as { message?: string; strength?: string; improvement?: string; nextMove?: string; example?: string };
-      setEntries((current) => [
-        ...current,
-        {
-          id: localId,
-          kind: requestType === "ask" ? "ask" : "turn",
-          label: options?.askKind,
-          message: data.message,
-          strength: data.strength,
-          improvement: data.improvement,
-          nextMove: data.nextMove,
-          example: data.example
-        }
-      ]);
+      const data = (await response.json()) as {
+        message?: string;
+        strength?: string;
+        improvement?: string;
+        nextMove?: string;
+        example?: string;
+        unavailable?: boolean;
+      };
+      // A provider outage arrives as HTTP 200 with `unavailable: true`, and a malformed payload can
+      // arrive with nothing renderable. Neither is an evaluation — never show either as coaching.
+      if (!isRenderableCoaching(data, requestType)) {
+        throw new Error("coach unavailable");
+      }
+      upsert({
+        id: localId,
+        kind: requestType === "ask" ? "ask" : "turn",
+        label: options?.askKind,
+        message: data.message,
+        strength: data.strength,
+        improvement: data.improvement,
+        nextMove: data.nextMove,
+        example: data.example
+      });
     } catch {
-      setEntries((current) => [
-        ...current,
-        { id: localId, kind: "error", message: "Your Side Coach is unavailable right now. You can continue the debate." }
-      ]);
+      upsert({ id: localId, kind: "unavailable", label: options?.askKind, retry: request });
     } finally {
       setLoading(false);
     }
@@ -164,9 +202,48 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
           <p className="text-sm text-emerald-100/60">Speak or ask for help and your Side Coach will guide you here.</p>
         ) : null}
         {entries.map((entry) => (
-          <div key={entry.id} className="rounded-md border border-white/10 bg-black/20 p-3 text-sm text-neutral-100">
+          <div
+            key={entry.id}
+            className={
+              entry.kind === "unavailable"
+                ? "rounded-md border border-amber-400/40 bg-amber-500/10 p-3 text-sm text-neutral-100"
+                : "rounded-md border border-white/10 bg-black/20 p-3 text-sm text-neutral-100"
+            }
+          >
             {entry.label ? <p className="text-xs font-semibold text-emerald-200">{entry.label}</p> : null}
-            {entry.kind === "error" ? <p className="text-amber-200">{entry.message}</p> : null}
+            {/* Honest unavailable state: no praise, no rubric fields, no example, no success styling,
+                no completion. Status is carried by an icon AND text, never by colour alone. */}
+            {entry.kind === "unavailable" ? (
+              <div>
+                <p className="flex items-start gap-2 font-semibold text-amber-100">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden />
+                  <span>Side Coach is temporarily unavailable. {isPractice ? "Your practice was not evaluated." : "Your debate was not evaluated."}</span>
+                </p>
+                <p className="mt-1 text-xs text-amber-100/80">
+                  No score, feedback, or progress was recorded. Your {isPractice ? "practice" : "debate"} and transcript are
+                  unchanged, and you can keep going.
+                </p>
+                {entry.retry ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    className="mt-2 border-amber-400/40 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20"
+                    onClick={() =>
+                      askCoach(
+                        entry.retry!.requestType,
+                        { askKind: entry.retry!.askKind, latestStudentSpeech: entry.retry!.latestStudentSpeech },
+                        entry.id
+                      )
+                    }
+                  >
+                    <RefreshCw className="h-4 w-4" aria-hidden />
+                    Try again
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             {entry.strength ? <p className="mt-1"><span className="font-semibold text-emerald-200">Worked:</span> {entry.strength}</p> : null}
             {entry.improvement ? <p className="mt-1"><span className="font-semibold text-emerald-200">Improve:</span> {entry.improvement}</p> : null}
             {entry.nextMove ? <p className="mt-1"><span className="font-semibold text-emerald-200">Next move:</span> {entry.nextMove}</p> : null}

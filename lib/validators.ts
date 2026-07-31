@@ -50,6 +50,24 @@ export const opponentRequestSchema = z.object({
   transcript: transcriptSchema
 });
 
+/**
+ * Ceiling for the field the authored practice sends both learner responses in (M11R8).
+ *
+ * The authored lesson caps EACH response at 4000 characters, and the practice wraps the pair in
+ * fixed labels ("INITIAL RESPONSE:" / "RESPONSE TO FOLLOW-UP:") before sending them as one field.
+ * At 8000 flat, two legitimately maximum-length responses were rejected by 43 characters of framing
+ * and the client reported that validation failure as a provider outage.
+ *
+ * So the learner allowance and the bounded framing are counted separately: 2 × 4000 learner
+ * characters plus headroom for the labels. This is still a hard bound — not an open body — and the
+ * per-response 4000-character limits are unchanged.
+ */
+export const SIDE_COACH_LEARNER_RESPONSE_MAX_CHARS = 4000;
+export const SIDE_COACH_RESPONSES_PER_REQUEST = 2;
+export const SIDE_COACH_FRAMING_HEADROOM_CHARS = 192;
+export const SIDE_COACH_SPEECH_MAX_CHARS =
+  SIDE_COACH_LEARNER_RESPONSE_MAX_CHARS * SIDE_COACH_RESPONSES_PER_REQUEST + SIDE_COACH_FRAMING_HEADROOM_CHARS;
+
 export const sideCoachRequestSchema = z.object({
   organization: organizationSchema,
   // When present, the owning student's debate is marked assistedPractice (real coach use, not the toggle).
@@ -67,7 +85,7 @@ export const sideCoachRequestSchema = z.object({
   rubricIds: z.array(z.string().max(60)).max(8).optional(),
   // Public transcript only — never judge reasoning or private coaching.
   transcript: z.array(z.object({ role: z.string().max(20), content: z.string().min(1).max(8000) })).max(40).default([]),
-  latestStudentSpeech: z.string().max(8000).optional(),
+  latestStudentSpeech: z.string().max(SIDE_COACH_SPEECH_MAX_CHARS).optional(),
   requestType: z.enum(["turn-feedback", "ask"]).default("turn-feedback"),
   askKind: z.string().max(80).optional(),
   guidanceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional()

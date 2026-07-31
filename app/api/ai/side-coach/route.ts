@@ -3,7 +3,8 @@ import { apiError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
-import { generateSideCoachResponse } from "@/lib/side-coach";
+import { validateAndCanonicalizeAuthoredRubricIds } from "@/lib/authored-rubric-feedback";
+import { authoredDecaRubricIds, generateSideCoachResponse } from "@/lib/side-coach";
 import { sideCoachRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -30,6 +31,18 @@ export async function POST(request: Request) {
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "conversation" });
     const input = await parseJson(request, sideCoachRequestSchema);
 
+    // M11R8: rubric ids opt a request into the structured authored contract and are interpolated
+    // into a model instruction, so an id that is not exactly the authored set fails HERE — before
+    // any provider call, and with a stable reason that never echoes the caller's string back.
+    let rubricIds = input.rubricIds;
+    if (rubricIds && rubricIds.length > 0) {
+      const canonical = validateAndCanonicalizeAuthoredRubricIds(rubricIds, authoredDecaRubricIds());
+      if (!canonical.ok) {
+        return NextResponse.json({ error: canonical.reason }, { status: 400 });
+      }
+      rubricIds = canonical.ids;
+    }
+
     // Actual coach use (this route is only called when the student invokes the coach) flags the debate.
     // Merely rendering the toggle never reaches here, so it never marks a debate assisted.
     if (input.debateId) {
@@ -38,6 +51,7 @@ export async function POST(request: Request) {
 
     const response = await generateSideCoachResponse({
       ...input,
+      rubricIds,
       transcript: input.transcript ?? [],
       requestType: input.requestType ?? "turn-feedback"
     });

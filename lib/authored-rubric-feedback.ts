@@ -127,6 +127,46 @@ const MIN_EXCERPT_WORD_TOKENS = 3;
  * Pure and exported so both evidence paths share ONE rule and the tests can exercise it directly
  * rather than mirroring it.
  */
+/**
+ * Validates client-supplied rubric ids against the canonical set and returns the CANONICAL strings
+ * (M11R8).
+ *
+ * The structured prompt used to interpolate whatever the client sent, so an id was an untrusted
+ * string on its way into a model instruction. This fails closed on anything that is not exactly the
+ * canonical set — unknown, duplicated, empty, non-string, reordered-with-extras, or content carrying
+ * instructions, markup, delimiters, control characters or excess length — and it returns ids taken
+ * from `canonical`, never the caller's own strings.
+ *
+ * `canonical` is supplied by the caller so this module keeps its no-runtime-imports purity contract;
+ * the caller reads it from the authored lesson, which is the single source of truth.
+ *
+ * Order is ours: a request that supplies the supported set in another order is normalised to
+ * canonical authored order rather than letting the caller shape the prompt.
+ *
+ * The failure reason is a stable code. The offending value is never echoed back, so an invalid id
+ * cannot be reflected into a response, a prompt, or the UI at any length.
+ */
+export function validateAndCanonicalizeAuthoredRubricIds(
+  value: unknown,
+  canonical: readonly string[]
+): { ok: true; ids: string[] } | { ok: false; reason: "invalid-rubric-ids" } {
+  const fail = { ok: false, reason: "invalid-rubric-ids" } as const;
+  if (!Array.isArray(value)) return fail;
+  if (canonical.length === 0) return fail;
+  if (value.length !== canonical.length) return fail;
+  const seen = new Set<string>();
+  for (const raw of value) {
+    if (typeof raw !== "string") return fail;
+    // No trimming: an id that needs normalising is not one of ours. This also rejects whitespace
+    // manipulation, newlines, tabs and control characters outright.
+    if (!canonical.includes(raw)) return fail;
+    if (seen.has(raw)) return fail;
+    seen.add(raw);
+  }
+  // Every canonical id is present exactly once; hand back OUR strings in OUR order.
+  return { ok: true, ids: [...canonical] };
+}
+
 export function isMeaningfulLearnerExcerpt(excerpt: unknown): boolean {
   if (typeof excerpt !== "string") return false;
   const collapsed = excerpt.replace(/\s+/g, " ").trim();

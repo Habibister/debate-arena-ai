@@ -7,6 +7,8 @@
 // unavailable state and offer a retry.
 import type { Organization } from "@prisma/client";
 import { runProviderCompletion, extractJson } from "@/lib/ai-providers";
+import { validateAndCanonicalizeAuthoredRubricIds } from "@/lib/authored-rubric-feedback";
+import { getRoleplayLesson } from "@/lib/roleplay-lessons";
 
 export type SideCoachTranscriptLine = { role: string; content: string };
 
@@ -85,6 +87,17 @@ function guidanceRule(level: number | undefined): string {
   return "Offer a small framework or structure they can fill in (e.g. 'They argue ___; however ___; this matters because ___'). Do not write the full speech.";
 }
 
+/**
+ * The canonical authored-DECA rubric ids, read from the authored lesson itself (M11R8) — the SAME
+ * data the practice component renders, so there is one source of truth and no second hand-maintained
+ * allowlist that could drift from the lesson.
+ */
+export function authoredDecaRubricIds(): readonly string[] {
+  const lesson = getRoleplayLesson("how-deca-roleplay-works");
+  if (!lesson || lesson.practiceStatus !== "available") return [];
+  return lesson.practice.write.rubric.map((item: { id: string }) => item.id);
+}
+
 export function buildSideCoachSystemPrompt(input: SideCoachInput): string {
   return [
     "You are a private Side Coach for a beginner competitor. You are NOT the opponent and NOT the judge.",
@@ -133,7 +146,14 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
     parts.push("CALIBRATION: The no-strength line is reserved for responses where NO rubric item is genuinely met. If at least one rubric item IS genuinely demonstrated (for example a real recommendation or a real reason), name that item as the strength and quote the learner's words — do not use the no-strength line.");
     // Structured, evidence-anchored verdicts — authored-lesson requests ONLY. Gated on rubricIds so
     // Debate (no goals) and the role-play rooms (scenario goals, no IDs) keep their existing contract.
-    if (input.rubricIds && input.rubricIds.length > 0) {
+    // M11R8: the ids that reach this prompt are CANONICAL, never the caller's strings. An id is
+    // untrusted input on its way into a model instruction, so anything that is not exactly the
+    // authored set drops the structured block entirely rather than being interpolated.
+    const canonicalRubricIds =
+      input.rubricIds && input.rubricIds.length > 0
+        ? validateAndCanonicalizeAuthoredRubricIds(input.rubricIds, authoredDecaRubricIds())
+        : null;
+    if (canonicalRubricIds?.ok) {
       // Proof-of-review, kept SEPARATE from criterion evidence (M7B). Asking for a per-response
       // excerpt here is what lets every rubric item be honestly `missing` without inventing a quote.
       parts.push(
@@ -149,7 +169,7 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
       parts.push(
         [
           "PER-ITEM VERDICTS: Also return a `rubricFeedback` array with exactly one entry per rubric criterion.",
-          `Use these EXACT rubricId values, once each, no others: ${input.rubricIds.join(", ")}.`,
+          `Use these EXACT rubricId values, once each, no others: ${canonicalRubricIds.ids.join(", ")}.`,
           'Each entry is {"rubricId": string, "status": "met"|"partial"|"missing", "evidence": [{"response": "initial"|"follow-up", "excerpt": string}], "comment": string}.',
           "Evaluate BOTH labeled learner responses. For \"met\" or \"partial\" you MUST include at least one evidence entry whose `excerpt` is a SHORT, EXACT quotation copied from the learner response named in `response` — do not paraphrase, do not reword, and never quote from the other response.",
           "That quotation must be SPECIFIC: a few words at minimum. A single word or a generic fragment will be rejected, because it does not show what supports the criterion.",

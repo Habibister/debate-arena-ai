@@ -4,6 +4,7 @@ import { getRoleplayLesson } from "../lib/roleplay-lessons";
 // THE PRODUCTION VALIDATOR — the same function the practice component calls. There is deliberately
 // NO mirrored copy in this file: a mirror can drift while its tests keep passing (M7A, issue 1).
 import {
+  isMeaningfulLearnerExcerpt,
   orderByAuthoredRubric,
   responseReviewLabel,
   rubricStatusLabel,
@@ -214,6 +215,69 @@ function main() {
   // The removed rule, stated as a negative: this must NOT fail merely for citing one response.
   const followOnly = complete().map((e) => ({ ...e, status: "partial", evidence: [{ response: "follow-up", excerpt: "brief the front desk on Monday" }] }));
   passes(envelope({ rubricFeedback: followOnly }), "criterion evidence drawn only from the follow-up response");
+
+  // ============ M11R4: an excerpt must be specific enough to BE evidence ============
+  // The shared production rule, exercised directly — no mirrored copy here.
+  for (const bad of ["a", "I", " I ", "the", "and then", "yes", "...", "............", "a          b", "  ", ""]) {
+    assert.equal(isMeaningfulLearnerExcerpt(bad), false, `degenerate excerpt rejected: ${JSON.stringify(bad)}`);
+  }
+  for (const good of ["offer a full refund today", "track weekly customer complaints", "train the front desk team",
+                      "hold a small buffer of loyalty-tier suites", "brief the front desk on Monday"]) {
+    assert.equal(isMeaningfulLearnerExcerpt(good), true, `concise but meaningful excerpt accepted: ${JSON.stringify(good)}`);
+  }
+  assert.equal(isMeaningfulLearnerExcerpt(12 as never), false, "a non-string is not evidence");
+  // Padding cannot inflate a fragment: same visible content, more whitespace, still rejected.
+  assert.equal(isMeaningfulLearnerExcerpt("a" + " ".repeat(40) + "b"), false, "repeated whitespace cannot inflate a fragment");
+  // Punctuation alone never satisfies the token count, however long.
+  assert.equal(isMeaningfulLearnerExcerpt("-------------------"), false, "punctuation runs are not word-like tokens");
+
+  // The validator enforces it on BOTH evidence paths.
+  const degenerateReview = envelope({ responseReview: [{ ...review()[0], excerpt: "a" }, review()[1]] });
+  failsWith(degenerateReview, "degenerate-review-excerpt", "a one-letter response-review excerpt");
+  failsWith(envelope({ responseReview: [review()[0], { ...review()[1], excerpt: "on" }] }), "degenerate-review-excerpt",
+    "a two-character response-review excerpt");
+  const metDegenerate = complete();
+  metDegenerate[0] = { ...metDegenerate[0], evidence: [{ response: "initial", excerpt: " I " }] };
+  failsWith(envelope({ rubricFeedback: metDegenerate }), "degenerate-excerpt", '"met" anchored only to a single letter');
+  const partialDegenerate = complete();
+  partialDegenerate[2] = { ...partialDegenerate[2], status: "partial", evidence: [{ response: "follow-up", excerpt: "and then" }] };
+  failsWith(envelope({ rubricFeedback: partialDegenerate }), "degenerate-excerpt", '"partial" anchored only to a generic fragment');
+  // `missing` may omit evidence — but anything it DOES supply must still be real evidence.
+  const missingDegenerate = complete();
+  missingDegenerate[2] = { rubricId: "practical-implementation", status: "missing",
+    evidence: [{ response: "initial", excerpt: "a" }], comment: "Not demonstrated." } as never;
+  failsWith(envelope({ rubricFeedback: missingDegenerate }), "degenerate-excerpt", '"missing" with degenerate supplied evidence');
+  const missingNoEvidence = complete();
+  missingNoEvidence[2] = { rubricId: "practical-implementation", status: "missing", comment: "Not demonstrated." } as never;
+  passes(envelope({ rubricFeedback: missingNoEvidence }), '"missing" with NO evidence still passes');
+
+  // NON-VACUOUS CONTROLS — same phrase, four fates.
+  const PHRASE = "hold a small buffer of loyalty-tier suites";   // really in the initial response
+  const okPayload = complete();
+  okPayload[0] = { ...okPayload[0], evidence: [{ response: "initial", excerpt: PHRASE }] };
+  passes(envelope({ rubricFeedback: okPayload }), "control: the meaningful phrase, correctly attributed, passes");
+  const oneWord = complete();
+  oneWord[0] = { ...oneWord[0], evidence: [{ response: "initial", excerpt: "buffer" }] };
+  failsWith(envelope({ rubricFeedback: oneWord }), "degenerate-excerpt", "control: one word FROM that phrase fails");
+  const wrongResponse = complete();
+  wrongResponse[0] = { ...wrongResponse[0], evidence: [{ response: "follow-up", excerpt: PHRASE }] };
+  failsWith(envelope({ rubricFeedback: wrongResponse }), "wrong-response-attribution", "control: that phrase on the wrong response fails");
+  const fromExample = complete();
+  fromExample[0] = { ...fromExample[0], evidence: [{ response: "initial", excerpt: "tiered protection policy with a quarterly" }] };
+  failsWith(envelope({ rubricFeedback: fromExample }), "fabricated-excerpt", "control: a phrase found only in the coach example fails");
+  // A complete valid payload passes, then fails the moment one entry becomes degenerate.
+  passes(envelope(), "control: the complete valid payload passes");
+  const spoiled = complete();
+  spoiled[3] = { ...spoiled[3], evidence: [{ response: "follow-up", excerpt: "a" }] };
+  failsWith(envelope({ rubricFeedback: spoiled }), "degenerate-excerpt", "control: replacing one excerpt with \"a\" fails the same payload");
+
+  // The prompt states the expectation, and only for authored-lesson requests.
+  const coachSrc = readFileSync("lib/side-coach.ts", "utf8");
+  const gate = coachSrc.slice(coachSrc.indexOf('if (input.rubricIds && input.rubricIds.length > 0)'));
+  assert.ok(/A single word or a generic fragment is not evidence/.test(gate), "the prompt forbids single-word evidence");
+  assert.ok(/SPECIFIC/.test(gate), "and asks for a specific phrase");
+  assert.equal(coachSrc.split("A single word or a generic fragment is not evidence").length - 1, 1,
+    "that instruction exists once, inside the authored-lesson gate only");
 
   // ============ rubric evidence rules — preserved from M7A ============
 

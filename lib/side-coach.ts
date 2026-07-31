@@ -141,6 +141,7 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
           "RESPONSE REVIEW: Return a `responseReview` array with EXACTLY TWO entries — one for the initial response and one for the follow-up response.",
           'Each entry is {"response": "initial"|"follow-up", "excerpt": string, "note": string}.',
           "`excerpt` must be a SHORT, EXACT quotation copied from the response named in `response` — never paraphrased, never taken from the other response, never your own wording.",
+          "Quote a short but SPECIFIC phrase — at least a few words. A single word or a generic fragment is not evidence; the quotation must make clear which part of the response supports your note.",
           "`note` says honestly what that response contributed or failed to demonstrate. It may be critical. Do not tie it to one criterion, and do not claim anything the response did not do.",
           "Include both entries even when the response demonstrates nothing — that is exactly what the note is for."
         ].join(" ")
@@ -151,6 +152,7 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
           `Use these EXACT rubricId values, once each, no others: ${input.rubricIds.join(", ")}.`,
           'Each entry is {"rubricId": string, "status": "met"|"partial"|"missing", "evidence": [{"response": "initial"|"follow-up", "excerpt": string}], "comment": string}.',
           "Evaluate BOTH labeled learner responses. For \"met\" or \"partial\" you MUST include at least one evidence entry whose `excerpt` is a SHORT, EXACT quotation copied from the learner response named in `response` — do not paraphrase, do not reword, and never quote from the other response.",
+          "That quotation must be SPECIFIC: a few words at minimum. A single word or a generic fragment will be rejected, because it does not show what supports the criterion.",
           'For "missing", leave `evidence` empty and say plainly in `comment` what was not demonstrated. Never invent a quotation to justify a verdict.',
           "Criterion evidence may come from one response only, or from neither, if that is the honest result — `responseReview` already shows you read both. NEVER attach an irrelevant quotation to a criterion just to cover a response.",
           "Keep any model rewrite in `example` only — it is your wording, never the learner\'s, and never evidence or review.",

@@ -65,6 +65,7 @@ export type AuthoredFeedbackValidationFailure =
   | "duplicate-review-response"
   | "missing-review-response"
   | "empty-review-excerpt"
+  | "degenerate-review-excerpt"
   | "empty-review-note"
   | "uninformative-review-note"
   | "review-fabricated-excerpt"
@@ -80,6 +81,7 @@ export type AuthoredFeedbackValidationFailure =
   | "missing-evidence"
   | "malformed-evidence"
   | "fabricated-excerpt"
+  | "degenerate-excerpt"
   | "wrong-response-attribution";
 
 export type AuthoredFeedbackValidationResult =
@@ -100,6 +102,39 @@ const SOURCES: readonly EvidenceSource[] = ["initial", "follow-up"];
  * criterion-neutral, and this module does not pretend otherwise.
  */
 const MIN_REVIEW_NOTE_CHARS = 10;
+
+/**
+ * Floors for a learner-evidence excerpt (M11R4). An excerpt is a QUOTATION offered as proof, so it
+ * has to carry enough of the learner's actual wording to show what supports the verdict.
+ */
+const MIN_EXCERPT_VISIBLE_CHARS = 12;
+const MIN_EXCERPT_WORD_TOKENS = 3;
+
+/**
+ * Is this excerpt specific enough to function as evidence?
+ *
+ * Substring containment alone was not enough: `"a"` and `" I "` appear in almost any response, so a
+ * degraded provider could mark every criterion `met`, "anchor" each one to a single letter, and
+ * produce a fully-passing card whose quotations proved nothing. That is the exact fabrication this
+ * module exists to stop, so specificity is now a precondition rather than a hope.
+ *
+ * Deliberately mechanical: a character floor AND a word-token floor, both measured after whitespace
+ * is collapsed so padding cannot inflate a fragment into validity. Tokens must contain a letter or a
+ * digit, so punctuation runs never satisfy the count. No sentence is required, no punctuation is
+ * required, and no semantic judgement is attempted — a concise phrase like "train the front desk
+ * team" passes, which is the point.
+ *
+ * Pure and exported so both evidence paths share ONE rule and the tests can exercise it directly
+ * rather than mirroring it.
+ */
+export function isMeaningfulLearnerExcerpt(excerpt: unknown): boolean {
+  if (typeof excerpt !== "string") return false;
+  const collapsed = excerpt.replace(/\s+/g, " ").trim();
+  if (!collapsed) return false;
+  if (collapsed.replace(/\s/g, "").length < MIN_EXCERPT_VISIBLE_CHARS) return false;
+  const wordLike = collapsed.split(" ").filter((token) => /[A-Za-z0-9]/.test(token));
+  return wordLike.length >= MIN_EXCERPT_WORD_TOKENS;
+}
 
 /** Whitespace- and case-insensitive containment, so ordinary reformatting is not treated as fabrication. */
 function normalize(text: string): string {
@@ -154,6 +189,8 @@ function validateResponseReview(
 
     const excerpt = typeof entry.excerpt === "string" ? entry.excerpt : "";
     if (!excerpt.trim()) return { ok: false, reason: "empty-review-excerpt" };
+    // A one-letter "quotation" proves nothing about whether the response was read (M11R4).
+    if (!isMeaningfulLearnerExcerpt(excerpt)) return { ok: false, reason: "degenerate-review-excerpt" };
 
     const note = typeof entry.note === "string" ? entry.note.trim() : "";
     if (!note) return { ok: false, reason: "empty-review-note" };
@@ -223,6 +260,9 @@ function validateRubricFeedback(
       const excerpt = typeof ev.excerpt === "string" ? ev.excerpt : "";
       if (!SOURCES.includes(response)) return { ok: false, reason: "malformed-evidence" };
       if (!excerpt.trim()) return { ok: false, reason: "malformed-evidence" };
+      // Applies to EVERY supplied entry, including one attached to a `missing` verdict: evidence is
+      // optional there, but anything actually supplied must still be real evidence (M11R4).
+      if (!isMeaningfulLearnerExcerpt(excerpt)) return { ok: false, reason: "degenerate-excerpt" };
 
       const problem = checkExcerpt(excerpt, response, initialResponse, followUpResponse);
       if (problem === "misattributed") return { ok: false, reason: "wrong-response-attribution" };

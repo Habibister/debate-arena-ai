@@ -61,6 +61,10 @@ export const sideCoachRequestSchema = z.object({
   // The role-play scenario + goals, so coaching is specific to the actual situation (not generic).
   scenario: z.string().max(4000).optional(),
   goals: z.array(z.string().max(300)).max(6).optional(),
+  // Stable authored-rubric IDs. ONLY the authored-lesson practice sends these; their presence is
+  // what opts a request into the structured, evidence-anchored rubric contract. Debate sends no
+  // goals at all, and the role-play rooms send scenario goals without IDs — both are unaffected.
+  rubricIds: z.array(z.string().max(60)).max(8).optional(),
   // Public transcript only — never judge reasoning or private coaching.
   transcript: z.array(z.object({ role: z.string().max(20), content: z.string().min(1).max(8000) })).max(40).default([]),
   latestStudentSpeech: z.string().max(8000).optional(),

@@ -451,7 +451,10 @@ function main() {
   const rpPractice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
   assert.ok(rpPractice.includes("/api/ai/side-coach"), "role-play practice reuses the existing Side Coach route");
   assert.ok(!/recordDrillMastery|from \"@\/lib\/prisma\"|from \"@\/lib\/spaced-review\"/.test(rpPractice), "role-play practice records no mastery/competition result");
-  assert.ok(rpPractice.includes("Retry") && rpPractice.includes("goals: [...p.write.rubric, COACH_NOTE]"), "role-play practice retries on failure and validates against the authored rubric (+ coach note)");
+  // M7A: the rubric now travels as stable "id \u2014 label" pairs, alongside the machine IDs the coach
+  // must key its verdicts to. The coach note still rides at the end of goals.
+  assert.ok(rpPractice.includes("Retry") && rpPractice.includes("goals: [...p.write.rubric.map((r) => `${r.id} \u2014 ${r.label}`), COACH_NOTE]"), "role-play practice retries on failure and validates against the authored rubric (+ coach note)");
+  assert.ok(rpPractice.includes("rubricIds: p.write.rubric.map((r) => r.id)"), "the authored rubric's stable IDs are sent so feedback can be keyed to them");
   // ===== C5C1a: feedback evaluates BOTH responses; nonsense can't unlock coaching =====
   // Both learner responses travel in the field the coach is explicitly instructed to evaluate.
   assert.ok(rpPractice.includes("INITIAL RESPONSE:") && rpPractice.includes("RESPONSE TO FOLLOW-UP:") && /latestStudentSpeech: `INITIAL RESPONSE:/.test(rpPractice), "both initial + follow-up responses are included in the evaluation input");
@@ -472,7 +475,7 @@ function main() {
   if (decaLesson && hosaLesson) {
     if (decaLesson.practiceStatus === "available") {
       assert.equal(decaLesson.practice.write.rubric.length, 4, "DECA rubric still has its 4 authored items");
-      assert.ok(decaLesson.practice.write.rubric[0].includes("specific recommendation"), "DECA rubric content passed through unchanged");
+      assert.ok(decaLesson.practice.write.rubric[0].label.includes("specific recommendation"), "DECA rubric content passed through unchanged");
     }
     // M3: the HOSA rubric is withdrawn with its scenario — no orphaned rubric remains active.
     assert.equal(hosaLesson.practice, undefined, "no HOSA rubric remains active after the scenario withdrawal");

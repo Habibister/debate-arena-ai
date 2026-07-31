@@ -41,10 +41,16 @@ type RoleplayLessonBase = {
 // learner's own sentence; `followUp` is the authored in-character question they then answer. The
 // rubric is what the Side Coach validates the learner's wording against. The coach analyzes the
 // learner's response — it never role-plays the character (that stays authored).
+// An authored rubric criterion. The `id` is a STABLE machine identifier used to match provider
+// feedback back to the criterion; the `label` is the learner-facing wording. They are deliberately
+// separate — full sentence text must never be the only identifier, because any rewording of the
+// label would silently break matching.
+export type AuthoredRubricItem = { id: string; label: string };
+
 type RoleplayPractice = {
   intro: string;
   identify: Array<{ prompt: string; choices: string[]; correct: string; explanation: string }>;
-  write: { instruction: string; placeholder: string; rubric: string[] };
+  write: { instruction: string; placeholder: string; rubric: AuthoredRubricItem[] };
   followUp: { speaker: string; question: string; note: string };
 };
 
@@ -182,7 +188,7 @@ const decaRoleplay: AvailableRoleplayLesson = {
   ],
 
   practice: {
-    intro: "Now do it. First read the situation, then make the calls a manager makes. The last steps use your OWN words — a coach will give you feedback on exactly what you write, judged against the rubric below.",
+    intro: "Now do it. First read the situation, then make the calls a manager makes. The last steps use your OWN words — a coach will give you feedback on exactly what you write, judged against the rubric below. Those four checks line up with what an official evaluation form asks about your solution: is it accurate and original, is it practical, and would it be effective. They are not a score, and nothing here is recorded.",
     identify: [
       { prompt: "In this scenario, who are YOU (the participant)?", choices: ["A hotel guest", "The front-desk manager", "A DECA judge", "A travel agent"], correct: "The front-desk manager", explanation: "You play the front-desk manager — everything you say should sound like that manager doing the job." },
       { prompt: "Who is the JUDGE playing?", choices: ["Your teacher", "A hotel inspector", "The upset anniversary guest", "The hotel owner"], correct: "The upset anniversary guest", explanation: "The judge is the guest whose suite was lost. Speak TO her, in character." },
@@ -190,13 +196,18 @@ const decaRoleplay: AvailableRoleplayLesson = {
       { prompt: "Which is the STRONGER recommendation?", choices: ["\"I'll try to find you another room and we value your business.\"", "\"I'll upgrade you to the Penthouse suite at no charge with an anniversary setup tonight, and add a loyalty-suite buffer so this can't repeat — measured by repeat-booking rate.\"", "\"Customer service is important for retention.\"", "\"Sorry, that's all I can do right now.\""], correct: "\"I'll upgrade you to the Penthouse suite at no charge with an anniversary setup tonight, and add a loyalty-suite buffer so this can't repeat — measured by repeat-booking rate.\"", explanation: "It's specific, has a business reason, an implementation, and a metric — the full recommendation structure." }
     ],
     write: {
-      instruction: "Write ONE recommendation for this scenario using the structure: recommendation → business reason → how you'd measure it. Speak as the manager.",
-      placeholder: "I recommend that we… because… and I'd measure success by…",
+      instruction: "Write ONE recommendation for this scenario, as the manager: what you would do, why it fits this situation, how you would actually carry it out, and how you would know it worked.",
+      placeholder: "I recommend that we… because… I'd start by… and I'd know it worked if…",
+      // Four items, aligned to the official evaluation form's Solution dimensions — accurate/unique,
+      // practical, effective — while staying assessable from the two written responses alone.
+      // Deliberately NOT here: any point value or score, any requirement to say a performance
+      // indicator's name aloud (explicit vs woven delivery is an unresolved judgment call), any
+      // D-E-C-A mnemonic, and any judgement of delivery, tone, or appearance, which text cannot show.
       rubric: [
-        "States a specific recommendation (a concrete action, not 'try to help')",
-        "Gives a business reason (retention, revenue, loyalty, cost, or brand)",
-        "Names a measurable outcome (a number the business would watch)",
-        "Sounds like the manager speaking to the guest, in character"
+        { id: "specific-recommendation", label: "States a specific recommendation — a concrete action for this business problem, not a general intention" },
+        { id: "scenario-reasoning-pi", label: "Explains why it fits this scenario, demonstrating the performance indicator through the reasoning itself" },
+        { id: "practical-implementation", label: "Covers practical implementation — who acts, what it takes, timing, or a tradeoff, where the scenario makes that relevant" },
+        { id: "effectiveness-measurement", label: "Says what result is expected and how success could be checked" }
       ]
     },
     followUp: {

@@ -1,7 +1,10 @@
 // Beginner Side Coach — a SEPARATE AI role from the opponent and judge. It privately helps the
 // student. It has its own system prompt (never the opponent's), receives only the public transcript
-// + the student's latest speech, and never sees judge scoring or future opponent speeches. On any
-// failure it returns a deterministic, track-aware fallback so the debate never breaks.
+// + the student's latest speech, and never sees judge scoring or future opponent speeches.
+//
+// On any failure it returns an explicit `unavailable` result carrying NO learner-specific feedback,
+// so an outage is never rendered as coaching about the learner's own work. Callers show an honest
+// unavailable state and offer a retry.
 import type { Organization } from "@prisma/client";
 import { runProviderCompletion, extractJson } from "@/lib/ai-providers";
 
@@ -17,6 +20,8 @@ export type SideCoachInput = {
   // specific to THIS situation, not generic advice.
   scenario?: string;
   goals?: string[];
+  // Present only for authored-lesson requests — see lib/validators.ts.
+  rubricIds?: string[];
   transcript: SideCoachTranscriptLine[];
   latestStudentSpeech?: string;
   requestType: "turn-feedback" | "ask";
@@ -32,6 +37,18 @@ export type SideCoachResponse = {
   // One concrete example/model sentence (an improved version of the learner's wording, an opener, or
   // a short sample response). Kept separate so the UI can label it as an example, not the submission.
   example?: string;
+  // Per-rubric-item verdicts, present only for authored-lesson requests (those that send rubricIds).
+  // Deliberately OPAQUE here: the server cannot judge this payload, because validity depends on the
+  // authored rubric AND on the learner's actual submitted text, neither of which it holds. It is
+  // passed through untouched and validated in exactly one place —
+  // `validateAuthoredRubricFeedback` in lib/authored-rubric-feedback.ts. Keeping a second partial
+  // check here would be a mirror that can drift.
+  rubricFeedback?: unknown;
+  // Proof that BOTH learner responses were examined: one verified excerpt and one honest note each.
+  // Separate from rubricFeedback because a response can be reviewed carefully and still demonstrate
+  // no criterion — see the M7B note in lib/authored-rubric-feedback.ts. Opaque here for the same
+  // reason as rubricFeedback: only the caller holds the learner's text to check it against.
+  responseReview?: unknown;
   // `true` means NO evaluation happened. When set, this response carries NO learner-specific
   // feedback whatsoever — the caller must render an honest unavailable state, never a coaching card.
   unavailable?: boolean;
@@ -114,6 +131,33 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
     parts.push("COMBINED-EVIDENCE RULE: Judge the initial response and follow-up as one complete attempt. A rubric item is satisfied if it is genuinely demonstrated in either response; do not mark an item missing merely because it is absent from the follow-up. Distinguish between fully demonstrated, partially demonstrated, and missing items. In `improvement` or `nextMove`, state the status of EVERY supplied rubric item by name — fully demonstrated, partially demonstrated, or missing — including any tone or in-character item.");
     parts.push('When two learner responses are supplied, the `example` must contain a revised initial response AND a revised follow-up response, clearly labeled, so the full exchange is improved. Label them exactly "INITIAL RESPONSE:" and "FOLLOW-UP RESPONSE:".');
     parts.push("CALIBRATION: The no-strength line is reserved for responses where NO rubric item is genuinely met. If at least one rubric item IS genuinely demonstrated (for example a real recommendation or a real reason), name that item as the strength and quote the learner's words — do not use the no-strength line.");
+    // Structured, evidence-anchored verdicts — authored-lesson requests ONLY. Gated on rubricIds so
+    // Debate (no goals) and the role-play rooms (scenario goals, no IDs) keep their existing contract.
+    if (input.rubricIds && input.rubricIds.length > 0) {
+      // Proof-of-review, kept SEPARATE from criterion evidence (M7B). Asking for a per-response
+      // excerpt here is what lets every rubric item be honestly `missing` without inventing a quote.
+      parts.push(
+        [
+          "RESPONSE REVIEW: Return a `responseReview` array with EXACTLY TWO entries — one for the initial response and one for the follow-up response.",
+          'Each entry is {"response": "initial"|"follow-up", "excerpt": string, "note": string}.',
+          "`excerpt` must be a SHORT, EXACT quotation copied from the response named in `response` — never paraphrased, never taken from the other response, never your own wording.",
+          "`note` says honestly what that response contributed or failed to demonstrate. It may be critical. Do not tie it to one criterion, and do not claim anything the response did not do.",
+          "Include both entries even when the response demonstrates nothing — that is exactly what the note is for."
+        ].join(" ")
+      );
+      parts.push(
+        [
+          "PER-ITEM VERDICTS: Also return a `rubricFeedback` array with exactly one entry per rubric criterion.",
+          `Use these EXACT rubricId values, once each, no others: ${input.rubricIds.join(", ")}.`,
+          'Each entry is {"rubricId": string, "status": "met"|"partial"|"missing", "evidence": [{"response": "initial"|"follow-up", "excerpt": string}], "comment": string}.',
+          "Evaluate BOTH labeled learner responses. For \"met\" or \"partial\" you MUST include at least one evidence entry whose `excerpt` is a SHORT, EXACT quotation copied from the learner response named in `response` — do not paraphrase, do not reword, and never quote from the other response.",
+          'For "missing", leave `evidence` empty and say plainly in `comment` what was not demonstrated. Never invent a quotation to justify a verdict.',
+          "Criterion evidence may come from one response only, or from neither, if that is the honest result — `responseReview` already shows you read both. NEVER attach an irrelevant quotation to a criterion just to cover a response.",
+          "Keep any model rewrite in `example` only — it is your wording, never the learner\'s, and never evidence or review.",
+          "Never include a score, point value, or weight."
+        ].join(" ")
+      );
+    }
   }
   return parts.join("\n\n");
 }
@@ -155,12 +199,18 @@ function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input:
   if (!hasFeedbackField) {
     return sideCoachUnavailable("incomplete-turn-feedback");
   }
+  // Passed through untouched — never trimmed, repaired, or partially accepted. The authored-lesson
+  // caller validates both against the rubric and the learner's own text, and refuses anything else.
+  const rubricFeedback = parsed.rubricFeedback;
+  const responseReview = parsed.responseReview;
   return {
     message,
     strength: parsed.strength,
     improvement: parsed.improvement,
     nextMove: parsed.nextMove,
-    example: parsed.example
+    example: parsed.example,
+    ...(rubricFeedback !== undefined ? { rubricFeedback } : {}),
+    ...(responseReview !== undefined ? { responseReview } : {})
   };
 }
 

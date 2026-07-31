@@ -9,6 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import type { AvailableRoleplayLesson, RoleplayLesson } from "@/lib/roleplay-lessons";
 import {
+  orderByAuthoredRubric,
+  responseReviewLabel,
+  rubricStatusLabel,
+  validateAuthoredRubricFeedback,
+  type ResponseReviewEntry,
+  type RubricItemFeedback
+} from "@/lib/authored-rubric-feedback";
+import {
   clearAuthoredLessonProgress,
   countResponseWords,
   loadAuthoredLessonProgress,
@@ -18,7 +26,14 @@ import {
   saveAuthoredLessonProgress
 } from "@/lib/authored-lesson-progress";
 
-type Feedback = { strength?: string; improvement?: string; example?: string; unavailable?: boolean };
+type Feedback = {
+  strength?: string;
+  improvement?: string;
+  example?: string;
+  rubricFeedback?: unknown;
+  responseReview?: unknown;
+  unavailable?: boolean;
+};
 
 // Lightweight meaningful-response gate: blocks blank/obvious-nonsense submissions while still
 // allowing genuinely weak answers (which are exactly what coaching is for).
@@ -148,6 +163,11 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  // Only ever set from the shared production validator — never assembled or patched here.
+  const [rubricVerdicts, setRubricVerdicts] = useState<RubricItemFeedback[] | null>(null);
+  // Proof that both submissions were examined. Same rule: validator output only, already ordered
+  // initial-then-follow-up, never reassembled here.
+  const [responseReview, setResponseReview] = useState<ResponseReviewEntry[] | null>(null);
 
   // ---- Device-local resume (M5 Phase A) ------------------------------------------------------
   // Persist ONLY the learner's own work and their position. Never feedback, never correctness
@@ -218,6 +238,8 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
     setFollowText("");
     setFollowUnlocked(false);
     setFeedback(null);
+    setRubricVerdicts(null);
+    setResponseReview(null);
     setError(null);
     setConfirmingReset(false);
   }, [userScope, lesson.slug]);
@@ -242,6 +264,11 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
   const getFeedback = async () => {
     setBusy(true);
     setError(null);
+    // Clear any previous result before asking again: if this attempt fails, the learner must see the
+    // honest unavailable state alone — never a stale coaching card sitting next to an error.
+    setFeedback(null);
+    setRubricVerdicts(null);
+    setResponseReview(null);
     try {
       const res = await fetch("/api/ai/side-coach", {
         method: "POST",
@@ -257,7 +284,10 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
           // (C5C1a). The COACH_NOTE rides with the rubric to require every category + honest
           // no-strength handling.
           scenario: scenario.text,
-          goals: [...p.write.rubric, COACH_NOTE],
+          goals: [...p.write.rubric.map((r) => `${r.id} — ${r.label}`), COACH_NOTE],
+          // Stable machine IDs. Only the authored lesson sends these, so the structured-rubric
+          // contract applies to this surface alone — Debate and the role-play rooms are untouched.
+          rubricIds: p.write.rubric.map((r) => r.id),
           stage: "Guided lesson practice — evaluate the learner's initial response AND follow-up against every lesson-rubric item.",
           transcript: [
             { role: "MODERATOR", content: `Scenario: ${scenario.title}` },
@@ -275,6 +305,22 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
       // payload. Both surface the honest unavailable state + Retry; the learner's responses stay put.
       if (data.unavailable) throw new Error("The coach is unavailable right now.");
       if (!data.strength && !data.improvement && !data.example) throw new Error("No feedback came back.");
+      // Rubric-complete AND evidence-anchored, or nothing. Category coverage alone would let four
+      // generic comments through, so every met/partial verdict must quote the learner's actual
+      // words from the response it names. Proof that BOTH submissions were read comes from
+      // `responseReview`, not from criterion evidence — a response that genuinely demonstrates
+      // nothing is entitled to produce no evidence (M7B). The whole payload goes in, so the
+      // coach's own `example` can never be mistaken for the learner's words.
+      const verdict = validateAuthoredRubricFeedback(data, {
+        rubric: p.write.rubric,
+        initialResponse: writeText.trim(),
+        followUpResponse: followText.trim()
+      });
+      if (!verdict.ok) {
+        throw new Error("The coach's feedback didn't check out against what you wrote.");
+      }
+      setResponseReview(verdict.review);
+      setRubricVerdicts(verdict.items);
       setFeedback(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -358,7 +404,7 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
           <p className="text-sm font-semibold">{p.write.instruction}</p>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
             {p.write.rubric.map((r) => (
-              <li key={r} className="flex gap-2"><span aria-hidden className="text-primary">•</span><span>{r}</span></li>
+              <li key={r.id} className="flex gap-2"><span aria-hidden className="text-primary">•</span><span>{r.label}</span></li>
             ))}
           </ul>
           <Textarea
@@ -409,7 +455,64 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
             <p className="font-semibold text-emerald-700 dark:text-emerald-300">Feedback on your response</p>
             {feedback.strength ? <p className="mt-2"><span className="font-semibold">Worked:</span> {feedback.strength}</p> : null}
             {feedback.improvement ? <p className="mt-1"><span className="font-semibold">Improve:</span> {feedback.improvement}</p> : null}
-            {feedback.example ? <p className="mt-2 rounded border border-emerald-400/20 bg-emerald-500/10 p-2 italic">Example: {feedback.example}</p> : null}
+
+            {/* Proof that BOTH submissions were read, shown separately from the rubric so a learner
+                never reads a review excerpt as evidence that some criterion was met. Already ordered
+                initial-then-follow-up by the validator. */}
+            {responseReview ? (
+              <div className="mt-3 border-t border-emerald-400/20 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Both responses reviewed</p>
+                <ul className="mt-2 space-y-2">
+                  {responseReview.map((r) => (
+                    <li key={r.response}>
+                      <p className="font-medium leading-6">{responseReviewLabel(r.response)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold">You wrote:</span>{" "}
+                        <span className="italic">&ldquo;{r.excerpt}&rdquo;</span>
+                      </p>
+                      <p className="leading-6">{r.note}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {/* Every authored rubric item, exactly once, in the authored order. Status is carried by
+                a word — never by colour alone — and carries no score or point value. */}
+            {rubricVerdicts ? (
+              <ul className="mt-3 space-y-3 border-t border-emerald-400/20 pt-3">
+                {orderByAuthoredRubric(rubricVerdicts, p.write.rubric).map(({ item, feedback: v }) => (
+                  <li key={item.id}>
+                    {/* Learner-facing label first; the machine ID is never shown as the label. */}
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {rubricStatusLabel(v.status)}
+                    </p>
+                    <p className="font-medium leading-6">{item.label}</p>
+                    {v.evidence?.length ? (
+                      <ul className="mt-1 space-y-1">
+                        {v.evidence.map((e, i) => (
+                          <li key={i} className="text-xs text-muted-foreground">
+                            <span className="font-semibold">
+                              {e.response === "initial" ? "From your first response:" : "From your follow-up:"}
+                            </span>{" "}
+                            <span className="italic">&ldquo;{e.excerpt}&rdquo;</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    <p className="mt-1 leading-6">{v.comment}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {feedback.example ? (
+              <p className="mt-2 rounded border border-emerald-400/20 bg-emerald-500/10 p-2">
+                <span className="font-semibold">Example revision</span>{" "}
+                <span className="text-xs text-muted-foreground">(written by the coach — not your words)</span>
+                <span className="mt-1 block italic">{feedback.example}</span>
+              </p>
+            ) : null}
             <p className="mt-2 text-xs text-muted-foreground">Guided practice — this feedback isn&apos;t a score, and nothing here is recorded.</p>
           </div>
         ) : null}

@@ -26,10 +26,16 @@ function main() {
 
   // ---- 1. the route exists, is HOSA-scoped, and reads the registry -----------------------------
   assert.ok(page.includes("export default function EventNavigatorPage"), "the Navigator route renders a page");
-  assert.ok(page.includes('if (track.id !== "HOSA") notFound()'), "the Navigator is HOSA-only in M8A (DECA is M8B)");
-  assert.ok(page.includes("<HosaEventNavigator"), "the route renders the Navigator component");
-  assert.ok(hub.includes('track.id === "HOSA" ?') && hub.includes("/events`"), "the HOSA hub links to the Navigator");
-  assert.ok(!hub.includes('track.id === "DECA"') || !hub.includes("deca/events"), "no DECA Navigator entry point was added");
+  // M8B added the DECA Navigator behind the same route. The guard is now a two-track allow-list;
+  // every other track still 404s, and each track resolves ONLY its own parameter through its own
+  // registry — which is what keeps HOSA fail-closed regardless of what DECA does.
+  assert.ok(page.includes('if (track.id !== "HOSA" && track.id !== "DECA") notFound()'), "only HOSA and DECA have a Navigator; every other track 404s");
+  assert.ok(page.includes("<HosaEventNavigator"), "the route renders the HOSA Navigator component");
+  assert.ok(page.includes('const isHosa = track.id === "HOSA"'), "the branch is an explicit track check, not a fallback");
+  assert.ok(page.includes("hosaEventById(requested) : decaFamilyById(requested)"), "HOSA resolves ids through its own registry only");
+  assert.ok(page.includes("singleParam(searchParams?.event)"), "HOSA reads ?event=, which DECA never resolves");
+  assert.ok(hub.includes('NAVIGATOR_TRACKS: TrainingTrack[] = ["HOSA", "DECA"]') && hub.includes("/events`"), "the HOSA hub links to the Navigator");
+  assert.ok(hosaEventById("individual-series") === undefined, "a DECA family id resolves to nothing in the HOSA registry");
 
   // ---- 2/3. the ONE verified card uses only approved sourced facts ------------------------------
   const mt = hosaEventById("medical-terminology");
@@ -190,9 +196,14 @@ function main() {
   // ---- 19/20. Debate and DECA untouched; track isolation intact -----------------------------------------
   // Comments stripped: the route's own comment records that the DECA Navigator is M8B, which is
   // scope documentation, not DECA content reaching a HOSA learner.
-  for (const [name, src] of [["the registry", registry], ["the Navigator", nav], ["the route", page]] as const) {
+  // The route file is shared with DECA since M8B, so it necessarily names DECA. What must stay true
+  // is that HOSA's own registry and component carry no DECA content, and that a HOSA request is
+  // served only by the HOSA branch.
+  for (const [name, src] of [["the registry", registry], ["the Navigator", nav]] as const) {
     assert.ok(!/DECA|Public Forum|performance indicator|role[- ]play series/i.test(stripComments(src)), `${name} renders no DECA or Debate content`);
   }
+  assert.ok(page.includes("isHosa ? (\n        <HosaEventNavigator") || /isHosa \? \(\s*<HosaEventNavigator/.test(page),
+    "a HOSA request renders the HOSA Navigator and nothing else");
   assert.ok(!page.includes('trackBySlug(params.track)?.id === "DECA"'), "the route grants no DECA access");
   const hubDeca = hub.includes('DECA: "hotel-lodging-management"');
   assert.ok(hubDeca, "the DECA Event HQ entry point is unchanged");
@@ -238,7 +249,7 @@ function main() {
   assert.equal(hosaEventsByFamily(findHosaEvents("zzzz")).length, 0, "and produces no family groups, so the empty state shows");
 
   console.log(
-    "HOSA Navigator smoke passed: the route is HOSA-only and fails closed. Exactly one event (Medical Terminology) is displayable as verified, carrying only the two facts the approved local record sources — 50 questions and 60 minutes, season 2025-26, verified 2026-07-05 — and every other field stays absent rather than defaulted. The other seven events are identity-only partial cards that expose no facts at all, and no Medical Terminology value reaches them. Unknown, blank, or malformed identifiers resolve to nothing: never the first entry, never a silent redirect, never another event. A record claiming verification without season, date, source label and at least one real fact degrades to partial. No room layout, patient portrayal, team size, timing, question count, round count, equipment list, tiebreaker, advancement rule or results timing is invented anywhere; families are labeled as CompeteReady's grouping, not an official taxonomy; association variation is stated for every event; and the September 1, 2026 gate is preserved as one dated expectation rather than an annual rule. The clinical-skill family routes only to the informational communication lesson with its scope statement, whose practice remains unavailable and mounts no hooks, storage or request. Debate and DECA are untouched, status is always words plus an icon, search is labeled and keyboard-operable, and nothing writes to a schema, API, mastery, progress, XP, rating or ballot."
+    "HOSA Navigator smoke passed: the HOSA branch of the shared Navigator route resolves only ?event= through the HOSA registry and fails closed. Exactly one event (Medical Terminology) is displayable as verified, carrying only the two facts the approved local record sources — 50 questions and 60 minutes, season 2025-26, verified 2026-07-05 — and every other field stays absent rather than defaulted. The other seven events are identity-only partial cards that expose no facts at all, and no Medical Terminology value reaches them. Unknown, blank, or malformed identifiers resolve to nothing: never the first entry, never a silent redirect, never another event. A record claiming verification without season, date, source label and at least one real fact degrades to partial. No room layout, patient portrayal, team size, timing, question count, round count, equipment list, tiebreaker, advancement rule or results timing is invented anywhere; families are labeled as CompeteReady's grouping, not an official taxonomy; association variation is stated for every event; and the September 1, 2026 gate is preserved as one dated expectation rather than an annual rule. The clinical-skill family routes only to the informational communication lesson with its scope statement, whose practice remains unavailable and mounts no hooks, storage or request. Debate and DECA are untouched, status is always words plus an icon, search is labeled and keyboard-operable, and nothing writes to a schema, API, mastery, progress, XP, rating or ballot."
   );
 }
 

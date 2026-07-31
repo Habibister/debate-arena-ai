@@ -19,6 +19,10 @@ const EVENT_HQ_SLUG: Partial<Record<TrainingTrack, string>> = {
   HOSA: "medical-terminology"
 };
 
+// Tracks with a fail-closed Event Navigator. Each has its OWN registry and component; adding a
+// track here without one would 404, not borrow another track's data.
+const NAVIGATOR_TRACKS: TrainingTrack[] = ["HOSA", "DECA"];
+
 const PRACTICE_ACTION: Record<TrainingTrack, string> = {
   GENERAL_DEBATE: "Start a debate practice",
   HOSA: "Start HOSA practice",
@@ -69,9 +73,9 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
       {/* Practice */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {/* Navigator-first: HOSA spans written tests, clinical skills, interviews, presentations and
-            team events, so the exact event must be identified before any training is recommended.
-            HOSA only in M8A — the DECA Navigator is M8B. */}
-        {track.id === "HOSA" ? (
+            team events, and DECA's families differ in timing, exams, PIs and judge questions — so the
+            exact event or family must be identified before any training is recommended. */}
+        {NAVIGATOR_TRACKS.includes(track.id) ? (
           <Link
             href={`/training/${track.slug}/events` as Route}
             className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10"
@@ -80,8 +84,8 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             <span>
               <span className="block font-semibold">Event Navigator</span>
               <span className="mt-1 block text-sm text-muted-foreground">
-                Start here. Find your exact event, see what we&apos;ve actually verified about it, and go to the right
-                training.
+                Start here. Find your {track.id === "HOSA" ? "exact event" : "event family"}, see what we&apos;ve actually
+                verified about it, and go to the right training.
               </span>
             </span>
           </Link>

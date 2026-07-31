@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { hosaEventById, hosaEventsByFamily, presentHosaEvent, HOSA_EVENTS } from "../lib/hosa-events";
+import { decaFamilyById, decaFamiliesByScope, presentDecaFamily, DECA_FAMILIES } from "../lib/deca-events";
 import {
   composePractice,
   CONTENT_SOURCE_LABEL,
@@ -695,7 +696,7 @@ function main() {
   // C8 (M8A). HOSA Event Navigator: track-scoped and fail-closed.
   const navPage = readFileSync("app/(app)/training/[track]/events/page.tsx", "utf8");
   assert.ok(existsSync("app/(app)/training/[track]/events/page.tsx"), "the Event Navigator route exists");
-  assert.ok(navPage.includes('if (track.id !== "HOSA") notFound()'), "the Navigator is HOSA-only — DECA and Debate 404 exactly as before");
+  assert.ok(navPage.includes('if (track.id !== "HOSA" && track.id !== "DECA") notFound()'), "the Navigator serves HOSA and DECA only — Debate and every other track still 404");
   // An unknown or absent event never resolves to a real event, and never to the first entry.
   for (const bad of ["", "  ", "unknown-event", "deca-hotel-lodging", "public-forum"]) {
     assert.equal(hosaEventById(bad), undefined, `Navigator fails closed on "${bad}"`);
@@ -715,6 +716,29 @@ function main() {
   // The withdrawn HOSA practice is never reachable as available through the Navigator.
   assert.ok(!navSrc.includes("/training/hosa/practice"), "the Navigator never routes to the withdrawn interactive practice");
 
+  // C9 (M8B). DECA Event Navigator: family-first, fail-closed, isolated from HOSA.
+  const decaNavSrc = readFileSync("components/training/deca-event-navigator.tsx", "utf8");
+  for (const bad of ["", "  ", "unknown-family", "medical-terminology", "public-forum"]) {
+    assert.equal(decaFamilyById(bad), undefined, `DECA Navigator fails closed on "${bad}"`);
+  }
+  assert.equal(decaFamilyById(undefined), undefined, "a missing family id selects nothing");
+  assert.notEqual(decaFamilyById("unknown-family"), DECA_FAMILIES[0], "an unknown id never falls through to the first family");
+  // Cross-track identifiers never resolve in the other registry.
+  assert.equal(decaFamilyById("medical-terminology"), undefined, "a HOSA event id resolves to nothing in DECA");
+  assert.equal(hosaEventById("individual-series"), undefined, "a DECA family id resolves to nothing in HOSA");
+  // Individual Series is never the default: its facts reach no other family.
+  for (const f of DECA_FAMILIES.filter((f) => f.id !== "individual-series")) {
+    assert.equal(presentDecaFamily(f).facts.examQuestionCount, undefined, `${f.name} does not inherit the Series exam`);
+    assert.equal(presentDecaFamily(f).facts.rolePlayMinutes, undefined, `${f.name} does not inherit the Series role-play clock`);
+  }
+  // Out-of-scope families never route into the role-play lesson.
+  for (const f of DECA_FAMILIES.filter((f) => presentDecaFamily(f).outOfScope)) {
+    assert.notEqual(f.routeTarget, "/lessons/how-deca-roleplay-works", `${f.name} is not routed into the role-play course`);
+  }
+  assert.ok(decaFamiliesByScope().every((g) => g.families.every((f) => f.scope === g.scope.id)), "families never appear under another scope");
+  assert.ok(!/HOSA|Medical Terminology|patient/i.test(decaNavSrc), "the DECA Navigator surfaces no HOSA content");
+  assert.ok(!/DECA|Performance Indicator/i.test(navSrc), "the HOSA Navigator surfaces no DECA content");
+
   // C7. CompeteReady branding replaces DebateArena AI in user-facing surfaces.
   for (const file of ["components/app/app-shell.tsx", "app/(auth)/signin/page.tsx", "app/layout.tsx", "app/page.tsx"]) {
     const src = readFileSync(file, "utf8");
@@ -722,7 +746,7 @@ function main() {
   }
   assert.ok(readFileSync("components/app/app-shell.tsx", "utf8").includes("CompeteReady"), "app shell uses the CompeteReady name");
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage).");
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson).");
 }
 
 main();

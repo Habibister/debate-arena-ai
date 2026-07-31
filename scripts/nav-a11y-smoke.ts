@@ -149,7 +149,10 @@ function main() {
   const partial = route("hosa", { event: "hosa-bowl" });
   assert.ok(!partial.includes("Official HOSA source") && !partial.includes("Last verified"), "a partial HOSA event inherits no provenance");
   assert.ok(visible(partial).includes("Complete current details not yet verified"), "and says so in words");
-  assert.ok(mt.includes("Don't see your event?".replace("'", "'")) || mt.includes("Don"), "the family-level routing section is present");
+  // M11R9: this was `"Don't see your event?".replace("'", "'")` — a transform whose output equals
+  // its input — OR'd with `mt.includes("Don")`, which almost any HOSA markup satisfies. Both halves
+  // are gone: the rendered markup is DECODED once and the real section title is required.
+  assert.ok(decode(mt).includes("Don't see your event?"), "the family-level routing section is present");
   assert.ok(!/Both responses reviewed/.test(mt), "no DECA rubric surface leaks into HOSA");
   const tdm = route("deca", { family: "team-decision-making" });
   assert.ok(!/\d{1,3}\s*%/.test(visible(tdm)) && tdm.includes("Guide and its published sample conflict"),
@@ -187,6 +190,67 @@ function main() {
   ok("both desktop and mobile navigation reach /training, the only path to either Navigator");
 
   console.log(results.join("\n"));
+  // ============ M11R9: button content semantics and heading outline ============
+  // Both checks run on RENDERED markup and are proven on fixtures, so neither can silently pass.
+  const paragraphInButton = (html: string): number =>
+    (html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? []).filter((b) => /<p\b/.test(b)).length;
+  const nestedInteractive = (html: string): number =>
+    (html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? [])
+      .filter((b) => /<(?:a|button|input|select|textarea)\b/.test(b.replace(/^<button\b[^>]*>/, ""))).length;
+  const headingLevels = (html: string): number[] =>
+    (html.match(/<h([1-6])\b[^>]*>/g) ?? []).map((h) => Number(/<h([1-6])/.exec(h)![1]));
+  const skipsALevel = (levels: number[]): boolean => {
+    let prev = 0;
+    for (const lvl of levels) {
+      if (prev && lvl > prev + 1) return true;
+      prev = lvl;
+    }
+    return false;
+  };
+
+  // CONTROLS FIRST — a check that cannot fail is worth nothing.
+  assert.equal(paragraphInButton("<button><p>Invalid text</p></button>"), 1,
+    "control: the button check rejects a paragraph inside a button");
+  assert.equal(paragraphInButton('<button><span class="block">Valid text</span></button>'), 0,
+    "control: and accepts a phrasing-content button");
+  assert.equal(nestedInteractive('<button><a href="/x">go</a></button>'), 1,
+    "control: the nesting check rejects an anchor inside a button");
+  assert.equal(nestedInteractive('<button><span>go</span></button>'), 0, "control: and accepts a plain button");
+  assert.ok(skipsALevel(headingLevels("<h1>Page</h1><h3>Skipped section</h3>")),
+    "control: the outline check rejects h1 -> h3");
+  assert.ok(!skipsALevel(headingLevels("<h1>Page</h1><h2>Section</h2><h3>Sub</h3>")),
+    "control: and accepts h1 -> h2 -> h3");
+  assert.ok(!skipsALevel(headingLevels("<h1>Page</h1><h2>Section</h2>")), "control: and accepts h1 -> h2");
+  // Tailwind class digits must never be read as heading levels.
+  assert.deepEqual(headingLevels('<div class="h-3 gap-2"><h2 class="text-h1">x</h2></div>'), [2],
+    "control: class names are not mistaken for heading levels");
+
+  // PRODUCTION — every rendered navigator state.
+  const m11r9States: Array<[string, string]> = [
+    ["DECA default", route("deca")],
+    ["DECA selected family", route("deca", { family: "team-decision-making" })],
+    ["DECA unresolved PSC", route("deca", { family: "professional-selling-and-consulting" })],
+    ["DECA unknown family", route("deca", { family: "not-a-family" })],
+    ["HOSA default", route("hosa")],
+    ["HOSA selected Medical Terminology", route("hosa", { event: "medical-terminology" })],
+    ["HOSA partial event", route("hosa", { event: "hosa-bowl" })],
+    ["HOSA unknown event", route("hosa", { event: "not-an-event" })]
+  ];
+  for (const [label, html] of m11r9States) {
+    assert.ok(html.includes("<button"), `${label}: really rendered interactive controls (the scans below mean something)`);
+    assert.equal(paragraphInButton(html), 0, `${label}: no button contains a paragraph`);
+    assert.equal(nestedInteractive(html), 0, `${label}: no button contains another interactive element`);
+    const levels = headingLevels(html);
+    assert.equal(levels.filter((l) => l === 1).length, 1, `${label}: exactly one h1`);
+    assert.ok(!skipsALevel(levels), `${label}: the heading outline skips no level (${levels.map((l) => `h${l}`).join(" ")})`);
+    assert.ok(levels.length >= 3, `${label}: the page really has a section outline`);
+    // Every result button keeps a useful accessible name from its own visible text.
+    for (const button of html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? []) {
+      const name = visible(decode(button));
+      assert.ok(name.length > 0 || /aria-label="[^"]+"/.test(button), `${label}: every button has an accessible name`);
+    }
+  }
+
   console.log(
     "\nNav/a11y smoke passed: all three hubs render track-local navigation with Start Debate on /debate and both Event HQ links unchanged; /training/debate/events fails closed. Each Navigator resolves only its own identifier through its own parameter — a foreign id shows the honest unknown state, while the other track's parameter and a repeated parameter are treated as absent, and malformed input always keeps list + hub recovery without a silent redirect. Search inputs carry real labels with unique ids, selection uses real buttons with aria-pressed, navigation uses links, lists are semantic, and no state renders a duplicate id, a tooltip-only fact, a hover-only control, a fixed pixel width, whitespace-nowrap, or an unnecessary live region. Status wording survives with every styling class stripped, and no machine code reaches learner text. Medical Terminology keeps its provenance while partial events inherit none; TDM shows no weighting; PSC and the prepared/written/online families never link into role-play practice; the withdrawn HOSA practice renders no control at all. NOTE: this is SSR + markup proof only — real viewport layout, focus order and screen-reader output are NOT verified here."
   );

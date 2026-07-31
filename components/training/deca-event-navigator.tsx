@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { AlertTriangle, ArrowRight, CheckCircle2, HelpCircle, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
@@ -53,11 +53,13 @@ function FactRow({ label, value }: { label: string; value: string }) {
 function StatusLine({ record }: { record: DecaFamilyRecord }) {
   const { verified } = presentDecaFamily(record);
   const Icon = verified ? CheckCircle2 : HelpCircle;
+  // M11R9: a SPAN, not a paragraph. This line renders inside the result <button>s below, and a
+  // button may only contain phrasing content — `flex` gives the same layout without invalid markup.
   return (
-    <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+    <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
       <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${verified ? "text-emerald-600" : "text-amber-600"}`} aria-hidden />
       <span>{decaStatusLabel(verified ? record.sourceStatus : record.sourceStatus === "unresolved" ? "unresolved" : "partial")}</span>
-    </p>
+    </span>
   );
 }
 
@@ -69,10 +71,10 @@ function FamilyDetail({ record }: { record: DecaFamilyRecord }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">
+        <h2 className="font-semibold leading-none text-lg">
           {record.name}
           {record.abbreviation ? <span className="ml-2 text-base font-normal text-muted-foreground">({record.abbreviation})</span> : null}
-        </CardTitle>
+        </h2>
         {scope ? (
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{scope.label}</span> — {scope.summary}
@@ -242,10 +244,10 @@ function UnknownFamily({ requestedId }: { requestedId: string }) {
   return (
     <Card className="border-amber-500/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+        <h2 className="flex items-center gap-2 font-semibold leading-none text-base">
           <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden />
           We do not have verified details for that event family yet
-        </CardTitle>
+        </h2>
       </CardHeader>
       <CardContent className="text-sm">
         <p className="text-muted-foreground">
@@ -280,7 +282,7 @@ export function DecaEventNavigator({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Find your event family</CardTitle>
+          <h2 className="font-semibold leading-none text-base">Find your event family</h2>
           <p className="text-sm text-muted-foreground">
             DECA&apos;s families run on different rules. Timing, Performance Indicator counts, exam structure, and when
             the judge may ask questions all change between them — so a formula learned for one family is wrong for
@@ -366,7 +368,7 @@ export function DecaEventNavigator({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">What each scope means</CardTitle>
+          <h2 className="font-semibold leading-none text-base">What each scope means</h2>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">

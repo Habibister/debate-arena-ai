@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { AlertTriangle, ArrowRight, CheckCircle2, HelpCircle, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
@@ -72,11 +72,13 @@ function FactRow({ label, value }: { label: string; value: string }) {
 function StatusLine({ record }: { record: HosaEventRecord }) {
   const verified = presentHosaEvent(record).verified;
   const Icon = verified ? CheckCircle2 : HelpCircle;
+  // M11R9: a SPAN, not a paragraph. This line renders inside the result <button>s below, and a
+  // button may only contain phrasing content — `flex` gives the same layout without invalid markup.
   return (
-    <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+    <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
       <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${verified ? "text-emerald-600" : "text-amber-600"}`} aria-hidden />
       <span>{hosaStatusLabel(verified ? record.sourceStatus : "partial")}</span>
-    </p>
+    </span>
   );
 }
 
@@ -92,7 +94,7 @@ function EventDetail({ record }: { record: HosaEventRecord }) {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <CardTitle className="text-lg">{record.name}</CardTitle>
+          <h2 className="font-semibold leading-none text-lg">{record.name}</h2>
         </div>
         {family ? (
           <p className="text-sm text-muted-foreground">
@@ -209,10 +211,10 @@ function UnknownEvent({ requestedId }: { requestedId: string }) {
   return (
     <Card className="border-amber-500/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+        <h2 className="flex items-center gap-2 font-semibold leading-none text-base">
           <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden />
           We do not have verified details for that event yet
-        </CardTitle>
+        </h2>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">
@@ -247,7 +249,7 @@ export function HosaEventNavigator({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Find your event</CardTitle>
+          <h2 className="font-semibold leading-none text-base">Find your event</h2>
           <p className="text-sm text-muted-foreground">
             HOSA is not one format. Training that is right for a terminology test is wrong for a clinical skill or an
             interview, so start from the exact event on your registration — not &ldquo;something medical.&rdquo;
@@ -332,7 +334,7 @@ export function HosaEventNavigator({
           being stranded without inventing an event name to hang the branch on. */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Don&apos;t see your event?</CardTitle>
+          <h2 className="font-semibold leading-none text-base">Don&apos;t see your event?</h2>
           <p className="text-sm text-muted-foreground">
             We can only name the events we&apos;ve sourced, and that is fewer than HOSA offers. If yours isn&apos;t listed,
             find the kind of event it is below — the training branch is the same, and your own guideline stays the

@@ -237,17 +237,66 @@ async function main() {
     "follow-up unlock is impossible during the identify phase"
   );
 
-  // Cross-field: the index is clamped no matter which phase is normalized.
-  assert.equal(normalizeRestoredProgress({ phase: "feedback", identifyIndex: 99, writeText: SHORT, followText: "", followUnlocked: false }, QCOUNT).identifyIndex, QCOUNT - 1, "an out-of-range index is clamped during normalization");
+  // Cross-field: an out-of-range index never reads past the end.
+  // M11R2 CHANGED THIS EXPECTATION: it used to require clamping to QCOUNT - 1. A "feedback" phase
+  // normalizes to `identify` (SHORT does not meet the gate), and a resumed identify phase now
+  // RESTARTS at 0 rather than resuming mid-exercise with an unknowable score. The pure clamp is
+  // still exercised directly below, so nothing about the out-of-range guarantee was lost.
+  const outOfRange = normalizeRestoredProgress({ phase: "feedback", identifyIndex: 99, writeText: SHORT, followText: "", followUnlocked: false }, QCOUNT);
+  assert.equal(outOfRange.phase, "identify", "an unsafe phase with no meaningful first response lands in identify");
+  assert.equal(outOfRange.identifyIndex, 0, "and a resumed identify phase restarts at question zero");
+  assert.equal(outOfRange.identifyRestartedForScore, true, "the restart is reported so the learner can be told why");
+  assert.equal(resolveRestoredIdentifyIndex(99, QCOUNT), QCOUNT - 1, "the pure clamp still bounds an out-of-range index");
   assert.equal(normalizeRestoredProgress({ phase: "respond", identifyIndex: -5, writeText: GOOD_FIRST, followText: "", followUnlocked: false }, QCOUNT).identifyIndex, 0, "a negative index normalizes to 0");
+
+  // ---- M11R2: a resumed quick check never shows a score it cannot justify ---------------------------
+  // 3/4/5. index 0 resumes untouched; index > 0 restarts; no correct count is ever invented.
+  const at0 = normalizeRestoredProgress({ phase: "identify", identifyIndex: 0, writeText: "", followText: "", followUnlocked: false }, QCOUNT);
+  assert.equal(at0.identifyIndex, 0, "a stored identify phase at question zero restores at zero");
+  assert.equal(at0.identifyRestartedForScore, false, "and reports no restart, because nothing was lost");
+  for (const idx of [1, 2, QCOUNT - 1, 99]) {
+    const r = normalizeRestoredProgress({ phase: "identify", identifyIndex: idx, writeText: "", followText: "", followUnlocked: false }, QCOUNT);
+    assert.equal(r.identifyIndex, 0, `a stored identify phase at ${idx} restarts at zero`);
+    assert.equal(r.identifyRestartedForScore, true, `and the restart at ${idx} is reported`);
+    assert.ok(!("correctCount" in r) && !("score" in r), "normalization never produces a correct count or score");
+  }
+  // 7/8/9/10. a respond-phase restore keeps its work and is NOT sent back through the quick check.
+  const resumedRespond = normalizeRestoredProgress(
+    { phase: "respond", identifyIndex: 3, writeText: GOOD_FIRST, followText: "A follow-up answer that is clearly long enough to count.", followUnlocked: true },
+    QCOUNT
+  );
+  assert.equal(resumedRespond.phase, "respond", "a restored respond phase stays in respond");
+  assert.equal(resumedRespond.identifyIndex, 3, "and is NOT rewound through the quick check to rebuild a score");
+  assert.equal(resumedRespond.identifyRestartedForScore, false, "so it reports no quick-check restart");
+  assert.equal(resumedRespond.writeText, GOOD_FIRST, "the first response survives verbatim");
+  assert.ok(resumedRespond.followText.startsWith("A follow-up answer"), "the follow-up survives verbatim");
+  assert.equal(resumedRespond.followUnlocked, true, "and the unlock is re-derived through the shared gate");
+  // 21. a hand-edited index cannot manufacture a score or a shortcut.
+  const handEdited = normalizeRestoredProgress({ phase: "identify", identifyIndex: 999999, writeText: "", followText: "", followUnlocked: true }, QCOUNT);
+  assert.equal(handEdited.identifyIndex, 0, "a hand-edited index cannot skip the quick check");
+  assert.equal(handEdited.followUnlocked, false, "nor unlock the follow-up");
+  assert.equal(Object.keys(handEdited).sort().join(","),
+    ["followText", "followUnlocked", "identifyIndex", "identifyRestartedForScore", "normalizedPhase", "phase", "withdrewFollowUnlock", "writeText"].join(","),
+    "the normalizer's result shape carries no score-bearing field");
+  // 20. restarting converges: re-normalizing the value that would be written back is a fixed point.
+  const rewritten = normalizeRestoredProgress({ phase: at0.phase, identifyIndex: 0, writeText: "", followText: "", followUnlocked: false }, QCOUNT);
+  assert.equal(rewritten.identifyIndex, 0, "the normalized index is a fixed point — no hydrate/write loop");
+  assert.equal(rewritten.identifyRestartedForScore, false, "and the restart notice does not re-fire on the next load");
 
   // 8. Normalization records nothing: its result carries no completion/mastery/score/progress field.
   const shape = Object.keys(fromFeedback).sort();
+  // M11R2 added `identifyRestartedForScore`: a boolean saying the quick check restarted so the UI can
+  // explain why. It is navigation/notice state, not a score — and it is never persisted (asserted
+  // against the stored payload elsewhere in this suite).
   assert.deepEqual(
     shape,
-    ["followText", "followUnlocked", "identifyIndex", "normalizedPhase", "phase", "withdrewFollowUnlock", "writeText"],
+    ["followText", "followUnlocked", "identifyIndex", "identifyRestartedForScore", "normalizedPhase", "phase", "withdrewFollowUnlock", "writeText"],
     "normalization returns navigation state only — no completion, mastery, XP, score, rating or progress"
   );
+  for (const [k, v] of Object.entries(fromFeedback)) {
+    if (k === "identifyIndex") continue; // navigation position, not a result
+    assert.notEqual(typeof v, "number", `no normalized field carries a number that could read as a score: ${k}`);
+  }
 
   // 9. Invalid phase strings are rejected at the STORAGE boundary too (defence in depth).
   map = installStorage();

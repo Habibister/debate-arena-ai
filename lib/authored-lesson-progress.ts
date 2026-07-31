@@ -84,6 +84,12 @@ export type NormalizedResume = {
   followUnlocked: boolean;
   /** True when the stored phase could not be restored as-is and was mapped to a safe one. */
   normalizedPhase: boolean;
+  /**
+   * True when a partially-completed quick check was restarted at question zero because its score
+   * could not be reconstructed honestly. The caller must explain this to the learner. Ephemeral —
+   * this is never stored.
+   */
+  identifyRestartedForScore: boolean;
   /** True when a stored `followUnlocked: true` was withdrawn because it was not semantically earned. */
   withdrewFollowUnlock: boolean;
 };
@@ -124,7 +130,20 @@ export function normalizeRestoredProgress(
       : "identify";
 
   const rawIndex = typeof saved.identifyIndex === "number" ? saved.identifyIndex : 0;
-  const identifyIndex = resolveRestoredIdentifyIndex(rawIndex, questionCount);
+  const clampedIndex = resolveRestoredIdentifyIndex(rawIndex, questionCount);
+
+  // M11R2 — a resumed identify phase RESTARTS at question zero.
+  //
+  // The payload deliberately stores no correct count, no selected answers and no per-question
+  // correctness, so a mid-exercise index cannot be paired with an honest score. Resuming at question
+  // four with a counter of zero rendered "0/3 correct" for work the learner had actually done, which
+  // is a fabricated statistic. Restarting is the only honest option that does not persist a score:
+  // the learner answers from the top and the number they see is one they just earned.
+  //
+  // Only the identify phase is affected. A restored `respond` phase keeps its index untouched —
+  // sending someone back through the quick check purely to rebuild a number would destroy real work.
+  const identifyRestarted = phase === "identify" && clampedIndex > 0;
+  const identifyIndex = identifyRestarted ? 0 : clampedIndex;
 
   // The follow-up is a protected UI state: it is only reachable in `respond`, and only after the
   // first response passes the gate. Storage cannot grant it.
@@ -138,7 +157,8 @@ export function normalizeRestoredProgress(
     followText,
     followUnlocked,
     normalizedPhase: !storedPhaseIsSafe,
-    withdrewFollowUnlock: storedUnlock && !followUnlocked
+    withdrewFollowUnlock: storedUnlock && !followUnlocked,
+    identifyRestartedForScore: identifyRestarted
   };
 }
 

@@ -155,6 +155,11 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
   const [selected, setSelected] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  // M11R2 — ephemeral, NEVER written to storage. `scoreAvailable` is true only while the number on
+  // screen was earned during THIS mounted session. A resumed `respond` phase had an earlier quick
+  // check whose score we deliberately never stored, so no number may stand in for it.
+  const [scoreAvailable, setScoreAvailable] = useState(true);
+  const [resumeNotice, setResumeNotice] = useState<string | null>(null);
 
   const [writeText, setWriteText] = useState("");
   const [followText, setFollowText] = useState("");
@@ -202,6 +207,20 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
       setWriteText(safe.writeText);
       setFollowText(safe.followText);
       setFollowUnlocked(safe.followUnlocked);
+      // A restored `respond` phase carries a quick-check score we never stored, so the live counter
+      // must not present itself as that score. A restarted identify phase is genuinely fresh from
+      // question zero, so its counter is honest again.
+      setScoreAvailable(safe.phase !== "respond");
+      const restoredWriting = safe.writeText.trim().length > 0 || safe.followText.trim().length > 0;
+      setResumeNotice(
+        safe.identifyRestartedForScore
+          ? restoredWriting
+            ? "Your written responses were restored. The quick check restarted from the first question because answer scoring isn't saved on this device."
+            : "The quick check restarted from the first question because answer scoring isn't saved on this device."
+          : safe.phase === "respond" && restoredWriting
+            ? "Your written responses were restored. Your earlier quick-check score isn't saved on this device."
+            : null
+      );
       // Feedback is deliberately NOT restored — the learner asks for fresh coaching after a reload,
       // and nothing here issues that request automatically.
     }
@@ -234,6 +253,8 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
     setSelected(null);
     setRevealed(false);
     setCorrectCount(0);
+    setScoreAvailable(true);
+    setResumeNotice(null);
     setWriteText("");
     setFollowText("");
     setFollowUnlocked(false);
@@ -336,10 +357,23 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="text-base">Read the situation — question {idx + 1} of {p.identify.length}</CardTitle>
-            <span className="text-sm text-muted-foreground">{correctCount}/{idx + (revealed ? 1 : 0)} correct</span>
+            {/* Shown ONLY when this session earned it. Never a reconstructed or placeholder number. */}
+            {scoreAvailable ? (
+              <span className="text-sm text-muted-foreground">{correctCount}/{idx + (revealed ? 1 : 0)} correct</span>
+            ) : (
+              <span className="text-sm text-muted-foreground">Quick-check score isn&apos;t saved on this device</span>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+        {/* M11R2: why the quick check restarted, or why no earlier score is shown. Visible text with
+            an icon — never colour alone — and it never claims work was lost or blames the learner. */}
+        {resumeNotice ? (
+          <p className="flex items-start gap-1.5 rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{resumeNotice}</span>
+          </p>
+        ) : null}
           <p className="text-sm font-medium">{current.prompt}</p>
           <div className="space-y-2" role="group" aria-label="Answer choices">
             {current.choices.map((choice) => {
@@ -400,6 +434,14 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
+      {/* M11R2: why the quick check restarted, or why no earlier score is shown. Visible text with
+          an icon — never colour alone — and it never claims work was lost or blames the learner. */}
+      {resumeNotice ? (
+        <p className="flex items-start gap-1.5 rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{resumeNotice}</span>
+        </p>
+      ) : null}
         <div>
           <p className="text-sm font-semibold">{p.write.instruction}</p>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">

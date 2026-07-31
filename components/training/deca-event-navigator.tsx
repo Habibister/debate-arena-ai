@@ -64,7 +64,7 @@ function StatusLine({ record }: { record: DecaFamilyRecord }) {
 }
 
 function FamilyDetail({ record }: { record: DecaFamilyRecord }) {
-  const { verified, facts, degraded, outOfScope, unresolvedScope } = presentDecaFamily(record);
+  const { verified, facts, degraded, outOfScope, unresolvedScope, hasExamComponent } = presentDecaFamily(record);
   const scope = decaScope(record.scope);
   const isTdm = record.id === "team-decision-making";
 
@@ -170,12 +170,18 @@ function FamilyDetail({ record }: { record: DecaFamilyRecord }) {
           </div>
         ) : null}
 
-        {/* Weighting: a qualitative note where sourced, and an explicit refusal of any figure. */}
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Exam weighting</p>
-          {facts.examWeightingNote ? <p className="mt-1 leading-6">{facts.examWeightingNote}</p> : null}
-          <p className="mt-1 text-xs leading-6 text-muted-foreground">{isTdm ? DECA_TDM_WEIGHTING_NOTE : DECA_WEIGHTING_NOTE}</p>
-        </div>
+        {/* Weighting: a qualitative note where sourced, and an explicit refusal of any figure.
+            M11R10: shown ONLY where this family's own record establishes that an exam applies. On a
+            family whose exam we could not establish, an "Exam weighting" heading plus "we do not
+            show a figure" asserts an exam exists and implies we merely withheld the number. Those
+            families carry their unresolved exam entry in "Not shown, and why" below instead. */}
+        {hasExamComponent ? (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Exam weighting</p>
+            {facts.examWeightingNote ? <p className="mt-1 leading-6">{facts.examWeightingNote}</p> : null}
+            <p className="mt-1 text-xs leading-6 text-muted-foreground">{isTdm ? DECA_TDM_WEIGHTING_NOTE : DECA_WEIGHTING_NOTE}</p>
+          </div>
+        ) : null}
 
         {record.unresolvedFields?.length ? (
           <div>

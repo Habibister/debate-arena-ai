@@ -451,6 +451,8 @@ export type DecaFamilyPresentation = {
    * sourced explanation, whereas an unresolved family has none and must borrow none.
    */
   unresolvedScope: boolean;
+  /** True only when a SOURCED exam fact exists for this family (M11R10). */
+  hasExamComponent: boolean;
 };
 
 /**
@@ -465,12 +467,19 @@ export type DecaFamilyPresentation = {
 export function presentDecaFamily(record: DecaFamilyRecord): DecaFamilyPresentation {
   const verified = isDisplayableAsVerified(record);
   const degraded = isVerifiedStatus(record.sourceStatus) && !verified;
+  const facts = degraded ? {} : (record.verifiedFacts ?? {});
   return {
     record,
     verified,
-    facts: degraded ? {} : (record.verifiedFacts ?? {}),
+    facts,
     degraded,
     outOfScope: record.scope !== "role-play",
+    // M11R10: whether THIS family's own record establishes that an exam applies at all. Only a
+    // sourced exam fact counts — an entry in `unresolvedFields` means we could not establish the
+    // exam, so it must not license an "Exam weighting" section. Without this, every family showed
+    // that heading plus a refusal note, which implies an exam exists and we merely withheld the
+    // number. Families whose exam is unresolved say so in "Not shown, and why" instead.
+    hasExamComponent: Object.keys(facts).some((key) => key.startsWith("exam")),
     // M11R3: `other` means our record contradicts itself about placement. It must never inherit the
     // prepared/written/online explanation, which describes THOSE families' rules, not this one's.
     unresolvedScope: record.scope === "other"

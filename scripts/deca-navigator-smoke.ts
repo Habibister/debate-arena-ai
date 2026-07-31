@@ -420,6 +420,77 @@ function main() {
     assert.ok("Official category — Role-play".includes("Official category"), "control: an official-category label is detected");
   }
 
+  // ============ M11R10: an exam-weighting section only where an exam is established ============
+  {
+    // The flag is DERIVED from each family's own sourced facts — the component owns no rule.
+    for (const family of DECA_FAMILIES) {
+      const present = presentDecaFamily(family);
+      const sourcedExamFacts = Object.keys(present.facts).filter((k) => k.startsWith("exam"));
+      assert.equal(present.hasExamComponent, sourcedExamFacts.length > 0,
+        `${family.id}: exam applicability follows its own sourced facts`);
+      // An unresolved entry must NEVER license the section.
+      const unresolvedExam = (family.unresolvedFields ?? []).filter((f) => /exam/i.test(f));
+      if (sourcedExamFacts.length === 0 && unresolvedExam.length > 0) {
+        assert.equal(present.hasExamComponent, false,
+          `${family.id}: an unresolved exam entry does not establish an exam`);
+      }
+    }
+    // Exactly the two families our record establishes an exam for.
+    const withExam = DECA_FAMILIES.filter((f) => presentDecaFamily(f).hasExamComponent).map((f) => f.id);
+    assert.deepEqual(withExam, ["individual-series", "team-decision-making"],
+      "only Individual Series and Team Decision Making have a sourced exam component");
+
+    // RENDERED: the section appears for those two and nobody else, and no figure appears anywhere.
+    for (const family of DECA_FAMILIES) {
+      const html = renderToStaticMarkup(
+        createElement(DecaEventNavigator as never, { initialFamilyId: family.id } as never) as never
+      );
+      const text = html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
+      const expected = presentDecaFamily(family).hasExamComponent;
+      assert.equal(text.includes("Exam weighting"), expected,
+        `${family.id}: the exam-weighting section renders only where an exam is established`);
+      assert.equal(/\b\d{1,3}\s*%/.test(text), false, `${family.id}: no numeric weighting figure renders`);
+      for (const filler of ["Exam weighting N/A", "Exam weighting 0%", "Unknown%"]) {
+        assert.ok(!text.includes(filler), `${family.id}: missing weighting is omitted, not filled in ("${filler}")`);
+      }
+      // Supported non-weight facts survive the change.
+      if (family.id === "individual-series") {
+        assert.ok(text.includes("Five Performance Indicators per role-play"), "Individual Series keeps its PI fact");
+        assert.ok(text.includes("The exam contributes to preliminary standing."), "and its qualitative exam note");
+      }
+      if (family.id === "team-decision-making") {
+        assert.ok(text.includes("Guide and its published sample conflict"), "TDM still states its unresolved conflict");
+        assert.ok(!/\bexam weighting is\s*\d/i.test(text), "and asserts no figure");
+      }
+      // Whatever the record leaves unresolved is still named.
+      if ((family.unresolvedFields ?? []).length > 0) {
+        assert.ok(text.includes("Not shown, and why"), `${family.id}: unresolved fields are still surfaced`);
+      }
+    }
+
+    // ---- Non-vacuous controls: fixtures only, production untouched ----
+    const examLess = { ...decaFamilyById("prepared-events")!, verifiedFacts: { judgeQuestionFlow: "x" } };
+    assert.equal(presentDecaFamily(examLess).hasExamComponent, false,
+      "control: a fixture family with no exam fact is rejected");
+    const unresolvedOnly = { ...decaFamilyById("personal-financial-literacy")!,
+      unresolvedFields: ["Exam structure and weighting"] };
+    assert.equal(presentDecaFamily(unresolvedOnly).hasExamComponent, false,
+      "control: an unresolved-only fixture is rejected");
+    // Built from a family that IS displayable as verified, so the only variable is the exam fact.
+    const displayable = decaFamilyById("individual-series")!;
+    assert.equal(presentDecaFamily(displayable).degraded, false, "control setup: this family is displayable");
+    const sourced = { ...displayable, verifiedFacts: { examQuestionCount: 100 } };
+    assert.equal(presentDecaFamily(sourced).hasExamComponent, true,
+      "control: a genuinely sourced exam fact IS accepted");
+    const stripped = { ...displayable, verifiedFacts: { judgeQuestionFlow: "x" } };
+    assert.equal(presentDecaFamily(stripped).hasExamComponent, false,
+      "control: the SAME displayable family without an exam fact is rejected");
+    // Removing the section from a rendered fixture makes the exam-less check pass.
+    assert.ok(!"Prepared events — no exam section here".includes("Exam weighting"),
+      "control: a rendered fixture without the section passes the exam-less check");
+    assert.deepEqual(DECA_FAMILIES.map((f) => f.id).length, 8, "control: the production registry was not mutated");
+  }
+
   console.log(
     "DECA Navigator smoke passed: /training/deca/events renders its own registry and component, /training/hosa/events is unchanged, and every other track still 404s — HOSA reads ?event=, DECA reads ?family=, and neither identifier resolves in the other. Individual Series' 100q/10/10, five PIs, materials and visual-aid rules stay Series facts and reach no other family; PBA carries only its four Business Administration Core PIs and its eligibility wording, with 'recommended beginner pathway' labeled as CompeteReady's inference; TDM shows 30/15, both members speaking and averaged exams while displaying NO weighting and naming the unresolved Guide-versus-sample conflict; PSC's no-scripted-questions wording is exact and it is not routed into the role-play course while our record places it both ways. No one-third formula, no percentage weighting, no 'conversational questions', no universal interruption or question penalty, no instruction to say PI names aloud, no claim that woven delivery is superior, and no D-E-C-A framework. Prepared, written and online families carry no role-play facts and route to the DECA hub, never the lesson. Unknown, blank, repeated and malformed identifiers select nothing; a record claiming verification without full provenance degrades and leaks nothing. Association variation is stated for every family, status is words plus an icon, search is labeled and keyboard-operable, every fact renders from the registry, and nothing writes to a schema, API, storage, mastery, XP, rating or ballot. HOSA's single verified event, fail-closed lookups and withdrawn practice are all intact."
   );

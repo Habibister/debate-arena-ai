@@ -145,10 +145,18 @@ export function normalizeRestoredProgress(
   const identifyRestarted = phase === "identify" && clampedIndex > 0;
   const identifyIndex = identifyRestarted ? 0 : clampedIndex;
 
-  // The follow-up is a protected UI state: it is only reachable in `respond`, and only after the
-  // first response passes the gate. Storage cannot grant it.
+  // The follow-up is a protected UI state. It is EARNED by an explicit learner action — clicking
+  // Continue, which the UI enables only once the first response passes the gate — and that decision
+  // is what persistence records.
+  //
+  // M11R10: this previously read `phase === "respond" && firstResponseIsMeaningful`, dropping the
+  // stored value entirely. A learner who wrote a meaningful first response but never clicked
+  // Continue came back from a reload with the follow-up already open — a different unlock rule after
+  // restore than during the session. The stored decision is now the source of truth; the phase and
+  // the gate only VALIDATE it, so storage still cannot grant an unlock the learner never earned and
+  // cannot preserve one the current response no longer supports.
   const storedUnlock = saved.followUnlocked === true;
-  const followUnlocked = phase === "respond" && firstResponseIsMeaningful;
+  const followUnlocked = storedUnlock && phase === "respond" && firstResponseIsMeaningful;
 
   return {
     phase,

@@ -406,6 +406,114 @@ async function main() {
   assert.ok(/not a score, a competition result, or mastery/.test(practice), "label denies score/competition/mastery meaning");
   assert.ok(practice.includes("Start this practice over"), "local reset action present");
 
+  // ============ M11R10: the follow-up unlock is EARNED, not re-derived on restore ============
+  // The live UI earns it by an explicit Continue click that is enabled only once the first response
+  // passes the shared word gate. Restore must honour that recorded decision, never manufacture it.
+  {
+    const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
+    const AT_GATE = words(MIN_MEANINGFUL_RESPONSE_WORDS);
+    const BELOW_GATE = words(MIN_MEANINGFUL_RESPONSE_WORDS - 1);
+    const ABOVE_GATE = words(MIN_MEANINGFUL_RESPONSE_WORDS + 5);
+    const restore = (over: Record<string, unknown>) =>
+      normalizeRestoredProgress(
+        { phase: "respond", identifyIndex: 0, writeText: AT_GATE, followText: "", followUnlocked: false, ...over },
+        3
+      );
+
+    // 1-4. A stored FALSE stays false however good the writing is — typing is not earning.
+    for (const [label, writeText] of [["at the gate", AT_GATE], ["above the gate", ABOVE_GATE]] as const) {
+      const out = restore({ writeText, followUnlocked: false });
+      assert.equal(out.followUnlocked, false, `a never-clicked unlock stays locked (${label})`);
+      assert.equal(out.withdrewFollowUnlock, false, `and reports no withdrawal (${label})`);
+    }
+
+    // 5-6. A stored TRUE with a response that still passes restores unlocked.
+    for (const [label, writeText] of [["at the gate", AT_GATE], ["above the gate", ABOVE_GATE]] as const) {
+      const out = restore({ writeText, followUnlocked: true });
+      assert.equal(out.followUnlocked, true, `an explicitly earned unlock survives restore (${label})`);
+      assert.equal(out.withdrewFollowUnlock, false, `with no withdrawal notice (${label})`);
+    }
+
+    // 7-8, 10. A stored TRUE is withdrawn when the gate or the phase no longer supports it.
+    for (const [label, over] of [
+      ["one word below the gate", { writeText: BELOW_GATE }],
+      ["whitespace-only", { writeText: "   \n\t  " }],
+      ["an empty first response", { writeText: "" }],
+      ["a non-response phase", { phase: "identify" }]
+    ] as const) {
+      const out = restore({ ...over, followUnlocked: true });
+      assert.equal(out.followUnlocked, false, `a stored unlock is withdrawn with ${label}`);
+      assert.equal(out.withdrewFollowUnlock, true, `and the withdrawal is reported with ${label}`);
+    }
+
+    // 9. Punctuation-only: the shared gate counts whitespace-separated tokens, so this passes it in
+    // BOTH the live Continue button and restore. Restore therefore treats it identically rather than
+    // applying a second, stricter rule — which is the divergence this change exists to remove. The
+    // gate's own token rule is a separate finding, reported and not changed here.
+    const punctuation = ". , ; ! ? - -- ... :";
+    assert.ok(countResponseWords(punctuation) >= MIN_MEANINGFUL_RESPONSE_WORDS,
+      "punctuation-only text passes the shared word gate (the gate is unchanged here)");
+    assert.equal(restore({ writeText: punctuation, followUnlocked: true }).followUnlocked, true,
+      "so restore accepts it exactly as the live Continue button would — one gate, one behaviour");
+    assert.equal(restore({ writeText: punctuation, followUnlocked: false }).followUnlocked, false,
+      "and it still cannot unlock without the recorded click");
+
+    // 11-12. withdrewFollowUnlock reports ONLY a stored true that normalization had to reject.
+    assert.equal(restore({ writeText: BELOW_GATE, followUnlocked: false }).withdrewFollowUnlock, false,
+      "a stored false never produces a withdrawal notice");
+
+    // 13. Default/reset progress is locked and quiet.
+    const fresh = restore({ phase: "identify", identifyIndex: 0, writeText: "", followText: "", followUnlocked: false });
+    assert.equal(fresh.followUnlocked, false, "reset/default progress is locked");
+    assert.equal(fresh.withdrewFollowUnlock, false, "with no withdrawal notice");
+
+    // 14. Unlock cannot cross lessons: the store is keyed per scope AND slug.
+    map = installStorage();
+    saveAuthoredLessonProgress(SCOPE, SLUG, { phase: "respond", identifyIndex: 0, writeText: AT_GATE, followText: "", followUnlocked: true });
+    saveAuthoredLessonProgress(SCOPE, "how-hosa-scenario-interaction-works",
+      { phase: "respond", identifyIndex: 0, writeText: AT_GATE, followText: "", followUnlocked: false });
+    assert.equal(loadAuthoredLessonProgress(SCOPE, SLUG)!.followUnlocked, true, "lesson A keeps its earned unlock");
+    assert.equal(loadAuthoredLessonProgress(SCOPE, "how-hosa-scenario-interaction-works")!.followUnlocked, false,
+      "lesson B does not inherit it");
+
+    // 15-17. Normalization is pure, and the learner's own text is never altered.
+    const input = { phase: "respond", identifyIndex: 0, writeText: AT_GATE, followText: "my follow-up", followUnlocked: true };
+    const snapshot = JSON.stringify(input);
+    const out = normalizeRestoredProgress({ ...input }, 3);
+    assert.equal(JSON.stringify(input), snapshot, "normalization does not mutate its input");
+    assert.equal(out.writeText, AT_GATE, "the first response survives verbatim");
+    assert.equal(out.followText, "my follow-up", "and so does the follow-up text");
+
+    // ---- Non-vacuous controls ----
+    // The pre-fix formula, evaluated on the SAME fixture, unlocks it. The production normalizer does not.
+    const preFix = (phase: string, writeText: string) =>
+      phase === "respond" && countResponseWords(writeText) >= MIN_MEANINGFUL_RESPONSE_WORDS;
+    assert.equal(preFix("respond", AT_GATE), true, "control: the pre-fix formula unlocks a never-clicked fixture");
+    assert.equal(restore({ writeText: AT_GATE, followUnlocked: false }).followUnlocked, false,
+      "control: the corrected production normalizer keeps that same fixture locked");
+    assert.equal(restore({ writeText: AT_GATE, followUnlocked: true }).followUnlocked, true,
+      "control: flipping ONLY the stored flag restores it unlocked");
+    assert.equal(restore({ writeText: BELOW_GATE, followUnlocked: true }).followUnlocked, false,
+      "control: dropping ONLY the response below the gate withdraws it");
+    // The production source no longer contains the derived-only formula.
+    const normalizerSrc = readFileSync("lib/authored-lesson-progress.ts", "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+    assert.ok(!/followUnlocked\s*=\s*phase === "respond" && firstResponseIsMeaningful/.test(normalizerSrc),
+      "control: the derived-only formula is gone from production code");
+    assert.ok(/followUnlocked\s*=\s*storedUnlock && phase === "respond" && firstResponseIsMeaningful/.test(normalizerSrc),
+      "and the stored decision is the source of truth");
+    // 20. The component's Continue gate is still the same shared condition.
+    const practiceSrc = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
+    assert.ok(/disabled=\{wordCount\(writeText\) < MIN_RESPONSE_WORDS\}/.test(practiceSrc),
+      "the explicit Continue button still uses the shared word gate");
+    assert.ok(practiceSrc.includes("const MIN_RESPONSE_WORDS = MIN_MEANINGFUL_RESPONSE_WORDS;"),
+      "and that gate is the same production constant");
+    // 19. HOSA authored practice remains inert.
+    const { getRoleplayLesson } = await import("../lib/roleplay-lessons");
+    assert.equal(getRoleplayLesson("how-hosa-scenario-interaction-works")!.practiceStatus, "temporarily-unavailable",
+      "HOSA authored practice remains unavailable");
+  }
+
   console.log(
     "Lesson-progress smoke passed: M5 device-local resume (versioned user+lesson key, no PII), approved-fields-only payload, restore of phase/index/both responses/unlock, rejection of malformed JSON + wrong version + wrong slug + oversized fields, SSR-safe and throw-safe storage, honest save-failure reporting, reset scoped to one user+lesson, hydration gate, no mastery/server/Side-Coach writes on the persistence path, and unavailable lessons touching no storage; PLUS M5A resume normalization (every phase value covered, non-authoring phases never restored, both responses preserved, follow-up unlock only when earned, index clamped, navigation-only result, no request on any normalization path)."
   );

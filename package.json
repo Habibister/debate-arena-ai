@@ -27,6 +27,7 @@
     "deca-rubric:smoke": "tsx scripts/deca-rubric-smoke.ts",
     "hosa-navigator:smoke": "tsx scripts/hosa-navigator-smoke.ts",
     "deca-navigator:smoke": "tsx scripts/deca-navigator-smoke.ts",
+    "source-freshness:smoke": "tsx scripts/source-freshness-smoke.ts",
     "lesson-progress:smoke": "tsx scripts/lesson-progress-smoke.ts",
     "debate-replay:smoke": "tsx scripts/debate-replay-smoke.ts",
     "learning-path:smoke": "tsx scripts/learning-path-smoke.ts",

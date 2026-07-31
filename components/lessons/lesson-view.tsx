@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowUpRight, Brain, CheckCircle2, Clock, Film, Lightbul
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AuthoredLesson } from "@/lib/lessons";
+import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 
 // Static teaching (sections 1-4 + the empty video slot). Theme-token styling so it reads in light and
 // dark; status is always paired with an icon AND a text label (never color alone).
@@ -21,6 +22,8 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
         <h1 className="mt-3 text-3xl font-bold tracking-tight">{lesson.title}</h1>
         <p className="mt-2 max-w-2xl text-lg text-muted-foreground">{lesson.subtitle}</p>
         <p className="mt-4 text-xs text-muted-foreground">{lesson.provenanceNote}</p>
+        {/* Structured provenance from the lesson data — the renderer restates no source or date. */}
+        <SourceFreshnessNote metadata={lesson.provenance} className="mt-3" compact />
       </header>
 
       {/* (1) What it is */}

@@ -38,6 +38,9 @@
 //     practice)" under "Known NOT sourced")
 //   docs/curriculum/03-hosa-course.md:280-287 (open validation gates)
 
+// TYPE-ONLY import: erased at compile time, so this module still pulls in nothing at runtime.
+import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
+
 /**
  * CompeteReady's TRAINING grouping — deliberately NOT presented as HOSA's official category names.
  *
@@ -208,6 +211,35 @@ export const HOSA_EVENTS: HosaEventRecord[] = [
 ];
 
 // ---- lookup + validation ----------------------------------------------------------------------
+
+// ---- shared source/freshness metadata (M9) ------------------------------------------------------
+
+/**
+ * Projects a record into the shared source model. It ADDS NOTHING: every value below already exists
+ * on the record or in this module's constants. A record that is not displayable as verified yields
+ * `partial`, so it can never acquire official framing by passing through here.
+ */
+export function hosaSourceMetadata(record: HosaEventRecord): SourceFreshnessMetadata {
+  const verified = isDisplayableAsVerified(record);
+  return {
+    authority: verified ? "official" : "partial",
+    // A partial record makes no currency claim at all — see lib/source-freshness.ts.
+    freshness: verified ? (record.sourceStatus === "verified-stable" ? "stable" : "current") : undefined,
+    organization: "HOSA",
+    sourceLabel: verified ? record.sourceLabel : undefined,
+    season: verified ? record.season : undefined,
+    lastVerified: verified ? record.lastVerified : undefined,
+    revalidation: record.revalidationRequired
+      ? {
+          required: true,
+          // One dated expectation, never a standing annual rule.
+          triggerLabel: "the expected September 1, 2026 release",
+          note: HOSA_REVALIDATION_NOTE
+        }
+      : undefined,
+    associationVariation: record.associationVariation === true
+  };
+}
 
 /** Learner-facing status wording. A machine status code is never shown as the primary label. */
 export function hosaStatusLabel(status: HosaSourceStatus): string {

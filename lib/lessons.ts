@@ -9,6 +9,8 @@ import type { DrillArea } from "@/lib/debate-drills";
 // own evidence before using it competitively. Practice records real MasteryProgress through the
 // existing drills pipeline (recordDrillMastery), never a parallel scorekeeper.
 
+import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
+
 export type LessonPart = { term: string; plain: string; example: string };
 
 export type AuthoredLesson = {
@@ -53,6 +55,11 @@ export type AuthoredLesson = {
 
   // Honest framing (teaching material, not official rules).
   provenanceNote: string;
+  /**
+   * Structured provenance for the shared source indicator (M9). Lives with the lesson data so no
+   * renderer restates a source, a season, or a verification date.
+   */
+  provenance: SourceFreshnessMetadata;
 };
 
 const claimWarrantImpact: AuthoredLesson = {
@@ -198,7 +205,16 @@ const claimWarrantImpact: AuthoredLesson = {
   },
 
   provenanceNote:
-    "Teaching lesson — original instruction, not official competition rules. Claim/Warrant/Impact is an officially supported beginner model in the NSDA's Debate Training Guide, and CompeteReady uses it as its beginner teaching model; compatible four-part presentations (Claim/Data/Warrant/Impact) also appear in official material, so this is one supported formulation rather than the only one. Examples are illustrative; verify your own evidence before using it in a round."
+    "Teaching lesson — original instruction, not official competition rules. Claim/Warrant/Impact is an officially supported beginner model in the NSDA's Debate Training Guide, and CompeteReady uses it as its beginner teaching model; compatible four-part presentations (Claim/Data/Warrant/Impact) also appear in official material, so this is one supported formulation rather than the only one. Examples are illustrative; verify your own evidence before using it in a round.",
+
+  // The Guide is durable teaching material, NOT a current-competition-rules source, and our record
+  // carries no version or verification date for it — so neither is claimed here.
+  provenance: {
+    authority: "stable-teaching",
+    freshness: "stable",
+    organization: "NSDA",
+    sourceLabel: "NSDA Debate Training Guide"
+  }
 };
 
 export const AUTHORED_LESSONS: AuthoredLesson[] = [claimWarrantImpact];

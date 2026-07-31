@@ -9,6 +9,8 @@
 // DECA and HOSA are intentionally different in method and vocabulary. Nothing here is official
 // competition material; examples are illustrative.
 
+import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
+
 export type RolePlayLine = { speaker: string; text: string; note?: string };
 
 // Teaching content every role-play lesson has, whether or not its interactive practice is live.
@@ -29,6 +31,8 @@ type RoleplayLessonBase = {
   commonMistakes: Array<{ title: string; explanation: string }>;
 
   provenanceNote: string;
+  /** Structured provenance for the shared source indicator (M9). Lives with the lesson data. */
+  provenance: SourceFreshnessMetadata;
   supportingLink?: { label: string; note: string };
   nextLesson: { label: string; note: string };
   courseMap: string[];
@@ -217,7 +221,14 @@ const decaRoleplay: AvailableRoleplayLesson = {
     }
   },
 
-  provenanceNote: "Teaching lesson — original instruction, not official DECA material. The scenario and examples are illustrative; real events use official performance indicators.",
+  provenanceNote:
+    "Teaching lesson — original instruction, not official DECA material. The scenario and examples are illustrative; real events use official performance indicators. CompeteReady's five-part recommendation scaffold is ours, not official DECA terminology. This is shared role-play instruction, not a specification for any one event: your family's current official guideline controls timing, exam weighting, Performance Indicator count, and how the judge asks questions.",
+  provenance: {
+    authority: "tier-2",
+    freshness: "stable",
+    organization: "CompeteReady",
+    sourceLabel: "CompeteReady authored lesson"
+  },
   supportingLink: { label: "Need a business term?", note: "Optional: review the related DECA vocabulary cards. This is support — the role-play is the lesson." },
   nextLesson: { label: "Reading and Decoding a DECA Scenario", note: "Next you'll learn to pull the role, the judge, the problem, and the PIs out of a fresh scenario card fast." },
   courseMap: [
@@ -318,7 +329,13 @@ const hosaScenarioInteraction: UnavailableRoleplayLesson = {
     message: "The interactive scenario that used to sit here is being reviewed, so it has been taken down for now. Nothing above it has changed — the lesson content, the framework, and the common mistakes are all still here to read. Your event's current official guideline and rating sheet remain the place to check what your event actually scores."
   },
 
-  provenanceNote: "Teaching lesson — original instruction, not official HOSA material. Examples are illustrative and generic; they are never scored as official. CompeteReady never teaches, scores, or simulates hands-on clinical procedures, and practising here does not create clinical readiness. Guidance about practising with supervision is CompeteReady's own policy, not a HOSA rule.",
+  provenanceNote: "Teaching lesson — original instruction, not official HOSA material. Examples are illustrative and generic; they are never scored as official. CompeteReady never teaches, scores, or simulates hands-on clinical procedures, and practising here does not create clinical readiness. Guidance about practising with supervision is CompeteReady's own policy, not a HOSA rule. Communication is one layer inside applicable clinical skill events, and your event's current official guideline and rating sheet control every rule.",
+  provenance: {
+    authority: "tier-2",
+    freshness: "stable",
+    organization: "CompeteReady",
+    sourceLabel: "CompeteReady authored lesson"
+  },
   supportingLink: { label: "Need help with a medical term?", note: "Optional: review the related medical-terminology cards. This is support — the communication layer is the lesson." },
   nextLesson: { label: "Reading Your Event's Rating Sheet", note: "Next you'll learn to pull the scored steps out of your own event's current rating sheet — the list of what actually earns points." },
   courseMap: [

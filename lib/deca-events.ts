@@ -53,6 +53,8 @@
 // guarantees, timing for PBA / PFL / PSC, exam question counts outside Individual Series, and any
 // per-event roster detail. Absent means absent — never defaulted, never borrowed from a sibling.
 
+import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
+
 export type DecaFamilyScope = "role-play" | "prepared" | "written" | "online" | "other";
 
 export type DecaSourceStatus = "verified-current" | "verified-stable" | "partial" | "unresolved";
@@ -343,6 +345,30 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
 ];
 
 // ---- lookup + validation ----------------------------------------------------------------------------
+
+// ---- shared source/freshness metadata (M9) --------------------------------------------------------
+
+/**
+ * Projects a family into the shared source model. It ADDS NOTHING — no publication calendar, no
+ * season rollover, no weighting update date. A family that is not displayable as verified yields
+ * `partial`, so an unresolved family (TDM's weighting, PSC's scope) can never acquire official
+ * framing by passing through here.
+ */
+export function decaSourceMetadata(record: DecaFamilyRecord): SourceFreshnessMetadata {
+  const verified = isDisplayableAsVerified(record);
+  return {
+    authority: verified ? "official" : "partial",
+    freshness: verified ? (record.sourceStatus === "verified-stable" ? "stable" : "current") : undefined,
+    organization: "DECA",
+    sourceLabel: verified ? record.sourceLabel : undefined,
+    season: verified ? record.season : undefined,
+    lastVerified: verified ? record.lastVerified : undefined,
+    // DECA has no approved release date in our record, so no revalidation trigger is ever supplied.
+    associationVariation: record.associationVariation === true,
+    // Dress and conference requirements are level-specific (doc 02:228-232).
+    competitionLevelVariation: true
+  };
+}
 
 /** Learner-facing status wording. A machine status code is never shown as the primary label. */
 export function decaStatusLabel(status: DecaSourceStatus): string {

@@ -1,6 +1,7 @@
 import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Clock, Lightbulb, ListChecks, MapPin, MessageSquare, Target, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RolePlayLine, RoleplayLesson } from "@/lib/roleplay-lessons";
+import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 
 function Transcript({ lines, tone }: { lines: RolePlayLine[]; tone: "weak" | "strong" }) {
   const weak = tone === "weak";
@@ -42,6 +43,8 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
         <h1 className="mt-3 text-3xl font-bold tracking-tight">{lesson.title}</h1>
         <p className="mt-2 max-w-2xl text-lg text-muted-foreground">{lesson.subtitle}</p>
         <p className="mt-4 text-xs text-muted-foreground">{lesson.provenanceNote}</p>
+        {/* Structured provenance from the lesson data — the renderer restates no source or date. */}
+        <SourceFreshnessNote metadata={lesson.provenance} className="mt-3" compact />
       </header>
 
       {/* What it is */}

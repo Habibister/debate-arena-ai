@@ -3,20 +3,21 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { AlertTriangle, ArrowRight, CheckCircle2, HelpCircle, Search, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, HelpCircle, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 import {
   findHosaEvents,
   hosaEventsByFamily,
   hosaEventById,
   hosaFamily,
+  hosaSourceMetadata,
   hosaStatusLabel,
   presentHosaEvent,
   HOSA_FAMILIES,
   HOSA_ASSOCIATION_NOTE,
-  HOSA_REVALIDATION_NOTE,
   HOSA_SUPERVISION_POLICY_NOTE,
   type HosaEventRecord
 } from "@/lib/hosa-events";
@@ -115,15 +116,9 @@ function EventDetail({ record }: { record: HosaEventRecord }) {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {record.sourceLabel} — last verified {record.lastVerified}. Only the fields shown above are verified; anything
-              this event&apos;s guideline covers that we haven&apos;t sourced is simply not shown.
+              Only the fields shown above are verified; anything this event&apos;s guideline covers that we
+              haven&apos;t sourced is simply not shown.
             </p>
-            {record.revalidationRequired ? (
-              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
-                <span>{HOSA_REVALIDATION_NOTE}</span>
-              </p>
-            ) : null}
           </div>
         ) : (
           <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.06] p-3">
@@ -141,11 +136,11 @@ function EventDetail({ record }: { record: HosaEventRecord }) {
           </div>
         )}
 
+        {/* Source, season, verification date, revalidation gate and variation all come from the
+            shared indicator, driven by registry metadata — never restated here. */}
+        <SourceFreshnessNote metadata={hosaSourceMetadata(record)} />
         {record.associationVariation ? (
-          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
-            <span>{HOSA_ASSOCIATION_NOTE}</span>
-          </p>
+          <p className="text-xs leading-6 text-muted-foreground">{HOSA_ASSOCIATION_NOTE}</p>
         ) : null}
 
         {family ? (

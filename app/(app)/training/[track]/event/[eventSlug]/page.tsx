@@ -75,7 +75,9 @@ const EVENT_HQ: Record<
     specEvent: "Public Forum Debate",
     title: "Public Forum",
     overview:
-      "Partner-style debate judged holistically with 0–30 speaker points. Train the round itself, then drill the skills the ballot actually rewards.",
+      // M11R3: the withdrawn speaker-point range was removed here rather than replaced with another
+      // figure. Scoring detail now defers to the event's own current rules or ballot.
+      "Partner-style debate judged holistically. Scoring details depend on the event format and its current rules or ballot. Train the round itself, then drill the skills the ballot actually rewards.",
     rubricEventType: "PUBLIC_FORUM",
     sections: [
       { label: "Full rounds", detail: "Live practice with an AI opponent and judged ballot.", href: "/debate?track=debate", icon: "rounds" },

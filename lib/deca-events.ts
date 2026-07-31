@@ -172,6 +172,13 @@ export const DECA_OUT_OF_SCOPE_NOTE =
  * The families the approved record names collectively for prepared/written/online. It does NOT
  * assign each one to a specific scope, so neither do we.
  */
+/**
+ * For a family our record places both inside and outside the course. It states the conflict and
+ * nothing else — no prepared/written/online rules, no role-play rules, no invented placement.
+ */
+export const DECA_UNRESOLVED_SCOPE_NOTE =
+  "CompeteReady has not resolved which current course branch applies to this family. Our approved record documents it both inside and outside the role-play course, and we are not going to pick one on DECA's behalf. Work from this family's current official guideline and your chartered association's instructions.";
+
 export const DECA_OUT_OF_SCOPE_EXAMPLES =
   "Our record names these collectively, without saying which is prepared, which is written, and which is online: business operations research, project management, integrated marketing, entrepreneurship, professional selling, and stock-market and virtual-business challenges.";
 
@@ -438,6 +445,12 @@ export type DecaFamilyPresentation = {
   degraded: boolean;
   /** True when this family is outside the role-play course and must not route into the lesson. */
   outOfScope: boolean;
+  /**
+   * True when our record does not place this family in ANY current branch. Distinct from
+   * `outOfScope`: prepared/written/online are known to sit outside the course and have their own
+   * sourced explanation, whereas an unresolved family has none and must borrow none.
+   */
+  unresolvedScope: boolean;
 };
 
 /**
@@ -457,7 +470,10 @@ export function presentDecaFamily(record: DecaFamilyRecord): DecaFamilyPresentat
     verified,
     facts: degraded ? {} : (record.verifiedFacts ?? {}),
     degraded,
-    outOfScope: record.scope !== "role-play"
+    outOfScope: record.scope !== "role-play",
+    // M11R3: `other` means our record contradicts itself about placement. It must never inherit the
+    // prepared/written/online explanation, which describes THOSE families' rules, not this one's.
+    unresolvedScope: record.scope === "other"
   };
 }
 

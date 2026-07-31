@@ -897,6 +897,71 @@ function main() {
     }
   }
 
+  // C10 (M11R3). HOSA timeline honesty + the withdrawn speaker-point range.
+  const m11r3Hosa = getRoleplayLesson("how-hosa-scenario-interaction-works");
+  const m11r3Deca = getRoleplayLesson("how-deca-roleplay-works");
+  assert.ok(m11r3Hosa && m11r3Deca, "both authored role-play lessons resolve");
+  // The HOSA sequence is labelled as OURS and says what actually controls.
+  assert.equal(m11r3Hosa!.timelineLabel, "CompeteReady learning flow", "the HOSA sequence is labelled as CompeteReady's");
+  assert.ok(/not an official HOSA event timeline/i.test(m11r3Hosa!.timelineNote ?? ""), "and is explicitly not an official event timeline");
+  assert.ok(/current official guideline and rating sheet control/i.test(m11r3Hosa!.timelineNote ?? ""), "the guideline and rating sheet remain controlling");
+  assert.ok(/one layer inside applicable clinical skill events/i.test(m11r3Hosa!.timelineNote ?? ""), "communication stays one layer");
+  assert.ok(/does not teach or score hands-on/i.test(m11r3Hosa!.timelineNote ?? ""), "no hands-on teaching or scoring is claimed");
+  assert.ok(/does not mean you are ready for the complete event/i.test(m11r3Hosa!.timelineNote ?? ""), "no complete-event readiness is implied");
+  // POSITIVE CONTROL: DECA's timeline is the sourced event sequence and keeps the default heading.
+  assert.equal(m11r3Deca!.timelineLabel, undefined, "the DECA sequence is NOT relabelled — it is the sourced event structure");
+  assert.equal(m11r3Deca!.timelineNote, undefined, "and carries no CompeteReady-flow caveat");
+  assert.ok(m11r3Deca!.timeline.includes("Receive your score sheet"), "DECA still lists its sourced score-sheet step");
+  // The two unsupported HOSA steps are gone; no universal room/cast is implied.
+  const hosaSteps = m11r3Hosa!.timeline.join(" | ");
+  assert.ok(!/Receive your score sheet/i.test(hosaSteps), "HOSA no longer lists receiving a score sheet — that is an open advisor gate");
+  assert.ok(!/Check that the person understood you/i.test(hosaSteps), "HOSA no longer lists an unscored inference as an event step");
+  assert.ok(!/in the room/i.test(hosaSteps), "HOSA implies no universal room or cast");
+  assert.ok(!/\b(actor|manikin|station)\b/i.test(hosaSteps), "and no universal actor, manikin or station setup");
+  // Still communication-only, still withdrawn.
+  assert.ok(/trained in a lab, with your instructor/i.test(hosaSteps), "positive control: the hands-on step still points at the instructor");
+  assert.equal(m11r3Hosa!.practiceStatus, "temporarily-unavailable", "HOSA practice remains temporarily unavailable");
+  assert.ok(!/never real procedures on real people/i.test(JSON.stringify(m11r3Hosa)), "the rejected phrase is absent");
+  // The withdrawn speaker-point range appears nowhere in production source or rendered text.
+  const eventHq = readFileSync("app/(app)/training/[track]/event/[eventSlug]/page.tsx", "utf8");
+  for (const [name, src] of [["Event HQ", eventHq], ["lessons", readFileSync("lib/roleplay-lessons.ts", "utf8")],
+                             ["DECA registry", readFileSync("lib/deca-events.ts", "utf8")],
+                             ["HOSA registry", readFileSync("lib/hosa-events.ts", "utf8")]] as const) {
+    assert.ok(!/0\s*[–-]\s*30\s*speaker/i.test(src), `${name} carries no speaker-point range`);
+  }
+  assert.ok(eventHq.includes("Scoring details depend on the event format and its current rules or ballot"),
+    "the Debate overview defers to the event's own ballot instead");
+  assert.ok(!/\b\d+\s*[–-]\s*\d+\s*speaker points/i.test(eventHq), "and introduces no replacement numeric range");
+
+  // ---- M11R3A: the seed source must not hold the withdrawn claim either --------------------------
+  // It is not rendered today, but it is a live path for the claim to return on a future seed run.
+  const seedSrc = readFileSync("scripts/seed-competition-specs.ts", "utf8");
+  const SPEAKER_RANGE = /\b\d+\s*[–-]\s*\d+\s*(speaker|speaker-point|speaker point)/i;
+  const SOURCED_SCALE = /speaker[- ]point scale is sourced|Sourced:\s*\d+\s*[–-]\s*\d+/i;
+  assert.ok(!SPEAKER_RANGE.test(seedSrc), "the seed source carries no speaker-point range");
+  assert.ok(!SOURCED_SCALE.test(seedSrc), "and no longer describes that scale as sourced");
+  assert.ok(!SPEAKER_RANGE.test(eventHq), "the Event HQ source carries no speaker-point range");
+  assert.ok(seedSrc.includes("Scoring details depend on the event format and its current rules or ballot"),
+    "the seeded description uses the neutral format-dependent wording");
+  // The seed entry and its write path are untouched — this was a text-only edit.
+  assert.ok(/eventName:\s*"Public Forum Debate"/.test(seedSrc), "the Debate competition-spec entry still exists");
+  assert.ok(seedSrc.includes("points: 30"), "the seeded numeric allocation is unchanged");
+  assert.ok(/upsert/.test(seedSrc) && /prisma\./.test(seedSrc), "seed control flow and Prisma calls are unchanged");
+  // NON-VACUOUS: the same rules reject a fixture carrying the withdrawn claim, and accept the real text.
+  const badFixture = 'description: "Sourced: 0-30 speaker-point scale (in practice ~25-30)"';
+  assert.ok(SPEAKER_RANGE.test(badFixture), "negative control: the range rule DOES fire on a fixture containing it");
+  assert.ok(SOURCED_SCALE.test(badFixture), "negative control: the sourced-scale rule DOES fire on that fixture");
+  const goodFixture = "Scoring details depend on the event format and its current rules or ballot.";
+  assert.ok(!SPEAKER_RANGE.test(goodFixture) && !SOURCED_SCALE.test(goodFixture),
+    "positive control: the current neutral wording is accepted by both rules");
+  // Debate Event HQ still works, and no other track inherits debate scoring language.
+  assert.ok(eventHq.includes('"debate/public-forum"') && eventHq.includes('"deca/hotel-lodging-management"') && eventHq.includes('"hosa/medical-terminology"'),
+    "all three Event HQ routes remain");
+  const decaHqBlock = eventHq.slice(eventHq.indexOf('"deca/hotel-lodging-management"'), eventHq.indexOf('"debate/public-forum"'));
+  assert.ok(!/speaker point/i.test(decaHqBlock), "the DECA Event HQ entry carries no speaker-point language");
+  const hosaHqBlock = eventHq.slice(eventHq.indexOf('"hosa/medical-terminology"'), eventHq.indexOf('"deca/hotel-lodging-management"'));
+  assert.ok(!/speaker point/i.test(hosaHqBlock), "the HOSA Event HQ entry carries no speaker-point language");
+
   // C7. CompeteReady branding replaces DebateArena AI in user-facing surfaces.
   for (const file of ["components/app/app-shell.tsx", "app/(auth)/signin/page.tsx", "app/layout.tsx", "app/page.tsx"]) {
     const src = readFileSync(file, "utf8");

@@ -64,7 +64,10 @@ const specs: SpecSeed[] = [
       totalPoints: null,
       categories: [
         { name: "Win/Loss decision", description: "Holistic judge decision on the resolution — no fixed public point rubric" },
-        { name: "Speaker points", points: 30, description: "Sourced: 0-30 speaker-point scale (in practice ~25-30, 27.5 an average speech). This is the per-speaker quality dimension; it does NOT determine the win, which is holistic." }
+        // M11R3A: the withdrawn speaker-point range and its "in practice" figures were removed here.
+        // Our approved record withdrew that scale, so leaving it would let a withdrawn claim return on
+        // a future seed run. No replacement figure is supplied, and `points` is unchanged.
+        { name: "Speaker points", points: 30, description: "Scoring details depend on the event format and its current rules or ballot. This is the per-speaker quality dimension; it does NOT determine the win, which is holistic." }
       ],
       notes: "PF is judged holistically. Do not present a point rubric as official NSDA scoring."
     },
@@ -88,7 +91,7 @@ const specs: SpecSeed[] = [
     fieldNotes: {
       roundStructure: "sourced (speech order + times cross-checked against NSDA-aligned references, 2025-26 format with 3-min summaries)",
       prepTime: "sourced (3 minutes per team is the NSDA standard)",
-      rubric: "partly sourced (speaker points 0-30 scale is sourced; the WIN is holistic with no public point rubric — deliberately not a weighted sum)",
+      rubric: "partly sourced (the WIN is holistic with no public point rubric — deliberately not a weighted sum; the per-speaker scale is NOT sourced and no range is stated here)",
       penalties: "sourced (no-new-arguments-in-Final-Focus is standard)",
       aiAssistanceRestrictions: "placeholder (verify current NSDA AI policy)",
       stateVariations: "sourced (tournament variance is well documented)"

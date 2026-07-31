@@ -70,8 +70,13 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
       <section aria-labelledby="timeline" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <ListChecks className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="timeline" className="text-xl font-bold">The event, start to finish</h2>
+          <h2 id="timeline" className="text-xl font-bold">{lesson.timelineLabel ?? "The event, start to finish"}</h2>
         </div>
+        {/* M11R3: present only when the sequence is CompeteReady's teaching order rather than the
+            event's sourced structure. Visible text, never colour alone. */}
+        {lesson.timelineNote ? (
+          <p className="mt-2 text-xs leading-6 text-muted-foreground">{lesson.timelineNote}</p>
+        ) : null}
         <ol className="mt-4 grid gap-2 sm:grid-cols-2">
           {lesson.timeline.map((step, i) => (
             <li key={step} className="flex items-start gap-3 rounded-md border bg-background p-3">

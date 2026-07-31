@@ -15,6 +15,7 @@ import {
   DECA_PROVENANCE_NOTE,
   DECA_RESEARCH_RECORD_LAST_CHECKED,
   DECA_OUT_OF_SCOPE_NOTE,
+  DECA_UNRESOLVED_SCOPE_NOTE,
   DECA_PI_RULE_NOTE,
   DECA_SCAFFOLD_NOTE,
   DECA_SCOPES,
@@ -220,6 +221,44 @@ function main() {
     }
   }
   assert.equal(presentDecaFamily(psc).outOfScope, true, "PSC is not routed into the role-play course while our record is unresolved");
+
+  // ---- M11R3: PSC gets its OWN unresolved card and borrows nothing from other families ------------
+  assert.equal(psc.scope, "other", "PSC stays scope 'other'");
+  assert.equal(psc.sourceStatus, "unresolved", "PSC stays unresolved");
+  assert.equal(presentDecaFamily(psc).unresolvedScope, true, "PSC is flagged as unresolved, not merely out of scope");
+  // Positive control: the families that DO own the out-of-scope explanation still get it.
+  for (const id of ["prepared-events", "written-events", "online-events"]) {
+    const v = presentDecaFamily(decaFamilyById(id)!);
+    assert.equal(v.outOfScope, true, `${id} is still out of scope`);
+    assert.equal(v.unresolvedScope, false, `${id} is NOT unresolved — its placement is known`);
+  }
+  // PSC carries only its sourced question-flow fact.
+  assert.deepEqual(Object.keys(presentDecaFamily(psc).facts), ["judgeQuestionFlow"], "PSC carries only its question flow");
+  const pscFlowText = presentDecaFamily(psc).facts.judgeQuestionFlow ?? "";
+  assert.ok(/no scripted standard questions/i.test(pscFlowText), "PSC keeps: no scripted standard questions");
+  assert.ok(/may ask appropriate questions if time remains/i.test(pscFlowText), "PSC keeps: judge may ask if time remains");
+  assert.ok(/do not assume a question round will happen/i.test(pscFlowText), "PSC keeps: questions are not guaranteed");
+  assert.ok(!/penal|deduct|lose points/i.test(pscFlowText), "PSC claims no universal scoring consequence");
+  // The unresolved note states the conflict and borrows nothing.
+  assert.ok(/has not resolved which current course branch applies/i.test(DECA_UNRESOLVED_SCOPE_NOTE), "the unresolved note says so plainly");
+  assert.ok(/both inside and outside/i.test(DECA_UNRESOLVED_SCOPE_NOTE), "and names the conflict without resolving it");
+  for (const borrowed of ["statements of assurance", "penalty points", "page and slide limits", "visual aids",
+                          "prejudged", "upload", "written entry", "exam weighting", "advance"]) {
+    assert.ok(!DECA_UNRESOLVED_SCOPE_NOTE.toLowerCase().includes(borrowed.toLowerCase()),
+      `the unresolved note borrows no prepared/written/online rule: ${borrowed}`);
+  }
+  // Rendered: PSC must not show the out-of-scope banner or any borrowed rule; other families still do.
+  const pscHtml = renderDecaRoute({ family: "professional-selling-and-consulting" });
+  assert.ok(pscHtml.includes("has not resolved which current course branch applies"), "the PSC card renders the unresolved wording");
+  for (const borrowed of ["statements of assurance", "penalty points", "page and slide limits"]) {
+    assert.ok(!pscHtml.includes(borrowed), `the PSC card must not render ${JSON.stringify(borrowed)}`);
+  }
+  assert.ok(!pscHtml.includes("/lessons/how-deca-roleplay-works"), "the PSC card never links into role-play instruction");
+  assert.ok(pscHtml.includes('href="/training/deca"'), "and offers the DECA hub instead");
+  // Negative control: the prepared card DOES still carry the sourced out-of-scope explanation.
+  const preparedHtml = renderDecaRoute({ family: "prepared-events" });
+  assert.ok(preparedHtml.includes("statements of assurance"), "positive control: prepared events keep their own sourced explanation");
+  assert.ok(!preparedHtml.includes("has not resolved which current course branch applies"), "and do not get the unresolved wording");
   assert.ok(/outside CompeteReady's current role-play course/.test(DECA_OUT_OF_SCOPE_NOTE), "the out-of-scope wording is explicit");
   assert.ok(/statements of assurance, penalty points, page and slide limits/.test(DECA_OUT_OF_SCOPE_NOTE),
     "it names the sourced material differences (02-deca-course.md:20-21)");

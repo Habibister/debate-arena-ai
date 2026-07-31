@@ -27,6 +27,13 @@ type RoleplayLessonBase = {
   intro: string[];
   keyIdeas: Array<{ term: string; plain: string }>;
   timeline: string[];
+  /**
+   * Heading for the sequence. Absent means it IS the event's sourced structure. Present means the
+   * list is CompeteReady's teaching order and must not read as an official event timeline (M11R3).
+   */
+  timelineLabel?: string;
+  /** Shown with a labelled sequence to say plainly what controls instead. */
+  timelineNote?: string;
   framework: { name: string; steps: string[]; note: string };
   commonMistakes: Array<{ title: string; explanation: string }>;
 
@@ -274,20 +281,31 @@ const hosaScenarioInteraction: UnavailableRoleplayLesson = {
     { term: "Verbalizing, with the nuance", plain: "Some rating sheets require you to state actions or observations aloud — do that, because it is a scored step. But saying a step out loud does not replace performing it when the required equipment is present and the action has to actually happen. The community shorthand 'just say everything out loud' oversimplifies the rule. Your current event guideline and rating sheet decide which steps require what." },
     { term: "What the rating sheet actually says", plain: "For most clinical skill events the sheet is a step-by-step checklist with points attached, and often a threshold you have to clear. It is literally the list of what earns points, which makes it your practice plan. Read your own event's current sheet — do not infer it from another event or from someone else's description." }
   ],
+  // M11R3 — this is CompeteReady's LEARNING order, not an official HOSA event timeline.
+  // Two steps were removed because our record does not support them as event structure:
+  //   "Receive your score sheet"        — whether competitors receive rating sheets or feedback is
+  //                                       an OPEN advisor gate, so it cannot be listed as a step.
+  //   "Check that the person understood you" — documented as good practice with NO scored row
+  //                                       located; it survives in the framework below, where it is
+  //                                       already labelled as ours, rather than here where a
+  //                                       numbered list reads as official sequence.
+  // "who each person in the room is playing" was reworded: who portrays the patient is also an open
+  // gate, and the original implied a universal room and cast.
   timeline: [
-    "Read the scenario and the rating sheet for your event",
+    "Read your event's current guideline and rating sheet",
     "Identify your assigned role and what it permits",
-    "Identify who each person in the room is playing",
+    "Confirm from that guideline who each participant represents in your event",
     "Greet and introduce yourself",
     "Explain what you are about to do, in plain language",
     "Perform the skill (trained in a lab, with your instructor — not here)",
     "Verbalize the actions or observations your rating sheet requires",
     "Identify any concern you notice",
     "Report that concern to the designated professional",
-    "Check that the person understood you",
-    "Close professionally",
-    "Receive your score sheet"
+    "Close professionally"
   ],
+  timelineLabel: "CompeteReady learning flow",
+  timelineNote:
+    "This is the order CompeteReady teaches these communication layers in — it is not an official HOSA event timeline, and events differ. Your event's current official guideline and rating sheet control what actually happens and what is scored. Communication is one layer inside applicable clinical skill events; CompeteReady does not teach or score hands-on procedures, and finishing this lesson does not mean you are ready for the complete event.",
   framework: {
     name: "CompeteReady's interaction framework",
     steps: [

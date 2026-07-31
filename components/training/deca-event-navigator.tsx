@@ -20,6 +20,7 @@ import {
   DECA_DRESS_NOTE,
   DECA_OUT_OF_SCOPE_EXAMPLES,
   DECA_OUT_OF_SCOPE_NOTE,
+  DECA_UNRESOLVED_SCOPE_NOTE,
   DECA_PI_RULE_NOTE,
   DECA_PROVENANCE_NOTE,
   DECA_SCAFFOLD_NOTE,
@@ -61,7 +62,7 @@ function StatusLine({ record }: { record: DecaFamilyRecord }) {
 }
 
 function FamilyDetail({ record }: { record: DecaFamilyRecord }) {
-  const { verified, facts, degraded, outOfScope } = presentDecaFamily(record);
+  const { verified, facts, degraded, outOfScope, unresolvedScope } = presentDecaFamily(record);
   const scope = decaScope(record.scope);
   const isTdm = record.id === "team-decision-making";
 
@@ -81,7 +82,17 @@ function FamilyDetail({ record }: { record: DecaFamilyRecord }) {
       <CardContent className="space-y-4 text-sm">
         <StatusLine record={record} />
 
-        {outOfScope ? (
+        {/* M11R3: an UNRESOLVED family gets its own card. It previously fell through to the
+            prepared/written/online banner and was shown statements of assurance, penalty points and
+            page/slide limits that our record attributes to those families, not to this one. */}
+        {unresolvedScope ? (
+          <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.06] p-3">
+            <p className="flex items-start gap-1.5 font-medium">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <span>{DECA_UNRESOLVED_SCOPE_NOTE}</span>
+            </p>
+          </div>
+        ) : outOfScope ? (
           <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.06] p-3">
             <p className="flex items-start gap-1.5 font-medium">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />

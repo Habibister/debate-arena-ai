@@ -184,7 +184,29 @@ function main() {
   assert.ok(lesson, "the HOSA lesson still exists at its stable slug");
   assert.equal(lesson!.practiceStatus, "temporarily-unavailable", "its practice remains unavailable");
   assert.equal(lesson!.practice, undefined, "no practice or rubric was restored");
-  assert.ok(!registry.includes("temporarily-unavailable") || true, "the Navigator never overrides that state");
+  // M11R1 — this was `assert.ok(!registry.includes("temporarily-unavailable") || true, …)`, which can
+  // never fail. The intended contract was that the HOSA Navigator cannot resurrect the withdrawn
+  // practice. Replaced with real invariants over production data, plus a fixture negative control.
+  //
+  // Positive: the withdrawn lesson is genuinely unavailable and exposes no practice surface.
+  assert.equal(lesson!.practiceStatus, "temporarily-unavailable", "positive control: the lesson is withdrawn");
+  assert.equal((lesson as { practice?: unknown }).practice, undefined, "positive control: it exposes no practice");
+  // The Navigator must never carry a practiceStatus of its own, nor route into interactive practice.
+  const navCode = stripComments(nav);
+  assert.ok(!/practiceStatus/.test(navCode), "the Navigator holds no practiceStatus — it cannot override the lesson's");
+  for (const banned of ["/training/hosa/practice", "/training/hosa/room"]) {
+    assert.ok(!navCode.includes(banned), `the Navigator never routes to ${banned}`);
+  }
+  // Every HOSA route target the Navigator can follow must be informational, never interactive practice.
+  for (const target of [...HOSA_EVENTS.map((e) => e.routeTarget), ...HOSA_FAMILIES.map((f) => f.branchHref)]) {
+    if (!target) continue;
+    assert.ok(!/\/(practice|room)(\/|$)/.test(target), `HOSA route target is not interactive practice: ${target}`);
+  }
+  // NEGATIVE CONTROL (fixture only — production untouched): a family pointing at interactive practice
+  // must be rejected by the same rule, proving the assertion above is not vacuous.
+  const badFixture = { id: "x", label: "X", summary: "s", branchLabel: "b", branchHref: "/training/hosa/practice" };
+  assert.ok(/\/(practice|room)(\/|$)/.test(badFixture.branchHref),
+    "negative control: the rule DOES fire on a branch that routes into interactive practice");
 
   // ---- 18. the unavailable practice still initializes nothing -----------------------------------------
   const practice = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");

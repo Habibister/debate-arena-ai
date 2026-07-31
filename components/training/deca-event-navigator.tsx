@@ -21,6 +21,7 @@ import {
   DECA_OUT_OF_SCOPE_EXAMPLES,
   DECA_OUT_OF_SCOPE_NOTE,
   DECA_PI_RULE_NOTE,
+  DECA_PROVENANCE_NOTE,
   DECA_SCAFFOLD_NOTE,
   DECA_SCOPES,
   DECA_TDM_WEIGHTING_NOTE,
@@ -216,12 +217,10 @@ function FamilyDetail({ record }: { record: DecaFamilyRecord }) {
           </div>
         ) : null}
 
-        {verified ? (
-          <p className="text-xs text-muted-foreground">
-            Only the fields shown above are verified; anything this family&apos;s guideline covers that we
-            haven&apos;t sourced is simply not shown.
-          </p>
-        ) : null}
+        {/* M11R1: no DECA family is displayable as verified, because the approved record supplies no
+            season, document version or source label. The facts above are still ours to show; the
+            provenance behind them is not something we can attest, and this says so. */}
+        <p className="text-xs text-muted-foreground">{DECA_PROVENANCE_NOTE}</p>
       </CardContent>
     </Card>
   );

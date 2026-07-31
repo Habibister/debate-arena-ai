@@ -171,8 +171,15 @@ export function presentSourceFreshness(metadata: SourceFreshnessMetadata): Sourc
   // --- verification date -------------------------------------------------------------------------
   const formatted = formatVerifiedDate(metadata.lastVerified);
   if (metadata.lastVerified && !formatted) degraded = true;
-  // A date only means something next to a source. Without one it is decoration, so it is dropped.
-  const verifiedLabel = formatted && sourceLabel ? `Last verified ${formatted}` : null;
+  // A date only means something next to a source AND an authority that survived the checks above.
+  // Without that, it is decoration, so it is dropped.
+  //
+  // M11R1: the authority test is the fix for a real hole. Previously this line looked only at the
+  // date and the label, so a claim demoted to `unverified` for want of an organization still kept
+  // its date — producing a card that read "Not yet verified" directly above "Last verified July 5,
+  // 2026". A demoted claim must lose the verification line with everything else.
+  const claimSurvived = authority === "official" || authority === "stable-teaching";
+  const verifiedLabel = formatted && sourceLabel && claimSurvived ? `Last verified ${formatted}` : null;
 
   // --- revalidation ------------------------------------------------------------------------------
   let revalidationLabel: string | null = null;

@@ -6,7 +6,7 @@ import { DecaEventNavigator } from "@/components/training/deca-event-navigator";
 import { HosaEventNavigator } from "@/components/training/hosa-event-navigator";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { decaFamilyById, DECA_CURRENT_SEASON, DECA_NAVIGATOR_SCOPE_NOTE } from "@/lib/deca-events";
+import { decaFamilyById, DECA_NAVIGATOR_SCOPE_NOTE, DECA_PROVENANCE_NOTE } from "@/lib/deca-events";
 import { hosaEventById, HOSA_CURRENT_SEASON, HOSA_NAVIGATOR_SCOPE_NOTE, HOSA_REVALIDATION_NOTE } from "@/lib/hosa-events";
 import { isTrackRetired, trackBySlug } from "@/lib/training-tracks";
 
@@ -75,10 +75,9 @@ export default function EventNavigatorPage({
               Content reflects the {HOSA_CURRENT_SEASON} official set. {HOSA_REVALIDATION_NOTE}
             </>
           ) : (
-            <>
-              Content reflects the {DECA_CURRENT_SEASON} official set and must be re-checked against your family&apos;s
-              current guideline — a source that is current today does not stay current.
-            </>
+            // M11R1: the page-level "Content reflects the 2025-26 official set" claim was removed —
+            // that season was never supported for DECA. What replaces it says only what we can attest.
+            <>{DECA_PROVENANCE_NOTE}</>
           )}
         </p>
       </div>

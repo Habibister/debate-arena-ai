@@ -112,9 +112,30 @@ export type DecaFamilyRecord = {
 
 // ---- registry-owned wording (components never restate these) -----------------------------------
 
-export const DECA_CURRENT_SEASON = "2025-26";
-export const DECA_LAST_VERIFIED = "2026-07-05";
-export const DECA_SOURCE_LABEL = "DECA competitive event guidelines";
+// M11R1 — the DECA season and a generic source label were REMOVED, not softened.
+//
+// Neither had support in the approved record: "2025-26" appears there only in HOSA contexts, and the
+// record names DECA's sources as "DECA Guide, evaluation forms, blueprints, PI lists" — never
+// "competitive event guidelines". Those two invented values were exactly what `isDisplayableAsVerified`
+// required, so they were what promoted DECA families to "Official DECA source / Current for 2025-26".
+// A season must never be borrowed from another organization by analogy.
+//
+// What IS supported is the date OUR OWN research record was checked (02-deca-course.md:6, "Sourced
+// facts (registry, verified 2026-07-05)"). The name is deliberately narrow: this is NOT a DECA
+// publication date, NOT a competition-season verification, and NOT evidence that any particular DECA
+// document is current. It is never projected as source provenance.
+export const DECA_RESEARCH_RECORD_LAST_CHECKED = "2026-07-05";
+
+/**
+ * Why DECA families show their facts without an official badge.
+ *
+ * Three separate things, kept separate on purpose: the family details ARE supported by our approved
+ * research record; the date is when WE last checked that record; and what remains unverified is which
+ * official DECA document and competition season those details correspond to. The gap is in the
+ * provenance, not in the details.
+ */
+export const DECA_PROVENANCE_NOTE =
+  "These family details come from CompeteReady's approved research record, last checked July 5, 2026. We have not verified which official DECA document or competition season they correspond to — confirm against your family's current official guideline.";
 
 export const DECA_NAVIGATOR_SCOPE_NOTE =
   "This Navigator identifies your event family and routes you — it is not a full DECA event list and it does not replace your event's current official guidelines. CompeteReady's course teaches the role-play and case-study families only.";
@@ -192,7 +213,6 @@ export function decaScope(id: DecaFamilyScope): DecaScopeInfo | undefined {
 
 // ---- the registry ---------------------------------------------------------------------------------
 
-const SOURCED = { season: DECA_CURRENT_SEASON, lastVerified: DECA_LAST_VERIFIED, sourceLabel: DECA_SOURCE_LABEL };
 const ROLE_PLAY_LESSON = "/lessons/how-deca-roleplay-works";
 const DECA_HUB = "/training/deca";
 
@@ -201,8 +221,8 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
     id: "individual-series",
     name: "Individual Series",
     scope: "role-play",
-    sourceStatus: "verified-current",
-    ...SOURCED,
+    // Facts are sourced; PROVENANCE is not — see the M11R1 note above.
+    sourceStatus: "partial",
     components: [
       { type: "exam", label: "Cluster exam" },
       { type: "preparation", label: "Preparation period" },
@@ -230,8 +250,8 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
     name: "Principles of Business Administration",
     abbreviation: "PBA",
     scope: "role-play",
-    sourceStatus: "verified-current",
-    ...SOURCED,
+    // Facts are sourced; PROVENANCE is not — see the M11R1 note above.
+    sourceStatus: "partial",
     components: [
       { type: "preparation", label: "Preparation period" },
       { type: "role-play", label: "Role-play meeting with the judge" }
@@ -255,7 +275,6 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
     abbreviation: "PFL",
     scope: "role-play",
     sourceStatus: "partial",
-    ...SOURCED,
     components: [{ type: "role-play", label: "Role-play meeting with the judge" }],
     verifiedFacts: {
       performanceIndicatorNote: "This family has its own Performance Indicator structure.",
@@ -271,8 +290,8 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
     name: "Team Decision Making",
     abbreviation: "TDM",
     scope: "role-play",
-    sourceStatus: "verified-current",
-    ...SOURCED,
+    // Facts are sourced; PROVENANCE is not — see the M11R1 note above.
+    sourceStatus: "partial",
     components: [
       { type: "exam", label: "Cluster exam (per team member)" },
       { type: "preparation", label: "Team preparation period" },
@@ -302,7 +321,6 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
     // only the fact that IS unambiguous and routes to the hub rather than into the role-play course.
     scope: "other",
     sourceStatus: "unresolved",
-    ...SOURCED,
     verifiedFacts: {
       judgeQuestionFlow:
         "There are no scripted standard questions. The judge may ask appropriate questions if time remains — so do not assume a question round will happen."
@@ -355,15 +373,16 @@ export const DECA_FAMILIES: DecaFamilyRecord[] = [
  * framing by passing through here.
  */
 export function decaSourceMetadata(record: DecaFamilyRecord): SourceFreshnessMetadata {
-  const verified = isDisplayableAsVerified(record);
+  // M11R1: unconditionally `partial`. No DECA record carries a season, document version or source
+  // label, because the approved record supplies none — so there is nothing that could honestly
+  // produce an official or current claim, and the projection does not offer one. `isDisplayableAsVerified`
+  // is deliberately NOT consulted here: a family's own structural facts must never become evidence of
+  // its provenance.
   return {
-    authority: verified ? "official" : "partial",
-    freshness: verified ? (record.sourceStatus === "verified-stable" ? "stable" : "current") : undefined,
+    authority: "partial",
+    // No `freshness`: a record with no season or version has no currency claim to make.
     organization: "DECA",
-    sourceLabel: verified ? record.sourceLabel : undefined,
-    season: verified ? record.season : undefined,
-    lastVerified: verified ? record.lastVerified : undefined,
-    // DECA has no approved release date in our record, so no revalidation trigger is ever supplied.
+    // No sourceLabel, season, documentVersion, lastVerified or revalidation trigger — none is approved.
     associationVariation: record.associationVariation === true,
     // Dress and conference requirements are level-specific (doc 02:228-232).
     competitionLevelVariation: true
@@ -381,7 +400,9 @@ export function decaStatusLabel(status: DecaSourceStatus): string {
       return "Our record is unresolved for this family";
     case "partial":
     default:
-      return "Structure not yet verified";
+      // NOT "Structure not yet verified" — that wrongly implied the displayed family details have no
+      // support. What is unverified is the official document and season behind them.
+      return "Official source and season not yet verified";
   }
 }
 

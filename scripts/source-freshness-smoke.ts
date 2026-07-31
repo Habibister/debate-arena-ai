@@ -78,6 +78,30 @@ function main() {
   assert.equal(badDate.verifiedLabel, null, "a malformed date is dropped, never reformatted into a guess");
   assert.equal(badDate.degraded, true, "and the drop is reported");
 
+  // ---- M11R1 demotion regression: a demoted claim must lose its verification line ------------------------
+  // The suite previously fed exactly this input and asserted tone, authorityLabel and freshnessLabel —
+  // but NOT verifiedLabel, which was the one property that leaked. Positive control first.
+  const fullOfficial = { authority: "official", freshness: "current", organization: "HOSA",
+                         sourceLabel: "HOSA guidelines", season: "2025-26", lastVerified: "2026-07-05" } as const;
+  const intact = presentSourceFreshness(fullOfficial);
+  assert.equal(intact.verifiedLabel, "Last verified July 5, 2026", "positive control: a complete official claim keeps its date");
+  assert.equal(intact.tone, "verified", "positive control: and earns verified tone");
+  for (const [label, meta] of [
+    ["source label removed", { ...fullOfficial, sourceLabel: undefined }],
+    ["organization removed", { ...fullOfficial, organization: undefined }],
+    ["authority already partial", { ...fullOfficial, authority: "partial" }],
+    ["authority already unverified", { ...fullOfficial, authority: "unverified" }]
+  ] as const) {
+    const d = presentSourceFreshness(meta as never);
+    assert.notEqual(d.authority, "official", `${label}: the claim is demoted`);
+    assert.equal(d.verifiedLabel, null, `${label}: verifiedLabel does NOT survive demotion`);
+    assert.equal(d.tone, "provisional", `${label}: verified tone does not survive`);
+    assert.ok(!/Official/.test(d.authorityLabel), `${label}: no official wording survives`);
+    const rendered = allText(d);
+    assert.ok(!/Last verified/.test(rendered), `${label}: no stale verification line reaches the learner`);
+    assert.ok(/not yet verified/i.test(d.authorityLabel), `${label}: the state reads as unverified/partial`);
+  }
+
   // ---- 7/8. partial and unverified never render as verified ----------------------------------------------
   for (const authority of ["partial", "unverified"] as const) {
     const v = presentSourceFreshness({ authority, freshness: "current", season: "2025-26", sourceLabel: "X", organization: "HOSA", lastVerified: "2026-07-05" });
@@ -136,15 +160,29 @@ function main() {
   assert.ok(!famBlock.includes("hosaSourceMetadata"), "and derives no verification of its own");
 
   // ---- 16/17/18/19/20. DECA families -----------------------------------------------------------------------------------
+  // M11R1 — these four assertions previously REQUIRED the fabricated DECA provenance
+  // ("Official DECA source", "Current for 2025-26", "Last verified July 5, 2026", verified tone).
+  // The season and source label had no support in the approved record and were removed, so the
+  // expectations are inverted to the honest state rather than deleted: DECA must now fail closed.
   const series = presentSourceFreshness(decaSourceMetadata(decaFamilyById("individual-series")!));
-  assert.equal(series.authorityLabel, "Official DECA source");
-  assert.equal(series.freshnessLabel, "Current for 2025-26");
-  assert.equal(series.verifiedLabel, "Last verified July 5, 2026");
-  assert.equal(series.tone, "verified");
-  for (const id of ["principles-of-business-administration", "team-decision-making"]) {
+  assert.equal(series.authority, "partial", "Individual Series projects partial provenance");
+  assert.ok(!/Official/.test(series.authorityLabel), "and never an official label");
+  assert.equal(series.freshnessLabel, null, "with no currency claim");
+  assert.equal(series.verifiedLabel, null, "and no verification date");
+  assert.equal(series.tone, "provisional", "and never verified tone");
+  for (const id of ["principles-of-business-administration", "team-decision-making",
+                    "personal-financial-literacy", "professional-selling-and-consulting"]) {
     const v = presentSourceFreshness(decaSourceMetadata(decaFamilyById(id)!));
-    assert.equal(v.authority, "official", `${id} keeps its approved metadata`);
-    assert.equal(v.freshnessLabel, "Current for 2025-26", `${id} keeps its season`);
+    assert.equal(v.authority, "partial", `${id} projects partial provenance`);
+    assert.equal(v.freshnessLabel, null, `${id} makes no currency claim`);
+    assert.equal(v.verifiedLabel, null, `${id} shows no verification date`);
+  }
+  // DECA must not borrow HOSA's season or label through any path.
+  for (const f of DECA_FAMILIES) {
+    const t = allText(presentSourceFreshness(decaSourceMetadata(f)));
+    for (const banned of ["2025-26", "competitive event guidelines", "Last verified", "Official"]) {
+      assert.ok(!t.includes(banned), `${f.name} provenance must not contain ${JSON.stringify(banned)}`);
+    }
   }
   // TDM's weighting stays unresolved and the indicator does not launder it into a clean badge.
   const tdm = decaFamilyById("team-decision-making")!;

@@ -5,14 +5,15 @@ import {
   decaFamiliesByScope,
   decaFamilyById,
   decaScope,
+  decaSourceMetadata,
   decaStatusLabel,
   findDecaFamilies,
   isDisplayableAsVerified,
   presentDecaFamily,
   DECA_ASSOCIATION_NOTE,
-  DECA_CURRENT_SEASON,
   DECA_FAMILIES,
-  DECA_LAST_VERIFIED,
+  DECA_PROVENANCE_NOTE,
+  DECA_RESEARCH_RECORD_LAST_CHECKED,
   DECA_OUT_OF_SCOPE_NOTE,
   DECA_PI_RULE_NOTE,
   DECA_SCAFFOLD_NOTE,
@@ -22,7 +23,17 @@ import {
   type DecaFamilyRecord
 } from "../lib/deca-events";
 import { hosaEventById, presentHosaEvent, HOSA_EVENTS } from "../lib/hosa-events";
+import { formatVerifiedDate, presentSourceFreshness } from "../lib/source-freshness";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
+// Renders the REAL route so the absence contract is checked against learner-facing output, not only
+// against data. jsx=preserve emits classic createElement, so React must be global first.
+(globalThis as { React?: unknown }).React = React;
+const DecaRoutePage = require("../app/(app)/training/[track]/events/page").default;
+const renderDecaRoute = (searchParams?: Record<string, unknown>) =>
+  renderToStaticMarkup(React.createElement(DecaRoutePage, { params: { track: "deca" }, searchParams } as never) as never);
 
 /** Scan what the code SAYS, not what its comments say about what it refuses to say. */
 const stripComments = (src: string) =>
@@ -67,9 +78,67 @@ function main() {
     "Series uninterrupted-then-scripted flow (02-deca-course.md:91-94)");
   assert.ok(/provided at the event/.test(sf.preparationMaterialsNote ?? ""), "materials provided at the event (10-benchmark:159-161)");
   assert.ok(/do not let you bring visual aids in/.test(sf.visualAidNote ?? ""), "role-play visual-aid prohibition (02:83-85)");
-  assert.equal(series.season, DECA_CURRENT_SEASON);
-  assert.equal(series.lastVerified, DECA_LAST_VERIFIED);
-  assert.equal(DECA_LAST_VERIFIED, "2026-07-05", "verification date matches the approved record (02-deca-course.md:6)");
+  // M11R1 — the assertions here used to be `series.season === DECA_CURRENT_SEASON`: the registry
+  // constant checked against itself. That is why a fabricated season passed green for two milestones.
+  // Replaced with the ABSENCE contract the approved record actually supports. These compare production
+  // data against literals and rendered text, never against the module's own exports.
+  assert.equal(series.season, undefined, "no DECA family carries a season — the record supplies none");
+  assert.equal(series.sourceLabel, undefined, "no DECA family carries a source label — the record supplies none");
+  assert.ok(!("documentVersion" in series), "the DECA record shape carries no document version at all");
+  for (const f of DECA_FAMILIES) {
+    assert.equal(f.season, undefined, `${f.name} claims no season`);
+    assert.equal(f.sourceLabel, undefined, `${f.name} claims no source label`);
+    const meta = decaSourceMetadata(f);
+    assert.equal(meta.authority, "partial", `${f.name} projects partial provenance, never official`);
+    assert.equal(meta.freshness, undefined, `${f.name} makes no currency claim`);
+    assert.equal(meta.season, undefined, `${f.name} projects no season`);
+    assert.equal(meta.sourceLabel, undefined, `${f.name} projects no source label`);
+    assert.equal(meta.lastVerified, undefined, `${f.name} projects no verification date`);
+    const view = presentSourceFreshness(meta);
+    assert.equal(view.tone, "provisional", `${f.name} never earns verified tone`);
+    assert.ok(!/Official/.test(view.authorityLabel), `${f.name} never renders an official label`);
+    assert.equal(view.freshnessLabel, null, `${f.name} renders no currency line`);
+    assert.equal(view.verifiedLabel, null, `${f.name} renders no verification date`);
+  }
+  // The invented strings must not reappear anywhere in the DECA registry, route or component.
+  for (const [name, file] of [["registry", "lib/deca-events.ts"], ["route", "app/(app)/training/[track]/events/page.tsx"],
+                              ["Navigator", "components/training/deca-event-navigator.tsx"]] as const) {
+    const code = stripComments(readFileSync(file, "utf8"));
+    assert.ok(!/DECA_CURRENT_SEASON|DECA_SOURCE_LABEL/.test(code), `${name} no longer references the removed constants`);
+    assert.ok(!/competitive event guidelines/i.test(code), `${name} no longer carries the invented source label`);
+    assert.ok(!/2025-26/.test(code), `${name} no longer carries the unsupported DECA season`);
+  }
+  // ---- M11R1A: the retained date is narrowly scoped, and the wording separates the three claims ----
+  assert.equal(DECA_RESEARCH_RECORD_LAST_CHECKED, "2026-07-05", "the retained date is our research-record check date");
+  // It must read as OUR check of OUR record — never as a DECA publication or season verification.
+  const formattedCheck = formatVerifiedDate(DECA_RESEARCH_RECORD_LAST_CHECKED);
+  assert.equal(formattedCheck, "July 5, 2026", "the date formats for the learner without drift");
+  assert.ok(DECA_PROVENANCE_NOTE.includes(formattedCheck!), "the note carries that exact date, so the two cannot drift apart");
+  assert.ok(/CompeteReady's approved research record/.test(DECA_PROVENANCE_NOTE), "the note attributes the details to OUR record");
+  assert.ok(/last checked/i.test(DECA_PROVENANCE_NOTE), "the date is described as when WE last checked");
+  assert.ok(/have not verified which official DECA document or competition season/.test(DECA_PROVENANCE_NOTE),
+    "and the note names exactly what is unverified: the official document and the season");
+  for (const banned of ["Current official structure", "Officially verified structure", "Current DECA guidelines",
+                        "Current for 2025-26", "Official DECA source", "Last verified"]) {
+    assert.ok(!DECA_PROVENANCE_NOTE.includes(banned), `the note must not claim ${JSON.stringify(banned)}`);
+  }
+  // The status label must not blame the details themselves.
+  assert.equal(decaStatusLabel("partial"), "Official source and season not yet verified", "the gap is provenance, not the details");
+  assert.ok(!/Structure not yet verified/.test(decaStatusLabel("partial")), "the old misleading wording is gone");
+  const anyDecaRender = renderDecaRoute({ family: "individual-series" });
+  assert.ok(!anyDecaRender.includes("Structure not yet verified"), "no rendered DECA state says the structure is unverified");
+  assert.ok(anyDecaRender.includes("Official source and season not yet verified"), "it says the source and season are unverified");
+  assert.ok(anyDecaRender.includes("last checked July 5, 2026"), "and the card carries the research-record note");
+
+  // And they must not reach a learner in any rendered DECA state.
+  for (const sp of [undefined, { family: "individual-series" }, { family: "team-decision-making" },
+                    { family: "principles-of-business-administration" }, { family: "prepared-events" }]) {
+    const html = renderDecaRoute(sp);
+    for (const banned of ["Official DECA source", "Current for 2025-26", "DECA competitive event guidelines",
+                          "Last verified", "2025-26"]) {
+      assert.ok(!html.includes(banned), `rendered DECA state must not contain ${JSON.stringify(banned)}`);
+    }
+  }
 
   const pf = presentDecaFamily(pba).facts;
   assert.ok(/four per role-play/.test(pf.performanceIndicatorNote ?? ""), "PBA four PIs (02-deca-course.md:116-119)");

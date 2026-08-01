@@ -34,6 +34,7 @@
     "debate-replay:smoke": "tsx scripts/debate-replay-smoke.ts",
     "learning-path:smoke": "tsx scripts/learning-path-smoke.ts",
     "avatar:smoke": "tsx scripts/avatar-smoke.ts",
+    "education-registry:smoke": "tsx scripts/education-registry-smoke.ts",
     "auth:check": "tsx scripts/auth-users-check.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

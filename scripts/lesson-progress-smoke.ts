@@ -446,15 +446,16 @@ async function main() {
       assert.equal(out.withdrewFollowUnlock, true, `and the withdrawal is reported with ${label}`);
     }
 
-    // 9. Punctuation-only: the shared gate counts whitespace-separated tokens, so this passes it in
-    // BOTH the live Continue button and restore. Restore therefore treats it identically rather than
-    // applying a second, stricter rule — which is the divergence this change exists to remove. The
-    // gate's own token rule is a separate finding, reported and not changed here.
+    // 9. Punctuation-only. M11R10 recorded this as a known limitation of the shared token counter;
+    // M11R11 corrected the counter itself, so punctuation is now zero words on BOTH paths.
     const punctuation = ". , ; ! ? - -- ... :";
-    assert.ok(countResponseWords(punctuation) >= MIN_MEANINGFUL_RESPONSE_WORDS,
-      "punctuation-only text passes the shared word gate (the gate is unchanged here)");
-    assert.equal(restore({ writeText: punctuation, followUnlocked: true }).followUnlocked, true,
-      "so restore accepts it exactly as the live Continue button would — one gate, one behaviour");
+    assert.ok(punctuation.trim().split(/\s+/).filter(Boolean).length >= MIN_MEANINGFUL_RESPONSE_WORDS,
+      "control: the fixture really is 8+ whitespace-separated pieces (the old counter passed it)");
+    assert.equal(countResponseWords(punctuation), 0, "punctuation-only text contains no words");
+    assert.equal(restore({ writeText: punctuation, followUnlocked: true }).followUnlocked, false,
+      "so a stored unlock over punctuation-only text is withdrawn");
+    assert.equal(restore({ writeText: punctuation, followUnlocked: true }).withdrewFollowUnlock, true,
+      "and the withdrawal is reported");
     assert.equal(restore({ writeText: punctuation, followUnlocked: false }).followUnlocked, false,
       "and it still cannot unlock without the recorded click");
 
@@ -512,6 +513,77 @@ async function main() {
     const { getRoleplayLesson } = await import("../lib/roleplay-lessons");
     assert.equal(getRoleplayLesson("how-hosa-scenario-interaction-works")!.practiceStatus, "temporarily-unavailable",
       "HOSA authored practice remains unavailable");
+  }
+
+  // ============ M11R11: the gate counts WORD-LIKE tokens, on one shared helper ============
+  {
+    const passes = (t: string) => countResponseWords(t) >= MIN_MEANINGFUL_RESPONSE_WORDS;
+    const oldCounter = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+
+    // 13-14. The threshold itself is unchanged.
+    assert.equal(MIN_MEANINGFUL_RESPONSE_WORDS, 8, "the threshold remains exactly eight");
+    assert.equal(countResponseWords("one two three four five six seven eight"), 8, "eight ordinary words count as eight");
+    assert.ok(passes("one two three four five six seven eight"), "and pass");
+    assert.ok(!passes("one two three four five six seven"), "seven ordinary words stay below the threshold");
+
+    // 15-17. Non-word input counts as nothing.
+    for (const [label, text] of [
+      ["whitespace-only", "   \n\t  "],
+      ["punctuation-only", ". , ; ! ? - -- ... :"],
+      ["bracket/symbol-only", "[ ] { } ( ) < > / \\ | @"],
+      ["emoji-only", "🙂 🎉 ✅ ❤️ 🚀 ⭐ 🔥 💡"]
+    ] as const) {
+      assert.equal(countResponseWords(text), 0, `${label} input counts as zero words`);
+      assert.ok(!passes(text), `${label} input cannot satisfy the gate`);
+    }
+
+    // 18-22. Real words survive punctuation, and the token rules are explicit.
+    assert.equal(countResponseWords("Yes, we do — and I recommend it, truly."), 8,
+      "punctuation attached to real words does not erase them");
+    assert.equal(countResponseWords("don't"), 1, "a contraction is one word");
+    assert.equal(countResponseWords("evidence-based"), 1, "a hyphenated term is one word");
+    assert.equal(countResponseWords("café niño über señor αβγ"), 5, "unicode alphabetic words count");
+    // Digits count: the authored rubric asks for metrics and costs, and the production evidence
+    // helper already treats a digit as word-like.
+    assert.equal(countResponseWords("15% 2026 $40"), 3, "numeric tokens count as words");
+    assert.equal(countResponseWords(" — hello , world ; 15% ... "), 3, "mixed input counts only word-like tokens");
+
+    // 23-25. ONE helper serves both paths.
+    const practiceSrc = readFileSync("components/lessons/roleplay-lesson-practice.tsx", "utf8");
+    assert.ok(/const wordCount = countResponseWords;/.test(practiceSrc),
+      "the live Continue gate uses the shared production helper");
+    assert.ok(practiceSrc.includes('from "@/lib/authored-lesson-progress"'), "imported from the shared module");
+    const progressSrc = readFileSync("lib/authored-lesson-progress.ts", "utf8");
+    assert.equal((progressSrc.match(/export function countResponseWords/g) ?? []).length, 1,
+      "exactly one token-count implementation exists");
+    assert.ok(/firstResponseIsMeaningful = countResponseWords\(writeText\) >= MIN_MEANINGFUL_RESPONSE_WORDS/.test(progressSrc),
+      "and restore normalization uses that same helper and threshold");
+    assert.ok(!/split\(\/\\s\+\/\)\.filter\(Boolean\)\.length/.test(progressSrc.replace(/\/\/[^\n]*/g, " ")),
+      "the raw whitespace-chunk counter is gone from production");
+
+    // 26-33. The unlock contract holds under the corrected gate.
+    const eightWords = "one two three four five six seven eight";
+    const sevenWords = "one two three four five six seven";
+    const punct = ". , ; ! ? - -- ... :";
+    const norm = (writeText: string, followUnlocked: boolean) =>
+      normalizeRestoredProgress({ phase: "respond", identifyIndex: 0, writeText, followText: "keep me", followUnlocked }, 3);
+    assert.equal(norm(punct, false).followUnlocked, false, "stored false + punctuation stays locked");
+    assert.equal(norm(punct, true).followUnlocked, false, "stored true + punctuation is withdrawn");
+    assert.equal(norm(punct, true).withdrewFollowUnlock, true, "and reported");
+    assert.equal(norm(eightWords, false).followUnlocked, false, "stored false + eight real words stays locked");
+    assert.equal(norm(eightWords, false).withdrewFollowUnlock, false, "with no false withdrawal notice");
+    assert.equal(norm(eightWords, true).followUnlocked, true, "stored true + eight real words restores unlocked");
+    assert.equal(norm(sevenWords, true).followUnlocked, false, "stored true + seven words is withdrawn");
+    assert.equal(norm(eightWords, true).followText, "keep me", "learner text is never rewritten");
+    assert.equal(norm(punct, true).writeText, punct, "and neither is a rejected first response");
+
+    // ---- Non-vacuous controls ----
+    assert.ok(oldCounter(punct) >= MIN_MEANINGFUL_RESPONSE_WORDS,
+      "control: the OLD whitespace-split formula counted the punctuation fixture as 8+");
+    assert.equal(countResponseWords(punct), 0, "control: the corrected production helper counts it as zero");
+    assert.ok(passes(eightWords) && !passes(sevenWords), "control: eight pass, seven fail");
+    assert.equal(countResponseWords("one two three four five six seven ---"), 7,
+      "control: replacing one word with punctuation drops the count");
   }
 
   console.log(

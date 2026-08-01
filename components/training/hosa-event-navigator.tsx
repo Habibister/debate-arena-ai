@@ -308,7 +308,7 @@ export function HosaEventNavigator({
                           type="button"
                           onClick={() => setSelectedId(event.id)}
                           aria-pressed={selectedId === event.id}
-                          className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
+                          className={`focus-ring w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
                             selectedId === event.id ? "border-primary bg-primary/5" : "bg-card"
                           }`}
                         >

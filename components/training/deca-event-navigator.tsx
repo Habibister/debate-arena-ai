@@ -348,7 +348,7 @@ export function DecaEventNavigator({
                           type="button"
                           onClick={() => setSelectedId(family.id)}
                           aria-pressed={selectedId === family.id}
-                          className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
+                          className={`focus-ring w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
                             selectedId === family.id ? "border-primary bg-primary/5" : "bg-card"
                           }`}
                         >

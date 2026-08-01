@@ -251,6 +251,50 @@ function main() {
     }
   }
 
+  // ============ M11R11: the project focus-visible utility on every result button ============
+  {
+    // The utility is the project's own, defined once in globals.css and already used by the shared
+    // Button/Input/Textarea primitives — not a second focus system invented here.
+    const css = readFileSync("app/globals.css", "utf8");
+    assert.ok(/\.focus-ring\s*\{[^}]*focus-visible:ring-2/.test(css),
+      "the project focus utility exists and is keyboard-scoped (:focus-visible)");
+    assert.ok(readFileSync("components/ui/button.tsx", "utf8").includes("focus-ring"),
+      "and it is the same utility the shared Button primitive uses");
+    // Colorblind mode adds an outline on top rather than removing the ring.
+    assert.ok(/html\[data-colorblind\][^{]*:focus-visible\s*\{[^}]*outline:/.test(css),
+      "colorblind mode reinforces focus with an outline instead of suppressing it");
+
+    for (const [label, html, selectedParam] of [
+      ["DECA", route("deca"), route("deca", { family: "team-decision-making" })],
+      ["HOSA", route("hosa"), route("hosa", { event: "medical-terminology" })]
+    ] as const) {
+      const resultButtons = (markup: string) =>
+        (markup.match(/<button\b[^>]*aria-pressed=[^>]*>/g) ?? []);
+      const buttons = resultButtons(html);
+      assert.ok(buttons.length > 0, `${label}: result buttons render (the scan means something)`);
+      for (const button of buttons) {
+        assert.ok(/class="[^"]*focus-ring/.test(button), `${label}: every result button carries the focus utility`);
+        assert.ok(/aria-pressed="(true|false)"/.test(button), `${label}: and keeps its pressed state`);
+        assert.ok(/type="button"/.test(button), `${label}: and stays a native button`);
+      }
+      // The SELECTED button keeps the utility too — selection styling must not replace focus styling.
+      const selected = resultButtons(selectedParam).filter((b) => /aria-pressed="true"/.test(b));
+      assert.equal(selected.length, 1, `${label}: exactly one selected result button`);
+      assert.ok(/class="[^"]*focus-ring/.test(selected[0]),
+        `${label}: the selected button still carries the focus utility`);
+      assert.ok(/border-primary/.test(selected[0]), `${label}: alongside its selected styling`);
+    }
+
+    // ---- Non-vacuous controls ----
+    const withUtility = '<button type="button" aria-pressed="false" class="focus-ring w-full rounded-lg border">x</button>';
+    const withoutUtility = '<button type="button" aria-pressed="false" class="w-full rounded-lg border">x</button>';
+    assert.ok(/class="[^"]*focus-ring/.test(withUtility), "control: a button WITH the utility passes");
+    assert.ok(!/class="[^"]*focus-ring/.test(withoutUtility), "control: a button WITHOUT it is rejected");
+    const selectedFixture = '<button type="button" aria-pressed="true" class="focus-ring border-primary">x</button>';
+    assert.ok(/class="[^"]*focus-ring/.test(selectedFixture) && /aria-pressed="true"/.test(selectedFixture),
+      "control: a selected button still exposes the utility");
+  }
+
   console.log(
     "\nNav/a11y smoke passed: all three hubs render track-local navigation with Start Debate on /debate and both Event HQ links unchanged; /training/debate/events fails closed. Each Navigator resolves only its own identifier through its own parameter — a foreign id shows the honest unknown state, while the other track's parameter and a repeated parameter are treated as absent, and malformed input always keeps list + hub recovery without a silent redirect. Search inputs carry real labels with unique ids, selection uses real buttons with aria-pressed, navigation uses links, lists are semantic, and no state renders a duplicate id, a tooltip-only fact, a hover-only control, a fixed pixel width, whitespace-nowrap, or an unnecessary live region. Status wording survives with every styling class stripped, and no machine code reaches learner text. Medical Terminology keeps its provenance while partial events inherit none; TDM shows no weighting; PSC and the prepared/written/online families never link into role-play practice; the withdrawn HOSA practice renders no control at all. NOTE: this is SSR + markup proof only — real viewport layout, focus order and screen-reader output are NOT verified here."
   );

@@ -63,7 +63,18 @@ export function resolveRestoredIdentifyIndex(savedIndex: number, questionCount: 
 export const MIN_MEANINGFUL_RESPONSE_WORDS = 8;
 
 export function countResponseWords(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
+  // M11R11: counts WORD-LIKE tokens, not raw whitespace chunks. ". , ; ! ? - -- ... :" is nine
+  // whitespace-separated pieces but no words, and it used to satisfy the eight-word gate in both the
+  // live Continue button and restore. A token counts when it contains at least one letter or digit
+  // — the same word-like rule `isMeaningfulLearnerExcerpt` already applies to learner evidence, and
+  // digits count because the authored rubric explicitly asks for metrics and costs.
+  //
+  // This is the single helper behind BOTH the live gate and restore normalization, so the two can
+  // never diverge. Unicode-aware: accented and non-Latin words count; emoji and symbols do not.
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((token) => /[\p{L}\p{N}]/u.test(token)).length;
 }
 
 /**

@@ -23,7 +23,9 @@ export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
     <div className="space-y-3 rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">Practice source</p>
-        <Link href={"/training" as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+        {/* M12D2, class-only: `h-auto min-h-11 min-w-11` overrides the compact size's `h-9` so the
+            control clears 44px in both dimensions. Destination, label and behaviour are unchanged. */}
+        <Link href={"/training" as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 px-4")}>
           <RefreshCw className="h-4 w-4" aria-hidden />
           Switch track
         </Link>
@@ -35,8 +37,11 @@ export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
             type="button"
             onClick={() => setSource(s.id)}
             aria-pressed={source === s.id}
+            // M12D2, class-only: the selector was 34px tall. `min-h-11 min-w-11` with centred
+            // inline-flex padding clears 44px without changing the pressed state, the labels, the
+            // notes, or which source is selected.
             className={cn(
-              "focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold",
+              "focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border px-4 py-2 text-sm font-semibold",
               source === s.id ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
             )}
           >

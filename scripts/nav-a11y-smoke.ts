@@ -295,6 +295,50 @@ function main() {
       "control: a selected button still exposes the utility");
   }
 
+  // ============ M12D2: permanent track-hub heading-outline coverage ============
+  // The M11R9 outline checks above run over Navigator states ONLY. That is precisely why the three
+  // track hubs shipped an `h1 -> h3` skip unnoticed: their only headings were the page title and the
+  // flashcard `CardTitle` (which renders an h3), so no committed assertion ever looked at them.
+  // These checks close that gap permanently and are purely additive — nothing above is changed.
+  {
+    const headingTags = (html: string): string[] =>
+      (html.match(/<h([1-6])\b[^>]*>/g) ?? []).map((h) => `h${/<h([1-6])/.exec(h)![1]}`);
+    /** True when an h3 appears before any h2 — a nesting fault that skips no level on its own. */
+    const h3WithoutH2 = (levels: number[]): boolean => {
+      let seenH2 = false;
+      for (const level of levels) {
+        if (level === 2) seenH2 = true;
+        if (level === 3 && !seenH2) return true;
+      }
+      return false;
+    };
+
+    // CONTROLS FIRST — each must trip on the exact defect it exists to catch.
+    assert.ok(skipsALevel(headingLevels("<h1>Track</h1><h3>Flashcard decks</h3>")),
+      "control: the hub outline check rejects the h1 -> h3 shape the hubs used to render");
+    assert.ok(!skipsALevel(headingLevels("<h1>Track</h1><h2>Flashcard decks</h2><h3>Marketing</h3>")),
+      "control: and accepts h1 -> h2 -> h3");
+    assert.equal(headingLevels("<h1>a</h1><h2>b</h2><h1>c</h1>").filter((l) => l === 1).length, 2,
+      "control: a second h1 is visible to the single-h1 check");
+    assert.deepEqual(headingTags('<div class="h-1 gap-3"><h2 class="text-h3">x</h2></div>'), ["h2"],
+      "control: Tailwind class digits are never read as heading levels");
+    assert.ok(h3WithoutH2([1, 3]), "control: an h3 with no preceding h2 is rejected");
+    assert.ok(!h3WithoutH2([1, 2, 3, 3]), "control: and an h3 after an h2 is accepted");
+
+    // PRODUCTION — every canonical hub, rendered for real.
+    for (const slug of ["debate", "deca", "hosa"] as const) {
+      const html = hub(slug);
+      const levels = headingLevels(html);
+      const outline = headingTags(html).join(" ");
+      assert.ok(levels.length >= 2, `${slug} hub: really rendered a heading outline (${outline})`);
+      assert.equal(levels.filter((l) => l === 1).length, 1, `${slug} hub: exactly one h1`);
+      assert.ok(levels.filter((l) => l === 2).length >= 1, `${slug} hub: renders at least one real h2 section`);
+      assert.ok(!skipsALevel(levels), `${slug} hub: the heading outline skips no level (${outline})`);
+      assert.ok(!h3WithoutH2(levels), `${slug} hub: every h3 sits beneath a preceding h2 (${outline})`);
+    }
+    console.log("  ok  all three track hubs render one h1, real h2 sections, and no skipped heading level");
+  }
+
   console.log(
     "\nNav/a11y smoke passed: all three hubs render track-local navigation with Start Debate on /debate and both Event HQ links unchanged; /training/debate/events fails closed. Each Navigator resolves only its own identifier through its own parameter — a foreign id shows the honest unknown state, while the other track's parameter and a repeated parameter are treated as absent, and malformed input always keeps list + hub recovery without a silent redirect. Search inputs carry real labels with unique ids, selection uses real buttons with aria-pressed, navigation uses links, lists are semantic, and no state renders a duplicate id, a tooltip-only fact, a hover-only control, a fixed pixel width, whitespace-nowrap, or an unnecessary live region. Status wording survives with every styling class stripped, and no machine code reaches learner text. Medical Terminology keeps its provenance while partial events inherit none; TDM shows no weighting; PSC and the prepared/written/online families never link into role-play practice; the withdrawn HOSA practice renders no control at all. NOTE: this is SSR + markup proof only — real viewport layout, focus order and screen-reader output are NOT verified here."
   );

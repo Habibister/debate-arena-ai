@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, BookOpenCheck, ClipboardList, Compass, Gamepad2, GraduationCap, Info, Layers3, MessageSquareText } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, ClipboardList, Compass, Gamepad2, GraduationCap, Info, Layers3, MessageSquareText, type LucideIcon } from "lucide-react";
 import { TrackControls } from "@/components/training/track-controls";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { LearnerPathRail } from "@/components/ui/learner-path-rail";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
+import { learnerPathForTrack } from "@/lib/learner-path";
 import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
 import { deckSummaries } from "@/lib/study-content";
@@ -30,6 +32,36 @@ const PRACTICE_ACTION: Record<TrainingTrack, string> = {
   DECA: "Start a DECA role play",
   MODEL_UN: "Start Model UN practice"
 };
+
+/**
+ * One compact destination row.
+ *
+ * Deliberately local to this hub: it has exactly one consumer, so promoting it to a shared
+ * `components/ui` primitive would be an abstraction over a single call site. Every row is a native
+ * link, clears 44px in both dimensions, carries the project focus utility, and puts its label in
+ * `--foreground` — the track accent only ever reaches the (aria-hidden) icon.
+ */
+function DestinationRow({ href, icon: Icon, label, detail }: {
+  href: Route;
+  icon: LucideIcon;
+  label: string;
+  detail: string;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="focus-ring flex min-h-11 min-w-11 items-start gap-3 rounded-md border bg-card px-3 py-2.5 transition-colors hover:bg-muted"
+      >
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-track" aria-hidden />
+        <span className="min-w-0">
+          <span className="block font-semibold text-foreground">{label}</span>
+          <span className="mt-0.5 block break-words text-xs leading-5 text-muted-foreground">{detail}</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
 
 export default function TrackHubPage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
@@ -56,68 +88,80 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
   // The verified event's NAME is read from the registry — this page asserts no event facts of its own.
   const hosaEventHqName = track.id === "HOSA" ? hosaEventById(EVENT_HQ_SLUG.HOSA ?? "")?.name : undefined;
 
+  // M12D2: exactly one strongest action per track, and it is a ROUTE RULE, never a recommendation.
+  // HOSA and DECA are Navigator-first because the event or family decides what training even applies
+  // (1 of 8 HOSA events is routed today, and half of DECA's families sit outside the role-play
+  // course). Debate has no Navigator, so its authored start is the round itself.
+  const hasNavigator = NAVIGATOR_TRACKS.includes(track.id);
+  // Start-a-round action launches directly: Debate -> /debate (no hub in between). Non-debate tracks
+  // open their own role-play setup. HOSA never renders this — its branch is the recovery block.
+  const startPracticeHref = (isDebate ? "/debate" : `/training/${track.slug}/practice`) as Route;
+  const hasPracticeSetup = track.id !== "HOSA";
+  const primaryHref = hasNavigator ? (`/training/${track.slug}/events` as Route) : startPracticeHref;
+  const PrimaryIcon = hasNavigator ? Compass : MessageSquareText;
+
+  // Static availability for this track — never a claim about the learner. `currentStageId` is
+  // deliberately never supplied: no server record proves where anyone is.
+  const stages = learnerPathForTrack(track.id);
+
   return (
     <div className="space-y-6">
-      <Link href={"/training" as Route} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Tracks
-      </Link>
-
-      <div>
-        <Badge variant="secondary">Training in: {track.label}</Badge>
-        <h1 className="mt-3 text-3xl font-bold">{track.label}</h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">{track.description}</p>
-        {track.formats ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {track.formats.map((f) => (
-              <Badge key={f} variant="outline">{f}</Badge>
-            ))}
-          </div>
-        ) : null}
+      {/* 1. Page header — the only h1 on the page, with the back action beside it. */}
+      <div className="space-y-4">
+        <Link
+          href={"/training" as Route}
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto min-h-11 min-w-11 px-3")}
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Tracks
+        </Link>
+        <PageHeader
+          eyebrow="Training"
+          badges={<Badge variant="secondary">Training in: {track.label}</Badge>}
+          heading={<h1 className="page-title">{track.label}</h1>}
+          description={
+            <>
+              <p>{track.description}</p>
+              {track.formats ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {track.formats.map((f) => (
+                    <Badge key={f} variant="outline">{f}</Badge>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          }
+        />
       </div>
 
-      <TrackControls trackId={track.id} />
+      {/* 2. Primary action. One authored start, no "recommended for you", no inferred next step. */}
+      <div className="space-y-3">
+        <Link
+          href={primaryHref}
+          className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-11 min-w-11 w-full whitespace-normal px-5 text-center sm:w-fit")}
+        >
+          <PrimaryIcon className="h-4 w-4 shrink-0" aria-hidden />
+          {hasNavigator ? "Open the Event Navigator" : PRACTICE_ACTION[track.id]}
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+        </Link>
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          {hasNavigator ? (
+            <>
+              Start here. Find your {track.id === "HOSA" ? "exact event" : "event family"}, see what we&apos;ve actually
+              verified about it, and go to the right training.
+            </>
+          ) : (
+            "Choose a format and practice with an AI opponent and judge."
+          )}
+        </p>
 
-      {/* Practice */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Navigator-first: HOSA spans written tests, clinical skills, interviews, presentations and
-            team events, and DECA's families differ in timing, exams, PIs and judge questions — so the
-            exact event or family must be identified before any training is recommended. */}
-        {NAVIGATOR_TRACKS.includes(track.id) ? (
-          <Link
-            href={`/training/${track.slug}/events` as Route}
-            className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10"
-          >
-            <Compass className="mt-0.5 h-5 w-5 text-track" aria-hidden />
-            <span>
-              <span className="block font-semibold">Event Navigator</span>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                Start here. Find your {track.id === "HOSA" ? "exact event" : "event family"}, see what we&apos;ve actually
-                verified about it, and go to the right training.
-              </span>
-            </span>
-          </Link>
-        ) : null}
-        {EVENT_HQ_SLUG[track.id] ? (
-          <Link
-            href={`/training/${track.slug}/event/${EVENT_HQ_SLUG[track.id]}` as Route}
-            className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10"
-          >
-            <Layers3 className="mt-0.5 h-5 w-5 text-track" aria-hidden />
-            <span>
-              <span className="block font-semibold">Event HQ</span>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                Everything for your event in one place — rules, practice, drills, and simulations.
-              </span>
-            </span>
-          </Link>
-        ) : null}
-        {/* M11R5/M11R5A: a generic "Start HOSA practice" CTA sent learners into one room for events
-            that differ completely, so it is gone. What replaces it is a NON-INTERACTIVE statement of
-            where to go instead — and deliberately NOT a claim that HOSA practice is unavailable,
-            because /training/hosa/practice is still live and reachable from Event HQ. The only
-            unavailability stated here is the lesson's own, read from the lesson's status.
-            Debate and DECA are untouched. */}
+        {/* 3. M11R5/M11R5A: a generic "Start HOSA practice" CTA sent learners into one room for events
+               that differ completely, so it is gone. What replaces it is a NON-INTERACTIVE statement of
+               where to go instead — and deliberately NOT a claim that HOSA practice is unavailable,
+               because /training/hosa/practice is still live and reachable from Event HQ. The only
+               unavailability stated here is the lesson's own, read from the lesson's status.
+               Debate and DECA are untouched. M12D2 moved this block out of the destination grid (it
+               was 4x the height of its row neighbours on a tablet) but changed nothing inside it. */}
         {track.id === "HOSA" ? (
           <div className="flex items-start gap-3 rounded-lg border border-dashed bg-card p-4">
             <Info className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
@@ -159,92 +203,123 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
               </span>
             </span>
           </div>
-        ) : (
-          /* Start-a-round action launches directly: Debate -> /debate (no hub in between). Non-debate
-             tracks open their own role-play setup. */
-          <Link href={(isDebate ? "/debate" : `/training/${track.slug}/practice`) as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-            <MessageSquareText className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
-            <span>
-              <span className="block font-semibold">{PRACTICE_ACTION[track.id]}</span>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                {isDebate ? "Choose a format and practice with an AI opponent and judge." : `A ${track.label}-specific setup — the AI uses ${track.label} criteria. AI-generated practice.`}
-              </span>
-            </span>
-          </Link>
-        )}
-        {hasTests ? (
-          <Link href={`/tests?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-            <ClipboardList className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
-            <span>
-              <span className="block font-semibold">Practice tests</span>
-              <span className="mt-1 block text-sm text-muted-foreground">Generate a {track.short} practice set with explanations.</span>
-            </span>
-          </Link>
         ) : null}
-        {hasGuidedLessons ? (
-          <Link href={`/lessons?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border border-track/30 bg-track/5 p-4 transition-colors hover:bg-track/10">
-            <GraduationCap className="mt-0.5 h-5 w-5 text-track" aria-hidden />
-            <span>
-              {/* M11R5C: HOSA's only lesson is informational and carries no worked examples and no
-                  active practice, so the generic "weak-vs-strong examples, then practice it" promise
-                  is false there. Debate and DECA keep it, where it remains accurate. */}
-              <span className="block font-semibold">{track.id === "HOSA" ? "Guided information" : "Guided lessons"}</span>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                {track.id === "HOSA"
-                  ? "Learn the communication layer, then check your current event guideline for event-specific requirements."
-                  : "Learn a skill with worked weak-vs-strong examples, then practice it."}
-              </span>
-            </span>
-          </Link>
-        ) : null}
-        <Link href={`/skills?track=${track.slug}` as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-          <BookOpenCheck className="mt-0.5 h-5 w-5 text-primary" aria-hidden />
-          <span>
-            <span className="block font-semibold">Lessons & skill drills</span>
-            <span className="mt-1 block text-sm text-muted-foreground">Work through examples, guided practice, and mastery checks.</span>
-          </span>
-        </Link>
       </div>
 
-      {/* Flashcard decks (filtered by track) */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Layers3 className="h-5 w-5 text-primary" aria-hidden />
-              Flashcard decks
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {decks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No {track.label} flashcard decks are available yet.</p>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              {decks.map((deck) => (
-                <div key={deck.deckSlug} className="rounded-lg border bg-background p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold">{deck.deck}</h3>
-                    <Badge variant="outline">{CONTENT_SOURCE_LABEL.AI_GENERATED}</Badge>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{deck.count} terms</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link href={`/study/${deck.deckSlug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-                      Study
-                    </Link>
-                    <Link href={`/study/${deck.deckSlug}/games` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-                      <Gamepad2 className="h-4 w-4" aria-hidden />
-                      Review games
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* 4. Training path — the deployed static availability map. No current stage, no completion,
+             no percentage, no readiness. Every stage, href, state and note is M12D1's, unchanged. */}
+      {stages.length > 0 ? (
+        <section aria-labelledby="hub-path">
+          <h2 id="hub-path" className="section-title">Training path</h2>
+          <LearnerPathRail stages={stages} label={`${track.label} learner path`} className="mt-3" />
+        </section>
+      ) : null}
 
-      <p className="text-xs text-muted-foreground">{TRACK_DISCLAIMER}</p>
+      {/* 5. Where to train — the same destinations the six equal-weight cards carried, as one
+             compact grouped list. Nothing was removed; only the weight and the duplicate
+             "lessons"-vs-"lessons" labelling changed. */}
+      <section aria-labelledby="hub-destinations">
+        <h2 id="hub-destinations" className="section-title">Where to train</h2>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {hasNavigator && hasPracticeSetup ? (
+            <DestinationRow
+              href={startPracticeHref}
+              icon={MessageSquareText}
+              label={PRACTICE_ACTION[track.id]}
+              detail={`A ${track.label}-specific setup — the AI uses ${track.label} criteria. AI-generated practice.`}
+            />
+          ) : null}
+          {EVENT_HQ_SLUG[track.id] ? (
+            <DestinationRow
+              href={`/training/${track.slug}/event/${EVENT_HQ_SLUG[track.id]}` as Route}
+              icon={Layers3}
+              label="Event HQ"
+              detail="Everything for your event in one place — rules, practice, drills, and simulations."
+            />
+          ) : null}
+          {hasTests ? (
+            <DestinationRow
+              href={`/tests?track=${track.slug}` as Route}
+              icon={ClipboardList}
+              label="Practice tests"
+              detail={`Generate a ${track.short} practice set with explanations.`}
+            />
+          ) : null}
+          {hasGuidedLessons ? (
+            // M11R5C: HOSA's only lesson is informational and carries no worked examples and no
+            // active practice, so the generic "weak-vs-strong examples, then practice it" promise
+            // is false there. Debate and DECA keep it, where it remains accurate.
+            <DestinationRow
+              href={`/lessons?track=${track.slug}` as Route}
+              icon={GraduationCap}
+              label={track.id === "HOSA" ? "Guided information" : "Guided lessons"}
+              detail={
+                track.id === "HOSA"
+                  ? "Learn the communication layer, then check your current event guideline for event-specific requirements."
+                  : "Learn a skill with worked weak-vs-strong examples, then practice it."
+              }
+            />
+          ) : null}
+          <DestinationRow
+            href={`/skills?track=${track.slug}` as Route}
+            icon={BookOpenCheck}
+            label="Skill drills"
+            detail="Work through examples, guided practice, and mastery checks."
+          />
+        </ul>
+      </section>
+
+      {/* 6. Flashcard decks (filtered by track). One list instead of a wall of cards: every deck
+             name, term count, AI-generated label and both destinations are unchanged. A track with
+             no decks renders no section at all rather than an empty shell. */}
+      {decks.length > 0 ? (
+        <section aria-labelledby="hub-decks">
+          <h2 id="hub-decks" className="section-title">Flashcard decks</h2>
+          <ul className="mt-3 divide-y divide-border rounded-md border bg-card px-4">
+            {decks.map((deck) => (
+              <li key={deck.deckSlug} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2">
+                {/* Name and metadata share one baseline row so a deck costs one text line, not two.
+                    A long name still wraps — it is never truncated. */}
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                  <h3 className="break-words font-semibold text-foreground">{deck.deck}</h3>
+                  <span className="break-words text-xs text-muted-foreground">
+                    {deck.count} terms
+                    <span aria-hidden> · </span>
+                    {/* Per-deck, never hoisted to a section note: a sourced deck added later must not
+                        inherit an AI label, and an AI deck must never lose one. */}
+                    {CONTENT_SOURCE_LABEL.AI_GENERATED}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/study/${deck.deckSlug}` as Route}
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 px-4")}
+                  >
+                    Study
+                  </Link>
+                  <Link
+                    href={`/study/${deck.deckSlug}/games` as Route}
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 px-4")}
+                  >
+                    <Gamepad2 className="h-4 w-4" aria-hidden />
+                    Review games
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {/* 7. Track settings — the preference control now sits AFTER the learner's own actions instead
+             of ahead of them. Its behaviour is untouched. */}
+      <section aria-labelledby="hub-settings">
+        <h2 id="hub-settings" className="section-title">Track settings</h2>
+        <div className="mt-3 space-y-3">
+          <TrackControls trackId={track.id} />
+          <p className="text-xs text-muted-foreground">{TRACK_DISCLAIMER}</p>
+        </div>
+      </section>
     </div>
   );
 }

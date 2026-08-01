@@ -2,41 +2,110 @@ import Link from "next/link";
 import type { Route } from "next";
 import { ArrowRight, BookOpen, Clock, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Fact } from "@/components/ui/fact";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusChip } from "@/components/ui/status-chip";
+import { cn } from "@/lib/utils";
 import { getActiveTrack } from "@/lib/track-server";
 import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
 
-type LessonCard = { slug: string; title: string; subtitle: string; minutes: number; label: string; unavailableNote?: string };
+/**
+ * One availability statement about a lesson. `state` picks the reinforcement chip; the WORD in
+ * `value` is the status, so the meaning survives with every styling class removed.
+ */
+type LessonAvailability = {
+  label: string;
+  value: string;
+  state: "available" | "unavailable" | "informational";
+  detail?: string;
+};
+
+type LessonCard = {
+  slug: string;
+  title: string;
+  subtitle: string;
+  minutes: number;
+  label: string;
+  kind: "Concept lesson" | "Role-play lesson";
+  availability: LessonAvailability[];
+  unavailableNote?: string;
+};
+
+const CHIP: Record<LessonAvailability["state"], "success" | "unavailable" | "info"> = {
+  available: "success",
+  unavailable: "unavailable",
+  informational: "info"
+};
 
 // Guided lessons index (Learn -> Performance Course). Track-scoped: Debate shows its concept lessons,
 // DECA/HOSA show their role-play course. Fail closed to an honest empty state when a track has none.
 export default function LessonsIndexPage({ searchParams }: { searchParams: { track?: string } }) {
   const activeTrack = getActiveTrack(searchParams.track);
   const cards: LessonCard[] = [
-    ...lessonsForTrack(activeTrack?.slug).map((l) => ({ slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes, label: "General Debate" })),
+    ...lessonsForTrack(activeTrack?.slug).map((l) => ({
+      slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes,
+      label: "General Debate", kind: "Concept lesson" as const,
+      // A concept lesson ends with its own practice AND the track keeps a separate drill set, so
+      // neither fact may swallow the other.
+      availability: [
+        { label: "Reading", value: "Available", state: "available" as const },
+        { label: "Practice", value: "Available in this lesson", state: "available" as const },
+        {
+          label: "Skill drills",
+          value: "Available separately",
+          state: "available" as const,
+          detail: "This track's full skill-drill set lives outside the lesson, in Skill drills."
+        }
+      ]
+    })),
     // M11R5C: lessons differ in what they contain, so this page promises nothing on their behalf. A
     // withdrawn lesson carries its OWN short note (authored in the registry) rather than a page-level
-    // guess about what it still offers.
+    // guess about what it still offers. Everything below branches on the `practiceStatus`
+    // discriminant — never on a slug, and never on missing data.
     ...roleplayLessonsForTrack(activeTrack?.slug).map((l) => ({
-      slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes, label: l.organization,
-      unavailableNote: l.practiceStatus === "available" ? undefined : l.practiceUnavailable.cardNote
+      slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes,
+      label: l.organization, kind: "Role-play lesson" as const,
+      unavailableNote: l.practiceStatus === "available" ? undefined : l.practiceUnavailable.cardNote,
+      availability: l.practiceStatus === "available"
+        ? [
+            { label: "Reading", value: "Available", state: "available" as const },
+            {
+              label: "Guided practice",
+              value: "Available",
+              state: "available" as const,
+              // Supported by the practice component itself, which persists a device-local draft and
+              // explicitly nothing else — no server write, no completion, no mastery, no rating.
+              detail: "Guided practice is available, but it does not create a saved score, competition result, or mastery record."
+            }
+          ]
+        : [
+            { label: "Reading", value: "Available", state: "available" as const },
+            { label: "Interactive scenario", value: "Unavailable", state: "unavailable" as const },
+            { label: "Scope", value: "Informational only", state: "informational" as const }
+          ]
     }))
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">Performance Course</Badge>
-          {activeTrack ? <Badge variant="outline">{activeTrack.label}</Badge> : null}
-        </div>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight">Learn how your event works</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Each lesson explains the concept or the event in plain language and shows the learning activities available
-          for that topic. Lessons differ in what they include, so each card says what its own lesson offers.
-        </p>
-      </div>
+      <PageHeader
+        badges={
+          <>
+            <Badge variant="secondary">Performance Course</Badge>
+            {activeTrack ? <Badge variant="outline">{activeTrack.label}</Badge> : null}
+          </>
+        }
+        heading={<h1 className="page-title">Learn how your event works</h1>}
+        description={
+          <p>
+            Each lesson explains the concept or the event in plain language and shows the learning activities available
+            for that topic. Lessons differ in what they include, so each card says what its own lesson offers.
+          </p>
+        }
+      />
 
       {cards.length === 0 ? (
         <Card>
@@ -49,34 +118,52 @@ export default function LessonsIndexPage({ searchParams }: { searchParams: { tra
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-4">
           {cards.map((card) => (
-            <Link
-              key={card.slug}
-              href={`/lessons/${card.slug}` as Route}
-              className="group flex flex-col rounded-lg border bg-card p-5 transition-colors hover:bg-muted"
-            >
+            // Deliberately NOT one card-wide link any more: the entry now carries several
+            // availability statements, and wrapping them all in an anchor would make the link's
+            // accessible name the whole card. One real action, one accessible name.
+            <article key={card.slug} className="rounded-lg border bg-card p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{card.label}</Badge>
+                <StatusChip variant="neutral" icon={null}>{card.kind}</StatusChip>
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                   <Clock className="h-3.5 w-3.5" aria-hidden />
                   {card.minutes} min
                 </span>
               </div>
               <h2 className="mt-3 text-xl font-bold">{card.title}</h2>
-              <p className="mt-1 flex-1 text-sm leading-6 text-muted-foreground">{card.subtitle}</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{card.subtitle}</p>
+
+              {/* What this lesson actually offers. Every value is a word first; the chip only
+                  reinforces it, so nothing here depends on colour. */}
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {card.availability.map((item) => (
+                  <Fact
+                    key={item.label}
+                    label={item.label}
+                    value={<StatusChip variant={CHIP[item.state]}>{item.value}</StatusChip>}
+                    description={item.detail}
+                  />
+                ))}
+              </div>
+
               {/* Visible text, not colour alone. The wording is the lesson's own authored note. */}
               {card.unavailableNote ? (
-                <span className="mt-2 inline-flex items-start gap-1.5 text-xs text-muted-foreground">
+                <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-muted-foreground">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                   {card.unavailableNote}
-                </span>
+                </p>
               ) : null}
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+
+              <Link
+                href={`/lessons/${card.slug}` as Route}
+                className={cn(buttonVariants(), "mt-4 h-auto min-h-11 min-w-11 px-4")}
+              >
                 Start lesson
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </span>
-            </Link>
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+              </Link>
+            </article>
           ))}
         </div>
       )}

@@ -67,16 +67,3 @@ export const DECA_ROLE_PAIRS: Array<{ student: string; judge: string }> = [
   { student: "guest-services agent", judge: "wedding planner with last-minute changes" },
   { student: "night-shift duty manager", judge: "tour-group leader whose rooms aren't ready" }
 ];
-
-export const HOSA_ROLE_PAIRS: Array<{ student: string; character: string }> = [
-  { student: "health science student", character: "patient who is anxious about a new diagnosis" },
-  { student: "clinic volunteer", character: "parent worried about a child's fever" },
-  { student: "pharmacy technician trainee", character: "senior confused about a dosing schedule" },
-  { student: "nursing assistant student", character: "post-op patient afraid to start walking" },
-  { student: "EMT trainee", character: "shaken bystander at a minor accident" },
-  { student: "school health aide", character: "teen embarrassed to describe symptoms" },
-  { student: "community-health presenter", character: "audience member citing online misinformation" },
-  { student: "dental assistant student", character: "patient with severe dental anxiety" },
-  { student: "physical-therapy aide", character: "athlete pushing to return too soon" },
-  { student: "telehealth support trainee", character: "caller unsure whether symptoms are urgent" }
-];

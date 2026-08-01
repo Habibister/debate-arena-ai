@@ -42,8 +42,10 @@ function main() {
   const prep = read("components/training/hosa-event-prep.tsx");
   assert.ok(prep.includes('getActiveSpec("HOSA", "Medical Terminology")'), "3. which loads the registry spec");
   assert.ok(prep.includes("SpecBanner"), "3b. and shows its provenance banner");
-  assert.ok(prep.includes("HosaMedtermEngine") || prep.includes("hosa-medterm-engine"),
-    "16. and mounts the Medical Terminology engine");
+  // M11R12: this previously accepted EITHER the symbol or the module path, so a misspelled symbol
+  // still passed on the path alone. It now pins the actual exported component name.
+  assert.ok(prep.includes("HosaMedTermEngine"), "16. and mounts the Medical Terminology engine by name");
+  assert.ok(prep.includes("hosa-medterm-engine"), "16b. imported from its own module");
 
   // ---- 4-7. The generic simulator is gone from the practice route ----------------------------------
   assert.ok(!practice.includes("HosaRoleplaySetup"), "4. the practice route no longer imports or mounts HosaRoleplaySetup");
@@ -223,6 +225,45 @@ function main() {
   // And the positive controls the negatives depend on: the retained paths are really there.
   assert.ok(read(PRACTICE_ROUTE).includes("HosaEventPrep"), "control: Medical Terminology practice still exists");
   assert.ok(read(TURN_ROUTE).length > 100, "control: the shared roleplay-turn route still exists");
+
+  // ---- M11R12. The withdrawn mode's role configuration is gone, and only that ------------------------
+  const ROLEPLAY_CONFIG = "components/rooms/roleplay-config.ts";
+  const configSrc = read(ROLEPLAY_CONFIG);
+  assert.ok(configSrc.length > 500, "the shared role-play config is non-empty (the scans below mean something)");
+  // 1/2. The dormant declaration and every reference to it are absent from tracked production source.
+  assert.ok(!code(configSrc).includes("HOSA_ROLE_PAIRS"), "M11R12: the dormant HOSA role pairs are removed");
+  for (const file of [PRACTICE_ROUTE, ROOM_ROUTE, COMPETE_ROUTE, "components/rooms/roleplay-room.tsx",
+                      "components/training/deca-roleplay-setup.tsx"]) {
+    assert.ok(!code(read(file)).includes("HOSA_ROLE_PAIRS"), `nothing imports it (${file})`);
+  }
+  // 3. Its former patient/clinician role labels are gone from the shared configuration entirely.
+  for (const role of ["health science student", "anxious about a new diagnosis", "post-op patient",
+                      "shaken bystander", "dental anxiety", "telehealth support trainee"]) {
+    assert.ok(!configSrc.includes(role), `the withdrawn role label is gone ("${role}")`);
+  }
+  // 14/15/16/17. Retained configuration and its callers are untouched — positive controls.
+  assert.ok(configSrc.includes("export const DECA_ROLE_PAIRS"), "DECA role pairs remain");
+  assert.ok(read("components/training/deca-roleplay-setup.tsx").includes("DECA_ROLE_PAIRS"),
+    "and DECA's setup still consumes them");
+  assert.ok(configSrc.includes("export type HosaRoomConfig"),
+    "the shared HosaRoomConfig type remains — roleplay-room.tsx still references it");
+  assert.ok(read("components/rooms/roleplay-room.tsx").includes("HosaRoomConfig"), "confirming that consumer");
+  assert.ok(readFileSync("lib/training-tracks.ts", "utf8").includes("export const HOSA_CATEGORIES"),
+    "HOSA_CATEGORIES remains");
+  assert.ok(read("components/training/track-practice-setup.tsx").includes("HOSA_CATEGORIES"),
+    "and its retained caller remains");
+  for (const shared of ["writeRoleplayConfig", "readRoleplayConfig", "roleplayTurnCap", "roleplayEstimatedMinutes"]) {
+    assert.ok(configSrc.includes(shared), `the shared helper ${shared} remains`);
+  }
+
+  // ---- Non-vacuous controls: fixtures only ----------------------------------------------------------
+  assert.ok(code('export const HOSA_ROLE_PAIRS: Array<{ student: string }> = [];').includes("HOSA_ROLE_PAIRS"),
+    "control: a fixture declaring HOSA_ROLE_PAIRS is detected");
+  assert.ok(code('import { HOSA_ROLE_PAIRS } from "@/components/rooms/roleplay-config";').includes("HOSA_ROLE_PAIRS"),
+    "control: a fixture importing it is detected");
+  assert.ok("const pair = { student: 'health science student' };".includes("health science student"),
+    "control: the role-label scan can still match");
+  assert.ok(!code(configSrc).includes("HOSA_ROLE_PAIRS"), "control: production passes because it is genuinely absent");
 
   console.log(
     "HOSA practice-scope smoke passed: the generic health-science role-play is withdrawn end to end " +

@@ -22,5 +22,8 @@ export function LoadingState({ title, description, className }: LoadingStateProp
 }
 
 export function SkeletonBlock({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-md bg-muted", className)} />;
+  // A placeholder shape, not content: hidden from assistive technology so a screen reader hears the
+  // LoadingState status message instead of a run of empty boxes. The pulse is a plain CSS animation,
+  // so the sitewide reduced-motion rule already stills it.
+  return <div aria-hidden className={cn("animate-pulse rounded-md bg-muted", className)} />;
 }

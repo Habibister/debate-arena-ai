@@ -21,7 +21,9 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, action
       <p className="mt-4 font-semibold">{title}</p>
       <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">{description}</p>
       {actionHref && actionLabel ? (
-        <a href={actionHref} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4")}>
+        // min-h-11 with h-auto keeps the recovery link at the 44px touch minimum while still letting
+        // a long label wrap. API, markup and copy are unchanged.
+        <a href={actionHref} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 h-auto min-h-11")}>
           {actionLabel}
           <ArrowRight className="h-4 w-4" aria-hidden />
         </a>

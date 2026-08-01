@@ -40,6 +40,31 @@
   --track-hosa: 350 80% 60%; /* medical red */
   /* Default accent when no track context applies (falls back to the action blue). */
   --track-accent: var(--primary);
+
+  /* ---- Semantic state roles (M12B) ----------------------------------------------------------
+     Meaning that used to live in raw palette classes (emerald-500, amber-500, neutral-400…) now
+     lives here, so every accessibility mode below can reach it. Each `--x` is the readable accent
+     for that state: it is used as text, as an aria-hidden icon, as a border, and as a low-alpha
+     tint of its own surface. `--x-foreground` is the text placed on a SOLID `--x` fill.
+
+     Every value was chosen against the real composited background it is used on (card + tint) and
+     re-measured in the browser. Colour never carries meaning alone — each state also ships a word
+     and an icon in the components that use it. */
+  --surface-interactive: 227 22% 14%;
+  --surface-interactive-foreground: 220 30% 93%;
+  --success: 155 62% 64%;
+  --success-foreground: 227 40% 8%;
+  --warning: 38 92% 62%;
+  --warning-foreground: 227 40% 8%;
+  --info: 205 90% 70%;
+  --info-foreground: 227 40% 8%;
+  --locked: 225 14% 70%; /* cool + desaturated: "you don't have access" */
+  --locked-foreground: 227 40% 8%;
+  --unavailable: 32 22% 68%; /* warm + desaturated: "it exists, it's switched off" */
+  --unavailable-foreground: 227 40% 8%;
+  --selected-border: var(--primary);
+  --selected-surface: 217 42% 17%;
+  --selected-foreground: 217 92% 78%;
 }
 
 /* ---------- Light theme: the same token contract on a blue-biased paper ground. ----------
@@ -68,6 +93,21 @@ html[data-theme="light"] {
   --track-debate: 40 92% 42%;
   --track-deca: 152 66% 32%;
   --track-hosa: 350 75% 44%;
+  /* Semantic states invert with the ground: dark values are light, light values are dark. */
+  --surface-interactive: 220 26% 96%;
+  --surface-interactive-foreground: 227 35% 12%;
+  --success: 158 84% 23%;
+  --success-foreground: 0 0% 100%;
+  --warning: 28 96% 27%;
+  --warning-foreground: 0 0% 100%;
+  --info: 212 90% 33%;
+  --info-foreground: 0 0% 100%;
+  --locked: 225 18% 33%;
+  --locked-foreground: 0 0% 100%;
+  --unavailable: 30 30% 31%;
+  --unavailable-foreground: 0 0% 100%;
+  --selected-surface: 217 90% 95%;
+  --selected-foreground: 217 90% 32%;
 }
 @media (prefers-color-scheme: light) {
   html:not([data-theme]) {
@@ -93,6 +133,20 @@ html[data-theme="light"] {
     --track-debate: 40 92% 42%;
     --track-deca: 152 66% 32%;
     --track-hosa: 350 75% 44%;
+    --surface-interactive: 220 26% 96%;
+    --surface-interactive-foreground: 227 35% 12%;
+    --success: 158 84% 23%;
+    --success-foreground: 0 0% 100%;
+    --warning: 28 96% 27%;
+    --warning-foreground: 0 0% 100%;
+    --info: 212 90% 33%;
+    --info-foreground: 0 0% 100%;
+    --locked: 225 18% 33%;
+    --locked-foreground: 0 0% 100%;
+    --unavailable: 30 30% 31%;
+    --unavailable-foreground: 0 0% 100%;
+    --selected-surface: 217 90% 95%;
+    --selected-foreground: 217 90% 32%;
   }
 }
 
@@ -139,6 +193,18 @@ body {
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
   }
+  /* Section heading inside a page — body face, one clear step below .page-title. Deliberately not
+     uppercase: sections are read, not announced. rem-based, so large-text mode scales it. */
+  .section-title {
+    @apply text-xl font-bold leading-tight tracking-tight;
+    text-wrap: balance;
+  }
+  /* A single number or short metric. Display face + tabular figures so digits never jitter as a
+     value changes. It styles a number that a caller already has — it never implies one. */
+  .metric {
+    @apply font-display text-2xl font-bold leading-none tabular-nums sm:text-3xl;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 ::selection {
@@ -169,6 +235,12 @@ html[data-eye-comfort] {
   --border: 30 10% 23%;
   --input: 30 10% 23%;
   --foreground: 35 25% 90%;
+  /* Warm only the NEUTRAL semantic surfaces, matching how this mode already leaves --primary,
+     --accent and --ring alone. The chromatic states keep their hue so success never stops looking
+     like success; only the blue glare leaves. Re-measured against this mode's warmer --card. */
+  --surface-interactive: 30 12% 15%;
+  --locked: 32 10% 72%;
+  --unavailable: 32 22% 70%;
 }
 html[data-eye-comfort] .arena-grid {
   background-image:
@@ -185,6 +257,9 @@ html[data-theme="light"][data-eye-comfort] {
   --border: 40 22% 85%;
   --input: 40 22% 85%;
   --foreground: 30 30% 14%;
+  --surface-interactive: 40 30% 93%;
+  --locked: 32 20% 31%;
+  --unavailable: 30 34% 29%;
 }
 @media (prefers-color-scheme: light) {
   html:not([data-theme])[data-eye-comfort] {
@@ -195,6 +270,9 @@ html[data-theme="light"][data-eye-comfort] {
     --border: 40 22% 85%;
     --input: 40 22% 85%;
     --foreground: 30 30% 14%;
+    --surface-interactive: 40 30% 93%;
+    --locked: 32 20% 31%;
+    --unavailable: 30 34% 29%;
   }
 }
 
@@ -219,6 +297,17 @@ html[data-high-contrast] {
   --border: 222 24% 56%;
   --input: 222 24% 56%;
   --ring: 217 100% 72%;
+  /* STRENGTHEN, never flatten: each state moves further from the ground and stays distinct from
+     the others, so high contrast sharpens the difference between success/warning/locked/unavailable
+     instead of collapsing them into one bright colour. */
+  --success: 155 78% 78%;
+  --warning: 42 100% 76%;
+  --info: 205 100% 82%;
+  --locked: 225 22% 86%;
+  --unavailable: 34 36% 84%;
+  --surface-interactive: 227 28% 16%;
+  --selected-surface: 217 52% 22%;
+  --selected-foreground: 217 100% 88%;
 }
 
 /* Light-theme high contrast: darker text, stronger borders, deeper ring on paper. */
@@ -229,6 +318,14 @@ html[data-theme="light"][data-high-contrast] {
   --border: 224 32% 34%;
   --input: 224 32% 34%;
   --ring: 217 100% 38%;
+  --success: 158 95% 15%;
+  --warning: 26 100% 18%;
+  --info: 212 98% 23%;
+  --locked: 225 30% 20%;
+  --unavailable: 28 42% 19%;
+  --surface-interactive: 220 32% 94%;
+  --selected-surface: 217 92% 92%;
+  --selected-foreground: 217 100% 22%;
 }
 @media (prefers-color-scheme: light) {
   html:not([data-theme])[data-high-contrast] {
@@ -238,22 +335,51 @@ html[data-theme="light"][data-high-contrast] {
     --border: 224 32% 34%;
     --input: 224 32% 34%;
     --ring: 217 100% 38%;
+    --success: 158 95% 15%;
+    --warning: 26 100% 18%;
+    --info: 212 98% 23%;
+    --locked: 225 30% 20%;
+    --unavailable: 28 42% 19%;
+    --surface-interactive: 220 32% 94%;
+    --selected-surface: 217 92% 92%;
+    --selected-foreground: 217 100% 22%;
   }
 }
 
 /* Light-theme color-blind borders: darker instead of brighter. */
 html[data-theme="light"][data-colorblind] {
   --border: 224 26% 40%;
+  --success: 182 92% 21%;
+  --warning: 22 98% 28%;
+  --info: 214 92% 31%;
+  --locked: 225 20% 31%;
+  --unavailable: 28 34% 29%;
 }
 @media (prefers-color-scheme: light) {
   html:not([data-theme])[data-colorblind] {
     --border: 224 26% 40%;
+    --success: 182 92% 21%;
+    --warning: 22 98% 28%;
+    --info: 214 92% 31%;
+    --locked: 225 20% 31%;
+    --unavailable: 28 34% 29%;
   }
 }
 
-/* Color-blind friendly: never rely on color alone — strengthen borders + always-visible focus. */
+/* Color-blind friendly: never rely on color alone — strengthen borders + always-visible focus.
+   The two states that share a page (weak vs strong, warning vs success) are pushed apart in hue —
+   success moves teal-ward, warning moves orange-ward — so the pair survives red-green deficiency.
+   Hue is still only a reinforcement: every state also ships its own word and its own icon, and the
+   borders above are strengthened globally. NOTE ON PRECEDENCE: this block sits after the
+   high-contrast block at equal specificity, so with BOTH modes on the colour-blind values win —
+   the long-standing behaviour for --border, and every value here is measured to pass on its own. */
 html[data-colorblind] {
   --border: 222 20% 52%;
+  --success: 178 62% 68%;
+  --warning: 26 96% 64%;
+  --info: 212 92% 74%;
+  --locked: 225 12% 72%;
+  --unavailable: 30 26% 70%;
 }
 html[data-colorblind] :focus-visible {
   outline: 2px solid hsl(var(--ring));

@@ -87,19 +87,19 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {/* Weak */}
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/[0.06] p-4">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+          <div className="rounded-lg border border-warning/50 bg-warning/[0.06] p-4">
+            <div className="flex items-center gap-2 text-warning">
               <ThumbsDown className="h-4 w-4" aria-hidden />
               <h3 className="text-sm font-bold uppercase tracking-wide">Weak argument</h3>
             </div>
-            <blockquote className="mt-3 border-l-2 border-amber-500/50 pl-3 leading-7 text-foreground">
+            <blockquote className="mt-3 border-l-2 border-warning/60 pl-3 leading-7 text-foreground">
               {lesson.weak.text}
             </blockquote>
             <p className="mt-4 text-sm font-semibold">Why it fails</p>
             <ul className="mt-2 space-y-2">
               {lesson.weak.reasons.map((reason) => (
                 <li key={reason} className="flex gap-2 text-sm leading-6 text-muted-foreground">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
                   <span>{reason}</span>
                 </li>
               ))}
@@ -107,19 +107,19 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
           </div>
 
           {/* Strong */}
-          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/[0.06] p-4">
-            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+          <div className="rounded-lg border border-success/50 bg-success/[0.06] p-4">
+            <div className="flex items-center gap-2 text-success">
               <ThumbsUp className="h-4 w-4" aria-hidden />
               <h3 className="text-sm font-bold uppercase tracking-wide">Strong argument</h3>
             </div>
-            <blockquote className="mt-3 border-l-2 border-emerald-500/50 pl-3 leading-7 text-foreground">
+            <blockquote className="mt-3 border-l-2 border-success/60 pl-3 leading-7 text-foreground">
               {lesson.strong.text}
             </blockquote>
             <p className="mt-4 text-sm font-semibold">Why it works</p>
             <ul className="mt-2 space-y-2">
               {lesson.strong.reasons.map((reason) => (
                 <li key={reason} className="flex gap-2 text-sm leading-6 text-muted-foreground">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
                   <span>{reason}</span>
                 </li>
               ))}
@@ -160,26 +160,26 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{lesson.evidenceUpgrade.intro}</p>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/[0.06] p-4">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+          <div className="rounded-lg border border-warning/50 bg-warning/[0.06] p-4">
+            <div className="flex items-center gap-2 text-warning">
               <ThumbsDown className="h-4 w-4" aria-hidden />
               <h3 className="text-sm font-bold uppercase tracking-wide">Vague</h3>
             </div>
-            <blockquote className="mt-3 border-l-2 border-amber-500/50 pl-3 leading-7 text-foreground">{lesson.evidenceUpgrade.vague}</blockquote>
+            <blockquote className="mt-3 border-l-2 border-warning/60 pl-3 leading-7 text-foreground">{lesson.evidenceUpgrade.vague}</blockquote>
           </div>
-          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/[0.06] p-4">
-            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+          <div className="rounded-lg border border-success/50 bg-success/[0.06] p-4">
+            <div className="flex items-center gap-2 text-success">
               <ThumbsUp className="h-4 w-4" aria-hidden />
               <h3 className="text-sm font-bold uppercase tracking-wide">Specific</h3>
             </div>
-            <blockquote className="mt-3 border-l-2 border-emerald-500/50 pl-3 leading-7 text-foreground">{lesson.evidenceUpgrade.specific}</blockquote>
+            <blockquote className="mt-3 border-l-2 border-success/60 pl-3 leading-7 text-foreground">{lesson.evidenceUpgrade.specific}</blockquote>
           </div>
         </div>
         <p className="mt-4 text-sm font-semibold">What changed</p>
         <ul className="mt-2 space-y-2">
           {lesson.evidenceUpgrade.whatChanged.map((change) => (
             <li key={change} className="flex gap-2 text-sm leading-6 text-muted-foreground">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
               <span>{change}</span>
             </li>
           ))}
@@ -193,8 +193,8 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
           <Brain className="h-5 w-5 text-primary" aria-hidden />
           <h2 id="misconception" className="text-xl font-bold">The mental model to fix</h2>
         </div>
-        <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/[0.06] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">The wrong idea</p>
+        <div className="mt-3 rounded-md border border-warning/50 bg-warning/[0.06] p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-warning">The wrong idea</p>
           <p className="mt-1 font-semibold">{lesson.misconception.name}</p>
           <p className="mt-2 leading-7 text-muted-foreground">{lesson.misconception.wrongModel}</p>
         </div>
@@ -202,8 +202,8 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
           <p className="text-sm font-semibold">Why it’s wrong</p>
           <p className="mt-1 leading-7 text-muted-foreground">{lesson.misconception.whyWrong}</p>
         </div>
-        <div className="mt-3 rounded-md border border-emerald-500/40 bg-emerald-500/[0.06] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">The right model</p>
+        <div className="mt-3 rounded-md border border-success/50 bg-success/[0.06] p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-success">The right model</p>
           <p className="mt-2 leading-7 text-foreground">{lesson.misconception.rightModel}</p>
         </div>
       </section>
@@ -211,7 +211,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
       {/* (4) Common mistakes */}
       <section aria-labelledby="mistakes" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden />
+          <AlertTriangle className="h-5 w-5 text-warning" aria-hidden />
           <h2 id="mistakes" className="text-xl font-bold">Common mistakes</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">The three things debaters actually get wrong on this skill.</p>

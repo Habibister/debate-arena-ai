@@ -9,13 +9,13 @@ function Transcript({ lines, tone }: { lines: RolePlayLine[]; tone: "weak" | "st
     <div className="mt-3 space-y-3">
       {lines.map((line, i) => (
         <div key={i}>
-          <div className={`rounded-lg border p-3 ${weak ? "border-amber-500/40 bg-amber-500/[0.06]" : "border-emerald-500/40 bg-emerald-500/[0.06]"}`}>
+          <div className={`rounded-lg border p-3 ${weak ? "border-warning/50 bg-warning/[0.06]" : "border-success/50 bg-success/[0.06]"}`}>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{line.speaker}</p>
             <p className="mt-1 leading-7 text-foreground">{line.text}</p>
           </div>
           {line.note ? (
             <p className="mt-1 flex gap-2 pl-3 text-sm leading-6 text-muted-foreground">
-              <span aria-hidden className={weak ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}>▸</span>
+              <span aria-hidden className={weak ? "text-warning" : "text-success"}>▸</span>
               <span>{line.note}</span>
             </p>
           ) : null}
@@ -137,14 +137,14 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
           <p className="mt-2 text-sm text-muted-foreground">Same situation, same role. Read the annotations under each line — that&apos;s where the skill is.</p>
           <div className="mt-4 grid gap-5 lg:grid-cols-2">
             <div>
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+              <div className="flex items-center gap-2 text-warning">
                 <ThumbsDown className="h-4 w-4" aria-hidden />
                 <h3 className="text-sm font-bold uppercase tracking-wide">{lesson.weakExample.title}</h3>
               </div>
               <Transcript lines={lesson.weakExample.lines} tone="weak" />
             </div>
             <div>
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+              <div className="flex items-center gap-2 text-success">
                 <ThumbsUp className="h-4 w-4" aria-hidden />
                 <h3 className="text-sm font-bold uppercase tracking-wide">{lesson.strongExample.title}</h3>
               </div>
@@ -157,7 +157,7 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
       {/* Common mistakes */}
       <section aria-labelledby="mistakes" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden />
+          <AlertTriangle className="h-5 w-5 text-warning" aria-hidden />
           <h2 id="mistakes" className="text-xl font-bold">Common mistakes</h2>
         </div>
         <ol className="mt-4 space-y-3">

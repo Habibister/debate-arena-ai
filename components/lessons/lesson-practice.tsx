@@ -117,8 +117,8 @@ export function LessonPractice({
             ({result.correctCount} of {result.total} correct).
           </p>
           {recorded ? (
-            <p className="flex items-start gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/[0.06] p-3 text-sm">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+            <p className="flex items-start gap-2 rounded-md border border-success/50 bg-success/[0.06] p-3 text-sm">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
               <span>
                 Your <span className="font-semibold">{skillLabel}</span> mastery was updated
                 {mine ? <> — {mine.passed ? "you passed this round" : "keep practicing to pass (70%+)"}</> : null}. It counts toward spaced review.
@@ -189,8 +189,8 @@ export function LessonPractice({
                     className={`flex w-full items-start gap-2 rounded-md border p-2 text-left text-sm ${
                       showState
                         ? isCorrect
-                          ? "border-emerald-500/50 bg-emerald-500/10"
-                          : "border-red-500/50 bg-red-500/10"
+                          ? "border-success/60 bg-success/10"
+                          : "border-destructive/60 bg-destructive/10"
                         : isSel
                           ? "border-primary bg-primary/10"
                           : "bg-background hover:bg-muted"
@@ -198,9 +198,9 @@ export function LessonPractice({
                   >
                     {revealed ? (
                       isCorrect ? (
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
                       ) : isSel ? (
-                        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden />
+                        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
                       ) : (
                         <span className="h-4 w-4 shrink-0" />
                       )

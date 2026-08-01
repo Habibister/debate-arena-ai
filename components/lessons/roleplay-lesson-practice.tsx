@@ -388,11 +388,11 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
                   aria-pressed={isSel}
                   onClick={() => setSelected(choice)}
                   className={`flex w-full items-start gap-2 rounded-md border p-2 text-left text-sm ${
-                    showState ? (isCorrect ? "border-emerald-500/50 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10") : isSel ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"
+                    showState ? (isCorrect ? "border-success/60 bg-success/10" : "border-destructive/60 bg-destructive/10") : isSel ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"
                   }`}
                 >
                   {revealed ? (
-                    isCorrect ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden /> : isSel ? <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden /> : <span className="h-4 w-4 shrink-0" />
+                    isCorrect ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /> : isSel ? <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden /> : <span className="h-4 w-4 shrink-0" />
                   ) : (
                     <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full border" />
                   )}
@@ -474,8 +474,8 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
         </div>
 
         {followUnlocked ? (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/[0.06] p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">{p.followUp.speaker}</p>
+        <div className="rounded-md border border-warning/50 bg-warning/[0.06] p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-warning">{p.followUp.speaker}</p>
           <p className="mt-1 leading-7 text-foreground">{p.followUp.question}</p>
           <p className="mt-1 text-xs text-muted-foreground">{p.followUp.note}</p>
           <Textarea
@@ -493,8 +493,8 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
         ) : null}
 
         {feedback ? (
-          <div className="rounded-md border border-emerald-400/30 bg-emerald-500/[0.06] p-3 text-sm">
-            <p className="font-semibold text-emerald-700 dark:text-emerald-300">Feedback on your response</p>
+          <div className="rounded-md border border-success/50 bg-success/[0.06] p-3 text-sm">
+            <p className="font-semibold text-success">Feedback on your response</p>
             {feedback.strength ? <p className="mt-2"><span className="font-semibold">Worked:</span> {feedback.strength}</p> : null}
             {feedback.improvement ? <p className="mt-1"><span className="font-semibold">Improve:</span> {feedback.improvement}</p> : null}
 
@@ -502,7 +502,7 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
                 never reads a review excerpt as evidence that some criterion was met. Already ordered
                 initial-then-follow-up by the validator. */}
             {responseReview ? (
-              <div className="mt-3 border-t border-emerald-400/20 pt-3">
+              <div className="mt-3 border-t border-success/30 pt-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Both responses reviewed</p>
                 <ul className="mt-2 space-y-2">
                   {responseReview.map((r) => (
@@ -522,7 +522,7 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
             {/* Every authored rubric item, exactly once, in the authored order. Status is carried by
                 a word — never by colour alone — and carries no score or point value. */}
             {rubricVerdicts ? (
-              <ul className="mt-3 space-y-3 border-t border-emerald-400/20 pt-3">
+              <ul className="mt-3 space-y-3 border-t border-success/30 pt-3">
                 {orderByAuthoredRubric(rubricVerdicts, p.write.rubric).map(({ item, feedback: v }) => (
                   <li key={item.id}>
                     {/* Learner-facing label first; the machine ID is never shown as the label. */}
@@ -549,7 +549,7 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
             ) : null}
 
             {feedback.example ? (
-              <p className="mt-2 rounded border border-emerald-400/20 bg-emerald-500/10 p-2">
+              <p className="mt-2 rounded border border-success/30 bg-success/10 p-2">
                 <span className="font-semibold">Example revision</span>{" "}
                 <span className="text-xs text-muted-foreground">(written by the coach — not your words)</span>
                 <span className="mt-1 block italic">{feedback.example}</span>
@@ -560,8 +560,8 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
         ) : null}
 
         {error ? (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-            <span className="text-amber-800 dark:text-amber-200">{error} Your responses are saved — try again.</span>
+          <div className="flex items-center justify-between gap-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm">
+            <span className="text-warning">{error} Your responses are saved — try again.</span>
             <Button type="button" size="sm" variant="outline" onClick={getFeedback} disabled={busy}>
               <RefreshCw className="h-4 w-4" aria-hidden /> Retry
             </Button>

@@ -2,26 +2,28 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M11 remediation closeout (2026-07-31)
+## Latest handoff — post-deployment verification (2026-08-01)
 
 M11's independent review returned **NOT READY** and enumerated findings from BLOCKER down to LOW. Twelve
 remediation passes (M11R1–M11R12) closed every one of them. **No confirmed M11 code finding remains
-open.** The code and tests are clean; only documentation is uncommitted.
+open.** The code and tests are clean and pushed.
 
-This handoff was written after re-verifying the repository directly — commit stack, cumulative diff and
-runtime behaviour — rather than trusting the earlier milestone reports.
+The nine approved commits are **pushed and deployed**. This handoff was written after re-verifying the
+repository directly — commit stack, cumulative diff and runtime behaviour — rather than trusting the
+earlier milestone reports, and then after verifying the production deployment from commit-linked public
+metadata.
 
 ## Repository state
 
 - **Branch:** `main`
-- **Local HEAD:** `e44fb6f`
-- **origin/main:** `700f40e`
-- **Ahead by 8 commits, behind by 0.**
-- Working tree: ` M docs/CURRENT_STATE.md`, ` M docs/HANDOFF.md`, `?? docs/curriculum/`. Nothing staged.
-  **`docs/curriculum/` must stay untracked** — it is the approved research record, not app source.
-- No production or test file differs from `e44fb6f`.
+- **Synchronized commit before this update:** `d7efcb5`
+- **origin/main:** `d7efcb5` · **Remote `refs/heads/main`:** `d7efcb5`
+- **Ahead/behind: `0 0`.** Working tree was clean before this pass's documentation edits.
+- `docs/curriculum/` is now tracked (committed in `d7efcb5`) and is the approved research record — treat
+  it as such, not as app source.
+- No production or test file differs from `d7efcb5`.
 
-## The eight local commits and what each is for
+## The nine pushed commits and what each is for
 
 | # | Commit | Purpose |
 |---|---|---|
@@ -33,6 +35,10 @@ runtime behaviour — rather than trusting the earlier milestone reports.
 | 6 | `f03db4e` | Exam sections render only from a family's own sourced exam facts; restored follow-up unlock requires the persisted explicit decision. |
 | 7 | `b9c904d` | Project `focus-ring` on navigator result buttons; the shared response gate counts word-like tokens. |
 | 8 | `e44fb6f` | Removes the dormant `HOSA_ROLE_PAIRS` configuration left behind by commit 2. |
+| 9 | `d7efcb5` | Closes M11: rewrites both tracked documents and brings `docs/curriculum/` into git. |
+
+All nine were pushed in one normal fast-forward (`700f40e..d7efcb5`). No force, no rebase, no squash,
+no merge, no history rewrite.
 
 Cumulative against `700f40e`: 27 files, +1,728/−247, one deletion, one addition. No schema, migration,
 API-route addition, dependency or lockfile change. `package.json` changed only to register one smoke script.
@@ -184,6 +190,46 @@ certification; a full keyboard journey; database-backed resume verification; end
 coverage. The browser-preview helper cannot launch from `~/Documents`, which is why the local-server
 approach is used.
 
+## Production deployment status
+
+**Verified from unauthenticated, commit-linked GitHub metadata** — a Vercel **Production** deployment
+tied to full SHA `d7efcb59ed94ca887f9d562ef21ea4723dde1175` completed successfully.
+
+| Field | Value |
+|---|---|
+| GitHub deployment ID | `5700303276` |
+| Commit status ID | `51469218987` |
+| Environment | `Production` |
+| State | `success` ("Deployment has completed") |
+| Deployment-specific URL | `https://debate-arena-k697ureau-habibisters-projects.vercel.app` |
+| Production alias | `https://debate-arena-ai.vercel.app` |
+
+The **deployment-specific URL is behind Vercel Deployment Protection** — every route there redirects to
+Vercel SSO, so it shows nothing about the app without provider authentication. The **production alias**
+serves CompeteReady and `/` returns **200**.
+
+**Public route results.** `/training/hosa`, `/training/hosa/events`, `/training/hosa/practice`,
+`/training/hosa/room`, `/training/hosa/event/medical-terminology`, `/training/deca/events`, `/lessons`,
+`/compete` and `/debate` each returned **307** to `/signin?callbackUrl=…`, then **200** on the sign-in
+page — one redirect each, no loops.
+
+**API boundary.** Unauthenticated `POST /api/ai/hosa-scenario` and `POST /api/ai/judge-hosa` both
+returned **401** (`{"error":"You must be signed in to do that."}`).
+
+### Keep these three levels of evidence distinct
+
+1. **Deployment verification** — proven: Production, success, tied to `d7efcb5`.
+2. **Route existence and auth boundary** — proven: the routes exist and are auth-gated; the two HOSA-only
+   AI endpoints authenticate first.
+3. **Authenticated protected-page product behaviour** — **not verified in production.** No session was
+   used. Everything behind sign-in — HOSA hub wording, Medical-Terminology-specific practice, the room's
+   post-auth fail-closed redirect, the post-auth HOSA `410`, the Compete entry, DECA grouping wording and
+   family-specific timing, PSC's unresolved state, the lessons index, focus rings, heading outlines,
+   authored-progress restore, Side Coach feedback — is verified **locally only**.
+
+A public alias cannot by itself prove which commit it serves; the commit-linked deployment metadata is
+what establishes that `d7efcb5` reached Production.
+
 ## Remote incident — read before pushing
 
 On 2026-07-31 at 16:22:41 local, `origin/main` moved from `a6f0e78` to `700f40e`: a push from this clone
@@ -209,19 +255,23 @@ If `origin/main` is not what you expect, stop and reconcile before doing anythin
 | `/private/tmp/compete-ready-final-docs-precloseout.patch` | This closeout's pre-edit backup of the two tracked docs |
 | `/private/tmp/compete-ready-final-curriculum-precloseout.tar` | Pre-edit backup of `docs/curriculum/` |
 | `/private/tmp/compete-ready-final-docs-precloseout-sha256.txt` | Hashes for the two above |
+| `/private/tmp/compete-ready-postdeploy-docs-before.patch` | Pre-edit backup of the two docs at `d7efcb5` |
+| `/private/tmp/compete-ready-postdeploy-docs-before.tar` | The same two files as a tar |
+| `/private/tmp/compete-ready-postdeploy-docs-before-sha256.txt` | Hashes for the two above |
 
 These are scratch-space artifacts. Verify with `shasum -a 256 -c <hash file>`; never stage or commit them.
 
 ## The exact safe sequence for the next engineer
 
-1. Review the documentation diff (`git diff -- docs/`).
-2. Commit the **documentation only** — no production or test file belongs in that commit.
-3. Re-verify remote main with the command above.
-4. Push without rewriting history: `git push origin main`.
-5. Verify the deployment actually completed.
-6. Smoke-test the critical routes against production: `/training/hosa`, `/training/hosa/events`,
-   `/training/hosa/practice`, `/training/deca/events`, `/lessons`, `/compete`, `/debate`.
-7. Start the redesign only after production verification.
+1. Review this post-deployment documentation update (`git diff -- docs/`).
+2. Commit and safely push the **documentation only**.
+3. Verify the automatic Vercel Production deployment for that documentation commit, using
+   commit-linked public GitHub metadata.
+4. Perform authenticated protected-route verification when an existing safe session is available — a
+   tracked follow-up that does **not** block step 5.
+5. Begin the visual redesign.
+6. Stabilize the design system.
+7. Add interactive card games, mini-games, progression, XP and streak features.
 
 ## Rules
 
@@ -229,6 +279,7 @@ These are scratch-space artifacts. Verify with `shasum -a 256 -c <hash file>`; n
 - Never commit secrets, `.env` content, or anything under `/private/tmp`.
 - Never stage unrelated files; keep `docs/curriculum/` untracked.
 - Never treat an unverified deployment as successful.
+- Never treat an authentication redirect as verification of the protected page behind it.
 - Never run `npm run build` while a dev server holds `.next`.
 - Never present unverified content as official; label AI-generated material as AI-generated.
 - Qualification does not equal attendance; no unauthorized copies or access-control circumvention.

@@ -2,20 +2,20 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-07-31 (M11 remediation closeout)_
+_Last updated: 2026-08-01 (post-deployment verification)_
 
 ## Repository state
 
 - **Branch:** `main`
-- **Local HEAD:** `e44fb6f`
-- **origin/main:** `700f40e`
-- **Local main is ahead by eight unpushed commits.** Nothing from this remediation stack has been
-  pushed, merged or deployed during this closeout.
-- **Working tree:** only the two documentation files updated by this pass are modified
-  (` M docs/CURRENT_STATE.md`, ` M docs/HANDOFF.md`), plus `?? docs/curriculum/`, which is **untracked
-  and must stay untracked**. No production or test file is modified; nothing is staged.
+- **Local HEAD:** `d7efcb5`
+- **origin/main:** `d7efcb5`
+- **Remote `refs/heads/main`:** `d7efcb5`
+- **Ahead/behind: `0 0`** — the branch is synchronized with the remote.
+- The nine approved M11 commits (eight code, one documentation) were **pushed through a normal
+  fast-forward**. No force-push, rebase, squash, merge or history rewrite occurred at any point.
+- **Working tree:** clean apart from this pass's own edits to the two documentation files.
 
-### The eight local commits
+### The nine pushed commits
 
 | Commit | Subject |
 |---|---|
@@ -27,8 +27,9 @@ _Last updated: 2026-07-31 (M11 remediation closeout)_
 | `f03db4e` | fix(progress): scope exam sections and restore unlock state |
 | `b9c904d` | fix(a11y): add focus rings and word-like gate |
 | `e44fb6f` | chore(hosa): remove dormant role-pair config |
+| `d7efcb5` | docs: close M11 remediation and handoff |
 
-Cumulative against `700f40e`: 27 files changed, 1,728 insertions, 247 deletions — one file deleted
+Cumulative code change against `700f40e`: 27 files changed, 1,728 insertions, 247 deletions — one deleted
 (`components/training/hosa-roleplay-setup.tsx`), one added (`scripts/hosa-practice-scope-smoke.ts`).
 No schema change, no migration, no API route added, no package dependency added, no lockfile change.
 `package.json` changed only to register one new smoke script.
@@ -136,14 +137,44 @@ real navigation was exercised. No screen-reader certification and no full keyboa
    files that are not under version control.
 6. **Advisor/judge validation gates** from the research synthesis remain open; evidence validation
    proves an excerpt is real, not that a verdict is correct.
-7. **Deployment is unverified against this local state** — see below.
+7. **Authenticated production verification is outstanding** — the deployment itself is verified; see below.
 
 ## Remote and deployment status
 
-Production is `debate-arena-ai.vercel.app`, auto-deploying from `main`. `origin/main` is `700f40e`, so
-work up to and including that commit is on the remote and would have deployed; **the eight local commits
-above are not pushed and are therefore not deployed.** No live route, authenticated session or
-production behaviour was verified during this closeout.
+**A Vercel Production deployment tied directly to `d7efcb59ed94ca887f9d562ef21ea4723dde1175`
+completed successfully.** Verified from unauthenticated, commit-linked GitHub metadata:
+
+| Field | Value |
+|---|---|
+| Provider | Vercel |
+| GitHub deployment ID | `5700303276` |
+| Commit status ID | `51469218987` |
+| Environment | `Production` |
+| State | `success` ("Deployment has completed") |
+| Deployment-specific URL | `https://debate-arena-k697ureau-habibisters-projects.vercel.app` |
+| Production alias | `https://debate-arena-ai.vercel.app` |
+
+The deployment-specific URL is behind **Vercel Deployment Protection** and redirects to Vercel SSO, so
+it exposes no application behaviour without provider authentication. The production alias serves
+CompeteReady (`<title>CompeteReady</title>`), and `/` returns **200**.
+
+**Public route checks.** All nine critical routes — `/training/hosa`, `/training/hosa/events`,
+`/training/hosa/practice`, `/training/hosa/room`,
+`/training/hosa/event/medical-terminology`, `/training/deca/events`, `/lessons`, `/compete`, `/debate`
+— returned an intentional application **307** to `/signin?callbackUrl=…`, followed by **200** on the
+sign-in page. One redirect each; no loops, no error boundaries.
+
+**API authentication boundary.** Unauthenticated `POST /api/ai/hosa-scenario` and
+`POST /api/ai/judge-hosa` both returned **401** with
+`{"error":"You must be signed in to do that."}` — authentication remains first.
+
+**What this does and does not establish.** It establishes that the Production deployment for this
+commit succeeded, that those routes exist and are auth-gated, and that the two HOSA-only AI endpoints
+authenticate before anything else. It does **not** establish any protected page's internal behaviour:
+no authenticated session was used, so nothing behind sign-in was exercised in production. The
+post-authentication HOSA `410` contract remains verified **locally only**. A public alias cannot by
+itself prove which commit it currently serves; the commit-linked deployment metadata above is the
+evidence that `d7efcb5` deployed successfully to Production.
 
 **Remote incident.** On 2026-07-31 at 16:22:41 local, `origin/main` moved from `a6f0e78` to `700f40e`
 — a push from this clone that was not part of any approved step. The source is **unknown and is not
@@ -162,18 +193,26 @@ No environment requirement changed in these eight commits.
 
 ## Next operational steps
 
-1. Human review of this documentation.
-2. Commit the documentation only.
-3. Re-check remote state.
-4. Push the local commit stack safely — no history rewriting.
-5. Verify deployment and the critical production routes.
-6. Begin the visual redesign.
-7. Add interactive card games and progression features once the design system is stable.
+1. Review this post-deployment documentation update.
+2. Commit and safely push the documentation-only change.
+3. Verify the automatic Vercel Production deployment for that documentation commit.
+4. Perform authenticated protected-route verification when an existing safe session is available.
+   This is a tracked follow-up; it does not block step 5.
+5. Begin the visual redesign.
+6. Stabilize the design system.
+7. Add interactive card games, mini-games, progression, XP and streak features.
 
 ## What is explicitly NOT true
 
-- The eight local commits are **not** deployed, and no production route was verified live.
-- No authenticated production behaviour was tested during this closeout.
+- **No authenticated production behaviour was verified.** Every protected page's internal behaviour —
+  HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's post-auth fail-closed
+  redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA training-group wording and
+  family-specific timing, PSC's unresolved state, the lessons index, navigator focus rings, heading
+  outlines, authored-progress restore and Side Coach structured feedback — remains verified **locally**,
+  not through authenticated production access.
+- It is **not** claimed that the public alias cryptographically proves which SHA it serves.
+- It is **not** claimed that every protected page is error-free; they could not be opened.
+- The post-authentication HOSA `410` behaviour was **not** tested in production.
 - The source of the earlier remote push is **not** known.
 - Generic HOSA patient/clinical role-play is **not** available — it was withdrawn.
 - It is **not** true that all HOSA practice is unavailable: Medical Terminology practice is active and

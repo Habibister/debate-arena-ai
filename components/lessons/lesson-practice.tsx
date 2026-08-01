@@ -130,7 +130,7 @@ export function LessonPractice({
               <span>This attempt was not recorded to your mastery (you may be signed out, or this skill isn’t available yet). Your answers above still stand.</span>
             </p>
           )}
-          <Button type="button" variant="outline" onClick={start} disabled={busy}>
+          <Button type="button" variant="outline" onClick={start} disabled={busy} className="h-auto min-h-11 min-w-11">
             <RefreshCw className="h-4 w-4" aria-hidden />
             Practice again
           </Button>
@@ -152,7 +152,7 @@ export function LessonPractice({
         <CardContent className="space-y-4">
           <p className="leading-7 text-muted-foreground">{intro}</p>
           {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
-          <Button type="button" onClick={start} disabled={busy}>
+          <Button type="button" onClick={start} disabled={busy} className="h-auto min-h-11 min-w-11">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Dumbbell className="h-4 w-4" aria-hidden />}
             Start practice ({questionCount} questions)
           </Button>
@@ -186,7 +186,7 @@ export function LessonPractice({
                     disabled={revealed}
                     aria-pressed={isSel}
                     onClick={() => setSelected(choice)}
-                    className={`flex w-full items-start gap-2 rounded-md border p-2 text-left text-sm ${
+                    className={`focus-ring flex min-h-11 w-full min-w-11 items-start gap-2 rounded-md border p-3 text-left text-sm ${
                       showState
                         ? isCorrect
                           ? "border-success/60 bg-success/10"
@@ -220,11 +220,11 @@ export function LessonPractice({
             ) : null}
             {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
             {!revealed ? (
-              <Button type="button" size="sm" onClick={checkAnswer} disabled={selected === null}>
+              <Button type="button" size="sm" onClick={checkAnswer} disabled={selected === null} className="h-auto min-h-11 min-w-11">
                 Check answer
               </Button>
             ) : (
-              <Button type="button" size="sm" onClick={next} disabled={busy}>
+              <Button type="button" size="sm" onClick={next} disabled={busy} className="h-auto min-h-11 min-w-11">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                 {index + 1 < questions.length ? "Next question" : "Finish & record mastery"}
               </Button>

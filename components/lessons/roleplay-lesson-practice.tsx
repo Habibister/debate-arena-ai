@@ -82,7 +82,7 @@ function PracticeUnavailable({ notice }: { notice: { title: string; message: str
         <p className="text-xs text-muted-foreground">
           Nothing is recorded for this lesson, and no part of it counts as completed.
         </p>
-        <Link href={"/lessons" as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <Link href={"/lessons" as Route} className={`${buttonVariants({ variant: "outline", size: "sm" })} h-auto min-h-11 min-w-11 px-4`}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Back to lessons
         </Link>
@@ -131,11 +131,11 @@ function PracticeStatusBar({
       {confirmingReset ? (
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Clear your answers for this lesson?</span>
-          <Button type="button" size="sm" variant="outline" onClick={onConfirmReset}>Yes, start over</Button>
-          <Button type="button" size="sm" variant="ghost" onClick={onCancelReset}>Cancel</Button>
+          <Button type="button" size="sm" variant="outline" onClick={onConfirmReset} className="h-auto min-h-11 min-w-11">Yes, start over</Button>
+          <Button type="button" size="sm" variant="ghost" onClick={onCancelReset} className="h-auto min-h-11 min-w-11">Cancel</Button>
         </div>
       ) : (
-        <Button type="button" size="sm" variant="ghost" onClick={onAskReset}>
+        <Button type="button" size="sm" variant="ghost" onClick={onAskReset} className="h-auto min-h-11 min-w-11">
           <RotateCcw className="h-4 w-4" aria-hidden />
           Start this practice over
         </Button>
@@ -387,7 +387,7 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
                   disabled={revealed}
                   aria-pressed={isSel}
                   onClick={() => setSelected(choice)}
-                  className={`flex w-full items-start gap-2 rounded-md border p-2 text-left text-sm ${
+                  className={`focus-ring flex min-h-11 w-full min-w-11 items-start gap-2 rounded-md border p-3 text-left text-sm ${
                     showState ? (isCorrect ? "border-success/60 bg-success/10" : "border-destructive/60 bg-destructive/10") : isSel ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"
                   }`}
                 >
@@ -408,9 +408,9 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
             </div>
           ) : null}
           {!revealed ? (
-            <Button type="button" size="sm" onClick={checkIdentify} disabled={selected === null}>Check answer</Button>
+            <Button type="button" size="sm" onClick={checkIdentify} disabled={selected === null} className="h-auto min-h-11 min-w-11">Check answer</Button>
           ) : (
-            <Button type="button" size="sm" onClick={nextIdentify}>{idx + 1 < p.identify.length ? "Next" : "Now try it in your own words"}</Button>
+            <Button type="button" size="sm" onClick={nextIdentify} className="h-auto min-h-11 min-w-11">{idx + 1 < p.identify.length ? "Next" : "Now try it in your own words"}</Button>
           )}
           <PracticeStatusBar
             saveState={saveState}
@@ -464,7 +464,7 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
             <Button
               type="button"
               size="sm"
-              className="mt-2"
+              className="mt-2 h-auto min-h-11 min-w-11"
               onClick={() => setFollowUnlocked(true)}
               disabled={wordCount(writeText) < MIN_RESPONSE_WORDS}
             >
@@ -562,14 +562,14 @@ function ActiveRoleplayPractice({ lesson, userScope }: { lesson: AvailableRolepl
         {error ? (
           <div className="flex items-center justify-between gap-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm">
             <span className="text-warning">{error} Your responses are saved — try again.</span>
-            <Button type="button" size="sm" variant="outline" onClick={getFeedback} disabled={busy}>
+            <Button type="button" size="sm" variant="outline" onClick={getFeedback} disabled={busy} className="h-auto min-h-11 min-w-11">
               <RefreshCw className="h-4 w-4" aria-hidden /> Retry
             </Button>
           </div>
         ) : null}
 
         {followUnlocked ? (
-        <Button type="button" onClick={getFeedback} disabled={busy || wordCount(writeText) < MIN_RESPONSE_WORDS || wordCount(followText) < MIN_RESPONSE_WORDS}>
+        <Button type="button" onClick={getFeedback} disabled={busy || wordCount(writeText) < MIN_RESPONSE_WORDS || wordCount(followText) < MIN_RESPONSE_WORDS} className="h-auto min-h-11 min-w-11">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
           {feedback ? "Revise and get feedback again" : "Get coaching feedback"}
         </Button>

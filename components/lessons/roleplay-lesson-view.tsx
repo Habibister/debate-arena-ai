@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Clock, Lightbulb, ListChecks, MapPin, MessageSquare, Target, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RolePlayLine, RoleplayLesson } from "@/lib/roleplay-lessons";
@@ -27,7 +28,12 @@ function Transcript({ lines, tone }: { lines: RolePlayLine[]; tone: "weak" | "st
 
 // Static teaching for a role-play lesson (everything except the interactive practice). Theme-token
 // styling, semantic sections, status paired with icon + text.
-export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
+//
+// `nav` is the route's in-page contents (M12D3A). Optional, so this view still renders on its own,
+// and placed after the header/provenance and before the first instructional section. Every section
+// heading carries tabIndex={-1} + scroll-mt-24 so a fragment jump moves keyboard focus to the
+// heading. No heading level, id, authored line, section order or safety boundary changed.
+export function RoleplayLessonView({ lesson, nav }: { lesson: RoleplayLesson; nav?: ReactNode }) {
   const orgLabel = lesson.organization === "DECA" ? "DECA" : "HOSA";
   return (
     <div className="space-y-6">
@@ -47,11 +53,13 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
         <SourceFreshnessNote metadata={lesson.provenance} className="mt-3" compact />
       </header>
 
+      {nav}
+
       {/* What it is */}
       <section aria-labelledby="what" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="what" className="text-xl font-bold">What it is</h2>
+          <h2 id="what" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">What it is</h2>
         </div>
         {lesson.intro.map((p, i) => (
           <p key={i} className="mt-3 leading-7 text-muted-foreground">{p}</p>
@@ -70,7 +78,7 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
       <section aria-labelledby="timeline" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <ListChecks className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="timeline" className="text-xl font-bold">{lesson.timelineLabel ?? "The event, start to finish"}</h2>
+          <h2 id="timeline" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">{lesson.timelineLabel ?? "The event, start to finish"}</h2>
         </div>
         {/* M11R3: present only when the sequence is CompeteReady's teaching order rather than the
             event's sourced structure. Visible text, never colour alone. */}
@@ -91,7 +99,7 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
       <section aria-labelledby="framework" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="framework" className="text-xl font-bold">{lesson.framework.name}</h2>
+          <h2 id="framework" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">{lesson.framework.name}</h2>
         </div>
         <ol className="mt-4 space-y-2">
           {lesson.framework.steps.map((step, i) => (
@@ -110,7 +118,7 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
           is a compile error rather than something that silently renders like a withdrawn one. */}
       {lesson.practiceStatus === "available" ? (
         <section aria-labelledby="scenario" className="rounded-lg border border-primary/30 bg-primary/5 p-6">
-          <h2 id="scenario" className="text-xl font-bold">{lesson.scenario.title}</h2>
+          <h2 id="scenario" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">{lesson.scenario.title}</h2>
           <p className="mt-2 leading-7">{lesson.scenario.text}</p>
           <div className="mt-4 rounded-md border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{lesson.prepOutline.title}</p>
@@ -132,7 +140,7 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
         <section aria-labelledby="worked" className="rounded-lg border bg-card p-6">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary" aria-hidden />
-            <h2 id="worked" className="text-xl font-bold">One scenario, performed two ways</h2>
+            <h2 id="worked" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">One scenario, performed two ways</h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">Same situation, same role. Read the annotations under each line — that&apos;s where the skill is.</p>
           <div className="mt-4 grid gap-5 lg:grid-cols-2">
@@ -158,16 +166,16 @@ export function RoleplayLessonView({ lesson }: { lesson: RoleplayLesson }) {
       <section aria-labelledby="mistakes" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-warning" aria-hidden />
-          <h2 id="mistakes" className="text-xl font-bold">Common mistakes</h2>
+          <h2 id="mistakes" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Common mistakes</h2>
         </div>
         <ol className="mt-4 space-y-3">
           {lesson.commonMistakes.map((m, i) => (
             <li key={m.title} className="rounded-lg border bg-background p-4">
               <div className="flex items-start gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold">{i + 1}</span>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold">{m.title}</h3>
-                  <p className="mt-1 leading-7 text-muted-foreground">{m.explanation}</p>
+                  <p className="mt-1 break-words leading-7 text-muted-foreground">{m.explanation}</p>
                 </div>
               </div>
             </li>
@@ -191,7 +199,7 @@ export function RoleplayCourseFooter({ lesson }: { lesson: RoleplayLesson }) {
 
       <section aria-labelledby="next" className="rounded-lg border border-primary/30 bg-primary/5 p-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">Continue to</p>
-        <h2 id="next" className="mt-1 flex items-center gap-2 text-xl font-bold">
+        <h2 id="next" tabIndex={-1} className="scroll-mt-24 mt-1 flex items-center gap-2 text-xl font-bold">
           {lesson.nextLesson.label}
           <ArrowRight className="h-5 w-5 text-primary" aria-hidden />
         </h2>
@@ -202,7 +210,7 @@ export function RoleplayCourseFooter({ lesson }: { lesson: RoleplayLesson }) {
       <section aria-labelledby="coursemap" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="coursemap" className="text-xl font-bold">Your {lesson.organization} Performance Course</h2>
+          <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} Performance Course</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">The full path from zero to a competitor. This lesson is ready now; the rest are on the way.</p>
         <ol className="mt-4 space-y-1.5">

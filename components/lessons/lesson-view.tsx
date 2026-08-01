@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { AlertTriangle, ArrowUpRight, Brain, CheckCircle2, Clock, Film, Lightbulb, Target, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,12 @@ import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 
 // Static teaching (sections 1-4 + the empty video slot). Theme-token styling so it reads in light and
 // dark; status is always paired with an icon AND a text label (never color alone).
-export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
+//
+// `nav` is the route's in-page contents (M12D3A). It is optional so this view still renders on its
+// own, and it is placed after the header/provenance and before the first instructional section. Every
+// section heading below carries tabIndex={-1} + scroll-mt-24 so a fragment jump moves keyboard focus
+// to the heading rather than only scrolling past it. No heading level or id changed.
+export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: ReactNode }) {
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -26,11 +32,13 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
         <SourceFreshnessNote metadata={lesson.provenance} className="mt-3" compact />
       </header>
 
+      {nav}
+
       {/* (1) What it is */}
       <section aria-labelledby="what-it-is" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="what-it-is" className="text-xl font-bold">What it is</h2>
+          <h2 id="what-it-is" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">What it is</h2>
         </div>
         <p className="mt-3 leading-7 text-muted-foreground">{lesson.whatItIs.intro}</p>
         <div className="mt-5 grid gap-3">
@@ -54,7 +62,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
       <section aria-labelledby="video-slot" className="rounded-lg border border-dashed bg-card p-6">
         <div className="flex items-center gap-2">
           <Film className="h-5 w-5 text-muted-foreground" aria-hidden />
-          <h2 id="video-slot" className="text-xl font-bold">Video walkthrough</h2>
+          <h2 id="video-slot" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Video walkthrough</h2>
         </div>
         {lesson.video.url ? (
           <div className="mt-3 aspect-video w-full overflow-hidden rounded-md border">
@@ -76,7 +84,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
 
       {/* (2) + (3) Same claim, weak vs strong */}
       <section aria-labelledby="contrast" className="rounded-lg border bg-card p-6">
-        <h2 id="contrast" className="text-xl font-bold">See the difference on one claim</h2>
+        <h2 id="contrast" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">See the difference on one claim</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Both arguments below defend the exact same claim. Only the warrant and impact change — that is the whole skill.
         </p>
@@ -135,7 +143,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
       <section aria-labelledby="revise" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <ArrowUpRight className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="revise" className="text-xl font-bold">Revise it, one pass at a time</h2>
+          <h2 id="revise" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Revise it, one pass at a time</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{lesson.revisionLadder.intro}</p>
         <ol className="mt-4 space-y-3">
@@ -156,7 +164,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
       <section aria-labelledby="evidence" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="evidence" className="text-xl font-bold">Make your evidence specific</h2>
+          <h2 id="evidence" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Make your evidence specific</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{lesson.evidenceUpgrade.intro}</p>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -191,7 +199,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
       <section aria-labelledby="misconception" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="misconception" className="text-xl font-bold">The mental model to fix</h2>
+          <h2 id="misconception" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">The mental model to fix</h2>
         </div>
         <div className="mt-3 rounded-md border border-warning/50 bg-warning/[0.06] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-warning">The wrong idea</p>
@@ -212,7 +220,7 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
       <section aria-labelledby="mistakes" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-warning" aria-hidden />
-          <h2 id="mistakes" className="text-xl font-bold">Common mistakes</h2>
+          <h2 id="mistakes" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Common mistakes</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">The three things debaters actually get wrong on this skill.</p>
         <ol className="mt-4 space-y-4">
@@ -220,9 +228,9 @@ export function LessonView({ lesson }: { lesson: AuthoredLesson }) {
             <li key={mistake.title} className="rounded-lg border bg-background p-4">
               <div className="flex items-start gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold">{i + 1}</span>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold">{mistake.title}</h3>
-                  <p className="mt-1 leading-7 text-muted-foreground">{mistake.explanation}</p>
+                  <p className="mt-1 break-words leading-7 text-muted-foreground">{mistake.explanation}</p>
                   <p className="mt-2 flex gap-2 text-sm leading-6">
                     <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span><span className="font-semibold text-foreground">Fix:</span> <span className="text-muted-foreground">{mistake.fix}</span></span>

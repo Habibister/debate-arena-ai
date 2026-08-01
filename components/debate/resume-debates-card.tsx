@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocalDate } from "@/components/ui/local-date";
 import { draftKey } from "@/lib/debate-drafts";
+import { cn } from "@/lib/utils";
 
 export type ResumeDebate = {
   id: string;
@@ -72,18 +73,24 @@ export function ResumeDebatesCard({ debates, isPractice = false }: { debates: Re
                 {debate.statusLabel} · Last active <LocalDate value={debate.updatedIso} />
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Link href={`/debate/${debate.id}` as Route} className={buttonVariants({ size: "sm" })}>
+            {/* Class-only sizing: `min-h-11` overrides the `h-9` these compact sizes set, so every
+                control clears 44px in both dimensions without changing the shared Button sizes.
+                Labels, destinations and handlers are untouched. */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href={`/debate/${debate.id}` as Route} className={cn(buttonVariants({ size: "sm" }), "min-h-11 min-w-11 px-4")}>
                 Continue
               </Link>
-              <Button type="button" variant="ghost" size="sm" onClick={() => dismiss(debate.id)}>
+              <Button type="button" variant="ghost" size="sm" className="min-h-11 min-w-11" onClick={() => dismiss(debate.id)}>
                 <X className="mr-1 h-4 w-4" aria-hidden />
                 Discard draft
               </Button>
             </div>
           </div>
         ))}
-        <Link href={"/debates/history" as Route} className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
+        <Link
+          href={"/debates/history" as Route}
+          className="focus-ring inline-flex min-h-11 min-w-11 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
           <History className="h-3.5 w-3.5" aria-hidden />
           View all history
         </Link>

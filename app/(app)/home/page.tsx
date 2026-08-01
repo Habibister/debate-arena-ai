@@ -1,11 +1,13 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { getServerSession } from "next-auth";
-import { ClipboardList, Flame, Gavel, RotateCcw, Target, Timer, Trophy } from "lucide-react";
+import { ClipboardList, Gavel, RotateCcw, Timer } from "lucide-react";
 import { ResumeDebatesCard, type ResumeDebate } from "@/components/debate/resume-debates-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Fact } from "@/components/ui/fact";
+import { PageHeader } from "@/components/ui/page-header";
 import { authOptions } from "@/lib/auth";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { prisma } from "@/lib/prisma";
@@ -94,36 +96,44 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   ] as const;
 
   return (
-    <div className="space-y-6">
-      {/* Hero: one obvious next action. */}
-      <div className="rounded-lg border bg-card p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">Home</Badge>
-          {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
-        </div>
-        <h1 className="display-title mt-4">
-          {hasContinue ? "Pick up where you left off" : `Ready to train, ${firstName}?`}
-        </h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          {hasContinue
+    <div className="space-y-8">
+      {/* 1. Context. The heading and lead still say exactly what the data supports. */}
+      <PageHeader
+        eyebrow="Home"
+        badges={activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
+        heading={
+          <h1 className="display-title">
+            {hasContinue ? "Pick up where you left off" : `Ready to train, ${firstName}?`}
+          </h1>
+        }
+        description={
+          hasContinue
             ? "You have an unfinished session — continuing it is the fastest way back into form."
             : activeTrack
               ? `One focused ${activeTrack.label} rep is the best next step. Everything here counts toward your real record.`
-              : "Pick a track and start a focused rep — everything here counts toward your real record."}
-        </p>
-        {!hasContinue ? (
-          <Link
-            href={(activeTrack ? `/training/${activeTrack.slug}/practice` : "/training") as Route}
-            className={cn(buttonVariants({ size: "lg" }), "mt-5")}
-          >
-            {activeTrack ? `Start ${activeTrack.short} practice` : "Choose your track"}
-          </Link>
-        ) : null}
-      </div>
+              : "Pick a track and start a focused rep — everything here counts toward your real record."
+        }
+      />
 
-      {hasContinue ? <ResumeDebatesCard debates={unfinished} isPractice={Boolean(activeTrack && activeTrack.id !== "GENERAL_DEBATE")} /> : null}
+      {/* 2. One strongest action. A returning learner gets the real resumable session; everyone else
+             gets the single start CTA. Nothing here is inferred — `hasContinue` comes from actual
+             unfinished records, and the resume card is unchanged.
+             The heading is visually hidden because both branches already carry their own visible
+             title; it exists so the outline reads h1 -> h2 -> h3 instead of jumping straight to the
+             resume card's own h3, which is what it did before. */}
+      <h2 className="sr-only">Continue training</h2>
+      {hasContinue ? (
+        <ResumeDebatesCard debates={unfinished} isPractice={Boolean(activeTrack && activeTrack.id !== "GENERAL_DEBATE")} />
+      ) : (
+        <Link
+          href={(activeTrack ? `/training/${activeTrack.slug}/practice` : "/training") as Route}
+          className={cn(buttonVariants({ size: "lg" }), "min-h-11 w-full sm:w-fit")}
+        >
+          {activeTrack ? `Start ${activeTrack.short} practice` : "Choose your track"}
+        </Link>
+      )}
 
-      {/* Recommended next — real weak-skill data or an honest empty state. */}
+      {/* 3. Recommended next — real weak-skill data or an honest empty state. */}
       <Card>
         <CardContent className="p-5">
           <p className="eyebrow">Recommended next</p>
@@ -133,7 +143,7 @@ export default async function HomePage({ searchParams }: { searchParams: { track
               <p className="mt-1 text-sm text-muted-foreground">
                 Flagged by the grader on your latest completed test{weakAreas.length > 1 ? ` — also worth a look: ${weakAreas.slice(1).join(", ")}` : ""}.
               </p>
-              <Link href={`/skills?track=${trackSlug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-3")}>
+              <Link href={`/skills?track=${trackSlug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-3 min-h-11")}>
                 Open skill practice
               </Link>
             </div>
@@ -145,39 +155,50 @@ export default async function HomePage({ searchParams }: { searchParams: { track
         </CardContent>
       </Card>
 
-      {/* Quick actions. */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map((action) => {
-          const Icon = action.icon;
-          return (
-            <Link key={action.label} href={action.href as Route} className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
-              <Icon className="h-5 w-5 text-track" aria-hidden />
-              <p className="mt-2 font-semibold">{action.label}</p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">{action.detail}</p>
-            </Link>
-          );
-        })}
-      </div>
+      {/* 4. Quick actions — same labels, same destinations, now a compact list instead of four
+             oversized cards competing with the primary action above. */}
+      <section aria-labelledby="home-quick-actions">
+        <h2 id="home-quick-actions" className="section-title">Quick actions</h2>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <li key={action.label}>
+                <Link
+                  href={action.href as Route}
+                  className="focus-ring flex min-h-11 items-start gap-3 rounded-md border bg-card px-3 py-2.5 transition-colors hover:bg-muted"
+                >
+                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-track" aria-hidden />
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-foreground">{action.label}</span>
+                    <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{action.detail}</span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
-      {/* Honest stat trio (audited: real recorded activity only). */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border bg-card p-4">
-          <p className="eyebrow flex items-center gap-2"><Flame className="h-3.5 w-3.5 text-track" aria-hidden />Practice sessions</p>
-          <p className="mt-2 text-2xl font-bold">{sessions}</p>
+      {/* 5. Supporting stats. Same three audited values from real recorded activity — kept visible,
+             including their zeros, but no longer the loudest thing on an empty account. */}
+      <section aria-labelledby="home-record">
+        <h2 id="home-record" className="section-title">Your record</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <Fact label="Practice sessions" value={sessions} />
+          <Fact label="Judged rounds" value={judgedDebateCount} />
+          <Fact label="Mastery" value={`${mastery}%`} />
         </div>
-        <div className="rounded-lg border bg-card p-4">
-          <p className="eyebrow flex items-center gap-2"><Trophy className="h-3.5 w-3.5 text-track" aria-hidden />Judged rounds</p>
-          <p className="mt-2 text-2xl font-bold">{judgedDebateCount}</p>
-        </div>
-        <div className="rounded-lg border bg-card p-4">
-          <p className="eyebrow flex items-center gap-2"><Target className="h-3.5 w-3.5 text-track" aria-hidden />Mastery</p>
-          <p className="mt-2 text-2xl font-bold">{mastery}%</p>
-        </div>
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        Full stats and history live in <Link href={"/dashboard" as Route} className="font-semibold text-primary hover:underline">Progress</Link>.
-      </p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Full stats and history live in{" "}
+          <Link
+            href={"/dashboard" as Route}
+            className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 font-semibold text-primary hover:underline"
+          >
+            Progress
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

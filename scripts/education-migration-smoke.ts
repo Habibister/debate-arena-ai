@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 // THE PRODUCTION MODULES — never a mirrored copy of their data or logic.
 import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
 import { EDUCATION_COURSES, EDUCATION_LESSONS, EDUCATION_MODULES, EDUCATION_REGISTRY, educationLessonsForTrack, getEducationLesson, getEducationModule } from "../lib/education/registry";
 import { DEBATE_MIGRATED_LESSONS, HELD_DEBATE_CATALOG_SLUGS, MIGRATED_DEBATE_PROVENANCE } from "../lib/education/tracks/debate";
 import { EDUCATION_GENERIC_FILLER_SIGNATURES, validateEducationRegistry } from "../lib/education/validate";
+// M13E1C: the compatibility-alias rule validates its target against the seeded manifest.
+import { SEEDED_LESSON_SLUGS, SEEDED_SKILL_SLUGS } from "../lib/education/skills-compat";
 import { isConceptEducationLessonEntry } from "../lib/education/types";
 import { getLesson } from "../lib/lessons";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
@@ -18,6 +21,16 @@ const sha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { en
 const shaNow = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
 
 const MIGRATED = ["debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"] as const;
+
+function walkTree(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === ".next" || name === ".git") continue;
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) walkTree(full, out);
+    else if (/\.tsx?$/.test(full)) out.push(full);
+  }
+  return out;
+}
 
 /** Every string reachable from a value — used for the text-preservation and filler scans. */
 function collectStrings(value: unknown, out: string[], depth = 0): void {
@@ -54,7 +67,10 @@ function main() {
                       "components/lessons/lesson-view.tsx", "components/lessons/lesson-practice.tsx",
                       "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
                       "lib/authored-lesson-progress.ts", "lib/spaced-review.ts", "lib/debate-drills.ts",
-                      "app/(app)/skills/page.tsx", "app/(app)/skills/[slug]/page.tsx",
+                      // app/(app)/skills/[slug]/page.tsx is deliberately absent: M13E1C rewrites that
+                      // route. Its INDEX page stays pinned here, and the compatibility contract that
+                      // replaced its body is owned by scripts/skills-compat-smoke.ts.
+                      "app/(app)/skills/page.tsx",
                       "lib/assignments.ts", "prisma/schema.prisma", "prisma/seed.ts",
                       "app/api/skills/debate-writing/route.ts"]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
@@ -189,7 +205,38 @@ function main() {
   assert.ok(!("practice" in hosa) && !("scenario" in hosa), "35b. and HOSA still defines no interactive practice or scenario");
 
   // ---- 36-39. forbidden surfaces (byte-identity already asserted at check 4) ------------------------
-  assert.ok(!stripComments(read("app/(app)/skills/page.tsx")).includes("lib/education"), "36. /skills does not consume the registry");
+  // M13E1C connected a compatibility layer to /skills. The protection is not removed — it becomes an
+  // ALLOWLIST, so an unrelated legacy surface cannot quietly start consuming the education modules.
+  const EDUCATION_CONSUMERS = new Set([
+    // canonical lessons surface (M13E1B)
+    "app/(app)/lessons/page.tsx",
+    "app/(app)/lessons/[slug]/page.tsx",
+    "components/lessons/concept-education-lesson-view.tsx",
+    "components/lessons/concept-education-lesson-practice.tsx",
+    // legacy /skills compatibility surface (M13E1C)
+    "app/(app)/skills/[slug]/page.tsx",
+    "app/(app)/skills/[slug]/practice/page.tsx",
+    "components/skills/skill-path.tsx",
+    "app/(app)/study-arcade/review/page.tsx"
+  ]);
+  const found: string[] = [];
+  for (const file of [...walkTree("app"), ...walkTree("components")]) {
+    if (!stripComments(read(file)).includes("lib/education")) continue;
+    found.push(file);
+    assert.ok(EDUCATION_CONSUMERS.has(file), `36. only approved surfaces consume lib/education (${file})`);
+  }
+  assert.deepEqual([...found].sort(), [...EDUCATION_CONSUMERS].sort(),
+    "36b. and every approved consumer really does import it");
+  // The /skills index itself still does NOT reach the education modules — it renders SkillPath only.
+  assert.ok(!stripComments(read("app/(app)/skills/page.tsx")).includes("lib/education"),
+    "36c. the /skills index page still consumes nothing from lib/education directly");
+  // /lessons stays canonical: the compatibility surface may only reach the registry through the
+  // compatibility module, never through the raw lesson registry the canonical surface uses.
+  for (const file of ["app/(app)/skills/[slug]/page.tsx", "app/(app)/skills/[slug]/practice/page.tsx",
+                      "app/(app)/study-arcade/review/page.tsx"]) {
+    assert.ok(!/from "@\/lib\/education\/(registry|tracks)/.test(stripComments(read(file))),
+      `36d. ${file} reaches the registry only through skills-compat`);
+  }
 
   // ---- 40. no generic seed-template filler, in data ------------------------------------------------
   const migratedStrings: string[] = [];
@@ -233,8 +280,8 @@ function main() {
   assert.ok(view.includes("SourceFreshnessNote"), "50. the concept view renders the shared source note");
 
   // ---- registry validation --------------------------------------------------------------------------
-  assert.deepEqual(validateEducationRegistry(EDUCATION_REGISTRY), [],
-    `the real registry validates cleanly; got ${JSON.stringify(validateEducationRegistry(EDUCATION_REGISTRY))}`);
+  assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [],
+    `the real registry validates cleanly; got ${JSON.stringify(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }))}`);
 
   // ---- selector controls ------------------------------------------------------------------------------
   assert.ok(trackFile.includes("LEARNING_SKILL_CATALOG"), "selector: the track file imports the catalog rather than copying it");

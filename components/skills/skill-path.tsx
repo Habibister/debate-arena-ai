@@ -1,145 +1,122 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { BookOpenCheck, CheckCircle2, ClipboardList, Layers3, Lock, PenLine, PlayCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight, BookOpenCheck, Compass, MessageSquareText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { skillSharedOnly, skillVisibleForTrack, type TrainingTrack } from "@/lib/training-tracks";
+import { educationLessonsForTrack } from "@/lib/education/registry";
+import { EDUCATION_TRACKS, isConceptEducationLessonEntry, type EducationTrack } from "@/lib/education/types";
+import { getLesson } from "@/lib/lessons";
+import type { TrainingTrack } from "@/lib/training-tracks";
 
-const skills: Array<{
-  name: string;
-  org: "Debate" | "DECA" | "HOSA" | "Public Speaking";
-  mastery: number;
-  status: "complete" | "active" | "locked";
-  slug: string;
-  action: "writing" | "test" | "study" | "lesson";
-}> = [
-  { name: "Claim, Warrant, Impact", org: "Debate", mastery: 82, status: "complete", slug: "debate-claim-building-1", action: "writing" },
-  { name: "Evidence and Support", org: "Debate", mastery: 64, status: "active", slug: "debate-evidence-1", action: "writing" },
-  { name: "Refutation", org: "Debate", mastery: 58, status: "active", slug: "debate-rebuttal-1", action: "writing" },
-  { name: "Weighing Arguments", org: "Debate", mastery: 42, status: "active", slug: "debate-weighing", action: "writing" },
-  { name: "Reading Scenarios", org: "DECA", mastery: 71, status: "active", slug: "deca-reading-scenarios", action: "test" },
-  { name: "Marketing Terms", org: "DECA", mastery: 49, status: "active", slug: "deca-marketing", action: "study" },
-  { name: "Medical Terminology", org: "HOSA", mastery: 54, status: "active", slug: "hosa-medical-terminology-basics", action: "study" },
-  { name: "Patient Communication", org: "HOSA", mastery: 61, status: "active", slug: "hosa-patient-communication", action: "lesson" },
-  { name: "Presentation Structure", org: "Public Speaking", mastery: 38, status: "locked", slug: "public-speaking-delivery-1", action: "lesson" }
-];
+/**
+ * The skills index (M13E1C).
+ *
+ * This component was a hardcoded array of nine fictional skills carrying invented mastery
+ * percentages (82%, 64%, 58%…), a "Mastery Map" heading, a permanently locked Public Speaking row
+ * that could never unlock because no such skill is seeded, and three destinations that 404 when
+ * opened. None of it came from the database or from any real learner activity.
+ *
+ * It now lists what actually exists: the track's real authored lessons, and — for DECA and HOSA,
+ * whose training lives outside the lesson system — the one true destination each. Every tile leads
+ * somewhere that resolves. There is no percentage, no bar and no completion or mastery claim,
+ * because this component has no access to real per-learner progress and will not imply otherwise.
+ */
 
-function actionHref(skill: (typeof skills)[number]): Route {
-  if (skill.action === "writing") {
-    return `/skills/${skill.slug}/practice` as Route;
-  }
+type Tile = { key: string; title: string; detail: string; href: Route; icon: typeof BookOpenCheck; cta: string };
 
-  if (skill.action === "test") {
-    return "/tests" as Route;
-  }
-
-  if (skill.action === "study") {
-    return "/study" as Route;
-  }
-
-  return `/skills/${skill.slug}` as Route;
+function canonicalTrack(track: TrainingTrack | undefined): EducationTrack | null {
+  return EDUCATION_TRACKS.find((candidate) => candidate === track) ?? null;
 }
 
-function actionLabel(skill: (typeof skills)[number]) {
-  if (skill.action === "writing") {
-    return "Practice writing";
+function tilesForTrack(track: TrainingTrack | undefined): Tile[] {
+  const canonical = canonicalTrack(track);
+  if (!canonical) return [];
+
+  if (canonical === "GENERAL_DEBATE") {
+    return educationLessonsForTrack(canonical)
+      .filter((entry) => entry.visibility === "learner")
+      .map((entry) => {
+        // The shipped Claim/Warrant/Impact lesson is not a migrated concept entry, so its wording
+        // comes from its own legacy object rather than from the concept source shape.
+        const legacy = isConceptEducationLessonEntry(entry) ? null : getLesson(entry.id);
+        return {
+          key: entry.id,
+          title: isConceptEducationLessonEntry(entry) ? entry.source.lesson.title : legacy?.title ?? entry.id,
+          detail: isConceptEducationLessonEntry(entry) ? entry.source.lesson.content.objective : legacy?.subtitle ?? "",
+          href: `/lessons/${entry.id}` as Route,
+          icon: BookOpenCheck,
+          cta: "Open lesson"
+        };
+      });
   }
 
-  if (skill.action === "test") {
-    return "Test me";
+  if (canonical === "DECA") {
+    return [
+      {
+        key: "deca-practice",
+        title: "DECA role-play practice",
+        detail: "Work a scenario end to end with a coach available. Nothing is scored or recorded.",
+        href: "/training/deca/practice" as Route,
+        icon: MessageSquareText,
+        cta: "Open practice"
+      }
+    ];
   }
 
-  if (skill.action === "study") {
-    return "Study terms";
-  }
-
-  return skill.status === "complete" ? "Review" : "Practice";
+  return [
+    {
+      key: "hosa-events",
+      title: "Find your HOSA event",
+      detail: "HOSA events differ too much for one path. Start from your exact event and train what it contains.",
+      href: "/training/hosa/events" as Route,
+      icon: Compass,
+      cta: "Open the Event Navigator"
+    }
+  ];
 }
 
-function actionIcon(skill: (typeof skills)[number]) {
-  if (skill.action === "writing") {
-    return PenLine;
-  }
-
-  if (skill.action === "test") {
-    return ClipboardList;
-  }
-
-  if (skill.action === "study") {
-    return Layers3;
-  }
-
-  return BookOpenCheck;
-}
-
-// showSampleProgress is true only for demo accounts. Real users have not earned mastery yet, so we
-// show "Not started" at 0% instead of fake percentages.
-export function SkillPath({ showSampleProgress = false, track }: { showSampleProgress?: boolean; track?: TrainingTrack }) {
-  // When a track is active, show that track's skills plus shared foundations. C5B1 fail-closed: when
-  // NO track is resolved, show shared foundations ONLY — never every track's skills.
-  const visibleSkills = track
-    ? skills.filter((skill) => skillVisibleForTrack(skill.org, track).visible)
-    : skills.filter((skill) => skillSharedOnly(skill.org));
+/**
+ * `showSampleProgress` is still accepted because `app/(app)/skills/page.tsx` passes it, and that
+ * route is outside this change's boundary. It is deliberately UNUSED: it existed to gate demo-only
+ * mastery literals, and there are no longer any percentages on this surface to gate.
+ */
+export function SkillPath({ track }: { showSampleProgress?: boolean; track?: TrainingTrack }) {
+  const tiles = tilesForTrack(track);
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Mastery Map</CardTitle>
-          <Badge variant="accent">Adaptive lessons</Badge>
-        </div>
+        <CardTitle>Skills in this track</CardTitle>
       </CardHeader>
       <CardContent>
-        {visibleSkills.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No skills for this track yet.</p>
+        {tiles.length === 0 ? (
+          // Fail closed: with no resolved track we show nothing rather than another track's content.
+          <p className="text-sm text-muted-foreground">Pick a track to see the skills it trains.</p>
         ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {visibleSkills.map((skill) => {
-            const shared = track ? skillVisibleForTrack(skill.org, track).shared : false;
-            // Real users start every skill "not started" until they log real activity.
-            const mastery = showSampleProgress ? skill.mastery : 0;
-            const status = showSampleProgress ? skill.status : skill.status === "locked" ? "locked" : "active";
-            const Icon = status === "complete" ? CheckCircle2 : status === "locked" ? Lock : PlayCircle;
-            const skillForAction = { ...skill, status };
-            const ActionIcon = actionIcon(skillForAction);
-            return (
-              <div key={skill.name} className="rounded-lg border bg-background p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase text-muted-foreground">{skill.org}</p>
-                    <h3 className="mt-1 font-semibold">{skill.name}</h3>
-                    {shared ? <Badge variant="outline" className="mt-1">Shared foundation</Badge> : null}
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </span>
-                </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${mastery}%` }} />
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-1 text-muted-foreground">
-                    <BookOpenCheck className="h-3.5 w-3.5" aria-hidden />
-                    {status === "locked" ? "Locked path" : "Lesson set"}
-                  </span>
-                  <span className="font-semibold">{showSampleProgress ? `${mastery}%` : "Not started"}</span>
-                </div>
-                {status === "locked" ? (
-                  <div className="mt-4 rounded-md border bg-muted px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
-                    Complete the earlier lessons to unlock
-                  </div>
-                ) : (
-                  <Link href={actionHref(skillForAction)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}>
-                    <ActionIcon className="h-4 w-4" aria-hidden />
-                    {actionLabel(skillForAction)}
+          <ul className="grid gap-3 md:grid-cols-2">
+            {tiles.map((tile) => {
+              const Icon = tile.icon;
+              return (
+                <li key={tile.key}>
+                  <Link
+                    href={tile.href}
+                    className="focus-ring flex min-h-11 min-w-11 items-start gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
+                  >
+                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-track" aria-hidden />
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words font-semibold text-foreground">{tile.title}</span>
+                      {tile.detail ? (
+                        <span className="mt-1 block break-words text-sm leading-6 text-muted-foreground">{tile.detail}</span>
+                      ) : null}
+                      <span className="mt-2 flex items-center gap-1 text-sm font-semibold text-primary">
+                        {tile.cta}
+                        <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      </span>
+                    </span>
                   </Link>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </CardContent>
     </Card>

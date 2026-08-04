@@ -1,272 +1,140 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, ClipboardList, Clock, Dumbbell, Flame, GraduationCap, PenLine, Layers3 } from "lucide-react";
-import { RecommendedVideos } from "@/components/resources/recommended-videos";
+import { notFound, permanentRedirect } from "next/navigation";
+import { ArrowLeft, ArrowRight, Archive, Info, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { prisma } from "@/lib/prisma";
-import type { StudyOrganization } from "@/lib/study-content";
+import { debateWritingPracticeSupported, resolveSkillsSlug } from "@/lib/education/skills-compat";
 import { cn } from "@/lib/utils";
 
-type LessonContent = {
-  objective?: string;
-  lesson?: string;
-  examples?: string[];
-  guidedPractice?: string[];
-  independentPractice?: string[];
-  checks?: string[];
-  masteryQuiz?: Array<{
-    question: string;
-    answer?: string;
-    explanation?: string;
-  }>;
+/**
+ * Legacy `/skills/[slug]` (M13E1C).
+ *
+ * This page used to read `Lesson.content` out of the database and render it as instruction. All
+ * thirty of those rows are `buildLessonContent` output — one template with two nouns substituted —
+ * and any field the template omitted was replaced with a generic substitute written right here. It
+ * also showed a "Mastery Path" percentage that was really the lesson's POSITION in its skill, and a
+ * `+10 XP` badge on eighteen rows that had no way to earn it.
+ *
+ * None of that is rendered any more, and the page no longer touches the database at all. Every
+ * legacy URL still resolves — coaches' assignments store these slugs with no foreign key behind
+ * them — but it resolves to one of exactly two honest outcomes: a permanent redirect to the real
+ * authored lesson, or a compatibility page that says plainly no authored lesson exists yet.
+ */
+
+const TRACK_LABEL: Record<string, string> = {
+  DEBATE: "General Debate",
+  DECA: "DECA",
+  HOSA: "HOSA",
+  MODEL_UN: "Model UN"
 };
 
-type MasteryQuizItem = NonNullable<LessonContent["masteryQuiz"]>[number];
+export default function SkillCompatibilityPage({ params }: { params: { slug: string } }) {
+  const resolution = resolveSkillsSlug(params.slug);
 
-function parseLessonContent(content: unknown): LessonContent {
-  if (!content || typeof content !== "object" || Array.isArray(content)) {
-    return {};
+  // Real authored instruction lives at ONE canonical URL. A permanent redirect keeps every stored
+  // assignment, judge report and test recommendation working without a second copy of the lesson.
+  if (resolution.kind === "canonical-redirect") {
+    permanentRedirect(`/lessons/${resolution.lessonId}`);
   }
 
-  return content as LessonContent;
-}
-
-export default async function SkillPracticePage({ params }: { params: { slug: string } }) {
-  const lesson = await prisma.lesson.findFirst({
-    where: {
-      OR: [{ slug: params.slug }, { skill: { slug: params.slug } }]
-    },
-    include: {
-      skill: {
-        include: {
-          lessons: {
-            orderBy: { order: "asc" }
-          }
-        }
-      }
-    }
-  });
-
-  if (!lesson) {
+  // Fail closed. An unrecognised slug is not given a page that guesses what it might have been.
+  if (resolution.kind === "unknown") {
     notFound();
   }
 
-  const content = parseLessonContent(lesson.content);
-  const currentIndex = lesson.skill.lessons.findIndex((item) => item.id === lesson.id);
-  const previousLesson = currentIndex > 0 ? lesson.skill.lessons[currentIndex - 1] : null;
-  const nextLesson = currentIndex < lesson.skill.lessons.length - 1 ? lesson.skill.lessons[currentIndex + 1] : null;
-  const masteryProgress = Math.round(((currentIndex + 1) / Math.max(lesson.skill.lessons.length, 1)) * 100);
-  const examples = content.examples && content.examples.length > 0 ? content.examples : ["Identify the skill in a realistic prompt.", "Explain why the stronger answer works.", "Revise a weaker response into a competitive version."];
-  const guidedPractice =
-    content.guidedPractice && content.guidedPractice.length > 0
-      ? content.guidedPractice
-      : ["Complete one rep slowly. Name the goal, write a response, then compare it to the score category this lesson supports.", "Revise once for clarity and once for strategic impact."];
-  const independentPractice =
-    content.independentPractice && content.independentPractice.length > 0
-      ? content.independentPractice
-      : ["Set a short timer and produce the skill without notes.", "Log one weakness to target in your next practice test or judged round."];
-  const checks = content.checks && content.checks.length > 0 ? content.checks : ["Can you name the goal of this skill?", "Can you use it under time pressure?", "Can you explain how it improves your score?"];
-  const masteryQuiz: MasteryQuizItem[] =
-    content.masteryQuiz && content.masteryQuiz.length > 0
-      ? content.masteryQuiz
-      : checks.map((check) => ({ question: check }));
-  const isDebateSkill = lesson.skill.organization === "DEBATE";
-  const studyOrganization = lesson.skill.organization === "DECA" || lesson.skill.organization === "HOSA" ? lesson.skill.organization : undefined;
+  const trackLabel = TRACK_LABEL[resolution.track] ?? resolution.track;
+  const retired = resolution.track === "MODEL_UN";
+  // Debate is the only track with a writing-practice implementation behind this route. Everything
+  // else gets its own track's real tool rather than a debate motion.
+  const practiceSupported = debateWritingPracticeSupported(params.slug);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-5">
-        <Link href="/skills" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Skills
-        </Link>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{lesson.skill.organization.replace("_", " ")}</Badge>
-          <Badge variant="outline">{lesson.type.replace("_", " ").toLowerCase()}</Badge>
+    <div className="mx-auto w-full max-w-2xl space-y-6">
+      <Link
+        href={"/lessons" as Route}
+        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto min-h-11 min-w-11 px-3")}
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Lessons
+      </Link>
+
+      <div className="rounded-lg border bg-card p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{trackLabel}</Badge>
+          {/* The state is a WORD first — "Older record" — so it survives with every class removed. */}
+          <Badge variant="outline">
+            <Archive className="mr-1 h-3.5 w-3.5" aria-hidden />
+            Older record
+          </Badge>
         </div>
-        <h1 className="mt-3 text-3xl font-bold">{lesson.title}</h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">{lesson.summary}</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-md border bg-background p-3">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Clock className="h-4 w-4 text-primary" aria-hidden />
-              {lesson.estimatedMinutes} min
-            </div>
-          </div>
-          <div className="rounded-md border bg-background p-3">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Flame className="h-4 w-4 text-accent" aria-hidden />
-              +{lesson.xpReward} XP
-            </div>
-          </div>
-          <div className="rounded-md border bg-background p-3">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <CheckCircle2 className="h-4 w-4 text-secondary" aria-hidden />
-              Step {currentIndex + 1} of {lesson.skill.lessons.length}
-            </div>
-          </div>
-        </div>
+        <h1 className="mt-3 break-words text-3xl font-bold tracking-tight">{resolution.title}</h1>
+        {resolution.step ? (
+          // Real seeded ordering, stated as a position and never converted into a percentage.
+          <p className="mt-2 text-sm text-muted-foreground">
+            {resolution.skillName} · Step {resolution.step.index} of {resolution.step.total}
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">{resolution.skillName}</p>
+        )}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Mastery Path</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Info className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+            No written lesson here yet
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-semibold">{lesson.skill.name}</span>
-            <span className="text-muted-foreground">{masteryProgress}%</span>
-          </div>
-          <Progress value={masteryProgress} />
-          <div className="mt-4 grid gap-2 md:grid-cols-3">
-            {lesson.skill.lessons.map((item) => (
-              <Link
-                key={item.id}
-                href={`/skills/${item.slug}` as Route}
-                className={`rounded-md border p-3 text-sm transition-colors ${item.id === lesson.id ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
-              >
-                <span className="font-semibold">{item.title}</span>
-              </Link>
-            ))}
-          </div>
+        <CardContent className="space-y-4">
+          <p className="leading-7 text-muted-foreground">
+            This is an older record kept so existing assignments and links keep working. It does not
+            have a written lesson behind it yet — so rather than show you filler, we are telling you
+            plainly that there is nothing to read here.
+            {retired ? " Model UN is also no longer one of the training tracks." : null}
+          </p>
+          <p className="leading-7 text-muted-foreground">
+            {resolution.track === "DEBATE"
+              ? "The Debate lessons that are written are on the Lessons page."
+              : "Here is where this track's real training lives:"}
+          </p>
+          <Link
+            href={resolution.destination.href as Route}
+            className={cn(buttonVariants({ size: "sm" }), "h-auto min-h-11 min-w-11 whitespace-normal px-4 text-center")}
+          >
+            {resolution.destination.label}
+            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+          </Link>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      {/* XP appears ONLY beside an action that genuinely awards it: Debate writing practice, which
+          posts to /api/skills/debate-writing and records XP_REWARDS.lessonCompleted. No other branch
+          of this page shows XP, because no other branch can earn any. */}
+      {practiceSupported ? (
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" aria-hidden />
-              <CardTitle>Lesson</CardTitle>
-            </div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <PenLine className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+              Practice writing for this skill
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-base leading-8 text-muted-foreground">
-              {content.lesson ?? "This lesson introduces the skill, shows what strong execution looks like, and gives you a repeatable pattern for practice."}
+          <CardContent className="space-y-3">
+            <p className="leading-7 text-muted-foreground">
+              You can still practise this Debate skill in writing and get scored feedback. Finishing a
+              round awards 10 XP and updates this skill&apos;s mastery.
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BookOpenCheck className="h-5 w-5 text-secondary" aria-hidden />
-              <CardTitle>Examples</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {examples.map((example) => (
-              <div key={example} className="rounded-lg border bg-background p-3 text-sm leading-6 text-muted-foreground">
-                {example}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Dumbbell className="h-5 w-5 text-accent" aria-hidden />
-              <CardTitle>Guided Practice</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            {guidedPractice.map((step) => (
-              <p key={step}>{step}</p>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-primary" aria-hidden />
-              <CardTitle>Independent Practice</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            {independentPractice.map((step) => (
-              <p key={step}>{step}</p>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-secondary" aria-hidden />
-              <CardTitle>Mastery Check</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {masteryQuiz.map((check) => (
-              <div key={check.question} className="rounded-lg border bg-background p-3 text-sm leading-6 text-muted-foreground">
-                <p className="font-semibold text-foreground">{check.question}</p>
-                {check.answer ? <p className="mt-2">{check.answer}</p> : null}
-                {check.explanation ? <p className="mt-2">{check.explanation}</p> : null}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        {previousLesson ? (
-          <Link href={`/skills/${previousLesson.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Previous: {previousLesson.title}
-          </Link>
-        ) : (
-          <Link href="/tests" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-            <ClipboardList className="h-4 w-4" aria-hidden />
-            Try a diagnostic test
-          </Link>
-        )}
-        {nextLesson ? (
-          <Link href={`/skills/${nextLesson.slug}` as Route} className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-            Next: {nextLesson.title}
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        ) : (
-          <Link href="/debate" className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-            Apply in a judged round
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        )}
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-3">
-        {isDebateSkill ? (
-          <Link href={`/skills/${lesson.slug}/practice` as Route} className={cn(buttonVariants({ size: "lg" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-            <PenLine className="h-4 w-4" aria-hidden />
-            Practice with writing feedback
-          </Link>
-        ) : null}
-        {studyOrganization ? (
-          <>
-            <Link href="/tests" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-              <ClipboardList className="h-4 w-4" aria-hidden />
-              Test this track
+            <Link
+              href={`/skills/${params.slug}/practice` as Route}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 whitespace-normal px-4 text-center")}
+            >
+              Start writing practice
+              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
             </Link>
-            <Link href="/study" className={cn(buttonVariants({ size: "lg", variant: "secondary" }), "h-auto min-h-12 justify-start whitespace-normal text-left")}>
-              <Layers3 className="h-4 w-4" aria-hidden />
-              Study terms
-            </Link>
-          </>
-        ) : null}
-      </div>
-
-      <RecommendedVideos
-        organization={(isDebateSkill ? "DEBATE" : studyOrganization) as StudyOrganization | undefined}
-        skillTags={[lesson.skill.name, lesson.title]}
-        title="Recommended video resources"
-      />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

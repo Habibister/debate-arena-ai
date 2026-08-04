@@ -514,6 +514,29 @@ export function validateEducationRegistry(input: EducationRegistryInput): Educat
         issue("ALIAS_UNKNOWN_TARGET", alias.legacySlug, `Active alias "${alias.legacySlug}" targets unknown ${alias.targetKind} "${alias.target}".`)
       );
     }
+    // M13E1C. A compatibility alias leads to an honest "no authored lesson yet" page, so its target
+    // must be a seeded record — and must NOT be canonical, because a canonical target means real
+    // instruction exists and the alias should say `active` instead.
+    if (alias.status === "compatibility-active") {
+      if (!input.seededSlugs || !input.seededSlugs.includes(alias.target)) {
+        issues.push(
+          issue(
+            "ALIAS_COMPAT_UNKNOWN_TARGET",
+            alias.legacySlug,
+            `Compatibility alias "${alias.legacySlug}" targets "${alias.target}", which is not in the seeded manifest.`
+          )
+        );
+      }
+      if (resolves) {
+        issues.push(
+          issue(
+            "ALIAS_COMPAT_SHADOWS_CANONICAL",
+            alias.legacySlug,
+            `Compatibility alias "${alias.legacySlug}" targets "${alias.target}", which resolves canonically — it should be active, not compatibility-active.`
+          )
+        );
+      }
+    }
     // A planned alias whose target has since landed must be promoted deliberately, never resolved
     // by accident. Reported so the promotion is an explicit edit in the slice that lands the target.
     if (alias.status === "planned" && resolves) {

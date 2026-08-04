@@ -777,10 +777,17 @@ function sideFeedback(side: SideMetrics, opponent: SideMetrics) {
   };
 }
 
+/**
+ * M13E1C: these emit slugs that RESOLVE. They previously emitted `debate-*-lesson` names that
+ * matched nothing — every post-round recommendation link 404'd. Reports already stored with the old
+ * names keep working through the alias map in `lib/education/slug-map.ts`; this only stops new ones
+ * from being written broken. `debate-weighing` is the seeded skill, because its authored lesson is
+ * held, so it resolves to that skill's honest compatibility page rather than to nothing.
+ */
 function recommendationForStudent(student: SideMetrics) {
   if (student.scores.refutation < 65) {
     return {
-      lessonSlug: "debate-refutation-lesson",
+      lessonSlug: "debate-refutation",
       reason: "Practice answering the opponent's exact claim before adding new offense.",
       priority: "high" as const
     };
@@ -788,7 +795,7 @@ function recommendationForStudent(student: SideMetrics) {
 
   if (student.scores.weighing < 65) {
     return {
-      lessonSlug: "debate-weighing-lesson",
+      lessonSlug: "debate-weighing",
       reason: "Practice explaining why your impact matters more than theirs.",
       priority: "high" as const
     };
@@ -796,14 +803,14 @@ function recommendationForStudent(student: SideMetrics) {
 
   if (student.scores.evidence < 65) {
     return {
-      lessonSlug: "debate-claim-warrant-impact-lesson",
+      lessonSlug: "claim-warrant-impact",
       reason: "Add examples or evidence that prove the warrant, not just the claim.",
       priority: "medium" as const
     };
   }
 
   return {
-    lessonSlug: "debate-signposting-lesson",
+    lessonSlug: "debate-signposting",
     reason: "Make the judge's path through the speech easier to follow.",
     priority: "medium" as const
   };
@@ -1252,14 +1259,14 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     recommendedLessons: [
       studentRecommendation,
       {
-        lessonSlug: "debate-claim-warrant-impact-lesson",
+        lessonSlug: "claim-warrant-impact",
         reason: "Strengthen every claim with a because sentence and a concrete impact.",
-        priority: studentRecommendation.lessonSlug === "debate-claim-warrant-impact-lesson" ? "high" : "medium"
+        priority: studentRecommendation.lessonSlug === "claim-warrant-impact" ? "high" : "medium"
       },
       {
-        lessonSlug: "debate-weighing-lesson",
+        lessonSlug: "debate-weighing",
         reason: "Practice comparing why your best impact should decide the round.",
-        priority: studentRecommendation.lessonSlug === "debate-weighing-lesson" ? "high" : "medium"
+        priority: studentRecommendation.lessonSlug === "debate-weighing" ? "high" : "medium"
       }
     ],
     internalScoringSummary: {

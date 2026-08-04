@@ -13,6 +13,8 @@ import {
   getEducationModule
 } from "../lib/education/registry";
 import { EDUCATION_SLUG_ALIASES } from "../lib/education/slug-map";
+// M13E1C: the compatibility-alias rule needs the seeded manifest to validate its target.
+import { SEEDED_LESSON_SLUGS, SEEDED_SKILL_SLUGS } from "../lib/education/skills-compat";
 import {
   EDUCATION_GENERIC_FILLER_SIGNATURES,
   assertEducationRegistryValid,
@@ -250,11 +252,16 @@ function main() {
   const componentFiles = walk("components");
   // M13E1B connected the canonical registry to the lessons surface, and to NOTHING else. The
   // allowlist is the contract: any other route or component importing it is a boundary breach.
+  // M13E1C added the legacy /skills compatibility surface, which resolves through the registry.
   const ALLOWED_CONSUMERS = new Set([
     "app/(app)/lessons/page.tsx",
     "app/(app)/lessons/[slug]/page.tsx",
     "components/lessons/concept-education-lesson-view.tsx",
-    "components/lessons/concept-education-lesson-practice.tsx"
+    "components/lessons/concept-education-lesson-practice.tsx",
+    "app/(app)/skills/[slug]/page.tsx",
+    "app/(app)/skills/[slug]/practice/page.tsx",
+    "components/skills/skill-path.tsx",
+    "app/(app)/study-arcade/review/page.tsx"
   ]);
   const consumers: string[] = [];
   for (const file of [...appFiles, ...componentFiles]) {
@@ -265,9 +272,12 @@ function main() {
   }
   assert.deepEqual([...consumers].sort(), [...ALLOWED_CONSUMERS].sort(), "16a. and every allowed consumer really does import it");
   assert.ok(appFiles.length > 20 && componentFiles.length > 20, "16b. control: the scan really walked the route and component trees");
-  // Nothing under /skills may reach it — that surface is untouched by this milestone.
+  // /skills consumes it only through the compatibility layer — never the raw lesson registry helpers
+  // that the canonical lessons surface uses.
   for (const file of appFiles.filter((f) => f.includes("app/(app)/skills/"))) {
-    assert.ok(!stripComments(readFileSync(file, "utf8")).includes("lib/education"), `16c. /skills does not import the registry (${file})`);
+    const code = stripComments(readFileSync(file, "utf8"));
+    assert.ok(!/from "@\/lib\/education\/(registry|tracks)/.test(code),
+      `16c. /skills reaches the registry only through skills-compat (${file})`);
   }
   for (const legacy of ["lib/lessons.ts", "lib/roleplay-lessons.ts", "lib/learning-content.ts", "lib/source-freshness.ts"]) {
     assert.ok(!readFileSync(legacy, "utf8").includes("lib/education"), `17. ${legacy} does not import the new registry`);
@@ -305,21 +315,29 @@ function main() {
       assert.ok(resolves(alias), `20a. active alias "${alias.legacySlug}" targets a registered ${alias.targetKind}`);
     } else if (alias.status === "planned") {
       assert.ok(!resolves(alias), `19a. planned alias "${alias.legacySlug}" resolves nothing yet — promote it when its target lands`);
+    } else if (alias.status === "compatibility-active") {
+      // Must NOT resolve canonically — that is what separates it from `active`. Its seeded target is
+      // proven by scripts/skills-compat-smoke.ts, which owns the manifest.
+      assert.ok(!resolves(alias), `19f. compatibility alias "${alias.legacySlug}" must not resolve canonically`);
     }
   }
   assert.equal(byLegacy.get("debate-claim-warrant-impact-lesson")?.target, "debate-claim-building", "20b. CWI alias targets the registered skill");
-  assert.equal(byLegacy.get("debate-signposting-lesson")?.target, "debate-signposting", "19b. signposting still points at a target that does not exist");
-  assert.equal(byLegacy.get("debate-signposting-lesson")?.status, "planned", "19c. and is therefore still planned");
-  assert.equal(byLegacy.get("debate-weighing-lesson")?.status, "planned", "19d. weighing is still planned (its lesson is held)");
+  // M13E1C: signposting's targetKind was corrected from `skill` to `lesson` — the M13E1A entry
+  // guessed at a skill that never existed, and M13E1B published a LESSON with that id.
+  assert.equal(byLegacy.get("debate-signposting-lesson")?.target, "debate-signposting", "19b. signposting targets the published lesson");
+  assert.equal(byLegacy.get("debate-signposting-lesson")?.targetKind, "lesson", "19c. by lesson id, not a skill slug");
+  assert.equal(byLegacy.get("debate-signposting-lesson")?.status, "active", "19d. and is therefore active");
+  assert.equal(byLegacy.get("debate-weighing-lesson")?.status, "compatibility-active",
+    "19e. weighing is compatibility-active — a seeded skill with no published authored lesson");
   assert.ok(registeredSkills.has("debate-claim-building"), "20c. control: the CWI alias's target really is registered");
   // Non-vacuity: the invariant must reject a planned alias whose target is registered.
   assert.ok(resolves({ target: "debate-claim-building", targetKind: "skill" }), "20d. control: `resolves` really resolves a registered skill");
   assert.ok(!resolves({ target: "no-such-skill", targetKind: "skill" }), "20e. control: and really rejects an unregistered one");
 
   // ---- 21. the real registry validates cleanly --------------------------------------------------
-  const realIssues = validateEducationRegistry(EDUCATION_REGISTRY);
+  const realIssues = validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] });
   assert.deepEqual(realIssues, [], `21. the real registry produces zero issues; got ${JSON.stringify(realIssues)}`);
-  assertEducationRegistryValid(EDUCATION_REGISTRY);
+  assertEducationRegistryValid({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] });
 
   // ================================================================================================
   // PART B — non-vacuous controls: every issue code has a fixture that provokes it
@@ -487,9 +505,12 @@ function main() {
     "MAX_RUNG_EXCEEDED", "DUPLICATE_SKILL_SLUG", "GENERIC_FILLER_TEXT", "ALIAS_UNKNOWN_TARGET", "ALIAS_COLLISION",
     "EMPTY_METADATA", "UNSUPPORTED_TRACK", "MISSING_SOURCE", "DUPLICATE_SOURCE_OBJECT", "ALIAS_EMPTY_TARGET",
     "ALIAS_SELF_CYCLE", "ALIAS_CONFLICTING_TARGET", "ALIAS_PLANNED_RESOLVABLE",
-    "CONCEPT_SOURCE_SLUG_MISMATCH", "CONCEPT_SOURCE_INCOMPLETE", "CONCEPT_QUESTION_INVALID"
+    "CONCEPT_SOURCE_SLUG_MISMATCH", "CONCEPT_SOURCE_INCOMPLETE", "CONCEPT_QUESTION_INVALID",
+    // M13E1C codes are controlled in scripts/skills-compat-smoke.ts, which owns the seeded manifest.
+    "ALIAS_COMPAT_UNKNOWN_TARGET", "ALIAS_COMPAT_SHADOWS_CANONICAL"
   ];
-  for (const code of declaredCodes) {
+  const OWNED_ELSEWHERE = new Set(["ALIAS_COMPAT_UNKNOWN_TARGET", "ALIAS_COMPAT_SHADOWS_CANONICAL"]);
+  for (const code of declaredCodes.filter((c) => !OWNED_ELSEWHERE.has(c))) {
     assert.ok(controlsRun.some((entry) => entry.endsWith(`-> ${code}`)), `every issue code needs a control: ${code} has none`);
   }
   assert.equal(controlsRun.length, 38, "38 controls ran");
@@ -497,10 +518,10 @@ function main() {
   // The base fixture is still valid after all of that — no control mutated shared state.
   assert.deepEqual(validateEducationRegistry(baseFixture()), [], "the base fixture is unchanged and still valid");
   // And the REAL registry is still clean after every fixture ran.
-  assert.deepEqual(validateEducationRegistry(EDUCATION_REGISTRY), [], "the real registry is untouched by the controls");
+  assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [], "the real registry is untouched by the controls");
 
   console.log(
-    `Education-registry smoke passed: the canonical registry holds exactly three lessons — Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, with only debate-claim-warrant-impact-lesson active because only its target is registered, and refutation, weighing and signposting recorded as planned resolving nothing. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
+    `Education-registry smoke passed: the canonical registry holds exactly seven lessons — Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, with only debate-claim-warrant-impact-lesson active because only its target is registered, and refutation, weighing and signposting recorded as planned resolving nothing. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }
 

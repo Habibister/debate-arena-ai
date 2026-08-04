@@ -5,6 +5,7 @@ import { CheckCircle2, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
+import { COMPAT_TRACK_DESTINATION, compatTrackForSlug, debateWritingPracticeSupported } from "@/lib/education/skills-compat";
 import { getDueReviews } from "@/lib/spaced-review";
 
 // Review session: the skills whose spaced review is due, each linking into the EXISTING skill
@@ -52,10 +53,19 @@ export default async function ReviewSessionPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
-            {due.map((review) => (
+            {due.map((review) => {
+              // M13E1C: this card used to send EVERY due skill to /skills/[slug]/practice, which is
+              // Debate writing practice. A HOSA Medical Terminology review — scheduled by the MedTerm
+              // engine itself — landed on a debate motion. The destination and the wording are now
+              // decided from the skill's own track, so the card cannot promise a reassessment that
+              // does not exist for it.
+              const reassessable = debateWritingPracticeSupported(review.skillSlug);
+              const track = compatTrackForSlug(review.skillSlug);
+              const fallback = track ? COMPAT_TRACK_DESTINATION[track] : { href: "/training", label: "Choose a training track" };
+              return (
               <Link
                 key={review.skillId}
-                href={`/skills/${review.skillSlug}/practice` as Route}
+                href={(reassessable ? `/skills/${review.skillSlug}/practice` : fallback.href) as Route}
                 className="rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -72,9 +82,12 @@ export default async function ReviewSessionPage() {
                     ? `Survived ${review.reviewCount} ${review.reviewCount === 1 ? "review" : "reviews"} so far — due since ${review.nextReviewAt.toISOString().slice(0, 10)}.`
                     : `First review — due since ${review.nextReviewAt.toISOString().slice(0, 10)}.`}
                 </p>
-                <span className="mt-2 inline-block text-sm font-semibold text-primary">Reassess now</span>
+                <span className="mt-2 inline-block text-sm font-semibold text-primary">
+                  {reassessable ? "Reassess now" : fallback.label}
+                </span>
               </Link>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}

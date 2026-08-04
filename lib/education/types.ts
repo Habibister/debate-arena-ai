@@ -196,14 +196,16 @@ export function isConceptEducationLessonEntry(entry: EducationRegistryEntry): en
 // --- slug aliases -------------------------------------------------------------------------------
 
 /**
- * `active`     — the target resolves inside the canonical registry today.
- * `planned`    — the target does not exist yet. Recorded so the gap is visible; resolves nothing.
- * `deprecated` — retained for the record; must never be resolved.
- *
- * An alias is DATA in E1A. Nothing consumes it, no redirect exists, and no historical link is
- * claimed fixed by its presence here.
+ * `active`               — the target resolves inside the CANONICAL registry, so the alias leads to
+ *                          real authored instruction.
+ * `compatibility-active` — the target resolves only in the seeded compatibility manifest. The alias
+ *                          leads to an honest "this record exists, its authored lesson does not yet"
+ *                          page. Kept distinct from `active` on purpose: collapsing the two would
+ *                          make "this alias works" stop meaning "there is instruction behind it".
+ * `planned`              — the target is not currently resolvable at all.
+ * `deprecated`           — retained for the record; must never be resolved.
  */
-export type EducationAliasStatus = "active" | "planned" | "deprecated";
+export type EducationAliasStatus = "active" | "compatibility-active" | "planned" | "deprecated";
 
 export type EducationAliasTargetKind = "lesson" | "skill";
 
@@ -257,7 +259,10 @@ export type EducationIssueCode =
   // --- concept-education-lesson source integrity (M13E1B) ---------------------------------------
   | "CONCEPT_SOURCE_SLUG_MISMATCH"
   | "CONCEPT_SOURCE_INCOMPLETE"
-  | "CONCEPT_QUESTION_INVALID";
+  | "CONCEPT_QUESTION_INVALID"
+  // --- compatibility-alias integrity (M13E1C) ----------------------------------------------------
+  | "ALIAS_COMPAT_UNKNOWN_TARGET"
+  | "ALIAS_COMPAT_SHADOWS_CANONICAL";
 
 export type EducationValidationIssue = {
   code: EducationIssueCode;
@@ -272,4 +277,9 @@ export type EducationRegistryInput = {
   modules: readonly EducationModule[];
   lessons: readonly EducationRegistryEntry[];
   aliases: readonly EducationSlugAlias[];
+  /**
+   * Every slug the seeded compatibility manifest knows (M13E1C). Optional so the E1A fixtures stay
+   * valid unchanged; a `compatibility-active` alias without it is reported, never silently accepted.
+   */
+  seededSlugs?: readonly string[];
 };

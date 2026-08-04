@@ -360,11 +360,17 @@ function fallbackLessons(organization: Organization, eventType: string): LessonR
 
   const defaults: Record<Organization, string[]> = {
     DEBATE: ["debate-claim-building-1", "debate-rebuttal-1", "debate-evidence-1"],
-    MODEL_UN: ["model-un-resolution-writing-1", "model-un-diplomacy-1"],
+    // M13E1C: these emitted slugs that resolve to nothing — model-un-*, mock-trial-case-theory-1
+    // and public-speaking-delivery-1 are none of them seeded. Renaming the Model UN pair to
+    // `mun-*` WOULD resolve, but Model UN is retired from learner navigation and surfacing its
+    // content as current curriculum is worse than saying nothing; Mock Trial and Public Speaking
+    // have no seeded skill at all and none is invented here. An empty list yields no
+    // recommendation, which is the honest result when there is nothing real to recommend.
+    MODEL_UN: [],
     DECA: ["deca-roleplay-1", "deca-marketing-1", "deca-roleplay-2"],
     HOSA: ["hosa-medical-terminology-1", "hosa-patient-communication-1"],
-    MOCK_TRIAL: ["mock-trial-case-theory-1"],
-    PUBLIC_SPEAKING: ["public-speaking-delivery-1"]
+    MOCK_TRIAL: [],
+    PUBLIC_SPEAKING: []
   };
 
   return (lessonSlugs.length > 0 ? lessonSlugs : defaults[organization]).slice(0, 3).map((lessonSlug, index) => ({

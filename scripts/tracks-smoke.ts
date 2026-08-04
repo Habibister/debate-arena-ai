@@ -3,6 +3,7 @@
  * Run with: npm run tracks:smoke
  */
 import assert from "node:assert/strict";
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { hosaEventById, hosaEventsByFamily, hosaFamily, hosaSourceMetadata, presentHosaEvent, HOSA_EVENTS, HOSA_FAMILIES } from "../lib/hosa-events";
 import { decaFamilyById, decaFamiliesByScope, presentDecaFamily, DECA_FAMILIES } from "../lib/deca-events";
@@ -37,6 +38,7 @@ import { isLegacyPracticeRecord, practiceTypeLabel, showsOpponentMeta } from "..
 import { assignmentTypeAllowedForOrganization, assignmentTypesForOrganization, contentAllowedForOrganization } from "../lib/track-content";
 import { AUTHORED_LESSONS, getLesson } from "../lib/lessons";
 import { DRILL_AREAS } from "../lib/debate-drills";
+import { educationLessonsForTrack } from "../lib/education/registry";
 import { weakAreasForTrack } from "../lib/track-recommendations";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
 import React, { createElement } from "react";
@@ -645,7 +647,34 @@ function main() {
   // filtered out of the HOSA path entirely — so a HOSA user never sees a rebuttal prerequisite.
   const skillPath = readFileSync("components/skills/skill-path.tsx", "utf8");
   assert.ok(!/Unlock after rebuttal/.test(skillPath), "the 'Unlock after rebuttal' lock text is gone");
-  assert.ok(skillPath.includes("Complete the earlier lessons to unlock"), "lock text is track-neutral progression copy");
+  // M13E1C replaced the hardcoded nine-item index. The old lock copy belonged to the fictional
+  // `public-speaking-delivery-1` tile, which 404'd and could never unlock because no Public Speaking
+  // skill is seeded — so the assertion below now pins the NEW truth rather than the removed copy.
+  // Local comment-stripper: the file's own doc comment explains what was removed and therefore
+  // quotes the very strings these scans forbid.
+  const skillPathCode = skillPath.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/(^|\s)\/\/.*$/, "")).join("\n");
+  assert.ok(skillPath.includes("Skills in this track"), "the index heading is truthful");
+  for (const gone of ["Mastery Map", "Complete the earlier lessons to unlock", "public-speaking-delivery-1",
+                      "deca-reading-scenarios", "hosa-medical-terminology-basics", "Not started",
+                      "mastery:", "showSampleProgress ?"]) {
+    assert.ok(!skillPathCode.includes(gone), `the fictional index element "${gone}" is gone`);
+  }
+  assert.ok(!/\d+\s*%|<Progress/.test(skillPathCode), "no fake percentage or progress bar remains on the index");
+  // Control: HEAD really did carry what these scans look for, so "absent" cannot mean "looked in the
+  // wrong place".
+  const skillPathAtHead = execSync("git show HEAD:components/skills/skill-path.tsx", { encoding: "utf8" });
+  for (const present of ["Mastery Map", "Complete the earlier lessons to unlock", "public-speaking-delivery-1"]) {
+    assert.ok(skillPathAtHead.includes(present), `control: HEAD carried "${present}"`);
+  }
+  // The index destinations, proven from the production registry rather than from markup.
+  assert.deepEqual(educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id),
+    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"],
+    "Debate exposes exactly the five canonical lessons, in order");
+  assert.ok(skillPath.includes("`/lessons/${entry.id}`"), "and each Debate tile links to its canonical lesson");
+  assert.ok(skillPath.includes("/training/deca/practice"), "DECA exposes its real practice destination");
+  assert.ok(skillPath.includes("/training/hosa/events"), "HOSA exposes its real Event Navigator destination");
+  assert.ok(/canonicalTrack\(track\)/.test(skillPath) && skillPath.includes("return [];"),
+    "the index fails closed when no track resolves");
   assert.equal(skillVisibleForTrack("Debate", "HOSA").visible, false, "HOSA path excludes Debate skills (no rebuttal prerequisite reaches HOSA)");
 
   // A6. Coach dashboards follow the same track isolation: the shared dashboard actions/resources are

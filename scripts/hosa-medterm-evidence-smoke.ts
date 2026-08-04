@@ -417,15 +417,31 @@ async function main() {
     "PA5. exactly four new schema blocks (2 models + 2 enums) and nothing else");
   assert.ok(!existsSync("prisma/migrations"), "PA6. Phase A introduces no migration directory");
   assert.ok(existsSync("prisma/schema.prisma"), "PA6b. control: existsSync does report a path that exists");
-  let m13e2RuntimeRefs = "";
+  // M13E2 C1 adds approved shared helpers under lib/. They are wired to NO route yet, so this check
+  // narrows from "nothing references the new models" to "only these four helpers may". The property
+  // that actually matters before the C2 cutover is unchanged and now asserted directly: no route and
+  // no component touches the practice-session tables.
+  const M13E2_C1_ALLOWED = ["lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts"];
+  let m13e2RuntimeRefs: string[] = [];
   try {
-    m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" }).trim();
+    m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
+      .trim().split("\n").filter(Boolean);
   } catch {
-    m13e2RuntimeRefs = ""; // grep exits non-zero when nothing matches, which is the passing case
+    m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
   }
-  assert.equal(m13e2RuntimeRefs, "", "PA7. no route, lib or component references the new models in Phase A");
+  assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
+    "PA7. only the approved C1 helpers reference the new models");
+  for (const f of m13e2RuntimeRefs) {
+    assert.ok(!f.startsWith("app/") && !f.startsWith("components/"),
+      `PA7a. no route or component references them before the C2 cutover (${f})`);
+  }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
+  assert.deepEqual(
+    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+      .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
+    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx"],
+    "PA7c. control: the allowlist rejects a route and a component while permitting an approved helper");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
     "PA8. control: the surviving seed byte pin's hash does vary with file content");

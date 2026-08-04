@@ -2,7 +2,50 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-04 (M13E2 Phase A — additive practice-session schema)_
+_Last updated: 2026-08-04 (M13E2 Phase C1 — server-session core helpers)_
+
+## M13E2 Phase C1 — helper code only, wired to nothing
+
+Phase A (schema definitions) is **deployed**. Phase B (`npm run db:push` against the shared
+Production database) is **complete**, so `PracticeSession`, `PracticeSessionItem`,
+`PracticeSessionKind` and `PracticeSessionStatus` — with their foreign keys, indexes and unique
+constraints — are **active in the database**.
+
+Phase C1 adds the reusable server-session primitives and **nothing else**:
+
+- `lib/practice-session.ts` — session lifecycle types, the user-row lock helper, bounded per-user
+  cleanup, active-session lookup, opaque option generation and choice shuffling, the immutable
+  snapshot parser, served-item serialization, the item first-answer CAS, and completed-result parsing.
+- `lib/spaced-review.ts` — new **transaction-native** review and mastery cores, added *beside* the
+  public M13E1G helpers.
+- `lib/xp.ts` — `awardXpInTransaction`, an atomic XP increment whose rank derives from the value the
+  increment returned.
+- `lib/validators.ts` — additive schemas for the eventual C2 route contracts.
+- `scripts/practice-session-smoke.ts` — 83 deterministic helper-level controls, no database.
+
+**No route, page or component imports or invokes any of it.** That is asserted directly, both by the
+new suite and by the narrowed PA7 check in the six Phase-A suites. **Learner-facing behavior is
+unchanged**: the drill session routes still return `correctAnswer` and `explanation`, submissions are
+still unbound to a served set, and there is still no replay resistance. Server-bound practice sessions
+are **not** active in the application.
+
+Design decisions now fixed in code:
+
+- `scenarioJson` holds a **versioned, kind-discriminated session snapshot** — `{version: 1, kind:
+  "DRILL", requestedCount, order}` or `{version: 1, kind: "WRITING", scenario}`. A malformed snapshot
+  is rejected, never guessed at or reconstructed.
+- `resultJson` is reserved for the **completed public result only**.
+- Requested learner-facing counts are preserved. A focused twenty-question session stores **nine
+  distinct item rows** plus a twenty-slot order of repeated item ids; repeated slots share one
+  first-answer-final item and add no evidence, mastery, review or XP.
+- Option ids are `crypto.randomUUID()` per session — never `o0`/`o1`, never a bank index.
+- The transaction cores use `INSERT ... ON CONFLICT DO NOTHING` then `SELECT ... FOR UPDATE`. They
+  contain no catch-and-continue and no `write-failed`: a real database error throws and rolls back.
+- Public M13E1G helpers are **unchanged** — seven review variants, returned `write-failed`, the
+  missing-table degradation, the concurrent classifications, and assertion 28c all intact.
+
+Still pending: **C2** (route cutover), **C3** (component cutover), and the broad C4 assertion-repair
+and closeout pass. **M13E2 is not complete.** Nothing in C1 is deployed until it is separately pushed.
 
 ## M13E2 Phase A — what this pass did, and what it deliberately did not do
 
@@ -72,9 +115,12 @@ No schema change, no migration, no API route added, no package dependency added,
 | M11R1–M11R12 — remediation passes | Complete. **No confirmed M11 code finding remains open.** |
 | M13E1D–M13E1F — drill evidence safety (DECA, Debate, HOSA) | Complete, pushed and deployed. |
 | M13E1G — due-gated spaced review | Complete, pushed and deployed (`95fdd4c`). |
-| M13E2 Phase A — additive practice-session schema | **Code complete, local commit only. Database activation NOT run.** |
-| M13E2 Phase B — shared-Production `db push` | **Not started. Requires explicit human authorization.** |
-| M13E2 Phase C — route/component cutover | **Blocked until Phase B succeeds.** |
+| M13E2 Phase A — additive practice-session schema | Complete, pushed and deployed (`221e07f`). |
+| M13E2 Phase B — shared-Production `db push` | **Complete.** Enums, tables, foreign keys and indexes are active. |
+| M13E2 Phase C1 — server-session core helpers | **Code complete, local commit only.** No route or component uses them. |
+| M13E2 Phase C2 — route cutover | **Not started.** |
+| M13E2 Phase C3 — component cutover | **Not started.** |
+| M13E2 Phase C4 — assertion repair and closeout | **Not started.** |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)

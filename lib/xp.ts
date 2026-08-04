@@ -1,4 +1,4 @@
-import type { Rank } from "@prisma/client";
+import type { Prisma, Rank } from "@prisma/client";
 import { RANK_THRESHOLDS, XP_REWARDS } from "@/lib/constants";
 import { ratingLabel } from "@/lib/ai-personas";
 
@@ -52,4 +52,44 @@ export function debateRatingProgress(rating: number) {
     pointsToNext: Math.max(next - rating, 0),
     percent: Math.max(0, Math.min(100, percent))
   };
+}
+
+/**
+ * Award XP inside an existing transaction, atomically (M13E2 Phase C1).
+ *
+ * Every XP writer in this codebase currently reads `User.xp`, adds to it in JavaScript, and writes
+ * the sum back as an absolute value. Two of those reads are unlocked, so a row lock elsewhere does
+ * NOT protect them: a plain SELECT never blocks under MVCC, so a writer can read 100, wait for
+ * another transaction to commit 110, and then write 150 — erasing the other award. Ordering the
+ * write does not repair a value that was already stale when it was read.
+ *
+ * `{ increment }` re-reads the row at write time under a row-exclusive lock, so no stale value can
+ * be written at all, and rank is derived from the value the increment RETURNED rather than from
+ * anything read earlier. That lock is held to commit, so nothing can change the row between the two
+ * statements. Both must therefore live in one transaction — a failed rank update rolls back the
+ * increment with it.
+ *
+ * Deliberately does NOT touch `wins` or `streak`: those are route-specific policy, and their own
+ * staleness is a separate pre-existing defect that this helper does not claim to fix.
+ * No XP amount changes here — callers pass the amount their route already awarded.
+ */
+export async function awardXpInTransaction(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  amount: number
+): Promise<{ xp: number; rank: Rank }> {
+  const updatedUser = await tx.user.update({
+    where: { id: userId },
+    data: { xp: { increment: amount } },
+    select: { xp: true }
+  });
+
+  const rank = calculateRank(updatedUser.xp);
+
+  await tx.user.update({
+    where: { id: userId },
+    data: { rank }
+  });
+
+  return { xp: updatedUser.xp, rank };
 }

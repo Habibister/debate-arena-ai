@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // Spaced Reassessment v1 (Study Arcade review loop). Deliberately simple and honest:
@@ -419,4 +421,138 @@ export async function recordDrillMastery(params: {
 }): Promise<boolean> {
   const outcome = await recordDrillMasteryDetailed(params);
   return outcome.status === "updated";
+}
+
+// ==================================================================================================
+// TRANSACTION-NATIVE CORES (M13E2 Phase C1)
+//
+// ADDITIVE ONLY. Everything above this line is the public M13E1G surface and is unchanged: the
+// seven-variant result, the returned `write-failed`, the missing-table degradation, the create-race
+// classification, and the guarantee that a review mutation which truthfully landed is preserved even
+// when a later mastery write fails. Nothing below is called by those helpers, and they are NOT
+// rewritten to call it.
+//
+// Why a separate path exists at all: inside a PostgreSQL interactive transaction a failed statement
+// aborts the whole transaction, so the public helpers' pattern — provoke a unique violation, catch
+// it, then issue another query to classify the race — cannot work there. The recovery query would
+// fail with 25P02 and so would every later write in the enclosing transaction. These cores therefore
+// never provoke a constraint violation: `ON CONFLICT DO NOTHING` returns zero rows instead of
+// raising, and the existing row is then locked. A genuine database error throws and rolls the caller
+// back; there is deliberately NO `write-failed` status here, because returning one would mean
+// continuing to issue queries on a transaction that is already dead.
+//
+// The caller MUST already hold the user row lock (see `lockUserRow` in lib/practice-session.ts).
+// No route calls these yet — the C2 cutover wires them up.
+
+export type TxReviewOutcome =
+  | { status: "created"; previousReviewCount: null; reviewCount: number; previousNextReviewAt: null; nextReviewAt: Date }
+  | { status: "advanced"; previousReviewCount: number; reviewCount: number; previousNextReviewAt: Date; nextReviewAt: Date }
+  | { status: "reset-after-due-failure"; previousReviewCount: number; reviewCount: 0; previousNextReviewAt: Date; nextReviewAt: Date }
+  | { status: "preserved-not-due"; previousReviewCount: number; reviewCount: number; previousNextReviewAt: Date; nextReviewAt: Date };
+
+/** Transactional twin of `masteryMayDecrease`: a failed DUE reassessment stays the only branch
+ *  permitted to lower mastery. */
+export function txMasteryMayDecrease(review: TxReviewOutcome): boolean {
+  return review.status === "reset-after-due-failure";
+}
+
+export async function recordPracticeOutcomeInTransaction(
+  tx: Prisma.TransactionClient,
+  params: { userId: string; skillId: string; scorePercent: number; passed: boolean; now: Date }
+): Promise<TxReviewOutcome> {
+  const { userId, skillId, passed, now } = params;
+  const lastOutcome = passed ? "passed" : "failed";
+
+  // ---- no row yet: a non-throwing insert. Zero rows back means someone else already created it. ---
+  const inserted = await tx.$queryRaw<Array<{ reviewCount: number; nextReviewAt: Date }>>`
+    INSERT INTO "SkillReviewSchedule" ("id", "userId", "skillId", "nextReviewAt", "reviewCount", "lastOutcome", "createdAt", "updatedAt")
+    VALUES (${randomUUID()}, ${userId}, ${skillId}, ${daysFrom(now, 1)}, ${passed ? 1 : 0}, ${lastOutcome}, ${now}, ${now})
+    ON CONFLICT ("userId", "skillId") DO NOTHING
+    RETURNING "reviewCount", "nextReviewAt"`;
+  if (inserted.length === 1) {
+    return {
+      status: "created",
+      previousReviewCount: null,
+      reviewCount: inserted[0].reviewCount,
+      previousNextReviewAt: null,
+      nextReviewAt: inserted[0].nextReviewAt
+    };
+  }
+
+  // ---- a row exists: lock it, so a concurrent writer is serialized rather than raced -------------
+  const locked = await tx.$queryRaw<Array<{ reviewCount: number; nextReviewAt: Date }>>`
+    SELECT "reviewCount", "nextReviewAt" FROM "SkillReviewSchedule"
+    WHERE "userId" = ${userId} AND "skillId" = ${skillId}
+    FOR UPDATE`;
+  if (locked.length !== 1) throw new Error("SkillReviewSchedule row vanished between insert and lock");
+  const priorCount = locked[0].reviewCount;
+  const priorNext = locked[0].nextReviewAt;
+
+  // Not due: a TRUE no-write. The row is not touched, so `updatedAt` does not move either.
+  if (priorNext > now) {
+    return {
+      status: "preserved-not-due",
+      previousReviewCount: priorCount,
+      reviewCount: priorCount,
+      previousNextReviewAt: priorNext,
+      nextReviewAt: priorNext
+    };
+  }
+
+  // Due or overdue. The interval comes from the PRE-increment count, then the count moves.
+  if (passed) {
+    const nextReviewAt = daysFrom(now, intervalDaysFor(priorCount));
+    await tx.skillReviewSchedule.update({
+      where: { userId_skillId: { userId, skillId } },
+      data: { reviewCount: priorCount + 1, nextReviewAt, lastOutcome }
+    });
+    return { status: "advanced", previousReviewCount: priorCount, reviewCount: priorCount + 1, previousNextReviewAt: priorNext, nextReviewAt };
+  }
+
+  const nextReviewAt = daysFrom(now, 1);
+  await tx.skillReviewSchedule.update({
+    where: { userId_skillId: { userId, skillId } },
+    data: { reviewCount: 0, nextReviewAt, lastOutcome }
+  });
+  return { status: "reset-after-due-failure", previousReviewCount: priorCount, reviewCount: 0, previousNextReviewAt: priorNext, nextReviewAt };
+}
+
+export async function recordDrillMasteryInTransaction(
+  tx: Prisma.TransactionClient,
+  params: { userId: string; skillSlug: string; scorePercent: number; passed: boolean; now: Date; review: TxReviewOutcome }
+): Promise<{ status: "updated" | "skill-missing" }> {
+  const { userId, skillSlug, scorePercent, passed, now, review } = params;
+  const skill = await tx.skill.findUnique({ where: { slug: skillSlug }, select: { id: true } });
+  if (!skill) return { status: "skill-missing" }; // not seeded — never fabricate progress
+
+  // Non-throwing insert first, so a concurrent unlocked creator cannot poison this transaction.
+  const inserted = await tx.$queryRaw<Array<{ id: string }>>`
+    INSERT INTO "MasteryProgress" ("id", "userId", "skillId", "masteryLevel", "masteryPercent", "correctCount", "incorrectCount", "lastPracticedAt", "createdAt", "updatedAt")
+    VALUES (${randomUUID()}, ${userId}, ${skill.id}, ${masteryLevelFor(scorePercent)}::"MasteryLevel", ${scorePercent}, ${passed ? 1 : 0}, ${passed ? 0 : 1}, ${now}, ${now}, ${now})
+    ON CONFLICT ("userId", "skillId") DO NOTHING
+    RETURNING "id"`;
+  if (inserted.length === 1) return { status: "updated" };
+
+  const locked = await tx.$queryRaw<Array<{ masteryPercent: number }>>`
+    SELECT "masteryPercent" FROM "MasteryProgress"
+    WHERE "userId" = ${userId} AND "skillId" = ${skill.id}
+    FOR UPDATE`;
+  if (locked.length !== 1) throw new Error("MasteryProgress row vanished between insert and lock");
+
+  // A failed DUE reassessment is the ONLY branch that may lower mastery — identical to the public path.
+  const nextMastery = txMasteryMayDecrease(review)
+    ? Math.min(locked[0].masteryPercent, scorePercent)
+    : Math.min(100, Math.max(locked[0].masteryPercent, scorePercent));
+
+  await tx.masteryProgress.update({
+    where: { userId_skillId: { userId, skillId: skill.id } },
+    data: {
+      masteryLevel: masteryLevelFor(nextMastery),
+      masteryPercent: nextMastery,
+      correctCount: { increment: passed ? 1 : 0 },
+      incorrectCount: { increment: passed ? 0 : 1 },
+      lastPracticedAt: now
+    }
+  });
+  return { status: "updated" };
 }

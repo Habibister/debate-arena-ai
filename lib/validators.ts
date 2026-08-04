@@ -518,3 +518,57 @@ export const decaDrillSessionRequestSchema = z.object({
 export const decaDrillSubmitRequestSchema = z.object({
   answers: z.array(z.object({ id: z.string().min(1).max(20), selected: z.string().min(1).max(400) })).min(1).max(40)
 });
+
+// --- Server-bound practice sessions (M13E2 Phase C1) ---
+//
+// ADDITIVE. The schemas above still describe the routes as they run today; C2 performs the cutover.
+// Nothing here is wired to a route yet, so current routes keep compiling unchanged.
+//
+// Ids are opaque server-issued strings (cuid for rows, uuid for option ids). They are bounded but
+// never parsed for meaning by the client, and the server always re-checks ownership — a well-formed
+// id is not authorisation.
+
+const sessionIdSchema = z.string().min(1).max(64);
+
+/** Drill session start. Same learner-facing counts as today — focused sessions are NOT clamped, so
+ *  a 20-slot request over a 9-question pool stays a 20-slot request. */
+export const practiceSessionStartRequestSchema = z.object({
+  count: z.number().int().min(1).max(40),
+  areas: z.array(z.string().min(1).max(40)).max(6).optional()
+});
+
+/** HOSA offers up to 50 questions, matching its existing official-mode session length. */
+export const medTermSessionStartRequestSchema = z.object({
+  count: z.number().int().min(1).max(100),
+  areas: z.array(z.string().min(1).max(40)).max(6).optional()
+});
+
+/** Writing session start. The server picks the scenario; the client may only name a skill and level,
+ *  and both are validated against server-known data before anything is stored. */
+export const writingSessionStartRequestSchema = z.object({
+  slug: z.string().min(2).max(120),
+  level: z.enum(["BEGINNER", "INTERMEDIATE", "ELITE"]).default("BEGINNER")
+});
+
+/** One answer. The option id is opaque and is checked against the item's own stored choices. */
+export const practiceCheckRequestSchema = z.object({
+  sessionId: sessionIdSchema,
+  itemId: z.string().min(1).max(64),
+  optionId: z.string().min(1).max(64)
+});
+
+/** Final drill submit carries the session and NOTHING else — no answers, no ids, no grading data.
+ *  The answers were recorded server-side as they were given. */
+export const practiceSessionSubmitRequestSchema = z.object({
+  sessionId: sessionIdSchema
+});
+
+/** Final writing submit: the session, plus the learner's prose. No scenario index, no scenario text. */
+export const writingSessionSubmitRequestSchema = z.object({
+  sessionId: sessionIdSchema,
+  response: z.string().min(10).max(8000)
+});
+
+/** A stored completed result must still be an object when it is replayed on retry. A malformed one
+ *  is reported, never silently recomputed — recomputing would award a second time. */
+export const storedSessionResultSchema = z.record(z.string(), z.unknown());

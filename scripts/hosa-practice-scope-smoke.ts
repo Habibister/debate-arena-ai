@@ -194,7 +194,7 @@ function main() {
   const pkg = JSON.parse(read("package.json")) as { scripts: Record<string, string>; dependencies?: unknown };
   assert.ok(pkg.scripts["hosa-practice-scope:smoke"], "43. this suite is registered");
   const smokes = Object.keys(pkg.scripts).filter((k) => k.endsWith(":smoke"));
-  assert.equal(smokes.length, 31, `43b. the registered smoke inventory is 31 (found ${smokes.length})`);
+  assert.equal(smokes.length, 32, `43b. the registered smoke inventory is 32 (found ${smokes.length})`);
 
   // ---- NON-VACUOUS CONTROLS -------------------------------------------------------------------------
   // Each check above is re-run against a fixture carrying the OLD behaviour and must trip. Production

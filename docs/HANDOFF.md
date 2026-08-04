@@ -2,7 +2,58 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M13E2 Phase A (2026-08-04)
+## Latest handoff — M13E2 Phase C1 (2026-08-04)
+
+**Read this before starting C2.**
+
+Phase A is deployed (`221e07f`). Phase B ran with explicit authorization: `npm run db:push` against
+the shared Production database completed additively, and the practice-session enums, tables, foreign
+keys, indexes and unique constraints are **active**. Phase C was then split into independently
+verifiable sub-commits. **C1 is helper code only.**
+
+What C1 contains — 15 paths, 2 added and 13 modified:
+
+- `lib/practice-session.ts` (new) and `scripts/practice-session-smoke.ts` (new, 83 controls)
+- transaction-native review/mastery cores appended to `lib/spaced-review.ts`
+- `awardXpInTransaction` appended to `lib/xp.ts`
+- six additive schemas in `lib/validators.ts`
+- `practice-session:smoke` registered in `package.json`; the inventory counter in
+  `scripts/hosa-practice-scope-smoke.ts` moved `31 → 32`
+- PA7 narrowed in all six Phase-A suites, plus these two documents
+
+**Nothing is wired up.** No route, page or component imports the helpers — the new suite asserts this
+and so does the narrowed PA7 check. Learner behavior is byte-identical to before C1: the session
+routes still hand out `correctAnswer` and `explanation`, submissions are still unbound to a served
+set, and there is no replay resistance yet. Do not describe M13E2 as active, and do not claim C1 is
+deployed until it is pushed.
+
+Two things the next engineer must not undo:
+
+**PA7 was narrowed, not deleted.** It now permits exactly four helper files
+(`lib/practice-session.ts`, `lib/spaced-review.ts`, `lib/xp.ts`, `lib/validators.ts`) and asserts
+directly that **no `app/**` route and no `components/**` file** references the session tables, with a
+non-vacuous control proving the allowlist rejects a route and a component. C2 will need to widen it
+again — widen it deliberately, one path at a time, and keep the route/component rejection.
+
+**The transaction cores are additive and must stay that way.** The public M13E1G helpers are
+untouched and are *not* rewritten to call the new cores — control 82 asserts that. The public path
+keeps its seven variants, its returned `write-failed`, its missing-table degradation, its create-race
+classification, and the "a review mutation that truthfully landed is preserved rather than rolled
+back" contract that `review-ladder-smoke.ts` assertion 28c pins. The new cores deliberately have the
+opposite rollback semantics, because inside a PostgreSQL transaction a caught statement error poisons
+everything after it — which is why they use `ON CONFLICT DO NOTHING` plus `FOR UPDATE` and never
+catch-and-continue.
+
+Design contracts fixed in C1 and relied on by C2: `scenarioJson` is a versioned kind-discriminated
+session snapshot; `resultJson` is completed-result-only; a focused twenty-slot session stores nine
+distinct items plus a persisted twenty-slot order, so requested learner counts are preserved and
+repeats share one first-answer-final item; option ids are per-session UUIDs; XP is incremented
+atomically with rank derived from the returned value, and `wins`/`streak` staleness in the judge route
+is untouched and remains carried.
+
+No schema change, no activation, no seed, no migration, and no database access occurred in C1.
+
+## Earlier handoff — M13E2 Phase A (2026-08-04)
 
 **Read this before touching the database or starting Phase C.**
 

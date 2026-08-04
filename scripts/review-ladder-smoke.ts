@@ -11,7 +11,85 @@
  */
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+
+// ---- M13E2 Phase A: additive practice-session schema control ----------------------------------------
+// prisma/schema.prisma was byte-pinned to a MOVING `HEAD` here until M13E2 Phase A. A HEAD-relative pin
+// turns green the moment the schema commit lands, so it proved nothing at the only time it mattered:
+// before the commit. It is replaced by an immutable control at the pre-M13E2 commit plus structural
+// assertions -- every historical model and enum survives byte-for-byte, `User` gains exactly one virtual
+// back-relation, and the two new models arrive with exactly the approved fields, constraints and indexes.
+const PRE_M13E2 = "95fdd4c812328728766de2f518b38da618bab3cb";
+const M13E2_NEW_BLOCKS = ["model PracticeSession", "model PracticeSessionItem",
+                          "enum PracticeSessionKind", "enum PracticeSessionStatus"];
+const M13E2_USER_FIELD = "practiceSessions PracticeSession[]";
+// name -> normalized body lines (comments stripped, runs of whitespace collapsed) so a rename, retype,
+// nullability flip, default change or attribute change all surface as a body mismatch.
+const schemaBlocks = (src: string) => {
+  const out = new Map<string, string[]>();
+  for (const m of src.matchAll(/^(model|enum)[ \t]+(\w+)[ \t]*\{([\s\S]*?)^\}/gm)) {
+    out.set(`${m[1]} ${m[2]}`,
+      m[3].split("\n").map((l) => l.replace(/\/\/.*$/, "").replace(/\s+/g, " ").trim()).filter(Boolean));
+  }
+  return out;
+};
+// THROWS on any non-additive change. It never returns a boolean, so the same function backs both the
+// real check and the in-memory failing controls below -- a silent `false` would be a vacuous assertion.
+function assertAdditiveSchema(now: string, parent: string) {
+  const was = schemaBlocks(parent);
+  const is = schemaBlocks(now);
+  for (const name of M13E2_NEW_BLOCKS) {
+    if (was.has(name)) throw new Error(`the parent schema already defined ${name}`);
+    if (!is.has(name)) throw new Error(`the working schema is missing ${name}`);
+  }
+  if (parent.includes(M13E2_USER_FIELD)) throw new Error("the parent schema already had the User back-relation");
+  for (const [name, body] of was) {
+    const next = is.get(name);
+    if (!next) throw new Error(`${name} was removed`);
+    if (name === "model User") {
+      const gained = next.filter((l) => !body.includes(l));
+      const lost = body.filter((l) => !next.includes(l));
+      if (lost.length > 0) throw new Error(`User lost ${lost.join(" | ")}`);
+      if (gained.length !== 1 || gained[0] !== M13E2_USER_FIELD) {
+        throw new Error(`User gained ${gained.join(" | ") || "nothing"} instead of exactly the back-relation`);
+      }
+    } else if (next.join("\n") !== body.join("\n")) {
+      throw new Error(`${name} is not structurally identical to the parent`);
+    }
+  }
+  const session = is.get("model PracticeSession")!.join("\n");
+  const item = is.get("model PracticeSessionItem")!.join("\n");
+  for (const required of ["userId String", "kind PracticeSessionKind", "track SkillTrack", "skillSlug String?",
+                          "status PracticeSessionStatus @default(ISSUED)", "issuedAt DateTime @default(now())",
+                          "expiresAt DateTime", "completedAt DateTime?", "purgeAfter DateTime",
+                          "resultJson Json?", "scenarioJson Json?", "requestedAreas String[] @default([])",
+                          "updatedAt DateTime @updatedAt", "items PracticeSessionItem[]",
+                          "user User @relation(fields: [userId], references: [id], onDelete: Cascade)",
+                          "@@index([userId, kind, status, expiresAt])", "@@index([userId, purgeAfter])"]) {
+    if (!session.includes(required)) throw new Error(`PracticeSession is missing ${required}`);
+  }
+  for (const required of ["sessionId String", "bankQuestionId String", "displayOrder Int",
+                          "promptSnapshot String @db.Text", "choicesJson Json", "correctOptionId String",
+                          "explanationSnapshot String @db.Text", "area String", "skillSlug String",
+                          "selectedOptionId String?", "isCorrect Boolean?", "answeredAt DateTime?",
+                          "updatedAt DateTime @updatedAt",
+                          "session PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)",
+                          "@@unique([sessionId, bankQuestionId])", "@@unique([sessionId, displayOrder])"]) {
+    if (!item.includes(required)) throw new Error(`PracticeSessionItem is missing ${required}`);
+  }
+  const added = [session, item, is.get("enum PracticeSessionKind")!.join("\n"),
+                 is.get("enum PracticeSessionStatus")!.join("\n")].join("\n");
+  for (const banned of ["PROCESSING", "FAILED", "ABANDONED", "claimedAt", "activeKey", "token", "nonce",
+                        "@@index([status, expiresAt])", "@@index([sessionId])"]) {
+    if (added.includes(banned)) throw new Error(`the new definitions carry an unapproved ${banned}`);
+  }
+  if (is.get("enum PracticeSessionStatus")!.join(",") !== "ISSUED,COMPLETED") {
+    throw new Error("PracticeSessionStatus is not exactly ISSUED,COMPLETED");
+  }
+  if (is.get("enum PracticeSessionKind")!.join(",") !== "DEBATE_DRILL,DECA_DRILL,HOSA_MEDTERM,DEBATE_WRITING") {
+    throw new Error("PracticeSessionKind is not exactly the four approved kinds");
+  }
+}
 
 const read = (p: string) => readFileSync(p, "utf8");
 const stripComments = (src: string) =>
@@ -413,11 +491,61 @@ async function main() {
   // ---- 65-68. nothing structural changed --------------------------------------------------------------------
   const sha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
   const now = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
-  for (const file of ["prisma/schema.prisma", "prisma/seed.ts", "lib/debate-drills.ts", "lib/deca-drills.ts",
+  for (const file of ["prisma/seed.ts", "lib/debate-drills.ts", "lib/deca-drills.ts",
                       "lib/hosa-medterm.ts", "app/api/hosa/medterm/submit/route.ts",
                       "components/lessons/lesson-practice.tsx", "components/skills/debate-writing-practice.tsx"]) {
     assert.equal(now(file), sha(file), `65-68. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- PA1-PA16. M13E2 Phase A: prisma/schema.prisma changed only by ADDING -----------------------------
+  const schemaAtM13E2Parent = execSync(`git show ${PRE_M13E2}:prisma/schema.prisma`, { encoding: "utf8" });
+  const schemaNow = readFileSync("prisma/schema.prisma", "utf8");
+  for (const name of M13E2_NEW_BLOCKS) {
+    assert.ok(!schemaAtM13E2Parent.includes(`${name} {`), `PA1. at ${PRE_M13E2.slice(0, 8)} the schema had no ${name}`);
+    assert.ok(schemaNow.includes(`${name} {`), `PA2. the working schema defines ${name}`);
+  }
+  assert.ok(!schemaAtM13E2Parent.includes(M13E2_USER_FIELD), "PA3. and no User.practiceSessions back-relation");
+  assertAdditiveSchema(schemaNow, schemaAtM13E2Parent); // PA4. additive practice-session definitions only
+  assert.equal(schemaBlocks(schemaNow).size, schemaBlocks(schemaAtM13E2Parent).size + 4,
+    "PA5. exactly four new schema blocks (2 models + 2 enums) and nothing else");
+  assert.ok(!existsSync("prisma/migrations"), "PA6. Phase A introduces no migration directory");
+  assert.ok(existsSync("prisma/schema.prisma"), "PA6b. control: existsSync does report a path that exists");
+  let m13e2RuntimeRefs = "";
+  try {
+    m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" }).trim();
+  } catch {
+    m13e2RuntimeRefs = ""; // grep exits non-zero when nothing matches, which is the passing case
+  }
+  assert.equal(m13e2RuntimeRefs, "", "PA7. no route, lib or component references the new models in Phase A");
+  assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
+    "PA7b. control: that scan does match a real runtime usage");
+  const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
+  assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
+    "PA8. control: the surviving seed byte pin's hash does vary with file content");
+
+  // Non-vacuous controls: every one mutates the schema IN MEMORY and proves the checker rejects it.
+  const m13e2Rejects = (label: string, mutate: (s: string) => string) => {
+    const mutated = mutate(schemaNow);
+    assert.notEqual(mutated, schemaNow, `PA. the ${label} control actually changed the schema text`);
+    assert.throws(() => assertAdditiveSchema(mutated, schemaAtM13E2Parent), `PA. the check rejects ${label}`);
+  };
+  m13e2Rejects("a changed existing field type", (s) => s.replace(/reviewCount(\s+)Int/, "reviewCount$1String"));
+  m13e2Rejects("a removed existing field", (s) => s.replace(/\n[ \t]+lastOutcome[^\n]*/, ""));
+  m13e2Rejects("an unapproved field on an existing model",
+    (s) => s.replace("model SkillReviewSchedule {", "model SkillReviewSchedule {\n  sneaky String?"));
+  m13e2Rejects("a removed User back-relation", (s) => s.replace(/\n[ \t]+practiceSessions[ \t]+PracticeSession\[\]/, ""));
+  m13e2Rejects("an extra unapproved User field",
+    (s) => s.replace(/([ \t]+practiceSessions[ \t]+PracticeSession\[\])/, "$1\n  sneaky String?"));
+  m13e2Rejects("an omitted [userId, kind, status, expiresAt] index",
+    (s) => s.replace("@@index([userId, kind, status, expiresAt])", ""));
+  m13e2Rejects("an omitted [userId, purgeAfter] index", (s) => s.replace("@@index([userId, purgeAfter])", ""));
+  m13e2Rejects("an unapproved global [status, expiresAt] index",
+    (s) => s.replace("@@index([userId, purgeAfter])", "@@index([userId, purgeAfter])\n  @@index([status, expiresAt])"));
+  m13e2Rejects("a redundant standalone [sessionId] index",
+    (s) => s.replace("@@unique([sessionId, displayOrder])", "@@unique([sessionId, displayOrder])\n  @@index([sessionId])"));
+  m13e2Rejects("a removed unique constraint", (s) => s.replace("@@unique([sessionId, bankQuestionId])", ""));
+  m13e2Rejects("a PROCESSING status", (s) => s.replace(/(enum PracticeSessionStatus \{\n[ \t]+ISSUED)/, "$1\n  PROCESSING"));
+  m13e2Rejects("a claimedAt column", (s) => s.replace(/([ \t]+purgeAfter[ \t]+DateTime\n)/, "$1  claimedAt DateTime?\n"));
 
   // ---- historical controls, pinned to the PARENT commit ------------------------------------------------------
   const parentReview = execSync(`git show ${PRE_M13E1G}:lib/spaced-review.ts`, { encoding: "utf8" });

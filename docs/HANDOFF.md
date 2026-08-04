@@ -2,7 +2,44 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — post-deployment verification (2026-08-01)
+## Latest handoff — M13E2 Phase A (2026-08-04)
+
+**Read this before touching the database or starting Phase C.**
+
+M13E1G is complete, pushed and deployed at `95fdd4c`. M13E2 Phase A adds **additive Prisma definitions
+only** — two enums (`PracticeSessionKind`, `PracticeSessionStatus`), two models (`PracticeSession`,
+`PracticeSessionItem`), and one additive virtual back-relation `User.practiceSessions`, which adds no
+column to the `User` table. Nine paths changed: the schema, the six suites that byte-pinned it, and
+these two documents.
+
+What has **not** happened, and must not be assumed:
+
+- **The tables do not exist.** `npm run db:push` was not run. No migration, seed, activation, or
+  learner-data operation occurred, and no database connection was opened.
+- **Nothing imports the new models.** No route, library or component references them; the suites assert
+  this. Production learner behavior is unchanged and Phase A is safe to deploy automatically.
+- **Phase B requires explicit human authorization** because it targets the shared Production database.
+  The reviewed command is `npm run db:push` — additive only, no `--accept-data-loss`, no seed, no reset.
+- **Phase C must not deploy before Phase B succeeds.** Route code that queries an absent table would
+  fail at runtime.
+- **No Redis and no signing secret** are used or required by the approved design.
+- **M13E2 is not active or complete.** Sessions are not bound to submissions, answer keys are still
+  returned by the session routes, and there is no replay resistance yet. Do not describe it otherwise.
+
+The approved Phase C direction: server-authoritative PostgreSQL sessions, a user-row lock as the
+serialization primitive, and transaction-native **internal** review/mastery cores. The public M13E1G
+helpers keep their current signatures and behavior for non-session callers — including the documented
+"a review mutation that truthfully landed is preserved rather than rolled back" contract that
+`review-ladder-smoke.ts` assertion 28c pins. Do not rewrite that assertion.
+
+One validation change worth knowing: the six suites no longer byte-pin `prisma/schema.prisma` against a
+moving `HEAD`. A HEAD-relative pin turns green the moment the schema commit lands, so it proved nothing
+before the commit. They now use an immutable control at `95fdd4c8` plus structural assertions that every
+historical model and enum survives unchanged, that `User` gained exactly the one back-relation, and that
+the new models carry exactly the approved fields, constraints and indexes — with twelve in-memory
+mutation controls proving the checker rejects each violation. `prisma/seed.ts` stays byte-pinned.
+
+## Earlier handoff — post-deployment verification (2026-08-01)
 
 M11's independent review returned **NOT READY** and enumerated findings from BLOCKER down to LOW. Twelve
 remediation passes (M11R1–M11R12) closed every one of them. **No confirmed M11 code finding remains

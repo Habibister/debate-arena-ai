@@ -2,15 +2,44 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-01 (post-deployment verification)_
+_Last updated: 2026-08-04 (M13E2 Phase A — additive practice-session schema)_
+
+## M13E2 Phase A — what this pass did, and what it deliberately did not do
+
+M13E2 Phase A adds **Prisma definitions only**: two enums (`PracticeSessionKind`,
+`PracticeSessionStatus`), two models (`PracticeSession`, `PracticeSessionItem`), and exactly one
+additive virtual back-relation on `User` (`practiceSessions PracticeSession[]`, which adds no column
+to the `User` table). The schema now holds 32 models and 21 enums.
+
+What is true right now:
+
+- **The database tables do not exist.** They exist only as source definitions. `npm run db:push` was
+  **not** run, and no migration, seed, activation or learner-data operation occurred.
+- **No route, library or component imports or queries the new models.** Phase A is asserted to be
+  runtime-inert, and Production learner-facing behavior is unchanged.
+- **Phase B (shared-Production `db push`) requires explicit human authorization** — it targets the
+  database shared with production.
+- **Phase C is blocked until Phase B succeeds.** Route and component cutover must not deploy before
+  the tables are activated.
+- **No Redis and no signing secret are used or required.**
+- The approved Phase C direction is server-authoritative PostgreSQL sessions with transaction-native
+  *internal* review/mastery cores, leaving the public M13E1G helpers (`recordPracticeOutcome`,
+  `recordDrillMasteryDetailed`, `recordDrillMastery`) and their contracts unchanged.
+- **M13E2 is not active and not complete.** Sessions are not bound, answer keys are not yet withheld,
+  and no replay resistance exists yet.
+
+The six suites that byte-pinned `prisma/schema.prisma` against a moving `HEAD` now use an immutable
+control at `95fdd4c8` plus structural assertions, so the schema change is validated **before** the
+commit rather than going green because `HEAD` moved.
 
 ## Repository state
 
 - **Branch:** `main`
-- **Local HEAD:** `d7efcb5`
-- **origin/main:** `d7efcb5`
-- **Remote `refs/heads/main`:** `d7efcb5`
-- **Ahead/behind: `0 0`** — the branch is synchronized with the remote.
+- **Parent of the Phase A commit:** `95fdd4c` (`fix(review): gate the spaced ladder on due reassessment`)
+- **origin/main and remote `refs/heads/main`:** `95fdd4c` — the Phase A commit is **local only**.
+- **Ahead/behind: `0 1`** after the Phase A commit; nothing has been pushed or deployed by the agent.
+- Sections below this point describe the M11 close-out and were last re-verified on 2026-08-01 against
+  `d7efcb5`; fifteen commits have landed since, through `95fdd4c`.
 - The nine approved M11 commits (eight code, one documentation) were **pushed through a normal
   fast-forward**. No force-push, rebase, squash, merge or history rewrite occurred at any point.
 - **Working tree:** clean apart from this pass's own edits to the two documentation files.
@@ -41,6 +70,11 @@ No schema change, no migration, no API route added, no package dependency added,
 | M1–M10 | Complete |
 | M11 — independent review + documentation | Complete. Its verdict was NOT READY; every finding it raised has since been remediated. |
 | M11R1–M11R12 — remediation passes | Complete. **No confirmed M11 code finding remains open.** |
+| M13E1D–M13E1F — drill evidence safety (DECA, Debate, HOSA) | Complete, pushed and deployed. |
+| M13E1G — due-gated spaced review | Complete, pushed and deployed (`95fdd4c`). |
+| M13E2 Phase A — additive practice-session schema | **Code complete, local commit only. Database activation NOT run.** |
+| M13E2 Phase B — shared-Production `db push` | **Not started. Requires explicit human authorization.** |
+| M13E2 Phase C — route/component cutover | **Blocked until Phase B succeeds.** |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)

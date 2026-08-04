@@ -137,6 +137,21 @@ enum AssignmentStatus {
   COMPLETED
 }
 
+// Which practice surface issued a server-authoritative session (M13E2).
+enum PracticeSessionKind {
+  DEBATE_DRILL
+  DECA_DRILL
+  HOSA_MEDTERM
+  DEBATE_WRITING
+}
+
+// A session is ISSUED until one final submit claims and completes it in a single transaction;
+// there is no committed intermediate state, so a rollback simply leaves it ISSUED and retryable.
+enum PracticeSessionStatus {
+  ISSUED
+  COMPLETED
+}
+
 model User {
   id                     String        @id @default(cuid())
   name                   String?
@@ -181,6 +196,7 @@ model User {
   masteryProgresses     MasteryProgress[]
   practiceAttempts      PracticeAttempt[]
   questionAttempts      QuestionAttempt[]
+  practiceSessions      PracticeSession[]
   coachAssignments      Assignment[]            @relation("CoachAssignments")
   assignmentTargets     AssignmentAssignee[]
   assignmentSubmissions AssignmentSubmission[]
@@ -797,4 +813,62 @@ model SkillReviewSchedule {
 
   @@unique([userId, skillId])
   @@index([userId, nextReviewAt])
+}
+
+// Server-authoritative practice session (M13E2). Phase A adds the definition only: no table exists
+// until an approved `db push`, and no route imports these models yet. The server issues the session
+// and stores what it served, so a submission can be bound to that exact set instead of trusting the
+// client. Drill sessions carry normalized item rows; a writing session carries zero items and uses
+// `scenarioJson`. `expiresAt` bounds an unfinished session; `purgeAfter` bounds retention of a
+// completed result kept for network-retry recovery.
+model PracticeSession {
+  id             String                @id @default(cuid())
+  userId         String
+  kind           PracticeSessionKind
+  track          SkillTrack
+  skillSlug      String?
+  status         PracticeSessionStatus @default(ISSUED)
+  issuedAt       DateTime              @default(now())
+  expiresAt      DateTime
+  completedAt    DateTime?
+  purgeAfter     DateTime
+  resultJson     Json?
+  scenarioJson   Json?
+  requestedAreas String[]              @default([])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items PracticeSessionItem[]
+
+  @@index([userId, kind, status, expiresAt])
+  @@index([userId, purgeAfter])
+}
+
+// One served question, snapshotted at issue time so a deploy between issue and submit cannot change
+// correctness, choice mapping, explanation, or attribution. `choicesJson` holds the already-shuffled
+// `[{ optionId, text }]`; the learner submits an opaque `optionId`, never answer text or a bank index.
+// The first recorded answer is final: `selectedOptionId` is written by a conditional update that
+// matches only while it is still null.
+model PracticeSessionItem {
+  id                  String    @id @default(cuid())
+  sessionId           String
+  bankQuestionId      String
+  displayOrder        Int
+  promptSnapshot      String    @db.Text
+  choicesJson         Json
+  correctOptionId     String
+  explanationSnapshot String    @db.Text
+  area                String
+  skillSlug           String
+  selectedOptionId    String?
+  isCorrect           Boolean?
+  answeredAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  session PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, bankQuestionId])
+  @@unique([sessionId, displayOrder])
 }

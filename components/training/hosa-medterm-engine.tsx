@@ -10,18 +10,76 @@ type Area = { id: string; label: string; description: string };
 type Question = { id: string; area: string; question: string; choices: string[]; correctAnswer: string; explanation: string };
 type Confidence = "low" | "medium" | "high";
 type GradedItem = { id: string; area: string; correct: boolean; correctAnswer: string; explanation: string };
+type EvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
+type PersistenceStatus = "not-attempted" | "review-attempted";
 type Result = {
+  /** The SESSION result: every answer, counted every time it was submitted. */
   total: number;
   correctCount: number;
   scorePercent: number;
-  passed: boolean;
   items: GradedItem[];
+  /** The EVIDENCE result: each distinct question counted once, first answer only. */
+  uniqueTotal: number;
+  uniqueCorrect: number;
+  coveredAreas: string[];
+  coveredAreaCount: number;
+  requiredUnique: number;
+  requiredAreas: number;
+  evidenceScore: number;
+  evidenceStatus: EvidenceStatus;
+  persistenceStatus: PersistenceStatus;
+  /** Weak areas derived from the evidence set — only covered areas can appear. */
   weakAreas: Array<{ area: string; label: string; missed: number; total: number }>;
-  reviewScheduled: boolean;
+  passed: boolean;
 };
 
 const OFFICIAL_COUNT = 50;
 const OFFICIAL_MINUTES = 60;
+
+/**
+ * Review-evidence requirements, mirroring `HOSA_MEDTERM_REQUIRED_UNIQUE` and
+ * `HOSA_MEDTERM_REQUIRED_AREAS`, which this client component cannot import from the server bank
+ * module. `scripts/hosa-medterm-evidence-smoke.ts` asserts the constants match so they cannot drift.
+ */
+const REQUIRED_UNIQUE_FOR_REVIEW = 10;
+const REQUIRED_AREAS_FOR_REVIEW = 3;
+
+/** Guidance shown before starting and again on results, so the requirement is never a surprise. */
+const EVIDENCE_GUIDANCE =
+  `Mixed sessions can count toward review practice when they include at least ${REQUIRED_UNIQUE_FOR_REVIEW} ` +
+  `different questions across ${REQUIRED_AREAS_FOR_REVIEW} areas. Focused area sessions are practice only.`;
+
+/**
+ * What the results row says, from the EVIDENCE status alone.
+ *
+ * Deliberately makes no persistence claim. `recordPracticeOutcome` swallows its own failures, so the
+ * route cannot prove a review row was written — and this component will not say it was saved,
+ * recorded, scheduled or updated. It also never says mastered, event-ready or clinically proficient:
+ * this is a recognition drill on one aggregate event skill, and it is review-only by design.
+ */
+export function evidenceState(result: Result): { badge: string; tone: "success" | "info" | "outline"; explanation: string } {
+  if (result.evidenceStatus === "insufficient-evidence") {
+    return {
+      badge: "Practice only",
+      tone: "outline",
+      explanation:
+        `Answer at least ${result.requiredUnique} different questions across ${result.requiredAreas} areas ` +
+        `in one session before this result can count toward review practice. Nothing was recorded.`
+    };
+  }
+  if (result.evidenceStatus === "below-threshold") {
+    return {
+      badge: "Keep practicing",
+      tone: "info",
+      explanation: "You answered enough different questions across enough areas, but scored below 70%."
+    };
+  }
+  return {
+    badge: "Practice complete",
+    tone: "success",
+    explanation: "You answered enough different questions across enough areas and scored at least 70%."
+  };
+}
 
 export function HosaMedTermEngine({ official }: { official: boolean }) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
@@ -180,6 +238,7 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
                 <option key={c} value={c}>{c} questions{official && c === OFFICIAL_COUNT ? " (official)" : ""}</option>
               ))}
             </select>
+            <span className="mt-2 block text-xs font-normal text-muted-foreground">{EVIDENCE_GUIDANCE}</span>
           </label>
 
           {error ? (
@@ -200,6 +259,10 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
 
   // --- Results screen ---
   if (result) {
+    const state = evidenceState(result);
+    // Only worth explaining when the two numbers actually disagree — i.e. a question was answered
+    // more than once, or an unknown id was submitted.
+    const repeated = result.evidenceScore !== result.scorePercent;
     return (
       <Card>
         <CardHeader>
@@ -209,17 +272,24 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-3xl font-bold">{result.scorePercent}%</span>
             <span className="text-sm text-muted-foreground">{result.correctCount} / {result.total} correct</span>
-            <Badge variant={result.passed ? "secondary" : "outline"}>{result.passed ? "Passed" : "Keep practicing"}</Badge>
+            <Badge variant={state.tone}>{state.badge}</Badge>
           </div>
 
-          {result.reviewScheduled ? (
-            <p className="flex items-center gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-              <RotateCcw className="h-3.5 w-3.5 text-primary" aria-hidden />
-              {result.passed
-                ? "Nice — Medical Terminology moves further out on your spaced-review schedule."
-                : "Medical Terminology is scheduled to come back for review tomorrow so the gaps don't stick."}
-            </p>
-          ) : null}
+          <div className="space-y-1 rounded-md border bg-muted/40 p-3">
+            <p className="text-xs text-muted-foreground">{state.explanation}</p>
+            {repeated ? (
+              <p className="text-xs text-muted-foreground">
+                Repeated questions count once toward review evidence — {result.uniqueCorrect} of {result.uniqueTotal} different questions correct.
+              </p>
+            ) : null}
+            {result.coveredAreaCount === 1 ? (
+              <p className="text-xs text-muted-foreground">
+                Focused area sessions are practice only because they cover one area. Use a mixed session to build
+                review-qualified evidence.
+              </p>
+            ) : null}
+            <p className="text-xs text-muted-foreground">{EVIDENCE_GUIDANCE}</p>
+          </div>
 
           {result.weakAreas.length > 0 ? (
             <div>
@@ -232,9 +302,11 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
                 ))}
               </ul>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No weak areas — every topic was clean.</p>
-          )}
+          ) : result.evidenceStatus !== "insufficient-evidence" ? (
+            // Scoped to what was actually covered — a session that never touched physiology cannot
+            // report physiology as clean.
+            <p className="text-sm text-muted-foreground">No weak areas were detected in the areas covered by this session.</p>
+          ) : null}
 
           <Button
             type="button"

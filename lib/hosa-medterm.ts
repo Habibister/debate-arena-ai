@@ -197,3 +197,134 @@ export function gradeMedTermAnswers(answers: MedTermAnswer[]): MedTermResult {
 
   return { total, correctCount, scorePercent, passed: scorePercent >= PASS_THRESHOLD, items, weakAreas };
 }
+
+// --- Duplicate-resistant review evidence (M13E1F) --------------------------------------------------
+//
+// `gradeMedTermAnswers` above reports the LEARNER'S SESSION: every graded answer, counted every time
+// it was submitted. That is the right number to show someone who just finished practising, and the
+// wrong number to base spaced review on. Three paths turned it into fabricated evidence, all live:
+//
+//   ONE QUESTION.       A single correct answer is 1/1 = 100%, which cleared the 70% threshold and
+//                       pushed Medical Terminology further out on the review ladder.
+//   DUPLICATE INFLATION. Five distinct questions with ONE genuinely correct, plus twelve repeats of
+//                       that correct id, tallies 13/17 = 76% — a pass off one right answer.
+//   FOCUSED PADDING.    `buildMedTermSession` repeats items once a focused count exceeds an area's
+//                       nine-question pool, and the UI offers 20/30/50. Every repeat arrives after
+//                       the learner has already seen the answer and explanation.
+//
+// So review eligibility reads from an EVIDENCE SET: at most one entry per valid question id, using
+// the FIRST answer submitted for that id, and each covered area counted once.
+//
+// WHY BREADTH, NOT JUST COUNT. Unlike the Debate and DECA drills — where each area maps to its own
+// narrow skill — every MedTerm session writes to ONE aggregate skill named for the whole Medical
+// Terminology event. Nine word-root questions say nothing about physiology, so a review interval on
+// the event slug must not be earned from a single corner of it. Hence a breadth requirement as well
+// as a count: a focused single-area session is real practice, but it can never be review evidence.
+//
+// THIS SKILL REMAINS REVIEW-ONLY. No MasteryProgress is written here and none should be: the slug
+// names an entire event, half the bank sits in areas its description does not claim, and a 50-item
+// session consumes 50 of 54 questions — so "survived spaced reassessment" could only ever mean
+// "re-recognised items already seen". Recognition of a term's gloss is not mastery of the event.
+//
+// NOT tamper-proof: the session route still returns `correctAnswer` to the browser and nothing binds
+// a submission to the served set. Session binding is deliberately out of scope here.
+
+/** Distinct valid questions required in ONE submission before review may be attempted. */
+export const HOSA_MEDTERM_REQUIRED_UNIQUE = 10;
+/** Distinct bank areas those questions must span. */
+export const HOSA_MEDTERM_REQUIRED_AREAS = 3;
+
+export type MedTermEvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
+
+export type MedTermEvidence = {
+  uniqueTotal: number;
+  uniqueCorrect: number;
+  coveredAreas: MedTermArea[];
+  coveredAreaCount: number;
+  requiredUnique: number;
+  requiredAreas: number;
+  /** Rounded for display only. Pass/fail uses the exact ratio below, never this. */
+  evidenceScore: number;
+  evidenceStatus: MedTermEvidenceStatus;
+  passed: boolean;
+  /** Weak areas derived from the evidence set — only areas actually covered can appear. */
+  weakAreas: Array<{ area: MedTermArea; label: string; missed: number; total: number }>;
+};
+
+/** Build the review-evidence set for a submission. Pure; deterministic; order-independent. */
+export function buildMedTermEvidence(answers: MedTermAnswer[]): MedTermEvidence {
+  const byId = new Map(MEDTERM_BANK.map((q) => [q.id, q]));
+
+  // First occurrence per valid id wins; unknown ids and every repeat are dropped here.
+  const firstById = new Map<string, { question: MedTermQuestion; selected: string }>();
+  for (const answer of answers) {
+    const question = byId.get(answer.id);
+    if (!question) continue;
+    if (firstById.has(answer.id)) continue;
+    firstById.set(answer.id, { question, selected: answer.selected });
+  }
+
+  const tally = new Map<MedTermArea, { total: number; missed: number }>();
+  let uniqueTotal = 0;
+  let uniqueCorrect = 0;
+  for (const { question, selected } of firstById.values()) {
+    // Attribution is by the question's OWN area, never by whatever area the session requested.
+    const correct = selected === question.correctAnswer;
+    uniqueTotal += 1;
+    if (correct) uniqueCorrect += 1;
+    const bucket = tally.get(question.area) ?? { total: 0, missed: 0 };
+    bucket.total += 1;
+    if (!correct) bucket.missed += 1;
+    tally.set(question.area, bucket);
+  }
+
+  // Bank order, so the list is stable rather than submission-order dependent.
+  const coveredAreas = MEDTERM_AREAS.map((a) => a.id).filter((id) => tally.has(id));
+  const coveredAreaCount = coveredAreas.length;
+
+  const evidenceScore = uniqueTotal > 0 ? Math.round((uniqueCorrect / uniqueTotal) * 100) : 0;
+  // EXACT ratio, never the rounded percent: 16 of 23 rounds to 70 but is 69.57%, and a rounded 70
+  // must not buy a pass the learner did not earn.
+  const meetsThreshold = uniqueTotal > 0 && uniqueCorrect * 100 >= PASS_THRESHOLD * uniqueTotal;
+  const hasEnoughEvidence = uniqueTotal >= HOSA_MEDTERM_REQUIRED_UNIQUE && coveredAreaCount >= HOSA_MEDTERM_REQUIRED_AREAS;
+  const evidenceStatus: MedTermEvidenceStatus = !hasEnoughEvidence
+    ? "insufficient-evidence"
+    : meetsThreshold
+      ? "passing"
+      : "below-threshold";
+
+  const weakAreas = Array.from(tally.entries())
+    .filter(([, bucket]) => bucket.missed > 0)
+    .map(([area, bucket]) => ({
+      area,
+      label: MEDTERM_AREAS.find((a) => a.id === area)?.label ?? area,
+      missed: bucket.missed,
+      total: bucket.total
+    }))
+    .sort((a, b) => b.missed - a.missed);
+
+  return {
+    uniqueTotal,
+    uniqueCorrect,
+    coveredAreas,
+    coveredAreaCount,
+    requiredUnique: HOSA_MEDTERM_REQUIRED_UNIQUE,
+    requiredAreas: HOSA_MEDTERM_REQUIRED_AREAS,
+    evidenceScore,
+    evidenceStatus,
+    passed: evidenceStatus === "passing",
+    weakAreas
+  };
+}
+
+/**
+ * What to send to spaced review for this submission, or `null` meaning DO NOT CALL it.
+ *
+ * `null` is not "record a zero" — it is the absence of a call, so a short or narrow submission
+ * cannot advance the review ladder, cannot reset it, and cannot alter a due review it never earned
+ * the right to answer.
+ */
+export function medTermPersistenceRequest(evidence: MedTermEvidence): { scorePercent: number; passed: boolean } | null {
+  if (evidence.evidenceStatus === "insufficient-evidence") return null;
+  return { scorePercent: evidence.evidenceScore, passed: evidence.passed };
+}

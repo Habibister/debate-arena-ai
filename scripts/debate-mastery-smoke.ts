@@ -307,12 +307,45 @@ async function main() {
   for (const file of ["app/api/skills/debate-writing/route.ts", "lib/debate-skill-practice.ts",   // 27 Debate writing
                       "lib/deca-drills.ts", "app/api/deca/drills/submit/route.ts",                 // 28 DECA
                       "components/training/concept-drills.tsx",
-                      "app/api/hosa/medterm/submit/route.ts",                                      // 29 HOSA
                       "prisma/schema.prisma", "prisma/seed.ts",                                    // 30/31 schema + seed
                       "lib/spaced-review.ts", "app/api/debate/drills/session/route.ts",
                       "lib/education/registry.ts", "lib/assignments.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27-31. ${file} is byte-identical to HEAD`);
   }
+
+
+  // ---- 29. what the HOSA byte-pin was protecting, asserted exactly ----------------------------------
+  // The HOSA MedTerm submit route was byte-pinned here until M13E1F, which deliberately gives it the
+  // same duplicate-resistant evidence gate. A blanket hash would forbid that approved change rather
+  // than protect Debate, so it is replaced by assertions on what actually matters.
+  const hosaRoute = stripComments(read("app/api/hosa/medterm/submit/route.ts"));
+  const hosaLib = stripComments(read("lib/hosa-medterm.ts"));
+  // (i) HOSA stays REVIEW-ONLY — no mastery helper, no mastery model, no XP.
+  for (const banned of ["recordDrillMastery", "recordDrillMasteryDetailed", "MasteryProgress",
+                        "masteryProgress", "masteryLevelFor", "MASTERED",
+                        "xpReward", "XPLog", "xpLog", "awardXp", "XP_REWARDS"]) {
+    assert.ok(!hosaRoute.includes(banned), `29. the HOSA route stays review-only (no {banned})`);
+    assert.ok(!hosaLib.includes(banned), `29b. and so does lib/hosa-medterm.ts (no {banned})`);
+  }
+  assert.ok(/recordPracticeOutcome\(/.test(hosaRoute), "29c. it still uses the review helper only");
+  // (ii) No cross-track abstraction: HOSA uses its own helper, and the tracks do not import each other.
+  assert.ok(/buildMedTermEvidence\(/.test(hosaRoute), "29d. HOSA uses its OWN evidence helper");
+  for (const foreign of ["@/lib/deca-drills", "@/lib/debate-drills", "buildDecaDrillEvidence", "buildDrillEvidence"]) {
+    assert.ok(!hosaRoute.includes(foreign), `29e. the HOSA route imports no {foreign}`);
+    assert.ok(!hosaLib.includes(foreign), `29e2. nor does lib/hosa-medterm.ts`);
+  }
+  for (const [file, foreign] of [["lib/deca-drills.ts", "hosa-medterm"], ["lib/debate-drills.ts", "hosa-medterm"]] as const) {
+    assert.ok(!stripComments(read(file)).includes(foreign), `29f. ${file} does not import HOSA evidence helpers`);
+  }
+  // (iii) The unprovable review claim is gone, and no mastery system was introduced.
+  assert.ok(!hosaRoute.includes("reviewScheduled"), "29g. the HOSA route no longer claims reviewScheduled");
+  // (iv) The HOSA session route and the question bank itself are untouched.
+  assert.equal(nowSha("app/api/hosa/medterm/session/route.ts"), headSha("app/api/hosa/medterm/session/route.ts"),
+    "29h. the HOSA session route is byte-identical to HEAD");
+  const hosaBank = await import("../lib/hosa-medterm");
+  assert.equal(hosaBank.MEDTERM_BANK.length, 54, "29i. the HOSA bank still holds 54 questions");
+  assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 54, "29j. with unique ids");
+  assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "29k. across six areas");
 
   // ---- 32. no database contact ------------------------------------------------------------------------------
   for (const file of ["lib/debate-drills.ts", "components/training/debate-drills.tsx"]) {

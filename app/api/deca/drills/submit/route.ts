@@ -1,16 +1,37 @@
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
-import { gradeDecaDrillAnswers } from "@/lib/deca-drills";
+import {
+  buildDecaDrillEvidence,
+  decaDrillPersistenceRequest,
+  gradeDecaDrillAnswers,
+  DECA_DRILL_REQUIRED_UNIQUE,
+  type DecaDrillEvidenceStatus
+} from "@/lib/deca-drills";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { recordDrillMastery } from "@/lib/spaced-review";
+import { recordDrillMasteryDetailed } from "@/lib/spaced-review";
 import { decaDrillSubmitRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
 
 // Grade a DECA concept-drill session server-side and write real MasteryProgress + spaced review PER
-// SKILL via the shared recordDrillMastery helper. Skills not yet seeded are skipped honestly (never
-// faked). This is concept drilling only — it does not touch the DECA role-play/judging system.
+// SKILL. This is concept drilling only — it does not touch the DECA role-play/judging system.
+//
+// TWO SEPARATE NUMBERS, deliberately (M13E1D):
+//
+//   the SESSION result   — every graded answer, counted every time it was submitted. Shown to the
+//                          learner, because it is what they just did.
+//   the EVIDENCE result  — at most one entry per valid question id, first answer only. The ONLY
+//                          thing persistence is allowed to see, because `answers` is composed by
+//                          the client and repeating one correct id used to inflate a 20% run into
+//                          a 76% "pass".
+//
+// The response therefore carries two orthogonal statuses per skill. `evidenceStatus` says whether
+// the work qualifies; `persistenceStatus` says what the database actually did about it. Collapsing
+// them loses the difference between "we did not try", "there is no row yet", and "the write broke"
+// — and the learner-facing copy for those three is not interchangeable.
+type PersistenceStatus = "not-attempted" | "updated" | "skill-missing" | "write-failed";
+
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
@@ -18,15 +39,52 @@ export async function POST(request: Request) {
     const input = await parseJson(request, decaDrillSubmitRequestSchema);
 
     const result = gradeDecaDrillAnswers(input.answers);
+    const evidenceByArea = new Map(buildDecaDrillEvidence(input.answers).map((e) => [e.area, e]));
 
     const wroteSkills: string[] = [];
+    const perSkill = [];
+
     for (const skill of result.perSkill) {
-      if (!skill.skillSlug) continue;
-      const wrote = await recordDrillMastery({ userId: user.id, skillSlug: skill.skillSlug, scorePercent: skill.scorePercent, passed: skill.passed });
-      if (wrote) wroteSkills.push(skill.skillSlug);
+      const evidence = evidenceByArea.get(skill.area);
+      // Both sets are derived from the same bank-filtered answers, so this is always present; the
+      // fallback exists so a future divergence fails CLOSED (no evidence => no write) rather than open.
+      const uniqueTotal = evidence?.uniqueTotal ?? 0;
+      const uniqueCorrect = evidence?.uniqueCorrect ?? 0;
+      const evidenceScore = evidence?.evidenceScore ?? 0;
+      const evidenceStatus: DecaDrillEvidenceStatus = evidence?.evidenceStatus ?? "insufficient-evidence";
+      const passed = evidence?.passed ?? false;
+
+      // `null` means the persistence helper is NOT CALLED — no mastery, no review, and critically
+      // no due-review knock-down from a submission too short to have earned one.
+      const plan = evidence ? decaDrillPersistenceRequest(evidence) : null;
+
+      let persistenceStatus: PersistenceStatus = "not-attempted";
+      if (plan && skill.skillSlug) {
+        const outcome = await recordDrillMasteryDetailed({
+          userId: user.id,
+          skillSlug: skill.skillSlug,
+          scorePercent: plan.scorePercent,
+          passed: plan.passed
+        });
+        persistenceStatus = outcome.status;
+        if (outcome.status === "updated") wroteSkills.push(skill.skillSlug);
+      }
+
+      perSkill.push({
+        ...skill,
+        uniqueTotal,
+        uniqueCorrect,
+        requiredUnique: DECA_DRILL_REQUIRED_UNIQUE,
+        evidenceScore,
+        evidenceStatus,
+        persistenceStatus,
+        reviewScheduled: persistenceStatus === "updated",
+        // Overrides the raw grader's duplicate-weighted `passed`. This is the last key on purpose.
+        passed
+      });
     }
 
-    return NextResponse.json({ ...result, wroteSkills });
+    return NextResponse.json({ ...result, perSkill, wroteSkills });
   } catch (error) {
     return apiError(error);
   }

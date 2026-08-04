@@ -3,7 +3,15 @@
  * Run with: npm run deca-drills:smoke
  */
 import assert from "node:assert/strict";
-import { DECA_DRILL_AREAS, DECA_DRILL_BANK, buildDecaDrillSession, gradeDecaDrillAnswers, type DecaDrillArea } from "../lib/deca-drills";
+import {
+  DECA_DRILL_AREAS,
+  DECA_DRILL_BANK,
+  DECA_DRILL_REQUIRED_UNIQUE,
+  buildDecaDrillEvidence,
+  buildDecaDrillSession,
+  gradeDecaDrillAnswers,
+  type DecaDrillArea
+} from "../lib/deca-drills";
 
 async function main() {
   assert.ok(DECA_DRILL_BANK.length >= 32, `expected >=32 DECA drill questions, found ${DECA_DRILL_BANK.length}`);
@@ -40,7 +48,23 @@ async function main() {
   const q0Skill = mixed.perSkill.find((sk) => sk.area === q0.area)!;
   assert.ok(q0Skill.scorePercent < 100, "a wrong answer lowers that skill's score");
 
-  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} original questions across ${DECA_DRILL_AREAS.length} areas, integrity + focused sessions + per-skill grading consistent.`);
+  // Every area's bank must be able to REACH the evidence floor, or that skill could never be
+  // recorded at all — including marketing-fundamentals, the one area already seeded.
+  for (const area of DECA_DRILL_AREAS) {
+    const pool = DECA_DRILL_BANK.filter((q) => q.area === area.id);
+    assert.ok(pool.length >= DECA_DRILL_REQUIRED_UNIQUE,
+      `area ${area.id} has fewer than ${DECA_DRILL_REQUIRED_UNIQUE} distinct questions, so it could never qualify`);
+    const evidence = buildDecaDrillEvidence(pool.slice(0, DECA_DRILL_REQUIRED_UNIQUE).map((q) => ({ id: q.id, selected: q.correctAnswer })));
+    assert.equal(evidence[0]?.evidenceStatus, "passing", `area ${area.id} reaches passing evidence at the floor`);
+    assert.equal(evidence[0]?.skillSlug, area.skillSlug, `area ${area.id} maps to ${area.skillSlug}`);
+  }
+
+  // The raw session grader keeps reporting the LEARNER'S session; the evidence set does not.
+  const repeated = [q0, q0, q0].map((q) => ({ id: q.id, selected: q.correctAnswer }));
+  assert.equal(gradeDecaDrillAnswers(repeated).total, 3, "the session grader still counts every answer");
+  assert.equal(buildDecaDrillEvidence(repeated)[0].uniqueTotal, 1, "but the evidence set counts the question once");
+
+  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} original questions across ${DECA_DRILL_AREAS.length} areas, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -132,3 +132,116 @@ export function gradeDecaDrillAnswers(answers: DecaDrillAnswer[]): DecaDrillResu
 
   return { total, correctCount, scorePercent, items, perSkill };
 }
+
+// --- Duplicate-resistant mastery evidence (M13E1D) ------------------------------------------------
+//
+// `gradeDecaDrillAnswers` above reports the LEARNER'S SESSION: every graded answer, counted every
+// time it was submitted. That is the right number to show someone who just finished a drill, but it
+// is the wrong number to persist, because `answers` is composed entirely by the client and the same
+// question id may appear in it any number of times.
+//
+// The bypass this closes, reproduced exactly: submit five distinct performance-indicator ids with
+// only ONE answered correctly, then repeat that one correct id twelve more times. The session tally
+// is 13/17 = 76%, which clears the 70% threshold and would have written PRACTICING mastery — off a
+// single genuinely correct question out of five. A minimum-distinct-questions floor alone does not
+// stop it, because the score itself was still duplicate-weighted.
+//
+// So persistence reads from an EVIDENCE SET instead: at most one entry per valid question id, using
+// the FIRST answer submitted for that id.
+//
+//   first occurrence, not last  — a later answer to an already-answered id is ignored, so revealing
+//                                 the explanation and resubmitting cannot convert a miss into credit
+//   first occurrence, not all   — `buildDecaDrillSession` legitimately repeats items once a session
+//                                 is longer than an area's nine-item pool, so requiring every
+//                                 occurrence to be correct would punish honest repeats
+//   ignore, do not reject       — an unrecognised id contributes nothing rather than failing the
+//                                 whole submission, and each id is attributed to its OWN bank area,
+//                                 so a filtered session can never misattribute evidence
+//
+// This makes the evidence duplicate-resistant and unknown-id-resistant. It is NOT tamper-proof:
+// nothing yet binds a submission to the question set the server actually served, so a client may
+// still answer bank ids it was never shown. Session binding is deliberately out of scope here.
+
+/**
+ * Distinct valid questions required for ONE skill before any mastery or review may be written.
+ *
+ * Five, because each area's bank holds nine distinct items (so five is a majority of what exists),
+ * five is the smallest focused-session size the UI offers, and at five questions the 70% threshold
+ * needs at least four correct — there is no way to clear it on a single lucky answer.
+ */
+export const DECA_DRILL_REQUIRED_UNIQUE = 5;
+
+export type DecaDrillEvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
+
+export type DecaDrillSkillEvidence = {
+  area: DecaDrillArea;
+  skillSlug: string;
+  label: string;
+  /** Distinct valid question ids submitted for this skill. */
+  uniqueTotal: number;
+  /** How many of those were correct ON THEIR FIRST submitted answer. */
+  uniqueCorrect: number;
+  requiredUnique: number;
+  /** `uniqueCorrect / uniqueTotal` — the only score that may reach the database. */
+  evidenceScore: number;
+  evidenceStatus: DecaDrillEvidenceStatus;
+  /** True only with enough distinct questions AND an evidence score at or above the threshold. */
+  passed: boolean;
+};
+
+/** Build the per-skill evidence set for a submission. Pure; deterministic; order-independent. */
+export function buildDecaDrillEvidence(answers: DecaDrillAnswer[]): DecaDrillSkillEvidence[] {
+  const byId = new Map(DECA_DRILL_BANK.map((q) => [q.id, q]));
+
+  // First occurrence per valid id wins; unknown ids and every repeat are dropped here.
+  const firstById = new Map<string, { question: DecaDrillQuestion; selected: string }>();
+  for (const answer of answers) {
+    const question = byId.get(answer.id);
+    if (!question) continue;
+    if (firstById.has(answer.id)) continue;
+    firstById.set(answer.id, { question, selected: answer.selected });
+  }
+
+  const tally = new Map<DecaDrillArea, { uniqueTotal: number; uniqueCorrect: number }>();
+  for (const { question, selected } of firstById.values()) {
+    // Attribution is by the question's OWN area, never by whatever area the session requested.
+    const bucket = tally.get(question.area) ?? { uniqueTotal: 0, uniqueCorrect: 0 };
+    bucket.uniqueTotal += 1;
+    if (selected === question.correctAnswer) bucket.uniqueCorrect += 1;
+    tally.set(question.area, bucket);
+  }
+
+  return Array.from(tally.entries()).map(([area, bucket]) => {
+    const meta = DECA_DRILL_AREAS.find((a) => a.id === area);
+    const evidenceScore = bucket.uniqueTotal > 0 ? Math.round((bucket.uniqueCorrect / bucket.uniqueTotal) * 100) : 0;
+    const evidenceStatus: DecaDrillEvidenceStatus =
+      bucket.uniqueTotal < DECA_DRILL_REQUIRED_UNIQUE
+        ? "insufficient-evidence"
+        : evidenceScore >= DECA_DRILL_PASS_THRESHOLD
+          ? "passing"
+          : "below-threshold";
+    return {
+      area,
+      skillSlug: meta?.skillSlug ?? "",
+      label: meta?.label ?? area,
+      uniqueTotal: bucket.uniqueTotal,
+      uniqueCorrect: bucket.uniqueCorrect,
+      requiredUnique: DECA_DRILL_REQUIRED_UNIQUE,
+      evidenceScore,
+      evidenceStatus,
+      passed: evidenceStatus === "passing"
+    };
+  });
+}
+
+/**
+ * What to persist for one skill, or `null` meaning DO NOT CALL the persistence helper at all.
+ *
+ * `null` is not "write a zero" — it is the absence of a call, so a short submission cannot write
+ * mastery, cannot schedule a review, and cannot knock an existing mastery down through a due
+ * review it never earned the right to answer.
+ */
+export function decaDrillPersistenceRequest(evidence: DecaDrillSkillEvidence): { scorePercent: number; passed: boolean } | null {
+  if (evidence.uniqueTotal < evidence.requiredUnique) return null;
+  return { scorePercent: evidence.evidenceScore, passed: evidence.passed };
+}

@@ -3,8 +3,10 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 // THE PRODUCTION MODULES — never a mirrored copy of their logic.
 import {
+  ACTIVATION_PENDING_SKILLS,
   CANONICAL_REDIRECTS,
   COMPAT_TRACK_DESTINATION,
+  INTENDED_SKILL_INVENTORY,
   SEEDED_LESSON_SLUGS,
   SEEDED_SKILL_SLUGS,
   SEEDED_SKILLS,
@@ -23,6 +25,27 @@ const stripComments = (src: string) =>
 const headSha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
 const nowSha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
 
+/** M13E1C's parent — the last commit that still contained the fictional `/skills` mastery framing. */
+const PRE_M13E1C = "5bf3077dd83d1598b42d2dba227b99defb9df1ad";
+
+// A stub Prisma client, installed BEFORE `lib/prisma` is ever loaded (that module reads
+// `globalThis.prisma` before constructing a client, so no client is built and no connection opens).
+// Used only to prove the BOOLEAN contract of `recordDrillMastery` is still backward-compatible.
+const stub = { mode: "found" as "found" | "missing" | "write-throws" };
+const stubPrisma = {
+  skill: { findUnique: async () => (stub.mode === "missing" ? null : { id: "stub-skill-id" }) },
+  masteryProgress: {
+    findUnique: async () => null,
+    create: async () => { if (stub.mode === "write-throws") throw new Error("simulated write failure"); return {}; },
+    update: async () => { if (stub.mode === "write-throws") throw new Error("simulated write failure"); return {}; }
+  },
+  skillReviewSchedule: {
+    findUnique: async () => null, create: async () => ({}), update: async () => ({}),
+    count: async () => 0, findMany: async () => []
+  }
+};
+(globalThis as unknown as { prisma?: unknown }).prisma = stubPrisma;
+
 const MANIFEST = [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS];
 const withManifest: EducationRegistryInput = { ...EDUCATION_REGISTRY, seededSlugs: MANIFEST };
 
@@ -39,7 +62,7 @@ function control(label: string, expected: string, aliases: readonly EducationSlu
   controlsRun.push(`${label} -> ${expected}`);
 }
 
-function main() {
+async function main() {
   const detail = read("app/(app)/skills/[slug]/page.tsx");
   const practice = read("app/(app)/skills/[slug]/practice/page.tsx");
   const index = read("components/skills/skill-path.tsx");
@@ -154,10 +177,15 @@ function main() {
     assert.ok(!/\d+\s*%/.test(src), `15b. "${label}" shows no percentage`);
   }
   // Control: the pre-change files really did carry what the scan looks for.
-  const headDetail = execSync("git show HEAD:'app/(app)/skills/[slug]/page.tsx'", { encoding: "utf8" });
-  assert.ok(/Mastery Path/.test(stripComments(headDetail)), "14b. control: the scan finds the old fake mastery at HEAD");
-  const headIndex = execSync("git show HEAD:components/skills/skill-path.tsx", { encoding: "utf8" });
-  assert.ok(/Mastery Map/.test(stripComments(headIndex)), "14c. control: and the old index framing too");
+  //
+  // PINNED TO THE PRE-M13E1C COMMIT, NOT `HEAD`. These read `git show HEAD:` until M13E1D, which was
+  // a mistake: `HEAD` moves, and once M13E1C (the commit that DELETED this copy) became `HEAD`, the
+  // control could never hold again. A control that proves history existed must name that history.
+  const beforeDetail = execSync(`git show ${PRE_M13E1C}:'app/(app)/skills/[slug]/page.tsx'`, { encoding: "utf8" });
+  assert.ok(/Mastery Path/.test(stripComments(beforeDetail)),
+    `14b. control: the scan finds the old fake mastery at ${PRE_M13E1C.slice(0, 8)}`);
+  const beforeIndex = execSync(`git show ${PRE_M13E1C}:components/skills/skill-path.tsx`, { encoding: "utf8" });
+  assert.ok(/Mastery Map/.test(stripComments(beforeIndex)), "14c. control: and the old index framing too");
   assert.ok(!stripComments(index).includes("mastery:"), "15c. the hardcoded demo mastery literals are gone");
   assert.ok(detail.includes("Step {resolution.step.index} of {resolution.step.total}"),
     "14b. truthful seeded ordering is retained as a position, not a percentage");
@@ -224,9 +252,71 @@ function main() {
                       "components/lessons/concept-education-lesson-practice.tsx",
                       "components/lessons/lesson-view.tsx", "components/lessons/lesson-practice.tsx",
                       "app/(app)/lessons/page.tsx", "app/(app)/lessons/[slug]/page.tsx",
-                      "lib/assignments.ts", "lib/assignment-types.ts", "lib/spaced-review.ts",
+                      "lib/assignments.ts", "lib/assignment-types.ts",
+                      // lib/spaced-review.ts is deliberately absent — see 27b. M13E1D adds a detailed
+                      // persistence result there on purpose, so a blanket hash would forbid an
+                      // approved change instead of protecting the compatibility contract.
                       "prisma/schema.prisma", "prisma/seed.ts", "app/api/skills/debate-writing/route.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27. ${file} is byte-identical to HEAD`);
+  }
+
+  // ---- 27b. what the lib/spaced-review hash was protecting, asserted exactly --------------------------
+  // The compatibility layer must never become a writer, and the mastery contract every existing
+  // caller depends on must remain the same shape.
+  const spacedReview = read("lib/spaced-review.ts");
+  assert.ok(/export async function recordDrillMastery\(/.test(spacedReview),
+    "27b. the boolean recordDrillMastery export is still available under its original name");
+  assert.ok(/Promise<boolean>/.test(spacedReview), "27b2. and still returns a boolean");
+  assert.ok(/export async function recordDrillMasteryDetailed\(/.test(spacedReview),
+    "27b3. the detailed result is added beside it, never replacing it");
+  // Backward compatibility, run for real against the stub: true ONLY for `updated`.
+  const { recordDrillMastery, recordDrillMasteryDetailed } = await import("../lib/spaced-review");
+  assert.equal((globalThis as unknown as { prisma?: unknown }).prisma, stubPrisma,
+    "27c. control: the stub is the module's client — no PrismaClient was constructed, no database touched");
+  stub.mode = "found";
+  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }),
+    { status: "updated" }, "27d. a successful write is `updated`");
+  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }), true,
+    "27d2. and the boolean form is true only for it");
+  stub.mode = "missing";
+  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }),
+    { status: "skill-missing" }, "27e. an absent row is `skill-missing`");
+  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }), false,
+    "27e2. and the boolean form is false");
+  stub.mode = "write-throws";
+  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }),
+    { status: "write-failed" }, "27f. a failed write is `write-failed`");
+  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }), false,
+    "27f2. and the boolean form is false — the two failure modes are indistinguishable to it, as before");
+  stub.mode = "found";
+  // No /skills route gains database-writing behaviour (the compatibility surface stays read-only).
+  for (const file of ["app/(app)/skills/page.tsx", "app/(app)/skills/[slug]/page.tsx",
+                      "app/(app)/skills/[slug]/practice/page.tsx", "components/skills/skill-path.tsx",
+                      "lib/education/skills-compat.ts"]) {
+    const code = stripComments(read(file));
+    for (const banned of ["@/lib/spaced-review", "recordDrillMastery", "recordDrillMasteryDetailed",
+                          "@/lib/prisma", "prisma.", "masteryProgress"]) {
+      assert.ok(!code.includes(banned), `27g. ${file} gains no database-writing behaviour (${banned})`);
+    }
+  }
+
+  // ---- 27h. the three activation-pending DECA skills --------------------------------------------------
+  // They resolve as DECA-safe destinations BEFORE the activation script has been run, and they are
+  // kept separately identified from the seeded ten so the seed mirror above stays exact.
+  assert.deepEqual(ACTIVATION_PENDING_SKILLS.map((s) => s.slug),
+    ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations"],
+    "27h. exactly the three activation-pending skills");
+  assert.equal(INTENDED_SKILL_INVENTORY.length, SEEDED_SKILLS.length + ACTIVATION_PENDING_SKILLS.length,
+    "27h2. the intended inventory is the seeded ten plus those three, with no overlap");
+  for (const skill of ACTIVATION_PENDING_SKILLS) {
+    assert.ok(!SEEDED_SKILL_SLUGS.includes(skill.slug),
+      `27h3. "${skill.slug}" is NOT claimed as seeded — prisma/seed.ts does not create it`);
+    assert.equal(compatTrackForSlug(skill.slug), "DECA", `27h4. "${skill.slug}" resolves as DECA`);
+    const r = resolveSkillsSlug(skill.slug);
+    assert.equal(r.kind === "compatibility" ? r.destination.href : null, "/training/deca/practice",
+      `27h5. "${skill.slug}" is sent to DECA practice`);
+    assert.ok(!debateWritingPracticeSupported(skill.slug),
+      `27h6. and no DECA skill resolves into Debate writing practice`);
   }
   assert.equal(EDUCATION_LESSONS.length, 7, "28. still exactly seven canonical lessons");
   for (const held of ["debate-weighing", "debate-rebuttal-speeches", "debate-parliamentary-roles",
@@ -264,8 +354,8 @@ function main() {
   }
 
   console.log(
-    `Skills-compat smoke passed: all 44 legacy identifiers resolve — 30 seeded lesson slugs, 10 seeded skill slugs and 4 historical judge slugs — with 6 permanent redirects to real authored lessons and 38 honest compatibility pages, and zero 404s. The static manifest is proven equal to prisma/seed.ts by parsing that file, so no database is touched. Only the three hand-audited slugs redirect: debate-claim-building, debate-claim-building-1 and debate-rebuttal; debate-claim-building-2/-3 and all three debate-rebuttal-* are different subjects and render the compatibility state rather than silently becoming another lesson. All four aliases now have real behaviour — CWI, refutation and signposting redirect canonically (signposting's targetKind corrected from skill to lesson), and weighing is compatibility-active because its authored lesson is held. The judge producer emits only resolvable ids, the four broken AI fallbacks are empty rather than renamed onto retired-track content, the seed-content rendering path and every generic substitute are gone, no percentage or mastery claim survives on either surface, XP appears exactly once and only beside the Debate practice that awards it, and no DECA, HOSA, retired Model UN or unknown slug can reach a Debate motion — including from the Study Arcade review card, which now names its own track's destination. ${controlsRun.length} alias controls each produced their exact issue code.`
+    `Skills-compat smoke passed: all 44 legacy identifiers resolve — 30 seeded lesson slugs, 10 seeded skill slugs and 4 historical judge slugs — with 6 permanent redirects to real authored lessons and 38 honest compatibility pages, and zero 404s. The static manifest is proven equal to prisma/seed.ts by parsing that file, so no database is touched. Only the three hand-audited slugs redirect: debate-claim-building, debate-claim-building-1 and debate-rebuttal; debate-claim-building-2/-3 and all three debate-rebuttal-* are different subjects and render the compatibility state rather than silently becoming another lesson. All four aliases now have real behaviour — CWI, refutation and signposting redirect canonically (signposting's targetKind corrected from skill to lesson), and weighing is compatibility-active because its authored lesson is held. The judge producer emits only resolvable ids, the four broken AI fallbacks are empty rather than renamed onto retired-track content, the seed-content rendering path and every generic substitute are gone, no percentage or mastery claim survives on either surface, XP appears exactly once and only beside the Debate practice that awards it, and no DECA, HOSA, retired Model UN or unknown slug can reach a Debate motion — including from the Study Arcade review card, which now names its own track's destination. The two historical controls are pinned to ${PRE_M13E1C.slice(0, 8)} rather than a moving HEAD, so they prove the fiction existed instead of silently expiring the moment it was removed. lib/spaced-review.ts is no longer blanket-hashed: recordDrillMastery keeps its boolean export and returns true only for 'updated', false for both 'skill-missing' and 'write-failed', proven against a stub client with no database contact, and the three activation-pending DECA drill skills resolve to /training/deca/practice while staying out of the seed mirror until the activation script is run. ${controlsRun.length} alias controls each produced their exact issue code.`
   );
 }
 
-main();
+main().catch((e) => { console.error(e); process.exit(1); });

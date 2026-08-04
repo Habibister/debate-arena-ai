@@ -131,16 +131,30 @@ function masteryLevelFor(score: number): "MASTERED" | "PRACTICING" | "LEARNING" 
   return "LEARNING";
 }
 
-export async function recordDrillMastery(params: {
+/**
+ * Why the boolean above is not enough (M13E1D).
+ *
+ * `false` conflated two completely different facts: "this skill has no row yet" and "the write
+ * threw". A learner told "this skill isn't set up for progress tracking yet" after a transient
+ * database error has been told something false, and the true cause — that their real work was
+ * graded but not saved — is exactly what they needed to know in order to try again.
+ *
+ * So the write reports which of the three actually happened. Note that an exception raised BY THE
+ * LOOKUP ITSELF is `write-failed`, never `skill-missing`: a query that could not run has not
+ * established that the row is absent.
+ */
+export type DrillMasteryOutcome = { status: "updated" } | { status: "skill-missing" } | { status: "write-failed" };
+
+export async function recordDrillMasteryDetailed(params: {
   userId: string;
   skillSlug: string;
   scorePercent: number;
   passed: boolean;
-}): Promise<boolean> {
+}): Promise<DrillMasteryOutcome> {
   const { userId, skillSlug, scorePercent, passed } = params;
   try {
     const skill = await prisma.skill.findUnique({ where: { slug: skillSlug }, select: { id: true } });
-    if (!skill) return false; // skill not seeded — do not fabricate progress
+    if (!skill) return { status: "skill-missing" }; // skill not seeded — do not fabricate progress
 
     const dueForReview = await isReviewDue(userId, skill.id);
     const existing = await prisma.masteryProgress.findUnique({
@@ -179,9 +193,24 @@ export async function recordDrillMastery(params: {
     }
 
     await recordPracticeOutcome({ userId, skillId: skill.id, passed });
-    return true;
+    return { status: "updated" };
   } catch {
     // never break practice if the write fails
-    return false;
+    return { status: "write-failed" };
   }
+}
+
+/**
+ * The original boolean contract, unchanged for every existing caller (the Debate concept-drill
+ * submit route and anything else already reading it): `true` only when the write landed, `false`
+ * for a missing skill AND for a failed write — exactly as before.
+ */
+export async function recordDrillMastery(params: {
+  userId: string;
+  skillSlug: string;
+  scorePercent: number;
+  passed: boolean;
+}): Promise<boolean> {
+  const outcome = await recordDrillMasteryDetailed(params);
+  return outcome.status === "updated";
 }

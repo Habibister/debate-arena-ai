@@ -660,11 +660,17 @@ function main() {
     assert.ok(!skillPathCode.includes(gone), `the fictional index element "${gone}" is gone`);
   }
   assert.ok(!/\d+\s*%|<Progress/.test(skillPathCode), "no fake percentage or progress bar remains on the index");
-  // Control: HEAD really did carry what these scans look for, so "absent" cannot mean "looked in the
+  // Control: the fictional index copy really did exist, so "absent" above cannot mean "looked in the
   // wrong place".
-  const skillPathAtHead = execSync("git show HEAD:components/skills/skill-path.tsx", { encoding: "utf8" });
+  //
+  // PINNED, NOT `HEAD`. This control read `git show HEAD:` until M13E1D. That was wrong: `HEAD` moves,
+  // and the commit that REMOVED this copy (M13E1C, a8cbe345) is itself now `HEAD` — so the control
+  // started failing the moment the change it was written to verify was committed, and would break
+  // again after every future commit. A historical control must name the history it means.
+  const PRE_M13E1C = "5bf3077dd83d1598b42d2dba227b99defb9df1ad"; // M13E1C's parent — the last commit with the fiction
+  const skillPathBefore = execSync(`git show ${PRE_M13E1C}:components/skills/skill-path.tsx`, { encoding: "utf8" });
   for (const present of ["Mastery Map", "Complete the earlier lessons to unlock", "public-speaking-delivery-1"]) {
-    assert.ok(skillPathAtHead.includes(present), `control: HEAD carried "${present}"`);
+    assert.ok(skillPathBefore.includes(present), `control: ${PRE_M13E1C.slice(0, 8)} carried "${present}"`);
   }
   // The index destinations, proven from the production registry rather than from markup.
   assert.deepEqual(educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id),

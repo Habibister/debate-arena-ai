@@ -62,11 +62,23 @@ function main() {
     assert.ok(entry.provenance === MIGRATED_DEBATE_PROVENANCE, `3d. "${id}" uses the shared provenance object`);
   }
 
-  // ---- 4. the migration source file is untouched -------------------------------------------------
+  // ---- 4. the migration source files are untouched -------------------------------------------------
+  //
+  // `lib/spaced-review.ts` was in this list until M13E1D, which intentionally adds a DETAILED
+  // persistence result beside the existing boolean export. A blanket snapshot cannot distinguish
+  // "the education migration leaked into the mastery writer" from "an approved milestone extended
+  // it", so it is replaced at 4b by assertions on the property that actually matters: the education
+  // surface still does not touch mastery, and the existing contract is extended, never replaced.
+  //
+  // The canonical lesson ROUTES are added here — M13E1B's renderers were pinned but the two routes
+  // that mount them were not, so a change there would have gone unnoticed.
   for (const file of ["lib/learning-content.ts", "lib/lessons.ts", "lib/roleplay-lessons.ts",
                       "components/lessons/lesson-view.tsx", "components/lessons/lesson-practice.tsx",
                       "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
-                      "lib/authored-lesson-progress.ts", "lib/spaced-review.ts", "lib/debate-drills.ts",
+                      "components/lessons/concept-education-lesson-view.tsx",
+                      "components/lessons/concept-education-lesson-practice.tsx",
+                      "app/(app)/lessons/page.tsx", "app/(app)/lessons/[slug]/page.tsx",
+                      "lib/authored-lesson-progress.ts", "lib/debate-drills.ts",
                       // app/(app)/skills/[slug]/page.tsx is deliberately absent: M13E1C rewrites that
                       // route. Its INDEX page stays pinned here, and the compatibility contract that
                       // replaced its body is owned by scripts/skills-compat-smoke.ts.
@@ -74,6 +86,46 @@ function main() {
                       "lib/assignments.ts", "prisma/schema.prisma", "prisma/seed.ts",
                       "app/api/skills/debate-writing/route.ts"]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
+  }
+
+  // ---- 4b. what the lib/spaced-review snapshot was really protecting ---------------------------------
+  // (i) The education surface still writes no mastery. Proven by import graph, not by a file hash:
+  //     no canonical lesson route, renderer or registry module may reach the mastery writer at all.
+  for (const file of ["app/(app)/lessons/page.tsx", "app/(app)/lessons/[slug]/page.tsx",
+                      "components/lessons/concept-education-lesson-view.tsx",
+                      "components/lessons/concept-education-lesson-practice.tsx",
+                      "lib/education/registry.ts", "lib/education/tracks/debate.ts",
+                      "lib/education/skills-compat.ts"]) {
+    const code = stripComments(read(file));
+    for (const banned of ["@/lib/spaced-review", "recordDrillMastery", "recordDrillMasteryDetailed",
+                          "recordPracticeOutcome", "@/lib/prisma", "MasteryProgress"]) {
+      assert.ok(!code.includes(banned), `4b. ${file} still performs no ${banned}`);
+    }
+  }
+  // (ii) The existing boolean export is EXTENDED, not replaced. Both symbols are exported, and the
+  //      boolean one is still a function with the same name every existing caller imports.
+  const spacedReview = read("lib/spaced-review.ts");
+  assert.ok(/export async function recordDrillMastery\(/.test(spacedReview),
+    "4b2. the original boolean recordDrillMastery export still exists");
+  assert.ok(/export async function recordDrillMasteryDetailed\(/.test(spacedReview),
+    "4b3. and the detailed result is an ADDITION beside it, not a rename");
+  assert.ok(/Promise<boolean>/.test(spacedReview), "4b4. the boolean return type is unchanged");
+  // The Debate caller — the reason the contract must stay backward-compatible — is untouched and
+  // still consumes the boolean form.
+  assert.equal(shaNow("app/api/debate/drills/submit/route.ts"), sha("app/api/debate/drills/submit/route.ts"),
+    "4b5. the Debate drill submit route is byte-identical to HEAD");
+  assert.ok(/await recordDrillMastery\(/.test(read("app/api/debate/drills/submit/route.ts")),
+    "4b6. and still calls the boolean export by name");
+  // (iii) M13E1D introduces no second lesson or mastery renderer. The lesson component set is fixed,
+  //       and the one component M13E1D touched reaches no lesson or education module.
+  const lessonComponents = readdirSync("components/lessons").filter((f) => /\.tsx?$/.test(f)).sort();
+  assert.deepEqual(lessonComponents,
+    ["concept-education-lesson-practice.tsx", "concept-education-lesson-view.tsx", "lesson-practice.tsx",
+     "lesson-view.tsx", "roleplay-lesson-practice.tsx", "roleplay-lesson-view.tsx"],
+    "4b7. no new lesson renderer was introduced");
+  const drills = stripComments(read("components/training/concept-drills.tsx"));
+  for (const banned of ["lib/education", "lib/lessons", "lib/learning-content", "LessonView", "LessonPractice"]) {
+    assert.ok(!drills.includes(banned), `4b8. the drill runner is not a second lesson renderer (${banned})`);
   }
 
   // ---- 5-8. registry and discovery inventory -----------------------------------------------------
@@ -291,7 +343,7 @@ function main() {
   assert.ok(trackFile.includes("throw new Error"), "selector: it fails loudly rather than degrading");
 
   console.log(
-    `Education-migration smoke passed: four already-authored Debate lessons — Guide the judge through your speech, Create direct clash, Answer with refutation, and Build a constructive speech — are now learner-visible, and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, /skills page, assignment file and Prisma file are byte-identical to HEAD. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that ends honestly at null. Only debate-refutation names a seeded skill, as association alone: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All five held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page.`
+    `Education-migration smoke passed: four already-authored Debate lessons — Guide the judge through your speech, Create direct clash, Answer with refutation, and Build a constructive speech — are now learner-visible, and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, /skills page, assignment file and Prisma file are byte-identical to HEAD. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that ends honestly at null. Only debate-refutation names a seeded skill, as association alone: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All five held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
   );
 }
 

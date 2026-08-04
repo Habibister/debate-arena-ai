@@ -95,6 +95,31 @@ export const SEEDED_SKILLS: readonly CompatSkill[] = [
 ] as const;
 
 /**
+ * DECA concept-drill skills that exist in the drill bank but NOT yet in the database (M13E1D).
+ *
+ * `lib/deca-drills.ts` has always mapped four areas to four skill slugs, but only `deca-marketing`
+ * was ever seeded. The other three are created by `scripts/seed-deca-drill-skills.ts`, which is a
+ * committed operational script run deliberately — not by `prisma/seed.ts`.
+ *
+ * They are kept OUT of `SEEDED_SKILLS` on purpose: that constant is proven byte-equal to
+ * `prisma/seed.ts` by parsing the seed, and it must stay exactly that. This list is the other half
+ * of the intended inventory, and `INTENDED_SKILL_INVENTORY` below is what resolution actually uses
+ * — so a due review or a legacy `/skills` URL for one of these lands on the DECA destination rather
+ * than 404ing, whether or not the activation script has been run yet.
+ *
+ * No lessons: these skills carry drills, not authored instruction, and inventing lesson slugs for
+ * them would be exactly the fiction M13E1C removed.
+ */
+export const ACTIVATION_PENDING_SKILLS: readonly CompatSkill[] = [
+  { slug: "deca-performance-indicators", name: "Performance Indicators", track: "DECA", lessonSlugs: [], lessonTitles: [] },
+  { slug: "deca-business-reasoning", name: "Business Reasoning", track: "DECA", lessonSlugs: [], lessonTitles: [] },
+  { slug: "deca-customer-relations", name: "Customer Relations", track: "DECA", lessonSlugs: [], lessonTitles: [] }
+] as const;
+
+/** Every skill the platform intends to persist: the ten seeded plus the three activation-pending. */
+export const INTENDED_SKILL_INVENTORY: readonly CompatSkill[] = [...SEEDED_SKILLS, ...ACTIVATION_PENDING_SKILLS];
+
+/**
  * The ONLY legacy slugs that redirect to authored instruction.
  *
  * Hand-audited one at a time, never derived. `debate-claim-building-1` is titled "Claim, warrant,
@@ -125,7 +150,10 @@ export const COMPAT_TRACK_DESTINATION: Readonly<Record<CompatTrack, { href: stri
 
 // --- lookups ------------------------------------------------------------------------------------
 
-const SKILL_BY_SLUG = new Map(SEEDED_SKILLS.map((skill) => [skill.slug, skill]));
+/** Resolution reads the INTENDED inventory, so an activation-pending skill still resolves. */
+const SKILL_BY_SLUG = new Map(INTENDED_SKILL_INVENTORY.map((skill) => [skill.slug, skill]));
+/** The seed-only view, kept separate so the alias target space stays exactly `prisma/seed.ts`. */
+const SEEDED_SKILL_BY_SLUG = new Map(SEEDED_SKILLS.map((skill) => [skill.slug, skill]));
 const LESSON_INDEX = new Map<string, { skill: CompatSkill; title: string; step: number }>();
 for (const skill of SEEDED_SKILLS) {
   skill.lessonSlugs.forEach((slug, index) => {
@@ -136,14 +164,16 @@ for (const skill of SEEDED_SKILLS) {
 /** Every slug the static manifest knows — the exact set `prisma/seed.ts` creates. */
 export const SEEDED_SKILL_SLUGS: readonly string[] = SEEDED_SKILLS.map((s) => s.slug);
 export const SEEDED_LESSON_SLUGS: readonly string[] = SEEDED_SKILLS.flatMap((s) => [...s.lessonSlugs]);
+/** The seeded ten plus the three activation-pending DECA drill skills. */
+export const INTENDED_SKILL_SLUGS: readonly string[] = INTENDED_SKILL_INVENTORY.map((s) => s.slug);
 
 export function seededSkillBySlug(slug: string): CompatSkill | undefined {
-  return SKILL_BY_SLUG.get(slug);
+  return SEEDED_SKILL_BY_SLUG.get(slug);
 }
 
 /** True when the slug is a seeded skill OR a seeded lesson — the compatibility-alias target space. */
 export function isSeededSlug(slug: string): boolean {
-  return SKILL_BY_SLUG.has(slug) || LESSON_INDEX.has(slug);
+  return SEEDED_SKILL_BY_SLUG.has(slug) || LESSON_INDEX.has(slug);
 }
 
 /** The canonical lesson id a slug resolves to, or null. Consulted before any compatibility state. */

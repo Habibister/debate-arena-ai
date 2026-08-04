@@ -9,7 +9,7 @@ import {
   type DrillEvidenceStatus
 } from "@/lib/debate-drills";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { recordDrillMastery } from "@/lib/spaced-review";
+import { recordDrillMasteryDetailed, serializeReviewResult, type ReviewResultDTO } from "@/lib/spaced-review";
 import { debateDrillSubmitRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -29,10 +29,15 @@ export const runtime = "nodejs";
 // the UI's own padding turned a genuine 6-of-9 into 85%/MASTERED with no bad intent at all.
 //
 // `persistenceStatus` is reported separately from `evidenceStatus` because "we did not try" and "the
-// write did not land" are different things to tell a learner. There is deliberately NO
-// `reviewScheduled` field: `recordPracticeOutcome` swallows its own failures, so this route cannot
-// honestly claim a review row exists, and it will not imply one.
-type PersistenceStatus = "not-attempted" | "updated" | "not-saved";
+// write did not land" are different things to tell a learner.
+//
+// M13E1G: this route used the BOOLEAN helper, so every `false` became `not-saved` and the learner was
+// told "progress could not be saved". Under winner-only mastery a concurrency no-op also returns
+// false — nothing failed, another submission simply won the due review window — so the boolean form
+// can no longer express the truth here. The detailed outcome is consumed instead, and the exact
+// review mutation is serialized rather than asserted. `not-saved` keeps its existing spelling and
+// meaning: a mastery persistence exception, nothing else.
+type PersistenceStatus = "not-attempted" | "updated" | "preserved-concurrent" | "skill-missing" | "not-saved";
 
 export async function POST(request: Request) {
   try {
@@ -40,6 +45,8 @@ export async function POST(request: Request) {
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     const input = await parseJson(request, debateDrillSubmitRequestSchema);
 
+    // ONE server timestamp governs this whole submission.
+    const now = new Date();
     const result = gradeDrillAnswers(input.answers);
     const evidenceByArea = new Map(buildDrillEvidence(input.answers).map((e) => [e.area, e]));
 
@@ -61,15 +68,20 @@ export async function POST(request: Request) {
       const plan = evidence ? debateDrillPersistenceRequest(evidence) : null;
 
       let persistenceStatus: PersistenceStatus = "not-attempted";
+      let review: ReviewResultDTO | null = null;
       if (plan && skill.skillSlug) {
-        const wrote = await recordDrillMastery({
+        const outcome = await recordDrillMasteryDetailed({
           userId: user.id,
           skillSlug: skill.skillSlug,
           scorePercent: plan.scorePercent,
-          passed: plan.passed
+          passed: plan.passed,
+          now
         });
-        persistenceStatus = wrote ? "updated" : "not-saved";
-        if (wrote) wroteSkills.push(skill.skillSlug);
+        // `write-failed` keeps this route's existing public spelling, `not-saved`.
+        persistenceStatus = outcome.status === "write-failed" ? "not-saved" : outcome.status;
+        review = outcome.review ? serializeReviewResult(outcome.review) : null;
+        // Only an actual mastery write earns the slug — never a concurrency no-op.
+        if (outcome.status === "updated") wroteSkills.push(skill.skillSlug);
       }
 
       perSkill.push({
@@ -80,6 +92,7 @@ export async function POST(request: Request) {
         evidenceScore,
         evidenceStatus,
         persistenceStatus,
+        review,
         // Overrides the raw grader's duplicate-weighted `passed`. This is the last key on purpose.
         passed
       });

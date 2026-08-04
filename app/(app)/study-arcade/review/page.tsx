@@ -78,9 +78,11 @@ export default async function ReviewSessionPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {review.reviewCount > 0
-                    ? `Survived ${review.reviewCount} ${review.reviewCount === 1 ? "review" : "reviews"} so far — due since ${review.nextReviewAt.toISOString().slice(0, 10)}.`
-                    : `First review — due since ${review.nextReviewAt.toISOString().slice(0, 10)}.`}
+                    {/* M13E1G: the numeric claim is gone. `reviewCount` is a ladder counter, and rows written
+                        before the due-gate could be inflated by rapid submissions, so it cannot honestly be read
+                        as reviews survived, reassessments completed, or practices done. The due date is the one
+                        fact this card can prove. */}
+                    {`Due for review since ${review.nextReviewAt.toISOString().slice(0, 10)}.`}
                 </p>
                 <span className="mt-2 inline-block text-sm font-semibold text-primary">
                   {reassessable ? "Reassess now" : fallback.label}

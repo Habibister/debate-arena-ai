@@ -313,16 +313,39 @@ async function main() {
   assert.ok(!/passed: result\.passed/.test(routeSrc), "29b. never the raw duplicate-weighted one");
 
   // ---- 30, 32-35. everything outside the boundary is byte-identical to HEAD -----------------------------------------
+  // The DECA and Debate routes/components and lib/spaced-review.ts were byte-pinned here until
+  // M13E1G, which deliberately due-gates the shared ladder and threads the review result into both
+  // drill routes. A blanket hash would forbid that approved change rather than protect HOSA, so it is
+  // replaced below by assertions on what actually matters to THIS suite: HOSA stays review-only, its
+  // evidence contract is untouched, and the other tracks did not drag HOSA along with them.
   for (const file of ["app/api/hosa/medterm/session/route.ts",                                  // 30 HOSA session
-                      "lib/deca-drills.ts", "app/api/deca/drills/submit/route.ts",              // 32 DECA
-                      "components/training/concept-drills.tsx",
-                      "lib/debate-drills.ts", "app/api/debate/drills/submit/route.ts",          // 33 Debate
-                      "components/training/debate-drills.tsx",
-                      "lib/spaced-review.ts",                                                   // shared writer
+                      "lib/deca-drills.ts",                                                     // 32 DECA bank
+                      "lib/debate-drills.ts",                                                   // 33 Debate bank
                       "prisma/schema.prisma", "prisma/seed.ts",                                 // 34/35 schema + seed
                       "lib/roleplay-lessons.ts", "lib/hosa-events.ts"]) {
     assert.equal(nowSha(file), headSha(file), `30/32-35. ${file} is byte-identical to HEAD`);
   }
+  // 32b/33b. The other tracks' evidence FLOORS and dedup are unchanged by the ladder work.
+  const { DECA_DRILL_REQUIRED_UNIQUE } = await import("../lib/deca-drills");
+  const { DEBATE_DRILL_REQUIRED_UNIQUE } = await import("../lib/debate-drills");
+  assert.equal(DECA_DRILL_REQUIRED_UNIQUE, 5, "32b. the DECA evidence floor is still 5");
+  assert.equal(DEBATE_DRILL_REQUIRED_UNIQUE, 5, "33b. and the Debate floor is still 5");
+  assert.equal(HOSA_MEDTERM_REQUIRED_UNIQUE, 10, "30b. while HOSA keeps its own floor of 10");
+  assert.equal(HOSA_MEDTERM_REQUIRED_AREAS, 3, "30c. across three areas");
+  // 32c/33c. Neither drill route may reach a HOSA helper, and HOSA may not reach theirs.
+  for (const [file, foreign] of [["app/api/deca/drills/submit/route.ts", "hosa-medterm"],
+                                 ["app/api/debate/drills/submit/route.ts", "hosa-medterm"]] as const) {
+    assert.ok(!stripComments(read(file)).includes(foreign), `32c/33c. ${file} does not reach into HOSA`);
+  }
+  // 35b. lib/spaced-review.ts keeps the boolean export the HOSA route never needs, and HOSA still
+  // calls only the review helper — it may ignore the detailed result truthfully because it writes
+  // no mastery at all.
+  const spacedReview = stripComments(read("lib/spaced-review.ts"));
+  assert.ok(/export async function recordDrillMastery\(/.test(spacedReview), "35b. the boolean export still exists");
+  assert.ok(/Promise<boolean>/.test(spacedReview), "35b2. and still returns a boolean");
+  assert.ok(/export async function recordPracticeOutcome\(/.test(spacedReview), "35c. the review helper still exists");
+  assert.equal((routeSrc.match(/recordPracticeOutcome\(/g) ?? []).length, 1,
+    "35d. and HOSA still calls it exactly once");
 
   // ---- 31f. the bank CONTENT is untouched — answers and explanations included --------------------------------------
   const bankAtParent = execSync(`git show ${PRE_M13E1F}:lib/hosa-medterm.ts`, { encoding: "utf8" });

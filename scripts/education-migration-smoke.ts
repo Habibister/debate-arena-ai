@@ -86,8 +86,10 @@ async function main() {
                       // route. Its INDEX page stays pinned here, and the compatibility contract that
                       // replaced its body is owned by scripts/skills-compat-smoke.ts.
                       "app/(app)/skills/page.tsx",
-                      "lib/assignments.ts", "prisma/schema.prisma", "prisma/seed.ts",
-                      "app/api/skills/debate-writing/route.ts"]) {
+                      // app/api/skills/debate-writing/route.ts is deliberately absent from M13E1G
+                      // onward: that milestone reorders its review/mastery writes so a due window has
+                      // one winner. What this suite protects is asserted at 4b13 below.
+                      "lib/assignments.ts", "prisma/schema.prisma", "prisma/seed.ts"]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
   }
 
@@ -116,10 +118,28 @@ async function main() {
   // The Debate caller — the reason the contract must stay backward-compatible — still consumes the
   // boolean form. It is no longer byte-pinned: M13E1E rewrites its persistence GATING while keeping
   // the same call, so the assertion that matters is the call shape, not the file hash.
-  assert.ok(/const wrote = await recordDrillMastery\(/.test(read("app/api/debate/drills/submit/route.ts")),
-    "4b5. the Debate drill submit route still calls the boolean export by name");
-  assert.ok(!read("app/api/debate/drills/submit/route.ts").includes("recordDrillMasteryDetailed"),
-    "4b6. and has not switched to the detailed form");
+  // 4b5/4b6 INVERTED at M13E1G. The Debate route used the boolean helper, which cannot distinguish a
+  // deliberate concurrency no-op from a write failure — so it told learners "progress could not be
+  // saved" when nothing had failed. It now consumes the detailed outcome. The guarantee that still
+  // matters is that the BOOLEAN EXPORT survives unchanged for anything else that reads it.
+  const debateRoute = read("app/api/debate/drills/submit/route.ts");
+  assert.ok(/recordDrillMasteryDetailed\(/.test(debateRoute),
+    "4b5. the Debate drill submit route consumes the detailed outcome");
+  assert.ok(!/recordDrillMastery\(/.test(stripComments(debateRoute)),
+    "4b5b. and no longer calls the boolean form, which could not express a concurrency no-op");
+  assert.ok(/export async function recordDrillMastery\(/.test(spacedReview),
+    "4b6. the boolean export still exists for every other caller");
+  assert.ok(/Promise<boolean>/.test(spacedReview), "4b6b. and still returns a boolean");
+  assert.ok(/outcome\.status === "updated"/.test(stripComments(debateRoute)),
+    "4b6c. with only an actual mastery update entering wroteSkills");
+  // 4b13. Debate WRITING keeps its response shape, its XP and its grading; only the order changed.
+  const writing = stripComments(read("app/api/skills/debate-writing/route.ts"));
+  assert.ok(/xPLog\.create/.test(writing) && /XP_REWARDS\.lessonCompleted/.test(writing),
+    "4b13. Debate writing still awards XP");
+  assert.ok(/gradeDebateWritingResponse\(/.test(writing), "4b13b. and still grades the same way");
+  assert.ok(writing.indexOf("recordPracticeOutcome(") < writing.indexOf("prisma.$transaction"),
+    "4b13c. with review resolved BEFORE the mastery/XP transaction");
+  assert.ok(!/isReviewDue\(/.test(writing), "4b13d. and no independent due-check remains");
   // 4b9. The LESSON practice path is what this suite protects, and it is untouched by M13E1E: the one
   // authored lesson using LessonPractice reuses the Debate drill endpoints, so prove the lesson
   // renderer and its component are byte-identical even though the drill bank changed.

@@ -9,50 +9,225 @@ import { prisma } from "@/lib/prisma";
 // before db push), the review system degrades to "nothing due" instead of breaking pages.
 
 export const REVIEW_INTERVALS_DAYS = [1, 3, 7, 14] as const;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** How far two engine-written timestamps on one row may sit apart and still be the same write. */
+const SAME_WRITE_TOLERANCE_MS = 1000;
 
 export function intervalDaysFor(reviewCount: number): number {
   return REVIEW_INTERVALS_DAYS[Math.min(Math.max(reviewCount, 0), REVIEW_INTERVALS_DAYS.length - 1)];
 }
 
-function daysFromNow(days: number): Date {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+function daysFrom(now: Date, days: number): Date {
+  return new Date(now.getTime() + days * DAY_MS);
 }
 
-// True when this skill's review was due at practice time — the practice route uses this to apply
-// review semantics (failed due review = mastery knock-down) instead of normal practice semantics.
-export async function isReviewDue(userId: string, skillId: string): Promise<boolean> {
+// True when this skill's review was due at practice time.
+//
+// Still exported for read-only callers, but `recordPracticeOutcome` no longer uses it: due-ness and
+// the write must be decided from ONE read against ONE timestamp, or an attempt can cross the due
+// boundary between the check and the mutation.
+export async function isReviewDue(userId: string, skillId: string, now: Date = new Date()): Promise<boolean> {
   try {
     const row = await prisma.skillReviewSchedule.findUnique({
       where: { userId_skillId: { userId, skillId } },
       select: { nextReviewAt: true }
     });
-    return Boolean(row && row.nextReviewAt <= new Date());
+    return Boolean(row && row.nextReviewAt <= now);
   } catch {
     return false;
   }
 }
 
-// Called after every graded practice for a skill. Passing advances the ladder; failing resets it.
-export async function recordPracticeOutcome(params: { userId: string; skillId: string; passed: boolean }): Promise<void> {
-  const { userId, skillId, passed } = params;
-  try {
-    const existing = await prisma.skillReviewSchedule.findUnique({ where: { userId_skillId: { userId, skillId } } });
-    const reviewCount = passed ? (existing?.reviewCount ?? 0) + 1 : 0;
-    const nextReviewAt = daysFromNow(intervalDaysFor(reviewCount));
-    const lastOutcome = passed ? "passed" : "failed";
+// --- The due-gated review ladder (M13E1G) -----------------------------------------------------------
+//
+// WHAT WAS WRONG. The previous implementation incremented `reviewCount` BEFORE indexing the interval
+// table, so index 0 was unreachable on a pass and the very first success scheduled +3 days rather
+// than the documented +1. It never consulted due-ness at all, so four submissions seconds apart
+// walked 3d -> 7d -> 14d -> 14d: "survived spaced reassessment" could be manufactured in under a
+// minute. And a failure reset the ladder from ANY state, so ordinary practice a week before a review
+// was due still punished the learner. Finally it returned `void` from inside a bare catch, so no
+// caller could ever know whether a row had been written — which is how three learner-facing surfaces
+// came to claim a review was scheduled when nothing had been.
+//
+// THE CONTRACT NOW. Exactly one submission may mutate a given due window:
+//
+//   no row            -> create a 1-day first schedule (count 1 on a pass, 0 on a fail)
+//   row, not due      -> NO WRITE. The schedule is preserved exactly as it stands.
+//   row, due/overdue  -> compare-and-set against the exact snapshot that was read. A pass advances
+//                        one rung using the PRE-increment count; a failure resets to count 0 / 1 day.
+//
+// The CAS predicate matches `reviewCount` AND `nextReviewAt` exactly, not merely `nextReviewAt <= now`,
+// so a row another writer has already moved — in either direction — is never overwritten. The loser
+// of a race performs no write and says so; it is a deliberate no-op, not a failure.
+//
+// NOT replay-resistant: nothing binds a submission to a served session, and this milestone does not
+// claim otherwise.
 
-    if (existing) {
-      await prisma.skillReviewSchedule.update({
-        where: { id: existing.id },
-        data: { reviewCount, nextReviewAt, lastOutcome }
-      });
-    } else {
-      await prisma.skillReviewSchedule.create({
-        data: { userId, skillId, reviewCount, nextReviewAt, lastOutcome }
-      });
+export type ReviewPracticeResult =
+  | { status: "created"; dueState: "no-schedule"; previousReviewCount: null; reviewCount: number;
+      previousNextReviewAt: null; nextReviewAt: Date; scheduleChanged: true }
+  | { status: "advanced"; dueState: "due"; previousReviewCount: number; reviewCount: number;
+      previousNextReviewAt: Date; nextReviewAt: Date; scheduleChanged: true }
+  | { status: "reset-after-due-failure"; dueState: "due"; previousReviewCount: number; reviewCount: 0;
+      previousNextReviewAt: Date; nextReviewAt: Date; scheduleChanged: true }
+  | { status: "preserved-not-due"; dueState: "not-due"; previousReviewCount: number; reviewCount: number;
+      previousNextReviewAt: Date; nextReviewAt: Date; scheduleChanged: false }
+  | { status: "preserved-concurrent-existing"; dueState: "due"; previousReviewCount: number; reviewCount: number;
+      previousNextReviewAt: Date; nextReviewAt: Date; scheduleChanged: false }
+  // A create race has no previous row and no due determination, so both are null rather than invented.
+  | { status: "preserved-concurrent-created"; dueState: "no-schedule"; previousReviewCount: null; reviewCount: number;
+      previousNextReviewAt: null; nextReviewAt: Date; scheduleChanged: false }
+  | { status: "write-failed"; dueState: "unknown"; scheduleChanged: false };
+
+/** JSON-safe view for API responses. Every Date becomes an explicit ISO string — never implicit. */
+export type ReviewResultDTO = {
+  status: ReviewPracticeResult["status"];
+  dueState: "due" | "not-due" | "no-schedule" | "unknown";
+  previousReviewCount: number | null;
+  reviewCount: number | null;
+  previousNextReviewAt: string | null;
+  nextReviewAt: string | null;
+  scheduleChanged: boolean;
+};
+
+export function serializeReviewResult(result: ReviewPracticeResult): ReviewResultDTO {
+  if (result.status === "write-failed") {
+    return {
+      status: result.status,
+      dueState: result.dueState,
+      previousReviewCount: null,
+      reviewCount: null,
+      previousNextReviewAt: null,
+      nextReviewAt: null,
+      scheduleChanged: false
+    };
+  }
+  return {
+    status: result.status,
+    dueState: result.dueState,
+    previousReviewCount: result.previousReviewCount,
+    reviewCount: result.reviewCount,
+    previousNextReviewAt: result.previousNextReviewAt ? result.previousNextReviewAt.toISOString() : null,
+    nextReviewAt: result.nextReviewAt.toISOString(),
+    scheduleChanged: result.scheduleChanged
+  };
+}
+
+type ScheduleRow = {
+  id: string;
+  reviewCount: number;
+  nextReviewAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/**
+ * Is a refetched row the untouched first schedule another submission just created?
+ *
+ * Compares the row's own timestamps to EACH OTHER, never to this request's clock: two concurrent
+ * requests generate their own `now` milliseconds apart, so an equality test against our `now` would
+ * reject every genuine race. `createdAt` and `updatedAt` are both engine-written, and only
+ * `updatedAt` moves on a later write — so an untouched row has them together, and a first schedule
+ * sits exactly one day after its own creation. The nearest thing this could be confused with is a
+ * 3-day advance, two days away.
+ */
+function isUntouchedFirstSchedule(row: ScheduleRow, now: Date): boolean {
+  if (row.reviewCount !== 0 && row.reviewCount !== 1) return false;
+  if (row.nextReviewAt <= now) return false; // already due — not a fresh first schedule
+  const untouched = Math.abs(row.updatedAt.getTime() - row.createdAt.getTime()) <= SAME_WRITE_TOLERANCE_MS;
+  const firstShape = Math.abs(row.nextReviewAt.getTime() - row.createdAt.getTime() - DAY_MS) <= SAME_WRITE_TOLERANCE_MS;
+  return untouched && firstShape;
+}
+
+const SCHEDULE_FIELDS = { id: true, reviewCount: true, nextReviewAt: true, createdAt: true, updatedAt: true } as const;
+
+/**
+ * Record one graded practice against the spaced-review ladder.
+ *
+ * Returns the exact mutation (or non-mutation) so callers can tell a learner the truth. Existing
+ * callers may keep ignoring the return value — the previous signature was `Promise<void>` and every
+ * call site discarded it.
+ */
+export async function recordPracticeOutcome(params: {
+  userId: string;
+  skillId: string;
+  passed: boolean;
+  /** Server-only. One timestamp governs the whole submission; no client input reaches this. */
+  now?: Date;
+}): Promise<ReviewPracticeResult> {
+  const { userId, skillId, passed } = params;
+  const now = params.now ?? new Date();
+  const lastOutcome = passed ? "passed" : "failed";
+
+  try {
+    const existing = (await prisma.skillReviewSchedule.findUnique({
+      where: { userId_skillId: { userId, skillId } },
+      select: SCHEDULE_FIELDS
+    })) as ScheduleRow | null;
+
+    // ---- no row: create the first schedule, always one day out -------------------------------------
+    if (!existing) {
+      const reviewCount = passed ? 1 : 0;
+      const nextReviewAt = daysFrom(now, 1);
+      try {
+        await prisma.skillReviewSchedule.create({ data: { userId, skillId, reviewCount, nextReviewAt, lastOutcome } });
+        return { status: "created", dueState: "no-schedule", previousReviewCount: null, reviewCount,
+                 previousNextReviewAt: null, nextReviewAt, scheduleChanged: true };
+      } catch {
+        // Only a unique-key conflict can legitimately land here: another submission created the row
+        // between our read and our write. Refetch and accept it ONLY if it is that untouched row.
+        const raced = (await prisma.skillReviewSchedule.findUnique({
+          where: { userId_skillId: { userId, skillId } },
+          select: SCHEDULE_FIELDS
+        })) as ScheduleRow | null;
+        if (raced && isUntouchedFirstSchedule(raced, now)) {
+          return { status: "preserved-concurrent-created", dueState: "no-schedule", previousReviewCount: null,
+                   reviewCount: raced.reviewCount, previousNextReviewAt: null, nextReviewAt: raced.nextReviewAt,
+                   scheduleChanged: false };
+        }
+        return { status: "write-failed", dueState: "unknown", scheduleChanged: false };
+      }
     }
+
+    // ---- row exists but the review is not due yet: preserve it untouched ---------------------------
+    if (existing.nextReviewAt > now) {
+      return { status: "preserved-not-due", dueState: "not-due", previousReviewCount: existing.reviewCount,
+               reviewCount: existing.reviewCount, previousNextReviewAt: existing.nextReviewAt,
+               nextReviewAt: existing.nextReviewAt, scheduleChanged: false };
+    }
+
+    // ---- due or overdue: compare-and-set against the exact snapshot we read -------------------------
+    const priorCount = existing.reviewCount;
+    const priorNext = existing.nextReviewAt;
+    const reviewCount = passed ? priorCount + 1 : 0;
+    // Pre-increment indexing: the first pass takes index 0 (1 day), which the old code could never reach.
+    const nextReviewAt = daysFrom(now, passed ? intervalDaysFor(priorCount) : intervalDaysFor(0));
+
+    const { count } = await prisma.skillReviewSchedule.updateMany({
+      where: { userId, skillId, reviewCount: priorCount, nextReviewAt: priorNext },
+      data: { reviewCount, nextReviewAt, lastOutcome }
+    });
+
+    if (count === 1) {
+      return passed
+        ? { status: "advanced", dueState: "due", previousReviewCount: priorCount, reviewCount,
+            previousNextReviewAt: priorNext, nextReviewAt, scheduleChanged: true }
+        : { status: "reset-after-due-failure", dueState: "due", previousReviewCount: priorCount, reviewCount: 0,
+            previousNextReviewAt: priorNext, nextReviewAt, scheduleChanged: true };
+    }
+
+    // CAS matched nothing: another submission mutated this row first. Report what actually stands.
+    const current = (await prisma.skillReviewSchedule.findUnique({
+      where: { userId_skillId: { userId, skillId } },
+      select: SCHEDULE_FIELDS
+    })) as ScheduleRow | null;
+    if (!current) return { status: "write-failed", dueState: "unknown", scheduleChanged: false };
+    return { status: "preserved-concurrent-existing", dueState: "due", previousReviewCount: priorCount,
+             reviewCount: current.reviewCount, previousNextReviewAt: priorNext,
+             nextReviewAt: current.nextReviewAt, scheduleChanged: false };
   } catch {
-    // table not pushed yet — scheduling silently unavailable, never breaks practice
+    // table not pushed yet, or the write broke — reported, never silently swallowed
+    return { status: "write-failed", dueState: "unknown", scheduleChanged: false };
   }
 }
 
@@ -132,38 +307,67 @@ function masteryLevelFor(score: number): "MASTERED" | "PRACTICING" | "LEARNING" 
 }
 
 /**
- * Why the boolean above is not enough (M13E1D).
+ * Why the boolean is not enough (M13E1D), and why review comes first (M13E1G).
  *
- * `false` conflated two completely different facts: "this skill has no row yet" and "the write
- * threw". A learner told "this skill isn't set up for progress tracking yet" after a transient
- * database error has been told something false, and the true cause — that their real work was
- * graded but not saved — is exactly what they needed to know in order to try again.
+ * `false` originally conflated "this skill has no row yet" with "the write threw". A learner told
+ * "this skill isn't set up for progress tracking yet" after a transient database error has been told
+ * something false. Note that an exception raised BY THE LOOKUP ITSELF is `write-failed`, never
+ * `skill-missing`: a query that could not run has not established that the row is absent.
  *
- * So the write reports which of the three actually happened. Note that an exception raised BY THE
- * LOOKUP ITSELF is `write-failed`, never `skill-missing`: a query that could not run has not
- * established that the row is absent.
+ * M13E1G adds the fourth outcome and inverts the order. Mastery used to run its OWN `isReviewDue`
+ * check and then call the review helper afterwards, so two concurrent due submissions could pick
+ * different winners: the review CAS would let a passing attempt advance the ladder while the losing
+ * failing attempt independently knocked mastery down. Review now runs FIRST and its result decides
+ * what mastery may do — so a due window has exactly one winner in both tables.
+ *
+ * `preserved-concurrent` is the deliberate no-op: another submission won the window, this one wrote
+ * nothing. It is neither a success nor a failure, and it must never be reported as either.
  */
-export type DrillMasteryOutcome = { status: "updated" } | { status: "skill-missing" } | { status: "write-failed" };
+export type DrillMasteryOutcome =
+  | { status: "updated"; review: ReviewPracticeResult }
+  | { status: "preserved-concurrent";
+      review: Extract<ReviewPracticeResult, { status: "preserved-concurrent-existing" }>
+            | Extract<ReviewPracticeResult, { status: "preserved-concurrent-created" }> }
+  | { status: "skill-missing"; review: null }
+  | { status: "write-failed"; review: ReviewPracticeResult | null };
+
+/** True only when the review result licenses lowering an existing mastery percentage. */
+export function masteryMayDecrease(review: ReviewPracticeResult): boolean {
+  return review.status === "reset-after-due-failure";
+}
 
 export async function recordDrillMasteryDetailed(params: {
   userId: string;
   skillSlug: string;
   scorePercent: number;
   passed: boolean;
+  /** Server-only. One timestamp governs the whole submission; no client input reaches this. */
+  now?: Date;
 }): Promise<DrillMasteryOutcome> {
   const { userId, skillSlug, scorePercent, passed } = params;
+  const now = params.now ?? new Date();
+  let review: ReviewPracticeResult | null = null;
   try {
     const skill = await prisma.skill.findUnique({ where: { slug: skillSlug }, select: { id: true } });
-    if (!skill) return { status: "skill-missing" }; // skill not seeded — do not fabricate progress
+    if (!skill) return { status: "skill-missing", review: null }; // not seeded — never fabricate progress
 
-    const dueForReview = await isReviewDue(userId, skill.id);
+    // REVIEW FIRST: its result elects the due-window winner and decides what mastery may do. There is
+    // deliberately no independent due-check here any more.
+    review = await recordPracticeOutcome({ userId, skillId: skill.id, passed, now });
+
+    // The loser of a race writes nothing at all — not a zero, not a counter, not a ratchet.
+    if (review.status === "preserved-concurrent-existing" || review.status === "preserved-concurrent-created") {
+      return { status: "preserved-concurrent", review };
+    }
+
     const existing = await prisma.masteryProgress.findUnique({
       where: { userId_skillId: { userId, skillId: skill.id } },
       select: { id: true, masteryPercent: true }
     });
-    // Failed DUE review => honest knock-down to the demonstrated score; otherwise ratchet up.
+    // A failed DUE reassessment is the ONLY branch that may lower mastery. Everything else — an
+    // initial schedule, an advance, a pre-due practice, even a failed review write — is upward-only.
     const nextMastery =
-      dueForReview && !passed
+      masteryMayDecrease(review)
         ? Math.min(existing?.masteryPercent ?? 0, scorePercent)
         : Math.min(100, Math.max(existing?.masteryPercent ?? 0, scorePercent));
 
@@ -192,24 +396,26 @@ export async function recordDrillMasteryDetailed(params: {
       });
     }
 
-    await recordPracticeOutcome({ userId, skillId: skill.id, passed });
-    return { status: "updated" };
+    return { status: "updated", review };
   } catch {
-    // never break practice if the write fails
-    return { status: "write-failed" };
+    // A review mutation that truthfully landed is preserved here rather than rolled back: the
+    // schedule really did move, and the learner is entitled to be told so even though mastery failed.
+    return { status: "write-failed", review };
   }
 }
 
 /**
- * The original boolean contract, unchanged for every existing caller (the Debate concept-drill
- * submit route and anything else already reading it): `true` only when the write landed, `false`
- * for a missing skill AND for a failed write — exactly as before.
+ * The original boolean contract, unchanged for every existing caller: `true` ONLY when mastery was
+ * actually written. A deliberate concurrency no-op returns `false` — it wrote nothing, so claiming
+ * otherwise would put a slug into `wroteSkills` that no mastery row backs.
  */
 export async function recordDrillMastery(params: {
   userId: string;
   skillSlug: string;
   scorePercent: number;
   passed: boolean;
+  /** Server-only, optional. Callers that omit it keep the previous behaviour exactly. */
+  now?: Date;
 }): Promise<boolean> {
   const outcome = await recordDrillMasteryDetailed(params);
   return outcome.status === "updated";

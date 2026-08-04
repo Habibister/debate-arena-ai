@@ -10,7 +10,63 @@ import type { DrillArea } from "@/lib/debate-drills";
 type Question = { id: string; area: DrillArea; question: string; choices: string[]; correctAnswer: string; explanation: string };
 type AreaMeta = { id: DrillArea; label: string; skillSlug: string; description: string };
 type EvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
-type PersistenceStatus = "not-attempted" | "updated" | "not-saved";
+// M13E1G: `not-saved` keeps its exact existing meaning — a mastery persistence exception. The new
+// `preserved-concurrent` is a deliberate no-op (another submission won the due review window) and
+// must never be shown as a save or a failure.
+type PersistenceStatus = "not-attempted" | "updated" | "preserved-concurrent" | "skill-missing" | "not-saved";
+
+type ReviewResultDTO = {
+  status:
+    | "created" | "advanced" | "reset-after-due-failure" | "preserved-not-due"
+    | "preserved-concurrent-existing" | "preserved-concurrent-created" | "write-failed";
+  dueState: "due" | "not-due" | "no-schedule" | "unknown";
+  previousReviewCount: number | null;
+  reviewCount: number | null;
+  previousNextReviewAt: string | null;
+  nextReviewAt: string | null;
+  scheduleChanged: boolean;
+};
+
+/** ISO date -> a short local date the learner can read. Never shows a raw timestamp. */
+function reviewDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+/**
+ * The review sentence, rendered SEPARATELY from the evidence badge so a review mutation can never
+ * turn a below-threshold result into a celebratory one. Only a proven mutation uses a mutation verb;
+ * every preserved state states what stands.
+ */
+function reviewSentence(review: ReviewResultDTO | null, masterySaved: boolean): string | null {
+  if (!review) return null;
+  const when = reviewDate(review.nextReviewAt);
+  if (review.status === "write-failed") {
+    return masterySaved
+      ? "Your progress was saved, but the review date could not be updated."
+      : "Your progress and your review date could not be saved. Try again later.";
+  }
+  if (!when) return null;
+  if (masterySaved) {
+    switch (review.status) {
+      case "created": return `Your first review is set for ${when}.`;
+      case "advanced": return `Your next review moves out to ${when}.`;
+      case "reset-after-due-failure": return `This review comes back on ${when}.`;
+      case "preserved-not-due": return `Your review date is unchanged — it is not due yet (${when}).`;
+      default: return `Your review is set for ${when}.`;
+    }
+  }
+  switch (review.status) {
+    case "created": return `Your progress could not be saved. Your first review is still set for ${when}.`;
+    case "advanced": return `Your progress could not be saved. Your next review moved to ${when}.`;
+    case "reset-after-due-failure": return `Your progress could not be saved. This review comes back on ${when}.`;
+    case "preserved-not-due": return `Your progress could not be saved. Your review date is unchanged (${when}).`;
+    default: return `Your review is set for ${when}.`;
+  }
+}
+
+
 type PerSkill = {
   area: DrillArea;
   label: string;
@@ -26,6 +82,7 @@ type PerSkill = {
   evidenceScore: number;
   evidenceStatus: EvidenceStatus;
   persistenceStatus: PersistenceStatus;
+  review: ReviewResultDTO | null;
   passed: boolean;
 };
 type Result = { total: number; correctCount: number; scorePercent: number; items: Array<{ id: string; area: DrillArea; correct: boolean; correctAnswer: string; explanation: string }>; perSkill: PerSkill[]; wroteSkills: string[] };
@@ -48,12 +105,21 @@ const REQUIRED_UNIQUE_FOR_PROGRESS = 5;
  * as one. Nothing here claims a spaced review was scheduled: the review helper swallows its own
  * failures, so that claim cannot be made honestly.
  */
-export function resultState(skill: PerSkill): { badge: string; tone: "success" | "info" | "outline" | "warning"; explanation: string | null } {
+export function resultState(skill: PerSkill): { badge: string; tone: "success" | "info" | "outline" | "unavailable" | "warning"; explanation: string | null } {
+  // Badge from EVIDENCE first, then persistence. A review mutation must never upgrade a
+  // below-threshold result into a celebratory one.
   if (skill.persistenceStatus === "not-saved") {
     return {
       badge: "Progress not saved",
       tone: "warning",
       explanation: "Your answers were graded, but progress could not be saved. Try again later."
+    };
+  }
+  if (skill.persistenceStatus === "skill-missing") {
+    return {
+      badge: "Not tracked yet",
+      tone: "unavailable",
+      explanation: "Progress tracking is not available for this skill yet."
     };
   }
   if (skill.evidenceStatus === "insufficient-evidence") {
@@ -63,17 +129,27 @@ export function resultState(skill: PerSkill): { badge: string; tone: "success" |
       explanation: `Fewer than ${skill.requiredUnique} different questions were answered for this skill, so no progress was recorded.`
     };
   }
+  // A deliberate concurrency no-op: another submission won this review window, so nothing was
+  // written. Before M13E1G this route used the boolean helper and reported it as "Progress not
+  // saved" — a false claim, because nothing had failed.
+  if (skill.persistenceStatus === "preserved-concurrent") {
+    return skill.evidenceStatus === "passing"
+      ? { badge: "Practice complete", tone: "success",
+          explanation: "Another submission already handled this review, so this result did not change your saved progress." }
+      : { badge: "Keep practicing", tone: "info",
+          explanation: "You scored below 70%. Another submission already handled this review, so this result did not change your saved progress." };
+  }
   if (skill.evidenceStatus === "below-threshold") {
     return {
       badge: "Keep practicing",
       tone: "info",
-      explanation: "You answered enough different questions, but scored below 70%. This practice result was saved."
+      explanation: "You answered enough different questions, but scored below 70%."
     };
   }
   return {
     badge: "Progress saved",
     tone: "success",
-    explanation: "You answered enough different questions and scored 70% or above. This practice result was saved."
+    explanation: "You answered enough different questions and scored at least 70%."
   };
 }
 
@@ -172,6 +248,8 @@ export function DebateDrills() {
               // Only worth explaining when the two numbers actually disagree, which happens whenever a
               // question was answered more than once — including the repeats the drill itself served.
               const repeated = s.evidenceScore !== s.scorePercent;
+              // Review information is a SEPARATE line; it never changes the badge above.
+              const sentence = reviewSentence(s.review, s.persistenceStatus === "updated");
               return (
                 <div key={s.area} className="space-y-1 rounded-md border bg-background p-2 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -187,6 +265,7 @@ export function DebateDrills() {
                     </p>
                   ) : null}
                   {state.explanation ? <p className="text-xs text-muted-foreground">{state.explanation}</p> : null}
+                  {sentence ? <p className="text-xs text-muted-foreground">{sentence}</p> : null}
                 </div>
               );
             })}

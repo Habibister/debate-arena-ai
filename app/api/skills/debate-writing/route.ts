@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { XP_REWARDS } from "@/lib/constants";
 import { gradeDebateWritingResponse, getDebateSkillScenario } from "@/lib/debate-skill-practice";
 import { prisma } from "@/lib/prisma";
-import { isReviewDue, recordPracticeOutcome } from "@/lib/spaced-review";
+import { masteryMayDecrease, recordPracticeOutcome } from "@/lib/spaced-review";
 import { calculateRank } from "@/lib/xp";
 
 export const runtime = "nodejs";
@@ -72,7 +72,16 @@ export async function POST(request: Request) {
       // Spaced reassessment: when this skill's review is DUE, a failed attempt is a failed review —
       // mastery honestly goes DOWN to the demonstrated score instead of being ratcheted by Math.max.
       const passed = feedback.score >= 70;
-      const dueForReview = await isReviewDue(session.user.id, skill.id);
+      // ONE server timestamp governs this submission, and REVIEW RUNS FIRST (M13E1G). Previously an
+      // independent `isReviewDue` call decided the knock-down while `recordPracticeOutcome` ran only
+      // after the transaction had already committed — so two concurrent due submissions could elect
+      // different winners in MasteryProgress and SkillReviewSchedule. The review result now elects the
+      // winner, and only that winner may touch mastery. XP is unchanged: awarded per submission exactly
+      // as before, including to a concurrency loser.
+      const now = new Date();
+      const review = await recordPracticeOutcome({ userId: session.user.id, skillId: skill.id, passed, now });
+      const concurrentLoser =
+        review.status === "preserved-concurrent-existing" || review.status === "preserved-concurrent-created";
 
       await prisma.$transaction(async (tx) => {
         const user = await tx.user.findUniqueOrThrow({
@@ -88,8 +97,9 @@ export async function POST(request: Request) {
             }
           }
         });
+        // A failed DUE reassessment is the only branch that may lower mastery.
         const nextMastery =
-          dueForReview && !passed
+          masteryMayDecrease(review)
             ? Math.min(existing?.masteryPercent ?? 0, feedback.score)
             : Math.min(100, Math.max(existing?.masteryPercent ?? 0, feedback.score));
         const attempt = await tx.practiceAttempt.create({
@@ -124,7 +134,10 @@ export async function POST(request: Request) {
           }
         });
 
-        if (existing) {
+        // Winner-only: a concurrency loser writes no mastery row and no counters at all.
+        if (concurrentLoser) {
+          // no mastery write — another submission won this due review window
+        } else if (existing) {
           await tx.masteryProgress.update({
             where: { id: existing.id },
             data: {
@@ -174,9 +187,6 @@ export async function POST(request: Request) {
           }
         });
       });
-
-      // Schedule the next spaced review: pass advances the interval ladder, fail resets it to 1 day.
-      await recordPracticeOutcome({ userId: session.user.id, skillId: skill.id, passed });
     }
 
     return NextResponse.json({

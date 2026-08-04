@@ -40,6 +40,7 @@
     "deca-mastery:smoke": "tsx scripts/deca-mastery-smoke.ts",
     "debate-mastery:smoke": "tsx scripts/debate-mastery-smoke.ts",
     "hosa-medterm-evidence:smoke": "tsx scripts/hosa-medterm-evidence-smoke.ts",
+    "review-ladder:smoke": "tsx scripts/review-ladder-smoke.ts",
     "deca:skills:activate": "tsx scripts/seed-deca-drill-skills.ts",
     "auth:check": "tsx scripts/auth-users-check.ts",
     "db:generate": "prisma generate",

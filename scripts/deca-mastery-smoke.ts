@@ -109,9 +109,19 @@ const stubPrisma = {
     }
   },
   skillReviewSchedule: {
-    findUnique: async () => (stub.reviewDueAt === null ? null : { id: "stub-review-id", nextReviewAt: stub.reviewDueAt, reviewCount: 3 }),
+    // M13E1G: the row now carries createdAt/updatedAt, and a DUE row is mutated by a compare-and-set.
+    findUnique: async () =>
+      stub.reviewDueAt === null
+        ? null
+        : { id: "stub-review-id", nextReviewAt: stub.reviewDueAt, reviewCount: 3,
+            createdAt: new Date(stub.reviewDueAt.getTime() - 7 * 86_400_000),
+            updatedAt: new Date(stub.reviewDueAt.getTime() - 7 * 86_400_000) },
     create: async (args: { data: Record<string, unknown> }) => { stub.calls.push({ op: "review.create", data: args.data }); return {}; },
     update: async (args: { data: Record<string, unknown> }) => { stub.calls.push({ op: "review.update", data: args.data }); return {}; },
+    updateMany: async (args: { data: Record<string, unknown> }) => {
+      stub.calls.push({ op: "review.updateMany", data: args.data });
+      return { count: 1 };
+    },
     count: async () => 0,
     findMany: async () => []
   }
@@ -237,25 +247,25 @@ async function main() {
 
   // ---- 15. the detailed persistence result -------------------------------------------------------
   resetStub("found");
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-performance-indicators", scorePercent: 80, passed: true }),
-    { status: "updated" }, "15. a successful write reports updated");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-performance-indicators", scorePercent: 80, passed: true })).status,
+    "updated", "15. a successful write reports updated");
   const wrote = stub.calls.find((c) => c.op === "masteryProgress.create");
   assert.equal(wrote?.data.masteryPercent, 80, "15a. and the EVIDENCE score is what was written");
   assert.equal(wrote?.data.masteryLevel, "PRACTICING", "15a2. at the level that score earns");
   assert.ok(stub.calls.some((c) => c.op === "review.create"), "15a3. and a review was scheduled");
 
   resetStub("missing");
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-business-reasoning", scorePercent: 80, passed: true }),
-    { status: "skill-missing" }, "15b. an absent row reports skill-missing");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-business-reasoning", scorePercent: 80, passed: true })).status,
+    "skill-missing", "15b. an absent row reports skill-missing");
   assert.equal(stub.calls.length, 0, "15b2. and writes nothing");
 
   resetStub("write-throws");
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-customer-relations", scorePercent: 80, passed: true }),
-    { status: "write-failed" }, "15c. a failing write reports write-failed");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-customer-relations", scorePercent: 80, passed: true })).status,
+    "write-failed", "15c. a failing write reports write-failed");
 
   resetStub("lookup-throws");
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-customer-relations", scorePercent: 80, passed: true }),
-    { status: "write-failed" }, "15d. a failing LOOKUP is write-failed, never skill-missing");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-customer-relations", scorePercent: 80, passed: true })).status,
+    "write-failed", "15d. a failing LOOKUP is write-failed, never skill-missing");
   // CONTROL: 15d is the whole point of the split — a query that could not run has not proven absence.
   control("a thrown lookup is not reported as a missing skill",
     (await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "x", scorePercent: 1, passed: false })).status !== "skill-missing");
@@ -264,8 +274,8 @@ async function main() {
   resetStub("found");
   stub.existingMastery = 90;
   stub.reviewDueAt = new Date(Date.now() - 60_000);
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-performance-indicators", scorePercent: 60, passed: false }),
-    { status: "updated" }, "15e. a qualifying failed due review is still recorded");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-performance-indicators", scorePercent: 60, passed: false })).status,
+    "updated", "15e. a qualifying failed due review is still recorded");
   assert.equal(stub.calls.find((c) => c.op === "masteryProgress.update")?.data.masteryPercent, 60,
     "15e2. and knocks mastery down from 90 to the demonstrated 60");
 
@@ -541,10 +551,19 @@ async function main() {
   const debateRoute = read("app/api/debate/drills/submit/route.ts");
   // (i) The Debate route still consumes the BOOLEAN wrapper — the whole reason recordDrillMastery must
   //     stay backward-compatible. If Debate ever switched to the detailed form, that guarantee is moot.
-  assert.ok(/const wrote = await recordDrillMastery\(/.test(debateRoute),
-    "25b. the Debate caller still uses the boolean contract, by name");
-  assert.ok(!debateRoute.includes("recordDrillMasteryDetailed"),
-    "25b2. and never the detailed form reserved for DECA");
+  // 25b INVERTED at M13E1G. The Debate route used the boolean helper, which cannot distinguish a
+  // deliberate concurrency no-op from a write failure — so it told learners "progress could not be
+  // saved" when nothing had failed. Both drill routes now consume the detailed outcome. The guarantee
+  // that still matters is that the BOOLEAN EXPORT survives, truthful, for anything else reading it.
+  assert.ok(/recordDrillMasteryDetailed\(/.test(debateRoute),
+    "25b. the Debate caller consumes the detailed outcome");
+  assert.ok(!/(?<!Detailed)\brecordDrillMastery\(/.test(stripComments(debateRoute)),
+    "25b2. and no longer the boolean form, which could not express a no-op");
+  const spacedReviewSrc = stripComments(read("lib/spaced-review.ts"));
+  assert.ok(/export async function recordDrillMastery\(/.test(spacedReviewSrc), "25b3. the boolean export survives");
+  assert.ok(/Promise<boolean>/.test(spacedReviewSrc), "25b4. and still returns a boolean");
+  assert.ok(/outcome\.status === "updated"/.test(spacedReviewSrc),
+    "25b5. true ONLY for an actual mastery write — a deliberate no-op returns false");
   // (ii) DECA's own modules are untouched by the Debate change — no shared abstraction was introduced.
   const debateLib = stripComments(read("lib/debate-drills.ts"));
   for (const decaSymbol of ["@/lib/deca-drills", "../lib/deca-drills", "DECA_DRILL_BANK",
@@ -583,12 +602,18 @@ async function main() {
   assert.equal(Number(declared?.[1]), DECA_DRILL_REQUIRED_UNIQUE,
     "29c. the client's stated floor equals the server's DECA_DRILL_REQUIRED_UNIQUE");
   // Every learner-facing state string is present and states its meaning in WORDS.
-  for (const copy of ["Practice only", "Keep practicing", "Progress and review updated", "Not tracked yet",
+  for (const copy of ["Practice only", "Keep practicing", "Progress saved", "Not tracked yet",
+                      "Another submission already handled this review",
                       "Progress not saved", "Repeated questions count once toward progress",
                       "Focused skill sessions can update your progress"]) {
     assert.ok(componentCode.includes(copy), `29d. the result contract renders "${copy}"`);
   }
   assert.ok(!/mastery \+ review updated|not yet tracked</.test(componentCode), "29e. the old two-state copy is gone");
+  // M13E1G: the unprovable reviewScheduled boolean is gone from both route and component.
+  assert.ok(!componentCode.includes("reviewScheduled"), "29e2. and reviewScheduled is gone from the component");
+  assert.ok(!routeSrc.includes("reviewScheduled"), "29e3. and from the route");
+  assert.ok(/serializeReviewResult\(/.test(routeSrc), "29e4. replaced by the serialized review result");
+  assert.ok(/const now = new Date\(\);/.test(routeSrc), "29e5. under one server timestamp");
 
   // Every combination the UI can actually reach, run through the REAL branch function. A state must
   // never be conveyed by colour: each returns a badge whose WORDS carry the meaning.
@@ -596,12 +621,14 @@ async function main() {
   const row = (evidenceStatus: string, persistenceStatus: string, extra: Record<string, number> = {}) =>
     resultState({ area: "performance-indicators", label: "Performance indicators", skillSlug: "deca-performance-indicators",
       total: 5, correct: 4, scorePercent: 80, uniqueTotal: 5, uniqueCorrect: 4, requiredUnique: DECA_DRILL_REQUIRED_UNIQUE,
-      evidenceScore: 80, reviewScheduled: persistenceStatus === "updated", passed: evidenceStatus === "passing",
+      evidenceScore: 80, review: null, passed: evidenceStatus === "passing",
       ...extra, evidenceStatus, persistenceStatus } as Parameters<typeof resultState>[0]);
   const combos: Array<[string, string, string]> = [
     ["insufficient-evidence", "not-attempted", "Practice only"],
     ["below-threshold", "updated", "Keep practicing"],
-    ["passing", "updated", "Progress and review updated"],
+    ["passing", "updated", "Progress saved"],
+    ["passing", "preserved-concurrent", "Practice complete"],
+    ["below-threshold", "preserved-concurrent", "Keep practicing"],
     ["below-threshold", "skill-missing", "Not tracked yet"],
     ["passing", "skill-missing", "Not tracked yet"],
     ["below-threshold", "write-failed", "Progress not saved"],
@@ -625,6 +652,12 @@ async function main() {
   }
 
   // A write failure must never be described as an unseeded skill, and vice versa.
+  // A deliberate concurrency no-op is neither a save nor a failure.
+  for (const ev of ["passing", "below-threshold"] as const) {
+    const t = `${row(ev, "preserved-concurrent").badge} ${row(ev, "preserved-concurrent").explanation ?? ""}`;
+    assert.ok(/Another submission already handled this review/.test(t), `29j. ${ev} no-op explains why`);
+    assert.ok(!/could not be saved|Try again later/.test(t), `29k. ${ev} no-op is not a failure`);
+  }
   assert.ok(!/not.*(set up|available)/i.test(row("passing", "write-failed").explanation ?? ""),
     "29h. a failed write is not reported as a missing skill");
   assert.ok(/Try again later/.test(row("passing", "write-failed").explanation ?? ""),

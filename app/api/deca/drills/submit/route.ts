@@ -9,7 +9,7 @@ import {
   type DecaDrillEvidenceStatus
 } from "@/lib/deca-drills";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { recordDrillMasteryDetailed } from "@/lib/spaced-review";
+import { recordDrillMasteryDetailed, serializeReviewResult, type ReviewResultDTO } from "@/lib/spaced-review";
 import { decaDrillSubmitRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -30,7 +30,11 @@ export const runtime = "nodejs";
 // the work qualifies; `persistenceStatus` says what the database actually did about it. Collapsing
 // them loses the difference between "we did not try", "there is no row yet", and "the write broke"
 // — and the learner-facing copy for those three is not interchangeable.
-type PersistenceStatus = "not-attempted" | "updated" | "skill-missing" | "write-failed";
+//
+// M13E1G adds `preserved-concurrent` (another submission won the due review window, so this one
+// deliberately wrote nothing) and replaces the unprovable `reviewScheduled` boolean with the exact
+// serialized review outcome. A no-op is neither a save nor a failure and must not be shown as either.
+type PersistenceStatus = "not-attempted" | "updated" | "preserved-concurrent" | "skill-missing" | "write-failed";
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +42,9 @@ export async function POST(request: Request) {
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     const input = await parseJson(request, decaDrillSubmitRequestSchema);
 
+    // ONE server timestamp governs this whole submission: due determination, the CAS predicate, the
+    // next-review date and the mastery decision derived from it.
+    const now = new Date();
     const result = gradeDecaDrillAnswers(input.answers);
     const evidenceByArea = new Map(buildDecaDrillEvidence(input.answers).map((e) => [e.area, e]));
 
@@ -59,14 +66,18 @@ export async function POST(request: Request) {
       const plan = evidence ? decaDrillPersistenceRequest(evidence) : null;
 
       let persistenceStatus: PersistenceStatus = "not-attempted";
+      let review: ReviewResultDTO | null = null;
       if (plan && skill.skillSlug) {
         const outcome = await recordDrillMasteryDetailed({
           userId: user.id,
           skillSlug: skill.skillSlug,
           scorePercent: plan.scorePercent,
-          passed: plan.passed
+          passed: plan.passed,
+          now
         });
         persistenceStatus = outcome.status;
+        review = outcome.review ? serializeReviewResult(outcome.review) : null;
+        // Only an actual mastery write earns the slug — never a concurrency no-op.
         if (outcome.status === "updated") wroteSkills.push(skill.skillSlug);
       }
 
@@ -78,7 +89,7 @@ export async function POST(request: Request) {
         evidenceScore,
         evidenceStatus,
         persistenceStatus,
-        reviewScheduled: persistenceStatus === "updated",
+        review,
         // Overrides the raw grader's duplicate-weighted `passed`. This is the last key on purpose.
         passed
       });

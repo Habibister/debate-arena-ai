@@ -256,7 +256,9 @@ async function main() {
                       // lib/spaced-review.ts is deliberately absent — see 27b. M13E1D adds a detailed
                       // persistence result there on purpose, so a blanket hash would forbid an
                       // approved change instead of protecting the compatibility contract.
-                      "prisma/schema.prisma", "prisma/seed.ts", "app/api/skills/debate-writing/route.ts"]) {
+                      // app/api/skills/debate-writing/route.ts is deliberately absent from M13E1G
+                      // onward — see 27i. Its review/mastery ORDER changed; its contract did not.
+                      "prisma/schema.prisma", "prisma/seed.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27. ${file} is byte-identical to HEAD`);
   }
 
@@ -274,18 +276,18 @@ async function main() {
   assert.equal((globalThis as unknown as { prisma?: unknown }).prisma, stubPrisma,
     "27c. control: the stub is the module's client — no PrismaClient was constructed, no database touched");
   stub.mode = "found";
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }),
-    { status: "updated" }, "27d. a successful write is `updated`");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true })).status,
+    "updated", "27d. a successful write is `updated`");
   assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }), true,
     "27d2. and the boolean form is true only for it");
   stub.mode = "missing";
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }),
-    { status: "skill-missing" }, "27e. an absent row is `skill-missing`");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true })).status,
+    "skill-missing", "27e. an absent row is `skill-missing`");
   assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }), false,
     "27e2. and the boolean form is false");
   stub.mode = "write-throws";
-  assert.deepEqual(await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }),
-    { status: "write-failed" }, "27f. a failed write is `write-failed`");
+  assert.equal((await recordDrillMasteryDetailed({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true })).status,
+    "write-failed", "27f. a failed write is `write-failed`");
   assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "s", scorePercent: 80, passed: true }), false,
     "27f2. and the boolean form is false — the two failure modes are indistinguishable to it, as before");
   stub.mode = "found";
@@ -298,6 +300,23 @@ async function main() {
                           "@/lib/prisma", "prisma.", "masteryProgress"]) {
       assert.ok(!code.includes(banned), `27g. ${file} gains no database-writing behaviour (${banned})`);
     }
+  }
+
+  // ---- 27i. what the debate-writing byte-pin was protecting, asserted exactly ------------------------
+  const writingRoute = stripComments(read("app/api/skills/debate-writing/route.ts"));
+  assert.ok(/gradeDebateWritingResponse\(/.test(writingRoute), "27i. grading is unchanged");
+  assert.ok(/feedback\.score >= 70/.test(writingRoute), "27i2. and so is the threshold");
+  assert.ok(/NextResponse\.json\(\{\s*scenario,\s*feedback\s*\}\)/.test(writingRoute.replace(/\s+/g, " ").replace(/NextResponse\.json\(\{ /, "NextResponse.json({\n        ")) ||
+            /scenario,[\s\S]{0,40}feedback/.test(writingRoute.slice(writingRoute.indexOf("NextResponse.json"))),
+    "27i3. the response shape is still { scenario, feedback } — no review field was added");
+  assert.ok(!/review:/.test(writingRoute.slice(writingRoute.indexOf("NextResponse.json"))),
+    "27i4. and no review result leaks into it");
+  assert.ok(/XP_REWARDS\.lessonCompleted/.test(writingRoute) && /xPLog\.create/.test(writingRoute),
+    "27i5. XP behaviour is unchanged");
+  assert.ok(writingRoute.indexOf("recordPracticeOutcome(") < writingRoute.indexOf("prisma.$transaction"),
+    "27i6. review is resolved BEFORE the mastery/XP transaction, so one due window has one winner");
+  for (const banned of ["enforceRateLimit", "REQUIRED_UNIQUE", "sessionId", "reviewToken"]) {
+    assert.ok(!writingRoute.includes(banned), `27i7. no ${banned} was added by this milestone`);
   }
 
   // ---- 27h. the three activation-pending DECA skills --------------------------------------------------

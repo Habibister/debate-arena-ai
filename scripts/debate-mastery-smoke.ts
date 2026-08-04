@@ -231,12 +231,18 @@ async function main() {
 
   // ---- 13-14. below the floor the helper is never called ----------------------------------------------
   const routeSrc = stripComments(read("app/api/debate/drills/submit/route.ts"));
-  assert.equal((routeSrc.match(/recordDrillMastery\(/g) ?? []).length, 1, "13. exactly one persistence call site");
-  assert.ok(routeSrc.indexOf("debateDrillPersistenceRequest(") < routeSrc.indexOf("recordDrillMastery("),
+  // M13E1G: this route now consumes the DETAILED outcome. The boolean helper could not distinguish a
+  // deliberate concurrency no-op from a write failure, so it reported "Progress not saved" when
+  // nothing had failed. The boolean export itself is unchanged and still asserted at 32c-32e.
+  assert.equal((routeSrc.match(/recordDrillMasteryDetailed\(/g) ?? []).length, 1, "13. exactly one persistence call site");
+  assert.ok(!/(?<!Detailed)\brecordDrillMastery\(/.test(routeSrc), "13a2. and it is not the boolean form");
+  assert.ok(routeSrc.indexOf("debateDrillPersistenceRequest(") < routeSrc.indexOf("recordDrillMasteryDetailed("),
     "13b. and the decision is made BEFORE the call");
   assert.ok(/if \(plan && skill\.skillSlug\) \{/.test(routeSrc), "13c. the call is guarded by a non-null plan");
-  assert.ok(/const wrote = await recordDrillMastery\(/.test(read("app/api/debate/drills/submit/route.ts")),
-    "13d. and the existing boolean contract is kept by name");
+  assert.ok(/if \(outcome\.status === "updated"\) wroteSkills\.push/.test(routeSrc),
+    "13d. and only an actual mastery update enters wroteSkills — never a no-op");
+  assert.ok(/serializeReviewResult\(/.test(routeSrc), "13e. the review result is serialized explicitly");
+  assert.ok(/const now = new Date\(\);/.test(routeSrc), "13f. one server timestamp governs the submission");
   for (let n = 1; n < DEBATE_DRILL_REQUIRED_UNIQUE; n += 1) {
     assert.equal(debateDrillPersistenceRequest(evidenceFor(distinct(n, n))), null,
       `14. ${n} unique all-correct questions produce NO call — no write, no review, no due-review knock-down`);
@@ -257,7 +263,19 @@ async function main() {
   const row = (evidenceStatus: string, persistenceStatus: string) =>
     resultState({ area: "claim-warrant-impact", label: "Claim / Warrant / Impact", skillSlug: "debate-claim-building",
       total: 5, correct: 4, scorePercent: 80, uniqueTotal: 5, uniqueCorrect: 4, requiredUnique: DEBATE_DRILL_REQUIRED_UNIQUE,
-      evidenceScore: 80, passed: evidenceStatus === "passing", evidenceStatus, persistenceStatus } as Parameters<typeof resultState>[0]);
+      evidenceScore: 80, passed: evidenceStatus === "passing", evidenceStatus, persistenceStatus,
+      review: null } as Parameters<typeof resultState>[0]);
+  assert.equal(row("passing", "preserved-concurrent").badge, "Practice complete",
+    "16a. a passing concurrency no-op reads 'Practice complete' — never a save or a failure");
+  assert.equal(row("below-threshold", "preserved-concurrent").badge, "Keep practicing",
+    "16b. and a below-threshold no-op stays 'Keep practicing'");
+  for (const st of ["passing", "below-threshold"] as const) {
+    const text = `${row(st, "preserved-concurrent").badge} ${row(st, "preserved-concurrent").explanation ?? ""}`;
+    assert.ok(/Another submission already handled this review/.test(text), `16c. ${st} no-op explains why`);
+    assert.ok(!/could not be saved|Progress saved|Try again later/.test(text),
+      `16d. ${st} no-op claims neither save success nor save failure`);
+  }
+  assert.equal(row("passing", "skill-missing").badge, "Not tracked yet", "16e. a missing skill is distinct");
   assert.equal(row("passing", "not-saved").badge, "Progress not saved", "17. a failed write reads 'Progress not saved'");
   assert.equal(row("below-threshold", "not-saved").badge, "Progress not saved", "17b. for below-threshold too");
   assert.ok(!/not.*(set up|seeded|available|tracked)/i.test(row("passing", "not-saved").explanation ?? ""),
@@ -267,11 +285,12 @@ async function main() {
   assert.equal(row("passing", "updated").badge, "Progress saved", "19. passing + updated reads 'Progress saved'");
   assert.equal(row("insufficient-evidence", "not-attempted").badge, "Practice only", "19b. insufficient reads 'Practice only'");
   for (const [ev, pers] of [["insufficient-evidence", "not-attempted"], ["below-threshold", "updated"],
-                            ["passing", "updated"], ["passing", "not-saved"]] as const) {
+                            ["passing", "updated"], ["passing", "not-saved"],
+                            ["passing", "preserved-concurrent"], ["below-threshold", "preserved-concurrent"]] as const) {
     assert.ok(row(ev, pers).badge.trim().length > 0, "19c. every state is conveyed by words, never colour alone");
   }
-  control("persistence status alone changes the learner-facing result",
-    new Set(["updated", "not-saved"].map((p) => row("passing", p).badge)).size === 2);
+  control("save success, save failure and a deliberate no-op are three DIFFERENT learner results",
+    new Set(["updated", "not-saved", "preserved-concurrent"].map((p) => row("passing", p).badge)).size === 3);
 
   // ---- 20-23. the component's claims ----------------------------------------------------------------------
   const ui = stripComments(read("components/training/debate-drills.tsx"));
@@ -304,13 +323,39 @@ async function main() {
   }
 
   // ---- 27-31. everything outside the boundary is byte-identical to HEAD -------------------------------------
-  for (const file of ["app/api/skills/debate-writing/route.ts", "lib/debate-skill-practice.ts",   // 27 Debate writing
-                      "lib/deca-drills.ts", "app/api/deca/drills/submit/route.ts",                 // 28 DECA
-                      "components/training/concept-drills.tsx",
+  // The Debate-writing route, the DECA route/component and lib/spaced-review.ts were byte-pinned here
+  // until M13E1G, which deliberately due-gates the shared ladder and makes the review result elect the
+  // due-window winner for BOTH mastery writers. A blanket hash would forbid that approved change
+  // rather than protect Debate drills, so it is replaced at 27b-27f by assertions on what matters.
+  for (const file of ["lib/debate-skill-practice.ts",                                              // 27 Debate writing grading
+                      "lib/deca-drills.ts",                                                        // 28 DECA bank
                       "prisma/schema.prisma", "prisma/seed.ts",                                    // 30/31 schema + seed
-                      "lib/spaced-review.ts", "app/api/debate/drills/session/route.ts",
+                      "app/api/debate/drills/session/route.ts",
                       "lib/education/registry.ts", "lib/assignments.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27-31. ${file} is byte-identical to HEAD`);
+  }
+  // 27b. Debate WRITING keeps its grading, threshold, response shape and XP; only the ORDER changed.
+  const writingRoute = stripComments(read("app/api/skills/debate-writing/route.ts"));
+  assert.ok(/gradeDebateWritingResponse\(/.test(writingRoute), "27b. Debate writing grading is unchanged");
+  assert.ok(/feedback\.score >= 70/.test(writingRoute), "27b2. and its threshold");
+  assert.ok(/XP_REWARDS\.lessonCompleted/.test(writingRoute) && /xPLog\.create/.test(writingRoute),
+    "27b3. XP is still awarded exactly as before");
+  assert.ok(writingRoute.indexOf("recordPracticeOutcome(") < writingRoute.indexOf("prisma.$transaction"),
+    "27c. with review resolved BEFORE the mastery/XP transaction, so one due window has one winner");
+  assert.ok(!/isReviewDue\(/.test(writingRoute), "27c2. and the stale independent due-check is gone");
+  assert.ok(/if \(concurrentLoser\) \{/.test(writingRoute), "27c3. a concurrency loser writes no mastery");
+  for (const banned of ["enforceRateLimit", "REQUIRED_UNIQUE", "sessionId", "reviewToken"]) {
+    assert.ok(!writingRoute.includes(banned), `27c4. and no ${banned} was added`);
+  }
+  // 27d. DECA's own evidence contract and floor are untouched by the ladder work.
+  const { DECA_DRILL_REQUIRED_UNIQUE } = await import("../lib/deca-drills");
+  assert.equal(DECA_DRILL_REQUIRED_UNIQUE, 5, "27d. the DECA evidence floor is still 5");
+  const decaRoute = stripComments(read("app/api/deca/drills/submit/route.ts"));
+  assert.ok(!decaRoute.includes("reviewScheduled"), "27e. and DECA's unprovable reviewScheduled is gone");
+  assert.ok(/recordDrillMasteryDetailed\(/.test(decaRoute), "27e2. DECA still consumes the detailed outcome");
+  // 27f. Neither track reaches into the other's evidence helpers.
+  for (const [file, foreign] of [["lib/debate-drills.ts", "deca-drills"], ["lib/deca-drills.ts", "debate-drills"]] as const) {
+    assert.ok(!stripComments(read(file)).includes(foreign), `27f. ${file} does not import ${foreign}`);
   }
 
 
@@ -363,6 +408,13 @@ async function main() {
   resetStub("write-throws");
   assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "debate-rebuttal", scorePercent: 80, passed: true }), false,
     "32e. a failed write returns false -> not-saved");
+  // 32f. The boolean export still exists and is still boolean — that is the guarantee the route's
+  // switch to the detailed form must not cost any other caller.
+  const spacedReviewSrc = stripComments(read("lib/spaced-review.ts"));
+  assert.ok(/export async function recordDrillMastery\(/.test(spacedReviewSrc), "32f. the boolean export survives");
+  assert.ok(/Promise<boolean>/.test(spacedReviewSrc), "32f2. and still returns a boolean");
+  assert.ok(/outcome\.status === "updated"/.test(spacedReviewSrc),
+    "32f3. true ONLY for an actual mastery write — a deliberate no-op returns false");
   resetStub("found");
 
   // ---- 33. the pre-fix defect, proven from the EXPLICIT parent commit ----------------------------------------

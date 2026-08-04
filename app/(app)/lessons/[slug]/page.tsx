@@ -14,6 +14,9 @@ import { StatusChip } from "@/components/ui/status-chip";
 import { cn } from "@/lib/utils";
 import { getLesson } from "@/lib/lessons";
 import { getRoleplayLesson } from "@/lib/roleplay-lessons";
+import { ConceptEducationLessonView } from "@/components/lessons/concept-education-lesson-view";
+import { getEducationLesson, getEducationModule } from "@/lib/education/registry";
+import { isConceptEducationLessonEntry } from "@/lib/education/types";
 
 // Opaque, stable per-account namespace for DEVICE-LOCAL lesson resume (M5 Phase A).
 //
@@ -94,10 +97,32 @@ const DEBATE_SECTIONS: LessonSection[] = [
   { id: "practice", label: "Practice" }
 ];
 
+/**
+ * Resolves a MIGRATED concept lesson (M13E1B), or null.
+ *
+ * Third in the lookup order, behind both legacy registries, so the three shipped lessons resolve
+ * exactly as before. Narrowing is by the `sourceKind` discriminant — never by probing for an
+ * optional property — and an `internal` entry resolves to null so it can never render.
+ */
+function conceptEducationLesson(slug: string) {
+  const entry = getEducationLesson(slug);
+  if (!entry || entry.visibility !== "learner" || !isConceptEducationLessonEntry(entry)) return null;
+  const moduleEntry = getEducationModule(entry.moduleId);
+  const nextEntry = entry.nextLessonId ? getEducationLesson(entry.nextLessonId) : null;
+  const nextTitle = nextEntry && isConceptEducationLessonEntry(nextEntry) ? nextEntry.source.lesson.title : null;
+  return {
+    entry,
+    // Fail closed rather than inventing a label for a module that is not registered.
+    moduleLabel: moduleEntry ? moduleEntry.label : "Lesson",
+    next: nextEntry && nextTitle ? { id: nextEntry.id, title: nextTitle } : null
+  };
+}
+
 export default async function LessonPage({ params }: { params: { slug: string } }) {
   const lesson = getLesson(params.slug);
   const roleplay = getRoleplayLesson(params.slug);
-  if (!lesson && !roleplay) {
+  const concept = lesson || roleplay ? null : conceptEducationLesson(params.slug);
+  if (!lesson && !roleplay && !concept) {
     notFound();
   }
 
@@ -166,6 +191,22 @@ export default async function LessonPage({ params }: { params: { slug: string } 
           <RoleplayLessonPractice lesson={roleplay} userScope={userScope} />
         </section>
         <RoleplayCourseFooter lesson={roleplay} />
+      </div>
+    );
+  }
+
+  // Migrated Debate concept lesson (M13E1B). Its own canonical renderer; the legacy view below is
+  // untouched. Its checks save nothing — no mastery, no progress, no XP, no API, no AI.
+  if (concept) {
+    return (
+      <div className={column}>
+        {back}
+        <ConceptEducationLessonView
+          source={concept.entry.source}
+          provenance={concept.entry.provenance}
+          moduleLabel={concept.moduleLabel}
+          next={concept.next}
+        />
       </div>
     );
   }

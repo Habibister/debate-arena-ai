@@ -11,6 +11,17 @@ import { cn } from "@/lib/utils";
 import { getActiveTrack } from "@/lib/track-server";
 import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
+import { educationLessonsForTrack, getEducationModule } from "@/lib/education/registry";
+import { EDUCATION_TRACKS, isConceptEducationLessonEntry, type EducationTrack } from "@/lib/education/types";
+
+/**
+ * `TrainingTrack` still includes the soft-removed Model UN; `EducationTrack` deliberately does not.
+ * Narrowing through the canonical list is what keeps a retired track from ever reaching the
+ * education registry — it resolves to no lessons rather than being coerced into one.
+ */
+function educationTrack(track: string | undefined): EducationTrack | null {
+  return EDUCATION_TRACKS.find((candidate) => candidate === track) ?? null;
+}
 
 /**
  * One availability statement about a lesson. `state` picks the reinforcement chip; the WORD in
@@ -44,6 +55,7 @@ const CHIP: Record<LessonAvailability["state"], "success" | "unavailable" | "inf
 // DECA/HOSA show their role-play course. Fail closed to an honest empty state when a track has none.
 export default function LessonsIndexPage({ searchParams }: { searchParams: { track?: string } }) {
   const activeTrack = getActiveTrack(searchParams.track);
+  const canonicalTrack = educationTrack(activeTrack?.id);
   const cards: LessonCard[] = [
     ...lessonsForTrack(activeTrack?.slug).map((l) => ({
       slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes,
@@ -86,7 +98,40 @@ export default function LessonsIndexPage({ searchParams }: { searchParams: { tra
             { label: "Interactive scenario", value: "Unavailable", state: "unavailable" as const },
             { label: "Scope", value: "Informational only", state: "informational" as const }
           ]
-    }))
+    })),
+    // M13E1B — migrated Debate concept lessons, in registry (teaching) order after the lesson that
+    // already shipped. Only learner-visible canonical entries of the migrated source kind appear, so
+    // the three pre-existing lessons are never listed twice.
+    ...(canonicalTrack
+      ? educationLessonsForTrack(canonicalTrack)
+          .filter(isConceptEducationLessonEntry)
+          .filter((entry) => entry.visibility === "learner")
+          .map((entry) => ({
+            slug: entry.id,
+            title: entry.source.lesson.title,
+            subtitle: entry.source.lesson.content.objective,
+            minutes: entry.source.lesson.estimatedMinutes,
+            label: getEducationModule(entry.moduleId)?.label ?? "General Debate",
+            kind: "Concept lesson" as const,
+            // Reading and checks, and nothing saved. Stated as words first, exactly like every other
+            // card here, so the meaning survives with all styling removed.
+            availability: [
+              { label: "Reading", value: "Available", state: "available" as const },
+              {
+                label: "Knowledge checks",
+                value: "Available in this lesson",
+                state: "available" as const,
+                detail: "Answering them saves nothing — no score, no progress, no mastery record."
+              },
+              {
+                label: "Skill drills",
+                value: "Available separately",
+                state: "available" as const,
+                detail: "This track's full skill-drill set lives outside the lesson, in Skill drills."
+              }
+            ]
+          }))
+      : [])
   ];
 
   return (

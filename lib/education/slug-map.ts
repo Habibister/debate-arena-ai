@@ -34,8 +34,8 @@ export const EDUCATION_SLUG_ALIASES: readonly EducationSlugAlias[] = [
     legacySlug: "debate-refutation-lesson",
     target: "debate-rebuttal",
     targetKind: "skill",
-    status: "planned",
-    note: "Post-round judge recommendation. `debate-rebuttal` is a seeded skill, but no registered lesson carries it yet."
+    status: "active",
+    note: "Post-round judge recommendation. The learner-visible `debate-refutation` lesson now carries skillSlug `debate-rebuttal`, so this target resolves. Still DATA ONLY: no route consumes this map, so the historical /skills/debate-refutation-lesson link is not repaired by this entry."
   },
   {
     legacySlug: "debate-weighing-lesson",

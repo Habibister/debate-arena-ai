@@ -11,6 +11,7 @@
 import { presentSourceFreshness } from "@/lib/source-freshness";
 import {
   EDUCATION_TRACKS,
+  isConceptEducationLessonEntry,
   type EducationIssueCode,
   type EducationRegistryEntry,
   type EducationRegistryInput,
@@ -110,6 +111,85 @@ function issue(
 
 function isBlank(value: string | null | undefined): boolean {
   return typeof value !== "string" || value.trim().length === 0;
+}
+
+// --- concept-education-lesson source integrity (M13E1B) -------------------------------------------
+//
+// Validated at RUNTIME, never on the strength of the declared type. A migrated lesson renders its
+// source directly to a learner, so an empty objective or a question whose stored answer is not among
+// its choices must be a named failure here rather than an empty section or an unanswerable check on
+// the page.
+
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/** Returns the reasons this value is not a usable deterministic question. Empty means valid. */
+function questionDefects(value: unknown): string[] {
+  const defects: string[] = [];
+  if (!isRecord(value)) return ["not an object"];
+  if (!nonEmptyString(value.prompt)) defects.push("empty prompt");
+  const choices = value.choices;
+  if (!Array.isArray(choices) || choices.length < 2) {
+    defects.push("fewer than two choices");
+  } else if (!choices.every(nonEmptyString)) {
+    defects.push("a choice is empty");
+  }
+  if (!nonEmptyString(value.correctAnswer)) {
+    defects.push("no stored correct answer");
+  } else if (Array.isArray(choices)) {
+    const matches = choices.filter((choice) => choice === value.correctAnswer).length;
+    if (matches === 0) defects.push("correct answer is not among the choices");
+    if (matches > 1) defects.push("correct answer appears more than once among the choices");
+  }
+  if (!nonEmptyString(value.hint)) defects.push("empty hint");
+  if (!nonEmptyString(value.explanation)) defects.push("empty explanation");
+  if (!nonEmptyString(value.skillTag)) defects.push("empty skill tag");
+  return defects;
+}
+
+/** Returns the missing structural fields of a concept source. Empty means complete. */
+function conceptSourceGaps(source: unknown): string[] {
+  if (!isRecord(source)) return ["source is not an object"];
+  const gaps: string[] = [];
+  const lesson = source.lesson;
+  if (!isRecord(lesson)) return ["lesson"];
+  if (!nonEmptyString(lesson.title)) gaps.push("lesson.title");
+  const content = lesson.content;
+  if (!isRecord(content)) return [...gaps, "lesson.content"];
+  if (!nonEmptyString(content.objective)) gaps.push("objective");
+  if (!nonEmptyString(content.explanation)) gaps.push("explanation");
+  if (!nonEmptyString(content.whyMatters)) gaps.push("whyMatters");
+  if (!Array.isArray(content.steps) || content.steps.length === 0 || !content.steps.every(nonEmptyString)) {
+    gaps.push("steps");
+  }
+  const worked = content.workedExample;
+  if (!isRecord(worked)) {
+    gaps.push("workedExample");
+  } else {
+    for (const field of ["prompt", "weakAnswer", "strongAnswer", "whyItWorks"]) {
+      if (!nonEmptyString(worked[field])) gaps.push(`workedExample.${field}`);
+    }
+  }
+  if (!isRecord(content.guidedQuestion)) gaps.push("guidedQuestion");
+  if (!Array.isArray(content.practiceQuestions) || content.practiceQuestions.length === 0) gaps.push("practiceQuestions");
+  if (!Array.isArray(content.masteryCheck) || content.masteryCheck.length === 0) gaps.push("masteryCheck");
+  return gaps;
+}
+
+/** Every deterministic question on a concept source, in render order. */
+function conceptQuestions(source: unknown): Array<{ label: string; value: unknown }> {
+  if (!isRecord(source) || !isRecord(source.lesson) || !isRecord(source.lesson.content)) return [];
+  const content = source.lesson.content;
+  const out: Array<{ label: string; value: unknown }> = [];
+  if (content.guidedQuestion !== undefined) out.push({ label: "guided check", value: content.guidedQuestion });
+  if (Array.isArray(content.practiceQuestions)) {
+    content.practiceQuestions.forEach((q, i) => out.push({ label: `independent check ${i + 1}`, value: q }));
+  }
+  if (Array.isArray(content.masteryCheck)) {
+    content.masteryCheck.forEach((q, i) => out.push({ label: `final check ${i + 1}`, value: q }));
+  }
+  return out;
 }
 
 /** Walks `prerequisiteId` from `startId` and reports whether it re-enters a module already seen. */
@@ -281,8 +361,15 @@ export function validateEducationRegistry(input: EducationRegistryInput): Educat
         issue("CONCEPT_WITHOUT_PRACTICE", entry.id, `Concept lesson "${entry.id}" declares practiceState "${entry.practiceState}".`)
       );
     }
-    if (entry.variant === "concept" && entry.practiceState === "available" && !sourceHasPractice(entry.source)) {
-      issues.push(issue("CONCEPT_WITHOUT_PRACTICE", entry.id, `Concept lesson "${entry.id}" has no practice definition on its source.`));
+    // What counts as practice evidence depends on the source kind. A legacy authored lesson carries
+    // a `practice` object; a migrated catalog lesson carries its own deterministic questions.
+    if (entry.variant === "concept" && entry.practiceState === "available") {
+      const hasEvidence = isConceptEducationLessonEntry(entry)
+        ? conceptQuestions(entry.source).length > 0
+        : sourceHasPractice(entry.source);
+      if (!hasEvidence) {
+        issues.push(issue("CONCEPT_WITHOUT_PRACTICE", entry.id, `Concept lesson "${entry.id}" has no practice definition on its source.`));
+      }
     }
     if (entry.practiceState === "available" && entry.variant === "performance") {
       const status = sourcePracticeStatus(entry.source);
@@ -314,6 +401,35 @@ export function validateEducationRegistry(input: EducationRegistryInput): Educat
             `Lesson "${entry.id}" is withdrawn but its source carries no learner-facing unavailable notice.`
           )
         );
+      }
+    }
+
+    // ---- concept-education-lesson source integrity (M13E1B) ------------------------------------
+    if (isConceptEducationLessonEntry(entry)) {
+      const source: unknown = entry.source;
+      const slug = isRecord(source) && typeof source.slug === "string" ? source.slug : null;
+      if (slug !== entry.id) {
+        issues.push(
+          issue(
+            "CONCEPT_SOURCE_SLUG_MISMATCH",
+            entry.id,
+            `Lesson "${entry.id}" wraps a catalog entry whose slug is "${String(slug)}".`
+          )
+        );
+      }
+      const gaps = conceptSourceGaps(source);
+      if (gaps.length > 0) {
+        issues.push(
+          issue("CONCEPT_SOURCE_INCOMPLETE", entry.id, `Lesson "${entry.id}" is missing ${gaps.join(", ")}.`)
+        );
+      }
+      for (const { label, value } of conceptQuestions(source)) {
+        const defects = questionDefects(value);
+        if (defects.length > 0) {
+          issues.push(
+            issue("CONCEPT_QUESTION_INVALID", entry.id, `Lesson "${entry.id}" ${label}: ${defects.join(", ")}.`)
+          );
+        }
       }
     }
 

@@ -70,15 +70,77 @@ export type EducationModule = {
   id: string;
   courseId: string;
   track: EducationTrack;
+  /** Short name for the module. Metadata, not teaching text. */
+  label: string;
   /** One observable outcome. Internal metadata — not teaching text. */
   outcome: string;
   prerequisiteId: string | null;
 };
 
-export type EducationSourceKind = "authored-lesson" | "roleplay-lesson";
+export type EducationSourceKind = "authored-lesson" | "roleplay-lesson" | "concept-education-lesson";
 
-export type EducationRegistryEntry = {
-  /** The lesson's canonical id. In E1A this is deliberately the slug the route already serves. */
+// --- concept-education-lesson source --------------------------------------------------------------
+//
+// The STRUCTURAL shape of an entry already present in `LEARNING_SKILL_CATALOG`. It is written to
+// describe those objects exactly — nothing is added for a future that has not arrived, and nothing
+// the four selected entries do not carry appears here.
+//
+// A registry entry holds the ORIGINAL catalog object by reference; this type only lets the renderer
+// read it without a cast. No learner-facing string is ever copied out of it.
+
+/** One deterministic multiple-choice item. Every field below exists on every selected question. */
+export type ConceptEducationQuestion = {
+  prompt: string;
+  choices: readonly string[];
+  /** Exactly one stored answer, which the validator requires to appear among `choices`. */
+  correctAnswer: string;
+  hint: string;
+  explanation: string;
+  skillTag: string;
+};
+
+export type ConceptEducationWorkedExample = {
+  prompt: string;
+  weakAnswer: string;
+  strongAnswer: string;
+  whyItWorks: string;
+};
+
+export type ConceptEducationLessonContent = {
+  objective: string;
+  explanation: string;
+  whyMatters: string;
+  steps: readonly string[];
+  workedExample: ConceptEducationWorkedExample;
+  guidedQuestion: ConceptEducationQuestion;
+  practiceQuestions: readonly ConceptEducationQuestion[];
+  /**
+   * The catalog's own field name, preserved for source compatibility. It is NOT proof of mastery and
+   * the renderer must never present it as one — it is shown to the learner as a final check.
+   */
+  masteryCheck: readonly ConceptEducationQuestion[];
+};
+
+export type ConceptEducationLessonSource = {
+  /** The catalog skill slug. The validator requires it to equal the registry entry's id. */
+  slug: string;
+  organization: string;
+  track: string;
+  name: string;
+  description: string;
+  category: string;
+  lesson: {
+    title: string;
+    slug: string;
+    summary: string;
+    estimatedMinutes: number;
+    content: ConceptEducationLessonContent;
+  };
+};
+
+/** Everything an entry carries regardless of which source shape it wraps. */
+type EducationRegistryEntryBase = {
+  /** The lesson's canonical id. Deliberately the slug the route already serves. */
   id: string;
   track: EducationTrack;
   courseId: string;
@@ -87,22 +149,49 @@ export type EducationRegistryEntry = {
   visibility: EducationVisibility;
   practiceState: EducationPracticeState;
   /**
-   * REFERENCE to the original exported lesson object. Typed `unknown` on purpose: this layer must
-   * not restate `AuthoredLesson` or `RoleplayLesson`, and must not acquire the ability to read a
-   * learner-facing field as if it owned it. The validator narrows it with runtime guards.
+   * The seeded mastery skill this lesson is ABOUT. Association only — it does not authorise a write.
+   * A migrated concept lesson names one so recommendations can find it later, and still writes
+   * nothing, because its checks are not the graded drill bank.
    */
-  source: unknown;
-  sourceKind: EducationSourceKind;
-  /** The seeded mastery skill this lesson's practice writes to, when it writes at all. */
   skillSlug?: string;
   /** Previously published ids that must keep resolving. Empty today — nothing has been renamed. */
   legacySlugs: readonly string[];
   nextLessonId: string | null;
-  /** REFERENCE to the source object's own provenance. Never a rewritten copy. */
+  /** REFERENCE to the source object's own provenance, or the shared authored-lesson constant. */
   provenance: SourceFreshnessMetadata;
   /** Caps this lesson's practice rung. Must not exceed its course's `maxRung`. */
   maximumRung?: EducationRung;
 };
+
+/**
+ * The two legacy source kinds keep `source: unknown` exactly as M13E1A defined them. That is not an
+ * omission: this layer must not restate `AuthoredLesson` or `RoleplayLesson`, and must not acquire
+ * the ability to read one of their learner-facing fields as if it owned it. The validator narrows
+ * them with runtime guards, and their renderers receive them through the legacy lookups instead.
+ */
+type EducationLegacyEntry = EducationRegistryEntryBase & {
+  sourceKind: "authored-lesson" | "roleplay-lesson";
+  source: unknown;
+};
+
+/**
+ * The canonical source kind. `source` is typed, because this layer IS the one that renders it — and
+ * it is still the ORIGINAL `LEARNING_SKILL_CATALOG` object, held by reference, never a copy.
+ */
+type EducationConceptEntry = EducationRegistryEntryBase & {
+  sourceKind: "concept-education-lesson";
+  source: ConceptEducationLessonSource;
+};
+
+export type EducationRegistryEntry = EducationLegacyEntry | EducationConceptEntry;
+
+/**
+ * Narrows by the discriminant alone — never by probing for an optional property, which is how a
+ * malformed legacy entry could otherwise impersonate a canonical one.
+ */
+export function isConceptEducationLessonEntry(entry: EducationRegistryEntry): entry is EducationConceptEntry {
+  return entry.sourceKind === "concept-education-lesson";
+}
 
 // --- slug aliases -------------------------------------------------------------------------------
 
@@ -164,7 +253,11 @@ export type EducationIssueCode =
   | "ALIAS_EMPTY_TARGET"
   | "ALIAS_SELF_CYCLE"
   | "ALIAS_CONFLICTING_TARGET"
-  | "ALIAS_PLANNED_RESOLVABLE";
+  | "ALIAS_PLANNED_RESOLVABLE"
+  // --- concept-education-lesson source integrity (M13E1B) ---------------------------------------
+  | "CONCEPT_SOURCE_SLUG_MISMATCH"
+  | "CONCEPT_SOURCE_INCOMPLETE"
+  | "CONCEPT_QUESTION_INVALID";
 
 export type EducationValidationIssue = {
   code: EducationIssueCode;

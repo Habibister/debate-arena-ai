@@ -39,6 +39,9 @@ const stripComments = (src: string) =>
 const headSha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
 const nowSha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
 
+/** M13E1D's parent — the last commit with the old two-state drill-result copy. */
+const PRE_M13E1D = "a8cbe3453c462a75a9a4cf652cc9d2116893e535";
+
 /** Every control asserts the invariant would actually FAIL under the rejected alternative. */
 const controlsRun: string[] = [];
 function control(label: string, holds: boolean) {
@@ -314,30 +317,161 @@ async function main() {
   // ---- 21. the activation script ------------------------------------------------------------------
   const scriptSrc = read("scripts/seed-deca-drill-skills.ts");
   const scriptCode = stripComments(scriptSrc);
-  const scriptSlugs = [...scriptCode.matchAll(/slug:\s*"([^"]+)"/g)].map((m) => m[1]);
+  const scriptSlugs = [...scriptCode.matchAll(/slug:\s*"([^"]+)",/g)].map((m) => m[1]);
   assert.deepEqual(scriptSlugs, ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations"],
     "21. the script contains exactly the three approved rows");
   assert.deepEqual(scriptSlugs, ACTIVATION_PENDING_SKILLS.map((s) => s.slug), "21b. matching the manifest exactly");
   for (const model of ["prisma.lesson", "prisma.user", "prisma.masteryProgress", "prisma.xPLog", "prisma.xpLog",
-                       "prisma.achievement", "prisma.assignment", "prisma.rubric", "prisma.competitionResult"]) {
+                       "prisma.achievement", "prisma.assignment", "prisma.rubric", "prisma.competitionResult",
+                       "prisma.skillReviewSchedule", "prisma.debate", "prisma.test"]) {
     assert.ok(!scriptCode.includes(model), `21c. the script never touches ${model}`);
   }
-  for (const verb of ["deleteMany", "delete(", "updateMany", "createMany", "$executeRaw", "$queryRaw"]) {
+  for (const verb of ["deleteMany", "delete(", "updateMany", "createMany", "$executeRaw", "$queryRaw",
+                      "$transaction", "$connect", "skill.update", "skill.upsert"]) {
     assert.ok(!scriptCode.includes(verb), `21d. the script performs no ${verb}`);
   }
   assert.ok(!/from "\.\.\/prisma\/seed"|require\(".*prisma\/seed/.test(scriptCode), "21e. it never imports prisma/seed.ts");
-  assert.ok(/const apply = process\.argv\.includes\("--apply"\)/.test(scriptCode), "21f. --apply is required to write");
-  assert.ok(/if \(!apply\)/.test(scriptCode), "21g. and the dry-run branch returns before any write");
-  assert.ok(scriptCode.indexOf("if (!apply)") < scriptCode.indexOf("prisma.skill.upsert"), "21h. dry run short-circuits BEFORE the upsert");
-  assert.ok(/prisma\.skill\.upsert/.test(scriptCode), "21i. writes are idempotent upserts");
+  assert.ok(/argv\.includes\("--apply"\)/.test(scriptCode), "21f. --apply is required to write");
   assert.ok(/process\.exitCode = 1/.test(scriptCode), "21j. and it exits non-zero on failure");
   for (const secret of ["DATABASE_URL", "process.env.DATABASE", "connectionString"]) {
     assert.ok(!scriptCode.includes(secret), `21k. it never prints ${secret}`);
   }
-  assert.ok(/would create/.test(scriptCode) && /created /.test(scriptCode) && /already present/.test(scriptCode),
-    "21l. it reports would create / created / already present per row");
   // CONTROL: the slug scan is live.
   control("the activation-script scan really parsed its rows", scriptSlugs.length === 3);
+
+  // ---- 21m. exact three-row inventory, field by field ------------------------------------------------
+  const { ACTIVATION_SKILLS, classifyActivationRow, buildDryRunReport, main: activationMain } =
+    await import("../scripts/seed-deca-drill-skills");
+  assert.equal(ACTIVATION_SKILLS.length, 3, "21m. exactly three activation rows");
+  assert.deepEqual(ACTIVATION_SKILLS.map((s) => [s.slug, s.name, s.organization, s.track, s.order]), [
+    ["deca-performance-indicators", "Performance Indicators", "DECA", "DECA", 20],
+    ["deca-business-reasoning", "Business Reasoning", "DECA", "DECA", 21],
+    ["deca-customer-relations", "Customer Relations", "DECA", "DECA", 22]
+  ], "21m2. with exactly the approved slug/name/organization/track/order");
+  assert.ok(ACTIVATION_SKILLS.every((s) => s.description.trim().length > 0), "21m3. each carries its approved description");
+  for (const area of DECA_DRILL_AREAS) {
+    const owned = ACTIVATION_SKILLS.some((s) => s.slug === area.skillSlug);
+    assert.equal(owned, area.skillSlug !== "deca-marketing",
+      `21m4. the script owns "${area.skillSlug}" iff it is not the already-seeded deca-marketing`);
+  }
+
+  // ---- 21n. the dry run is structurally incapable of reaching a database ------------------------------
+  // No TOP-LEVEL database import of any form. The only one permitted is dynamic, inside apply.
+  const topLevel = scriptCode.slice(0, scriptCode.indexOf("async function applyActivation"));
+  for (const imp of ["@prisma/client", "@/lib/prisma", "../lib/prisma", "lib/prisma", "PrismaClient"]) {
+    assert.ok(!topLevel.includes(imp), `21n. no top-level ${imp} import or reference`);
+  }
+  assert.ok(!/^import .*(prisma|Prisma)/m.test(scriptCode), "21n2. no static prisma import statement anywhere");
+  assert.ok(/await import\("@prisma\/client"\)/.test(scriptCode), "21n3. the client is imported DYNAMICALLY");
+  // REACHABILITY, not text position: `applyActivation` is a function declaration, so where it sits
+  // in the file is irrelevant. What matters is that EVERY database operation lives inside its body,
+  // and that the only call to it in `main` is after the dry-run has already returned.
+  const applyStart = scriptCode.indexOf("async function applyActivation");
+  const mainStart = scriptCode.indexOf("export async function main");
+  assert.ok(applyStart > 0 && mainStart > applyStart, "21n4. control: both functions were located");
+  const applyBody = scriptCode.slice(applyStart, mainStart);
+  const mainBody = scriptCode.slice(mainStart);
+  for (const op of ['await import("@prisma/client")', "new PrismaClient(", "prisma.skill.findUnique",
+                    "prisma.skill.create", "prisma.$disconnect"]) {
+    assert.equal((scriptCode.match(new RegExp(op.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length,
+      (applyBody.match(new RegExp(op.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length,
+      `21n5. every occurrence of "${op}" is inside applyActivation()`);
+    assert.ok(!mainBody.includes(op), `21n5b. and "${op}" never appears in main() or below it`);
+  }
+  // In main(), the dry-run return comes before the only call into the database path.
+  const dryRunReturn = mainBody.indexOf("if (!apply) {");
+  const applyCall = mainBody.indexOf("return applyActivation()");
+  assert.ok(dryRunReturn > 0 && applyCall > 0, "21n6a. control: both branch points were located in main()");
+  assert.ok(dryRunReturn < applyCall,
+    `21n6. main() returns the dry-run report BEFORE it can call applyActivation() (${dryRunReturn} < ${applyCall})`);
+  assert.equal((mainBody.match(/applyActivation\(\)/g) ?? []).length, 1,
+    "21n6b. and there is exactly one call site, guarded by that return");
+  for (const forbidden of ["prisma.skill.findFirst", "prisma.skill.upsert", "prisma.skill.update", "$transaction", "$connect"]) {
+    assert.ok(!scriptCode.includes(forbidden), `21n7. the script contains no ${forbidden} at all`);
+  }
+  // Behavioural proof: build the dry-run report with a stub that THROWS on any access, and assert
+  // the stub was never touched. This runs the real function, not a description of it.
+  let stubTouched = 0;
+  const tripwire = new Proxy({}, { get() { stubTouched += 1; throw new Error("dry run touched a database client"); } });
+  const previousGlobal = (globalThis as unknown as { prisma?: unknown }).prisma;
+  (globalThis as unknown as { prisma?: unknown }).prisma = tripwire;
+  const dryLines = buildDryRunReport();
+  const dryText = dryLines.join("\n");
+  assert.equal(stubTouched, 0, "21n7. no database stub method was invoked while producing the dry-run report");
+  const wouldCreate = dryLines.filter((l) => l.includes("would create"));
+  assert.equal(wouldCreate.length, 3, "21n8. the dry run reports exactly three rows");
+  for (const s of ACTIVATION_SKILLS) {
+    assert.ok(wouldCreate.some((l) => l.includes(s.slug)), `21n9. "${s.slug}" is reported as would create`);
+  }
+  assert.ok(!/\bcreated\b/.test(dryText.replace(/would create/g, "")), "21n10. the dry run never says created");
+  assert.ok(!dryText.includes("already present"), "21n11. and never says already present — it did not look");
+  // The real entry point in dry-run mode also returns 0 without touching the tripwire.
+  const realLog = console.log;
+  const captured: string[] = [];
+  console.log = (...args: unknown[]) => { captured.push(args.join(" ")); };
+  const dryCode = await activationMain([]);
+  console.log = realLog;
+  assert.equal(dryCode, 0, "21n12. main([]) returns exit code 0");
+  assert.equal(captured.filter((l) => l.includes("would create")).length, 3,
+    "21n12b. and printed exactly the three would-create rows");
+  assert.ok(!captured.some((l) => l.includes("already present")), "21n12c. with no already-present claim");
+  assert.equal(stubTouched, 0, "21n13. and still touched no database client");
+  (globalThis as unknown as { prisma?: unknown }).prisma = previousGlobal;
+  // CONTROL: an identical tripwire really does fire when touched, so 21n7/21n13 are not vacuous.
+  const probe = { touched: 0 };
+  const probeWire = new Proxy({}, { get() { probe.touched += 1; throw new Error("touched"); } });
+  let tripped = false;
+  try { void (probeWire as { anything?: unknown }).anything; } catch { tripped = true; }
+  control("the database tripwire fires when touched", tripped && probe.touched === 1);
+
+  // ---- 21p. apply fails closed on every conflicting field --------------------------------------------
+  const approved = ACTIVATION_SKILLS[0];
+  const exactRow = {
+    slug: approved.slug, name: approved.name, description: approved.description,
+    organization: approved.organization, track: approved.track, order: approved.order
+  };
+  assert.deepEqual(classifyActivationRow(approved, null), { action: "create" },
+    "21p. a missing row is created");
+  assert.deepEqual(classifyActivationRow(approved, { ...exactRow }), { action: "already-present" },
+    "21p2. an exact row is already present — and no write branch exists for it");
+  for (const [field, mutated] of [
+    ["name", { ...exactRow, name: "Performance Indicators " }],
+    ["description", { ...exactRow, description: "something else" }],
+    ["organization", { ...exactRow, organization: "DEBATE" }],
+    ["track", { ...exactRow, track: "HOSA" }],
+    ["order", { ...exactRow, order: 99 }],
+    ["slug", { ...exactRow, slug: "deca-something-else" }]
+  ] as const) {
+    const verdict = classifyActivationRow(approved, mutated);
+    assert.equal(verdict.action, "conflict", `21p3. a conflicting ${field} is a CONFLICT, never an update`);
+    assert.ok(verdict.action === "conflict" && verdict.fields.includes(field),
+      `21p4. and the conflict names ${field}`);
+  }
+  // The conflict path must exit non-zero and must not write.
+  assert.ok(/conflicts \+= 1/.test(scriptCode) && /return 1;/.test(scriptCode),
+    "21p5. a conflict increments the counter and returns a non-zero exit code");
+  assert.ok(!/action === "conflict"[\s\S]{0,200}prisma\.skill\./.test(scriptCode),
+    "21p6. no database call follows the conflict branch");
+  // A race is accepted ONLY when the refetched row matches exactly — the same rule, re-applied.
+  assert.ok(/const raceVerdict = classifyActivationRow\(approved, refetched\)/.test(scriptCode),
+    "21p7. a unique-slug race re-applies the SAME comparison to the refetched row");
+  assert.ok(/raceVerdict\.action === "already-present"/.test(scriptCode),
+    "21p8. and accepts it only on an exact match");
+  // CONTROL: the comparison is load-bearing — a single trailing space is enough to fail closed.
+  control("one trailing space in a name is a conflict, not an update",
+    classifyActivationRow(approved, { ...exactRow, name: `${approved.name} ` }).action === "conflict");
+
+  // ---- 21q. the registered package command -----------------------------------------------------------
+  const pkgScripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> }).scripts;
+  assert.equal(pkgScripts["deca:skills:activate"], "tsx scripts/seed-deca-drill-skills.ts",
+    "21q. the activation command is registered exactly");
+  assert.ok(!pkgScripts["deca:skills:activate"].includes("--apply"),
+    "21q2. and does NOT default to apply mode");
+  for (const [name, cmd] of Object.entries(pkgScripts)) {
+    if (cmd.includes("seed-deca-drill-skills")) {
+      assert.equal(name, "deca:skills:activate", `21q3. only one command invokes the activation script (found ${name})`);
+    }
+  }
 
   // ---- 22. Study Arcade is DECA-safe ---------------------------------------------------------------
   const review = read("app/(app)/study-arcade/review/page.tsx");
@@ -435,12 +569,18 @@ async function main() {
   // persistence produces different copy, so the second status field is load-bearing.
   control("persistence status alone changes the learner-facing result",
     new Set(["updated", "skill-missing", "write-failed"].map((p) => row("passing", p).badge)).size === 3);
-  // CONTROL: the old copy really was there at HEAD, so 29e is not matching an already-absent string.
-  control("HEAD really carried the old two-state copy",
-    /mastery \+ review updated/.test(execSync("git show HEAD:components/training/concept-drills.tsx", { encoding: "utf8" })));
+  // CONTROL: the old copy really existed, so 29e is not matching an already-absent string.
+  //
+  // PINNED, NOT `HEAD`. This control read `git show HEAD:` when it was written, which was correct
+  // only until M13E1D itself was committed — at which point HEAD became the commit that DELETED the
+  // string and the control could never hold again. Same defect this milestone fixed in three other
+  // suites; it was in this file too. A historical control must name the history it means.
+  control("the pre-M13E1D commit really carried the old two-state copy",
+    /mastery \+ review updated/.test(
+      execSync(`git show ${PRE_M13E1D}:components/training/concept-drills.tsx`, { encoding: "utf8" })));
 
   console.log(
-    `Deca-mastery smoke passed: DECA drill mastery is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to the question's own bank area — and needs ${DECA_DRILL_REQUIRED_UNIQUE} distinct questions before anything is written. The exact reported bypass (five distinct performance-indicator questions, one genuinely correct, that one repeated twelve times) scored 76% and would have written a pass; it now scores 20% and never qualifies. Repeats, conflicting resubmits and unknown ids cannot raise evidence, and below the floor the persistence helper is not called at all, so no mastery, no review and no due-review knock-down can follow. Persistence reports updated / skill-missing / write-failed separately from the evidence status, a thrown lookup is never reported as a missing skill, and the existing boolean wrapper is true only for updated so the Debate caller is unchanged. The three DECA drill skills resolve as DECA to /training/deca/practice, never to Debate writing practice; the activation script holds exactly those three rows, is dry-run by default and upserts only Skill. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `Deca-mastery smoke passed: DECA drill mastery is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to the question's own bank area — and needs ${DECA_DRILL_REQUIRED_UNIQUE} distinct questions before anything is written. The exact reported bypass (five distinct performance-indicator questions, one genuinely correct, that one repeated twelve times) scored 76% and would have written a pass; it now scores 20% and never qualifies. Repeats, conflicting resubmits and unknown ids cannot raise evidence, and below the floor the persistence helper is not called at all, so no mastery, no review and no due-review knock-down can follow. Persistence reports updated / skill-missing / write-failed separately from the evidence status, a thrown lookup is never reported as a missing skill, and the existing boolean wrapper is true only for updated so the Debate caller is unchanged. The three DECA drill skills resolve as DECA to /training/deca/practice, never to Debate writing practice; the activation script holds exactly those three rows and is dry-run by default — the dry run imports no database client at all (proven against a tripwire that throws on any access), and apply creates a missing row, verifies an exact one, and fails closed with a non-zero exit on any conflicting slug, name, description, organization, track or order rather than overwriting it. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

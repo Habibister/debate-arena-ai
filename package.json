@@ -38,6 +38,7 @@
     "education-migration:smoke": "tsx scripts/education-migration-smoke.ts",
     "skills-compat:smoke": "tsx scripts/skills-compat-smoke.ts",
     "deca-mastery:smoke": "tsx scripts/deca-mastery-smoke.ts",
+    "deca:skills:activate": "tsx scripts/seed-deca-drill-skills.ts",
     "auth:check": "tsx scripts/auth-users-check.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

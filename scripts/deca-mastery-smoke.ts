@@ -491,9 +491,12 @@ async function main() {
   }
 
   // ---- 24-28. everything outside the boundary is byte-identical to HEAD -------------------------------
+  //
+  // The three Debate concept-drill files were byte-pinned here until M13E1E, which deliberately gives
+  // Debate the same duplicate-resistant evidence contract this suite proves for DECA. A blanket hash
+  // would forbid that approved change rather than protect DECA, so the pins are replaced at 25b-25f by
+  // assertions on what actually matters: DECA is untouched, and Debate did not drag DECA along with it.
   for (const file of ["lib/assignments.ts", "lib/assignment-types.ts",                       // 24 assignments
-                      "lib/debate-drills.ts", "app/api/debate/drills/submit/route.ts",       // 25 Debate
-                      "components/training/debate-drills.tsx",
                       "app/api/hosa/medterm/submit/route.ts",                                // 26 HOSA
                       "prisma/schema.prisma",                                                // 27 schema
                       "prisma/seed.ts",                                                      // 28 seed
@@ -501,9 +504,39 @@ async function main() {
                       "components/lessons/lesson-practice.tsx", "app/(app)/skills/[slug]/page.tsx"]) {
     assert.equal(nowSha(file), headSha(file), `24-28. ${file} is byte-identical to HEAD`);
   }
-  // The Debate route still consumes the BOOLEAN wrapper, unchanged.
-  assert.ok(/const wrote = await recordDrillMastery\(/.test(read("app/api/debate/drills/submit/route.ts")),
-    "25b. the Debate caller still uses the boolean contract");
+  // ---- 25b-25f. what the Debate byte-pins were protecting, asserted exactly ---------------------------
+  const debateRoute = read("app/api/debate/drills/submit/route.ts");
+  // (i) The Debate route still consumes the BOOLEAN wrapper — the whole reason recordDrillMastery must
+  //     stay backward-compatible. If Debate ever switched to the detailed form, that guarantee is moot.
+  assert.ok(/const wrote = await recordDrillMastery\(/.test(debateRoute),
+    "25b. the Debate caller still uses the boolean contract, by name");
+  assert.ok(!debateRoute.includes("recordDrillMasteryDetailed"),
+    "25b2. and never the detailed form reserved for DECA");
+  // (ii) DECA's own modules are untouched by the Debate change — no shared abstraction was introduced.
+  const debateLib = stripComments(read("lib/debate-drills.ts"));
+  for (const decaSymbol of ["@/lib/deca-drills", "../lib/deca-drills", "DECA_DRILL_BANK",
+                            "buildDecaDrillEvidence", "DECA_DRILL_REQUIRED_UNIQUE"]) {
+    assert.ok(!debateLib.includes(decaSymbol), `25c. lib/debate-drills.ts does not reach into DECA (${decaSymbol})`);
+  }
+  const decaLib = stripComments(read("lib/deca-drills.ts"));
+  for (const debateSymbol of ["@/lib/debate-drills", "../lib/debate-drills",
+                              "buildDrillEvidence", "DEBATE_DRILL_REQUIRED_UNIQUE"]) {
+    assert.ok(!decaLib.includes(debateSymbol), `25d. lib/deca-drills.ts does not reach into Debate (${debateSymbol})`);
+  }
+  // Word-boundary check: `DECA_DRILL_BANK` legitimately CONTAINS the Debate symbol's text, so a plain
+  // substring scan would fire on DECA's own constant.
+  assert.ok(!/(?<![A-Z_])DRILL_BANK\b/.test(decaLib), "25d2. and never references the bare Debate DRILL_BANK");
+  control("the bare-symbol scan is live — DECA's own DECA_DRILL_BANK is present and correctly ignored",
+    /\bDECA_DRILL_BANK\b/.test(decaLib) && !/(?<![A-Z_])DRILL_BANK\b/.test(decaLib));
+  // (iii) The two tracks keep separate floors and separate helpers — isolation, not a merged engine.
+  const { DEBATE_DRILL_REQUIRED_UNIQUE, buildDrillEvidence } = await import("../lib/debate-drills");
+  assert.equal(DEBATE_DRILL_REQUIRED_UNIQUE, DECA_DRILL_REQUIRED_UNIQUE,
+    "25e. both tracks use a five-distinct-question floor");
+  assert.notEqual(buildDrillEvidence, buildDecaDrillEvidence,
+    "25e2. but through separate per-track helpers, not one shared function");
+  // (iv) DECA's own evidence behaviour is unchanged by the Debate work — re-proven, not assumed.
+  assert.equal(piEvidence(distinctPi(5, 1)).evidenceScore, 20, "25f. DECA still scores 5-distinct/1-correct as 20");
+  assert.equal(buildDrillEvidence([]).length, 0, "25f2. and the Debate helper is independent of it");
 
   // ---- 29. no database, and no drift between the client constant and the server floor ----------------
   for (const file of ["lib/deca-drills.ts", "components/training/concept-drills.tsx"]) {

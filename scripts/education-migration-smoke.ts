@@ -42,7 +42,7 @@ function collectStrings(value: unknown, out: string[], depth = 0): void {
   }
 }
 
-function main() {
+async function main() {
   const view = read("components/lessons/concept-education-lesson-view.tsx");
   const practice = read("components/lessons/concept-education-lesson-practice.tsx");
   const trackFile = read("lib/education/tracks/debate.ts");
@@ -78,7 +78,10 @@ function main() {
                       "components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",
                       "app/(app)/lessons/page.tsx", "app/(app)/lessons/[slug]/page.tsx",
-                      "lib/authored-lesson-progress.ts", "lib/debate-drills.ts",
+                      // lib/debate-drills.ts is deliberately absent from M13E1E onward: that milestone
+                      // gives Debate the duplicate-resistant evidence contract. What this suite needs
+                      // to protect is the LESSON path, which is asserted at 4b9 below.
+                      "lib/authored-lesson-progress.ts",
                       // app/(app)/skills/[slug]/page.tsx is deliberately absent: M13E1C rewrites that
                       // route. Its INDEX page stays pinned here, and the compatibility contract that
                       // replaced its body is owned by scripts/skills-compat-smoke.ts.
@@ -110,12 +113,24 @@ function main() {
   assert.ok(/export async function recordDrillMasteryDetailed\(/.test(spacedReview),
     "4b3. and the detailed result is an ADDITION beside it, not a rename");
   assert.ok(/Promise<boolean>/.test(spacedReview), "4b4. the boolean return type is unchanged");
-  // The Debate caller — the reason the contract must stay backward-compatible — is untouched and
-  // still consumes the boolean form.
-  assert.equal(shaNow("app/api/debate/drills/submit/route.ts"), sha("app/api/debate/drills/submit/route.ts"),
-    "4b5. the Debate drill submit route is byte-identical to HEAD");
-  assert.ok(/await recordDrillMastery\(/.test(read("app/api/debate/drills/submit/route.ts")),
-    "4b6. and still calls the boolean export by name");
+  // The Debate caller — the reason the contract must stay backward-compatible — still consumes the
+  // boolean form. It is no longer byte-pinned: M13E1E rewrites its persistence GATING while keeping
+  // the same call, so the assertion that matters is the call shape, not the file hash.
+  assert.ok(/const wrote = await recordDrillMastery\(/.test(read("app/api/debate/drills/submit/route.ts")),
+    "4b5. the Debate drill submit route still calls the boolean export by name");
+  assert.ok(!read("app/api/debate/drills/submit/route.ts").includes("recordDrillMasteryDetailed"),
+    "4b6. and has not switched to the detailed form");
+  // 4b9. The LESSON practice path is what this suite protects, and it is untouched by M13E1E: the one
+  // authored lesson using LessonPractice reuses the Debate drill endpoints, so prove the lesson
+  // renderer and its component are byte-identical even though the drill bank changed.
+  for (const file of ["components/lessons/lesson-practice.tsx", "lib/lessons.ts"]) {
+    assert.equal(shaNow(file), sha(file), `4b9. ${file} is byte-identical to HEAD`);
+  }
+  // And the Debate bank's QUESTION DATA is unchanged — only the evidence layer was added.
+  const { DRILL_BANK, DRILL_AREAS } = await import("../lib/debate-drills");
+  assert.equal(DRILL_BANK.length, 36, "4b10. the Debate bank still holds exactly 36 questions");
+  assert.equal(DRILL_AREAS.length, 4, "4b11. across exactly four areas");
+  assert.equal(new Set(DRILL_BANK.map((q) => q.id)).size, 36, "4b12. with no duplicate ids");
   // (iii) M13E1D introduces no second lesson or mastery renderer. The lesson component set is fixed,
   //       and the one component M13E1D touched reaches no lesson or education module.
   const lessonComponents = readdirSync("components/lessons").filter((f) => /\.tsx?$/.test(f)).sort();
@@ -347,4 +362,4 @@ function main() {
   );
 }
 
-main();
+main().catch((e) => { console.error(e); process.exit(1); });

@@ -9,12 +9,77 @@ import type { DrillArea } from "@/lib/debate-drills";
 
 type Question = { id: string; area: DrillArea; question: string; choices: string[]; correctAnswer: string; explanation: string };
 type AreaMeta = { id: DrillArea; label: string; skillSlug: string; description: string };
-type PerSkill = { area: DrillArea; label: string; skillSlug: string; total: number; correct: number; scorePercent: number; passed: boolean };
+type EvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
+type PersistenceStatus = "not-attempted" | "updated" | "not-saved";
+type PerSkill = {
+  area: DrillArea;
+  label: string;
+  skillSlug: string;
+  /** The SESSION result: every answer, counted every time it was submitted. */
+  total: number;
+  correct: number;
+  scorePercent: number;
+  /** The EVIDENCE result: each distinct question counted once, first answer only. */
+  uniqueTotal: number;
+  uniqueCorrect: number;
+  requiredUnique: number;
+  evidenceScore: number;
+  evidenceStatus: EvidenceStatus;
+  persistenceStatus: PersistenceStatus;
+  passed: boolean;
+};
 type Result = { total: number; correctCount: number; scorePercent: number; items: Array<{ id: string; area: DrillArea; correct: boolean; correctAnswer: string; explanation: string }>; perSkill: PerSkill[]; wroteSkills: string[] };
 
+/**
+ * Distinct questions per skill required before anything is recorded.
+ *
+ * Mirrors `DEBATE_DRILL_REQUIRED_UNIQUE`, which this client component cannot import from the server
+ * bank module. `scripts/debate-mastery-smoke.ts` asserts the two constants are equal so they cannot
+ * drift.
+ */
+const REQUIRED_UNIQUE_FOR_PROGRESS = 5;
+
+/**
+ * What each result row says, from BOTH status fields.
+ *
+ * Never from one alone: a skill can qualify on evidence and still not be recorded if the write
+ * failed, and those are different things to tell someone. All four Debate skills are seeded, so a
+ * false persistence result is a FAILED WRITE — never an unseeded skill, and it must not be described
+ * as one. Nothing here claims a spaced review was scheduled: the review helper swallows its own
+ * failures, so that claim cannot be made honestly.
+ */
+export function resultState(skill: PerSkill): { badge: string; tone: "success" | "info" | "outline" | "warning"; explanation: string | null } {
+  if (skill.persistenceStatus === "not-saved") {
+    return {
+      badge: "Progress not saved",
+      tone: "warning",
+      explanation: "Your answers were graded, but progress could not be saved. Try again later."
+    };
+  }
+  if (skill.evidenceStatus === "insufficient-evidence") {
+    return {
+      badge: "Practice only",
+      tone: "outline",
+      explanation: `Fewer than ${skill.requiredUnique} different questions were answered for this skill, so no progress was recorded.`
+    };
+  }
+  if (skill.evidenceStatus === "below-threshold") {
+    return {
+      badge: "Keep practicing",
+      tone: "info",
+      explanation: "You answered enough different questions, but scored below 70%. This practice result was saved."
+    };
+  }
+  return {
+    badge: "Progress saved",
+    tone: "success",
+    explanation: "You answered enough different questions and scored 70% or above. This practice result was saved."
+  };
+}
+
 // General Debate concept drills: original multiple-choice items across argument construction,
-// rebuttal, evidence evaluation, and weighing. Immediate explanation per answer; on finish, real
-// per-skill scores are written to MasteryProgress + spaced review.
+// rebuttal, evidence evaluation, and weighing. Immediate explanation per answer; on finish, the
+// per-skill EVIDENCE score — each distinct question counted once — is what may be recorded.
 export function DebateDrills() {
   const [areaFilter, setAreaFilter] = useState<DrillArea | "mixed">("mixed");
   const [count, setCount] = useState(8);
@@ -102,23 +167,33 @@ export function DebateDrills() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
-            {result.perSkill.map((s) => (
-              <div key={s.area} className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-background p-2 text-sm">
-                <span className="font-semibold">{s.label}</span>
-                <span className="flex items-center gap-2">
-                  <span>{s.correct}/{s.total} ({s.scorePercent}%)</span>
-                  {result.wroteSkills.includes(s.skillSlug) ? (
-                    <Badge variant="secondary">mastery + review updated</Badge>
-                  ) : (
-                    <Badge variant="outline">not yet tracked</Badge>
-                  )}
-                </span>
-              </div>
-            ))}
+            {result.perSkill.map((s) => {
+              const state = resultState(s);
+              // Only worth explaining when the two numbers actually disagree, which happens whenever a
+              // question was answered more than once — including the repeats the drill itself served.
+              const repeated = s.evidenceScore !== s.scorePercent;
+              return (
+                <div key={s.area} className="space-y-1 rounded-md border bg-background p-2 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold">{s.label}</span>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span>{s.correct}/{s.total} ({s.scorePercent}%)</span>
+                      <Badge variant={state.tone}>{state.badge}</Badge>
+                    </span>
+                  </div>
+                  {repeated ? (
+                    <p className="text-xs text-muted-foreground">
+                      Repeated questions count once toward progress — {s.uniqueCorrect} of {s.uniqueTotal} different questions correct.
+                    </p>
+                  ) : null}
+                  {state.explanation ? <p className="text-xs text-muted-foreground">{state.explanation}</p> : null}
+                </div>
+              );
+            })}
           </div>
           <p className="text-xs text-muted-foreground">
-            Scores are real: each skill above updates your mastery and spaced-review schedule. Skills marked
-            &quot;not yet tracked&quot; aren&apos;t seeded yet, so no progress is recorded for them (never faked).
+            Focused skill sessions can update your progress. A mixed session is practice and only records a
+            skill when you answer at least {REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.
           </p>
           <Button type="button" size="sm" onClick={() => setResult(null)}>
             <RotateCcw className="h-4 w-4" aria-hidden />
@@ -141,8 +216,7 @@ export function DebateDrills() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Original multiple-choice reps on the core debate skills. Every answer gets an explanation, and your
-            real scores feed mastery + spaced review.
+            Original multiple-choice reps on the core debate skills. Every answer gets an explanation.
           </p>
           <div>
             <p className="mb-2 text-sm font-semibold">Focus</p>
@@ -156,6 +230,10 @@ export function DebateDrills() {
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Focused skill sessions can update your progress. A mixed session is practice and only records a
+              skill when you answer at least {REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.
+            </p>
           </div>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Questions</span>

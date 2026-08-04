@@ -150,3 +150,128 @@ export function gradeDrillAnswers(answers: DrillAnswer[]): DrillResult {
 
   return { total, correctCount, scorePercent, items, perSkill };
 }
+
+// --- Duplicate-resistant mastery evidence (M13E1E) ------------------------------------------------
+//
+// `gradeDrillAnswers` above reports the LEARNER'S SESSION: every graded answer, counted every time it
+// was submitted. That is the right number to show someone who just finished a drill, and it is the
+// wrong number to persist. Three separate paths turned it into fabricated mastery, all of them live:
+//
+//   ONE QUESTION.        A single correct answer is 1/1 = 100%, and `masteryLevelFor(100)` is
+//                        MASTERED. All four Debate skills are seeded, so that row is written and a
+//                        coach can see it. Nothing about answering one multiple-choice question
+//                        establishes mastery of rebuttal.
+//
+//   DUPLICATE INFLATION. Five distinct questions with ONE genuinely correct, plus twelve repeats of
+//                        that correct id, tallies 13/17 = 76% — over the 70% threshold. Identical to
+//                        the DECA bypass closed in M13E1D.
+//
+//   HONEST PADDING.      This one needs no bad intent at all. `buildDrillSession` repeats items once
+//                        the requested count exceeds an area's nine-question pool, and the UI offers
+//                        12 and 20. Every repeat arrives AFTER the learner has already been shown the
+//                        correct answer and explanation, so a learner who genuinely knew 6 of 9
+//                        reached 85% — MASTERED — by answering the same questions again. The product
+//                        manufactured the false mastery itself.
+//
+// So persistence reads from an EVIDENCE SET instead: at most one entry per valid question id, using
+// the FIRST answer submitted for that id.
+//
+//   first occurrence, not last  — a later answer to an already-answered id is ignored, so seeing the
+//                                 explanation and re-answering cannot convert a miss into credit.
+//                                 This is exactly what makes the padding path safe.
+//   first occurrence, not all   — repeats are legitimate above the nine-item pool, so requiring every
+//                                 occurrence to be correct would punish honest practice.
+//   ignore, do not reject       — an unrecognised id contributes nothing rather than failing the whole
+//                                 submission, and each id is attributed to its OWN bank area.
+//
+// This makes the evidence duplicate-resistant and unknown-id-resistant. It is NOT tamper-proof: the
+// session route still returns `correctAnswer` to the browser and nothing binds a submission to the
+// question set the server served. Session binding is deliberately out of scope here (M13E2).
+//
+// Deliberately Debate-specific. The DECA equivalent in `lib/deca-drills.ts` is not imported and not
+// modified: one shared cross-track abstraction would couple two banks that must stay isolated, and
+// this slice is not the place to build it.
+
+/**
+ * Distinct valid questions required for ONE Debate skill before any progress may be written.
+ *
+ * Five, matching DECA: each area's bank holds nine distinct items (so five is a majority of what
+ * exists), five is the smallest focused-session size the UI offers, and at five questions the 70%
+ * threshold needs at least four correct — unreachable on a single lucky answer.
+ */
+export const DEBATE_DRILL_REQUIRED_UNIQUE = 5;
+
+export type DrillEvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
+
+export type DrillSkillEvidence = {
+  area: DrillArea;
+  skillSlug: string;
+  label: string;
+  /** Distinct valid question ids submitted for this skill. */
+  uniqueTotal: number;
+  /** How many of those were correct ON THEIR FIRST submitted answer. */
+  uniqueCorrect: number;
+  requiredUnique: number;
+  /** `uniqueCorrect / uniqueTotal` — the only score that may reach the database. */
+  evidenceScore: number;
+  evidenceStatus: DrillEvidenceStatus;
+  /** True only with enough distinct questions AND an evidence score at or above the threshold. */
+  passed: boolean;
+};
+
+/** Build the per-skill evidence set for a Debate submission. Pure; deterministic; order-independent. */
+export function buildDrillEvidence(answers: DrillAnswer[]): DrillSkillEvidence[] {
+  const byId = new Map(DRILL_BANK.map((q) => [q.id, q]));
+
+  // First occurrence per valid id wins; unknown ids and every repeat are dropped here.
+  const firstById = new Map<string, { question: DrillQuestion; selected: string }>();
+  for (const answer of answers) {
+    const question = byId.get(answer.id);
+    if (!question) continue;
+    if (firstById.has(answer.id)) continue;
+    firstById.set(answer.id, { question, selected: answer.selected });
+  }
+
+  const tally = new Map<DrillArea, { uniqueTotal: number; uniqueCorrect: number }>();
+  for (const { question, selected } of firstById.values()) {
+    // Attribution is by the question's OWN area, never by whatever area the session requested.
+    const bucket = tally.get(question.area) ?? { uniqueTotal: 0, uniqueCorrect: 0 };
+    bucket.uniqueTotal += 1;
+    if (selected === question.correctAnswer) bucket.uniqueCorrect += 1;
+    tally.set(question.area, bucket);
+  }
+
+  return Array.from(tally.entries()).map(([area, bucket]) => {
+    const meta = DRILL_AREAS.find((a) => a.id === area);
+    const evidenceScore = bucket.uniqueTotal > 0 ? Math.round((bucket.uniqueCorrect / bucket.uniqueTotal) * 100) : 0;
+    const evidenceStatus: DrillEvidenceStatus =
+      bucket.uniqueTotal < DEBATE_DRILL_REQUIRED_UNIQUE
+        ? "insufficient-evidence"
+        : evidenceScore >= DRILL_PASS_THRESHOLD
+          ? "passing"
+          : "below-threshold";
+    return {
+      area,
+      skillSlug: meta?.skillSlug ?? "",
+      label: meta?.label ?? area,
+      uniqueTotal: bucket.uniqueTotal,
+      uniqueCorrect: bucket.uniqueCorrect,
+      requiredUnique: DEBATE_DRILL_REQUIRED_UNIQUE,
+      evidenceScore,
+      evidenceStatus,
+      passed: evidenceStatus === "passing"
+    };
+  });
+}
+
+/**
+ * What to persist for one Debate skill, or `null` meaning DO NOT CALL the persistence helper.
+ *
+ * `null` is not "write a zero" — it is the absence of a call, so a short submission cannot write
+ * progress, cannot touch the review schedule, and cannot knock an existing mastery down through a
+ * due review it never earned the right to answer.
+ */
+export function debateDrillPersistenceRequest(evidence: DrillSkillEvidence): { scorePercent: number; passed: boolean } | null {
+  if (evidence.uniqueTotal < evidence.requiredUnique) return null;
+  return { scorePercent: evidence.evidenceScore, passed: evidence.passed };
+}

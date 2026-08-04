@@ -3,7 +3,16 @@
  * Run with: npm run debate-drills:smoke
  */
 import assert from "node:assert/strict";
-import { DRILL_AREAS, DRILL_BANK, buildDrillSession, gradeDrillAnswers, type DrillArea } from "../lib/debate-drills";
+import {
+  DRILL_AREAS,
+  DRILL_BANK,
+  DEBATE_DRILL_REQUIRED_UNIQUE,
+  buildDrillEvidence,
+  buildDrillSession,
+  debateDrillPersistenceRequest,
+  gradeDrillAnswers,
+  type DrillArea
+} from "../lib/debate-drills";
 
 async function main() {
   // Bank integrity.
@@ -44,7 +53,40 @@ async function main() {
   const q0Skill = mixed.perSkill.find((sk) => sk.area === q0.area)!;
   assert.ok(q0Skill.scorePercent < 100, "a wrong answer lowers that skill's score");
 
-  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} original questions across ${DRILL_AREAS.length} areas, integrity + focused sessions + per-skill grading consistent.`);
+  // Every area's bank must be able to REACH the evidence floor, or that skill could never be recorded.
+  for (const area of DRILL_AREAS) {
+    const pool = DRILL_BANK.filter((q) => q.area === area.id);
+    assert.ok(pool.length >= DEBATE_DRILL_REQUIRED_UNIQUE,
+      `area ${area.id} has fewer than ${DEBATE_DRILL_REQUIRED_UNIQUE} distinct questions, so it could never qualify`);
+    const ev = buildDrillEvidence(pool.slice(0, DEBATE_DRILL_REQUIRED_UNIQUE).map((q) => ({ id: q.id, selected: q.correctAnswer })));
+    assert.equal(ev[0]?.evidenceStatus, "passing", `area ${area.id} reaches passing evidence at the floor`);
+    assert.equal(ev[0]?.skillSlug, area.skillSlug, `area ${area.id} maps to ${area.skillSlug}`);
+  }
+
+  // REGRESSION: the two scores the pre-M13E1E contract conflated must stay separate.
+  const w = (q: (typeof DRILL_BANK)[number]) => q.choices.find((c) => c !== q.correctAnswer)!;
+  const cwi = DRILL_BANK.filter((q) => q.area === "claim-warrant-impact");
+  const bypass = [
+    ...cwi.slice(0, 5).map((q, i) => ({ id: q.id, selected: i < 1 ? q.correctAnswer : w(q) })),
+    ...Array.from({ length: 12 }, () => ({ id: cwi[0].id, selected: cwi[0].correctAnswer }))
+  ];
+  assert.equal(gradeDrillAnswers(bypass).perSkill[0].scorePercent, 76, "the raw session score for the bypass is still 76");
+  assert.equal(buildDrillEvidence(bypass)[0].evidenceScore, 20, "but its evidence score is 20 — duplicates count once");
+
+  const reb = DRILL_BANK.filter((q) => q.area === "rebuttal");
+  const padded = reb.map((q, i) => ({ id: q.id, selected: i < 6 ? q.correctAnswer : w(q) }));
+  while (padded.length < 20) { const q = reb[padded.length % 9]; padded.push({ id: q.id, selected: q.correctAnswer }); }
+  assert.equal(gradeDrillAnswers(padded).perSkill[0].scorePercent, 85, "the honest-padding raw score still reads 85");
+  assert.equal(buildDrillEvidence(padded)[0].evidenceScore, 67, "but its evidence score is 67 — repeats count once");
+  assert.deepEqual(debateDrillPersistenceRequest(buildDrillEvidence(padded)[0]), { scorePercent: 67, passed: false },
+    "so persistence receives 67 with passed:false, never a MASTERED-qualified result");
+
+  // The raw grader still counts every answer; the evidence set does not.
+  const repeated = [cwi[0], cwi[0], cwi[0]].map((q) => ({ id: q.id, selected: q.correctAnswer }));
+  assert.equal(gradeDrillAnswers(repeated).total, 3, "the session grader still counts every answer");
+  assert.equal(buildDrillEvidence(repeated)[0].uniqueTotal, 1, "but the evidence set counts the question once");
+
+  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} original questions across ${DRILL_AREAS.length} areas, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%).`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -2,154 +2,112 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-04 (M13E2 Phase C2b — writing and XP route cutover, local only)_
+_Last updated: 2026-08-06 (M13E2 Phase C closeout — code complete locally, nothing pushed)_
 
-## M13E2 Phase C2b — Debate writing is session-backed and the XP writers are concurrency-safe
+## M13E2 — server-bound practice sessions: code complete locally, unpushed
 
-Local only. C1 (helpers), C2a (nine drill routes) and C2b are all **committed or implemented locally
-and none has been pushed or deployed. Production still runs the pre-C1 commit** — the old routes,
-which still hand out answer keys and accept unbound submissions.
+**M13E2 code is locally complete.** Phase A (schema) is pushed and deployed. Phase B (`npm run
+db:push` against the shared Production database) is complete, so the practice-session enums, tables,
+foreign keys, indexes and unique constraints are **active in the database**. Phases C1, C2a, C2b,
+C3a and C3b are **committed locally and none of them has been pushed or deployed**.
 
-C2b adds `app/api/skills/debate-writing/session/route.ts` and converts the writing submit route:
+**The application is no longer deliberately mid-cutover locally.** Debate drills, DECA drills, HOSA
+Medical Terminology, guided lesson practice and Debate Writing now use the **same** server-issued
+session protocol end to end — routes and clients speak one contract. That is true **locally only**.
 
-- The **server** now selects the writing scenario and freezes it into the session snapshot. The
-  client no longer sends `slug`, `level` or `scenarioIndex`, so a learner can no longer choose their
-  own prompt.
-- Submit takes `{ sessionId, response }`, grades against the scenario the session actually issued,
-  and replays a stored result on retry **before** the grader or any XP path runs.
-- One issued writing session awards XP **at most once**, through `awardXpInTransaction`. Requesting a
-  new session and completing it still awards the current amount — broader XP-farming policy is
-  deferred, not silently changed.
-- The grader, its 70 threshold, the feedback shape, the XP amount and the existing PracticeAttempt /
-  QuestionAttempt / MasteryProgress / review effects are all unchanged.
+### What the protocol guarantees, in local code
 
-The three XP/rank writers — writing, `tests/[testId]/grade` and `debates/[debateId]/judge` — now all
-increment atomically and derive rank from the returned value. The previous read-add-write could be
-erased by a concurrent writer, because a plain SELECT never blocks under MVCC. Only the XP/rank write
-changed in the latter two: grading rules, judging rules, amounts, response contracts, and **wins and
-streak** are untouched, and their own pre-read staleness remains carried work.
+- **The server issues the work.** Session start picks the questions or the writing scenario
+  server-side, shuffles each question's choices, mints an opaque `crypto.randomUUID()` id per served
+  choice, stores the answer key, and freezes everything into a versioned, kind-discriminated
+  `scenarioJson` snapshot.
+- **Unanswered answer keys are not required by the converted clients.** An unanswered item ships its
+  prompt and its shuffled choices and nothing else — no correct answer, no correct option id, no
+  explanation. The clients render feedback only from what the server returns after it has recorded
+  an answer, and from already-answered items on resume.
+- **Grading uses the persisted session snapshot**, never a live bank lookup, so a question edited
+  after issuance cannot change a grade already earned.
+- **The first accepted answer to a distinct item is final.** A later different pick returns the
+  stored first answer rather than replacing it.
+- **Repeated padded visual slots share one distinct-item answer state.** A focused twenty-question
+  session stores nine distinct item rows plus a persisted twenty-slot order of repeated item ids;
+  the repeats add no extra evidence, mastery, review or XP.
+- **Final drill submissions send only `{ sessionId }`.** Writing submission sends only
+  `{ sessionId, response }`.
+- **A completed retry replays the stored result before any effect runs** — before the grader, before
+  review and mastery, and before XP.
+- **HOSA remains review-only** and no drill route awards XP.
+- **Writing, test-grade and judge XP/rank writes use the concurrency-safe transactional helper**
+  (`awardXpInTransaction`): an atomic increment whose rank derives from the value the increment
+  returned. The previous read-add-write could be erased by a concurrent writer, because a plain
+  SELECT never blocks under MVCC.
 
-**Still not usable end to end.** The clients are not cut over, C3 has not begun, and M13E2 is not
-complete. No schema change, no database operation, no activation, no Redis, no secret.
+### What each phase contains
 
-## M13E2 Phase C2a — the nine drill routes are session-backed, in local code only
+| Phase | Commit | Contents |
+|---|---|---|
+| C1 | `59dd52b` | `lib/practice-session.ts` (new), transaction-native review/mastery cores appended to `lib/spaced-review.ts`, `awardXpInTransaction` in `lib/xp.ts`, additive schemas in `lib/validators.ts`, `scripts/practice-session-smoke.ts` (new) |
+| C2a | `dd11e69` | The nine Debate / DECA / HOSA MedTerm drill routes — session, check and submit — bound to server-issued sessions |
+| C2b | `4f0c856` | `app/api/skills/debate-writing/session/route.ts` (new) plus the writing submit cutover, and the XP/rank cutover for `tests/[testId]/grade` and `debates/[debateId]/judge` |
+| C3a-i | `80dbf75` | Debate drills client |
+| C3a-ii | `be97024` | DECA drills client and HOSA MedTerm client, plus an explicit `checkEndpoint` prop on the shared concept-drills component |
+| C3b-i | `9103693` | Guided lesson practice client — the last legacy caller of the old drill contract |
+| C3b-ii | `f392ede` | Debate Writing client |
 
-Phase A (schema) is **deployed**. Phase B (`npm run db:push` against the shared Production database)
-is **complete**, so the practice-session enums, tables, foreign keys, indexes and unique constraints
-are **active**. C1 (helpers) is **committed locally**. C2a is now **implemented locally**.
+Preserved exactly across all of it: Debate and DECA evidence floors of 5, HOSA's 10-unique-across-3-
+areas, the threshold of 70 (exact-ratio for HOSA), the honest 6-of-9 result of 67, no XP on any drill
+track, and the public M13E1G helpers with their seven review variants, their returned `write-failed`,
+their missing-table degradation and assertion 28c.
 
-All nine drill routes are cut over — Debate, DECA and HOSA MedTerm, each with a session-start, a
-per-answer check, and a final submit:
+### What is deliberately unchanged
 
-- **Session start** picks the questions server-side, shuffles each question's choices, mints an
-  opaque `randomUUID` id per served choice, stores the answer key, and persists the padded slot order
-  in a versioned `scenarioJson` snapshot. The response carries no correct answer and no explanation
-  for a question the learner has not answered.
-- **Check** records the learner's first answer under a conditional update and only then returns
-  feedback. A later different pick returns the stored first answer rather than replacing it.
-- **Submit** takes a session id and nothing else. Grading reads the stored snapshot and the stored
-  `isCorrect`, never the live bank, so a question edited after issuance cannot change a grade already
-  earned. Debate and DECA persist through the transaction-native review and mastery cores; HOSA stays
-  review-only. A completed session replays its stored result with zero effects.
+- **`enforceRateLimit` is absent from both Debate Writing routes.** That surface has never had rate
+  limiting, redesign is deferred, and three suites assert the absence. Do not "fix" it.
+- **The drill check routes are deliberately not rate-limited.** The light tier is 20/min and a
+  twenty-question drill needs 22 calls.
+- **`wins` and `streak` in the judge route are untouched.** They still read-modify-write from a
+  pre-read; that staleness is carried work, and `practice-session:smoke` controls 144–144c pin the
+  existing behaviour so it cannot drift while it waits.
+- **`app/(app)/skills/[slug]/practice/page.tsx` still passes `initialScenario`** to the writing
+  client. The prop is accepted for compatibility and is **never read** — it is not destructured in
+  the component — and the scenario a learner is graded against is the one the server issues. Its
+  caller was outside the approved Phase C boundary, so removing it is separate follow-up work.
 
-Preserved exactly: Debate and DECA evidence floors of 5, HOSA's 10-unique-across-3-areas, the
-threshold of 70 (exact-ratio for HOSA), the honest 6-of-9 result of 67, and no XP on any drill track.
+### What has NOT happened
 
-**What is NOT true yet.** The clients are **not** cut over — the components still expect the old
-response shape — so the practice flow is **not usable end to end** and M13E2 is **not complete**.
-**C1 and C2a have not been pushed or deployed; Production still runs the pre-C1 commit** and
-therefore still runs the old routes, which still return answer keys and accept unbound submissions.
+- **No Phase C schema change and no Phase C database operation.** No `db push`, no migration, no
+  seed, no reset, no activation, no learner-data read or write.
+- **No Redis and no new secret** were introduced or are required.
+- **Nothing in Phase C is pushed or deployed.** **Production still runs
+  `221e07f744b92b5ed3e68a8fcb56e21b3bd2fd37`** — the pre-C1 commit, and therefore still the old
+  routes, which still return answer keys and accept unbound submissions.
+- **Authenticated Production behavior of the session protocol is not claimed.** Nothing behind
+  sign-in has been exercised in Production for any of this work.
+- **The three database-writing suites — `auth:smoke`, `team:smoke`, `assignment:smoke` — were not
+  run** and must not be claimed as passing.
 
-C2b (Debate-writing session/submit and the XP/rank cross-writer safety for test-grade and
-Debate-judge) has **not begun**. C3 (components and pages) has **not begun**.
-
-No schema change, no database operation, no activation, no seed, no migration. No Redis and no
-signing secret are used or required.
-
-## M13E2 Phase C1 — helper code only, wired to nothing
-
-Phase A (schema definitions) is **deployed**. Phase B (`npm run db:push` against the shared
-Production database) is **complete**, so `PracticeSession`, `PracticeSessionItem`,
-`PracticeSessionKind` and `PracticeSessionStatus` — with their foreign keys, indexes and unique
-constraints — are **active in the database**.
-
-Phase C1 adds the reusable server-session primitives and **nothing else**:
-
-- `lib/practice-session.ts` — session lifecycle types, the user-row lock helper, bounded per-user
-  cleanup, active-session lookup, opaque option generation and choice shuffling, the immutable
-  snapshot parser, served-item serialization, the item first-answer CAS, and completed-result parsing.
-- `lib/spaced-review.ts` — new **transaction-native** review and mastery cores, added *beside* the
-  public M13E1G helpers.
-- `lib/xp.ts` — `awardXpInTransaction`, an atomic XP increment whose rank derives from the value the
-  increment returned.
-- `lib/validators.ts` — additive schemas for the eventual C2 route contracts.
-- `scripts/practice-session-smoke.ts` — 83 deterministic helper-level controls, no database.
-
-**No route, page or component imports or invokes any of it.** That is asserted directly, both by the
-new suite and by the narrowed PA7 check in the six Phase-A suites. **Learner-facing behavior is
-unchanged**: the drill session routes still return `correctAnswer` and `explanation`, submissions are
-still unbound to a served set, and there is still no replay resistance. Server-bound practice sessions
-are **not** active in the application.
-
-Design decisions now fixed in code:
-
-- `scenarioJson` holds a **versioned, kind-discriminated session snapshot** — `{version: 1, kind:
-  "DRILL", requestedCount, order}` or `{version: 1, kind: "WRITING", scenario}`. A malformed snapshot
-  is rejected, never guessed at or reconstructed.
-- `resultJson` is reserved for the **completed public result only**.
-- Requested learner-facing counts are preserved. A focused twenty-question session stores **nine
-  distinct item rows** plus a twenty-slot order of repeated item ids; repeated slots share one
-  first-answer-final item and add no evidence, mastery, review or XP.
-- Option ids are `crypto.randomUUID()` per session — never `o0`/`o1`, never a bank index.
-- The transaction cores use `INSERT ... ON CONFLICT DO NOTHING` then `SELECT ... FOR UPDATE`. They
-  contain no catch-and-continue and no `write-failed`: a real database error throws and rolls back.
-- Public M13E1G helpers are **unchanged** — seven review variants, returned `write-failed`, the
-  missing-table degradation, the concurrent classifications, and assertion 28c all intact.
-
-Still pending: **C2** (route cutover), **C3** (component cutover), and the broad C4 assertion-repair
-and closeout pass. **M13E2 is not complete.** Nothing in C1 is deployed until it is separately pushed.
-
-## M13E2 Phase A — what this pass did, and what it deliberately did not do
-
-M13E2 Phase A adds **Prisma definitions only**: two enums (`PracticeSessionKind`,
-`PracticeSessionStatus`), two models (`PracticeSession`, `PracticeSessionItem`), and exactly one
-additive virtual back-relation on `User` (`practiceSessions PracticeSession[]`, which adds no column
-to the `User` table). The schema now holds 32 models and 21 enums.
-
-What is true right now:
-
-- **The database tables do not exist.** They exist only as source definitions. `npm run db:push` was
-  **not** run, and no migration, seed, activation or learner-data operation occurred.
-- **No route, library or component imports or queries the new models.** Phase A is asserted to be
-  runtime-inert, and Production learner-facing behavior is unchanged.
-- **Phase B (shared-Production `db push`) requires explicit human authorization** — it targets the
-  database shared with production.
-- **Phase C is blocked until Phase B succeeds.** Route and component cutover must not deploy before
-  the tables are activated.
-- **No Redis and no signing secret are used or required.**
-- The approved Phase C direction is server-authoritative PostgreSQL sessions with transaction-native
-  *internal* review/mastery cores, leaving the public M13E1G helpers (`recordPracticeOutcome`,
-  `recordDrillMasteryDetailed`, `recordDrillMastery`) and their contracts unchanged.
-- **M13E2 is not active and not complete.** Sessions are not bound, answer keys are not yet withheld,
-  and no replay resistance exists yet.
-
-The six suites that byte-pinned `prisma/schema.prisma` against a moving `HEAD` now use an immutable
-control at `95fdd4c8` plus structural assertions, so the schema change is validated **before** the
-commit rather than going green because `HEAD` moved.
+Remaining steps: a GitHub Desktop push, the automatic Vercel Production deployment that follows, and
+a read-only deployment verification.
 
 ## Repository state
 
 - **Branch:** `main`
-- **Parent of the Phase A commit:** `95fdd4c` (`fix(review): gate the spaced ladder on due reassessment`)
-- **origin/main and remote `refs/heads/main`:** `95fdd4c` — the Phase A commit is **local only**.
-- **Ahead/behind: `0 1`** after the Phase A commit; nothing has been pushed or deployed by the agent.
-- Sections below this point describe the M11 close-out and were last re-verified on 2026-08-01 against
-  `d7efcb5`; fifteen commits have landed since, through `95fdd4c`.
+- **origin/main and remote `refs/heads/main`:** `221e07f` (the M13E2 Phase A commit)
+- **Local `HEAD`:** the M13E2 Phase C closeout commit, **eight commits ahead of `origin/main`, zero
+  behind** — a normal fast-forward with no merge commits.
+- The eight local commits are the seven Phase C code commits in the table above plus this
+  documentation closeout. Nothing has been pushed or deployed by the agent.
+- **Working tree:** clean apart from this pass's own edits to the two documentation files.
+- Cumulative Phase C change against `221e07f`: **34 paths — 6 added, 28 modified, none deleted or
+  renamed** (including these two documents). No schema change, no migration, no seed change, no
+  dependency, no lockfile change, no env or deployment-config change. `package.json` changed only to
+  register `practice-session:smoke`.
+- Sections below the milestone table describe the M11 close-out and were last re-verified on
+  2026-08-01 against `d7efcb5`.
 - The nine approved M11 commits (eight code, one documentation) were **pushed through a normal
   fast-forward**. No force-push, rebase, squash, merge or history rewrite occurred at any point.
-- **Working tree:** clean apart from this pass's own edits to the two documentation files.
 
-### The nine pushed commits
+### The nine M11 close-out commits (history, all long since pushed)
 
 | Commit | Subject |
 |---|---|
@@ -163,11 +121,6 @@ commit rather than going green because `HEAD` moved.
 | `e44fb6f` | chore(hosa): remove dormant role-pair config |
 | `d7efcb5` | docs: close M11 remediation and handoff |
 
-Cumulative code change against `700f40e`: 27 files changed, 1,728 insertions, 247 deletions — one deleted
-(`components/training/hosa-roleplay-setup.tsx`), one added (`scripts/hosa-practice-scope-smoke.ts`).
-No schema change, no migration, no API route added, no package dependency added, no lockfile change.
-`package.json` changed only to register one new smoke script.
-
 ## Milestone status
 
 | Milestone | Status |
@@ -179,10 +132,12 @@ No schema change, no migration, no API route added, no package dependency added,
 | M13E1G — due-gated spaced review | Complete, pushed and deployed (`95fdd4c`). |
 | M13E2 Phase A — additive practice-session schema | Complete, pushed and deployed (`221e07f`). |
 | M13E2 Phase B — shared-Production `db push` | **Complete.** Enums, tables, foreign keys and indexes are active. |
-| M13E2 Phase C1 — server-session core helpers | **Code complete, local commit only.** No route or component uses them. |
-| M13E2 Phase C2 — route cutover | **Not started.** |
-| M13E2 Phase C3 — component cutover | **Not started.** |
-| M13E2 Phase C4 — assertion repair and closeout | **Not started.** |
+| M13E2 Phase C1 — server-session core helpers | **Complete locally** (`59dd52b`). Unpushed. |
+| M13E2 Phase C2a — Debate, DECA and HOSA routes | **Complete locally** (`dd11e69`), session-backed. Unpushed. |
+| M13E2 Phase C2b — Debate Writing routes and XP/rank safety | **Complete locally** (`4f0c856`). Unpushed. |
+| M13E2 Phase C3a — Debate, DECA and HOSA clients | **Complete locally** (`80dbf75`, `be97024`). Unpushed. |
+| M13E2 Phase C3b — lesson practice and Debate Writing clients | **Complete locally** (`9103693`, `f392ede`). Unpushed. |
+| M13E2 — overall | **Code complete locally.** Awaiting push, automatic deployment and read-only deployment verification. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -237,20 +192,23 @@ button and on restore alike.
 
 **Accessibility.** Navigator result buttons contain no paragraph descendants, carry the project
 `focus-ring` utility, and keep a coherent `h1 → h2 → h3` outline in every rendered state. Selected
-styling and the keyboard focus ring render together.
+styling and the keyboard focus ring render together. The converted practice clients keep their
+distinct loading, expired, unavailable and retryable-error states, so status is never carried by
+colour alone.
 
-## Test results (2026-07-31, against `e44fb6f` plus these documentation edits)
+## Test results (2026-08-06, against the Phase C stack plus these documentation edits)
 
+- `npm run db:generate` — passes.
 - `npx tsc --noEmit` — passes.
-- `npm run lint` — passes with **one pre-existing warning** (`<img>` in `components/profile/user-avatar.tsx`).
+- `npm run lint` — **0 errors** (one pre-existing warning: `<img>` in `components/profile/user-avatar.tsx`).
 - `npm run build` — compiles successfully. The build was never run alongside a dev server.
-- **24/24 registered `*:smoke` suites pass:** security, judge, judge-shape, rubric-scoring,
-  debate-drills, deca-drills, auth, audio-debate, team, assignment, games, tracks,
-  hosa-practice-scope, side-coach, debate-side-coach, deca-rubric, hosa-navigator, deca-navigator,
-  source-freshness, nav-a11y, lesson-progress, debate-replay, learning-path, avatar.
-- Focused harnesses pass: M8A, M8B and M9 SSR; M10 navigation/accessibility; and M11R2, M11R3, M11R4,
-  M11R5, M11R6, M11R7, M11R8, M11R9, M11R10, M11R11, M11R12. These live in the session scratchpad,
-  not in the repository.
+- **32 registered `*:smoke` suites. 29 safe/read-only suites were run and all 29 pass.**
+- **`auth:smoke`, `team:smoke` and `assignment:smoke` write to the shared Production database. They
+  were NOT run in this pass and are NOT claimed to pass.**
+- `judge-shape:smoke` makes a live provider call and exits 0 with a console warning when no provider
+  responds — it was run on its own and its output read, not through a stdout-discarding loop.
+- Focused harnesses from earlier milestones (M8A, M8B, M9 SSR; M10 navigation/accessibility; M11R2
+  through M11R12) live in the session scratchpad, not in the repository.
 
 ## Browser and mobile validation
 
@@ -262,29 +220,42 @@ navigator result buttons, including a selected button and in colorblind mode.
 
 **This is not the live authenticated route.** No middleware, session, data fetching or click-through of
 real navigation was exercised. No screen-reader certification and no full keyboard journey was performed.
+**The converted practice flow has not been exercised against a live authenticated session** in any
+environment — its guarantees are established by code and by deterministic suites, not by a learner run.
 
 ## Known gates and unresolved items
 
-1. **M4 HOSA replacement scenario** — blocked pending an approved scenario and clinical/legal or advisor
+1. **The Phase C stack is unpushed.** Production runs the pre-C1 commit and therefore still serves the
+   old, unbound practice routes. Nothing about M13E2 may be described as live.
+2. **Authenticated verification of the session protocol is outstanding** — no learner run, in any
+   environment, has exercised issue → check → submit end to end.
+3. **M4 HOSA replacement scenario** — blocked pending an approved scenario and clinical/legal or advisor
    review. If none is approved, the interactive practice stays unavailable.
-2. **September 1, 2026 HOSA revalidation** — the final 2026-27 guidelines are expected then; every
+4. **September 1, 2026 HOSA revalidation** — the final 2026-27 guidelines are expected then; every
    officially dependent HOSA detail must be re-checked against that release and later notices. Nothing
    in the code degrades a record automatically when that date passes.
-3. **TDM weighting** — DECA's Guide and its published sample conflict; no figure may be stated until
+5. **TDM weighting** — DECA's Guide and its published sample conflict; no figure may be stated until
    DECA resolves it.
-4. **PSC scope** — the record places Professional Selling both inside and outside the role-play course;
+6. **PSC scope** — the record places Professional Selling both inside and outside the role-play course;
    unresolved by design, and it routes to the DECA hub rather than the role-play lesson.
-5. **`docs/curriculum/` is untracked** — the sole authority for every provenance claim is uncommitted
-   and can drift or vanish with no diff. Provenance comments in the registries cite line numbers into
-   files that are not under version control.
-6. **Advisor/judge validation gates** from the research synthesis remain open; evidence validation
+7. **`docs/curriculum/` provenance** — provenance comments in the registries cite line numbers into the
+   approved research record; keep that record and the citations in step.
+8. **Advisor/judge validation gates** from the research synthesis remain open; evidence validation
    proves an excerpt is real, not that a verdict is correct.
-7. **Authenticated production verification is outstanding** — the deployment itself is verified; see below.
+9. **`initialScenario`** is still accepted by the writing client and still passed by its page, purely
+   for compatibility. It is never read. Removing it is separate follow-up work.
+10. **XP-farming policy for writing** is deferred, not silently changed: one issued session awards XP at
+    most once, but requesting a new session and completing it still awards the current amount.
 
 ## Remote and deployment status
 
-**A Vercel Production deployment tied directly to `d7efcb59ed94ca887f9d562ef21ea4723dde1175`
-completed successfully.** Verified from unauthenticated, commit-linked GitHub metadata:
+`origin/main` and the remote `refs/heads/main` are both
+`221e07f744b92b5ed3e68a8fcb56e21b3bd2fd37` — the M13E2 Phase A commit — and **that is what Production
+runs.** M13E1G (`95fdd4c`) and Phase A (`221e07f`) were each pushed and their Production deployments
+verified in their own passes. Nothing after `221e07f` has been pushed or deployed.
+
+The most recent full commit-linked deployment record on file is for
+`d7efcb59ed94ca887f9d562ef21ea4723dde1175`, verified from unauthenticated GitHub metadata:
 
 | Field | Value |
 |---|---|
@@ -310,19 +281,17 @@ sign-in page. One redirect each; no loops, no error boundaries.
 `POST /api/ai/judge-hosa` both returned **401** with
 `{"error":"You must be signed in to do that."}` — authentication remains first.
 
-**What this does and does not establish.** It establishes that the Production deployment for this
+**What this does and does not establish.** It establishes that the Production deployment for that
 commit succeeded, that those routes exist and are auth-gated, and that the two HOSA-only AI endpoints
 authenticate before anything else. It does **not** establish any protected page's internal behaviour:
-no authenticated session was used, so nothing behind sign-in was exercised in production. The
-post-authentication HOSA `410` contract remains verified **locally only**. A public alias cannot by
-itself prove which commit it currently serves; the commit-linked deployment metadata above is the
-evidence that `d7efcb5` deployed successfully to Production.
+no authenticated session was used, so nothing behind sign-in was exercised in production. A public
+alias cannot by itself prove which commit it currently serves; commit-linked deployment metadata is
+the evidence.
 
 **Remote incident.** On 2026-07-31 at 16:22:41 local, `origin/main` moved from `a6f0e78` to `700f40e`
 — a push from this clone that was not part of any approved step. The source is **unknown and is not
-attributed to anyone**. The read-only evidence snapshot is preserved at
-`/private/tmp/compete-ready-origin-main-incident.txt`. Treat the remote as capable of changing outside
-this workflow: re-verify it immediately before any push.
+attributed to anyone**. Treat the remote as capable of changing outside this workflow: re-verify it
+immediately before any push.
 
 ## Environment variables (names only — never store values here)
 
@@ -331,37 +300,44 @@ this workflow: re-verify it immediately before any push.
 `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `DATABASE_URL`, `NEXTAUTH_SECRET`,
 `NEXTAUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `APP_URL`, `UPLOADTHING_TOKEN`.
 
-No environment requirement changed in these eight commits.
+**M13E2 introduced no new environment variable and no new secret.** No Redis and no signing secret are
+used or required by the session design — PostgreSQL is the only store.
 
 ## Next operational steps
 
-1. Review this post-deployment documentation update.
-2. Commit and safely push the documentation-only change.
-3. Verify the automatic Vercel Production deployment for that documentation commit.
-4. Perform authenticated protected-route verification when an existing safe session is available.
-   This is a tracked follow-up; it does not block step 5.
-5. Begin the visual redesign.
-6. Stabilize the design system.
+1. Review the Phase C stack (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
+2. Push the eight local commits through GitHub Desktop as a normal fast-forward. Re-verify
+   `origin/main` immediately beforehand.
+3. Let the automatic Vercel Production deployment run; verify it read-only from commit-linked public
+   GitHub metadata.
+4. Perform authenticated verification of the practice session flow when a safe session is available —
+   issue, check, resume, duplicate-submit and completed-replay.
+5. Remove the unused `initialScenario` prop from `app/(app)/skills/[slug]/practice/page.tsx` and the
+   writing client's prop type.
+6. Begin the visual redesign, then stabilize the design system.
 7. Add interactive card games, mini-games, progression, XP and streak features.
 
 ## What is explicitly NOT true
 
-- **No authenticated production behaviour was verified.** Every protected page's internal behaviour —
-  HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's post-auth fail-closed
-  redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA training-group wording and
-  family-specific timing, PSC's unresolved state, the lessons index, navigator focus rings, heading
-  outlines, authored-progress restore and Side Coach structured feedback — remains verified **locally**,
-  not through authenticated production access.
+- **M13E2 is not live.** Every Phase C guarantee above is **local only**. Production runs `221e07f`
+  and still serves the old routes, which return answer keys and accept unbound submissions.
+- **No authenticated production behaviour was verified** — not for the session protocol, and not for
+  the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
+  post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA
+  training-group wording and family-specific timing, PSC's unresolved state, the lessons index,
+  navigator focus rings, heading outlines, authored-progress restore, Side Coach structured feedback).
+- **The three database-writing suites were not run**, and no result is claimed for them.
+- The practice session design is **not** described as cheat-proof. It removes client answer authority,
+  binds submissions to a server-issued set, makes first answers final and replays completed sessions
+  without re-running effects. It is not a claim about every possible abuse.
 - It is **not** claimed that the public alias cryptographically proves which SHA it serves.
 - It is **not** claimed that every protected page is error-free; they could not be opened.
-- The post-authentication HOSA `410` behaviour was **not** tested in production.
 - The source of the earlier remote push is **not** known.
 - Generic HOSA patient/clinical role-play is **not** available — it was withdrawn.
 - It is **not** true that all HOSA practice is unavailable: Medical Terminology practice is active and
-  records attempts.
+  records attempts, and it remains **review-only** — it awards no XP.
 - CompeteReady's event groupings are **not** official DECA or HOSA taxonomy.
 - No universal DECA preparation time or exam weighting is claimed.
 - Curriculum guidance is **not** permanently current; the 2026-27 HOSA release requires revalidation.
-- Nothing has been rebased, squashed or amended; no schema change, migration, `db push` or seed was run;
-  no dependency or lockfile changed.
-- `docs/curriculum/` was read as authoritative context; it is not staged or committed.
+- Nothing has been rebased, squashed or amended; **no Phase C schema change, migration, `db push` or
+  seed was run**; no dependency or lockfile changed.

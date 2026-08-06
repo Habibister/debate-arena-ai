@@ -102,8 +102,8 @@ function ComingSoonOption({ destination }: { destination: Destination }) {
   );
 }
 
-export default function CompetePage({ searchParams }: { searchParams: { track?: string } }) {
-  const activeTrack = getActiveTrack(searchParams.track);
+export default async function CompetePage({ searchParams }: { searchParams: { track?: string } }) {
+  const activeTrack = await getActiveTrack(searchParams.track);
   // The first destination of every track IS its strongest real action (Debate: the round; DECA: the
   // guided role-play; HOSA: the Event Navigator). Splitting the existing array is what gives the page
   // its hierarchy — the data above is untouched, so every label, detail, href, order position and

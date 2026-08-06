@@ -32,7 +32,7 @@ const JUDGE_ROUTE = "app/api/ai/judge-hosa/route.ts";
 const TURN_ROUTE = "app/api/ai/roleplay-turn/route.ts";
 const WITHDRAWN_SETUP = "components/training/hosa-roleplay-setup.tsx";
 
-function main() {
+async function main() {
   // ---- 1-3. The verified Medical Terminology path survives untouched -------------------------------
   const practice = code(read(PRACTICE_ROUTE));
   assert.ok(practice.length > 200, "the practice route source is non-empty (the scans below are meaningful)");
@@ -159,8 +159,10 @@ function main() {
   const CompetePage = require("../app/(app)/compete/page").default;
   const hubText = visible(renderToStaticMarkup(
     createElement(TrackHubPage as never, { params: { track: hosaSlug } } as never) as never));
+  // CompetePage is an async server component (M14 Phase 1a made track resolution async), so it is
+  // invoked and awaited to obtain the element rather than passed to createElement directly.
   const competeText = visible(renderToStaticMarkup(
-    createElement(CompetePage as never, { searchParams: { track: hosaSlug } } as never) as never));
+    (await (CompetePage as never as (p: unknown) => Promise<never>)({ searchParams: { track: hosaSlug } })) as never));
   const WITHDRAWN_ROLES = ["anxious about a new diagnosis", "worried about a child's fever", "post-op patient",
                            "dental anxiety", "shaken bystander", "health science student"];
   for (const surface of [["HOSA hub", hubText], ["Compete", competeText]] as const) {

@@ -18,7 +18,7 @@ const testSteps = [
 
 export default async function TestsPage({ searchParams }: { searchParams: { track?: string; assignmentId?: string } }) {
   // `?track=` wins; otherwise fall back to the selected track (cookie).
-  const activeTrack = getActiveTrack(searchParams.track);
+  const activeTrack = await getActiveTrack(searchParams.track);
   // The DECA/HOSA test generator is only shown when it is actually relevant. Model UN and General
   // Debate get an honest empty state instead of another organization's generator. An assigned test
   // (?assignmentId=) always shows the generator so a valid assignment never lands on an empty page.

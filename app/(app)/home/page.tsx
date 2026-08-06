@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 // Every number derives from recorded activity; empty states say so instead of faking content.
 export default async function HomePage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
-  const activeTrack = getActiveTrack(searchParams.track);
+  const activeTrack = await getActiveTrack(searchParams.track);
   const activeOrg = activeTrack?.organization;
   const trackSlug = activeTrack?.slug ?? "debate";
 

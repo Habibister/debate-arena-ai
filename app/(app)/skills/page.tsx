@@ -12,7 +12,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
   const session = await getServerSession(authOptions);
   const showSampleProgress = isDemoUser(session?.user?.email);
   // `?track=` wins; otherwise fall back to the selected track (cookie) so skills stay track-scoped.
-  const activeTrack = getActiveTrack(searchParams.track);
+  const activeTrack = await getActiveTrack(searchParams.track);
 
   return (
     <div className="space-y-6">

@@ -9,7 +9,7 @@ import { flashcardsForDeck } from "@/lib/study-content";
 import { getActiveTrack } from "@/lib/track-server";
 import { trackAllowsOrganization } from "@/lib/training-tracks";
 
-export default function StudyDeckPage({ params, searchParams }: { params: { deck: string }; searchParams: { assignmentId?: string } }) {
+export default async function StudyDeckPage({ params, searchParams }: { params: { deck: string }; searchParams: { assignmentId?: string } }) {
   const cards = flashcardsForDeck(params.deck);
 
   if (cards.length === 0) {
@@ -23,7 +23,7 @@ export default function StudyDeckPage({ params, searchParams }: { params: { deck
   // the track-filtered study list rather than exposing another organization's content.
   // Exception: an assigned activity (?assignmentId=) opens under the ASSIGNMENT's track context, so it
   // is never redirected into the student's personal-track study list.
-  const activeTrack = getActiveTrack();
+  const activeTrack = await getActiveTrack();
   if (!searchParams.assignmentId && !trackAllowsOrganization(activeTrack, organization)) {
     redirect("/study");
   }

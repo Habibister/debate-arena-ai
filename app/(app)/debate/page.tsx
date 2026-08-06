@@ -6,11 +6,11 @@ import { RubricBreakdown } from "@/components/specs/rubric-breakdown";
 import { SpecBanner } from "@/components/specs/spec-banner";
 import { getActiveTrack } from "@/lib/track-server";
 
-export default function DebatePage({ searchParams }: { searchParams: { track?: string } }) {
+export default async function DebatePage({ searchParams }: { searchParams: { track?: string } }) {
   // The debate room is a General Debate (parliamentary/PF) experience. Other tracks have their own
   // legitimate practice (DECA role play, HOSA scenarios, Model UN committee) — never present
   // parliamentary debate as their training. Send them to the correct track practice instead.
-  const activeTrack = getActiveTrack(searchParams.track);
+  const activeTrack = await getActiveTrack(searchParams.track);
   if (activeTrack && activeTrack.id !== "GENERAL_DEBATE") {
     redirect(`/training/${activeTrack.slug}/practice` as Route);
   }

@@ -53,8 +53,8 @@ const CHIP: Record<LessonAvailability["state"], "success" | "unavailable" | "inf
 
 // Guided lessons index (Learn -> Performance Course). Track-scoped: Debate shows its concept lessons,
 // DECA/HOSA show their role-play course. Fail closed to an honest empty state when a track has none.
-export default function LessonsIndexPage({ searchParams }: { searchParams: { track?: string } }) {
-  const activeTrack = getActiveTrack(searchParams.track);
+export default async function LessonsIndexPage({ searchParams }: { searchParams: { track?: string } }) {
+  const activeTrack = await getActiveTrack(searchParams.track);
   const canonicalTrack = educationTrack(activeTrack?.id);
   const cards: LessonCard[] = [
     ...lessonsForTrack(activeTrack?.slug).map((l) => ({

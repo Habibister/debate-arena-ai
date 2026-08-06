@@ -20,11 +20,11 @@ const ICONS: Record<TrainingTrack, typeof GraduationCap> = {
 
 export const metadata = { title: "Choose your training track" };
 
-export default function TrainingPage() {
+export default async function TrainingPage() {
   // The SAVED preference only. This page passes no route slug, so the shared resolver can return
   // "preference" or "none" — never "route" — which is what lets the chip below name its source
   // honestly rather than guessing. Reading it changes nothing: the resolver never writes.
-  const resolution = resolveActiveTrack();
+  const resolution = await resolveActiveTrack();
   const savedTrack = resolution.source === "preference" ? resolution.track : undefined;
 
   return (

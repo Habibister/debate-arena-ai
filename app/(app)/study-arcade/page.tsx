@@ -19,7 +19,7 @@ import { getActiveTrack } from "@/lib/track-server";
 // existing decks and games are linked (not rebuilt), and the review tiles show REAL activity
 // numbers from MasteryProgress or honest empty states. No fabricated counts, ever.
 export default async function StudyArcadePage({ searchParams }: { searchParams: { track?: string } }) {
-  const activeTrack = getActiveTrack(searchParams.track);
+  const activeTrack = await getActiveTrack(searchParams.track);
   const allDecks = deckSummaries();
   const decks = activeTrack ? allDecks.filter((d) => d.organization === activeTrack.organization) : allDecks;
   const cardCount = decks.reduce((total, deck) => total + deck.count, 0);

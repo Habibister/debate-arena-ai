@@ -7,8 +7,8 @@ import { getActiveTrack } from "@/lib/track-server";
 
 // Resources landing — shared external study material, filtered to the active track. This is the
 // shell page for the Resources IA section; deeper libraries land with the Study Arcade build-out.
-export default function ResourcesPage({ searchParams }: { searchParams: { track?: string } }) {
-  const activeTrack = getActiveTrack(searchParams.track);
+export default async function ResourcesPage({ searchParams }: { searchParams: { track?: string } }) {
+  const activeTrack = await getActiveTrack(searchParams.track);
 
   return (
     <div className="space-y-6">

@@ -2,23 +2,44 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M13E2 Phase C closeout (2026-08-06)
+## Latest handoff — M14 Phase 1a: track-correct first run (2026-08-06)
 
-**Read this before pushing.**
+**Read this before pushing or starting Phase 1b.**
 
-**M13E2 code is complete locally.** Phase A (schema) is pushed and deployed at `221e07f`. Phase B ran
-with explicit authorization — `npm run db:push` against the shared Production database completed
-additively, so the practice-session enums, tables, foreign keys, indexes and unique constraints are
-**active**. Phases C1, C2a, C2b, C3a and C3b are **committed locally and none of them is pushed.**
+**M13E2 is complete, pushed and deployed.** The eight-commit Phase C stack landed on `origin/main` as
+a normal fast-forward on 2026-08-06 and **Production runs
+`bb397350029975520e0b96c1c741e7f873f59086`**, verified read-only from commit-linked GitHub metadata
+(deployment `5783679689`, `Production`, `success`) plus public route checks — the new
+session/check/submit routes return 401 unauthenticated where a control shows unknown paths 404.
+**Authenticated Production practice behavior remains untested.**
 
-**The application is no longer mid-cutover locally.** Debate drills, DECA drills, HOSA Medical
-Terminology, guided lesson practice and Debate Writing all speak the **same** server-issued session
-protocol, routes and clients together. Earlier handoffs said the tree was deliberately mid-cutover
-and must not be pushed until C3 landed; **C3 has landed and that instruction is retired.**
+Two commits are **local only**, in this order:
 
-**Production still runs `221e07f744b92b5ed3e68a8fcb56e21b3bd2fd37`** — the pre-C1 commit — and
-therefore still serves the old routes, which hand out answer keys and accept unbound submissions.
-Do not describe M13E2 as active or live.
+1. **M14 Phase A** (`a054706`) — `docs/M14_LEARNING_QUALITY_AUDIT.md`, the read-only learning-quality
+   audit. Its gap register (G1–G26) is the M14 roadmap; read it before any M14 work.
+2. **M14 Phase 1a** (this commit) — the learner's signup organization now resolves their track.
+
+What Phase 1a changed and why it is safe:
+
+- `lib/track-server.ts` — precedence is now `?track=` → **persisted organization** → cookie →
+  fail-closed default, implemented as a pure `pickActiveTrack` core (exhaustively tested in
+  `tracks:smoke` as `P1a-*`, every assertion with a non-vacuous control) plus a gatherer that reads
+  the session through a per-request cache. Only DEBATE/DECA/HOSA resolve; PUBLIC_SPEAKING,
+  MOCK_TRIAL, retired MODEL_UN, malformed and missing values are absent and fall through. The
+  resolver still writes nothing.
+- `getActiveTrack`/`resolveActiveTrack` became **async**; their twelve calling pages await them and
+  the five that were sync server components became async. All routes remain dynamic (ƒ) — verified
+  against the build output.
+- `components/auth/sign-up-form.tsx` — **Public Speaking is no longer selectable at signup** (no
+  track, no registered lesson; audit finding G25). Not remapped, simply removed.
+- `scripts/education-migration-smoke.ts` and `scripts/skills-compat-smoke.ts` byte-pinned the two
+  index pages the conversion touched. The pins were replaced by a diff against the **immutable
+  pre-Phase-1a commit `a054706`** in which each added line must be its removed counterpart with
+  exactly `async `/`await ` inserted — a hardcoded track, a dropped guard or any smuggled edit
+  fails. Never replace an immutable-base pin with a HEAD-relative one.
+
+Do not describe M14 as live: Production learners still get the pre-1a behaviour until the two local
+commits are pushed.
 
 ### The Phase C commit chain
 
@@ -31,9 +52,9 @@ Do not describe M13E2 as active or live.
 | 5 | `be97024` | DECA drills client and HOSA MedTerm client; explicit `checkEndpoint` prop on the shared concept-drills component |
 | 6 | `9103693` | Guided lesson practice client — the last legacy caller of the old drill contract |
 | 7 | `f392ede` | Debate Writing client |
-| 8 | this commit | This documentation closeout |
+| 8 | `bb39735` | The documentation closeout — the deployed Production commit |
 
-Eight commits, a clean fast-forward from `origin/main`, no merges. Cumulative against `221e07f`:
+Eight commits, pushed as one clean fast-forward, no merges. Cumulative against `221e07f`:
 **34 paths — 6 added, 28 modified, none deleted or renamed.** No schema change, no migration, no seed
 change, no dependency, no lockfile change, no env or deployment-config change.
 
@@ -114,7 +135,6 @@ files is safe, separate follow-up work.
 - **No Phase C schema change and no Phase C database operation.** No `db push`, migration, seed,
   reset or activation; no learner data was read or written.
 - **No Redis and no new secret.** PostgreSQL is the only store.
-- **Nothing is pushed or deployed.**
 - **Authenticated Production behavior is not claimed.** No learner run, in any environment, has
   exercised issue → check → submit end to end.
 - **`auth:smoke`, `team:smoke` and `assignment:smoke` write to the shared Production database. They
@@ -146,9 +166,9 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 ## Repository state
 
 - **Branch:** `main`
-- **origin/main and remote `refs/heads/main`:** `221e07f`
-- **Local `HEAD`:** the Phase C closeout commit — **8 ahead, 0 behind**, a normal fast-forward with no
-  merge commits.
+- **origin/main and remote `refs/heads/main`:** `bb39735` — the M13E2 Phase C closeout, deployed.
+- **Local `HEAD`:** the M14 Phase 1a commit — **2 ahead, 0 behind** (`a054706` audit + Phase 1a), a
+  normal fast-forward with no merge commits.
 - **Working tree:** clean apart from this pass's own edits to the two documentation files.
 - `docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
   as such, not as app source.
@@ -335,9 +355,10 @@ used. **Do not treat an authentication redirect as verification of the page behi
 
 ## Production deployment status
 
-**Production runs `221e07f744b92b5ed3e68a8fcb56e21b3bd2fd37`** — M13E2 Phase A. Everything after it is
-local. M13E1G (`95fdd4c`) and Phase A were each pushed and their Production deployments verified in
-their own passes.
+**Production runs `bb397350029975520e0b96c1c741e7f873f59086`** — the full M13E2 stack. The two M14
+commits are local. M13E1G (`95fdd4c`), Phase A (`221e07f`) and the Phase C stack (`bb39735`) were
+each pushed and their Production deployments verified in their own passes; the `bb39735` record is
+deployment `5783679689` / commit status `51784302970`, alias `https://debate-arena-ai.vercel.app`.
 
 The most recent full commit-linked deployment record on file is for
 `d7efcb59ed94ca887f9d562ef21ea4723dde1175`, verified from unauthenticated GitHub metadata:
@@ -404,8 +425,8 @@ the OS reaped. Never stage or commit any of it.
 
 1. Re-verify the remote with the command above, then review the stack:
    `git log origin/main..HEAD` and `git diff origin/main..HEAD`.
-2. **Push the eight local commits through GitHub Desktop** as a normal fast-forward. This is the first
-   step that makes M13E2 real for learners — after it, Production stops handing out answer keys.
+2. **Push the two local M14 commits through GitHub Desktop** as a normal fast-forward — the audit
+   and the track-correct first run.
 3. Verify the automatic Vercel Production deployment read-only, from commit-linked public GitHub
    metadata. Do not bypass Deployment Protection and do not authenticate into Production.
 4. Perform authenticated verification of the practice flow when a safe session is available: issue,

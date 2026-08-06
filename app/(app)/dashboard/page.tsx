@@ -80,7 +80,7 @@ export default async function DashboardPage() {
     redirect("/coach");
   }
   // C5B1: resolve the active track BEFORE reading tests so weak-area recommendations are track-scoped.
-  const activeTrack = getActiveTrack();
+  const activeTrack = await getActiveTrack();
   const activeOrg = activeTrack?.organization;
   const user = session?.user?.id
     ? await prisma.user.findUnique({ where: { id: session.user.id } })

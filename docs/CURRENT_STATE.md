@@ -2,18 +2,58 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M13E2 Phase C closeout — code complete locally, nothing pushed)_
+_Last updated: 2026-08-06 (M14 Phase 1a — track-correct first run, local only)_
 
-## M13E2 — server-bound practice sessions: code complete locally, unpushed
+## M14 Phase 1a — the first run is track-correct, in local code only
 
-**M13E2 code is locally complete.** Phase A (schema) is pushed and deployed. Phase B (`npm run
-db:push` against the shared Production database) is complete, so the practice-session enums, tables,
-foreign keys, indexes and unique constraints are **active in the database**. Phases C1, C2a, C2b,
-C3a and C3b are **committed locally and none of them has been pushed or deployed**.
+The learner's signup organization now resolves their training track. Before this pass nothing read
+the stored organization, and the only writer of the track cookie was the client switcher — which
+initialises to General Debate — so a student who signed up for DECA or HOSA landed in General Debate
+and never saw their own track by default (audit finding G24).
 
-**The application is no longer deliberately mid-cutover locally.** Debate drills, DECA drills, HOSA
-Medical Terminology, guided lesson practice and Debate Writing now use the **same** server-issued
-session protocol end to end — routes and clients speak one contract. That is true **locally only**.
+- **Precedence, first match wins:** a valid explicit `?track=` → the signed-in learner's persisted
+  organization → a valid track cookie → the existing fail-closed default. Implemented as a pure
+  function (`pickActiveTrack` in `lib/track-server.ts`) with the request plumbing kept separate, so
+  every ordering case is tested as behaviour.
+- **Only organizations with a live track resolve** (Debate, DECA, HOSA). `PUBLIC_SPEAKING`,
+  `MOCK_TRIAL`, retired `MODEL_UN`, malformed and missing values are treated as absent and fall
+  through to the cookie — an invalid organization can never override a valid cookie.
+- **The resolver still never writes** — no cookie, no row — and the session read is wrapped in a
+  per-request cache so pages that already load a session pay no second user lookup. An explicit
+  `?track=` short-circuits before any session or cookie read.
+- **Public Speaking is no longer selectable at signup** (`components/auth/sign-up-form.tsx`): no
+  Public Speaking track exists and no Public Speaking lesson is registered, so the option led
+  nowhere. It is not silently remapped; existing records that carry it simply resolve no track.
+- `getActiveTrack`/`resolveActiveTrack` became async; the twelve calling pages await them. All
+  affected routes remain dynamically rendered, exactly as before.
+- Two suites byte-pinned the two index pages this converted; those pins were replaced by a diff
+  against the **immutable pre-Phase-1a commit** (`a054706`) in which every changed line must be
+  exactly the async/await conversion — any other edit fails. The precedence itself is covered by
+  new `P1a-*` assertions in `tracks:smoke`, each with a non-vacuous control.
+
+**Local commit only — not pushed, not deployed.** No schema change, no migration, no seed, no
+dependency, no env change, **no database operation**. `docs/M14_LEARNING_QUALITY_AUDIT.md`
+(`a054706`, also local) is the audit this implements the first subphase of.
+
+## M13E2 — server-bound practice sessions: PUSHED AND DEPLOYED
+
+**M13E2 is complete, pushed and deployed.** The eight-commit Phase C stack was pushed as a normal
+fast-forward on 2026-08-06 and **Production now runs
+`bb397350029975520e0b96c1c741e7f873f59086`**. Phase B (`npm run db:push` against the shared
+Production database) is complete, so the practice-session enums, tables, foreign keys, indexes and
+unique constraints are **active in the database**.
+
+Deployment was verified read-only from commit-linked GitHub metadata: deployment `5783679689`,
+environment `Production`, state `success`, tied to that exact SHA. Public checks confirmed `/` and
+`/signin` return 200, eleven protected routes each return one 307 to `/signin?callbackUrl=…` then
+200, no route returned 5xx, and the new session/check/submit routes return **401** unauthenticated
+(a control confirmed unknown API paths under the same prefixes return 404, so the 401s are the real
+handlers). **Authenticated Production practice behavior remains untested** — no learner session has
+exercised issue → check → submit in any environment.
+
+**The application is no longer mid-cutover.** Debate drills, DECA drills, HOSA Medical Terminology,
+guided lesson practice and Debate Writing all use the **same** server-issued session protocol end to
+end, in Production.
 
 ### What the protocol guarantees, in local code
 
@@ -78,30 +118,27 @@ their missing-table degradation and assertion 28c.
 - **No Phase C schema change and no Phase C database operation.** No `db push`, no migration, no
   seed, no reset, no activation, no learner-data read or write.
 - **No Redis and no new secret** were introduced or are required.
-- **Nothing in Phase C is pushed or deployed.** **Production still runs
-  `221e07f744b92b5ed3e68a8fcb56e21b3bd2fd37`** — the pre-C1 commit, and therefore still the old
-  routes, which still return answer keys and accept unbound submissions.
 - **Authenticated Production behavior of the session protocol is not claimed.** Nothing behind
   sign-in has been exercised in Production for any of this work.
 - **The three database-writing suites — `auth:smoke`, `team:smoke`, `assignment:smoke` — were not
   run** and must not be claimed as passing.
 
-Remaining steps: a GitHub Desktop push, the automatic Vercel Production deployment that follows, and
-a read-only deployment verification.
+Remaining step: authenticated verification of the practice flow when a safe session is available.
 
 ## Repository state
 
 - **Branch:** `main`
-- **origin/main and remote `refs/heads/main`:** `221e07f` (the M13E2 Phase A commit)
-- **Local `HEAD`:** the M13E2 Phase C closeout commit, **eight commits ahead of `origin/main`, zero
-  behind** — a normal fast-forward with no merge commits.
-- The eight local commits are the seven Phase C code commits in the table above plus this
-  documentation closeout. Nothing has been pushed or deployed by the agent.
-- **Working tree:** clean apart from this pass's own edits to the two documentation files.
-- Cumulative Phase C change against `221e07f`: **34 paths — 6 added, 28 modified, none deleted or
-  renamed** (including these two documents). No schema change, no migration, no seed change, no
-  dependency, no lockfile change, no env or deployment-config change. `package.json` changed only to
-  register `practice-session:smoke`.
+- **origin/main and remote `refs/heads/main`:** `bb397350029975520e0b96c1c741e7f873f59086` — the
+  M13E2 Phase C closeout commit, **pushed 2026-08-06 and deployed to Production**.
+- **Local `HEAD`:** the M14 Phase 1a commit, ahead of `origin/main` by **two local commits**:
+  the M14 Phase A audit (`a054706`, adds `docs/M14_LEARNING_QUALITY_AUDIT.md`) and Phase 1a itself
+  (track-correct first run). Neither is pushed.
+- **Working tree:** clean apart from each pass's own commit.
+- Phase 1a changed 17 paths: `lib/track-server.ts` (precedence), 12 page call sites (await the async
+  resolver), `components/auth/sign-up-form.tsx` (Public Speaking removed from signup), two suites
+  whose byte pins covered converted pages, and these two documents. **No schema change, no
+  migration, no seed change, no dependency, no lockfile change, no env or deployment-config change,
+  and no database operation.**
 - Sections below the milestone table describe the M11 close-out and were last re-verified on
   2026-08-01 against `d7efcb5`.
 - The nine approved M11 commits (eight code, one documentation) were **pushed through a normal
@@ -132,12 +169,14 @@ a read-only deployment verification.
 | M13E1G — due-gated spaced review | Complete, pushed and deployed (`95fdd4c`). |
 | M13E2 Phase A — additive practice-session schema | Complete, pushed and deployed (`221e07f`). |
 | M13E2 Phase B — shared-Production `db push` | **Complete.** Enums, tables, foreign keys and indexes are active. |
-| M13E2 Phase C1 — server-session core helpers | **Complete locally** (`59dd52b`). Unpushed. |
-| M13E2 Phase C2a — Debate, DECA and HOSA routes | **Complete locally** (`dd11e69`), session-backed. Unpushed. |
-| M13E2 Phase C2b — Debate Writing routes and XP/rank safety | **Complete locally** (`4f0c856`). Unpushed. |
-| M13E2 Phase C3a — Debate, DECA and HOSA clients | **Complete locally** (`80dbf75`, `be97024`). Unpushed. |
-| M13E2 Phase C3b — lesson practice and Debate Writing clients | **Complete locally** (`9103693`, `f392ede`). Unpushed. |
-| M13E2 — overall | **Code complete locally.** Awaiting push, automatic deployment and read-only deployment verification. |
+| M13E2 Phase C1 — server-session core helpers | Complete, pushed and deployed (`59dd52b`). |
+| M13E2 Phase C2a — Debate, DECA and HOSA routes | Complete, pushed and deployed (`dd11e69`). |
+| M13E2 Phase C2b — Debate Writing routes and XP/rank safety | Complete, pushed and deployed (`4f0c856`). |
+| M13E2 Phase C3a — Debate, DECA and HOSA clients | Complete, pushed and deployed (`80dbf75`, `be97024`). |
+| M13E2 Phase C3b — lesson practice and Debate Writing clients | Complete, pushed and deployed (`9103693`, `f392ede`). |
+| M13E2 — overall | **Complete, pushed, deployed and publicly verified** at `bb39735`. Authenticated practice behavior untested. |
+| M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed. |
+| M14 Phase 1a — track-correct first run | **Complete locally** (this commit). Signup organization resolves the track; Public Speaking removed from signup. Unpushed. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -225,46 +264,42 @@ environment — its guarantees are established by code and by deterministic suit
 
 ## Known gates and unresolved items
 
-1. **The Phase C stack is unpushed.** Production runs the pre-C1 commit and therefore still serves the
-   old, unbound practice routes. Nothing about M13E2 may be described as live.
-2. **Authenticated verification of the session protocol is outstanding** — no learner run, in any
+1. **Authenticated verification of the session protocol is outstanding** — no learner run, in any
    environment, has exercised issue → check → submit end to end.
-3. **M4 HOSA replacement scenario** — blocked pending an approved scenario and clinical/legal or advisor
+2. **M4 HOSA replacement scenario** — blocked pending an approved scenario and clinical/legal or advisor
    review. If none is approved, the interactive practice stays unavailable.
-4. **September 1, 2026 HOSA revalidation** — the final 2026-27 guidelines are expected then; every
+3. **September 1, 2026 HOSA revalidation** — the final 2026-27 guidelines are expected then; every
    officially dependent HOSA detail must be re-checked against that release and later notices. Nothing
    in the code degrades a record automatically when that date passes.
-5. **TDM weighting** — DECA's Guide and its published sample conflict; no figure may be stated until
+4. **TDM weighting** — DECA's Guide and its published sample conflict; no figure may be stated until
    DECA resolves it.
-6. **PSC scope** — the record places Professional Selling both inside and outside the role-play course;
+5. **PSC scope** — the record places Professional Selling both inside and outside the role-play course;
    unresolved by design, and it routes to the DECA hub rather than the role-play lesson.
-7. **`docs/curriculum/` provenance** — provenance comments in the registries cite line numbers into the
+6. **`docs/curriculum/` provenance** — provenance comments in the registries cite line numbers into the
    approved research record; keep that record and the citations in step.
-8. **Advisor/judge validation gates** from the research synthesis remain open; evidence validation
+7. **Advisor/judge validation gates** from the research synthesis remain open; evidence validation
    proves an excerpt is real, not that a verdict is correct.
-9. **`initialScenario`** is still accepted by the writing client and still passed by its page, purely
+8. **`initialScenario`** is still accepted by the writing client and still passed by its page, purely
    for compatibility. It is never read. Removing it is separate follow-up work.
-10. **XP-farming policy for writing** is deferred, not silently changed: one issued session awards XP at
+9. **XP-farming policy for writing** is deferred, not silently changed: one issued session awards XP at
     most once, but requesting a new session and completing it still awards the current amount.
 
 ## Remote and deployment status
 
 `origin/main` and the remote `refs/heads/main` are both
-`221e07f744b92b5ed3e68a8fcb56e21b3bd2fd37` — the M13E2 Phase A commit — and **that is what Production
-runs.** M13E1G (`95fdd4c`) and Phase A (`221e07f`) were each pushed and their Production deployments
-verified in their own passes. Nothing after `221e07f` has been pushed or deployed.
+`bb397350029975520e0b96c1c741e7f873f59086` — the M13E2 Phase C closeout — and **that is what
+Production runs.** The two M14 commits (the Phase A audit and Phase 1a) are local only.
 
-The most recent full commit-linked deployment record on file is for
-`d7efcb59ed94ca887f9d562ef21ea4723dde1175`, verified from unauthenticated GitHub metadata:
+The commit-linked deployment record for that SHA, verified from unauthenticated GitHub metadata:
 
 | Field | Value |
 |---|---|
 | Provider | Vercel |
-| GitHub deployment ID | `5700303276` |
-| Commit status ID | `51469218987` |
+| GitHub deployment ID | `5783679689` |
+| Commit status ID | `51784302970` |
 | Environment | `Production` |
 | State | `success` ("Deployment has completed") |
-| Deployment-specific URL | `https://debate-arena-k697ureau-habibisters-projects.vercel.app` |
+| Deployment-specific URL | `https://debate-arena-dqxo0yhtj-habibisters-projects.vercel.app` |
 | Production alias | `https://debate-arena-ai.vercel.app` |
 
 The deployment-specific URL is behind **Vercel Deployment Protection** and redirects to Vercel SSO, so
@@ -305,22 +340,22 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## Next operational steps
 
-1. Review the Phase C stack (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
-2. Push the eight local commits through GitHub Desktop as a normal fast-forward. Re-verify
-   `origin/main` immediately beforehand.
-3. Let the automatic Vercel Production deployment run; verify it read-only from commit-linked public
-   GitHub metadata.
-4. Perform authenticated verification of the practice session flow when a safe session is available —
-   issue, check, resume, duplicate-submit and completed-replay.
-5. Remove the unused `initialScenario` prop from `app/(app)/skills/[slug]/practice/page.tsx` and the
+1. Review the two local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
+2. Push them through GitHub Desktop as a normal fast-forward. Re-verify `origin/main` immediately
+   beforehand.
+3. Verify the automatic Vercel Production deployment read-only from commit-linked GitHub metadata.
+4. Continue the M14 roadmap in `docs/M14_LEARNING_QUALITY_AUDIT.md` — Phase 1b (the authorized DECA
+   skill activation script) is next, then lesson registration.
+5. Perform authenticated verification of the practice session flow when a safe session is available —
+   issue, check, resume, duplicate-submit and completed-replay — and of the Phase 1a track routing.
+6. Remove the unused `initialScenario` prop from `app/(app)/skills/[slug]/practice/page.tsx` and the
    writing client's prop type.
-6. Begin the visual redesign, then stabilize the design system.
-7. Add interactive card games, mini-games, progression, XP and streak features.
 
 ## What is explicitly NOT true
 
-- **M13E2 is not live.** Every Phase C guarantee above is **local only**. Production runs `221e07f`
-  and still serves the old routes, which return answer keys and accept unbound submissions.
+- **M14 is not live.** The Phase A audit and Phase 1a (track-correct first run) are local commits
+  only; Production learners still get the pre-1a track behaviour, where the signup organization is
+  never read and the default is General Debate.
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for
   the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
   post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA

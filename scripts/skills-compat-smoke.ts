@@ -329,7 +329,10 @@ async function main() {
                       "components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",
                       "components/lessons/lesson-view.tsx",
-                      "app/(app)/lessons/page.tsx", "app/(app)/lessons/[slug]/page.tsx",
+                      // app/(app)/lessons/page.tsx is deliberately absent from M14 Phase 1a onward:
+                      // that milestone makes track resolution async, so the page becomes an async
+                      // server component. What the hash protected is asserted at 27P below.
+                      "app/(app)/lessons/[slug]/page.tsx",
                       "lib/assignments.ts", "lib/assignment-types.ts",
                       // lib/spaced-review.ts is deliberately absent — see 27b. M13E1D adds a detailed
                       // persistence result there on purpose, so a blanket hash would forbid an
@@ -339,6 +342,44 @@ async function main() {
                       "prisma/seed.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27. ${file} is byte-identical to HEAD`);
   }
+
+
+  // ---- 27P. what the /lessons index hash was protecting, asserted exactly -------------------------
+  // M14 Phase 1a makes track resolution async (the learner's signup organization now resolves their
+  // track), so this page becomes an async server component and a blanket hash would forbid an
+  // approved change rather than protect anything — the same reasoning as 27b and 27i above.
+  //
+  // The protection is PRESERVED: the diff is taken against the IMMUTABLE pre-Phase-1a commit, never
+  // HEAD (a HEAD-relative pin turns green the moment the change lands and proves nothing), and every
+  // changed line must be exactly the async/await conversion. Any other edit to this page fails here.
+  const PHASE_1A_BASE = "a05470637b4ca00a2370577efcc853691d838829";
+  const phase1aChanged = execSync(`git diff ${PHASE_1A_BASE} -- 'app/(app)/lessons/page.tsx'`, { encoding: "utf8" })
+    .split("\n")
+    .filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
+  assert.ok(phase1aChanged.length > 0,
+    "27P. control: the /lessons index really does differ from the pre-Phase-1a commit");
+  // Airtight rule: each ADDED line must be its REMOVED counterpart with exactly `async `/`await `
+  // inserted. A loose pattern would have let a hardcoded track (`getActiveTrack("debate")`) through.
+  const p1aRemoved = phase1aChanged.filter((l) => l.startsWith("-"));
+  const p1aAdded = phase1aChanged.filter((l) => l.startsWith("+"));
+  assert.equal(p1aAdded.length, p1aRemoved.length, "27P1. the /lessons index changed line-for-line, adding nothing extra");
+  for (let i = 0; i < p1aRemoved.length; i += 1) {
+    const body = p1aRemoved[i].slice(1);
+    const allowed = [
+      "+" + body.replace("export default function ", "export default async function "),
+      "+" + body.replace(/= (getActiveTrack|resolveActiveTrack)\(/, "= await $1(")
+    ];
+    assert.ok(allowed.includes(p1aAdded[i]),
+      `27P2. the /lessons index changed ONLY by inserting async/await — got: ${p1aAdded[i].trim()}`);
+  }
+  assert.ok(p1aAdded.some((l) => /^\+export default async function LessonsIndexPage\(/.test(l)),
+    "27P3. it is an async server component after the conversion");
+  assert.ok(p1aAdded.some((l) => /\bawait getActiveTrack\(searchParams\.track\)/.test(l)),
+    "27P4. and awaits the resolver rather than dropping the track scope");
+  // And what the page is FOR is unchanged.
+  const lessonsIdxSrc = read("app/(app)/lessons/page.tsx");
+  assert.ok(lessonsIdxSrc.includes("educationLessonsForTrack") && lessonsIdxSrc.includes("lessonsForTrack"),
+    "27P4. the index still draws from both the education registry and the legacy lesson modules");
 
   // ---- 27L. what the lesson-practice hash was protecting, asserted exactly -----------------------
   // C3b-i converts this component to the server-issued session protocol, so a blanket hash would

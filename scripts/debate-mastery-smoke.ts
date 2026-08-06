@@ -351,34 +351,50 @@ async function main() {
   const row = (evidenceStatus: string, persistenceStatus: string) =>
     resultState({ area: "claim-warrant-impact", label: "Claim / Warrant / Impact", skillSlug: "debate-claim-building",
       total: 5, correct: 4, scorePercent: 80, uniqueTotal: 5, uniqueCorrect: 4, requiredUnique: DEBATE_DRILL_REQUIRED_UNIQUE,
-      evidenceScore: 80, passed: evidenceStatus === "passing", evidenceStatus, persistenceStatus,
-      review: null } as Parameters<typeof resultState>[0]);
-  assert.equal(row("passing", "preserved-concurrent").badge, "Practice complete",
-    "16a. a passing concurrency no-op reads 'Practice complete' — never a save or a failure");
-  assert.equal(row("below-threshold", "preserved-concurrent").badge, "Keep practicing",
-    "16b. and a below-threshold no-op stays 'Keep practicing'");
-  for (const st of ["passing", "below-threshold"] as const) {
-    const text = `${row(st, "preserved-concurrent").badge} ${row(st, "preserved-concurrent").explanation ?? ""}`;
-    assert.ok(/Another submission already handled this review/.test(text), `16c. ${st} no-op explains why`);
-    assert.ok(!/could not be saved|Progress saved|Try again later/.test(text),
-      `16d. ${st} no-op claims neither save success nor save failure`);
-  }
+      evidenceScore: 80, passed: evidenceStatus === "passing", evidenceStatus,
+      persistenceStatus } as Parameters<typeof resultState>[0]);
+  // C3a-i: the client state model now mirrors the C2a result exactly. `preserved-concurrent` and
+  // `not-saved` are gone because the server can no longer produce them — a submission runs in one
+  // transaction that commits or rolls back, and the session claim means a second concurrent submit
+  // replays the stored result instead of reaching mastery. `review` is gone because the completed
+  // result carries no review outcome, and inventing one would be a fabrication.
+  assert.ok(!("review" in (row("passing", "updated") as object)),
+    "16a. the client no longer takes a review input it cannot honestly render");
+  assert.equal(row("below-threshold", "updated").badge, "Keep practicing",
+    "16b. a below-threshold result stays 'Keep practicing' even when the write landed");
+  // The surviving matrix, and the fail-closed case. `passing` + `not-attempted` cannot currently be
+  // produced by the route; it must NEVER read as a save.
+  const neutral = row("passing", "not-attempted");
+  assert.equal(neutral.badge, "Practice only", "16c. a qualifying result with no write attempt fails closed");
+  assert.ok(!/Progress saved|could not be saved/.test(`${neutral.badge} ${neutral.explanation ?? ""}`),
+    "16d. and claims neither save success nor save failure");
   assert.equal(row("passing", "skill-missing").badge, "Not tracked yet", "16e. a missing skill is distinct");
-  assert.equal(row("passing", "not-saved").badge, "Progress not saved", "17. a failed write reads 'Progress not saved'");
-  assert.equal(row("below-threshold", "not-saved").badge, "Progress not saved", "17b. for below-threshold too");
-  assert.ok(!/not.*(set up|seeded|available|tracked)/i.test(row("passing", "not-saved").explanation ?? ""),
-    "17c. and is NEVER described as an unseeded or untracked skill");
-  assert.ok(/Try again later/.test(row("passing", "not-saved").explanation ?? ""), "17d. it says the save failed");
+  assert.equal(row("passing", "updated").badge, "Progress saved", "17. a real write reads 'Progress saved'");
+  assert.equal(new Set(["Progress saved", "Practice only", "Not tracked yet", "Keep practicing"]).size, 4,
+    "17c. and the four surviving badges remain distinct from one another");
+  assert.equal(row("below-threshold", "skill-missing").badge, "Not tracked yet",
+    "17b. an unseeded skill is reported as such regardless of score");
+  // `not-saved` no longer exists: the submission runs in one transaction that commits or rolls back,
+  // so there is no "graded but not saved" outcome to describe. What still matters is that the two
+  // remaining non-save states stay distinguishable and neither is dressed up as a save.
+  assert.ok(!/not.*(set up|seeded|available)/i.test(row("passing", "not-attempted").explanation ?? ""),
+    "17d. the fail-closed state is NEVER described as an unseeded or unavailable skill");
+  assert.notEqual(row("passing", "not-attempted").explanation, row("passing", "skill-missing").explanation,
+    "17e. and it stays distinguishable from an unseeded skill");
+  for (const st of ["not-attempted", "skill-missing"] as const) {
+    assert.ok(!/Progress saved/.test(`${row("passing", st).badge} ${row("passing", st).explanation ?? ""}`),
+      `17f. neither non-save state claims a save (${st})`);
+  }
   assert.equal(row("below-threshold", "updated").badge, "Keep practicing", "18. below threshold + updated reads 'Keep practicing'");
   assert.equal(row("passing", "updated").badge, "Progress saved", "19. passing + updated reads 'Progress saved'");
   assert.equal(row("insufficient-evidence", "not-attempted").badge, "Practice only", "19b. insufficient reads 'Practice only'");
   for (const [ev, pers] of [["insufficient-evidence", "not-attempted"], ["below-threshold", "updated"],
-                            ["passing", "updated"], ["passing", "not-saved"],
-                            ["passing", "preserved-concurrent"], ["below-threshold", "preserved-concurrent"]] as const) {
+                            ["passing", "updated"], ["passing", "not-attempted"],
+                            ["passing", "skill-missing"], ["below-threshold", "skill-missing"]] as const) {
     assert.ok(row(ev, pers).badge.trim().length > 0, "19c. every state is conveyed by words, never colour alone");
   }
-  control("save success, save failure and a deliberate no-op are three DIFFERENT learner results",
-    new Set(["updated", "not-saved", "preserved-concurrent"].map((p) => row("passing", p).badge)).size === 3);
+  control("a save, an unseeded skill and a fail-closed non-write are three DIFFERENT learner results",
+    new Set(["updated", "skill-missing", "not-attempted"].map((p) => row("passing", p).badge)).size === 3);
 
   // ---- 20-23. the component's claims ----------------------------------------------------------------------
   const ui = stripComments(read("components/training/debate-drills.tsx"));

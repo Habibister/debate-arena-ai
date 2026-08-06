@@ -7,9 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Area = { id: string; label: string; description: string };
-type Question = { id: string; area: string; question: string; choices: string[]; correctAnswer: string; explanation: string };
+type ServedChoice = { optionId: string; text: string };
+// Server-issued item. No correct answer and no explanation until the learner has answered.
+type Question = {
+  itemId: string;
+  area: string;
+  prompt: string;
+  choices: ServedChoice[];
+  answered: boolean;
+  selectedOptionId?: string;
+  correct?: boolean;
+  correctAnswer?: string;
+  explanation?: string;
+};
+type AnswerState = { optionId: string; correct: boolean; correctAnswer: string; explanation: string; confidence?: Confidence };
 type Confidence = "low" | "medium" | "high";
-type GradedItem = { id: string; area: string; correct: boolean; correctAnswer: string; explanation: string };
 type EvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
 type PersistenceStatus = "not-attempted" | "review-attempted";
 type Result = {
@@ -17,7 +29,6 @@ type Result = {
   total: number;
   correctCount: number;
   scorePercent: number;
-  items: GradedItem[];
   /** The EVIDENCE result: each distinct question counted once, first answer only. */
   uniqueTotal: number;
   uniqueCorrect: number;
@@ -85,14 +96,18 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
   const [count, setCount] = useState(official ? OFFICIAL_COUNT : 10);
   const [questions, setQuestions] = useState<Question[] | null>(null);
+  const [order, setOrder] = useState<string[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [areas, setAreas] = useState<Area[]>([]);
   const [sessionOfficial, setSessionOfficial] = useState(false);
 
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState(false);
   const [confidence, setConfidence] = useState<Confidence | null>(null);
-  const [answers, setAnswers] = useState<Array<{ id: string; selected: string; confidence?: Confidence }>>([]);
+  // Keyed by DISTINCT itemId: a repeated visual slot shows the same recorded answer.
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
 
   const [elapsed, setElapsed] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -122,14 +137,25 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start the session.");
-      setQuestions(data.questions);
+      if (!data.sessionId || !data.items || !data.order) throw new Error(data.error ?? "Could not start the session.");
+      setQuestions(data.items);
+      setOrder(data.order);
+      setSessionId(data.sessionId);
       setAreas(data.areas ?? []);
       setSessionOfficial(data.mode === "official");
       setIndex(0);
       setSelected(null);
-      setRevealed(false);
       setConfidence(null);
-      setAnswers([]);
+      setExpired(false);
+      // A resumed session restores what was already answered.
+      const restored: Record<string, AnswerState> = {};
+      for (const item of data.items as Question[]) {
+        if (item.answered && item.selectedOptionId) {
+          restored[item.itemId] = { optionId: item.selectedOptionId, correct: item.correct ?? false,
+            correctAnswer: item.correctAnswer ?? "", explanation: item.explanation ?? "" };
+        }
+      }
+      setAnswers(restored);
       setElapsed(0);
       setResult(null);
     } catch (e) {
@@ -139,31 +165,54 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
     }
   }
 
-  const current = questions?.[index];
+  const currentItemId = order[index] ?? null;
+  const byItemId = useMemo(() => new Map((questions ?? []).map((q) => [q.itemId, q])), [questions]);
+  const current = currentItemId ? byItemId.get(currentItemId) ?? null : null;
+  const currentAnswer = currentItemId ? answers[currentItemId] ?? null : null;
+  const revealed = currentAnswer !== null;
 
-  function submitAnswer() {
-    if (!current || selected === null || !confidence) return;
-    setAnswers((a) => [...a, { id: current.id, selected, confidence }]);
-    setRevealed(true);
+  async function submitAnswer() {
+    // One in-flight check, and never a second for an item already recorded.
+    if (!sessionId || !current || selected === null || !confidence || checking || answers[current.itemId]) return;
+    setChecking(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/hosa/medterm/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, itemId: current.itemId, optionId: selected })
+      });
+      const data = await res.json();
+      if (res.status === 410) { setExpired(true); return; }
+      if (!res.ok) throw new Error(data.error ?? "That answer could not be saved. Try again.");
+      setAnswers((a) => ({ ...a, [data.itemId]: { optionId: selected, correct: data.correct,
+        correctAnswer: data.correctAnswer, explanation: data.explanation, confidence } }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That answer could not be saved. Try again.");
+    } finally {
+      setChecking(false);
+    }
   }
 
   function next() {
     setSelected(null);
-    setRevealed(false);
     setConfidence(null);
     setIndex((i) => i + 1);
   }
 
-  async function finish(allAnswers: Array<{ id: string; selected: string; confidence?: Confidence }>) {
+  async function finish() {
+    if (!sessionId || busy) return;
     setBusy(true);
     setError(null);
     try {
+      // Only the session id — score and pass come from the server, never from these slots.
       const res = await fetch("/api/hosa/medterm/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: allAnswers })
+        body: JSON.stringify({ sessionId })
       });
       const data = await res.json();
+      if (res.status === 410) { setExpired(true); return; }
       if (!res.ok) throw new Error(data.error ?? "Could not score the session.");
       setResult(data);
     } catch (e) {
@@ -176,17 +225,16 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
   // Auto-submit when out of time (score whatever was answered).
   useEffect(() => {
     if (outOfTime && !busy && !result) {
-      finish(answers);
+      finish();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outOfTime]);
 
-  const answeredCount = answers.length;
-  const runningCorrect = useMemo(() => {
-    if (!questions) return 0;
-    const byId = new Map(questions.map((q) => [q.id, q]));
-    return answers.filter((a) => byId.get(a.id)?.correctAnswer === a.selected).length;
-  }, [answers, questions]);
+  // Progress counts DISTINCT items, never visual slots.
+  const distinctTotal = questions?.length ?? 0;
+  const answeredCount = Object.keys(answers).length;
+  const allAnswered = distinctTotal > 0 && answeredCount === distinctTotal;
+  const runningCorrect = useMemo(() => Object.values(answers).filter((a) => a.correct).length, [answers]);
 
   function clockLabel(seconds: number) {
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
@@ -329,7 +377,7 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">
-            Question {index + 1} of {questions.length}
+            Question {index + 1} of {order.length}
           </CardTitle>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted-foreground">{runningCorrect}/{answeredCount} correct</span>
@@ -348,18 +396,19 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
             <div className="flex items-center gap-2">
               <Badge variant="outline">{areas.find((a) => a.id === current.area)?.label ?? current.area}</Badge>
             </div>
-            <p className="text-sm font-medium">{current.question}</p>
+            <p className="text-sm font-medium">{current.prompt}</p>
             <div className="space-y-2">
               {current.choices.map((choice) => {
-                const isSelected = selected === choice;
-                const isCorrect = choice === current.correctAnswer;
+                const isSelected = revealed ? currentAnswer?.optionId === choice.optionId : selected === choice.optionId;
+                // Correctness is known only after the server has recorded the answer.
+                const isCorrect = revealed && currentAnswer?.correctAnswer === choice.text;
                 const showState = revealed && (isCorrect || isSelected);
                 return (
                   <button
-                    key={choice}
+                    key={`${index}:${current.itemId}:${choice.optionId}`}
                     type="button"
-                    disabled={revealed}
-                    onClick={() => setSelected(choice)}
+                    disabled={revealed || checking}
+                    onClick={() => setSelected(choice.optionId)}
                     className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm ${
                       showState
                         ? isCorrect
@@ -370,7 +419,7 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
                           : "bg-background hover:bg-muted"
                     }`}
                   >
-                    {choice}
+                    {choice.text}
                     {showState ? (
                       isCorrect ? (
                         <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
@@ -408,15 +457,15 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
               <div className="space-y-3">
                 <div className="rounded-md border bg-muted/40 p-3 text-xs">
                   <p className="font-semibold">
-                    {selected === current.correctAnswer ? "Correct" : `Answer: ${current.correctAnswer}`}
+                    {currentAnswer?.correct ? "Correct" : `Answer: ${currentAnswer?.correctAnswer ?? ""}`}
                     {confidence ? <span className="ml-2 font-normal text-muted-foreground">(you felt {confidence} confidence)</span> : null}
                   </p>
-                  <p className="mt-1 text-muted-foreground">{current.explanation}</p>
+                  <p className="mt-1 text-muted-foreground">{currentAnswer?.explanation}</p>
                 </div>
-                {index + 1 < questions.length ? (
+                {index + 1 < order.length ? (
                   <Button type="button" onClick={next}>Next question</Button>
                 ) : (
-                  <Button type="button" onClick={() => finish(answers)} disabled={busy}>
+                  <Button type="button" onClick={finish} disabled={busy || !allAnswered}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                     {busy ? "Scoring..." : "Finish and score"}
                   </Button>

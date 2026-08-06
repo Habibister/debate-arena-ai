@@ -449,14 +449,13 @@ async function main() {
   // Learner copy.
   // C3a-i: Debate is cut over, so its no-op copy is gone — the state it described cannot occur any
   // more. DECA still runs the legacy client until C3a-ii and must keep it.
-  assert.ok(decaUi.includes("Another submission already handled this review"),
-    "33/34. DECA still carries its no-op copy until C3a-ii");
-  assert.ok(!debateUi.includes("Another submission already handled this review"),
-    "33/34b. Debate's no-op copy is gone with the state that produced it");
-  assert.ok(debateUi.includes("Your first answer for this question is the one that counts."),
-    "33/34c. replaced by first-answer-final copy, which the new protocol does produce");
-  for (const [label, ui] of [["DECA", decaUi]] as const) {
-    assert.ok(ui.includes("Practice complete"), `33b. ${label} passing no-op badge`);
+  // C3a-ii: both drill clients are cut over, so the no-op copy is gone from each along with the
+  // state that produced it, and both now carry the first-answer-final copy the protocol does produce.
+  for (const [label, ui] of [["DECA", decaUi], ["Debate", debateUi]] as const) {
+    assert.ok(!ui.includes("Another submission already handled this review"),
+      `33/34. ${label}'s no-op copy is gone with the state that produced it`);
+    assert.ok(ui.includes("Your first answer for this question is the one that counts."),
+      `33/34c. ${label} carries first-answer-final copy instead`);
     assert.ok(ui.includes("Keep practicing"), `34b. ${label} below-threshold badge`);
     assert.ok(!/review (was |is )?scheduled/i.test(ui), `35. ${label} never claims a review was scheduled`);
     // Word-bounded and case-sensitive where it matters: a substring scan for "CAS" matches "because".
@@ -478,18 +477,18 @@ async function main() {
       uniqueCorrect: 4, requiredUnique: 5, evidenceScore: 80, evidenceStatus, persistenceStatus,
       review: null, passed: evidenceStatus === "passing" } as never).badge;
   // DECA still runs the legacy client until C3a-ii, so it keeps its full legacy matrix.
-  assert.equal(row(decaState as never, "passing", "preserved-concurrent"), "Practice complete", "33c. DECA");
-  assert.equal(row(decaState as never, "below-threshold", "preserved-concurrent"), "Keep practicing", "34c. DECA");
-  assert.equal(row(decaState as never, "passing", "write-failed"), "Progress not saved", "35c. DECA failure distinct");
-  // Debate is cut over: states the server can no longer produce are gone; shared meanings survive.
+  // Both clients are cut over now; the states the server cannot produce are gone from both, and the
+  // fail-closed case is asserted for each below.
   for (const [label, st] of [["DECA", decaState], ["Debate", debateState]] as const) {
     assert.equal(row(st as never, "insufficient-evidence", "not-attempted"), "Practice only", `${label} floor`);
     assert.equal(row(st as never, "passing", "updated"), "Progress saved", `${label} saved`);
     assert.equal(row(st as never, "below-threshold", "updated"), "Keep practicing", `50. ${label} never celebratory`);
     assert.equal(row(st as never, "passing", "skill-missing"), "Not tracked yet", `${label} unseeded skill`);
   }
-  control("Debate's qualifying-but-unwritten case fails closed rather than claiming a save",
-    row(debateState as never, "passing", "not-attempted") === "Practice only");
+  for (const [label, st] of [["DECA", decaState], ["Debate", debateState]] as const) {
+    control(`${label}'s qualifying-but-unwritten case fails closed rather than claiming a save`,
+      row(st as never, "passing", "not-attempted") === "Practice only");
+  }
   control("and it stays distinct from a real save and from an unseeded skill",
     new Set([row(debateState as never, "passing", "updated"),
              row(debateState as never, "passing", "not-attempted"),

@@ -824,12 +824,19 @@ async function main() {
   assert.equal(Number(declared?.[1]), DECA_DRILL_REQUIRED_UNIQUE,
     "29c. the client's stated floor equals the server's DECA_DRILL_REQUIRED_UNIQUE");
   // Every learner-facing state string is present and states its meaning in WORDS.
+  // C3a-ii: the no-op and failed-write states are gone because the server can no longer produce
+  // them. The surviving matrix, the repeat explanation and the focused-session copy all remain.
   for (const copy of ["Practice only", "Keep practicing", "Progress saved", "Not tracked yet",
-                      "Another submission already handled this review",
-                      "Progress not saved", "Repeated questions count once toward progress",
+                      "Repeated questions count once toward progress",
                       "Focused skill sessions can update your progress"]) {
     assert.ok(componentCode.includes(copy), `29d. the result contract renders "${copy}"`);
   }
+  for (const gone of ["Another submission already handled this review", "Progress not saved"]) {
+    assert.ok(!componentCode.includes(gone),
+      `29d2. and no longer renders "${gone}" — the server cannot produce that state`);
+  }
+  assert.ok(componentCode.includes("Your first answer for this question is the one that counts."),
+    "29d3. replaced by first-answer-final copy, which the new protocol does produce");
   assert.ok(!/mastery \+ review updated|not yet tracked</.test(componentCode), "29e. the old two-state copy is gone");
   // M13E1G: the unprovable reviewScheduled boolean is gone from both route and component.
   assert.ok(!componentCode.includes("reviewScheduled"), "29e2. and reviewScheduled is gone from the component");
@@ -850,12 +857,9 @@ async function main() {
     ["insufficient-evidence", "not-attempted", "Practice only"],
     ["below-threshold", "updated", "Keep practicing"],
     ["passing", "updated", "Progress saved"],
-    ["passing", "preserved-concurrent", "Practice complete"],
-    ["below-threshold", "preserved-concurrent", "Keep practicing"],
     ["below-threshold", "skill-missing", "Not tracked yet"],
     ["passing", "skill-missing", "Not tracked yet"],
-    ["below-threshold", "write-failed", "Progress not saved"],
-    ["passing", "write-failed", "Progress not saved"],
+    ["passing", "not-attempted", "Practice only"],
     ["insufficient-evidence", "skill-missing", "Not tracked yet"]
   ];
   for (const [ev, pers, badge] of combos) {
@@ -896,21 +900,19 @@ async function main() {
 
   // A write failure must never be described as an unseeded skill, and vice versa.
   // A deliberate concurrency no-op is neither a save nor a failure.
-  for (const ev of ["passing", "below-threshold"] as const) {
-    const t = `${row(ev, "preserved-concurrent").badge} ${row(ev, "preserved-concurrent").explanation ?? ""}`;
-    assert.ok(/Another submission already handled this review/.test(t), `29j. ${ev} no-op explains why`);
-    assert.ok(!/could not be saved|Try again later/.test(t), `29k. ${ev} no-op is not a failure`);
-  }
-  assert.ok(!/not.*(set up|available)/i.test(row("passing", "write-failed").explanation ?? ""),
-    "29h. a failed write is not reported as a missing skill");
-  assert.ok(/Try again later/.test(row("passing", "write-failed").explanation ?? ""),
-    "29h2. it tells the learner their graded work simply was not saved");
+  // C3a-ii: the no-op and failed-write states are gone with the server states that produced them.
+  // What remains must still be mutually distinguishable, and neither may claim a save.
+  const failClosed = `${row("passing", "not-attempted").badge} ${row("passing", "not-attempted").explanation ?? ""}`;
+  assert.ok(!/not.*(set up|available)/i.test(failClosed),
+    "29h. the fail-closed state is not reported as a missing skill");
+  assert.ok(!/Progress saved|could not be saved/.test(failClosed),
+    "29h2. and claims neither a save nor a save failure");
   assert.ok(/not available for this skill yet/.test(row("passing", "skill-missing").explanation ?? ""),
     "29i. and a missing row says exactly that");
   // CONTROL: the branch function really discriminates — the same evidence with different
   // persistence produces different copy, so the second status field is load-bearing.
   control("persistence status alone changes the learner-facing result",
-    new Set(["updated", "skill-missing", "write-failed"].map((p) => row("passing", p).badge)).size === 3);
+    new Set(["updated", "skill-missing", "not-attempted"].map((p) => row("passing", p).badge)).size === 3);
   // CONTROL: the old copy really existed, so 29e is not matching an already-absent string.
   //
   // PINNED, NOT `HEAD`. This control read `git show HEAD:` when it was written, which was correct

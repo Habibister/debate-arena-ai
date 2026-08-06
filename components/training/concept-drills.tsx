@@ -6,130 +6,114 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Question = { id: string; area: string; question: string; choices: string[]; correctAnswer: string; explanation: string };
+// Server-issued item. There is deliberately no correct answer and no explanation here: the session
+// route withholds both until the learner has actually answered, and this client has no way to grade.
+type ServedChoice = { optionId: string; text: string };
+type ServedItem = {
+  itemId: string;
+  bankQuestionId: string;
+  prompt: string;
+  choices: ServedChoice[];
+  area: string;
+  displayOrder: number;
+  answered: boolean;
+  // Present ONLY for an item already answered, so a resumed session can restore what was shown.
+  selectedOptionId?: string;
+  correct?: boolean;
+  correctAnswer?: string;
+  explanation?: string;
+};
+// Only what the setup screen renders. Nothing else about an area needs to cross the boundary.
 type AreaMeta = { id: string; label: string };
-type EvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
-type PersistenceStatus = "not-attempted" | "updated" | "preserved-concurrent" | "skill-missing" | "write-failed";
-type ReviewResultDTO = {
-  status:
-    | "created" | "advanced" | "reset-after-due-failure" | "preserved-not-due"
-    | "preserved-concurrent-existing" | "preserved-concurrent-created" | "write-failed";
-  dueState: "due" | "not-due" | "no-schedule" | "unknown";
-  previousReviewCount: number | null;
-  reviewCount: number | null;
-  previousNextReviewAt: string | null;
-  nextReviewAt: string | null;
-  scheduleChanged: boolean;
+
+type SessionStart = {
+  sessionId: string;
+  items: ServedItem[];
+  /** Visual slots. A focused pool of nine can fill a twenty-slot session, so ids repeat here. */
+  order: string[];
+  expiresAtIso: string;
+  resumed: boolean;
+  error?: string;
 };
 
-/** ISO date -> a short local date the learner can read. Never shows a raw timestamp. */
-function reviewDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-}
+/** What the check route returns once — and only once — the first answer has been recorded. */
+type CheckResponse = {
+  itemId: string;
+  correct: boolean;
+  correctAnswer: string;
+  explanation: string;
+  previouslyAnswered: boolean;
+  answeredAtIso: string;
+  error?: string;
+};
 
-/**
- * The review sentence, rendered SEPARATELY from the evidence badge so a review mutation can never
- * turn a below-threshold result into a celebratory one. Only a proven mutation uses a mutation verb;
- * every preserved state states what stands.
- */
-function reviewSentence(review: ReviewResultDTO | null, masterySaved: boolean): string | null {
-  if (!review) return null;
-  const when = reviewDate(review.nextReviewAt);
-  if (review.status === "write-failed") {
-    return masterySaved
-      ? "Your progress was saved, but the review date could not be updated."
-      : "Your progress and your review date could not be saved. Try again later.";
-  }
-  if (!when) return null;
-  if (masterySaved) {
-    switch (review.status) {
-      case "created": return `Your first review is set for ${when}.`;
-      case "advanced": return `Your next review moves out to ${when}.`;
-      case "reset-after-due-failure": return `This review comes back on ${when}.`;
-      case "preserved-not-due": return `Your review date is unchanged — it is not due yet (${when}).`;
-      default: return `Your review is set for ${when}.`;
-    }
-  }
-  switch (review.status) {
-    case "created": return `Your progress could not be saved. Your first review is still set for ${when}.`;
-    case "advanced": return `Your progress could not be saved. Your next review moved to ${when}.`;
-    case "reset-after-due-failure": return `Your progress could not be saved. This review comes back on ${when}.`;
-    case "preserved-not-due": return `Your progress could not be saved. Your review date is unchanged (${when}).`;
-    default: return `Your review is set for ${when}.`;
-  }
-}
+type EvidenceStatus = "insufficient-evidence" | "below-threshold" | "passing";
+// The server's persistence outcome. `not-saved` and `preserved-concurrent` are gone: a submission
+// now runs in one transaction that either commits or rolls back, and the session claim means a
+// second concurrent submit never reaches mastery — it replays the stored result instead.
+type PersistenceStatus = "not-attempted" | "updated" | "skill-missing";
 
 type PerSkill = {
   area: string;
   label: string;
   skillSlug: string;
-  /** The SESSION result: every answer, counted every time it was submitted. */
   total: number;
   correct: number;
   scorePercent: number;
-  /** The EVIDENCE result: each distinct question counted once, first answer only. */
+  /** Item rows are one per DISTINCT question, so these count unique questions by construction. */
   uniqueTotal: number;
   uniqueCorrect: number;
   requiredUnique: number;
   evidenceScore: number;
   evidenceStatus: EvidenceStatus;
   persistenceStatus: PersistenceStatus;
-  review: ReviewResultDTO | null;
   passed: boolean;
 };
-type Result = { total: number; correctCount: number; scorePercent: number; perSkill: PerSkill[]; wroteSkills: string[] };
+type Result = {
+  total: number;
+  correctCount: number;
+  scorePercent: number;
+  perSkill: PerSkill[];
+  wroteSkills: string[];
+  sessionId: string;
+  completedAtIso: string;
+  alreadyCompleted: boolean;
+};
 
 /**
  * Distinct questions per skill required before anything is recorded.
  *
- * Mirrors `DECA_DRILL_REQUIRED_UNIQUE`, which this component cannot import (it is a client
- * component and the bank is server data). This is the only surface that mounts the runner, and
- * `scripts/deca-mastery-smoke.ts` asserts the two constants are equal so they cannot drift.
+ * Mirrors `DEBATE_DRILL_REQUIRED_UNIQUE`, which this client component cannot import from the server
+ * bank module. `scripts/debate-mastery-smoke.ts` asserts the two constants are equal so they cannot
+ * drift.
  */
 const REQUIRED_UNIQUE_FOR_PROGRESS = 5;
 
 /**
  * What each result row says, from BOTH status fields.
  *
- * Never from one alone: a skill can qualify on evidence and still not be recorded (no row yet, or
- * the write failed), and those are different things to tell someone. A failed write in particular
- * must not be reported as an unseeded skill — the learner's work was real, it just was not saved,
- * and "try again later" is only true for one of the two.
+ * Never from one alone: a skill can qualify on evidence and still not be recorded if the skill is
+ * not seeded, and those are different things to tell someone. Nothing here is inferred from the fact
+ * that a request succeeded — every state below comes from a field the server actually returned.
+ *
+ * The old `not-saved` and `preserved-concurrent` states are gone because the server can no longer
+ * produce them, and nothing invents a review date: the completed result carries no review outcome,
+ * so claiming one would be a fabrication.
  */
 export function resultState(skill: PerSkill): { badge: string; tone: "success" | "info" | "outline" | "unavailable" | "warning"; explanation: string | null } {
-  // Badge from EVIDENCE first, then persistence. A review mutation must never upgrade a
-  // below-threshold result into a celebratory one.
-  if (skill.persistenceStatus === "write-failed") {
-    return {
-      badge: "Progress not saved",
-      tone: "warning",
-      explanation: "Your answers were graded, but progress could not be saved. Try again later."
-    };
-  }
   if (skill.persistenceStatus === "skill-missing") {
     return {
       badge: "Not tracked yet",
       tone: "unavailable",
-      explanation: "Progress tracking is not available for this skill yet, so nothing was recorded."
+      explanation: "Progress tracking is not available for this skill yet."
     };
   }
   if (skill.evidenceStatus === "insufficient-evidence") {
     return {
       badge: "Practice only",
       tone: "outline",
-      explanation: `Fewer than ${skill.requiredUnique} different questions were answered for this skill, so no progress or review was recorded.`
+      explanation: `Fewer than ${skill.requiredUnique} different questions were answered for this skill, so no progress was recorded.`
     };
-  }
-  // A deliberate concurrency no-op: another submission won this review window, so nothing was
-  // written. It is neither a save nor a failure, and must not be shown as either.
-  if (skill.persistenceStatus === "preserved-concurrent") {
-    return skill.evidenceStatus === "passing"
-      ? { badge: "Practice complete", tone: "success",
-          explanation: "Another submission already handled this review, so this result did not change your saved progress." }
-      : { badge: "Keep practicing", tone: "info",
-          explanation: "You scored below 70%. Another submission already handled this review, so this result did not change your saved progress." };
   }
   if (skill.evidenceStatus === "below-threshold") {
     return {
@@ -138,24 +122,40 @@ export function resultState(skill: PerSkill): { badge: string; tone: "success" |
       explanation: "You answered enough different questions, but scored below 70%."
     };
   }
+  // Qualified on evidence AND the server says it wrote.
+  if (skill.persistenceStatus === "updated") {
+    return {
+      badge: "Progress saved",
+      tone: "success",
+      explanation: "You answered enough different questions and scored at least 70%."
+    };
+  }
+  // Qualified but the server reports no write attempt. The routes cannot currently produce this, so
+  // it fails CLOSED: report the practice honestly rather than claim a save that was never confirmed.
   return {
-    badge: "Progress saved",
-    tone: "success",
-    explanation: "You answered enough different questions and scored at least 70%."
+    badge: "Practice only",
+    tone: "outline",
+    explanation: "You answered enough different questions, but no progress was recorded for this skill."
   };
 }
 
-// Generic concept-drill runner: original multiple-choice items with immediate explanations; on
-// finish, real per-skill scores are written to MasteryProgress + spaced review by the submit route.
-// Parameterized by endpoints + area filters so a track can mount it without new UI code.
+type AnswerState = { optionId: string; correct: boolean; correctAnswer: string; explanation: string };
+
+// Generic concept-drill runner. The server issues the questions, shuffles the choices and keeps the
+// answer key; each answer is recorded server-side before its feedback comes back, and the first
+// answer to a question is final. On finish, the per-skill EVIDENCE score — each distinct question
+// counted once — is what may be recorded. Parameterized by endpoints so a track can mount it
+// without new UI code; the check endpoint is passed explicitly rather than derived from another.
 export function ConceptDrills({
   sessionEndpoint,
+  checkEndpoint,
   submitEndpoint,
   areas,
   title,
   blurb
 }: {
   sessionEndpoint: string;
+  checkEndpoint: string;
   submitEndpoint: string;
   areas: AreaMeta[];
   title: string;
@@ -163,36 +163,70 @@ export function ConceptDrills({
 }) {
   const [areaFilter, setAreaFilter] = useState<string>("mixed");
   const [count, setCount] = useState(8);
-  const [questions, setQuestions] = useState<Question[] | null>(null);
-  const [index, setIndex] = useState(0);
+  const [session, setSession] = useState<SessionStart | null>(null);
+  const [slot, setSlot] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState(false);
-  const [answers, setAnswers] = useState<Array<{ id: string; selected: string }>>([]);
+  // Keyed by DISTINCT itemId, never by slot: a repeated slot shows the same recorded answer.
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
 
-  const current = questions?.[index];
-  const answeredCount = answers.length;
-  const runningCorrect = useMemo(() => (questions ? answers.filter((a) => questions.find((q) => q.id === a.id)?.correctAnswer === a.selected).length : 0), [answers, questions]);
+  const itemsById = useMemo(
+    () => new Map((session?.items ?? []).map((item) => [item.itemId, item])),
+    [session]
+  );
+  const currentItemId = session?.order[slot] ?? null;
+  const current = currentItemId ? itemsById.get(currentItemId) ?? null : null;
+  const currentAnswer = currentItemId ? answers[currentItemId] ?? null : null;
+  const revealed = currentAnswer !== null;
+
+  // Progress counts DISTINCT items, never visual slots — a padded twenty-slot session over nine
+  // questions is complete after those nine.
+  const distinctTotal = session?.items.length ?? 0;
+  const answeredCount = Object.keys(answers).length;
+  const runningCorrect = useMemo(() => Object.values(answers).filter((a) => a.correct).length, [answers]);
+  const allAnswered = distinctTotal > 0 && answeredCount === distinctTotal;
+
+  function resetRun() {
+    setSlot(0);
+    setSelected(null);
+    setAnswers({});
+    setResult(null);
+    setExpired(false);
+  }
 
   async function start() {
     setBusy(true);
     setError(null);
+    setExpired(false);
     try {
       const res = await fetch(sessionEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ count, areas: areaFilter === "mixed" ? undefined : [areaFilter] })
       });
-      const data = (await res.json().catch(() => ({}))) as { questions?: Question[]; error?: string };
-      if (!res.ok || !data.questions) throw new Error(data.error ?? "Could not start the drill.");
-      setQuestions(data.questions);
-      setIndex(0);
-      setSelected(null);
-      setRevealed(false);
-      setAnswers([]);
-      setResult(null);
+      const data = (await res.json().catch(() => ({}))) as SessionStart;
+      if (!res.ok || !data.sessionId || !data.items || !data.order) {
+        throw new Error(data.error ?? "Could not start the drill.");
+      }
+      setSession(data);
+      resetRun();
+      // A resumed session restores what was already answered, so a refresh does not lose work.
+      const restored: Record<string, AnswerState> = {};
+      for (const item of data.items) {
+        if (item.answered && item.selectedOptionId) {
+          restored[item.itemId] = {
+            optionId: item.selectedOptionId,
+            correct: item.correct ?? false,
+            correctAnswer: item.correctAnswer ?? "",
+            explanation: item.explanation ?? ""
+          };
+        }
+      }
+      setAnswers(restored);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not start the drill.");
     } finally {
@@ -200,30 +234,63 @@ export function ConceptDrills({
     }
   }
 
-  function submitAnswer() {
-    if (!current || selected === null) return;
-    setAnswers((a) => [...a, { id: current.id, selected }]);
-    setRevealed(true);
+  async function checkAnswer() {
+    // One in-flight check at a time, and never a second check for a question already recorded.
+    if (!session || !current || selected === null || checking || answers[current.itemId]) return;
+    setChecking(true);
+    setError(null);
+    try {
+      const res = await fetch(checkEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: session.sessionId, itemId: current.itemId, optionId: selected })
+      });
+      const data = (await res.json().catch(() => ({}))) as CheckResponse;
+      if (res.status === 410) {
+        setExpired(true);
+        return;
+      }
+      if (!res.ok) throw new Error(data.error ?? "That answer could not be saved. Try again.");
+      // The server's recorded answer is authoritative — including when it reports that an earlier
+      // answer already stands.
+      setAnswers((a) => ({
+        ...a,
+        [data.itemId]: {
+          optionId: data.previouslyAnswered ? a[data.itemId]?.optionId ?? selected : selected,
+          correct: data.correct,
+          correctAnswer: data.correctAnswer,
+          explanation: data.explanation
+        }
+      }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That answer could not be saved. Try again.");
+    } finally {
+      setChecking(false);
+    }
   }
 
   async function next() {
-    if (!questions) return;
-    if (index + 1 < questions.length) {
-      setIndex((i) => i + 1);
+    if (!session) return;
+    if (slot + 1 < session.order.length) {
+      setSlot((s) => s + 1);
       setSelected(null);
-      setRevealed(false);
       return;
     }
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const finalAnswers = [...answers, ...(selected && current && !answers.find((a) => a.id === current.id) ? [{ id: current.id, selected }] : [])];
+      // Only the session id. The answers were recorded server-side as they were given.
       const res = await fetch(submitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: finalAnswers })
+        body: JSON.stringify({ sessionId: session.sessionId })
       });
       const data = (await res.json().catch(() => ({}))) as Result & { error?: string };
+      if (res.status === 410) {
+        setExpired(true);
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? "Could not score the drill.");
       setResult(data);
     } catch (e) {
@@ -233,6 +300,27 @@ export function ConceptDrills({
     }
   }
 
+  // --- Expired ---
+  if (expired) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Practice session expired</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            This practice session expired before it was submitted. Start a new session; your saved progress was not changed.
+          </p>
+          <Button type="button" size="sm" onClick={() => { setSession(null); resetRun(); }}>
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            New drill
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // --- Results ---
   if (result) {
     return (
       <Card>
@@ -243,14 +331,15 @@ export function ConceptDrills({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {result.alreadyCompleted ? (
+            <p className="text-xs text-muted-foreground">You already finished this session. Here are your results.</p>
+          ) : null}
           <div className="space-y-2">
             {result.perSkill.map((s) => {
               const state = resultState(s);
-              // Only worth explaining when the two numbers actually disagree, which happens when a
-              // question was answered more than once in the session.
+              // Repeated slots are answered once, so the two numbers now agree by construction. Kept
+              // as a guard: if they ever diverge, the learner is told why rather than left guessing.
               const repeated = s.evidenceScore !== s.scorePercent;
-              // Review information is a SEPARATE line; it never changes the badge above.
-              const sentence = reviewSentence(s.review, s.persistenceStatus === "updated");
               return (
                 <div key={s.area} className="space-y-1 rounded-md border bg-background p-2 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -266,7 +355,6 @@ export function ConceptDrills({
                     </p>
                   ) : null}
                   {state.explanation ? <p className="text-xs text-muted-foreground">{state.explanation}</p> : null}
-                  {sentence ? <p className="text-xs text-muted-foreground">{sentence}</p> : null}
                 </div>
               );
             })}
@@ -275,7 +363,7 @@ export function ConceptDrills({
             Focused skill sessions can update your progress. A mixed session is practice and only records a
             skill when you answer at least {REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.
           </p>
-          <Button type="button" size="sm" onClick={() => setResult(null)}>
+          <Button type="button" size="sm" onClick={() => { setSession(null); resetRun(); }}>
             <RotateCcw className="h-4 w-4" aria-hidden />
             New drill
           </Button>
@@ -284,7 +372,8 @@ export function ConceptDrills({
     );
   }
 
-  if (!questions) {
+  // --- Setup ---
+  if (!session) {
     return (
       <Card>
         <CardHeader>
@@ -330,56 +419,71 @@ export function ConceptDrills({
     );
   }
 
+  // --- Question ---
   return (
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base">Question {index + 1} of {questions.length}</CardTitle>
+          <CardTitle className="text-base">Question {slot + 1} of {session.order.length}</CardTitle>
           <span className="text-sm text-muted-foreground">{runningCorrect}/{answeredCount} correct</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {current ? (
           <>
-            <p className="text-sm font-medium">{current.question}</p>
+            <p className="text-sm font-medium">{current.prompt}</p>
             <div className="space-y-2">
               {current.choices.map((choice) => {
-                const isSel = selected === choice;
-                const isCorrect = choice === current.correctAnswer;
+                const isSel = revealed ? currentAnswer?.optionId === choice.optionId : selected === choice.optionId;
+                // Correctness is known only after the server has recorded the answer.
+                const isCorrect = revealed && currentAnswer?.correctAnswer === choice.text;
                 const showState = revealed && (isCorrect || isSel);
                 return (
                   <button
-                    key={choice}
+                    key={`${slot}:${current.itemId}:${choice.optionId}`}
                     type="button"
-                    disabled={revealed}
-                    onClick={() => setSelected(choice)}
+                    disabled={revealed || checking}
+                    onClick={() => setSelected(choice.optionId)}
                     className={`flex w-full items-start gap-2 rounded-md border p-2 text-left text-sm ${
                       showState ? (isCorrect ? "border-emerald-500/50 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10") : isSel ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"
                     }`}
                   >
                     {revealed ? (isCorrect ? <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" aria-hidden /> : isSel ? <XCircle className="mt-0.5 h-4 w-4 text-red-600" aria-hidden /> : <span className="h-4 w-4" />) : <span className="h-4 w-4 shrink-0 rounded-full border" />}
-                    <span>{choice}</span>
+                    <span>{choice.text}</span>
                   </button>
                 );
               })}
             </div>
-            {revealed ? (
+            {revealed && currentAnswer ? (
               <div className="rounded-md border bg-muted/40 p-3 text-sm">
-                <p className="font-semibold">{selected === current.correctAnswer ? "Correct" : "Not quite"}</p>
-                <p className="mt-1 text-muted-foreground">{current.explanation}</p>
+                <p className="font-semibold">{currentAnswer.correct ? "Correct" : "Not quite"}</p>
+                <p className="mt-1 text-muted-foreground">{currentAnswer.explanation}</p>
+                {current.answered && answeredCount > 0 ? (
+                  <p className="mt-1 text-xs text-muted-foreground">Your first answer for this question is the one that counts.</p>
+                ) : null}
               </div>
             ) : null}
             {!revealed ? (
-              <Button type="button" size="sm" onClick={submitAnswer} disabled={selected === null}>Check answer</Button>
+              <Button type="button" size="sm" onClick={checkAnswer} disabled={selected === null || checking}>
+                {checking ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                {checking ? "Saving..." : "Check answer"}
+              </Button>
             ) : (
-              <Button type="button" size="sm" onClick={next} disabled={busy}>
+              <Button type="button" size="sm" onClick={next} disabled={busy || (slot + 1 >= session.order.length && !allAnswered)}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-                {index + 1 < questions.length ? "Next question" : "Finish & score"}
+                {slot + 1 < session.order.length ? "Next question" : "Finish & score"}
               </Button>
             )}
+            {slot + 1 >= session.order.length && !allAnswered ? (
+              <p className="text-xs text-muted-foreground">
+                Answer every question before finishing. {answeredCount} of {distinctTotal} answered.
+              </p>
+            ) : null}
             {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
           </>
-        ) : null}
+        ) : (
+          <p className="text-sm text-muted-foreground">That practice session is not available. Start a new session.</p>
+        )}
       </CardContent>
     </Card>
   );

@@ -130,6 +130,7 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
       {!activeTrack || activeTrack.id === "DECA" ? (
         <ConceptDrills
           sessionEndpoint="/api/deca/drills/session"
+          checkEndpoint="/api/deca/drills/check"
           submitEndpoint="/api/deca/drills/submit"
           areas={DECA_DRILL_AREAS.map((a) => ({ id: a.id, label: a.label }))}
           title="DECA concept drills"

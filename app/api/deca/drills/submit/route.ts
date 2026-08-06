@@ -1,101 +1,145 @@
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
+import { DECA_DRILL_AREAS, DECA_DRILL_PASS_THRESHOLD, DECA_DRILL_REQUIRED_UNIQUE } from "@/lib/deca-drills";
 import {
-  buildDecaDrillEvidence,
-  decaDrillPersistenceRequest,
-  gradeDecaDrillAnswers,
-  DECA_DRILL_REQUIRED_UNIQUE,
-  type DecaDrillEvidenceStatus
-} from "@/lib/deca-drills";
+  aggregateAreaEvidence,
+  completedPurgeAfter,
+  lockUserRow,
+  parseStoredResult,
+  requireEveryItemAnswered,
+  sessionExpired,
+  sessionNotFound
+} from "@/lib/practice-session";
+import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { recordDrillMasteryDetailed, serializeReviewResult, type ReviewResultDTO } from "@/lib/spaced-review";
-import { decaDrillSubmitRequestSchema } from "@/lib/validators";
+import { recordDrillMasteryInTransaction, recordPracticeOutcomeInTransaction } from "@/lib/spaced-review";
+import { practiceSessionSubmitRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
 
-// Grade a DECA concept-drill session server-side and write real MasteryProgress + spaced review PER
-// SKILL. This is concept drilling only — it does not touch the DECA role-play/judging system.
+// Finish a DECA concept-drill session (M13E2 Phase C2a). Concept drilling only — this does not touch
+// the DECA role-play/judging system.
 //
-// TWO SEPARATE NUMBERS, deliberately (M13E1D):
+// The request carries a session id and NOTHING else. Answers were recorded server-side as they were
+// given, so a client can no longer submit bank ids it was never served, cherry-pick a passing subset,
+// or replay a stored payload.
 //
-//   the SESSION result   — every graded answer, counted every time it was submitted. Shown to the
-//                          learner, because it is what they just did.
-//   the EVIDENCE result  — at most one entry per valid question id, first answer only. The ONLY
-//                          thing persistence is allowed to see, because `answers` is composed by
-//                          the client and repeating one correct id used to inflate a 20% run into
-//                          a 76% "pass".
-//
-// The response therefore carries two orthogonal statuses per skill. `evidenceStatus` says whether
-// the work qualifies; `persistenceStatus` says what the database actually did about it. Collapsing
-// them loses the difference between "we did not try", "there is no row yet", and "the write broke"
-// — and the learner-facing copy for those three is not interchangeable.
-//
-// M13E1G adds `preserved-concurrent` (another submission won the due review window, so this one
-// deliberately wrote nothing) and replaces the unprovable `reviewScheduled` boolean with the exact
-// serialized review outcome. A no-op is neither a save nor a failure and must not be shown as either.
-type PersistenceStatus = "not-attempted" | "updated" | "preserved-concurrent" | "skill-missing" | "write-failed";
+// GRADED FROM THE SNAPSHOT: correctness comes from `PracticeSessionItem.isCorrect`, recorded at
+// answer time, never from a fresh bank lookup — a question edited after issuance cannot change a
+// grade already earned. Attribution is by the item's own STORED area, never by whatever area the
+// session requested. Floor (5) and threshold (70) are unchanged, and no XP is written here.
+type PersistenceStatus = "not-attempted" | "updated" | "skill-missing";
 
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
-    const input = await parseJson(request, decaDrillSubmitRequestSchema);
+    const input = await parseJson(request, practiceSessionSubmitRequestSchema);
 
-    // ONE server timestamp governs this whole submission: due determination, the CAS predicate, the
-    // next-review date and the mastery decision derived from it.
+    // ONE server timestamp governs this whole submission.
     const now = new Date();
-    const result = gradeDecaDrillAnswers(input.answers);
-    const evidenceByArea = new Map(buildDecaDrillEvidence(input.answers).map((e) => [e.area, e]));
 
-    const wroteSkills: string[] = [];
-    const perSkill = [];
+    const payload = await prisma.$transaction(async (tx) => {
+      // FIRST statement: the loser of two concurrent submits waits here, then sees COMPLETED.
+      await lockUserRow(tx, user.id);
 
-    for (const skill of result.perSkill) {
-      const evidence = evidenceByArea.get(skill.area);
-      // Both sets are derived from the same bank-filtered answers, so this is always present; the
-      // fallback exists so a future divergence fails CLOSED (no evidence => no write) rather than open.
-      const uniqueTotal = evidence?.uniqueTotal ?? 0;
-      const uniqueCorrect = evidence?.uniqueCorrect ?? 0;
-      const evidenceScore = evidence?.evidenceScore ?? 0;
-      const evidenceStatus: DecaDrillEvidenceStatus = evidence?.evidenceStatus ?? "insufficient-evidence";
-      const passed = evidence?.passed ?? false;
+      const session = await tx.practiceSession.findFirst({
+        where: { id: input.sessionId, userId: user.id, kind: "DECA_DRILL" },
+        include: { items: { orderBy: { displayOrder: "asc" } } }
+      });
+      if (!session) sessionNotFound();
 
-      // `null` means the persistence helper is NOT CALLED — no mastery, no review, and critically
-      // no due-review knock-down from a submission too short to have earned one.
-      const plan = evidence ? decaDrillPersistenceRequest(evidence) : null;
+      // Already finished: replay the stored result. Zero effects, and deliberately NOT a 409.
+      if (session.status === "COMPLETED") {
+        return { ...parseStoredResult(session.resultJson), alreadyCompleted: true };
+      }
+      if (session.expiresAt <= now) sessionExpired();
 
-      let persistenceStatus: PersistenceStatus = "not-attempted";
-      let review: ReviewResultDTO | null = null;
-      if (plan && skill.skillSlug) {
-        const outcome = await recordDrillMasteryDetailed({
-          userId: user.id,
-          skillSlug: skill.skillSlug,
-          scorePercent: plan.scorePercent,
-          passed: plan.passed,
-          now
+      const answered = requireEveryItemAnswered(session.items);
+      const evidence = aggregateAreaEvidence(answered);
+
+      const wroteSkills: string[] = [];
+      const perSkill = [];
+      for (const area of evidence) {
+        const meta = DECA_DRILL_AREAS.find((a) => a.id === area.area);
+        const qualifies = area.uniqueTotal >= DECA_DRILL_REQUIRED_UNIQUE;
+        const passed = qualifies && area.evidenceScore >= DECA_DRILL_PASS_THRESHOLD;
+        const evidenceStatus = !qualifies ? "insufficient-evidence" : passed ? "passing" : "below-threshold";
+
+        let persistenceStatus: PersistenceStatus = "not-attempted";
+        // Below the floor the persistence helpers are NOT CALLED at all — no mastery, no review, and
+        // no due-review knock-down from a session too short to have earned one.
+        if (qualifies && area.skillSlug) {
+          const skill = await tx.skill.findUnique({ where: { slug: area.skillSlug }, select: { id: true } });
+          if (!skill) {
+            persistenceStatus = "skill-missing";
+          } else {
+            // Review FIRST, then mastery consumes its result — no independent due check.
+            const review = await recordPracticeOutcomeInTransaction(tx, {
+              userId: user.id,
+              skillId: skill.id,
+              scorePercent: area.evidenceScore,
+              passed,
+              now
+            });
+            const mastery = await recordDrillMasteryInTransaction(tx, {
+              userId: user.id,
+              skillSlug: area.skillSlug,
+              scorePercent: area.evidenceScore,
+              passed,
+              now,
+              review
+            });
+            persistenceStatus = mastery.status === "updated" ? "updated" : "skill-missing";
+            // Only an actual mastery write earns the slug.
+            if (mastery.status === "updated") wroteSkills.push(area.skillSlug);
+          }
+        }
+
+        perSkill.push({
+          area: area.area,
+          skillSlug: area.skillSlug,
+          label: meta?.label ?? area.area,
+          total: area.uniqueTotal,
+          correct: area.uniqueCorrect,
+          scorePercent: area.evidenceScore,
+          uniqueTotal: area.uniqueTotal,
+          uniqueCorrect: area.uniqueCorrect,
+          requiredUnique: DECA_DRILL_REQUIRED_UNIQUE,
+          evidenceScore: area.evidenceScore,
+          evidenceStatus,
+          persistenceStatus,
+          passed
         });
-        persistenceStatus = outcome.status;
-        review = outcome.review ? serializeReviewResult(outcome.review) : null;
-        // Only an actual mastery write earns the slug — never a concurrency no-op.
-        if (outcome.status === "updated") wroteSkills.push(skill.skillSlug);
       }
 
-      perSkill.push({
-        ...skill,
-        uniqueTotal,
-        uniqueCorrect,
-        requiredUnique: DECA_DRILL_REQUIRED_UNIQUE,
-        evidenceScore,
-        evidenceStatus,
-        persistenceStatus,
-        review,
-        // Overrides the raw grader's duplicate-weighted `passed`. This is the last key on purpose.
-        passed
-      });
-    }
+      const total = answered.length;
+      const correctCount = answered.filter((item) => item.isCorrect).length;
+      const result = {
+        total,
+        correctCount,
+        scorePercent: total > 0 ? Math.round((correctCount / total) * 100) : 0,
+        perSkill,
+        wroteSkills,
+        sessionId: session.id,
+        completedAtIso: now.toISOString()
+      };
 
-    return NextResponse.json({ ...result, perSkill, wroteSkills });
+      await tx.practiceSession.update({
+        where: { id: session.id },
+        data: {
+          status: "COMPLETED",
+          completedAt: now,
+          purgeAfter: completedPurgeAfter(now),
+          resultJson: result
+        }
+      });
+
+      return { ...result, alreadyCompleted: false };
+    });
+
+    return NextResponse.json(payload);
   } catch (error) {
     return apiError(error);
   }

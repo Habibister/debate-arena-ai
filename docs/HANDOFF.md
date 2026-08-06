@@ -2,7 +2,55 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M13E2 Phase C1 (2026-08-04)
+## Latest handoff — M13E2 Phase C2a (2026-08-04)
+
+**Read this before starting C2b.**
+
+Phase A is deployed (`221e07f`), Phase B activated the tables, C1 (`59dd52b`) added the helpers, and
+C2a now binds the **nine drill routes** to server-issued sessions. Eighteen paths: three new check
+routes, six rewritten drill routes, seven suites, and these two documents.
+
+**Neither C1 nor C2a has been pushed. Production still runs the pre-C1 commit** — the old routes,
+which still hand out answer keys and accept unbound submissions. Do not describe M13E2 as active.
+
+**The application is deliberately mid-cutover and not usable end to end.** The routes now speak the
+session protocol; the components still expect the old `{questions:[…correctAnswer…]}` shape. That is
+expected between C2a and C3 and is why nothing may be pushed until C3 lands.
+
+What C2a guarantees, in local code only: the server picks the questions and shuffles the choices;
+option ids are per-session UUIDs, never positional; the answer key is stored, not served; the first
+answer to each item is final; final submit carries only a session id; grading reads the stored
+snapshot so a bank edit after issuance cannot change a grade; a completed session replays its stored
+result with zero effects; and the user row lock is the first statement of every session-start and
+final-submit transaction.
+
+Three things the next engineer must not undo:
+
+**Floors and thresholds are unchanged and pinned.** Debate 5, DECA 5, HOSA 10-across-3, threshold 70
+with HOSA comparing the exact ratio. `PASS_THRESHOLD` is module-private in `lib/hosa-medterm.ts`,
+which C2a could not modify, so `app/api/hosa/medterm/submit/route.ts` restates `70` as
+`MEDTERM_PASS_THRESHOLD` — `practice-session:smoke` control 112 pins the two together by regex so
+they cannot drift apart silently. If you ever export the library constant, delete the restatement.
+
+**HOSA is review-only and no drill route awards XP.** Asserted in four suites, over comment-stripped
+source — several routes describe in prose exactly what they refrain from writing, and control 102b
+exists to prove that ban is not passing vacuously.
+
+**The transaction-native cores are additive.** The public M13E1G helpers are untouched and are not
+rewritten to call them; assertion 28c still holds for the public path.
+
+Assertion repairs in C2a replaced obsolete implementation-shape checks — call counts, call ordering,
+`serializeReviewResult`, `reviewScheduled`, and three HEAD byte pins on rewritten routes — with
+targeted behavioural assertions. None was deleted. The two session-route byte pins were replaced with
+a shared sixteen-check block covering auth, rate limiting, lock-before-lifecycle ordering, exact-kind
+binding, reuse, opaque choices, persisted order, response-literal leak scanning, and no-write-at-issuance,
+each with non-vacuous controls.
+
+C2b (Debate-writing session and submit, plus `awardXpInTransaction` cutover for `tests/[testId]/grade`
+and `debates/[debateId]/judge`) has not begun. C3 (components and pages) has not begun. No schema
+change, no database operation, no activation, no Redis, no secret.
+
+## Earlier handoff — M13E2 Phase C1 (2026-08-04)
 
 **Read this before starting C2.**
 

@@ -357,7 +357,19 @@ async function main() {
   // narrows from "nothing references the new models" to "only these four helpers may". The property
   // that actually matters before the C2 cutover is unchanged and now asserted directly: no route and
   // no component touches the practice-session tables.
-  const M13E2_C1_ALLOWED = ["lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts"];
+  // C2a cuts the nine DRILL routes over to server-issued sessions, so they legitimately reference the
+  // new models now. The allowlist widens by exactly those nine plus the four C1 helpers. The property
+  // that still matters is asserted separately below and is UNCHANGED: no component touches the tables,
+  // and the writing/XP routes stay out until C2b.
+  const M13E2_C1_ALLOWED = [
+    "lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts",
+    "app/api/debate/drills/session/route.ts", "app/api/debate/drills/check/route.ts",
+    "app/api/debate/drills/submit/route.ts",
+    "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
+    "app/api/deca/drills/submit/route.ts",
+    "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
+    "app/api/hosa/medterm/submit/route.ts"
+  ];
   let m13e2RuntimeRefs: string[] = [];
   try {
     m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
@@ -366,18 +378,23 @@ async function main() {
     m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
   }
   assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
-    "PA7. only the approved C1 helpers reference the new models");
+    "PA7. only the approved C1 helpers and C2a drill routes reference the new models");
   for (const f of m13e2RuntimeRefs) {
-    assert.ok(!f.startsWith("app/") && !f.startsWith("components/"),
-      `PA7a. no route or component references them before the C2 cutover (${f})`);
+    assert.ok(!f.startsWith("components/"),
+      `PA7a. no component references the session tables before the C3 cutover (${f})`);
+  }
+  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
+                          "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(deferred),
+      `PA7d. ${deferred} stays out of scope until C2b`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx"],
-    "PA7c. control: the allowlist rejects a route and a component while permitting an approved helper");
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
     "PA8. control: the surviving seed byte pin's hash does vary with file content");

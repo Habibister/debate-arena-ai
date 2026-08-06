@@ -445,7 +445,9 @@ async function main() {
     assert.ok(!publicSection.includes(core), `82. the public helpers do not call ${core} — the new path is additive only`);
   }
 
-  // ================= C1 IS HELPERS ONLY ==========================================================
+  // ================= C2a SCOPE: DRILL ROUTES ONLY =================================================
+  // C2a cuts over the nine drill routes. What must still hold is that NO component and none of the
+  // deferred writing/XP routes touch the session tables yet.
   let refs: string[] = [];
   try {
     refs = (await import("node:child_process"))
@@ -453,7 +455,151 @@ async function main() {
   } catch {
     refs = [];
   }
-  assert.deepEqual(refs, [], "83. C1 wires NO route and NO component to the session tables");
+  assert.deepEqual(refs.filter((f) => f.startsWith("components/")), [],
+    "83. no component is wired to the session tables before C3");
+  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
+                          "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!refs.includes(deferred), `83b. ${deferred} stays out of scope until C2b`);
+  }
+  for (const cut of ["app/api/debate/drills/submit/route.ts", "app/api/deca/drills/submit/route.ts",
+                     "app/api/hosa/medterm/submit/route.ts"]) {
+    assert.ok(refs.includes(cut), `83c. and the C2a drill routes ARE cut over (${cut})`);
+  }
+
+  // ================= C2a ROUTE CONTRACTS (source-level, deterministic) ============================
+  const routes = {
+    debateSession: read("app/api/debate/drills/session/route.ts"),
+    decaSession: read("app/api/deca/drills/session/route.ts"),
+    hosaSession: read("app/api/hosa/medterm/session/route.ts"),
+    debateCheck: read("app/api/debate/drills/check/route.ts"),
+    decaCheck: read("app/api/deca/drills/check/route.ts"),
+    hosaCheck: read("app/api/hosa/medterm/check/route.ts"),
+    debateSubmit: read("app/api/debate/drills/submit/route.ts"),
+    decaSubmit: read("app/api/deca/drills/submit/route.ts"),
+    hosaSubmit: read("app/api/hosa/medterm/submit/route.ts")
+  };
+
+  // The user lock must be the FIRST database statement of every session-start and final-submit
+  // transaction — that is the whole serialization guarantee.
+  for (const [name, src] of [["debateSession", routes.debateSession], ["decaSession", routes.decaSession],
+                             ["hosaSession", routes.hosaSession], ["debateSubmit", routes.debateSubmit],
+                             ["decaSubmit", routes.decaSubmit], ["hosaSubmit", routes.hosaSubmit]] as const) {
+    const body = src.slice(src.indexOf("prisma.$transaction"));
+    const lockAt = body.indexOf("lockUserRow(tx");
+    assert.ok(lockAt > 0, `84. ${name} acquires the user row lock inside its transaction`);
+    for (const later of ["findActiveSession(", "findFirst(", "practiceSession.create(", "requireEveryItemAnswered("]) {
+      const at = body.indexOf(later);
+      if (at > 0) assert.ok(lockAt < at, `85. ${name}: the lock precedes ${later}`);
+    }
+  }
+
+  // Final submit takes a session id and NOTHING else — no answers, no ids, no grading data.
+  for (const [name, src] of [["debateSubmit", routes.debateSubmit], ["decaSubmit", routes.decaSubmit],
+                             ["hosaSubmit", routes.hosaSubmit]] as const) {
+    assert.ok(src.includes("practiceSessionSubmitRequestSchema"), `86. ${name} accepts only a session id`);
+    assert.ok(!src.includes("input.answers"), `87. ${name} never reads a client answer array`);
+    assert.ok(src.includes("requireEveryItemAnswered("), `88. ${name} requires every distinct stored item answered`);
+    assert.ok(src.includes("parseStoredResult("), `89. ${name} replays a stored completed result`);
+    assert.ok(src.includes("alreadyCompleted: true"), `89b. ${name} marks that replay explicitly`);
+    assert.ok(src.includes("sessionExpired()"), `90. ${name} returns the expiry outcome for a stale session`);
+  }
+
+  // Grading reads the SNAPSHOT. A live-bank grader after issuance would let a content edit change a
+  // grade already earned — the exact defect the snapshot contract exists to remove.
+  for (const [name, src] of [["debateSubmit", routes.debateSubmit], ["decaSubmit", routes.decaSubmit],
+                             ["hosaSubmit", routes.hosaSubmit]] as const) {
+    for (const liveGrader of ["gradeDrillAnswers(", "gradeDecaDrillAnswers(", "gradeMedTermAnswers(",
+                              "buildDrillEvidence(", "buildDecaDrillEvidence(", "buildMedTermEvidence("]) {
+      assert.ok(!src.includes(liveGrader), `91. ${name} never re-grades against the live bank (${liveGrader})`);
+    }
+  }
+
+  // Exact-kind binding: each route resolves ONLY its own kind, so a DECA session id cannot be spent
+  // on the Debate route.
+  const kindOf: Array<[string, string, string]> = [
+    ["debateSession", routes.debateSession, "DEBATE_DRILL"], ["debateCheck", routes.debateCheck, "DEBATE_DRILL"],
+    ["debateSubmit", routes.debateSubmit, "DEBATE_DRILL"], ["decaSession", routes.decaSession, "DECA_DRILL"],
+    ["decaCheck", routes.decaCheck, "DECA_DRILL"], ["decaSubmit", routes.decaSubmit, "DECA_DRILL"],
+    ["hosaSession", routes.hosaSession, "HOSA_MEDTERM"], ["hosaCheck", routes.hosaCheck, "HOSA_MEDTERM"],
+    ["hosaSubmit", routes.hosaSubmit, "HOSA_MEDTERM"]
+  ];
+  for (const [name, src, kind] of kindOf) {
+    const kinds = new Set([...src.matchAll(/"(DEBATE_DRILL|DECA_DRILL|HOSA_MEDTERM|DEBATE_WRITING)"/g)].map((m) => m[1]));
+    assert.deepEqual([...kinds], [kind], `92. ${name} binds exactly ${kind} and no other track`);
+  }
+
+  // Every check route scopes to the caller and reveals nothing about a session it does not own.
+  for (const [name, src] of [["debateCheck", routes.debateCheck], ["decaCheck", routes.decaCheck],
+                             ["hosaCheck", routes.hosaCheck]] as const) {
+    assert.ok(/userId: user\.id/.test(src), `93. ${name} scopes the lookup to the authenticated user`);
+    assert.ok(src.includes("sessionNotFound()"), `94. ${name} answers unknown and wrong-user identically`);
+    assert.ok(src.includes("recordFirstAnswer("), `95. ${name} uses the first-answer CAS`);
+    assert.ok(!src.includes("lockUserRow"), `96. ${name} does NOT take the user lock per answer`);
+  }
+
+  // Debate and DECA write mastery through the transaction-native cores; HOSA writes neither mastery
+  // nor XP, and no drill route awards XP at all.
+  for (const [name, src] of [["debateSubmit", routes.debateSubmit], ["decaSubmit", routes.decaSubmit]] as const) {
+    assert.ok(src.includes("recordPracticeOutcomeInTransaction("), `97. ${name} uses the tx-native review core`);
+    assert.ok(src.includes("recordDrillMasteryInTransaction("), `98. ${name} uses the tx-native mastery core`);
+    assert.ok(src.indexOf("recordPracticeOutcomeInTransaction(") < src.indexOf("recordDrillMasteryInTransaction("),
+      `99. ${name} runs review BEFORE mastery, and mastery consumes its result`);
+    assert.ok(!src.includes("recordDrillMasteryDetailed("), `100. ${name} no longer uses the public non-tx helper`);
+  }
+  assert.ok(routes.hosaSubmit.includes("recordPracticeOutcomeInTransaction("), "101. HOSA submit records review");
+  // Ban scans run over CODE, not prose — these routes describe in comments exactly what they refrain
+  // from writing, and a comment saying "no MasteryProgress is written here" must not read as a write.
+  const stripComments = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/(^|\s)\/\/.*$/, "")).join("\n");
+  const hosaCode = stripComments(routes.hosaSubmit);
+  for (const banned of ["recordDrillMasteryInTransaction", "recordDrillMastery", "MasteryProgress",
+                        "masteryProgress", "XP_REWARDS", "xPLog", "awardXpInTransaction", "practiceAttempt"]) {
+    assert.ok(!hosaCode.includes(banned), `102. HOSA stays review-only (${banned})`);
+  }
+  assert.ok(routes.hosaSubmit.includes("MasteryProgress"),
+    "102b. control: the ban is real — the word IS present in that route's prose, and only the code scan clears it");
+  for (const [name, src] of Object.entries(routes)) {
+    for (const banned of ["XP_REWARDS", "awardXpInTransaction", "xPLog"]) {
+      assert.ok(!stripComments(src).includes(banned), `103. no drill route awards XP (${name}, ${banned})`);
+    }
+  }
+
+  // The floors and thresholds M13E1D-F established are unchanged, and are imported rather than retyped.
+  assert.ok(routes.debateSubmit.includes("DEBATE_DRILL_REQUIRED_UNIQUE"), "104. Debate keeps its floor constant");
+  assert.ok(routes.debateSubmit.includes("DRILL_PASS_THRESHOLD"), "104b. and its threshold constant");
+  assert.ok(routes.decaSubmit.includes("DECA_DRILL_REQUIRED_UNIQUE"), "105. DECA keeps its floor constant");
+  assert.ok(routes.decaSubmit.includes("DECA_DRILL_PASS_THRESHOLD"), "105b. and its threshold constant");
+  assert.ok(routes.hosaSubmit.includes("HOSA_MEDTERM_REQUIRED_UNIQUE"), "106. HOSA keeps its unique floor");
+  assert.ok(routes.hosaSubmit.includes("HOSA_MEDTERM_REQUIRED_AREAS"), "106b. and its area-breadth floor");
+  assert.ok(/uniqueCorrect \* 100 >= MEDTERM_PASS_THRESHOLD \* uniqueTotal/.test(routes.hosaSubmit),
+    "107. HOSA compares the EXACT ratio, never a rounded percent");
+  const { DEBATE_DRILL_REQUIRED_UNIQUE, DRILL_PASS_THRESHOLD } = await import("../lib/debate-drills");
+  const { DECA_DRILL_REQUIRED_UNIQUE, DECA_DRILL_PASS_THRESHOLD } = await import("../lib/deca-drills");
+  const { HOSA_MEDTERM_REQUIRED_UNIQUE, HOSA_MEDTERM_REQUIRED_AREAS } = await import("../lib/hosa-medterm");
+  assert.equal(DEBATE_DRILL_REQUIRED_UNIQUE, 5, "108. the Debate floor is still 5");
+  assert.equal(DECA_DRILL_REQUIRED_UNIQUE, 5, "109. the DECA floor is still 5");
+  assert.equal(HOSA_MEDTERM_REQUIRED_UNIQUE, 10, "110. HOSA still needs 10 unique");
+  assert.equal(HOSA_MEDTERM_REQUIRED_AREAS, 3, "110b. across 3 areas");
+  assert.equal(DRILL_PASS_THRESHOLD, 70, "111. thresholds are still 70");
+  assert.equal(DECA_DRILL_PASS_THRESHOLD, 70, "111b.");
+  // The HOSA route restates 70 because lib/hosa-medterm.ts keeps PASS_THRESHOLD private and C2a may
+  // not modify that file. Pin the two together so they cannot drift apart silently.
+  assert.equal(
+    Number(/const MEDTERM_PASS_THRESHOLD = (\d+);/.exec(routes.hosaSubmit)?.[1]),
+    Number(/const PASS_THRESHOLD = (\d+);/.exec(read("lib/hosa-medterm.ts"))?.[1]),
+    "112. the HOSA route's restated threshold matches lib/hosa-medterm.ts exactly"
+  );
+
+  // Session start withholds the key. The response is built by the C1 serializer, which omits it.
+  for (const [name, src] of [["debateSession", routes.debateSession], ["decaSession", routes.decaSession],
+                             ["hosaSession", routes.hosaSession]] as const) {
+    assert.ok(src.includes("serializeStart("), `113. ${name} serves items through the safe serializer`);
+    assert.ok(src.includes("buildServedChoices("), `114. ${name} shuffles choices and mints opaque option ids`);
+    assert.ok(src.includes("correctOptionId"), `115. ${name} stores the correct option server-side`);
+    assert.ok(!/questions,\s*areas/.test(src), `116. ${name} no longer returns raw bank questions`);
+    assert.ok(src.includes('kind: "DRILL"'), `117. ${name} persists a versioned DRILL snapshot`);
+    assert.ok(src.includes("requestedCount: order.length"), `118. ${name} persists the padded order length`);
+  }
 
   console.log(
     "Practice-session smoke passed: server-session helpers are in place and helper-only. Snapshots are versioned, " +

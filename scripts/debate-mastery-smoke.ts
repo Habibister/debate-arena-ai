@@ -312,14 +312,24 @@ async function main() {
   // M13E1G: this route now consumes the DETAILED outcome. The boolean helper could not distinguish a
   // deliberate concurrency no-op from a write failure, so it reported "Progress not saved" when
   // nothing had failed. The boolean export itself is unchanged and still asserted at 32c-32e.
-  assert.equal((routeSrc.match(/recordDrillMasteryDetailed\(/g) ?? []).length, 1, "13. exactly one persistence call site");
-  assert.ok(!/(?<!Detailed)\brecordDrillMastery\(/.test(routeSrc), "13a2. and it is not the boolean form");
-  assert.ok(routeSrc.indexOf("debateDrillPersistenceRequest(") < routeSrc.indexOf("recordDrillMasteryDetailed("),
-    "13b. and the decision is made BEFORE the call");
-  assert.ok(/if \(plan && skill\.skillSlug\) \{/.test(routeSrc), "13c. the call is guarded by a non-null plan");
-  assert.ok(/if \(outcome\.status === "updated"\) wroteSkills\.push/.test(routeSrc),
+  // M13E2 C2a moved this route onto server-issued sessions, so the persistence SHAPE changed: the
+  // transaction-native cores replace the public helper, and the floor gate is an explicit predicate
+  // rather than a nullable plan. The invariants those assertions protected are re-asserted here.
+  assert.equal((routeSrc.match(/recordPracticeOutcomeInTransaction\(/g) ?? []).length, 1,
+    "13. exactly one review call site");
+  assert.equal((routeSrc.match(/recordDrillMasteryInTransaction\(/g) ?? []).length, 1,
+    "13a. and exactly one mastery call site");
+  assert.ok(!/(?<!Detailed)(?<!InTransaction)\brecordDrillMastery\(/.test(routeSrc),
+    "13a2. and it is not the boolean form");
+  assert.ok(routeSrc.indexOf("recordPracticeOutcomeInTransaction(") < routeSrc.indexOf("recordDrillMasteryInTransaction("),
+    "13b. review runs BEFORE mastery, and mastery consumes its result");
+  assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(routeSrc),
+    "13c. the call is guarded by the evidence floor — below it, persistence is not attempted at all");
+  assert.ok(/if \(mastery\.status === "updated"\) wroteSkills\.push/.test(routeSrc),
     "13d. and only an actual mastery update enters wroteSkills — never a no-op");
-  assert.ok(/serializeReviewResult\(/.test(routeSrc), "13e. the review result is serialized explicitly");
+  assert.ok(/requireEveryItemAnswered\(/.test(routeSrc), "13e. every distinct served item must be answered");
+  assert.ok(!/gradeDrillAnswers\(|buildDrillEvidence\(/.test(routeSrc),
+    "13e2. and grading reads the stored snapshot, never the live bank");
   assert.ok(/const now = new Date\(\);/.test(routeSrc), "13f. one server timestamp governs the submission");
   for (let n = 1; n < DEBATE_DRILL_REQUIRED_UNIQUE; n += 1) {
     assert.equal(debateDrillPersistenceRequest(evidenceFor(distinct(n, n))), null,
@@ -408,9 +418,45 @@ async function main() {
   for (const file of ["lib/debate-skill-practice.ts",                                              // 27 Debate writing grading
                       "lib/deca-drills.ts",                                                        // 28 DECA bank
                       "prisma/seed.ts",                                                             // 31 seed
-                      "app/api/debate/drills/session/route.ts",
+                      // app/api/debate/drills/session/route.ts is deliberately absent from M13E2 C2a
+                      // onward: it now issues a server-authoritative session. A blanket hash would
+                      // forbid that approved change rather than protect anything, so what it was
+                      // guarding is asserted directly at 27s below.
                       "lib/education/registry.ts", "lib/assignments.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27-31. ${file} is byte-identical to HEAD`);
+  }
+
+  // ---- 27s. what the Debate session-route hash was protecting, asserted exactly -----------------
+  const debateSession = stripComments(read("app/api/debate/drills/session/route.ts"));
+  assert.ok(/requireUser\(\)/.test(debateSession), "27s. the session route still authenticates");
+  assert.ok(/enforceRateLimit\(/.test(debateSession), "27s2. and is still rate-limited");
+  assert.ok(/prisma\.\$transaction\(/.test(debateSession), "27s3. issuance happens in one transaction");
+  const dsBody = debateSession.slice(debateSession.indexOf("prisma.$transaction"));
+  assert.ok(dsBody.indexOf("lockUserRow(tx") >= 0 && dsBody.indexOf("lockUserRow(tx") < dsBody.indexOf("findActiveSession("),
+    "27s4. whose FIRST statement is the user row lock, before any session lookup");
+  assert.ok(/findActiveSession\(/.test(debateSession), "27s5. an unexpired ISSUED session is reused, not duplicated");
+  assert.ok(/buildServedChoices\(/.test(debateSession), "27s6. choices are shuffled and given opaque option ids");
+  assert.ok(/correctOptionId/.test(debateSession), "27s7. the correct option is stored server-side");
+  assert.ok(/kind: "DRILL"/.test(debateSession) && /requestedCount: order\.length/.test(debateSession),
+    "27s8. the padded order is persisted in a versioned snapshot");
+  assert.ok(/serializeStart\(/.test(debateSession),
+    "27s9. and the response is built by the serializer that withholds the key for unanswered items");
+  const dkinds = new Set([...debateSession.matchAll(/"(DEBATE_DRILL|DECA_DRILL|HOSA_MEDTERM|DEBATE_WRITING)"/g)].map((m) => m[1]));
+  assert.deepEqual([...dkinds], ["DEBATE_DRILL"], "27s10. it binds exactly DEBATE_DRILL");
+  for (const banned of ["XP_REWARDS", "xPLog", "MasteryProgress", "masteryProgress",
+                        "recordDrillMastery", "recordPracticeOutcome"]) {
+    assert.ok(!debateSession.includes(banned), `27s11. issuance writes no progress at all (${banned})`);
+  }
+  // The route DOES read the bank's correct answer — it has to, in order to store it. What must never
+  // happen is returning it: the only response builder is the serializer that withholds it, and the
+  // raw bank question objects are never spread into the payload.
+  assert.equal((debateSession.match(/question\.correctAnswer/g) ?? []).length, 1,
+    "27s12. the correct answer is read exactly once, to be stored");
+  assert.ok(/buildServedChoices\(question\.choices, question\.correctAnswer\)/.test(debateSession),
+    "27s13. and that single read feeds the option-id minting, nothing else");
+  const dsResponse = debateSession.slice(debateSession.indexOf("NextResponse.json"));
+  for (const leak of ["correctAnswer", "correctOptionId", "explanationSnapshot"]) {
+    assert.ok(!dsResponse.includes(leak), `27s14. and the response literal carries no ${leak}`);
   }
 
   // ---- PA1-PA16. M13E2 Phase A: prisma/schema.prisma changed only by ADDING -----------------------------
@@ -430,7 +476,19 @@ async function main() {
   // narrows from "nothing references the new models" to "only these four helpers may". The property
   // that actually matters before the C2 cutover is unchanged and now asserted directly: no route and
   // no component touches the practice-session tables.
-  const M13E2_C1_ALLOWED = ["lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts"];
+  // C2a cuts the nine DRILL routes over to server-issued sessions, so they legitimately reference the
+  // new models now. The allowlist widens by exactly those nine plus the four C1 helpers. The property
+  // that still matters is asserted separately below and is UNCHANGED: no component touches the tables,
+  // and the writing/XP routes stay out until C2b.
+  const M13E2_C1_ALLOWED = [
+    "lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts",
+    "app/api/debate/drills/session/route.ts", "app/api/debate/drills/check/route.ts",
+    "app/api/debate/drills/submit/route.ts",
+    "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
+    "app/api/deca/drills/submit/route.ts",
+    "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
+    "app/api/hosa/medterm/submit/route.ts"
+  ];
   let m13e2RuntimeRefs: string[] = [];
   try {
     m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
@@ -439,18 +497,23 @@ async function main() {
     m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
   }
   assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
-    "PA7. only the approved C1 helpers reference the new models");
+    "PA7. only the approved C1 helpers and C2a drill routes reference the new models");
   for (const f of m13e2RuntimeRefs) {
-    assert.ok(!f.startsWith("app/") && !f.startsWith("components/"),
-      `PA7a. no route or component references them before the C2 cutover (${f})`);
+    assert.ok(!f.startsWith("components/"),
+      `PA7a. no component references the session tables before the C3 cutover (${f})`);
+  }
+  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
+                          "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(deferred),
+      `PA7d. ${deferred} stays out of scope until C2b`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx"],
-    "PA7c. control: the allowlist rejects a route and a component while permitting an approved helper");
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
     "PA8. control: the surviving seed byte pin's hash does vary with file content");
@@ -496,7 +559,8 @@ async function main() {
   assert.equal(DECA_DRILL_REQUIRED_UNIQUE, 5, "27d. the DECA evidence floor is still 5");
   const decaRoute = stripComments(read("app/api/deca/drills/submit/route.ts"));
   assert.ok(!decaRoute.includes("reviewScheduled"), "27e. and DECA's unprovable reviewScheduled is gone");
-  assert.ok(/recordDrillMasteryDetailed\(/.test(decaRoute), "27e2. DECA still consumes the detailed outcome");
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(decaRoute) && /recordDrillMasteryInTransaction\(/.test(decaRoute),
+    "27e2. DECA persists through the transaction-native cores");
   // 27f. Neither track reaches into the other's evidence helpers.
   for (const [file, foreign] of [["lib/debate-drills.ts", "deca-drills"], ["lib/deca-drills.ts", "debate-drills"]] as const) {
     assert.ok(!stripComments(read(file)).includes(foreign), `27f. ${file} does not import ${foreign}`);
@@ -516,9 +580,36 @@ async function main() {
     assert.ok(!hosaRoute.includes(banned), `29. the HOSA route stays review-only (no {banned})`);
     assert.ok(!hosaLib.includes(banned), `29b. and so does lib/hosa-medterm.ts (no {banned})`);
   }
-  assert.ok(/recordPracticeOutcome\(/.test(hosaRoute), "29c. it still uses the review helper only");
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(hosaRoute),
+    "29c. it still uses the review core only");
+  for (const masteryPath of ["recordDrillMasteryInTransaction", "recordDrillMasteryDetailed",
+                             "recordDrillMastery(", "masteryProgress", "MasteryProgress"]) {
+    assert.ok(!hosaRoute.includes(masteryPath), `29c2. and no mastery path at all (${masteryPath})`);
+  }
+  for (const xp of ["XP_REWARDS", "xPLog", "awardXpInTransaction"]) {
+    assert.ok(!hosaRoute.includes(xp), `29c3. and no XP path (${xp})`);
+  }
+  assert.ok(hosaRoute.indexOf("parseStoredResult(") < hosaRoute.indexOf("recordPracticeOutcomeInTransaction("),
+    "29c4. a completed retry returns the stored result BEFORE any review effect");
+  assert.ok(/recordDrillMasteryInTransaction/.test("await recordDrillMasteryInTransaction(tx, {})"),
+    "29c5. control: that mastery scan matches a real call");
   // (ii) No cross-track abstraction: HOSA uses its own helper, and the tracks do not import each other.
-  assert.ok(/buildMedTermEvidence\(/.test(hosaRoute), "29d. HOSA uses its OWN evidence helper");
+  // C2a: HOSA grades from its own persisted session items rather than the live-bank helper. Same
+  // shape as deca-mastery:26d — the property that mattered is that no track shares another's
+  // abstraction, and that the HOSA ratio semantics survive.
+  assert.ok(/HOSA_MEDTERM_REQUIRED_UNIQUE/.test(hosaRoute) && /HOSA_MEDTERM_REQUIRED_AREAS/.test(hosaRoute),
+    "29d. HOSA uses its OWN floors");
+  for (const foreign of ["debate-drills", "deca-drills", "DRILL_AREAS", "DECA_DRILL_AREAS",
+                         "buildDrillEvidence", "buildDecaDrillEvidence"]) {
+    assert.ok(!hosaRoute.includes(foreign), `29d2. and reaches into no other track (${foreign})`);
+  }
+  assert.ok(/const uniqueTotal = answered\.length;/.test(hosaRoute),
+    "29d3. its score counts persisted distinct answered items");
+  assert.ok(/item\.isCorrect/.test(hosaRoute), "29d4. using their STORED correctness");
+  assert.ok(/uniqueCorrect \* 100 >= MEDTERM_PASS_THRESHOLD \* uniqueTotal/.test(hosaRoute),
+    "29d5. and the exact-ratio HOSA semantics are preserved");
+  assert.ok(/scorePercent: evidenceScore/.test(hosaRoute) && /passed,\n/.test(hosaRoute),
+    "29d6. review receives the evidence-derived score and pass result");
   for (const foreign of ["@/lib/deca-drills", "@/lib/debate-drills", "buildDecaDrillEvidence", "buildDrillEvidence"]) {
     assert.ok(!hosaRoute.includes(foreign), `29e. the HOSA route imports no {foreign}`);
     assert.ok(!hosaLib.includes(foreign), `29e2. nor does lib/hosa-medterm.ts`);
@@ -529,8 +620,30 @@ async function main() {
   // (iii) The unprovable review claim is gone, and no mastery system was introduced.
   assert.ok(!hosaRoute.includes("reviewScheduled"), "29g. the HOSA route no longer claims reviewScheduled");
   // (iv) The HOSA session route and the question bank itself are untouched.
-  assert.equal(nowSha("app/api/hosa/medterm/session/route.ts"), headSha("app/api/hosa/medterm/session/route.ts"),
-    "29h. the HOSA session route is byte-identical to HEAD");
+  // C2a: the HOSA session route now issues a server-authoritative session, so a blanket hash would
+  // forbid an approved change rather than protect anything. Replaced by what it was guarding.
+  const hosaSession = stripComments(read("app/api/hosa/medterm/session/route.ts"));
+  assert.ok(/requireUser\(\)/.test(hosaSession), "29h. the HOSA session route still authenticates");
+  assert.ok(/enforceRateLimit\(/.test(hosaSession), "29h2. and its rate limiting is preserved");
+  const hs = hosaSession.slice(hosaSession.indexOf("prisma.$transaction"));
+  assert.ok(hs.indexOf("lockUserRow(tx") >= 0 && hs.indexOf("lockUserRow(tx") < hs.indexOf("findActiveSession("),
+    "29h3. the user row lock is its first statement, before any lifecycle query");
+  const hk = new Set([...hosaSession.matchAll(/"(DEBATE_DRILL|DECA_DRILL|HOSA_MEDTERM|DEBATE_WRITING)"/g)].map((m) => m[1]));
+  assert.deepEqual([...hk], ["HOSA_MEDTERM"], "29h4. it binds exactly HOSA_MEDTERM");
+  assert.ok(/findActiveSession\(/.test(hosaSession), "29h5. an unexpired ISSUED session is reused");
+  assert.ok(/buildServedChoices\(/.test(hosaSession) && /correctOptionId/.test(hosaSession),
+    "29h6. choices are shuffled with opaque ids and the correct option is stored server-side");
+  assert.ok(/requestedCount: order\.length/.test(hosaSession), "29h7. the padded order is persisted");
+  assert.ok(/mode: spec \? "official" : "generic"/.test(hosaSession), "29h8. official/generic labelling is preserved");
+  const hsResp = hosaSession.slice(hosaSession.indexOf("NextResponse.json"));
+  for (const leak of ["correctAnswer", "correctOptionId", "explanationSnapshot"]) {
+    assert.ok(!hsResp.includes(leak), `29h9. the response literal reveals no ${leak}`);
+  }
+  for (const banned of ["XP_REWARDS", "xPLog", "MasteryProgress", "recordDrillMastery", "recordPracticeOutcome"]) {
+    assert.ok(!hosaSession.includes(banned), `29h10. issuance writes no mastery and no XP (${banned})`);
+  }
+  assert.ok('{ correctAnswer: q.correctAnswer }'.includes("correctAnswer"),
+    "29h11. control: the leak scan matches an answer-key field in a response literal");
   const hosaBank = await import("../lib/hosa-medterm");
   assert.equal(hosaBank.MEDTERM_BANK.length, 54, "29i. the HOSA bank still holds 54 questions");
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 54, "29j. with unique ids");

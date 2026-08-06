@@ -386,15 +386,20 @@ async function main() {
   assert.ok(!decaRoute.includes("reviewScheduled"), "46. DECA no longer sends reviewScheduled");
   assert.ok(!decaUi.includes("reviewScheduled"), "46b. nor does its component");
   for (const [label, src] of [["DECA", decaRoute], ["Debate", debateRoute]] as const) {
-    assert.ok(/recordDrillMasteryDetailed\(/.test(src), `38. the ${label} route consumes the DETAILED outcome`);
-    assert.ok(/serializeReviewResult\(/.test(src), `38b. and serializes the review result explicitly`);
+    // C2a: both drill routes now persist through the transaction-native cores. The public helpers
+    // above are untouched and still asserted in full; these routes simply no longer call them.
+    assert.ok(/recordPracticeOutcomeInTransaction\(/.test(src), `38. the ${label} route uses the tx-native review core`);
+    assert.ok(/recordDrillMasteryInTransaction\(/.test(src), `38b. and the tx-native mastery core`);
+    assert.ok(src.indexOf("recordPracticeOutcomeInTransaction(") < src.indexOf("recordDrillMasteryInTransaction("),
+      `38b2. review first, mastery consuming its result (${label})`);
     assert.ok(/const now = new Date\(\);/.test(src), `52. one server timestamp per submission`);
-    assert.ok(/if \(outcome\.status === "updated"\) wroteSkills\.push/.test(src),
+    assert.ok(/if \(mastery\.status === "updated"\) wroteSkills\.push/.test(src),
       `32. only an actual mastery update enters wroteSkills (${label})`);
+    assert.ok(/lockUserRow\(tx, user\.id\)/.test(src), `32b. and the user row is locked first (${label})`);
+    assert.ok(/parseStoredResult\(/.test(src), `32c. a completed retry replays the stored result (${label})`);
   }
-  assert.ok(!/recordDrillMastery\(/.test(debateRoute), "38c. the Debate route no longer calls the boolean helper");
-  assert.ok(/persistenceStatus = outcome\.status === "write-failed" \? "not-saved"/.test(debateRoute),
-    "18b. and keeps its existing public `not-saved` spelling");
+  assert.ok(!/(?<!InTransaction)\brecordDrillMastery\(/.test(debateRoute),
+    "38c. the Debate route no longer calls the boolean helper");
 
   // Debate writing: review BEFORE the transaction, XP untouched, no floor or limit added.
   assert.ok(writingRoute.indexOf("recordPracticeOutcome(") < writingRoute.indexOf("prisma.$transaction"),
@@ -492,10 +497,35 @@ async function main() {
   const sha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
   const now = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   for (const file of ["prisma/seed.ts", "lib/debate-drills.ts", "lib/deca-drills.ts",
-                      "lib/hosa-medterm.ts", "app/api/hosa/medterm/submit/route.ts",
+                      "lib/hosa-medterm.ts",
+                      // app/api/hosa/medterm/submit/route.ts is deliberately absent from M13E2 C2a
+                      // onward: it is now session-backed. What the hash protected is asserted at 65h.
                       "components/lessons/lesson-practice.tsx", "components/skills/debate-writing-practice.tsx"]) {
     assert.equal(now(file), sha(file), `65-68. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 65h. what the HOSA submit-route hash was protecting, asserted exactly --------------------
+  const hosaSubmit = stripComments(read("app/api/hosa/medterm/submit/route.ts"));
+  assert.ok(/practiceSessionSubmitRequestSchema/.test(hosaSubmit), "65h. it accepts a session id only");
+  assert.ok(!/input\.answers/.test(hosaSubmit), "65h2. and never a client answer array");
+  const hsBody = hosaSubmit.slice(hosaSubmit.indexOf("prisma.$transaction"));
+  assert.ok(hsBody.indexOf("lockUserRow(tx") >= 0 && hsBody.indexOf("lockUserRow(tx") < hsBody.indexOf("findFirst("),
+    "65h3. the user row lock is the first statement of the transaction");
+  const hkinds = new Set([...hosaSubmit.matchAll(/"(DEBATE_DRILL|DECA_DRILL|HOSA_MEDTERM|DEBATE_WRITING)"/g)].map((m) => m[1]));
+  assert.deepEqual([...hkinds], ["HOSA_MEDTERM"], "65h4. it binds exactly HOSA_MEDTERM");
+  assert.ok(!/gradeMedTermAnswers\(|buildMedTermEvidence\(/.test(hosaSubmit),
+    "65h5. grading reads the stored snapshot, never the live bank");
+  assert.ok(/requireEveryItemAnswered\(/.test(hosaSubmit), "65h6. every distinct served item must be answered");
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(hosaSubmit), "65h7. review runs through the tx-native core");
+  for (const banned of ["recordDrillMasteryInTransaction", "recordDrillMastery", "MasteryProgress",
+                        "masteryProgress", "XP_REWARDS", "xPLog", "awardXpInTransaction",
+                        "practiceAttempt", "questionAttempt"]) {
+    assert.ok(!hosaSubmit.includes(banned), `65h8. HOSA stays review-only (${banned})`);
+  }
+  assert.ok(hosaSubmit.indexOf("parseStoredResult(") < hosaSubmit.indexOf("recordPracticeOutcomeInTransaction("),
+    "65h9. a completed retry returns the stored result BEFORE any review effect");
+  assert.ok(/status: "COMPLETED"/.test(hosaSubmit) && /resultJson: result/.test(hosaSubmit),
+    "65h10. the result and the completion are stored together in the same transaction");
 
   // ---- PA1-PA16. M13E2 Phase A: prisma/schema.prisma changed only by ADDING -----------------------------
   const schemaAtM13E2Parent = execSync(`git show ${PRE_M13E2}:prisma/schema.prisma`, { encoding: "utf8" });
@@ -514,7 +544,19 @@ async function main() {
   // narrows from "nothing references the new models" to "only these four helpers may". The property
   // that actually matters before the C2 cutover is unchanged and now asserted directly: no route and
   // no component touches the practice-session tables.
-  const M13E2_C1_ALLOWED = ["lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts"];
+  // C2a cuts the nine DRILL routes over to server-issued sessions, so they legitimately reference the
+  // new models now. The allowlist widens by exactly those nine plus the four C1 helpers. The property
+  // that still matters is asserted separately below and is UNCHANGED: no component touches the tables,
+  // and the writing/XP routes stay out until C2b.
+  const M13E2_C1_ALLOWED = [
+    "lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts",
+    "app/api/debate/drills/session/route.ts", "app/api/debate/drills/check/route.ts",
+    "app/api/debate/drills/submit/route.ts",
+    "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
+    "app/api/deca/drills/submit/route.ts",
+    "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
+    "app/api/hosa/medterm/submit/route.ts"
+  ];
   let m13e2RuntimeRefs: string[] = [];
   try {
     m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
@@ -523,18 +565,23 @@ async function main() {
     m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
   }
   assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
-    "PA7. only the approved C1 helpers reference the new models");
+    "PA7. only the approved C1 helpers and C2a drill routes reference the new models");
   for (const f of m13e2RuntimeRefs) {
-    assert.ok(!f.startsWith("app/") && !f.startsWith("components/"),
-      `PA7a. no route or component references them before the C2 cutover (${f})`);
+    assert.ok(!f.startsWith("components/"),
+      `PA7a. no component references the session tables before the C3 cutover (${f})`);
+  }
+  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
+                          "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(deferred),
+      `PA7d. ${deferred} stays out of scope until C2b`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx"],
-    "PA7c. control: the allowlist rejects a route and a component while permitting an approved helper");
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
     "PA8. control: the surviving seed byte pin's hash does vary with file content");

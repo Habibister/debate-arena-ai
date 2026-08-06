@@ -3,97 +3,170 @@ import { apiError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
 import { getWeightedScoringRubric } from "@/lib/competition-specs";
 import {
-  buildMedTermEvidence,
-  gradeMedTermAnswers,
-  medTermPersistenceRequest,
   HOSA_MEDTERM_REQUIRED_AREAS,
   HOSA_MEDTERM_REQUIRED_UNIQUE,
+  MEDTERM_AREAS,
   MEDTERM_SKILL_SLUG
 } from "@/lib/hosa-medterm";
+import {
+  completedPurgeAfter,
+  lockUserRow,
+  parseStoredResult,
+  requireEveryItemAnswered,
+  sessionExpired,
+  sessionNotFound
+} from "@/lib/practice-session";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { recordPracticeOutcome } from "@/lib/spaced-review";
-import { medTermSubmitRequestSchema } from "@/lib/validators";
+import { recordPracticeOutcomeInTransaction } from "@/lib/spaced-review";
+import { practiceSessionSubmitRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
 
-// Grade a Medical Terminology session server-side (authoritative, from the bank) and wire the outcome
-// into spaced reassessment on the existing Medical Terminology skill.
+// Finish a Medical Terminology session (M13E2 Phase C2a).
 //
-// TWO SEPARATE NUMBERS, deliberately (M13E1F):
+// REVIEW-ONLY, unchanged from M13E1F. No MasteryProgress, no XP, no PracticeAttempt is written here.
+// The slug names an entire HOSA event; a 4-option recognition drill over a 54-item bank cannot
+// establish mastery of it.
 //
-//   the SESSION result  — every graded answer, counted every time it was submitted. Shown to the
-//                         learner, because it is what they just did.
-//   the EVIDENCE result — at most one entry per valid question id, first answer only, and it must
-//                         span at least three bank areas. The ONLY thing review eligibility sees.
+// The request carries a session id and NOTHING else, and grading reads the stored snapshot rather
+// than the live bank, so a question edited after issuance cannot change a grade already earned.
 //
-// REVIEW-ONLY, on purpose. No MasteryProgress and no XP are written here. The slug names an entire
-// HOSA event; a 4-option recognition drill over a 54-item bank cannot establish mastery of it, and a
-// 50-question session consumes nearly the whole bank, so "survived spaced reassessment" could only
-// mean "re-recognised items already seen".
+// Item rows are one per DISTINCT question, so the unique-question evidence rule from M13E1F is
+// structural here: a padded 50-slot session contributes exactly its distinct questions, and both
+// floors — 10 unique across 3 areas — are applied to that set.
 //
-// There is deliberately NO `reviewScheduled` field. `recordPracticeOutcome` swallows its own
-// failures, so this route cannot prove a SkillReviewSchedule row exists and will not imply one. It
-// reports only that a review write was ATTEMPTED.
+// EXACT-RATIO THRESHOLD, deliberately: `uniqueCorrect * 100 >= 70 * uniqueTotal`, never a rounded
+// percent. 16 of 23 rounds to 70 but is 69.57%, and rounding it up would manufacture a pass.
+//
+// NOTE: `PASS_THRESHOLD` is module-private in lib/hosa-medterm.ts, which this phase may not modify,
+// so the value is restated here. practice-session:smoke pins the two to each other so they cannot
+// drift apart silently.
+const MEDTERM_PASS_THRESHOLD = 70;
+
 type PersistenceStatus = "not-attempted" | "review-attempted";
 
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
-    const input = await parseJson(request, medTermSubmitRequestSchema);
+    const input = await parseJson(request, practiceSessionSubmitRequestSchema);
 
-    const result = gradeMedTermAnswers(input.answers);
-    const evidence = buildMedTermEvidence(input.answers);
+    const now = new Date();
 
-    // `null` means spaced review is NOT CALLED — no ladder advance, no reset, and no change to a due
-    // review from a submission too short or too narrow to have earned one.
-    const plan = medTermPersistenceRequest(evidence);
+    const payload = await prisma.$transaction(async (tx) => {
+      // FIRST statement: the loser of two concurrent submits waits here, then sees COMPLETED.
+      await lockUserRow(tx, user.id);
 
-    let persistenceStatus: PersistenceStatus = "not-attempted";
-    if (plan) {
-      try {
-        const skill = await prisma.skill.findUnique({ where: { slug: MEDTERM_SKILL_SLUG }, select: { id: true } });
+      const session = await tx.practiceSession.findFirst({
+        where: { id: input.sessionId, userId: user.id, kind: "HOSA_MEDTERM" },
+        include: { items: { orderBy: { displayOrder: "asc" } } }
+      });
+      if (!session) sessionNotFound();
+
+      if (session.status === "COMPLETED") {
+        return { ...parseStoredResult(session.resultJson), alreadyCompleted: true };
+      }
+      if (session.expiresAt <= now) sessionExpired();
+
+      const answered = requireEveryItemAnswered(session.items);
+
+      const uniqueTotal = answered.length;
+      const uniqueCorrect = answered.filter((item) => item.isCorrect).length;
+      const coveredAreas = MEDTERM_AREAS.map((a) => a.id).filter((id) =>
+        answered.some((item) => item.area === id)
+      );
+      const coveredAreaCount = coveredAreas.length;
+
+      const evidenceScore = uniqueTotal > 0 ? Math.round((uniqueCorrect / uniqueTotal) * 100) : 0;
+      const hasEnoughEvidence =
+        uniqueTotal >= HOSA_MEDTERM_REQUIRED_UNIQUE && coveredAreaCount >= HOSA_MEDTERM_REQUIRED_AREAS;
+      const meetsThreshold = uniqueTotal > 0 && uniqueCorrect * 100 >= MEDTERM_PASS_THRESHOLD * uniqueTotal;
+      const passed = hasEnoughEvidence && meetsThreshold;
+      const evidenceStatus = !hasEnoughEvidence
+        ? "insufficient-evidence"
+        : meetsThreshold
+          ? "passing"
+          : "below-threshold";
+
+      // Weak areas come from the EVIDENCE set, so only areas actually covered can appear.
+      const weakAreas = coveredAreas
+        .map((area) => {
+          const inArea = answered.filter((item) => item.area === area);
+          const meta = MEDTERM_AREAS.find((a) => a.id === area);
+          return {
+            area,
+            label: meta?.label ?? area,
+            missed: inArea.filter((item) => !item.isCorrect).length,
+            total: inArea.length
+          };
+        })
+        .filter((entry) => entry.missed > 0);
+
+      // Below the floors `recordPracticeOutcomeInTransaction` is NOT CALLED — no ladder advance, no
+      // reset, and no change to a due review from a session too short or too narrow to have earned one.
+      let persistenceStatus: PersistenceStatus = "not-attempted";
+      if (hasEnoughEvidence) {
+        const skill = await tx.skill.findUnique({ where: { slug: MEDTERM_SKILL_SLUG }, select: { id: true } });
         if (skill) {
-          await recordPracticeOutcome({ userId: user.id, skillId: skill.id, passed: plan.passed });
+          await recordPracticeOutcomeInTransaction(tx, {
+            userId: user.id,
+            skillId: skill.id,
+            scorePercent: evidenceScore,
+            passed,
+            now
+          });
           persistenceStatus = "review-attempted";
         }
-      } catch {
-        // review wiring is best-effort — never block returning the graded result
       }
-    }
 
-    // Normalize the EVIDENCE score against the registry's sourced point structure (MT: a single
-    // 50-point "Test score" category). Derived from the evidence score, never the duplicate-weighted
-    // session score, and withheld entirely when the evidence does not qualify — an official-scale
-    // number built on one repeated question is exactly the fabrication this milestone removes.
-    const weighted = plan ? await getWeightedScoringRubric("HOSA", "HEALTH_SCIENCE_EVENT") : null;
-    const registryScore =
-      weighted && weighted.totalPoints > 0
-        ? {
-            pointsPossible: weighted.totalPoints,
-            pointsEarned: Math.round((evidence.evidenceScore / 100) * weighted.totalPoints),
-            source: `${weighted.eventName} ${weighted.season} (${weighted.verificationStatus})`
-          }
-        : null;
+      // Normalize the EVIDENCE score against the registry's sourced point structure, and withhold it
+      // entirely when the evidence does not qualify — an official-scale number built on too little
+      // evidence is exactly the fabrication M13E1F removed.
+      const weighted = hasEnoughEvidence ? await getWeightedScoringRubric("HOSA", "HEALTH_SCIENCE_EVENT") : null;
+      const registryScore =
+        weighted && weighted.totalPoints > 0
+          ? {
+              pointsPossible: weighted.totalPoints,
+              pointsEarned: Math.round((evidenceScore / 100) * weighted.totalPoints),
+              source: `${weighted.eventName} ${weighted.season} (${weighted.verificationStatus})`
+            }
+          : null;
 
-    return NextResponse.json({
-      ...result,
-      uniqueTotal: evidence.uniqueTotal,
-      uniqueCorrect: evidence.uniqueCorrect,
-      coveredAreas: evidence.coveredAreas,
-      coveredAreaCount: evidence.coveredAreaCount,
-      requiredUnique: HOSA_MEDTERM_REQUIRED_UNIQUE,
-      requiredAreas: HOSA_MEDTERM_REQUIRED_AREAS,
-      evidenceScore: evidence.evidenceScore,
-      evidenceStatus: evidence.evidenceStatus,
-      persistenceStatus,
-      // Weak areas come from the EVIDENCE set, so only areas actually covered can appear.
-      weakAreas: evidence.weakAreas,
-      // Overrides the raw grader's duplicate-weighted `passed`. Last key on purpose.
-      passed: evidence.passed,
-      registryScore
+      const result = {
+        total: uniqueTotal,
+        correctCount: uniqueCorrect,
+        scorePercent: evidenceScore,
+        uniqueTotal,
+        uniqueCorrect,
+        coveredAreas,
+        coveredAreaCount,
+        requiredUnique: HOSA_MEDTERM_REQUIRED_UNIQUE,
+        requiredAreas: HOSA_MEDTERM_REQUIRED_AREAS,
+        evidenceScore,
+        evidenceStatus,
+        persistenceStatus,
+        weakAreas,
+        passed,
+        registryScore,
+        sessionId: session.id,
+        completedAtIso: now.toISOString()
+      };
+
+      await tx.practiceSession.update({
+        where: { id: session.id },
+        data: {
+          status: "COMPLETED",
+          completedAt: now,
+          purgeAfter: completedPurgeAfter(now),
+          resultJson: result
+        }
+      });
+
+      return { ...result, alreadyCompleted: false };
     });
+
+    return NextResponse.json(payload);
   } catch (error) {
     return apiError(error);
   }

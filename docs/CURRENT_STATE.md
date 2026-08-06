@@ -2,7 +2,41 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-04 (M13E2 Phase C1 — server-session core helpers)_
+_Last updated: 2026-08-04 (M13E2 Phase C2a — drill route cutover, local only)_
+
+## M13E2 Phase C2a — the nine drill routes are session-backed, in local code only
+
+Phase A (schema) is **deployed**. Phase B (`npm run db:push` against the shared Production database)
+is **complete**, so the practice-session enums, tables, foreign keys, indexes and unique constraints
+are **active**. C1 (helpers) is **committed locally**. C2a is now **implemented locally**.
+
+All nine drill routes are cut over — Debate, DECA and HOSA MedTerm, each with a session-start, a
+per-answer check, and a final submit:
+
+- **Session start** picks the questions server-side, shuffles each question's choices, mints an
+  opaque `randomUUID` id per served choice, stores the answer key, and persists the padded slot order
+  in a versioned `scenarioJson` snapshot. The response carries no correct answer and no explanation
+  for a question the learner has not answered.
+- **Check** records the learner's first answer under a conditional update and only then returns
+  feedback. A later different pick returns the stored first answer rather than replacing it.
+- **Submit** takes a session id and nothing else. Grading reads the stored snapshot and the stored
+  `isCorrect`, never the live bank, so a question edited after issuance cannot change a grade already
+  earned. Debate and DECA persist through the transaction-native review and mastery cores; HOSA stays
+  review-only. A completed session replays its stored result with zero effects.
+
+Preserved exactly: Debate and DECA evidence floors of 5, HOSA's 10-unique-across-3-areas, the
+threshold of 70 (exact-ratio for HOSA), the honest 6-of-9 result of 67, and no XP on any drill track.
+
+**What is NOT true yet.** The clients are **not** cut over — the components still expect the old
+response shape — so the practice flow is **not usable end to end** and M13E2 is **not complete**.
+**C1 and C2a have not been pushed or deployed; Production still runs the pre-C1 commit** and
+therefore still runs the old routes, which still return answer keys and accept unbound submissions.
+
+C2b (Debate-writing session/submit and the XP/rank cross-writer safety for test-grade and
+Debate-judge) has **not begun**. C3 (components and pages) has **not begun**.
+
+No schema change, no database operation, no activation, no seed, no migration. No Redis and no
+signing secret are used or required.
 
 ## M13E2 Phase C1 — helper code only, wired to nothing
 

@@ -298,12 +298,19 @@ async function main() {
 
   // ---- 11-12. below the floor, the helper is never called ---------------------------------------
   const routeSrc = stripComments(read("app/api/deca/drills/submit/route.ts"));
-  assert.equal((routeSrc.match(/recordDrillMasteryDetailed\(/g) ?? []).length, 1,
-    "11. the route calls the persistence helper in exactly one place");
-  assert.ok(!/recordDrillMastery\(/.test(routeSrc), "11b. and never the undifferentiated boolean form");
-  assert.ok(routeSrc.indexOf("decaDrillPersistenceRequest(") < routeSrc.indexOf("recordDrillMasteryDetailed("),
-    "11c. and decides whether to call BEFORE calling");
-  assert.ok(/if \(plan && skill\.skillSlug\) \{/.test(routeSrc), "11d. the call is guarded by a non-null plan");
+  // C2a: session-backed shape. Same invariants, re-asserted against the transaction-native cores.
+  assert.equal((routeSrc.match(/recordPracticeOutcomeInTransaction\(/g) ?? []).length, 1,
+    "11. the route calls the review core in exactly one place");
+  assert.equal((routeSrc.match(/recordDrillMasteryInTransaction\(/g) ?? []).length, 1,
+    "11a. and the mastery core in exactly one place");
+  assert.ok(!/(?<!InTransaction)\brecordDrillMastery\(/.test(routeSrc),
+    "11b. and never the undifferentiated boolean form");
+  assert.ok(routeSrc.indexOf("recordPracticeOutcomeInTransaction(") < routeSrc.indexOf("recordDrillMasteryInTransaction("),
+    "11c. review decides the window BEFORE mastery is touched");
+  assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(routeSrc),
+    "11d. the call is guarded by the evidence floor");
+  assert.ok(!/gradeDecaDrillAnswers\(|buildDecaDrillEvidence\(/.test(routeSrc),
+    "11e. and grading reads the stored snapshot, never the live bank");
   // The guard's own decision function, run for real at every size from 0 to the floor.
   for (let n = 0; n < DECA_DRILL_REQUIRED_UNIQUE; n += 1) {
     if (n === 0) continue;
@@ -368,9 +375,9 @@ async function main() {
 
   // ---- 17. partial activation reports per skill ---------------------------------------------------
   // Each skill is resolved independently, so a half-activated database tells the truth per row.
-  const perSkillLoop = routeSrc.slice(routeSrc.indexOf("for (const skill of result.perSkill)"));
-  assert.ok(perSkillLoop.includes("recordDrillMasteryDetailed("), "17. persistence is decided inside the per-skill loop");
-  assert.ok(/persistenceStatus = outcome\.status/.test(perSkillLoop), "17b. each skill reports its OWN outcome");
+  const perSkillLoop = routeSrc.slice(routeSrc.indexOf("for (const area of evidence)"));
+  assert.ok(perSkillLoop.includes("recordDrillMasteryInTransaction("), "17. persistence is decided inside the per-area loop");
+  assert.ok(/persistenceStatus = mastery\.status/.test(perSkillLoop), "17b. each skill reports its OWN outcome");
   assert.ok(!/return NextResponse\.json\(\{[^}]*allWrote|broadly|everything/.test(routeSrc), "17c. there is no aggregate success claim");
   resetStub("missing");
   const missingOutcome = await recordDrillMasteryDetailed({ userId: "u1", skillSlug: "deca-performance-indicators", scorePercent: 80, passed: true });
@@ -608,7 +615,19 @@ async function main() {
   // narrows from "nothing references the new models" to "only these four helpers may". The property
   // that actually matters before the C2 cutover is unchanged and now asserted directly: no route and
   // no component touches the practice-session tables.
-  const M13E2_C1_ALLOWED = ["lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts"];
+  // C2a cuts the nine DRILL routes over to server-issued sessions, so they legitimately reference the
+  // new models now. The allowlist widens by exactly those nine plus the four C1 helpers. The property
+  // that still matters is asserted separately below and is UNCHANGED: no component touches the tables,
+  // and the writing/XP routes stay out until C2b.
+  const M13E2_C1_ALLOWED = [
+    "lib/practice-session.ts", "lib/spaced-review.ts", "lib/xp.ts", "lib/validators.ts",
+    "app/api/debate/drills/session/route.ts", "app/api/debate/drills/check/route.ts",
+    "app/api/debate/drills/submit/route.ts",
+    "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
+    "app/api/deca/drills/submit/route.ts",
+    "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
+    "app/api/hosa/medterm/submit/route.ts"
+  ];
   let m13e2RuntimeRefs: string[] = [];
   try {
     m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
@@ -617,18 +636,23 @@ async function main() {
     m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
   }
   assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
-    "PA7. only the approved C1 helpers reference the new models");
+    "PA7. only the approved C1 helpers and C2a drill routes reference the new models");
   for (const f of m13e2RuntimeRefs) {
-    assert.ok(!f.startsWith("app/") && !f.startsWith("components/"),
-      `PA7a. no route or component references them before the C2 cutover (${f})`);
+    assert.ok(!f.startsWith("components/"),
+      `PA7a. no component references the session tables before the C3 cutover (${f})`);
+  }
+  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
+                          "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(deferred),
+      `PA7d. ${deferred} stays out of scope until C2b`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/deca/drills/submit/route.ts", "components/training/concept-drills.tsx"],
-    "PA7c. control: the allowlist rejects a route and a component while permitting an approved helper");
+    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
     "PA8. control: the surviving seed byte pin's hash does vary with file content");
@@ -670,9 +694,25 @@ async function main() {
     assert.ok(!hosaRoute.includes(banned), `26. the HOSA route stays review-only (no {banned})`);
     assert.ok(!hosaLib.includes(banned), `26b. and so does lib/hosa-medterm.ts (no {banned})`);
   }
-  assert.ok(/recordPracticeOutcome\(/.test(hosaRoute), "26c. it still uses the review helper only");
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(hosaRoute),
+    "26c. it still uses the review core only");
+  for (const masteryPath of ["recordDrillMasteryInTransaction", "recordDrillMasteryDetailed", "recordDrillMastery("]) {
+    assert.ok(!hosaRoute.includes(masteryPath), `26c2. and no mastery path at all (${masteryPath})`);
+  }
+  assert.ok(hosaRoute.indexOf("parseStoredResult(") < hosaRoute.indexOf("recordPracticeOutcomeInTransaction("),
+    "26c3. a completed retry returns before any review effect");
+  // Non-vacuous: the scan does detect an injected mastery write.
+  assert.ok(/recordDrillMasteryInTransaction/.test("await recordDrillMasteryInTransaction(tx, {})"),
+    "26c4. control: that scan matches a real mastery call");
   // (ii) No cross-track abstraction: HOSA uses its own helper, and the tracks do not import each other.
-  assert.ok(/buildMedTermEvidence\(/.test(hosaRoute), "26d. HOSA uses its OWN evidence helper");
+  // C2a: HOSA grades from its own session snapshot rather than the live-bank helper. The property
+  // that mattered — no cross-track abstraction — is asserted directly.
+  assert.ok(/HOSA_MEDTERM_REQUIRED_UNIQUE/.test(hosaRoute) && /HOSA_MEDTERM_REQUIRED_AREAS/.test(hosaRoute),
+    "26d. HOSA uses its OWN floors");
+  for (const foreign of ["debate-drills", "deca-drills", "DRILL_AREAS", "DECA_DRILL_AREAS",
+                         "buildDrillEvidence", "buildDecaDrillEvidence"]) {
+    assert.ok(!hosaRoute.includes(foreign), `26d2. and reaches into no other track (${foreign})`);
+  }
   for (const foreign of ["@/lib/deca-drills", "@/lib/debate-drills", "buildDecaDrillEvidence", "buildDrillEvidence"]) {
     assert.ok(!hosaRoute.includes(foreign), `26e. the HOSA route imports no {foreign}`);
     assert.ok(!hosaLib.includes(foreign), `26e2. nor does lib/hosa-medterm.ts`);
@@ -683,8 +723,43 @@ async function main() {
   // (iii) The unprovable review claim is gone, and no mastery system was introduced.
   assert.ok(!hosaRoute.includes("reviewScheduled"), "26g. the HOSA route no longer claims reviewScheduled");
   // (iv) The HOSA session route and the question bank itself are untouched.
-  assert.equal(nowSha("app/api/hosa/medterm/session/route.ts"), headSha("app/api/hosa/medterm/session/route.ts"),
-    "26h. the HOSA session route is byte-identical to HEAD");
+  // C2a: the HOSA session route now issues a server-authoritative session, so a blanket hash would
+  // forbid an approved change rather than protect anything. Replaced by what it was guarding.
+  // ---- 26h. what the HOSA session-route hash was protecting, asserted exactly ----------------
+  const hosaSession = stripComments(read("app/api/hosa/medterm/session/route.ts"));
+  assert.ok(/requireUser\(\)/.test(hosaSession), "26h. the HOSA session route still authenticates");
+  assert.ok(/enforceRateLimit\(/.test(hosaSession), "26h2. and its rate limiting is preserved");
+  assert.ok(/prisma\.\$transaction\(/.test(hosaSession), "26h3. issuance happens in one transaction");
+  const hsSess = hosaSession.slice(hosaSession.indexOf("prisma.$transaction"));
+  assert.ok(hsSess.indexOf("lockUserRow(tx") >= 0 && hsSess.indexOf("lockUserRow(tx") < hsSess.indexOf("findActiveSession("),
+    "26h4. whose FIRST statement is the user row lock, before any lifecycle query");
+  const hsKinds = new Set([...hosaSession.matchAll(/"(DEBATE_DRILL|DECA_DRILL|HOSA_MEDTERM|DEBATE_WRITING)"/g)].map((m) => m[1]));
+  assert.deepEqual([...hsKinds], ["HOSA_MEDTERM"], "26h5. it binds exactly HOSA_MEDTERM");
+  assert.ok(/findActiveSession\(/.test(hosaSession), "26h6. an unexpired ISSUED session is reused, not duplicated");
+  assert.ok(/buildMedTermSession\(/.test(hosaSession), "26h7. the SERVER selects the questions");
+  assert.ok(/buildServedChoices\(/.test(hosaSession), "26h8. choices are shuffled and given opaque option ids");
+  assert.ok(/correctOptionId/.test(hosaSession), "26h9. the correct option is persisted server-side");
+  assert.ok(/kind: "DRILL"/.test(hosaSession) && /requestedCount: order\.length/.test(hosaSession),
+    "26h10. the padded order is persisted in the immutable snapshot");
+  assert.ok(/serializeStart\(/.test(hosaSession),
+    "26h11. and the response is built by the serializer that withholds the key for unanswered items");
+  assert.ok(/MEDTERM_AREAS/.test(hosaSession) && /mode: spec \? "official" : "generic"/.test(hosaSession),
+    "26h12. HOSA area and official/generic spec labelling is preserved");
+  // Reading the bank's correct answer at issuance is REQUIRED — it is what gets stored. What must
+  // never happen is revealing which served option it is.
+  const hsResponse = hosaSession.slice(hosaSession.indexOf("NextResponse.json"));
+  for (const leak of ["correctAnswer", "correctOptionId", "explanationSnapshot", "explanation:"]) {
+    assert.ok(!hsResponse.includes(leak), `26h13. the response literal reveals no ${leak}`);
+  }
+  for (const banned of ["XP_REWARDS", "xPLog", "MasteryProgress", "masteryProgress",
+                        "recordDrillMastery", "recordPracticeOutcome"]) {
+    assert.ok(!hosaSession.includes(banned), `26h14. issuance writes no mastery and no XP (${banned})`);
+  }
+  // Non-vacuous controls: both scans detect a real violation when one is present.
+  assert.ok(/"DECA_DRILL"/.test('const k = "DECA_DRILL";'), "26h15. control: the kind scan matches a wrong-kind binding");
+  assert.ok('{ correctAnswer: q.correctAnswer }'.includes("correctAnswer"),
+    "26h16. control: the leak scan matches an answer-key field in a response literal");
+
   const hosaBank = await import("../lib/hosa-medterm");
   assert.equal(hosaBank.MEDTERM_BANK.length, 54, "26i. the HOSA bank still holds 54 questions");
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 54, "26j. with unique ids");
@@ -698,8 +773,8 @@ async function main() {
   // deliberate concurrency no-op from a write failure — so it told learners "progress could not be
   // saved" when nothing had failed. Both drill routes now consume the detailed outcome. The guarantee
   // that still matters is that the BOOLEAN EXPORT survives, truthful, for anything else reading it.
-  assert.ok(/recordDrillMasteryDetailed\(/.test(debateRoute),
-    "25b. the Debate caller consumes the detailed outcome");
+  assert.ok(/recordDrillMasteryInTransaction\(/.test(debateRoute),
+    "25b. the Debate caller persists through the transaction-native mastery core");
   assert.ok(!/(?<!Detailed)\brecordDrillMastery\(/.test(stripComments(debateRoute)),
     "25b2. and no longer the boolean form, which could not express a no-op");
   const spacedReviewSrc = stripComments(read("lib/spaced-review.ts"));
@@ -755,7 +830,8 @@ async function main() {
   // M13E1G: the unprovable reviewScheduled boolean is gone from both route and component.
   assert.ok(!componentCode.includes("reviewScheduled"), "29e2. and reviewScheduled is gone from the component");
   assert.ok(!routeSrc.includes("reviewScheduled"), "29e3. and from the route");
-  assert.ok(/serializeReviewResult\(/.test(routeSrc), "29e4. replaced by the serialized review result");
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(routeSrc),
+    "29e4. replaced by the transaction-native review core, whose outcome is not guessed at");
   assert.ok(/const now = new Date\(\);/.test(routeSrc), "29e5. under one server timestamp");
 
   // Every combination the UI can actually reach, run through the REAL branch function. A state must
@@ -786,8 +862,28 @@ async function main() {
   // The last row above is DEFENSIVE ONLY — the route cannot produce it. Prove that: persistence is
   // attempted exactly when the plan is non-null, and the plan is null for every sub-floor evidence
   // set, so "insufficient evidence" always carries "not-attempted" and can never be mislabelled.
-  assert.ok(/if \(plan && skill\.skillSlug\)/.test(routeSrc) && /let persistenceStatus: PersistenceStatus = "not-attempted"/.test(routeSrc),
-    "29f2. persistence status starts at not-attempted and only the guarded branch changes it");
+  // C2a shape: the guard is the evidence floor and the statuses come from the transaction-native
+  // outcomes. Nothing may claim success before those calls return.
+  assert.ok(/let persistenceStatus: PersistenceStatus = "not-attempted"/.test(routeSrc),
+    "29f2. persistence status starts at not-attempted");
+  assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(routeSrc),
+    "29f2b. and only the floor-guarded branch changes it");
+  assert.ok(/persistenceStatus = mastery\.status === "updated" \? "updated" : "skill-missing"/.test(routeSrc),
+    "29f2c. the status is derived ONLY from the transaction-native mastery outcome");
+  assert.ok(/const review = await recordPracticeOutcomeInTransaction\(/.test(routeSrc),
+    "29f2d. and the review outcome comes only from the transaction-native review core");
+  assert.ok(/if \(mastery\.status === "updated"\) wroteSkills\.push/.test(routeSrc),
+    "29f2e. wroteSkills changes only for an actual mastery update");
+  assert.ok(/persistenceStatus = "skill-missing"/.test(routeSrc),
+    "29f2f. an unseeded skill is reported as skill-missing, never as success");
+  assert.ok(routeSrc.indexOf("parseStoredResult(") < routeSrc.indexOf("recordPracticeOutcomeInTransaction("),
+    "29f2g. a completed retry returns BEFORE any persistence effect");
+  assert.ok(!/let persistenceStatus: PersistenceStatus = "updated"/.test(routeSrc),
+    "29f2h. there is no unconditional success initializer");
+  // Non-vacuous: a pre-set success initializer WOULD be caught.
+  assert.ok(/let persistenceStatus: PersistenceStatus = "updated"/.test(
+    'let persistenceStatus: PersistenceStatus = "updated";'),
+    "29f2i. control: that scan matches a pre-set success status");
   for (let n = 1; n < DECA_DRILL_REQUIRED_UNIQUE; n += 1) {
     const ev = piEvidence(distinctPi(n, n));
     assert.equal(ev.evidenceStatus, "insufficient-evidence", `29f3. ${n} unique is insufficient`);

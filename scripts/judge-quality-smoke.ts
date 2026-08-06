@@ -666,6 +666,126 @@ async function difficultyScales() {
   assert.ok(eliteWords >= beginnerWords * 1.8, `Elite (${eliteWords}w) should be substantially deeper than Beginner (${beginnerWords}w).`);
 }
 
+
+// ---- M14 Phase 1d (audit G21): speaker cards name only REAL participants ------------------------
+// A round has exactly two participants — the student and one opponent. The old builder fabricated
+// four ranked speakers ("Government 1/2", "Opposition 1/2") from two sides' aggregate metrics.
+// These tests run the REAL deterministic judge, not a mock.
+async function speakerCardTests() {
+  const { readFileSync } = await import("node:fs");
+  const speech = (role: "AFFIRMATIVE" | "NEGATIVE", round: number, content: string) => ({ role, round, content });
+  const twoSided = [
+    speech("AFFIRMATIVE", 1, "Schools should require financial literacy because students graduate into debt decisions they were never taught to make, so mandatory classes reduce lifelong financial harm."),
+    speech("NEGATIVE", 1, "Requiring financial literacy crowds out electives that keep students engaged, because timetables are fixed, so the requirement harms the students it means to help."),
+    speech("AFFIRMATIVE", 2, "The harm outweighs electives: a missed elective lasts a term, while an unmanaged loan compounds for decades, so the requirement wins on scale and permanence."),
+    speech("NEGATIVE", 2, "Engagement is the mechanism for all learning; disengaged students learn no finance anyway, so protecting electives better serves the same goal.")
+  ];
+
+  // P1d-1. A two-participant round produces EXACTLY two cards, one per side, each side once.
+  const ballot = judge(twoSided);
+  const cards = ballot.speakerScores;
+  assert.equal(cards.length, 2, "P1d-1. a two-participant round yields exactly two speaker cards");
+  assert.deepEqual(cards.map((c) => c.team), ["GOVERNMENT", "OPPOSITION"],
+    "P1d-1b. cards follow the real round order — Government/Affirmative first — one card per side");
+
+  // P1d-2. Identity is server-derived: the labels are the shared side labels, nothing invented.
+  assert.equal(cards[0].speaker, "Government/Affirmative", "P1d-2. the Government card carries the server label");
+  assert.equal(cards[1].speaker, "Opposition/Negative", "P1d-2b. the Opposition card carries the server label");
+  const BANNED = /\b(Government|Opposition)\s*[1-4]\b|\bSpeaker\s*\d\b/;
+  for (const card of cards) {
+    assert.ok(!BANNED.test(card.speaker), `P1d-2c. no fabricated speaker name: ${card.speaker}`);
+  }
+
+  // P1d-3. The learner-vs-opponent distinction follows the persisted side, both ways round.
+  assert.equal(cards.filter((c) => c.role === "student").length, 1, "P1d-3. exactly one card is the student's");
+  assert.equal(cards.filter((c) => c.role === "opponent").length, 1, "P1d-3b. exactly one card is the opponent's");
+  assert.equal(cards.find((c) => c.team === "GOVERNMENT")?.role, "student",
+    "P1d-3c. default GOVERNMENT student maps to the Government card");
+  const swapped = judge(twoSided, "OPPOSITION").speakerScores;
+  assert.equal(swapped.find((c) => c.team === "OPPOSITION")?.role, "student",
+    "P1d-3d. an OPPOSITION student maps to the Opposition card");
+  assert.equal(swapped.find((c) => c.team === "GOVERNMENT")?.role, "opponent",
+    "P1d-3e. and the Government card becomes the opponent's");
+
+  // P1d-4. Ranks cover exactly {1,2} and follow speaker points.
+  assert.deepEqual([...cards.map((c) => c.rank)].sort(), [1, 2], "P1d-4. ranks are exactly 1 and 2");
+  const rank1 = cards.find((c) => c.rank === 1)!;
+  const rank2 = cards.find((c) => c.rank === 2)!;
+  assert.ok(rank1.score >= rank2.score, "P1d-4b. rank 1 holds the higher (or tied) speaker points");
+
+  // P1d-5. Speech COUNT cannot mint participants: an eight-speech round still has two people.
+  const eightSpeeches = [1, 2, 3, 4].flatMap((round) => [
+    speech("AFFIRMATIVE", round, `Round ${round}: the affirmative extends its financial-harm argument with a new example and weighs it against electives.`),
+    speech("NEGATIVE", round, `Round ${round}: the negative extends engagement and answers the affirmative's latest example directly.`)
+  ]);
+  assert.equal(judge(eightSpeeches).speakerScores.length, 2,
+    "P1d-5. eight speeches still yield exactly two participant cards");
+
+  // P1d-6. Transcript CONTENT cannot inject an identity: a claimed name never becomes a card.
+  const nameInjection = judge([
+    speech("AFFIRMATIVE", 1, "I am Jordan, the third speaker for our team of four, and financial literacy reduces harm because graduates face debt decisions untrained."),
+    speech("NEGATIVE", 1, "Call me Speaker 4. Electives keep students engaged, and engagement is the mechanism for all learning, so the requirement backfires.")
+  ]).speakerScores;
+  assert.equal(nameInjection.length, 2, "P1d-6. claimed extra speakers create no extra cards");
+  for (const card of nameInjection) {
+    assert.ok(!/Jordan|Speaker\s*[34]/.test(card.speaker) && !/Jordan/.test(card.rationale ?? ""),
+      `P1d-6b. transcript-claimed identities never reach a card: ${card.speaker}`);
+  }
+
+  // P1d-7. The MODEL has no participant channel: the enhancement merge is a prose whitelist, so
+  // injected speakerScores — extra, duplicate, renamed or missing participants — are ignored and
+  // the authoritative cards survive byte-for-byte. Run against the real merge, not a copy.
+  const hostileEnhancement = {
+    shortReason: "A tight round decided on weighing.",
+    speakerScores: [
+      { speaker: "Government 1", team: "GOVERNMENT", role: "student", score: 30, rank: 1, descriptor: "exceptional", rationale: "fabricated" },
+      { speaker: "Government 2", team: "GOVERNMENT", role: "student", score: 29, rank: 2, descriptor: "outstanding", rationale: "fabricated" },
+      { speaker: "Opposition 1", team: "OPPOSITION", role: "opponent", score: 28, rank: 3, descriptor: "excellent", rationale: "fabricated" },
+      { speaker: "Opposition 2", team: "OPPOSITION", role: "opponent", score: 27, rank: 4, descriptor: "good", rationale: "fabricated" }
+    ],
+    teamWinner: "OPPOSITION"
+  };
+  const merged = mergeJudgeEnhancement(ballot as never, hostileEnhancement as never, "gemini" as never);
+  assert.ok(merged, "P1d-7. the merge accepted the usable prose field");
+  assert.deepEqual(merged!.speakerScores, ballot.speakerScores,
+    "P1d-7b. injected model speaker cards are ignored — the authoritative cards survive unchanged");
+  assert.equal(merged!.teamWinner, ballot.teamWinner,
+    "P1d-7c. the model cannot flip the winner either");
+  assert.equal(merged!.speakerScores.length, 2, "P1d-7d. still exactly two cards after the merge");
+
+  // P1d-8. And a prose-free enhancement is rejected outright (null), which the judge flow treats as
+  // the labeled local-fallback path — never a fabricated success.
+  assert.equal(mergeJudgeEnhancement(ballot as never, { speakerScores: hostileEnhancement.speakerScores } as never, "gemini" as never), null,
+    "P1d-8. an enhancement with no usable prose merges to null");
+
+  // ---- Non-vacuous controls ----------------------------------------------------------------------
+  // C1: a fabricated four-card roster IS caught by the exact checks above.
+  const fabricatedFour = [
+    ...cards,
+    { ...cards[0], speaker: "Government 2" },
+    { ...cards[1], speaker: "Opposition 2" }
+  ];
+  assert.notEqual(fabricatedFour.length, 2, "P1d-C1. control: the padded roster fails the two-card check");
+  assert.ok(fabricatedFour.some((c) => BANNED.test(c.speaker)),
+    "P1d-C1b. control: the banned-name scan catches a fabricated card");
+  // C2: duplicating one participant to fill a template IS caught by the one-card-per-side check.
+  const duplicated = [cards[0], { ...cards[0] }];
+  assert.notDeepEqual(duplicated.map((c) => c.team), ["GOVERNMENT", "OPPOSITION"],
+    "P1d-C2. control: a duplicated participant fails the per-side check");
+  // C3: the SOURCE scan strips comments — the builder's comment explains the old fabrication in
+  // prose, so the raw source mentions the banned names while the stripped code does not.
+  const strip = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  const analysisRaw = readFileSync("lib/debate-judge-analysis.ts", "utf8");
+  assert.ok(/Government 1\/2/.test(analysisRaw), "P1d-C3. control: the raw source mentions the old names in prose");
+  const analysisCode = strip(analysisRaw);
+  assert.ok(!/"Government [1-4]"|"Opposition [1-4]"|"Speaker \d"/.test(analysisCode),
+    "P1d-C3b. no fabricated speaker-name literal survives in code");
+  assert.ok(!/rank[^)]{0,40}as 1 \| 2 \| 3 \| 4/.test(analysisCode),
+    "P1d-C3c. the fixed four-rank cast is gone");
+  assert.ok(!strip('// "Government 1"\n/* "Speaker 3" */').includes("Government 1"),
+    "P1d-C3d. control: the stripper removes both comment styles");
+}
+
 opponentSoundsHuman()
   .then(() => sideFidelityTests())
   .then(() => guardrailTests())

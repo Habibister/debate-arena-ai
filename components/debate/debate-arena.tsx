@@ -98,9 +98,12 @@ export type JudgeReport = {
     reason: string;
   }>;
   sharedSpeaking?: Record<string, number | undefined>;
+  // One entry per real participant (M14 Phase 1d): the student and their opponent, never a padded
+  // four-card roster. `role` is server-derived and marks whose card this is.
   speakerScores?: Array<{
     speaker: string;
     team: "GOVERNMENT" | "OPPOSITION";
+    role?: "student" | "opponent";
     score: number;
     rank: number;
     descriptor: string;
@@ -1245,11 +1248,20 @@ function JudgeDecisionModal({
           ) : null}
 
           {report.speakerScores ? (
+            // One card per REAL participant (M14 Phase 1d) — the student and their opponent. The
+            // learner-vs-opponent tag is text, not colour, and identity comes from the server.
             <div className="grid gap-3 md:grid-cols-2">
               {report.speakerScores.map((speaker) => (
-                <div key={`${speaker.team}-${speaker.rank}-${speaker.speaker}`} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+                <div key={`${speaker.team}-${speaker.speaker}`} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold">{speaker.speaker}</p>
+                    <p className="font-semibold">
+                      {speaker.speaker}
+                      {speaker.role ? (
+                        <span className="ml-2 text-sm font-normal text-neutral-400">
+                          {speaker.role === "student" ? "(you)" : "(your opponent)"}
+                        </span>
+                      ) : null}
+                    </p>
                     <Badge className="border border-purple-400/30 bg-purple-500/10 text-purple-100">Rank {speaker.rank}</Badge>
                   </div>
                   <p className="mt-2 text-sm text-neutral-400">

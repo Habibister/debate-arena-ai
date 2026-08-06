@@ -2,7 +2,40 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M14 Phase 1c — DECA judging fails closed, local only)_
+_Last updated: 2026-08-06 (M14 Phase 1d — fabricated Debate speaker cards removed, local only)_
+
+## M14 Phase 1d — Debate ballots name only real participants, in local code only
+
+Audit finding G21: every Debate ballot displayed **four ranked speaker cards** — "Government 1/2",
+"Opposition 1/2" — synthesised by splitting each side's aggregate metrics, for a round that has
+exactly two participants. Phase 1d removes the fabrication:
+
+- **One card per real participant.** The card roster derives from the authoritative round evidence
+  the judge flow already holds — the persisted `studentSide`/`opponentSide` and the transcript —
+  so a two-person round shows **exactly two cards**, ranked 1–2, in round order
+  (Government/Affirmative first). No placeholder names, no fixed four-card array, no duplication,
+  no card for a role that never appeared, and speech count cannot mint participants.
+- **Identity is server-controlled.** Card labels are the shared side labels; a new `role` field
+  ("student"/"opponent") carries the learner-vs-opponent distinction without exposing account data.
+  Transcript content claiming other identities never reaches a card.
+- **The model has no participant channel — proven behaviourally.** The Debate ballot is built by
+  the deterministic transcript analyzer; the AI contributes prose only, through
+  `mergeJudgeEnhancement`'s explicit whitelist. The suite runs the real merge against a hostile
+  enhancement that injects four fabricated cards and a flipped winner: the authoritative cards
+  survive byte-for-byte and the winner stands. An enhancement with no usable prose merges to null,
+  which the judge flow treats as the labelled local-fallback prose path — scores stay
+  transcript-derived either way, so no fabricated success can occur and the debate remains
+  retryable with all XP/rank/wins/streak/completion writes untouched by any failure.
+- **The public result type migrated deliberately**: `rank: 1 | 2`, `role` added — not an empty
+  four-slot array. The ballot renderer shows the two real cards with "(you)" / "(your opponent)"
+  as text (never colour alone); team-level rubric scoring, winner, reasoning, feedback, provenance,
+  XP, rank, wins/streak and replay behaviour are unchanged.
+- Pinned by the `P1d-*` block in `judge:smoke` — behavioural tests against the real judge and the
+  real merge, plus comment-stripped source scans with non-vacuous controls (a padded roster, a
+  duplicated participant and a re-introduced name literal are each proven caught).
+
+DECA and HOSA judging behaviour untouched. **Local commit only — not pushed, not deployed. No
+database operation.**
 
 ## M14 Phase 1c — DECA judging fails closed, in local code only
 
@@ -189,9 +222,9 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb397350029975520e0b96c1c741e7f873f59086` — the
   M13E2 Phase C closeout commit, **pushed 2026-08-06 and deployed to Production**.
-- **Local `HEAD`:** the M14 Phase 1c commit, ahead of `origin/main` by **four local commits**:
-  the M14 Phase A audit (`a054706`), Phase 1a (`66e7dd6`), Phase 1b (`8a7a74f`) and Phase 1c
-  (DECA fails closed). None is pushed.
+- **Local `HEAD`:** the M14 Phase 1d commit, ahead of `origin/main` by **five local commits**:
+  the M14 Phase A audit (`a054706`), Phase 1a (`66e7dd6`), Phase 1b (`8a7a74f`), Phase 1c
+  (`a29e506`) and Phase 1d (honest Debate ballots). None is pushed.
 - **Working tree:** clean apart from each pass's own commit.
 - Phase 1a changed 17 paths: `lib/track-server.ts` (precedence), 12 page call sites (await the async
   resolver), `components/auth/sign-up-form.tsx` (Public Speaking removed from signup), two suites
@@ -237,7 +270,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed. |
 | M14 Phase 1a — track-correct first run | **Complete locally** (`66e7dd6`). Signup organization resolves the track; Public Speaking removed from signup. Unpushed. |
 | M14 Phase 1b — withdrawn HOSA judging closed | **Complete locally** (`8a7a74f`). Generic debate creation and judging refuse HOSA with the established 410; no route reaches `judgeHosaPerformance`. Unpushed. |
-| M14 Phase 1c — DECA judging fails closed | **Complete locally** (this commit). The canned DECA fallback ballot is removed; failures throw the retryable 503; attribution only on validated results. Unpushed. |
+| M14 Phase 1c — DECA judging fails closed | **Complete locally** (`a29e506`). The canned DECA fallback ballot is removed; failures throw the retryable 503; attribution only on validated results. Unpushed. |
+| M14 Phase 1d — fabricated Debate speaker cards removed | **Complete locally** (this commit). One card per real participant; model output cannot alter the roster. Unpushed. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -401,7 +435,7 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## Next operational steps
 
-1. Review the four local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
+1. Review the five local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
 2. Push them through GitHub Desktop as a normal fast-forward. Re-verify `origin/main` immediately
    beforehand.
 3. Verify the automatic Vercel Production deployment read-only from commit-linked GitHub metadata.
@@ -414,10 +448,10 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## What is explicitly NOT true
 
-- **M14 is not live.** The Phase A audit and Phases 1a–1c are local commits only. Production
+- **M14 is not live.** The Phase A audit and Phases 1a–1d are local commits only. Production
   learners still get the pre-1a track behaviour, **Production's generic debate paths still carry the
-  G23 HOSA bypass, and Production's DECA judge can still return the G18 canned ballot, until these
-  commits are pushed.**
+  G23 HOSA bypass, Production's DECA judge can still return the G18 canned ballot, and Production's
+  Debate ballots still show the G21 fabricated four-speaker cards, until these commits are pushed.**
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for
   the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
   post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA

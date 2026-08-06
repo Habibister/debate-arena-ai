@@ -859,39 +859,40 @@ function descriptorForSpeaker(score: number) {
   return "poor";
 }
 
-function buildSpeakerScores(government: SideMetrics, opposition: SideMetrics) {
-  const speakers = [
+// M14 Phase 1d (audit G21): one card per REAL participant. A round in this product has exactly two
+// participants — the student on one side and one opponent on the other (the Debate row stores
+// studentSide/opponentSide, and the judge route requires every speech before judging) — yet this
+// function used to fabricate FOUR ranked speakers ("Government 1/2", "Opposition 1/2") by splitting
+// each side's aggregate metrics. Cards, names, ranks, scores and feedback are never invented for
+// speakers who did not exist. Identity is SERVER-controlled: the labels below derive from the
+// persisted sides, never from model output (the provider enhancement is prose-only and is merged by
+// an explicit whitelist that cannot touch speakerScores). The card order follows the real round
+// structure — Government/Affirmative first — regardless of which side the student took; the
+// `role` field carries the learner-vs-opponent distinction without exposing any account data.
+function buildSpeakerScores(government: SideMetrics, opposition: SideMetrics, studentSide: DebateSide) {
+  const participants = [
     {
-      speaker: "Government 1",
+      speaker: sideLabel("GOVERNMENT"),
       team: "GOVERNMENT" as const,
+      role: (studentSide === "GOVERNMENT" ? "student" : "opponent") as "student" | "opponent",
       score: speakerPoint(government.scores.overall, 0),
       rationale: scoreReason("speaker performance", government.scores.overall, government)
     },
     {
-      speaker: "Government 2",
-      team: "GOVERNMENT" as const,
-      score: speakerPoint((government.scores.refutation + government.scores.weighing + government.scores.finalSpeech) / 3, 1),
-      rationale: scoreReason("rebuttal and collapse", government.scores.finalSpeech, government)
-    },
-    {
-      speaker: "Opposition 1",
+      speaker: sideLabel("OPPOSITION"),
       team: "OPPOSITION" as const,
+      role: (studentSide === "OPPOSITION" ? "student" : "opponent") as "student" | "opponent",
       score: speakerPoint(opposition.scores.overall, 0),
       rationale: scoreReason("speaker performance", opposition.scores.overall, opposition)
-    },
-    {
-      speaker: "Opposition 2",
-      team: "OPPOSITION" as const,
-      score: speakerPoint((opposition.scores.refutation + opposition.scores.weighing + opposition.scores.finalSpeech) / 3, 1),
-      rationale: scoreReason("rebuttal and collapse", opposition.scores.finalSpeech, opposition)
     }
   ];
-  const sorted = [...speakers].sort((a, b) => b.score - a.score);
 
-  return speakers.map((speaker) => ({
-    ...speaker,
-    rank: (sorted.findIndex((item) => item.speaker === speaker.speaker) + 1) as 1 | 2 | 3 | 4,
-    descriptor: descriptorForSpeaker(speaker.score)
+  // Rank the two real participants by speaker points; a tie keeps round order (Government first).
+  const sorted = [...participants].sort((a, b) => b.score - a.score);
+  return participants.map((participant) => ({
+    ...participant,
+    rank: (sorted.findIndex((item) => item.team === participant.team) + 1) as 1 | 2,
+    descriptor: descriptorForSpeaker(participant.score)
   }));
 }
 
@@ -1175,7 +1176,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     overallScore: student.scores.overall,
     categoryScores: buildCategoryScores(student),
     sharedSpeaking: sharedSpeakingFor(student),
-    speakerScores: buildSpeakerScores(government, opposition),
+    speakerScores: buildSpeakerScores(government, opposition, studentSide),
     teamWinner: winner,
     losingSide: loser,
     confidenceLevel: confidence,

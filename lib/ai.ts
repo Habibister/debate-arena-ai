@@ -83,11 +83,15 @@ type DebateJudgeResult = {
   overallScore: number;
   categoryScores: CategoryScore[];
   sharedSpeaking: SharedSpeakingScores;
+  // M14 Phase 1d (audit G21): one entry per REAL participant — a two-person round carries exactly
+  // two cards, ranked 1-2. Identity is server-derived from the persisted sides; `role` marks the
+  // learner vs the opponent without exposing account data. Never padded back to four.
   speakerScores: Array<{
     speaker: string;
     team: "GOVERNMENT" | "OPPOSITION";
+    role: "student" | "opponent";
     score: number;
-    rank: 1 | 2 | 3 | 4;
+    rank: 1 | 2;
     descriptor: "poor" | "developing" | "competent" | "good" | "excellent" | "outstanding" | "exceptional";
     rationale: string;
   }>;

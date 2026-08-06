@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, hosaWithdrawn, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { buildDebateFormatConfig, getOpponentSide, resolveDebateSide, trackPracticeConfigForOrganization } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
@@ -48,6 +48,16 @@ export async function POST(request: Request) {
     }
 
     const input = await parseJson(request, debateCreateSchema);
+
+    // M14 Phase 1b (audit G23): generic HOSA clinical role-play and its AI judging were withdrawn in
+    // M11R6, but this route still accepted organization "HOSA" and would mint a Debate row the judge
+    // route could then score. Refuse BEFORE any database read or write, with the same 410 contract
+    // the dedicated /api/ai/hosa-scenario and /api/ai/judge-hosa endpoints use. HOSA is never
+    // silently mapped to another organization; every other organization is unchanged.
+    if (input.organization === "HOSA") {
+      return hosaWithdrawn();
+    }
+
     const format = input.format ?? "PARLIAMENTARY";
     const side = input.side ?? "GOVERNMENT";
     const category = input.category ?? "Global";

@@ -258,6 +258,113 @@ async function main() {
     assert.ok(configSrc.includes(shared), `the shared helper ${shared} remains`);
   }
 
+
+  // ---- 40-52. M14 Phase 1b: the GENERIC debate paths enforce the withdrawal (audit G23) -----------
+  // Before this pass, POST /api/debates accepted organization "HOSA" unguarded and the judge route
+  // dispatched HOSA rows to judgeHosaPerformance — then persisted the ballot and awarded XP, wins
+  // and streak — while the dedicated /api/ai/judge-hosa endpoint refused with 410. Both bypasses are
+  // now closed with the SAME contract. All scans below run over comment-stripped source, because the
+  // routes describe in prose exactly what they refuse to do.
+  const DEBATES_ROUTE = "app/api/debates/route.ts";
+  const DEBATE_JUDGE_ROUTE = "app/api/debates/[debateId]/judge/route.ts";
+  const createSrc = code(read(DEBATES_ROUTE));
+  const judgeSrc = code(read(DEBATE_JUDGE_ROUTE));
+
+  // The ordering predicates, reusable so the controls below can prove they reject mutated sources.
+  const createGuardOrdered = (src: string) => {
+    const post = src.slice(src.indexOf("export async function POST"));
+    const auth = post.indexOf("getServerSession(authOptions)");
+    const parse = post.indexOf("parseJson(request, debateCreateSchema)");
+    const guard = post.search(/if \(input\.organization === "HOSA"\) \{\s*return hosaWithdrawn\(\);/);
+    const firstDb = post.indexOf("prisma.");
+    const create = post.indexOf("prisma.debate.create");
+    return auth !== -1 && parse !== -1 && guard !== -1 && firstDb !== -1 && create !== -1 &&
+      auth < parse && parse < guard && guard < firstDb && guard < create;
+  };
+  const judgeGuardOrdered = (src: string) => {
+    const post = src.slice(src.indexOf("export async function POST"));
+    const auth = post.indexOf("getServerSession(authOptions)");
+    const limit = post.indexOf("enforceRateLimit(");
+    const owner = post.indexOf("prisma.debate.findFirst");
+    const notFound = post.indexOf('"Debate not found"');
+    const guard = post.search(/if \(debate\.organization === "HOSA"\) \{\s*return hosaWithdrawn\(\);/);
+    const judgeCall = post.indexOf("runOrganizationJudge(");
+    const xp = post.indexOf("awardXpInTransaction(");
+    return auth !== -1 && limit !== -1 && owner !== -1 && notFound !== -1 && guard !== -1 &&
+      judgeCall !== -1 && xp !== -1 &&
+      auth < limit && limit < owner && owner < notFound && notFound < guard &&
+      guard < judgeCall && guard < xp;
+  };
+
+  // 40/41 — creation: HOSA is refused after auth + parse and BEFORE any database read or write.
+  assert.ok(createGuardOrdered(createSrc),
+    "40. generic HOSA debate creation returns 410 after auth+parse and before any prisma call");
+  // 42 — judging: an existing HOSA row is refused after auth, rate limit and the ownership fetch,
+  //      and BEFORE the judge call, the ballot, the registry attribution and every progress write.
+  assert.ok(judgeGuardOrdered(judgeSrc),
+    "42. generic HOSA judging returns 410 before any judge call, ballot, attribution or XP/wins/streak write");
+  // 43 — the judge route can no longer even CALL the withdrawn judge: the symbol is gone from the
+  //      stripped source entirely (import and dispatch both removed).
+  assert.ok(!judgeSrc.includes("judgeHosaPerformance"),
+    "43. judgeHosaPerformance is neither imported nor called by the generic judge route");
+  // 43b — and no HOSA DISPATCH remains inside the judge chooser. The organization TYPE union still
+  //        names "HOSA" legitimately — a Prisma row can carry it — so the scan targets comparisons,
+  //        not the type.
+  const chooser = judgeSrc.slice(judgeSrc.indexOf("async function runOrganizationJudge"), judgeSrc.indexOf("export async function POST"));
+  assert.ok(!/organization === "HOSA"/.test(chooser), "43b. runOrganizationJudge has no HOSA dispatch");
+  // 44 — because the guard returns before runOrganizationJudge, a HOSA row can reach no fallback
+  //      ballot and no registry/spec attribution, and cannot be marked JUDGED — those all sit after
+  //      the judge call the guard precedes (asserted by ordering in 42); belt-and-braces, the only
+  //      status write remains inside the post-judge transaction.
+  assert.ok(judgeSrc.indexOf('status: "JUDGED"') > judgeSrc.search(/if \(debate\.organization === "HOSA"\)/),
+    "44. the JUDGED status write sits after the HOSA refusal");
+  // 45 — both new refusals use the ESTABLISHED contract, pinned to the dedicated endpoint's literal
+  //      so the two can never drift apart silently.
+  const dedicated = read(JUDGE_ROUTE);
+  const WITHDRAWN_TEXT = "Generic HOSA role-play practice is unavailable.";
+  assert.ok(dedicated.includes(WITHDRAWN_TEXT), "45. the dedicated endpoint still carries the withdrawal text");
+  assert.ok(/status: 410/.test(code(dedicated)), "45b. and still returns HTTP 410");
+  const apiLib = code(read("lib/api.ts"));
+  assert.ok(apiLib.includes(WITHDRAWN_TEXT) && apiLib.includes("HOSA_WITHDRAWN_STATUS = 410"),
+    "45c. the shared hosaWithdrawn() helper uses the identical text and status");
+  // 46 — non-HOSA behaviour is preserved: Debate and DECA dispatches survive, DECA and Debate are
+  //      not refused at creation, and the XP/rating writes that serve them are intact.
+  assert.ok(chooser.includes("judgeDecaRoleplay") && judgeSrc.includes("generateJudgeDecision"),
+    "46. Debate and DECA judge dispatches are unchanged");
+  assert.ok(!/organization === "DECA"\)\s*\{\s*return hosaWithdrawn/.test(createSrc) &&
+            !/organization === "DEBATE"\)\s*\{\s*return hosaWithdrawn/.test(createSrc),
+    "46b. no other organization is refused at creation");
+  assert.ok(createSrc.includes("trackPracticeConfigForOrganization"),
+    "46c. the organization-specific practice config path is untouched");
+  assert.ok(/wins: wonDebate \? user\.wins \+ 1 : user\.wins/.test(judgeSrc) && /streak: user\.streak \+ 1/.test(judgeSrc),
+    "46d. Debate wins/streak behaviour is byte-for-byte what practice-session:smoke 144 pins");
+  // 47 — auth and ownership protections are intact (asserted inside the ordering predicates too).
+  assert.ok(judgeSrc.includes("{ createdById: session.user.id }, { studentId: session.user.id }, { opponentUserId: session.user.id }"),
+    "47. the ownership OR-filter still gates the judge fetch");
+
+  // ---- 48-52. Non-vacuous controls -----------------------------------------------------------------
+  // 48 — moving the creation guard AFTER the create would fail: mutate a copy and re-run the predicate.
+  const movedGuard = createSrc.replace(/if \(input\.organization === "HOSA"\) \{\s*return hosaWithdrawn\(\);\s*\}/, "")
+    + '\nif (input.organization === "HOSA") { return hosaWithdrawn(); }';
+  assert.ok(!createGuardOrdered(movedGuard), "48. control: the creation ordering check rejects a guard moved after the writes");
+  // 49 — deleting the judge guard would fail.
+  const noJudgeGuard = judgeSrc.replace(/if \(debate\.organization === "HOSA"\) \{\s*return hosaWithdrawn\(\);\s*\}/, "");
+  assert.ok(!judgeGuardOrdered(noJudgeGuard), "49. control: the judging ordering check rejects a removed guard");
+  // 50 — re-introducing the withdrawn call would fail 43.
+  assert.ok((judgeSrc + "\nawait judgeHosaPerformance({});").includes("judgeHosaPerformance"),
+    "50. control: a re-introduced judgeHosaPerformance call IS detected");
+  // 51 — the scans strip comments and prose: the route's own comments mention the symbol, and the
+  //      stripped source must NOT contain it while the raw source DOES.
+  assert.ok(read(DEBATE_JUDGE_ROUTE).includes("judgeHosaPerformance"),
+    "51. control: the raw judge source mentions judgeHosaPerformance in prose");
+  assert.ok(!judgeSrc.includes("judgeHosaPerformance"),
+    "51b. control: comment-stripping removes the prose so 43 is not vacuous");
+  assert.ok(!code("// judgeHosaPerformance in a comment\n/* judgeHosaPerformance */").includes("judgeHosaPerformance"),
+    "51c. control: the stripper removes both comment styles");
+  // 52 — a HOSA branch smuggled back into the chooser would fail 43b.
+  assert.ok(/organization === "HOSA"/.test(chooser.replace('organization === "DECA"',
+    'organization === "HOSA"')), "52. control: a re-introduced HOSA dispatch IS detected");
+
   // ---- Non-vacuous controls: fixtures only ----------------------------------------------------------
   assert.ok(code('export const HOSA_ROLE_PAIRS: Array<{ student: string }> = [];').includes("HOSA_ROLE_PAIRS"),
     "control: a fixture declaring HOSA_ROLE_PAIRS is detected");
@@ -273,7 +380,11 @@ async function main() {
     "HOSA-only AI routes fail closed with 410 behind an unchanged auth + rate-limit boundary, reaching " +
     "no provider, parsing no body, producing no score and writing nothing), while verified Medical " +
     "Terminology practice, its registry provenance, its session/submit recording, the shared " +
-    "roleplay-turn endpoint, and Debate and DECA role-play are all unchanged."
+    "roleplay-turn endpoint, and Debate and DECA role-play are all unchanged. M14 Phase 1b: the GENERIC " +
+    "debate paths now enforce the same withdrawal — POST /api/debates refuses organization HOSA with " +
+    "the identical 410 contract before any database access, the judge route refuses existing HOSA rows " +
+    "before any judge call, fallback ballot, registry attribution or XP/wins/streak write, and " +
+    "judgeHosaPerformance is no longer imported or called by any route."
   );
 }
 

@@ -41,6 +41,23 @@ export function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
+// The withdrawn-HOSA contract. M11R6 withdrew generic HOSA clinical role-play and its AI judging —
+// scoring a clinical interaction that cannot be grounded in an official rating sheet is not
+// something CompeteReady does — and `/api/ai/hosa-scenario` + `/api/ai/judge-hosa` fail closed with
+// this exact body and status. M14 Phase 1b (audit G23) extends the same refusal to the generic
+// debate creation and judging paths, which previously bypassed it. The body text is DELIBERATELY
+// identical to the dedicated endpoints' literal; `hosa-practice-scope:smoke` pins the two together
+// so they cannot drift apart silently.
+export const HOSA_WITHDRAWN_STATUS = 410;
+export const HOSA_WITHDRAWN_BODY = {
+  unavailable: true,
+  error: "Generic HOSA role-play practice is unavailable."
+} as const;
+
+export function hosaWithdrawn() {
+  return NextResponse.json(HOSA_WITHDRAWN_BODY, { status: HOSA_WITHDRAWN_STATUS });
+}
+
 export function forbidden(message = "Forbidden") {
   return NextResponse.json({ error: message }, { status: 403 });
 }

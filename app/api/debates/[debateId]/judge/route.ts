@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { generateJudgeDecision, judgeDecaRoleplay, judgeHosaPerformance } from "@/lib/openai-debate";
-import { apiError, HttpError, unauthorized } from "@/lib/api";
+import { generateJudgeDecision, judgeDecaRoleplay } from "@/lib/openai-debate";
+import { apiError, hosaWithdrawn, HttpError, unauthorized } from "@/lib/api";
 import { clientIp } from "@/lib/api-auth";
 import { authOptions } from "@/lib/auth";
 import { nearestAiPersona } from "@/lib/ai-personas";
@@ -196,14 +196,8 @@ async function runOrganizationJudge(debate: {
     });
   }
 
-  if (debate.organization === "HOSA") {
-    return judgeHosaPerformance({
-      level: debate.level,
-      eventType: debate.eventType,
-      scenario: debate.topic,
-      transcript
-    });
-  }
+  // No HOSA branch: M11R6 withdrew clinical judging, and the POST handler below returns 410 for any
+  // HOSA row before this function can run — judgeHosaPerformance is not even imported here anymore.
 
   return generateJudgeDecision({
     organization: debate.organization,
@@ -242,6 +236,17 @@ export async function POST(request: Request, { params }: { params: { debateId: s
 
     if (!debate) {
       throw new HttpError("Debate not found", 404);
+    }
+
+    // M14 Phase 1b (audit G23): the dedicated /api/ai/judge-hosa endpoint fails closed with 410
+    // because clinical judging cannot be grounded in a sourced rating sheet — but this generic route
+    // still dispatched organization "HOSA" to judgeHosaPerformance and then persisted the ballot,
+    // awarded XP and bumped wins/streak. Existing HOSA rows are kept, not migrated; they are simply
+    // impossible to judge here. This return sits after auth, rate limiting and the ownership fetch
+    // (their order unchanged) and BEFORE every judging effect: no AI call, no fallback ballot, no
+    // registry attribution, no XP, rank, wins, streak or completion write.
+    if (debate.organization === "HOSA") {
+      return hosaWithdrawn();
     }
 
     if (debate.status === "JUDGED" || debate.status === "ARCHIVED") {

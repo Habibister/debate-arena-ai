@@ -2,22 +2,42 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 1a: track-correct first run (2026-08-06)
+## Latest handoff — M14 Phase 1b: withdrawn HOSA judging closed (2026-08-06)
 
-**Read this before pushing or starting Phase 1b.**
+**Read this before pushing or starting Phase 1c.**
 
-**M13E2 is complete, pushed and deployed.** The eight-commit Phase C stack landed on `origin/main` as
-a normal fast-forward on 2026-08-06 and **Production runs
-`bb397350029975520e0b96c1c741e7f873f59086`**, verified read-only from commit-linked GitHub metadata
-(deployment `5783679689`, `Production`, `success`) plus public route checks — the new
-session/check/submit routes return 401 unauthenticated where a control shows unknown paths 404.
-**Authenticated Production practice behavior remains untested.**
+**M13E2 is complete, pushed and deployed.** Production runs
+`bb397350029975520e0b96c1c741e7f873f59086`, verified read-only from commit-linked GitHub metadata
+(deployment `5783679689`, `Production`, `success`) plus public route checks.
+**Authenticated Production practice behavior remains untested**, and no database or Production
+operation occurred in any M14 pass.
 
-Two commits are **local only**, in this order:
+Three commits are **local only**, in this order:
 
 1. **M14 Phase A** (`a054706`) — `docs/M14_LEARNING_QUALITY_AUDIT.md`, the read-only learning-quality
    audit. Its gap register (G1–G26) is the M14 roadmap; read it before any M14 work.
-2. **M14 Phase 1a** (this commit) — the learner's signup organization now resolves their track.
+2. **M14 Phase 1a** (`66e7dd6`) — the learner's signup organization now resolves their track.
+3. **M14 Phase 1b** (this commit) — the generic debate paths enforce the M11R6 HOSA withdrawal
+   (audit G23, the audit's most serious finding).
+
+What Phase 1b changed:
+
+- `POST /api/debates` refuses `organization: "HOSA"` with the established 410 contract after auth
+  and validation, **before any database read or write** — no Debate row, no downstream effects.
+- The debate judge route refuses existing HOSA rows with the same 410 after auth, rate limiting and
+  the ownership fetch — **before any judge call, fallback ballot, registry attribution, XP, rank,
+  wins, streak or completion write**. `judgeHosaPerformance` is no longer imported or called by any
+  route; the dispatch was removed from `runOrganizationJudge`.
+- One shared helper, `hosaWithdrawn()` in `lib/api.ts`, carries the body and status. Its text is
+  **deliberately identical** to the dedicated endpoints' literal and `hosa-practice-scope:smoke`
+  pins the two together — do not let them drift, and do not weaken either 410.
+- Existing HOSA Debate rows were **kept** — not deleted, not migrated. History and coach views keep
+  honest labels; the rows are simply impossible to judge.
+- Debate and DECA creation/judging, response shapes, XP amounts, rating, and the carried
+  wins/streak behaviour (`practice-session:smoke` 144–144c) are unchanged and asserted.
+- Known remaining G23 sibling, deliberately out of this phase's scope: `/api/ai/roleplay-turn`
+  still accepts `organization: "HOSA"` (a turn generator, not a judge — it can score nothing).
+  It is tracked in the audit and belongs to a later phase.
 
 What Phase 1a changed and why it is safe:
 
@@ -38,8 +58,8 @@ What Phase 1a changed and why it is safe:
   exactly `async `/`await ` inserted — a hardcoded track, a dropped guard or any smuggled edit
   fails. Never replace an immutable-base pin with a HEAD-relative one.
 
-Do not describe M14 as live: Production learners still get the pre-1a behaviour until the two local
-commits are pushed.
+Do not describe M14 as live: Production learners still get the pre-1a behaviour — including the
+G23 judge bypass — until the three local commits are pushed.
 
 ### The Phase C commit chain
 
@@ -167,8 +187,8 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb39735` — the M13E2 Phase C closeout, deployed.
-- **Local `HEAD`:** the M14 Phase 1a commit — **2 ahead, 0 behind** (`a054706` audit + Phase 1a), a
-  normal fast-forward with no merge commits.
+- **Local `HEAD`:** the M14 Phase 1b commit — **3 ahead, 0 behind** (`a054706` audit, `66e7dd6`
+  Phase 1a, Phase 1b), a normal fast-forward with no merge commits.
 - **Working tree:** clean apart from this pass's own edits to the two documentation files.
 - `docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
   as such, not as app source.
@@ -425,8 +445,8 @@ the OS reaped. Never stage or commit any of it.
 
 1. Re-verify the remote with the command above, then review the stack:
    `git log origin/main..HEAD` and `git diff origin/main..HEAD`.
-2. **Push the two local M14 commits through GitHub Desktop** as a normal fast-forward — the audit
-   and the track-correct first run.
+2. **Push the three local M14 commits through GitHub Desktop** as a normal fast-forward — the
+   audit, the track-correct first run, and the closed HOSA judging bypass.
 3. Verify the automatic Vercel Production deployment read-only, from commit-linked public GitHub
    metadata. Do not bypass Deployment Protection and do not authenticate into Production.
 4. Perform authenticated verification of the practice flow when a safe session is available: issue,

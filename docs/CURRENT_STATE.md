@@ -2,7 +2,33 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M14 Phase 1a — track-correct first run, local only)_
+_Last updated: 2026-08-06 (M14 Phase 1b — withdrawn HOSA judging closed, local only)_
+
+## M14 Phase 1b — the withdrawn HOSA clinical judging is closed everywhere, in local code only
+
+M11R6 withdrew generic HOSA clinical role-play and its AI judging; `/api/ai/hosa-scenario` and
+`/api/ai/judge-hosa` fail closed with 410. The M14 audit (finding G23) showed the **generic** debate
+paths bypassed that withdrawal: `POST /api/debates` accepted `organization: "HOSA"` unguarded, and
+the debate judge route dispatched HOSA rows to `judgeHosaPerformance`, persisted the ballot, and
+awarded XP, wins and streak. Phase 1b closes both:
+
+- **Creation:** `POST /api/debates` refuses `organization: "HOSA"` with the identical 410 contract —
+  after auth and body validation, **before any database read or write**. No Debate row, no messages,
+  no attempts, no XP, no mastery, no review, no wins, no streak. HOSA is never silently remapped.
+- **Judging:** an existing HOSA row is refused with the same 410 after auth, rate limiting and the
+  ownership fetch — **before any judge call, fallback ballot, registry/spec attribution, XP, rank,
+  wins, streak or completion write**. `judgeHosaPerformance` is no longer imported or called by any
+  route. Existing HOSA rows were kept, not deleted or migrated; they are simply impossible to judge.
+- The refusal body and status live in one shared helper (`hosaWithdrawn()` in `lib/api.ts`) whose
+  text is pinned to the dedicated endpoints' literal by `hosa-practice-scope:smoke`, so the two
+  contracts cannot drift apart. The dedicated endpoints themselves are byte-unchanged.
+- Debate and DECA creation and judging, their response shapes, XP amounts, rating, and the carried
+  wins/streak behaviour (`practice-session:smoke` 144–144c) are all unchanged, asserted by suite.
+- 13 new assertions and 5 non-vacuous controls in `hosa-practice-scope:smoke` cover ordering,
+  the absent dispatch, contract equality and non-HOSA preservation — over comment-stripped source,
+  since the routes describe in prose exactly what they refuse.
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Phase 1a — the first run is track-correct, in local code only
 
@@ -130,9 +156,9 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb397350029975520e0b96c1c741e7f873f59086` — the
   M13E2 Phase C closeout commit, **pushed 2026-08-06 and deployed to Production**.
-- **Local `HEAD`:** the M14 Phase 1a commit, ahead of `origin/main` by **two local commits**:
-  the M14 Phase A audit (`a054706`, adds `docs/M14_LEARNING_QUALITY_AUDIT.md`) and Phase 1a itself
-  (track-correct first run). Neither is pushed.
+- **Local `HEAD`:** the M14 Phase 1b commit, ahead of `origin/main` by **three local commits**:
+  the M14 Phase A audit (`a054706`), Phase 1a (`66e7dd6`, track-correct first run) and Phase 1b
+  (withdrawn HOSA judging closed). None is pushed.
 - **Working tree:** clean apart from each pass's own commit.
 - Phase 1a changed 17 paths: `lib/track-server.ts` (precedence), 12 page call sites (await the async
   resolver), `components/auth/sign-up-form.tsx` (Public Speaking removed from signup), two suites
@@ -176,7 +202,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M13E2 Phase C3b — lesson practice and Debate Writing clients | Complete, pushed and deployed (`9103693`, `f392ede`). |
 | M13E2 — overall | **Complete, pushed, deployed and publicly verified** at `bb39735`. Authenticated practice behavior untested. |
 | M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed. |
-| M14 Phase 1a — track-correct first run | **Complete locally** (this commit). Signup organization resolves the track; Public Speaking removed from signup. Unpushed. |
+| M14 Phase 1a — track-correct first run | **Complete locally** (`66e7dd6`). Signup organization resolves the track; Public Speaking removed from signup. Unpushed. |
+| M14 Phase 1b — withdrawn HOSA judging closed | **Complete locally** (this commit). Generic debate creation and judging refuse HOSA with the established 410; no route reaches `judgeHosaPerformance`. Unpushed. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -340,7 +367,7 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## Next operational steps
 
-1. Review the two local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
+1. Review the three local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
 2. Push them through GitHub Desktop as a normal fast-forward. Re-verify `origin/main` immediately
    beforehand.
 3. Verify the automatic Vercel Production deployment read-only from commit-linked GitHub metadata.
@@ -353,9 +380,9 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## What is explicitly NOT true
 
-- **M14 is not live.** The Phase A audit and Phase 1a (track-correct first run) are local commits
-  only; Production learners still get the pre-1a track behaviour, where the signup organization is
-  never read and the default is General Debate.
+- **M14 is not live.** The Phase A audit, Phase 1a and Phase 1b are local commits only. Production
+  learners still get the pre-1a track behaviour, and **Production's generic debate paths still carry
+  the G23 HOSA bypass until these commits are pushed.**
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for
   the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
   post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA

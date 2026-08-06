@@ -328,7 +328,7 @@ async function main() {
                       "lib/education/registry.ts", "lib/education/tracks/debate.ts",
                       "components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",
-                      "components/lessons/lesson-view.tsx", "components/lessons/lesson-practice.tsx",
+                      "components/lessons/lesson-view.tsx",
                       "app/(app)/lessons/page.tsx", "app/(app)/lessons/[slug]/page.tsx",
                       "lib/assignments.ts", "lib/assignment-types.ts",
                       // lib/spaced-review.ts is deliberately absent — see 27b. M13E1D adds a detailed
@@ -339,6 +339,31 @@ async function main() {
                       "prisma/seed.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 27L. what the lesson-practice hash was protecting, asserted exactly -----------------------
+  // C3b-i converts this component to the server-issued session protocol, so a blanket hash would
+  // forbid an approved change rather than protect anything.
+  const lessonUi = stripComments(read("components/lessons/lesson-practice.tsx"));
+  assert.ok(/fetch\("\/api\/debate\/drills\/session"/.test(lessonUi), "27L. it still starts a Debate drill session");
+  assert.ok(/areas: \[drillArea\]/.test(lessonUi), "27L2. scoped to the lesson's own drill area — track isolation intact");
+  assert.ok(/fetch\("\/api\/debate\/drills\/check"/.test(lessonUi), "27L3. answers go through the Debate check route");
+  assert.ok(/JSON\.stringify\(\{ sessionId: session\.sessionId \}\)/.test(lessonUi),
+    "27L4. and the final submit carries only the session id");
+  assert.ok(!/JSON\.stringify\(\{ answers/.test(lessonUi), "27L5. the legacy answers body is gone");
+  for (const banned of ["correctOptionId", "DRILL_BANK", "buildDrillSession", "gradeDrillAnswers"]) {
+    assert.ok(!lessonUi.includes(banned), `27L6. no client answer authority or live-bank grading ({banned})`);
+  }
+  assert.ok(/answers\[current\.itemId\]/.test(lessonUi), "27L7. answer state is keyed by distinct item id");
+  assert.ok(/\$\{slot\}:\$\{current\.itemId\}/.test(lessonUi), "27L8. and rendered slots are keyed by slot AND item");
+  assert.ok(/checking \|\| answers\[current\.itemId\]/.test(lessonUi),
+    "27L9. a repeated slot cannot send a second check, and neither can a duplicate in-flight one");
+  assert.ok(/answeredCount === distinctTotal/.test(lessonUi), "27L10. completion counts DISTINCT items, not slots");
+  assert.ok(/wroteSkills\.includes\(skillSlug\)/.test(lessonUi),
+    "27L11. and mastery is still claimed only when the server confirms the write");
+  assert.ok(/setExpired\(true\)/.test(lessonUi) && /is not available/.test(lessonUi),
+    "27L12. expired and unavailable sessions have their own states");
+  assert.ok(/aria-pressed=\{isSel\}/.test(lessonUi) && /min-h-11/.test(lessonUi),
+    "27L13. accessibility and touch-target behaviour are preserved");
 
   // ---- PA1-PA16. M13E2 Phase A: prisma/schema.prisma changed only by ADDING -----------------------------
   const schemaAtM13E2Parent = execSync(`git show ${PRE_M13E2}:prisma/schema.prisma`, { encoding: "utf8" });

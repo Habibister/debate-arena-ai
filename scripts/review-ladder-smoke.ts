@@ -532,9 +532,38 @@ async function main() {
                       "lib/hosa-medterm.ts",
                       // app/api/hosa/medterm/submit/route.ts is deliberately absent from M13E2 C2a
                       // onward: it is now session-backed. What the hash protected is asserted at 65h.
-                      "components/skills/debate-writing-practice.tsx"]) {
+                      ]) {
     assert.equal(now(file), sha(file), `65-68. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 65W. what the writing-client hash was protecting, asserted exactly -----------------------
+  // C3b-ii converts this component to the server-issued session protocol, so a blanket hash would
+  // forbid an approved change rather than protect anything.
+  const writingUi = stripComments(read("components/skills/debate-writing-practice.tsx"));
+  assert.ok(/fetch\("\/api\/skills\/debate-writing\/session"/.test(writingUi),
+    "65W. it fetches the server-issued writing session");
+  assert.ok(/JSON\.stringify\(\{ sessionId, response \}\)/.test(writingUi),
+    "65W2. and submits ONLY the session id and the learner's prose");
+  for (const gone of ["scenarioIndex", "getDebateSkillScenario", "rubric:", "threshold", "XP_REWARDS", "calculateRank"]) {
+    assert.ok(!writingUi.includes(gone), `65W3. no client-controlled ${gone} remains`);
+  }
+  assert.ok(!/body: JSON\.stringify\(input\)/.test(writingUi),
+    "65W4. the legacy slug/level/scenarioIndex request body is gone");
+  assert.ok(/setSessionId\(data\.sessionId\)/.test(writingUi), "65W5. the session id is retained");
+  assert.ok(/if \(!sessionId \|\| isSubmitting\) return;/.test(writingUi),
+    "65W6. duplicate in-flight submissions are blocked, and none is possible without a session");
+  assert.ok(/setAlreadyCompleted\(payload\.alreadyCompleted === true\)/.test(writingUi),
+    "65W7. a completed session replays its stored result rather than resubmitting");
+  assert.ok(/setFeedback\(payload\.feedback\)/.test(writingUi) && !/feedback\.score =/.test(writingUi),
+    "65W8. score and feedback come from the server, never computed here");
+  assert.ok(/if \(res\.status === 410\)/.test(writingUi) && /Writing practice unavailable/.test(writingUi),
+    "65W9. expired and unavailable sessions have their own states");
+  assert.ok(/response\.trim\(\)\.length < 10/.test(writingUi), "65W10. the response-length limit is preserved");
+  assert.ok(!/enforceRateLimit/.test(writingUi),
+    "65W11. and no rate-limit assumption was added — its absence on this surface is deliberate");
+  assert.ok(/fetch\("\/api\/skills\/debate-writing\/session"/.test(
+    'await fetch("/api/skills/debate-writing/session", {})'),
+    "65W12. control: that endpoint scan matches a real call");
 
   // ---- 65L. what the lesson-practice hash was protecting, asserted exactly -----------------------
   // C3b-i converts this component to the server-issued session protocol, so a blanket hash would

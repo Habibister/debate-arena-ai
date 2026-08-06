@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Level } from "@prisma/client";
 import { ArrowRight, CheckCircle2, CircleAlert, Lightbulb, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
@@ -9,31 +9,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { getDebateSkillScenario, type DebateSkillScenario, type DebateWritingFeedback } from "@/lib/debate-skill-practice";
+import type { DebateSkillScenario, DebateWritingFeedback } from "@/lib/debate-skill-practice";
 
 type DebateWritingPracticeProps = {
   slug: string;
-  initialScenario: DebateSkillScenario;
+  /**
+   * Accepted for backward compatibility with the page that still renders this component, but NOT
+   * authoritative: the scenario a learner is graded against is the one the server issues below.
+   * The page may stop passing it once the writing surface is fully closed out.
+   */
+  initialScenario?: DebateSkillScenario;
 };
 
-async function gradeResponse(input: { slug: string; level: Level; response: string; scenarioIndex: number }) {
-  const response = await fetch("/api/skills/debate-writing", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input)
-  });
-  const payload = (await response.json().catch(() => ({}))) as {
-    scenario?: DebateSkillScenario;
-    feedback?: DebateWritingFeedback;
-    error?: string;
-  };
-
-  if (!response.ok || !payload.feedback || !payload.scenario) {
-    throw new Error(payload.error ?? "We could not grade that practice response. Please try again.");
-  }
-
-  return payload;
-}
+/** The learner-safe scenario the session route returns. No rubric internals, no grader data. */
+type IssuedScenario = {
+  skillSlug: string;
+  skillName: string;
+  level: Level;
+  motion: string;
+  side: string;
+  prompt: string;
+  hint: string;
+  modelExample: string;
+  rubricFocus: string[];
+};
 
 function nextLevel(level: Level): Level {
   if (level === "BEGINNER") {
@@ -47,35 +46,96 @@ function nextLevel(level: Level): Level {
   return "ELITE";
 }
 
-export function DebateWritingPractice({ slug, initialScenario }: DebateWritingPracticeProps) {
-  const [level, setLevel] = useState<Level>(initialScenario.level);
-  const [scenario, setScenario] = useState(initialScenario);
-  const [scenarioIndex, setScenarioIndex] = useState(0);
+// Debate writing practice, on the server-issued session protocol (M13E2 C3b-ii).
+//
+// The SERVER chooses the scenario and freezes it into the session. This client no longer selects or
+// rotates scenarios, and no longer sends `slug`, `level` or `scenarioIndex` with a submission — it
+// sends the session id and the learner's prose, and the server grades against what it issued. Score,
+// pass status, feedback and completion all come back from the server; nothing here estimates them.
+export function DebateWritingPractice({ slug }: DebateWritingPracticeProps) {
+  const [level, setLevel] = useState<Level>("BEGINNER");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [scenario, setScenario] = useState<IssuedScenario | null>(null);
   const [response, setResponse] = useState("");
   const [feedback, setFeedback] = useState<DebateWritingFeedback | null>(null);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [showModel, setShowModel] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function startSession(requestedLevel: Level) {
+    setLoading(true);
+    setError(null);
+    setExpired(false);
+    setFeedback(null);
+    setAlreadyCompleted(false);
+    setResponse("");
+    setShowHint(false);
+    setShowModel(false);
+    try {
+      const res = await fetch("/api/skills/debate-writing/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, level: requestedLevel })
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        sessionId?: string;
+        scenario?: IssuedScenario;
+        error?: string;
+      };
+      if (!res.ok || !data.sessionId || !data.scenario) {
+        throw new Error(data.error ?? "Could not start writing practice. Please try again.");
+      }
+      setSessionId(data.sessionId);
+      setScenario(data.scenario);
+      setLevel(data.scenario.level);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not start writing practice.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void startSession("BEGINNER");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
   async function submit() {
+    // One in-flight submission at a time, and never one without an issued session.
+    if (!sessionId || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const graded = await gradeResponse({
-        slug,
-        level,
-        response,
-        scenarioIndex
+      // Session id and prose only. No slug, level, scenario, rubric, score, threshold, XP or rank.
+      const res = await fetch("/api/skills/debate-writing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, response })
       });
-      const gradedScenario = graded.scenario;
-      const gradedFeedback = graded.feedback;
-      if (!gradedScenario || !gradedFeedback) {
-        throw new Error("We could not grade that practice response. Please try again.");
+      const payload = (await res.json().catch(() => ({}))) as {
+        scenario?: IssuedScenario;
+        feedback?: DebateWritingFeedback;
+        alreadyCompleted?: boolean;
+        error?: string;
+      };
+      if (res.status === 410) {
+        setExpired(true);
+        return;
       }
-      setScenario(gradedScenario);
-      setFeedback(gradedFeedback);
+      // A failed submission leaves the response editable and shows no completion.
+      if (!res.ok || !payload.feedback || !payload.scenario) {
+        throw new Error(payload.error ?? "We could not grade that practice response. Please try again.");
+      }
+      // The server result is authoritative — including when it replays an already-completed session,
+      // which awards nothing a second time.
+      setScenario(payload.scenario);
+      setFeedback(payload.feedback);
+      setAlreadyCompleted(payload.alreadyCompleted === true);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "We could not grade that practice response.");
     } finally {
@@ -83,21 +143,64 @@ export function DebateWritingPractice({ slug, initialScenario }: DebateWritingPr
     }
   }
 
-  function tryAgain() {
-    setFeedback(null);
-    setResponse("");
-    setShowHint(false);
-    setShowModel(false);
+  /** A fresh scenario means a fresh server-issued session; the client never picks one. */
+  function practiceSimilar(nextPracticeLevel: Level = level) {
+    void startSession(nextPracticeLevel);
   }
 
-  function practiceSimilar(nextScenarioIndex = scenarioIndex + 1, nextPracticeLevel = level) {
-    setScenarioIndex(nextScenarioIndex);
-    setLevel(nextPracticeLevel);
-    setFeedback(null);
-    setResponse("");
-    setShowHint(false);
-    setShowModel(false);
-    setScenario(getDebateSkillScenario(slug, nextPracticeLevel, nextScenarioIndex));
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          Loading writing practice...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (expired) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Practice session expired</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="leading-7 text-muted-foreground">
+            This practice session expired before it was submitted. Start a new session; your saved progress was not changed.
+          </p>
+          <Button type="button" onClick={() => practiceSimilar()}>
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            Start a new scenario
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!scenario) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Writing practice unavailable</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="leading-7 text-muted-foreground">
+            That practice session is not available. Start a new session.
+          </p>
+          {error ? (
+            <div className="flex gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              {error}
+            </div>
+          ) : null}
+          <Button type="button" onClick={() => practiceSimilar()}>
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            Try again
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -151,7 +254,7 @@ export function DebateWritingPractice({ slug, initialScenario }: DebateWritingPr
             <Button type="button" variant="ghost" onClick={() => setShowModel((current) => !current)}>
               Show stronger example
             </Button>
-            <Button type="button" onClick={submit} disabled={response.trim().length < 10 || isSubmitting}>
+            <Button type="button" onClick={submit} disabled={response.trim().length < 10 || isSubmitting || feedback !== null}>
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CheckCircle2 className="h-4 w-4" aria-hidden />}
               Check answer
             </Button>
@@ -177,6 +280,9 @@ export function DebateWritingPractice({ slug, initialScenario }: DebateWritingPr
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
+              {alreadyCompleted ? (
+                <p className="text-sm text-muted-foreground">You already finished this session. Here are your results.</p>
+              ) : null}
               <Progress value={feedback.score} />
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-lg border bg-background p-4">
@@ -225,7 +331,7 @@ export function DebateWritingPractice({ slug, initialScenario }: DebateWritingPr
           </Card>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Button type="button" size="lg" variant="outline" onClick={tryAgain}>
+            <Button type="button" size="lg" variant="outline" onClick={() => practiceSimilar()}>
               <RotateCcw className="h-5 w-5" aria-hidden />
               Try again
             </Button>
@@ -233,7 +339,7 @@ export function DebateWritingPractice({ slug, initialScenario }: DebateWritingPr
               <Sparkles className="h-5 w-5" aria-hidden />
               Similar scenario
             </Button>
-            <Button type="button" size="lg" onClick={() => practiceSimilar(scenarioIndex + 1, nextLevel(level))}>
+            <Button type="button" size="lg" onClick={() => practiceSimilar(nextLevel(level))}>
               Move harder
               <ArrowRight className="h-5 w-5" aria-hidden />
             </Button>

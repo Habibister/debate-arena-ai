@@ -1500,6 +1500,18 @@ function isValidPerformanceJudge(result: PerformanceJudgeResult): boolean {
   );
 }
 
+// M14 Phase 1c (audit G18): the DECA-only validator. DECA judging fails CLOSED, so its bar is
+// stricter than the shared shape check — every number a learner could see must be a real, finite
+// score. `typeof x === "number"` alone admits NaN and Infinity; this does not. Deliberately scoped
+// to DECA so no other organization's current validation behaviour changes in this phase.
+function isTrustworthyDecaJudge(result: PerformanceJudgeResult): boolean {
+  return (
+    isValidPerformanceJudge(result) &&
+    Number.isFinite(result.overallScore) &&
+    result.categoryScores.every((category) => Number.isFinite(category?.score))
+  );
+}
+
 // --- DECA role-play: registry-sourced scenarios + in-character objection judging ---------------
 // All of this reuses the same jsonCompletion path as judgeDecaRoleplay (same providers, same
 // fallback, same registry rubric helpers) — no new AI pipeline.
@@ -1821,9 +1833,15 @@ ${categoryInstruction}
 - judgeQuestionFeedback: array of strings
 - readinessForNextLevel: {"ready": boolean, "rationale": string, "nextMilestone": string}${splitInstruction}
 ${!weighted && registry ? registry.promptBlock : ""}`,
-    () => fallbackPerformanceJudge({ organization: "DECA", eventType: input.eventType }),
+    // M14 Phase 1c (audit G18): NO canned fallback for DECA judging. The old fallback returned
+    // hardcoded scores that never touched the learner's transcript, and the registry stamp below
+    // then attributed them to the official spec. With no fallback, jsonCompletion THROWS
+    // OpenAIUnavailableError on provider failure, malformed output or a validation miss, and the
+    // routes map that to the existing retryable 503 — no ballot, no attribution, no XP, and the
+    // debate stays retryable. fallbackPerformanceJudge itself remains for its other consumer.
+    undefined,
     "DECA judge",
-    isValidPerformanceJudge
+    isTrustworthyDecaJudge
   );
 
   if (weighted) {

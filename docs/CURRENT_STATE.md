@@ -2,7 +2,40 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M14 Phase 1b — withdrawn HOSA judging closed, local only)_
+_Last updated: 2026-08-06 (M14 Phase 1c — DECA judging fails closed, local only)_
+
+## M14 Phase 1c — DECA judging fails closed, in local code only
+
+Audit finding G18: when every AI provider failed, the DECA judge returned a **canned ballot** —
+hardcoded category scores and generic strengths that never touched the learner's transcript — and
+then stamped it with the official registry spec, in every environment including Production. Phase 1c
+removes that path entirely:
+
+- **`judgeDecaRoleplay` passes no fallback.** On provider failure, malformed output, an incomplete
+  rubric or a validation miss, `jsonCompletion` now **throws** the repository's retryable
+  unavailable error, and both consuming routes map it through `apiError` to the existing **503
+  "AI is temporarily unavailable. Please try again in a moment."** contract. No ballot, no scores,
+  no attribution, nothing persisted.
+- **A stricter DECA-only validator** (`isTrustworthyDecaJudge`) sits on top of the shared shape
+  check: the overall and every category score must be finite numbers, so NaN/Infinity output fails
+  closed too. No other organization's validation behaviour changed.
+- **Official registry/spec attribution is structurally limited to validated successful results** —
+  the stamp sits after the judge call, and every failure now throws before it. A fallback ballot can
+  no longer exist, let alone be stamped.
+- **A failed DECA judging awards nothing and completes nothing.** In the debate judge route every
+  write — XP, rank, wins, streak, the `JUDGED` status — sits after the judge call, so the throw
+  skips them all; the debate row stays `ACTIVE` and retryable with its transcript intact. The
+  dedicated `/api/ai/judge-deca` route persists nothing at all. Both clients already surface the
+  503 as a retryable error message.
+- **Non-DECA behaviour is unchanged:** `fallbackPerformanceJudge` remains for its HOSA consumer
+  (unreachable from routes since Phase 1b, deliberately untouched), Model UN keeps its own
+  fallback, Debate judging and the Phase 1b HOSA 410 guards are intact — all asserted.
+- Pinned by 16 new `P1c-*` assertions and 5 non-vacuous controls in `judge-shape:smoke`, over
+  comment-stripped source; its live retry loop now treats a **throw** as the providers-unavailable
+  signal, and a fallback-tagged DECA result is asserted impossible.
+
+No learner data was migrated or deleted. **Local commit only — not pushed, not deployed. No
+database operation.**
 
 ## M14 Phase 1b — the withdrawn HOSA clinical judging is closed everywhere, in local code only
 
@@ -156,9 +189,9 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb397350029975520e0b96c1c741e7f873f59086` — the
   M13E2 Phase C closeout commit, **pushed 2026-08-06 and deployed to Production**.
-- **Local `HEAD`:** the M14 Phase 1b commit, ahead of `origin/main` by **three local commits**:
-  the M14 Phase A audit (`a054706`), Phase 1a (`66e7dd6`, track-correct first run) and Phase 1b
-  (withdrawn HOSA judging closed). None is pushed.
+- **Local `HEAD`:** the M14 Phase 1c commit, ahead of `origin/main` by **four local commits**:
+  the M14 Phase A audit (`a054706`), Phase 1a (`66e7dd6`), Phase 1b (`8a7a74f`) and Phase 1c
+  (DECA fails closed). None is pushed.
 - **Working tree:** clean apart from each pass's own commit.
 - Phase 1a changed 17 paths: `lib/track-server.ts` (precedence), 12 page call sites (await the async
   resolver), `components/auth/sign-up-form.tsx` (Public Speaking removed from signup), two suites
@@ -203,7 +236,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M13E2 — overall | **Complete, pushed, deployed and publicly verified** at `bb39735`. Authenticated practice behavior untested. |
 | M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed. |
 | M14 Phase 1a — track-correct first run | **Complete locally** (`66e7dd6`). Signup organization resolves the track; Public Speaking removed from signup. Unpushed. |
-| M14 Phase 1b — withdrawn HOSA judging closed | **Complete locally** (this commit). Generic debate creation and judging refuse HOSA with the established 410; no route reaches `judgeHosaPerformance`. Unpushed. |
+| M14 Phase 1b — withdrawn HOSA judging closed | **Complete locally** (`8a7a74f`). Generic debate creation and judging refuse HOSA with the established 410; no route reaches `judgeHosaPerformance`. Unpushed. |
+| M14 Phase 1c — DECA judging fails closed | **Complete locally** (this commit). The canned DECA fallback ballot is removed; failures throw the retryable 503; attribution only on validated results. Unpushed. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -367,7 +401,7 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## Next operational steps
 
-1. Review the three local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
+1. Review the four local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
 2. Push them through GitHub Desktop as a normal fast-forward. Re-verify `origin/main` immediately
    beforehand.
 3. Verify the automatic Vercel Production deployment read-only from commit-linked GitHub metadata.
@@ -380,9 +414,10 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## What is explicitly NOT true
 
-- **M14 is not live.** The Phase A audit, Phase 1a and Phase 1b are local commits only. Production
-  learners still get the pre-1a track behaviour, and **Production's generic debate paths still carry
-  the G23 HOSA bypass until these commits are pushed.**
+- **M14 is not live.** The Phase A audit and Phases 1a–1c are local commits only. Production
+  learners still get the pre-1a track behaviour, **Production's generic debate paths still carry the
+  G23 HOSA bypass, and Production's DECA judge can still return the G18 canned ballot, until these
+  commits are pushed.**
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for
   the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
   post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA

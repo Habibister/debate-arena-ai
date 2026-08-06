@@ -2,9 +2,9 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 1b: withdrawn HOSA judging closed (2026-08-06)
+## Latest handoff — M14 Phase 1c: DECA judging fails closed (2026-08-06)
 
-**Read this before pushing or starting Phase 1c.**
+**Read this before pushing or starting Phase 1d.**
 
 **M13E2 is complete, pushed and deployed.** Production runs
 `bb397350029975520e0b96c1c741e7f873f59086`, verified read-only from commit-linked GitHub metadata
@@ -12,13 +12,38 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 **Authenticated Production practice behavior remains untested**, and no database or Production
 operation occurred in any M14 pass.
 
-Three commits are **local only**, in this order:
+Four commits are **local only**, in this order:
 
 1. **M14 Phase A** (`a054706`) — `docs/M14_LEARNING_QUALITY_AUDIT.md`, the read-only learning-quality
    audit. Its gap register (G1–G26) is the M14 roadmap; read it before any M14 work.
 2. **M14 Phase 1a** (`66e7dd6`) — the learner's signup organization now resolves their track.
-3. **M14 Phase 1b** (this commit) — the generic debate paths enforce the M11R6 HOSA withdrawal
+3. **M14 Phase 1b** (`8a7a74f`) — the generic debate paths enforce the M11R6 HOSA withdrawal
    (audit G23, the audit's most serious finding).
+4. **M14 Phase 1c** (this commit) — DECA judging fails closed instead of fabricating a ballot
+   (audit G18).
+
+What Phase 1c changed, and what the next engineer must not undo:
+
+- **`judgeDecaRoleplay` deliberately passes NO fallback** to `jsonCompletion`, and uses the strict
+  `isTrustworthyDecaJudge` validator (finite overall, finite category scores, on top of the shared
+  shape check). Every failure mode — provider outage, malformed JSON, incomplete rubric, validation
+  miss — **throws** `OpenAIUnavailableError`, which `apiError` maps to the retryable 503. Do not
+  reintroduce a fallback here: the old one returned hardcoded scores and was then stamped with the
+  official registry spec.
+- **Attribution follows validation structurally.** The `rubricSource` stamp sits after the judge
+  call; failures throw before it. `judge-shape:smoke` (`P1c-*`, 16 assertions + 5 controls) pins
+  the ordering, the absent fallback, the strict validator, and the impossibility of a
+  fallback-tagged DECA result — over comment-stripped source. Its live loop treats a throw as
+  "providers unavailable" and keeps the documented warn-and-exit-0 skip path.
+- **A failed DECA judging leaves the debate retryable**: every route write (XP, rank, wins, streak,
+  `JUDGED`) sits after the judge call, and the dedicated `/api/ai/judge-deca` route persists
+  nothing. The transcript and the debate row survive untouched.
+- **`fallbackPerformanceJudge` still exists** for its HOSA consumer (unreachable from routes since
+  Phase 1b) — deliberately unchanged, as is Model UN's own fallback and all Debate judging. Do not
+  delete it in a "cleanup" without deciding those consumers' fate explicitly.
+- The DECA scenario and objection generators keep their fallbacks — they produce practice prompts,
+  not scores, and were outside G18's scope. The room's "Using backup AI response." banner remains
+  for those surfaces; it can no longer appear on a DECA ballot.
 
 What Phase 1b changed:
 
@@ -59,7 +84,7 @@ What Phase 1a changed and why it is safe:
   fails. Never replace an immutable-base pin with a HEAD-relative one.
 
 Do not describe M14 as live: Production learners still get the pre-1a behaviour — including the
-G23 judge bypass — until the three local commits are pushed.
+G23 judge bypass and the G18 canned DECA ballot — until the four local commits are pushed.
 
 ### The Phase C commit chain
 
@@ -187,8 +212,8 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb39735` — the M13E2 Phase C closeout, deployed.
-- **Local `HEAD`:** the M14 Phase 1b commit — **3 ahead, 0 behind** (`a054706` audit, `66e7dd6`
-  Phase 1a, Phase 1b), a normal fast-forward with no merge commits.
+- **Local `HEAD`:** the M14 Phase 1c commit — **4 ahead, 0 behind** (`a054706` audit, `66e7dd6`
+  Phase 1a, `8a7a74f` Phase 1b, Phase 1c), a normal fast-forward with no merge commits.
 - **Working tree:** clean apart from this pass's own edits to the two documentation files.
 - `docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
   as such, not as app source.
@@ -445,8 +470,9 @@ the OS reaped. Never stage or commit any of it.
 
 1. Re-verify the remote with the command above, then review the stack:
    `git log origin/main..HEAD` and `git diff origin/main..HEAD`.
-2. **Push the three local M14 commits through GitHub Desktop** as a normal fast-forward — the
-   audit, the track-correct first run, and the closed HOSA judging bypass.
+2. **Push the four local M14 commits through GitHub Desktop** as a normal fast-forward — the
+   audit, the track-correct first run, the closed HOSA judging bypass, and the fail-closed DECA
+   judge.
 3. Verify the automatic Vercel Production deployment read-only, from commit-linked public GitHub
    metadata. Do not bypass Deployment Protection and do not authenticate into Production.
 4. Perform authenticated verification of the practice flow when a safe session is available: issue,

@@ -8,7 +8,7 @@ import { nearestAiPersona } from "@/lib/ai-personas";
 import { getNextSpeech, isSpeechComplete, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { calculateDebateRating, calculateRank } from "@/lib/xp";
+import { awardXpInTransaction, calculateDebateRating } from "@/lib/xp";
 import { XP_REWARDS } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -303,12 +303,16 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const [updatedDebate, updatedUser] = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUniqueOrThrow({
         where: { id: session.user.id },
-        select: { xp: true, wins: true, streak: true }
+        select: { wins: true, streak: true }
       });
 
-      const nextXp = user.xp + xpEarned;
+      // Award FIRST, atomically, so every XP-derived value below uses the authoritative result. The
+      // previous read-add-write could be erased by a concurrent writer: a plain SELECT does not block
+      // under MVCC, so ordering the write did not stop a stale value being written.
+      // Wins and streak keep their existing behaviour and their own pre-read staleness — carried work.
+      const awarded = await awardXpInTransaction(tx, session.user.id, xpEarned);
       const projectedRating = calculateDebateRating({
-        xp: nextXp,
+        xp: awarded.xp,
         wins: wonDebate ? user.wins + 1 : user.wins
       });
       const argumentDelta = skillDelta(scores.logic, overallScore);
@@ -367,10 +371,8 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       const savedUser = await tx.user.update({
         where: { id: session.user.id },
         data: {
-          xp: nextXp,
           wins: wonDebate ? user.wins + 1 : user.wins,
-          streak: user.streak + 1,
-          rank: calculateRank(nextXp)
+          streak: user.streak + 1
         }
       });
 

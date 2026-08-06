@@ -402,21 +402,42 @@ async function main() {
     "38c. the Debate route no longer calls the boolean helper");
 
   // Debate writing: review BEFORE the transaction, XP untouched, no floor or limit added.
-  assert.ok(writingRoute.indexOf("recordPracticeOutcome(") < writingRoute.indexOf("prisma.$transaction"),
-    "53. Debate writing calls review BEFORE its mastery/XP transaction");
+  // C2b: writing is session-backed, so review now runs INSIDE the one transaction that also claims
+  // the session and awards XP. The invariant is unchanged — review still elects the window and still
+  // gates the knock-down — but it is the transaction-native core that does it.
+  assert.ok(writingRoute.indexOf("lockUserRow(tx") < writingRoute.indexOf("recordPracticeOutcomeInTransaction("),
+    "53. Debate writing locks the user row BEFORE its review/mastery/XP work");
   assert.ok(!/isReviewDue\(/.test(writingRoute), "54. and the stale independent due-check is gone");
-  assert.ok(/masteryMayDecrease\(review\)/.test(writingRoute), "54b. the knock-down is gated on the review result");
-  assert.ok(/if \(concurrentLoser\) \{/.test(writingRoute), "56. a concurrency loser skips mastery");
+  assert.ok(/txMasteryMayDecrease\(review\)/.test(writingRoute), "54b. the knock-down is gated on the review result");
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(writingRoute),
+    "54c. through the transaction-native review core");
+  assert.ok(!/recordPracticeOutcome\(/.test(writingRoute.replace(/recordPracticeOutcomeInTransaction\(/g, "X(")),
+    "54d. and never the public non-transactional helper");
+  // C2b: the session claim under the user lock replaces the winner-only branch with a stronger
+  // guarantee — the second submitter never reaches mastery, it returns the stored result.
+  assert.ok(writingRoute.indexOf("parseStoredResult(") < writingRoute.indexOf("gradeDebateWritingResponse("),
+    "56. a second concurrent submit returns the stored result before the grader, so mastery runs once");
+  assert.ok(/awardXpInTransaction\(/.test(writingRoute), "56b. and XP is awarded atomically, once");
+  assert.equal((writingRoute.match(/awardXpInTransaction\(/g) ?? []).length, 1,
+    "56c. from exactly one call site");
   // XP is proven unchanged against the PARENT COMMIT rather than a hard-coded number.
   const parentWriting = stripComments(
     execSync(`git show ${PRE_M13E1G}:app/api/skills/debate-writing/route.ts`, { encoding: "utf8" }));
   assert.equal((writingRoute.match(/XP_REWARDS\.lessonCompleted/g) ?? []).length,
                (parentWriting.match(/XP_REWARDS\.lessonCompleted/g) ?? []).length,
     "55. XP references are identical in number to the parent commit");
-  assert.equal(writingRoute.includes("calculateRank(nextXp)"), parentWriting.includes("calculateRank(nextXp)"),
-    "55b. and the rank calculation is unchanged");
-  assert.ok(!/enforceRateLimit|REQUIRED_UNIQUE|sessionId|token/.test(writingRoute),
-    "58. no rate limit, evidence floor, session id or token was added");
+  // C2b: rank is no longer derived in this route from a pre-read xp. `awardXpInTransaction` performs
+  // an atomic increment and derives rank from the value it RETURNS — the same thresholds, computed
+  // from an authoritative number instead of a stale one.
+  assert.ok(!/calculateRank\(nextXp\)/.test(writingRoute),
+    "55b. the stale pre-increment rank derivation is gone");
+  assert.ok(/awardXpInTransaction\(/.test(writingRoute), "55b2. replaced by the atomic XP/rank helper");
+  const xpHelper = read("lib/xp.ts");
+  assert.ok(/calculateRank\(updatedUser\.xp\)/.test(xpHelper),
+    "55b3. whose rank comes from the value the increment returned");
+  assert.ok(/RANK_THRESHOLDS/.test(xpHelper), "55b4. against the unchanged rank thresholds");
+  assert.ok(!/enforceRateLimit|REQUIRED_UNIQUE|reviewToken/.test(writingRoute),
+    "58. no rate limit, evidence floor or token scheme was added");
   assert.ok(/xPLog\.create/.test(writingRoute), "55b. XP is still written");
 
   // HOSA stays review-only and may ignore the detailed result truthfully.
@@ -555,7 +576,9 @@ async function main() {
     "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
     "app/api/deca/drills/submit/route.ts",
     "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
-    "app/api/hosa/medterm/submit/route.ts"
+    "app/api/hosa/medterm/submit/route.ts",
+    // C2b: Debate writing is now session-backed too.
+    "app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts"
   ];
   let m13e2RuntimeRefs: string[] = [];
   try {
@@ -570,17 +593,19 @@ async function main() {
     assert.ok(!f.startsWith("components/"),
       `PA7a. no component references the session tables before the C3 cutover (${f})`);
   }
-  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
-                          "app/api/debates/[debateId]/judge/route.ts"]) {
-    assert.ok(!m13e2RuntimeRefs.includes(deferred),
-      `PA7d. ${deferred} stays out of scope until C2b`);
+  // C2b cut the writing routes over. tests/grade and judge take only the atomic XP helper — they
+  // never touch the session tables — so they must still never appear here.
+  for (const neverSessionBacked of ["app/api/tests/[testId]/grade/route.ts",
+                                    "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(neverSessionBacked),
+      `PA7d. ${neverSessionBacked} uses only the XP helper, never the session tables`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/tests/[testId]/grade/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    ["app/api/tests/[testId]/grade/route.ts", "components/training/concept-drills.tsx"],
     "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),

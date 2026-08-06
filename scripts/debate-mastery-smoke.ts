@@ -487,7 +487,9 @@ async function main() {
     "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
     "app/api/deca/drills/submit/route.ts",
     "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
-    "app/api/hosa/medterm/submit/route.ts"
+    "app/api/hosa/medterm/submit/route.ts",
+    // C2b: Debate writing is now session-backed too.
+    "app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts"
   ];
   let m13e2RuntimeRefs: string[] = [];
   try {
@@ -502,17 +504,19 @@ async function main() {
     assert.ok(!f.startsWith("components/"),
       `PA7a. no component references the session tables before the C3 cutover (${f})`);
   }
-  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
-                          "app/api/debates/[debateId]/judge/route.ts"]) {
-    assert.ok(!m13e2RuntimeRefs.includes(deferred),
-      `PA7d. ${deferred} stays out of scope until C2b`);
+  // C2b cut the writing routes over. tests/grade and judge take only the atomic XP helper — they
+  // never touch the session tables — so they must still never appear here.
+  for (const neverSessionBacked of ["app/api/tests/[testId]/grade/route.ts",
+                                    "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(neverSessionBacked),
+      `PA7d. ${neverSessionBacked} uses only the XP helper, never the session tables`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/tests/[testId]/grade/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    ["app/api/tests/[testId]/grade/route.ts", "components/training/concept-drills.tsx"],
     "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),
@@ -547,13 +551,25 @@ async function main() {
   assert.ok(/feedback\.score >= 70/.test(writingRoute), "27b2. and its threshold");
   assert.ok(/XP_REWARDS\.lessonCompleted/.test(writingRoute) && /xPLog\.create/.test(writingRoute),
     "27b3. XP is still awarded exactly as before");
-  assert.ok(writingRoute.indexOf("recordPracticeOutcome(") < writingRoute.indexOf("prisma.$transaction"),
-    "27c. with review resolved BEFORE the mastery/XP transaction, so one due window has one winner");
+  // C2b: writing is session-backed, so review, mastery and XP all run inside ONE transaction whose
+  // first statement is the user row lock. That subsumes the M13E1G winner-only construct with a
+  // stronger guarantee — a second concurrent submission cannot reach mastery at all, because it
+  // blocks on the lock and then finds the session COMPLETED.
+  assert.ok(writingRoute.indexOf("lockUserRow(tx") < writingRoute.indexOf("recordPracticeOutcomeInTransaction("),
+    "27c. with the user row locked BEFORE any review/mastery/XP work, so one due window has one winner");
   assert.ok(!/isReviewDue\(/.test(writingRoute), "27c2. and the stale independent due-check is gone");
-  assert.ok(/if \(concurrentLoser\) \{/.test(writingRoute), "27c3. a concurrency loser writes no mastery");
-  for (const banned of ["enforceRateLimit", "REQUIRED_UNIQUE", "sessionId", "reviewToken"]) {
+  assert.ok(writingRoute.indexOf("parseStoredResult(") < writingRoute.indexOf("gradeDebateWritingResponse("),
+    "27c3. a completed session returns its stored result BEFORE the grader — no second mastery write");
+  assert.ok(/status: "COMPLETED"/.test(writingRoute) && /resultJson: result/.test(writingRoute),
+    "27c4. and completion is stored with the result in the same transaction");
+  // C2b: `sessionId` is now REQUIRED on this route — binding the submission to a server-issued
+  // session is the milestone. The other bans stand: rate-limit redesign, an evidence floor and a
+  // bearer-token scheme all remain out of scope and must not appear.
+  for (const banned of ["enforceRateLimit", "REQUIRED_UNIQUE", "reviewToken"]) {
     assert.ok(!writingRoute.includes(banned), `27c4. and no ${banned} was added`);
   }
+  assert.ok(/writingSessionSubmitRequestSchema/.test(writingRoute),
+    "27c4b. and the request is bound to a server-issued session");
   // 27d. DECA's own evidence contract and floor are untouched by the ladder work.
   const { DECA_DRILL_REQUIRED_UNIQUE } = await import("../lib/deca-drills");
   assert.equal(DECA_DRILL_REQUIRED_UNIQUE, 5, "27d. the DECA evidence floor is still 5");

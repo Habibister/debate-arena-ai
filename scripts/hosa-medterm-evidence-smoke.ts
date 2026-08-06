@@ -493,7 +493,9 @@ async function main() {
     "app/api/deca/drills/session/route.ts", "app/api/deca/drills/check/route.ts",
     "app/api/deca/drills/submit/route.ts",
     "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
-    "app/api/hosa/medterm/submit/route.ts"
+    "app/api/hosa/medterm/submit/route.ts",
+    // C2b: Debate writing is now session-backed too.
+    "app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts"
   ];
   let m13e2RuntimeRefs: string[] = [];
   try {
@@ -508,17 +510,19 @@ async function main() {
     assert.ok(!f.startsWith("components/"),
       `PA7a. no component references the session tables before the C3 cutover (${f})`);
   }
-  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
-                          "app/api/debates/[debateId]/judge/route.ts"]) {
-    assert.ok(!m13e2RuntimeRefs.includes(deferred),
-      `PA7d. ${deferred} stays out of scope until C2b`);
+  // C2b cut the writing routes over. tests/grade and judge take only the atomic XP helper — they
+  // never touch the session tables — so they must still never appear here.
+  for (const neverSessionBacked of ["app/api/tests/[testId]/grade/route.ts",
+                                    "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!m13e2RuntimeRefs.includes(neverSessionBacked),
+      `PA7d. ${neverSessionBacked} uses only the XP helper, never the session tables`);
   }
   assert.ok(/practicesession/i.test("await prisma.practiceSession.findFirst()"),
     "PA7b. control: that scan does match a real runtime usage");
   assert.deepEqual(
-    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
+    ["app/api/tests/[testId]/grade/route.ts", "components/training/concept-drills.tsx", "lib/practice-session.ts"]
       .filter((f) => !M13E2_C1_ALLOWED.includes(f)),
-    ["app/api/skills/debate-writing/route.ts", "components/training/concept-drills.tsx"],
+    ["app/api/tests/[testId]/grade/route.ts", "components/training/concept-drills.tsx"],
     "PA7c. control: the allowlist still rejects an out-of-scope route and any component");
   const m13e2Sha = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   assert.notEqual(m13e2Sha("prisma/seed.ts"), m13e2Sha("prisma/schema.prisma"),

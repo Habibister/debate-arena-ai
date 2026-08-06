@@ -2,7 +2,35 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-04 (M13E2 Phase C2a — drill route cutover, local only)_
+_Last updated: 2026-08-04 (M13E2 Phase C2b — writing and XP route cutover, local only)_
+
+## M13E2 Phase C2b — Debate writing is session-backed and the XP writers are concurrency-safe
+
+Local only. C1 (helpers), C2a (nine drill routes) and C2b are all **committed or implemented locally
+and none has been pushed or deployed. Production still runs the pre-C1 commit** — the old routes,
+which still hand out answer keys and accept unbound submissions.
+
+C2b adds `app/api/skills/debate-writing/session/route.ts` and converts the writing submit route:
+
+- The **server** now selects the writing scenario and freezes it into the session snapshot. The
+  client no longer sends `slug`, `level` or `scenarioIndex`, so a learner can no longer choose their
+  own prompt.
+- Submit takes `{ sessionId, response }`, grades against the scenario the session actually issued,
+  and replays a stored result on retry **before** the grader or any XP path runs.
+- One issued writing session awards XP **at most once**, through `awardXpInTransaction`. Requesting a
+  new session and completing it still awards the current amount — broader XP-farming policy is
+  deferred, not silently changed.
+- The grader, its 70 threshold, the feedback shape, the XP amount and the existing PracticeAttempt /
+  QuestionAttempt / MasteryProgress / review effects are all unchanged.
+
+The three XP/rank writers — writing, `tests/[testId]/grade` and `debates/[debateId]/judge` — now all
+increment atomically and derive rank from the returned value. The previous read-add-write could be
+erased by a concurrent writer, because a plain SELECT never blocks under MVCC. Only the XP/rank write
+changed in the latter two: grading rules, judging rules, amounts, response contracts, and **wins and
+streak** are untouched, and their own pre-read staleness remains carried work.
+
+**Still not usable end to end.** The clients are not cut over, C3 has not begun, and M13E2 is not
+complete. No schema change, no database operation, no activation, no Redis, no secret.
 
 ## M13E2 Phase C2a — the nine drill routes are session-backed, in local code only
 

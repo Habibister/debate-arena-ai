@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { practiceTestGradeSchema } from "@/lib/validators";
 import { XP_REWARDS } from "@/lib/constants";
-import { calculateRank } from "@/lib/xp";
+import { awardXpInTransaction } from "@/lib/xp";
 
 export const runtime = "nodejs";
 
@@ -102,9 +102,14 @@ export async function POST(request: Request, { params }: { params: { testId: str
     }
 
     await prisma.$transaction(async (tx) => {
+      // XP is no longer read here. A plain SELECT never blocks under MVCC, so reading xp, adding in
+      // JavaScript and writing the sum back could be erased by a concurrent writer that committed in
+      // between — a row lock orders that write but cannot repair a value already stale when read.
+      // `awardXpInTransaction` increments atomically instead. Streak keeps its existing behaviour
+      // exactly, including its own pre-read staleness, which remains carried work.
       const user = await tx.user.findUniqueOrThrow({
         where: { id: session.user.id },
-        select: { xp: true, streak: true }
+        select: { streak: true }
       });
 
       for (const item of gradedQuestions) {
@@ -158,13 +163,12 @@ export async function POST(request: Request, { params }: { params: { testId: str
         }
       });
 
-      const nextXp = user.xp + XP_REWARDS.practiceTest;
+      // Same amount, same eligibility, same response contract — only the write is made safe.
+      await awardXpInTransaction(tx, session.user.id, XP_REWARDS.practiceTest);
       await tx.user.update({
         where: { id: session.user.id },
         data: {
-          xp: nextXp,
-          streak: user.streak + 1,
-          rank: calculateRank(nextXp)
+          streak: user.streak + 1
         }
       });
     });

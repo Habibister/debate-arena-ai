@@ -2,7 +2,40 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M13E2 Phase C2a (2026-08-04)
+## Latest handoff — M13E2 Phase C2b (2026-08-04)
+
+**Read this before starting C3.**
+
+C1 (`59dd52b`) added the helpers, C2a (`dd11e69`) bound the nine drill routes, and C2b now binds
+Debate writing and makes all three XP/rank writers concurrency-safe. **None of it is pushed.
+Production still runs the pre-C1 commit.**
+
+**The application is deliberately mid-cutover and must not be pushed until C3 lands.** Every server
+route now speaks the session protocol; every component still expects the old shapes. C3 is what makes
+the product usable again.
+
+What C2b guarantees, in local code only: the server picks the writing scenario and freezes it, so a
+client cannot choose its prompt; submit carries only `{sessionId, response}`; a completed session
+replays its stored result before the grader and before XP; one issued session awards XP at most once;
+and XP is incremented atomically with rank derived from the returned value in all three writers.
+
+Two things not to undo:
+
+**`enforceRateLimit` is deliberately absent from both writing routes.** That surface has never had
+rate limiting, redesign is deferred, and three suites assert its absence. Do not "fix" this in C3.
+
+**Wins and streak in the judge route are untouched.** They still read-modify-write from a pre-read,
+and that staleness is carried work — the C2b exception covered XP and rank only. `practice-session:smoke`
+controls 144–144c pin the existing behaviour so it cannot drift while it waits.
+
+Assertion repairs in C2b widened the PA7 allowlist to the writing routes, replaced the `sessionId` ban
+on the writing route (binding to a session is now the point, while the rate-limit, evidence-floor and
+token bans stand), and replaced the M13E1G `concurrentLoser` checks — the session claim under the user
+lock supersedes them with a stronger guarantee, since a second submitter never reaches mastery at all.
+
+C3 (components and pages) has not begun. No schema change, no database operation, no activation.
+
+## Earlier handoff — M13E2 Phase C2a (2026-08-04)
 
 **Read this before starting C2b.**
 

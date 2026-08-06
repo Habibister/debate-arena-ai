@@ -457,10 +457,82 @@ async function main() {
   }
   assert.deepEqual(refs.filter((f) => f.startsWith("components/")), [],
     "83. no component is wired to the session tables before C3");
-  for (const deferred of ["app/api/skills/debate-writing/route.ts", "app/api/tests/[testId]/grade/route.ts",
-                          "app/api/debates/[debateId]/judge/route.ts"]) {
-    assert.ok(!refs.includes(deferred), `83b. ${deferred} stays out of scope until C2b`);
+  // C2b cut the writing routes over. tests/grade and judge take only the atomic XP helper and must
+  // never touch the session tables at all.
+  for (const neverSessionBacked of ["app/api/tests/[testId]/grade/route.ts",
+                                    "app/api/debates/[debateId]/judge/route.ts"]) {
+    assert.ok(!refs.includes(neverSessionBacked),
+      `83b. ${neverSessionBacked} uses only the XP helper, never the session tables`);
   }
+  for (const cut of ["app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts"]) {
+    assert.ok(refs.includes(cut), `83d. and the C2b writing routes ARE cut over (${cut})`);
+  }
+
+  // ================= C2b: WRITING SESSION + XP CROSS-WRITERS ======================================
+  const stripC = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/(^|\s)\/\/.*$/, "")).join("\n");
+  const wSession = stripC(read("app/api/skills/debate-writing/session/route.ts"));
+  const wSubmit = stripC(read("app/api/skills/debate-writing/route.ts"));
+  const grade = stripC(read("app/api/tests/[testId]/grade/route.ts"));
+  const judge = stripC(read("app/api/debates/[debateId]/judge/route.ts"));
+
+  // --- writing session issuance ---
+  assert.ok(/getServerSession\(authOptions\)/.test(wSession) && /unauthorized\(\)/.test(wSession),
+    "119. the writing session route authenticates");
+  assert.ok(!/enforceRateLimit/.test(wSession) && !/enforceRateLimit/.test(wSubmit),
+    "120. and its rate limiting is preserved — this surface has never had any, and adding one is deferred");
+  const wsBody = wSession.slice(wSession.indexOf("prisma.$transaction"));
+  assert.ok(wsBody.indexOf("lockUserRow(tx") >= 0 && wsBody.indexOf("lockUserRow(tx") < wsBody.indexOf("findActiveSession("),
+    "121. the user row lock is its first statement, before any lifecycle query");
+  const wsKinds = new Set([...wSession.matchAll(/"(DEBATE_DRILL|DECA_DRILL|HOSA_MEDTERM|DEBATE_WRITING)"/g)].map((m) => m[1]));
+  assert.deepEqual([...wsKinds], ["DEBATE_WRITING"], "122. it binds exactly DEBATE_WRITING");
+  assert.ok(/findActiveSession\(/.test(wSession), "123. one active unexpired session is reused, not duplicated");
+  assert.ok(/cleanupExpiredSessions\(/.test(wSession), "124. bounded cleanup runs through the C1 helper");
+  assert.ok(/expiryFor\(now\)/.test(wSession), "125. and the 24h expiry / purge window comes from the C1 helper");
+  assert.ok(/const scenarioIndex = Math\.floor\(Math\.random\(\)/.test(wSession),
+    "126. the SERVER selects the scenario — the index never arrives from the client");
+  assert.ok(!/input\.scenarioIndex/.test(wSession) && !/input\.scenarioIndex/.test(wSubmit),
+    "127. and no client-supplied scenario index reaches either writing route");
+  assert.ok(/kind: "WRITING"/.test(wSession), "128. the scenario is frozen into a versioned snapshot");
+  for (const banned of ["XP_REWARDS", "xPLog", "awardXpInTransaction", "MasteryProgress", "masteryProgress",
+                        "practiceAttempt", "questionAttempt", "recordPracticeOutcome"]) {
+    assert.ok(!wSession.includes(banned), `129. issuance writes nothing (${banned})`);
+  }
+
+  // --- writing submit ---
+  assert.ok(/writingSessionSubmitRequestSchema/.test(wSubmit), "130. submit accepts { sessionId, response } only");
+  for (const clientControlled of ["input.slug", "input.level", "input.scenario"]) {
+    assert.ok(!wSubmit.includes(clientControlled), `131. no client-supplied ${clientControlled} is honoured`);
+  }
+  assert.ok(/parsePracticeSessionSnapshot\(issued\.scenarioJson, "WRITING"\)/.test(wSubmit),
+    "132. it grades against the scenario saved on the issued session");
+  assert.ok(wSubmit.indexOf("parseStoredResult(") < wSubmit.indexOf("gradeDebateWritingResponse("),
+    "133. a completed retry returns the stored result BEFORE the grader runs");
+  assert.ok(wSubmit.indexOf("parseStoredResult(") < wSubmit.indexOf("awardXpInTransaction("),
+    "134. and before any XP effect");
+  assert.equal((wSubmit.match(/awardXpInTransaction\(/g) ?? []).length, 1, "135. XP is awarded from exactly one site");
+  assert.ok(/XP_REWARDS\.lessonCompleted/.test(wSubmit), "136. at the unchanged amount");
+  assert.ok(/gradeDebateWritingResponse\(/.test(wSubmit) && /feedback\.score >= 70/.test(wSubmit),
+    "137. the grader and its threshold are unchanged");
+  assert.ok(/status: "COMPLETED"/.test(wSubmit) && /resultJson: result/.test(wSubmit),
+    "138. the result and the completion are stored together, atomically");
+  assert.ok(/sessionExpired\(\)/.test(wSubmit) && /sessionNotFound\(\)/.test(wSubmit),
+    "139. expiry and ownership are enforced without disclosing existence");
+
+  // --- the three XP writers are all atomic, and none writes an absolute stale value ---
+  for (const [name, src] of [["writing", wSubmit], ["tests/grade", grade], ["judge", judge]] as const) {
+    assert.ok(/awardXpInTransaction\(/.test(src), `140. ${name} awards XP through the atomic helper`);
+    assert.ok(!/xp:\s*nextXp/.test(src), `141. ${name} writes no absolute stale XP value`);
+    assert.ok(!/rank:\s*calculateRank\(nextXp\)/.test(src), `142. ${name} derives no rank from a pre-increment value`);
+    assert.ok(!/const nextXp\s*=/.test(src), `143. ${name} no longer computes xp in JavaScript at all`);
+  }
+  assert.ok(/xp:\s*nextXp/.test("data: { xp: nextXp }"), "143b. control: that scan matches a real stale write");
+  // Judge keeps wins and streak exactly as they were — their own staleness is carried, not fixed here.
+  assert.ok(/wins: wonDebate \? user\.wins \+ 1 : user\.wins/.test(judge), "144. judge wins behaviour is unchanged");
+  assert.ok(/streak: user\.streak \+ 1/.test(judge), "144b. and so is its streak behaviour");
+  assert.ok(/streak: user\.streak \+ 1/.test(grade), "144c. as is test-grade's streak behaviour");
+  assert.ok(/calculateDebateRating\(\{\s*xp: awarded\.xp/.test(judge),
+    "145. judge's XP-derived rating uses the authoritative awarded value");
   for (const cut of ["app/api/debate/drills/submit/route.ts", "app/api/deca/drills/submit/route.ts",
                      "app/api/hosa/medterm/submit/route.ts"]) {
     assert.ok(refs.includes(cut), `83c. and the C2a drill routes ARE cut over (${cut})`);

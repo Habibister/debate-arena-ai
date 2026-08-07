@@ -184,7 +184,14 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // physiological function, process, disease or procedure as its answer — that material belongs to
   // the `physiology` and `pathophysiology` areas and is reserved for Phases 2e and 2f. Four legacy
   // items (an-01, an-02, an-05, an-09) are function-flavoured; they are deliberately left unchanged.
-  // AI-ASSISTED DRAFT CONTENT — human content review is still outstanding (see docs/HANDOFF.md).
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // 21 items and approved their anatomical accuracy, the anatomy/physiology boundary, answer
+  // uniqueness, distractors, wording and explanations — including the refined an-24 (cerebellum
+  // inferior and posterior to the cerebrum, stated in anatomical position), an-25 ('Carotid
+  // artery' as the complete distractor name) and an-30 (largest muscle scoped to BY MASS, with
+  // sartorius distinguished as the longest). Option A remains the governing boundary.
+  // `CLAUDE.md` requires AI-generated material to stay labelled, so the authoring method is
+  // recorded here permanently — the approval is what changed, not the provenance.
   { id: "an-10", area: "anatomy", question: "In anatomical terms, 'superior' means:", choices: ["Toward the head", "Toward the feet", "Toward the front", "Toward the midline"], correctAnswer: "Toward the head", explanation: "'Superior' means above, toward the head. Its opposite, 'inferior', means below, toward the feet." },
   { id: "an-11", area: "anatomy", question: "A structure described as 'distal' is:", choices: ["Farther from the point of attachment", "Nearer the point of attachment", "Above the trunk", "Beneath the skin"], correctAnswer: "Farther from the point of attachment", explanation: "'Distal' means farther from the trunk or point of attachment — the hand is distal to the elbow. 'Proximal' means nearer to it." },
   { id: "an-12", area: "anatomy", question: "The term 'anterior' refers to a position:", choices: ["Toward the front of the body", "Toward the back of the body", "Above the waist", "Closest to the midline"], correctAnswer: "Toward the front of the body", explanation: "'Anterior' (ventral) means toward the front. 'Posterior' (dorsal) means toward the back." },

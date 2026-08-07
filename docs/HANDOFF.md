@@ -4,12 +4,27 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Phase 2d: HOSA anatomy bank 9→30 (2026-08-07)
 
-### ⚠ Phase 2d: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Phase 2d: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 anatomy questions (`an-10`…`an-30`), taking anatomy 9→30 and the bank
-117→138. **These items were AI-drafted and have NOT been reviewed by a human.** A source comment
-above `an-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa): expand anatomy
-question bank` commit until someone reviews those 21 items.**
+117→138. The items were AI-authored, and on **2026-08-07 the repository owner personally read all 21
+and approved them** — anatomical accuracy, the anatomy/physiology boundary, answer uniqueness,
+distractors, wording, explanations and structural/location focus — including the refined `an-24`
+(cerebellum inferior and posterior to the cerebrum, in anatomical position), `an-25` (`Carotid
+artery`) and `an-30` (largest muscle **by mass**, sartorius distinguished as longest).
+**The push gate is lifted.**
+
+Two things to keep straight, exactly as for Phases 2a–2c:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently** (`CLAUDE.md`). Approval changed the
+  review status, not the provenance.
+
+**Option A is the governing anatomy boundary and was approved as such:** anatomy = structures and
+their locations/relationships. Phase 2e must not let physiology material drift back into anatomy —
+and the four legacy function-flavoured items (`an-01`, `an-02`, `an-05`, `an-09`) stay unchanged.
 
 **Production runs `b1f5e85aa81cfa0857c531fe7811dc7b515d215a`** (deployment `5797883135`,
 `Production`, `success`) — Phase 2c, whose suffix content IS human-approved.

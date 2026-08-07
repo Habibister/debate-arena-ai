@@ -6,14 +6,26 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 **Read this before pushing. TWO local commits are unpushed, and the second needs a human read.**
 
-### ⚠ Phase 2a: AI-assisted content awaiting human review
+### Phase 2a: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 word-root questions (`wr-10`…`wr-30`), taking that area 9→30 and the
-bank 54→75, closing audit G2 for the first area. **These items were AI-drafted and have NOT been
-reviewed by a human for medical accuracy.** `CLAUDE.md` requires AI-generated material to be
-labelled; a source comment above `wr-10` carries that label. **Do not push the
-`feat(hosa): expand word-root question bank` commit until someone reviews those 21 items.** Every
-other part of the change is content-independent and verified.
+bank 54→75, closing audit G2 for the first area. The items were AI-authored, and on **2026-08-07 the
+repository owner personally read all 21 and approved them** for medical accuracy, clarity, distractor
+quality, originality, explanations and CompeteReady terminology conventions — explicitly confirming
+the dual/standard meanings of `pneum`, `myel` and `cyst`, and the `cerebr/o` / `enter/o` / `col/o`
+refinements. **The push gate is lifted.**
+
+Two things to keep straight if this ever comes up again:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently** (`CLAUDE.md` requires AI-generated
+  material to be labelled). Approval changed the review status, not the provenance.
+
+**Carried stylistic follow-up, not a blocker:** the bank mixes bare roots (`hist`, `arthr`, `cost`)
+with combining forms (`cerebr/o`, `enter/o`, `col/o`). Standardising on combining forms across all 30
+word-root items is wanted eventually and was explicitly excluded from Phase 2a scope.
 
 What Phase 2a changed structurally, and what not to undo:
 

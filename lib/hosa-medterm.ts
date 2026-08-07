@@ -53,7 +53,10 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // M14 Phase 2a (audit G2): word roots extended 9 -> 30 so a focused session meets new items across
   // a spaced cycle instead of re-showing the same nine. Every root below already appeared in this
   // bank as a distractor or inside an existing explanation, so nothing widens the event's scope.
-  // AI-ASSISTED DRAFT CONTENT — human content review is still outstanding (see docs/HANDOFF.md).
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // 21 items and approved them for medical accuracy, clarity, distractor quality, originality and
+  // explanation correctness. `CLAUDE.md` requires AI-generated material to stay labelled, so the
+  // authoring method is recorded here permanently — the approval is what changed, not the label.
   { id: "wr-10", area: "word-roots", question: "A term built on 'my' concerns which tissue?", choices: ["Muscle", "Bone", "Nerve", "Skin"], correctAnswer: "Muscle", explanation: "'My'/'myo' means muscle (myalgia = muscle pain; myocardium = heart muscle). 'Oste' is bone, 'neur' is nerve, 'derm' is skin." },
   { id: "wr-11", area: "word-roots", question: "The combining form 'cerebr/o' refers to the:", choices: ["Cerebrum (brain)", "Heart", "Ribs", "Bladder"], correctAnswer: "Cerebrum (brain)", explanation: "'Cerebr/o' names the cerebrum, the largest part of the brain (cerebral, cerebrovascular). For the brain as a whole the combining form is 'encephal/o'. 'Cardi/o' is heart, 'cost/o' is rib, 'cyst/o' is bladder/sac." },
   { id: "wr-12", area: "word-roots", question: "Which root refers to a rib?", choices: ["Cost", "Crani", "Cyst", "Col"], correctAnswer: "Cost", explanation: "'Cost' means rib (intercostal = between the ribs). 'Crani' is skull, 'cyst' is bladder/sac, 'col' is colon." },

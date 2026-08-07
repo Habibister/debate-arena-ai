@@ -2,7 +2,7 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2a — HOSA word-root bank 9→30, local only, human content review outstanding)_
+_Last updated: 2026-08-07 (M14 Phase 2a — HOSA word-root bank 9→30, human-reviewed and approved, local only)_
 
 ## M14 Phase 2a — the HOSA word-root bank is 30 deep, in local code only
 
@@ -35,10 +35,18 @@ area**, one area per session. Phase 2a takes the **first** area to depth:
   insufficient evidence, both evidence floors unchanged, and the neighbouring Debate/DECA banks not
   importing it — each with non-vacuous controls.
 
-**⚠ The 21 new items are AI-ASSISTED DRAFT CONTENT and have NOT received human content review.**
-`CLAUDE.md` requires AI-generated material to be labelled as such; the bank carries that label in a
-source comment. **Do not push this commit until a human has reviewed the medical accuracy of
-`wr-10`…`wr-30`.** Nothing else in the change is content-dependent.
+**Human content review is COMPLETE (2026-08-07).** The 21 items were AI-authored and the repository
+owner then personally read all of `wr-10`…`wr-30` and approved them for medical accuracy, clarity,
+distractor quality, originality, explanation correctness and CompeteReady terminology conventions.
+The owner specifically confirmed the three dual/standard-meaning items — `pneum` (lung or air),
+`myel` (spinal cord or bone marrow) and `cyst` (bladder or sac) — as correct terminology, and
+confirmed the `cerebr/o`, `enter/o` and `col/o` refinements. **The approval rests on that human
+reading alone; the earlier AI pre-screen was not independent verification and formed no part of it.**
+Per `CLAUDE.md` the authoring method stays labelled in the source regardless of approval.
+
+**Carried stylistic follow-up, deliberately not a blocker:** the bank mixes bare roots (`hist`,
+`arthr`, `cost`) with combining forms (`cerebr/o`, `enter/o`, `col/o`). Standardising on combining
+forms across all 30 items is desirable but was explicitly excluded from Phase 2a.
 
 **Local commit only — not pushed, not deployed. No database operation.**
 
@@ -345,7 +353,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1c — DECA judging fails closed | Complete, pushed and deployed (`a29e506`). |
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
-| M14 Phase 2a — HOSA word-root bank depth | **Complete locally** (this commit). Word roots 9→30, bank 54→75. **AI-assisted draft — human content review outstanding before push.** |
+| M14 Phase 2a — HOSA word-root bank depth | **Complete locally.** Word roots 9→30, bank 54→75. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

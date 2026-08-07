@@ -57,9 +57,13 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
         <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Study Arcade</h1>
+        {/* G19 (M14 Phase 1e): recording claims are scoped to the surfaces that actually record.
+            Drills write mastery + spaced review; flashcard decks and review games make no server
+            write at all (components/study/ issues none), so the copy must never lump them in. */}
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Repetition that doesn&apos;t feel like a chore: flashcard decks, review games, and drills that feed your real
-          mastery record{activeTrack ? ` for ${activeTrack.label}` : ""}.
+          Repetition that doesn&apos;t feel like a chore: drills that feed your real mastery
+          record{activeTrack ? ` for ${activeTrack.label}` : ""}, plus flashcard decks and review games that sharpen
+          recall — decks and games aren&apos;t recorded.
         </p>
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -111,7 +115,7 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {practicedSkills > 0 ? (
                 <>
-                  <span className="text-lg font-bold text-foreground">{practicedSkills}</span> {practicedSkills === 1 ? "skill" : "skills"} practiced so far — every arcade rep updates your real mastery progress.
+                  <span className="text-lg font-bold text-foreground">{practicedSkills}</span> {practicedSkills === 1 ? "skill" : "skills"} practiced so far, recorded from real drill sessions. Deck and game reps sharpen recall but aren&apos;t recorded.
                 </>
               ) : (
                 "Zero so far — that changes with your first drill. Nothing here is ever simulated."

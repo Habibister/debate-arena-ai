@@ -4,7 +4,7 @@
  * collection + weighting, and the missed-terms drill loop. Run with: npm run games:smoke
  */
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   adjustWeight,
   buildQuestion,
@@ -134,7 +134,60 @@ function main() {
   assert.ok(existsSync("lib/auth.ts"), "Auth must still exist.");
   assert.ok(existsSync("app/api/ai/health/route.ts"), "AI health route must still exist.");
 
-  console.log("Games smoke tests passed: min-card gate, 10-question round, reverse mode, missed collection + weighting, drill loop, timer-off default, settings normalize, no-shame copy, auth + AI health untouched.");
+  // ---- G19 (M14 Phase 1e): the Study Arcade never claims fabricated progress ---------------------
+  // The page once said "flashcard decks, review games, and drills that feed your real mastery
+  // record" and "every arcade rep updates your real mastery progress" — but deck and game reps make
+  // no server write at all. Recording claims must stay scoped to the drills, which do record.
+  // Scans run over comment-stripped, whitespace-normalized source so a claim split across JSX lines
+  // is still caught and prose in comments (like this one, or the fixture below) never trips them.
+  const stripCode = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  const normalize = (src: string) => stripCode(src).replace(/&apos;/g, "'").replace(/\s+/g, " ");
+  const arcade = normalize(readFileSync("app/(app)/study-arcade/page.tsx", "utf8"));
+
+  // G19-1/2: both former claims are gone, checked against normalized source.
+  assert.ok(!arcade.includes("every arcade rep updates"),
+    "G19-1. the 'every arcade rep updates your real mastery progress' claim is gone");
+  assert.ok(!/flashcard decks, review games, and drills that feed/.test(arcade),
+    "G19-2. the lumped decks+games+drills recording claim is gone");
+  // G19-3: no sentence couples decks/games with feeding or updating mastery/progress.
+  const LUMPED = /(decks?|games?)[^.]*?\b(feeds?|updates?)\b[^.]*?\b(mastery|progress)\b/i;
+  assert.ok(!LUMPED.test(arcade), "G19-3. no sentence claims decks or games feed/update mastery or progress");
+  // G19-4: the truthful scoped copy is present — drills record; decks and games are labeled unrecorded.
+  assert.ok(/drills that feed your real mastery record/.test(arcade),
+    "G19-4. the recording claim is scoped to drills");
+  assert.ok((arcade.match(/aren't recorded/g) ?? []).length >= 2,
+    "G19-4b. decks and games are labeled as not recorded, in the header and the record tile");
+  assert.ok(/recorded from real drill sessions/.test(arcade),
+    "G19-4c. the practiced-skills tile attributes its count to drill sessions");
+  // G19-5: the copy matches reality in BOTH directions — the study components still make no server
+  // write. If decks or games ever start recording, update the arcade copy AND this pairing together.
+  const studyFiles: string[] = [];
+  const walk = (dir: string) => { for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const full = `${dir}/${e.name}`;
+    if (e.isDirectory()) walk(full); else if (/\.(ts|tsx)$/.test(e.name)) studyFiles.push(full);
+  } };
+  walk("components/study");
+  assert.ok(studyFiles.length >= 5, "G19-5. control: the study components were actually enumerated");
+  for (const file of studyFiles) {
+    const src = stripCode(readFileSync(file, "utf8"));
+    assert.ok(!/\bfetch\(/.test(src) && !/\bprisma\./.test(src),
+      `G19-5b. ${file} makes no server write — decks/games stay unrecorded, matching the arcade copy`);
+  }
+  // ---- Non-vacuous controls ----------------------------------------------------------------------
+  // Each former claim, replayed as a fixture, IS caught by the scan that bans it.
+  assert.ok("every arcade rep updates your real mastery progress".includes("every arcade rep updates"),
+    "G19-C1. control: the old tile claim would be caught");
+  assert.ok(LUMPED.test("flashcard decks, review games, and drills that feed your real mastery record"),
+    "G19-C2. control: the old lumped claim would be caught");
+  assert.ok(LUMPED.test(normalize("review games that\n            update your mastery")),
+    "G19-C3. control: a claim split across JSX lines is still caught after normalization");
+  assert.ok(!LUMPED.test(normalize("// review games that update your mastery")),
+    "G19-C4. control: the same words inside a comment never trip the scan");
+  assert.ok(!LUMPED.test("decks and games aren't recorded"),
+    "G19-C5. control: the truthful negation does not trip the scan");
+
+
+  console.log("Games smoke tests passed: min-card gate, 10-question round, reverse mode, missed collection + weighting, drill loop, timer-off default, settings normalize, no-shame copy, auth + AI health untouched, PLUS G19: the Study Arcade scopes recording claims to drills, labels decks/games as unrecorded, and the study components verifiably make no server write.");
 }
 
 main();

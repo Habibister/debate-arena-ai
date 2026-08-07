@@ -2,9 +2,38 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M14 Phase 1d — fabricated Debate speaker cards removed, local only)_
+_Last updated: 2026-08-06 (M14 Phases A + 1a–1d pushed and deployed; Phase 1e G19 local only)_
 
-## M14 Phase 1d — Debate ballots name only real participants, in local code only
+## M14 status — Phases A and 1a–1d are DEPLOYED; Phase 1e G19 is local
+
+The five-commit M14 stack (`a054706` audit, `66e7dd6` 1a, `8a7a74f` 1b, `a29e506` 1c, `a37959c` 1d)
+was pushed as a normal fast-forward and **deployed to Production** — GitHub deployment `5785864553`,
+`Production`, `success`, tied to exact commit `a37959c1500c405d0302e769996d9f850020707e`, verified
+read-only with public route checks (all 200/307-to-signin, zero 5xx; the live `/signup` page no
+longer offers Public Speaking). **Authenticated Production behavior remains untested** — no learner
+action, no judging, no XP/rank/wins/streak/completion, and no database operation was performed in
+any verification pass.
+
+**M14 Phase 1e (G19) is complete locally and unpushed.** The Study Arcade's two fake-progress
+claims are gone:
+
+- The header no longer says decks, games and drills all "feed your real mastery record" — the
+  recording claim is scoped to the drills (which do record), and decks/games are labeled honestly:
+  "decks and games aren't recorded."
+- The record tile no longer says "every arcade rep updates your real mastery progress" — its
+  (always-honest) count is now attributed to "real drill sessions", with the same unrecorded label.
+- `games:smoke` gained a `G19-*` regression block: bans on both former claims plus a generic
+  decks/games-feed-mastery pattern over comment-stripped, whitespace-normalized source; presence
+  checks for the truthful copy; and a **both-directions reality pairing** — every file under
+  `components/study/` is verified to make no `fetch`/`prisma` call, so if decks or games ever start
+  recording, the suite forces the copy and the check to move together. Five non-vacuous controls.
+
+**Phase 1e (G20) — DECA skill activation — is prepared and NOT executed.** It requires an explicit
+human authorization for a shared-Production database write. The activation plan lives in
+`scripts/seed-deca-drill-skills.ts` (dry run is the default and provably opens no connection);
+`docs/HANDOFF.md` records the exact procedure. No database operation occurred in this pass.
+
+## M14 Phase 1d — Debate ballots name only real participants (deployed)
 
 Audit finding G21: every Debate ballot displayed **four ranked speaker cards** — "Government 1/2",
 "Opposition 1/2" — synthesised by splitting each side's aggregate metrics, for a round that has
@@ -34,10 +63,9 @@ exactly two participants. Phase 1d removes the fabrication:
   real merge, plus comment-stripped source scans with non-vacuous controls (a padded roster, a
   duplicated participant and a re-introduced name literal are each proven caught).
 
-DECA and HOSA judging behaviour untouched. **Local commit only — not pushed, not deployed. No
-database operation.**
+DECA and HOSA judging behaviour untouched. **Deployed in `a37959c`. No database operation.**
 
-## M14 Phase 1c — DECA judging fails closed, in local code only
+## M14 Phase 1c — DECA judging fails closed (deployed)
 
 Audit finding G18: when every AI provider failed, the DECA judge returned a **canned ballot** —
 hardcoded category scores and generic strengths that never touched the learner's transcript — and
@@ -67,10 +95,10 @@ removes that path entirely:
   comment-stripped source; its live retry loop now treats a **throw** as the providers-unavailable
   signal, and a fallback-tagged DECA result is asserted impossible.
 
-No learner data was migrated or deleted. **Local commit only — not pushed, not deployed. No
-database operation.**
+No learner data was migrated or deleted. **Deployed in the `a37959c` stack. No database
+operation.**
 
-## M14 Phase 1b — the withdrawn HOSA clinical judging is closed everywhere, in local code only
+## M14 Phase 1b — the withdrawn HOSA clinical judging is closed everywhere (deployed)
 
 M11R6 withdrew generic HOSA clinical role-play and its AI judging; `/api/ai/hosa-scenario` and
 `/api/ai/judge-hosa` fail closed with 410. The M14 audit (finding G23) showed the **generic** debate
@@ -94,9 +122,9 @@ awarded XP, wins and streak. Phase 1b closes both:
   the absent dispatch, contract equality and non-HOSA preservation — over comment-stripped source,
   since the routes describe in prose exactly what they refuse.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Deployed in the `a37959c` stack. No database operation occurred in the code change itself.**
 
-## M14 Phase 1a — the first run is track-correct, in local code only
+## M14 Phase 1a — the first run is track-correct (deployed)
 
 The learner's signup organization now resolves their training track. Before this pass nothing read
 the stored organization, and the only writer of the track cookie was the client switcher — which
@@ -123,9 +151,9 @@ and never saw their own track by default (audit finding G24).
   exactly the async/await conversion — any other edit fails. The precedence itself is covered by
   new `P1a-*` assertions in `tracks:smoke`, each with a non-vacuous control.
 
-**Local commit only — not pushed, not deployed.** No schema change, no migration, no seed, no
-dependency, no env change, **no database operation**. `docs/M14_LEARNING_QUALITY_AUDIT.md`
-(`a054706`, also local) is the audit this implements the first subphase of.
+**Deployed in the `a37959c` stack.** No schema change, no migration, no seed, no dependency, no
+env change, **no database operation**. `docs/M14_LEARNING_QUALITY_AUDIT.md` (`a054706`, also
+deployed) is the audit this implements the first subphase of.
 
 ## M13E2 — server-bound practice sessions: PUSHED AND DEPLOYED
 
@@ -222,9 +250,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb397350029975520e0b96c1c741e7f873f59086` — the
   M13E2 Phase C closeout commit, **pushed 2026-08-06 and deployed to Production**.
-- **Local `HEAD`:** the M14 Phase 1d commit, ahead of `origin/main` by **five local commits**:
-  the M14 Phase A audit (`a054706`), Phase 1a (`66e7dd6`), Phase 1b (`8a7a74f`), Phase 1c
-  (`a29e506`) and Phase 1d (honest Debate ballots). None is pushed.
+- **Local `HEAD`:** the M14 Phase 1e (G19) commit, **one ahead of `origin/main`**, which sits at
+  the deployed `a37959c` with the full A+1a–1d stack.
 - **Working tree:** clean apart from each pass's own commit.
 - Phase 1a changed 17 paths: `lib/track-server.ts` (precedence), 12 page call sites (await the async
   resolver), `components/auth/sign-up-form.tsx` (Public Speaking removed from signup), two suites
@@ -268,10 +295,12 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M13E2 Phase C3b — lesson practice and Debate Writing clients | Complete, pushed and deployed (`9103693`, `f392ede`). |
 | M13E2 — overall | **Complete, pushed, deployed and publicly verified** at `bb39735`. Authenticated practice behavior untested. |
 | M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed. |
-| M14 Phase 1a — track-correct first run | **Complete locally** (`66e7dd6`). Signup organization resolves the track; Public Speaking removed from signup. Unpushed. |
-| M14 Phase 1b — withdrawn HOSA judging closed | **Complete locally** (`8a7a74f`). Generic debate creation and judging refuse HOSA with the established 410; no route reaches `judgeHosaPerformance`. Unpushed. |
-| M14 Phase 1c — DECA judging fails closed | **Complete locally** (`a29e506`). The canned DECA fallback ballot is removed; failures throw the retryable 503; attribution only on validated results. Unpushed. |
-| M14 Phase 1d — fabricated Debate speaker cards removed | **Complete locally** (this commit). One card per real participant; model output cannot alter the roster. Unpushed. |
+| M14 Phase 1a — track-correct first run | Complete, pushed and deployed (`66e7dd6`). |
+| M14 Phase 1b — withdrawn HOSA judging closed | Complete, pushed and deployed (`8a7a74f`). |
+| M14 Phase 1c — DECA judging fails closed | Complete, pushed and deployed (`a29e506`). |
+| M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
+| M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
+| M14 Phase 1e — G20 DECA skill activation | **Prepared, NOT executed.** Awaits explicit authorization for the shared-Production `Skill` write. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -435,7 +464,7 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## Next operational steps
 
-1. Review the five local M14 commits (`git log origin/main..HEAD`, `git diff origin/main..HEAD`).
+1. Review the Phase 1e G19 commit, push it, and verify its automatic deployment read-only.
 2. Push them through GitHub Desktop as a normal fast-forward. Re-verify `origin/main` immediately
    beforehand.
 3. Verify the automatic Vercel Production deployment read-only from commit-linked GitHub metadata.
@@ -448,10 +477,10 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## What is explicitly NOT true
 
-- **M14 is not live.** The Phase A audit and Phases 1a–1d are local commits only. Production
-  learners still get the pre-1a track behaviour, **Production's generic debate paths still carry the
-  G23 HOSA bypass, Production's DECA judge can still return the G18 canned ballot, and Production's
-  Debate ballots still show the G21 fabricated four-speaker cards, until these commits are pushed.**
+- **Phases A and 1a–1d ARE live** (deployment `5785864553` at `a37959c`); the G19 copy fix is
+  **not** — it is a local commit only. **Authenticated Production behavior of any M14 change remains
+  untested.** The G20 DECA skill activation has **not** been run: three of four DECA drill areas
+  still record nothing (disclosed honestly in the UI) until it is explicitly authorized.
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for
   the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
   post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA

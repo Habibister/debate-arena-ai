@@ -2,17 +2,62 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 1d: honest Debate speaker cards (2026-08-06)
+## Latest handoff — M14 Phase 1e: G19 fixed locally; G20 awaits authorization (2026-08-06)
 
-**Read this before pushing or starting Phase 1e.**
+**Read this before pushing the G19 commit or authorizing G20.**
 
-**M13E2 is complete, pushed and deployed.** Production runs
-`bb397350029975520e0b96c1c741e7f873f59086`, verified read-only from commit-linked GitHub metadata
-(deployment `5783679689`, `Production`, `success`) plus public route checks.
-**Authenticated Production practice behavior remains untested**, and no database or Production
-operation occurred in any M14 pass.
+**M13E2 AND the five-commit M14 stack are pushed and deployed.** Production runs
+`a37959c1500c405d0302e769996d9f850020707e` — GitHub deployment `5785864553`, `Production`,
+`success`, tied to that exact SHA and verified read-only (public routes 200/307, zero 5xx; the live
+`/signup` no longer offers Public Speaking). **Authenticated Production behavior remains untested**,
+and no database or Production operation occurred in any M14 pass.
 
-Five commits are **local only**, in this order:
+**One commit is local only: M14 Phase 1e (G19)** — the Study Arcade fake-progress copy fix. Push it
+next. What it changed:
+
+- `app/(app)/study-arcade/page.tsx` — the header's recording claim is scoped to the drills, and the
+  record tile attributes its (always-honest) count to real drill sessions; both now state plainly
+  that "decks and games aren't recorded". No functionality, layout or legitimate claim changed; the
+  zero state was already truthful.
+- `scripts/games-smoke.ts` — the `G19-*` block: bans on both former claims and a generic
+  decks/games-feed-mastery pattern over comment-stripped, whitespace-normalized source; presence of
+  the truthful copy; and a both-directions pairing that verifies every `components/study/` file
+  makes no `fetch`/`prisma` call. **If decks or games ever start recording, that pairing fails on
+  purpose — update the copy and the check together.** Five non-vacuous controls.
+
+### G20 — DECA skill activation: prepared, NOT executed, awaits explicit authorization
+
+Three of four DECA drill areas record nothing because their `Skill` rows were never created
+(`prisma/seed.ts` seeds only `deca-marketing`; the submit route returns `skill-missing` and the UI
+says "Not tracked yet"). The remedy is `scripts/seed-deca-drill-skills.ts`, already reviewed in
+full:
+
+- **What changes:** exactly three `Skill` rows are CREATED (never updated):
+  `deca-performance-indicators` (order 20), `deca-business-reasoning` (21),
+  `deca-customer-relations` (22) — each with its name, description, `organization: "DECA"`,
+  `track: "DECA"` as literals in the script.
+- **Current state:** no rows with those slugs (drilling those areas returns `skill-missing`).
+  **Intended state:** the three rows exist; passing drill sessions record mastery and schedule
+  review, exactly as `deca-marketing` already does.
+- **Command:** `npm run deca:skills:activate -- --apply` (the flagless default is a dry run that
+  provably opens no database connection — the Prisma import sits below the dry-run return).
+- **Why required:** the mastery/review loop is the product's core promise; three quarters of DECA
+  drilling is inert without these rows (audit G20).
+- **Safety properties, verified by reading the script:** touches `Skill` only; create-or-verify,
+  never update; a field mismatch on an existing slug reports a CONFLICT (field names only, never
+  values) and exits non-zero with nothing written; rows are independent, so re-running is safe and
+  idempotent; nothing else is read or written; no credential is ever printed.
+- **Rollback:** delete the three rows by slug (they are new, so nothing references them until a
+  learner drills; any MasteryProgress/review rows created afterwards reference the skill and would
+  need the same authorization discussion before removal).
+- **Post-write verification:** re-run `--apply` (all three must report `already present`), then a
+  read-only check that `DECA_DRILL_SKILL_SLUGS` all resolve; `deca-mastery:smoke` pins the
+  slug/name correspondence statically.
+- **Blast radius:** no other rows, tables, learner data, XP, or config. **Do not run it without the
+  owner's explicit written authorization in chat — it writes to the database shared with
+  Production.**
+
+The five deployed commits, for reference:
 
 1. **M14 Phase A** (`a054706`) — `docs/M14_LEARNING_QUALITY_AUDIT.md`, the read-only learning-quality
    audit. Its gap register (G1–G26) is the M14 roadmap; read it before any M14 work.
@@ -102,9 +147,9 @@ What Phase 1a changed and why it is safe:
   exactly `async `/`await ` inserted — a hardcoded track, a dropped guard or any smuggled edit
   fails. Never replace an immutable-base pin with a HEAD-relative one.
 
-Do not describe M14 as live: Production learners still get the pre-1a behaviour — including the
-G23 judge bypass, the G18 canned DECA ballot and the G21 fabricated speaker cards — until the five
-local commits are pushed.
+M14 Phases A + 1a–1d ARE live. What is NOT live: the G19 copy fix (local commit, unpushed) and the
+G20 activation (not run). What is NOT tested anywhere: authenticated Production behavior of any M14
+change.
 
 ### The Phase C commit chain
 
@@ -232,9 +277,8 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 
 - **Branch:** `main`
 - **origin/main and remote `refs/heads/main`:** `bb39735` — the M13E2 Phase C closeout, deployed.
-- **Local `HEAD`:** the M14 Phase 1d commit — **5 ahead, 0 behind** (`a054706` audit, `66e7dd6`
-  Phase 1a, `8a7a74f` Phase 1b, `a29e506` Phase 1c, Phase 1d), a normal fast-forward with no merge
-  commits.
+- **Local `HEAD`:** the M14 Phase 1e (G19) commit — **1 ahead, 0 behind** `origin/main`, which
+  holds the deployed `a37959c` stack.
 - **Working tree:** clean apart from this pass's own edits to the two documentation files.
 - `docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
   as such, not as app source.
@@ -491,9 +535,9 @@ the OS reaped. Never stage or commit any of it.
 
 1. Re-verify the remote with the command above, then review the stack:
    `git log origin/main..HEAD` and `git diff origin/main..HEAD`.
-2. **Push the five local M14 commits through GitHub Desktop** as a normal fast-forward — the
-   audit, the track-correct first run, the closed HOSA judging bypass, the fail-closed DECA judge,
-   and the honest Debate speaker cards.
+2. **Push the Phase 1e G19 commit through GitHub Desktop** and verify its automatic deployment
+   read-only. Then decide G20: authorize `npm run deca:skills:activate -- --apply` explicitly, or
+   defer it.
 3. Verify the automatic Vercel Production deployment read-only, from commit-linked public GitHub
    metadata. Do not bypass Deployment Protection and do not authenticate into Production.
 4. Perform authenticated verification of the practice flow when a safe session is available: issue,

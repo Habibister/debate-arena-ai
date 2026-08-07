@@ -455,18 +455,60 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 
 ## Repository state
 
+Read this as a **handoff snapshot taken at the start of the Phase 2d documentation cleanup**, not as a
+live readout. Local SHAs and ahead/behind counts move the moment another commit lands — always
+re-derive them with `git status` and `git log --oneline -5` before acting. The three levels below are
+deliberately kept apart.
+
+`docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
+as such, not as app source.
+
+### Deployed / remote state — the only claim that survives new local commits
+
 - **Branch:** `main`
-- **origin/main and remote `refs/heads/main`:** `5789e19b2c626b2a9b902c9e2af7018ff523b2b6` — M14
-  Phase 2a, and **this is the SHA Production runs** (deployment `5788268138`).
-- **Local `HEAD`:** `b9e9c2abcffd94b2b53edb2a6fa37a255fc3ad2f` — **2 ahead, 0 behind**.
-- **All M14 implementation work is deployed.** Phase 1 (G23, G18, G21, G24, G25, G19, G20) and
-  Phase 2a (word roots 9→30) are live. The only unpushed commits are the two documentation cleanups
-  that corrected stale narration in this file:
-  - `eec6ebf` — refresh Phase 2a handoff state
-  - `b9e9c2a` — remove stale M14 handoff instructions
-- **Working tree:** clean.
-- `docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
-  as such, not as app source.
+- **origin/main and remote `refs/heads/main`:** `b1f5e85aa81cfa0857c531fe7811dc7b515d215a` — M14
+  Phase 2c, and **this is the SHA Production runs** (deployment `5797883135`, `Production`,
+  `success`).
+- **Deployed M14 work:** Phase 1 (G23, G18, G21, G24, G25, G19, G20) and Phase 2a (word roots 9→30),
+  2b (prefixes 9→30) and 2c (suffixes 9→30). All three shipped banks are human-reviewed and approved.
+
+### Historical snapshot — the unpushed Phase 2d stack at the start of this cleanup
+
+At the start of this documentation cleanup, local `main` was **3 ahead, 0 behind** `origin/main` and
+contained exactly these three unpushed Phase 2d commits, oldest first:
+
+| Commit | Message | What it did |
+|---|---|---|
+| `774359f` | `feat(hosa): expand anatomy question bank` | Added `an-10`…`an-30`; anatomy 9→30, bank 117→138 |
+| `da31e3c` | `fix(hosa): refine anatomy question wording` | Refined `an-24`, `an-25`, `an-30`; no count change |
+| `e1d684d` | `docs(hosa): record anatomy human review approval` | Status only — recorded the human approval, lifted the push gate |
+
+The documentation commit that produced this section sits on top of those three, so the local stack is
+one commit taller than the table. **Do not read the table as the current HEAD.**
+
+- **Working tree at snapshot time:** clean.
+- **Phase 2d state:** anatomy implementation, refinement and human-review approval are **complete
+  locally**. Human content review is **complete**; the AI-authorship provenance stays recorded in
+  `lib/hosa-medterm.ts` permanently.
+
+### Bank composition after Phase 2d (local)
+
+| Area | Items |
+|---|---|
+| word-roots | 30 |
+| prefixes | 30 |
+| suffixes | 30 |
+| anatomy | 30 |
+| physiology | 9 |
+| pathophysiology | 9 |
+| **`MEDTERM_BANK` total** | **138** |
+
+### Next intended action
+
+1. **Push the Phase 2d stack** (a normal fast-forward from `b1f5e85`) and verify the Production
+   deployment. Nothing else is waiting on it.
+2. **Phase 2e — physiology 9→30.**
+3. **Phase 2f — pathophysiology 9→30.** **Full six-area parity occurs after Phase 2f, not 2e.**
 
 ## How to run everything
 

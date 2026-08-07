@@ -53,7 +53,7 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // M14 Phase 2a (audit G2): word roots extended 9 -> 30 so a focused session meets new items across
   // a spaced cycle instead of re-showing the same nine. Every root below already appeared in this
   // bank as a distractor or inside an existing explanation, so nothing widens the event's scope.
-  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-06: the repository owner read all
   // 21 items and approved them for medical accuracy, clarity, distractor quality, originality and
   // explanation correctness. `CLAUDE.md` requires AI-generated material to stay labelled, so the
   // authoring method is recorded here permanently — the approval is what changed, not the label.

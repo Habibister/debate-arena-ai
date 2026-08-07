@@ -9,7 +9,7 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 ### Phase 2a: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 word-root questions (`wr-10`…`wr-30`), taking that area 9→30 and the
-bank 54→75, closing audit G2 for the first area. The items were AI-authored, and on **2026-08-07 the
+bank 54→75, closing audit G2 for the first area. The items were AI-authored, and on **2026-08-06 the
 repository owner personally read all 21 and approved them** for medical accuracy, clarity, distractor
 quality, originality, explanations and CompeteReady terminology conventions — explicitly confirming
 the dual/standard meanings of `pneum`, `myel` and `cyst`, and the `cerebr/o` / `enter/o` / `col/o`

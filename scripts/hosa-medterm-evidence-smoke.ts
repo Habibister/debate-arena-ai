@@ -173,24 +173,26 @@ async function main() {
     "36. no real PrismaClient was constructed — the stub is still the module's client");
 
   // ---- 31. the bank is unchanged ------------------------------------------------------------------
-  assert.equal(MEDTERM_BANK.length, 159, "31. exactly 159 questions");
-  assert.equal(new Set(MEDTERM_BANK.map((q) => q.id)).size, 159, "31b. 159 unique ids");
+  assert.equal(MEDTERM_BANK.length, 180, "31. exactly 180 questions");
+  assert.equal(new Set(MEDTERM_BANK.map((q) => q.id)).size, 180, "31b. 180 unique ids");
   assert.equal(MEDTERM_AREAS.length, 6, "31c. exactly six areas");
-  // Audit G2 is being closed one area at a time. EXPANDED_AREAS is the single source of truth for
-  // which areas have reached depth: 2a word roots, 2b prefixes, 2c suffixes, 2d anatomy, 2e
-  // physiology. Pathophysiology stays at 9 until Phase 2f. Adding an area here without expanding
-  // it (or vice versa) fails immediately, so this list cannot drift from the bank.
+  // Audit G2's HOSA portion was closed one area at a time: 2a word roots, 2b prefixes, 2c suffixes,
+  // 2d anatomy, 2e physiology, 2f pathophysiology. Phase 2f took the LAST HOSA area to depth, so
+  // there is no longer an unexpanded area and the old `expanded ? 30 : 9` ternary would be a dead
+  // branch pretending to protect something. It is replaced by explicit FINAL HOSA PARITY assertions.
+  // This closes G2 for HOSA ONLY — the audit's G2 also covers four Debate and four DECA areas that
+  // are still at 9 each, and nothing here asserts anything about those banks.
   const EXPANDED_AREAS: readonly MedTermArea[] =
-    ["word-roots", "prefixes", "suffixes", "anatomy", "physiology"];
+    ["word-roots", "prefixes", "suffixes", "anatomy", "physiology", "pathophysiology"];
   const DEPTH_TARGET = 30;
-  const UNEXPANDED_COUNT = 9;
-  for (const area of EXPANDED_AREAS) {
-    assert.equal(byArea(area).length, DEPTH_TARGET, `31d. ${area} holds ${DEPTH_TARGET} distinct questions`);
-  }
+  assert.equal(MEDTERM_AREAS.length, EXPANDED_AREAS.length,
+    "31c2. FINAL HOSA PARITY: every declared area has reached depth — no unexpanded HOSA area remains");
   for (const a of MEDTERM_AREAS) {
-    const expected = EXPANDED_AREAS.includes(a.id) ? DEPTH_TARGET : UNEXPANDED_COUNT;
-    assert.equal(byArea(a.id).length, expected, `31d2. area ${a.id} holds exactly ${expected} questions`);
+    assert.ok(EXPANDED_AREAS.includes(a.id), `31d. ${a.id} is listed as expanded`);
+    assert.equal(byArea(a.id).length, DEPTH_TARGET, `31d2. area ${a.id} holds exactly ${DEPTH_TARGET} questions`);
   }
+  assert.equal(DEPTH_TARGET * MEDTERM_AREAS.length, MEDTERM_BANK.length,
+    "31d4. six HOSA areas x 30 = 180 — the HOSA bank is at parity");
   assert.equal(
     MEDTERM_AREAS.reduce((sum, a) => sum + byArea(a.id).length, 0),
     MEDTERM_BANK.length,
@@ -295,14 +297,20 @@ async function main() {
       focusedEv.coveredAreaCount < HOSA_MEDTERM_REQUIRED_AREAS &&
       medTermPersistenceRequest(focusedEv) === null);
   // Padding itself is NOT removed from the engine — it still applies when a request exceeds a pool.
-  // Uses PATHOPHYSIOLOGY: Phase 2e took physiology to 30, so physiology no longer pads at count 20.
-  // This example must always name an area still holding 9. Phase 2f takes the LAST such area to 30,
-  // so that slice cannot simply move this fixture again — it must re-base on a count that exceeds
-  // a 30-item pool instead. The padding path must stay proven either way.
-  const stillPads = buildMedTermSession(20, ["pathophysiology"]);
-  assert.equal(stillPads.length, 20, "11g. a 20-question request on a 9-item area still serves 20");
-  assert.equal(new Set(stillPads.map((q) => q.id)).size, 9,
-    "11g2. over 9 distinct items — the padding path survives for areas not yet expanded");
+  // RE-BASED at Phase 2f: no area holds 9 any more, so this can no longer name a small area. It now
+  // asks for MORE than a full 30-item pool. `buildMedTermSession` seeds its result with the ENTIRE
+  // shuffled pool before appending any repeat, so all 30 distinct ids are guaranteed to appear and
+  // the distinct count is deterministic, not probabilistic. Do NOT delete this — it is the only
+  // proof the repeat branch still exists now that every area has depth.
+  const OVERDRAW = 40; // > 30 enters the repeat branch; < 60 makes the while loop append exactly once
+  const stillPads = buildMedTermSession(OVERDRAW, ["pathophysiology"]);
+  assert.equal(stillPads.length, OVERDRAW, "11g. a 40-question request on a 30-item area still serves 40");
+  assert.equal(new Set(stillPads.map((q) => q.id)).size, DEPTH_TARGET,
+    "11g2. over exactly 30 distinct items — the padding path survives now that every area has depth");
+  control("the padding branch only activates because the request exceeds the pool",
+    buildMedTermSession(DEPTH_TARGET, ["pathophysiology"]).length === DEPTH_TARGET &&
+      new Set(buildMedTermSession(DEPTH_TARGET, ["pathophysiology"]).map((q) => q.id)).size === DEPTH_TARGET &&
+      OVERDRAW > DEPTH_TARGET);
   // And the newly expanded area no longer pads, which is the point of the slice.
   // Every EXPANDED area serves 20 distinct items at count 20 and is still refused on breadth alone.
   for (const area of EXPANDED_AREAS) {
@@ -644,11 +652,15 @@ async function main() {
   // any other area, a removed item, or a reordering of the pre-existing ones.
   const bankAtParent = execSync(`git show ${PRE_M13E1F}:lib/hosa-medterm.ts`, { encoding: "utf8" });
   const bankSlice = (src: string) => src.slice(src.indexOf("export const MEDTERM_BANK"), src.indexOf("function shuffle"));
-  /** One trimmed source line per item literal, in file order. Comments and blanks are ignored. */
+  /** One trimmed source line per item literal, in file order. Comments and blanks are ignored.
+   *  ONE trailing comma is normalised away on BOTH sides. Phase 2f appended after `pp-09`, which had
+   *  been the final array element and therefore carried no comma; gaining one is punctuation, not
+   *  content. Normalising cannot mask a content edit — every id, area, question, choice, answer and
+   *  explanation still has to match byte for byte, which control 31f-C1c demonstrates. */
   const itemLines = (src: string) =>
     bankSlice(src)
       .split("\n")
-      .map((line) => line.trim())
+      .map((line) => line.trim().replace(/,$/, ""))
       .filter((line) => line.startsWith("{ id:"));
   const idOf = (line: string) => (line.match(/^\{ id: "([^"]+)"/) ?? [])[1] ?? "";
 
@@ -673,36 +685,54 @@ async function main() {
   // generalised to "any id" — an unapproved area (say sf-10) must still fail, which control
   // 31f-C2 proves. Extend this list one entry per approved slice, never pre-emptively.
   const ADDITIVE_ALLOWLIST: ReadonlyArray<{ idPrefix: string; area: MedTermArea }> = [
-    { idPrefix: "wr", area: "word-roots" }, // M14 Phase 2a
-    { idPrefix: "pr", area: "prefixes" },   // M14 Phase 2b
-    { idPrefix: "sf", area: "suffixes" },   // M14 Phase 2c
-    { idPrefix: "an", area: "anatomy" },    // M14 Phase 2d
-    { idPrefix: "ph", area: "physiology" }  // M14 Phase 2e
+    { idPrefix: "wr", area: "word-roots" },      // M14 Phase 2a
+    { idPrefix: "pr", area: "prefixes" },        // M14 Phase 2b
+    { idPrefix: "sf", area: "suffixes" },        // M14 Phase 2c
+    { idPrefix: "an", area: "anatomy" },         // M14 Phase 2d
+    { idPrefix: "ph", area: "physiology" },      // M14 Phase 2e
+    { idPrefix: "pp", area: "pathophysiology" }  // M14 Phase 2f
   ];
+  // THE single predicate that decides whether an added item literal is permitted. Real additions and
+  // every control below are evaluated by THIS function. A control that re-implemented the rule with
+  // its own regex would prove nothing about the rule the bank is actually checked against, so there
+  // is deliberately only one implementation.
+  type AdditionVerdict = { ok: boolean; stage: "prefix" | "range" | "area" | "ok"; reason: string };
+  const judgeAddition = (id: string, itemLine: string): AdditionVerdict => {
+    const entry = ADDITIVE_ALLOWLIST.find((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test(id));
+    if (!entry) return { ok: false, stage: "prefix", reason: `no allowlisted prefix maps ${id}` };
+    if (!(Number(id.slice(3)) > 9)) {
+      return { ok: false, stage: "range", reason: `${id} is inside the original 01-09 range, not an addition` };
+    }
+    if (!new RegExp(`area: "${entry.area}"`).test(itemLine)) {
+      return { ok: false, stage: "area", reason: `${id} does not declare the ${entry.area} area its prefix claims` };
+    }
+    return { ok: true, stage: "ok", reason: `${id} is an allowlisted ${entry.area} addition after 09` };
+  };
   const addedIds = currentItems.map(idOf).filter((id) => !parentOrder.includes(id));
   const currentByIdArea = new Map(currentItems.map((line) => [idOf(line), line]));
   for (const id of addedIds) {
-    const entry = ADDITIVE_ALLOWLIST.find((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test(id));
-    assert.ok(entry && Number(id.slice(3)) > 9,
-      `31f5. the only permitted additions are allowlisted-area items numbered after 09 — got ${id}`);
-    assert.ok(new RegExp(`area: "${entry!.area}"`).test(currentByIdArea.get(id) ?? ""),
-      `31f6. added item ${id} is declared in the ${entry!.area} area its id prefix claims`);
+    const v = judgeAddition(id, currentByIdArea.get(id) ?? "");
+    assert.ok(v.stage !== "prefix" && v.stage !== "range",
+      `31f5. the only permitted additions are allowlisted-area items numbered after 09 — ${v.reason}`);
+    assert.ok(v.stage !== "area",
+      `31f6. added item ${id} is declared in the area its id prefix claims — ${v.reason}`);
+    assert.ok(v.ok, `31f6b. so ${id} is a permitted addition — ${v.reason}`);
   }
-  // (c) Areas with NO approved additions stay byte-identical, content and count.
+  // (c) FINAL HOSA PARITY. Every area now has approved additions, so the old
+  // "unexpanded areas stay byte-identical" else-branch became unreachable — a dead branch that still
+  // reads like protection. It is replaced by an explicit shape assertion plus per-area proof.
   const EXPANDED_ID_AREAS = ADDITIVE_ALLOWLIST.map((a) => a.area);
+  assert.deepEqual([...EXPANDED_ID_AREAS].sort(), MEDTERM_AREAS.map((a) => a.id).slice().sort(),
+    "31f7. FINAL HOSA PARITY: every declared area is explicitly allowlisted — none is left unprotected by omission");
   for (const area of MEDTERM_AREAS.map((a) => a.id)) {
     const parentArea = parentItems.filter((line) => line.includes(`area: "${area}"`));
     const currentArea = currentItems.filter((line) => line.includes(`area: "${area}"`));
-    if (EXPANDED_ID_AREAS.includes(area)) {
-      // Expanded area: every ORIGINAL item survives byte-identical and in order; only additions differ.
-      const currentOriginals = currentArea.filter((line) => parentArea.includes(line));
-      assert.deepEqual(currentOriginals, parentArea,
-        `31f7. every original ${area} item is byte-identical to the parent commit and keeps its order`);
-      assert.ok(currentArea.length > parentArea.length,
-        `31f7b. and ${area} grew rather than shrank`);
-    } else {
-      assert.deepEqual(currentArea, parentArea, `31f7. the ${area} block is byte-identical to the parent commit`);
-    }
+    // Every ORIGINAL item survives byte-identical and in order; only additions differ.
+    const currentOriginals = currentArea.filter((line) => parentArea.includes(line));
+    assert.deepEqual(currentOriginals, parentArea,
+      `31f7b. every original ${area} item is byte-identical to the parent commit and keeps its order`);
+    assert.equal(parentArea.length, 9, `31f7c. control: the parent commit really held exactly 9 ${area} items`);
+    assert.equal(currentArea.length, DEPTH_TARGET, `31f7d. and ${area} now holds ${DEPTH_TARGET}`);
   }
   // (d) The original nine of each expanded area, called out because slices append beside them.
   for (const { idPrefix } of ADDITIVE_ALLOWLIST) {
@@ -716,19 +746,52 @@ async function main() {
   const sampleParent = parentItems.find((line) => idOf(line) === "wr-01") as string;
   assert.notEqual(sampleParent.replace("Kidney", "Liver"), sampleParent,
     "31f-C1. control: a one-word answer edit produces a different line, so 31f3 would catch it");
-  // This control's fixture MUST move every slice: `pr-10` until Phase 2b approved prefixes, `sf-10`
-  // until 2c approved suffixes, `an-10` until 2d, `ph-10` until 2e approved physiology. It now uses
-  // `pp-10`, the last unapproved area. Phase 2f must find a different rejected fixture — every real
-  // area will be allowlisted, so only a non-existent prefix like `xx-10` will remain rejectable.
-  assert.ok(!ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test("pp-10")),
-    "31f-C2. control: an added pathophysiology item (pp-10) is still rejected by the allowlist");
-  assert.ok(ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test("ph-10")),
-    "31f-C2b. control: and ph-10 IS allowlisted now, so the rule genuinely changed rather than loosening to anything");
-  for (const unapproved of ["pp-10", "xx-10"]) {
-    assert.ok(!ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test(unapproved)),
-      `31f-C2c. control: ${unapproved} remains outside the allowlist`);
+  // The trailing-comma normalisation must NOT be able to hide a content change.
+  const commaOnly = `${sampleParent},`.trim().replace(/,$/, "");
+  assert.equal(commaOnly, sampleParent,
+    "31f-C1b. control: a line differing ONLY by a trailing comma normalises back to identical");
+  const wordEdit = `${sampleParent.replace("Kidney", "Liver")},`.trim().replace(/,$/, "");
+  assert.notEqual(wordEdit, sampleParent,
+    "31f-C1c. control: but the SAME normalisation still leaves a one-word content edit different, so it cannot mask one");
+  control("normalising a trailing comma cannot mask a content edit",
+    commaOnly === sampleParent && wordEdit !== sampleParent);
+  // FINAL-PARITY CONTROL REDESIGN. Through 2e this control's rejected fixture moved each slice
+  // (pr-10 -> sf-10 -> an-10 -> ph-10 -> pp-10) because one real area was always still unapproved.
+  // Phase 2f approves the last one, so no real prefix can serve as the rejected fixture and the
+  // negatives become SYNTHETIC. Every control below is evaluated by `judgeAddition` — the same
+  // predicate the real additions above are judged by — so none of them is a tautology comparing one
+  // hard-coded string against a second hard-coded regex.
+  // (1) all six legitimate prefix -> area mappings ARE accepted
+  assert.equal(ADDITIVE_ALLOWLIST.length, 6,
+    "31f-C2a. control: exactly six approved prefix->area mappings, one per HOSA area");
+  for (const { idPrefix, area } of ADDITIVE_ALLOWLIST) {
+    const v = judgeAddition(`${idPrefix}-10`, `{ id: "${idPrefix}-10", area: "${area}", question: "x" }`);
+    assert.ok(v.ok, `31f-C2. control: ${idPrefix}-10 declaring ${area} IS accepted by the real predicate — ${v.reason}`);
+    control(`the allowlist accepts ${idPrefix}-10 for ${area} through the same predicate real additions use`, v.ok);
   }
-  assert.ok(!(Number("wr-09".slice(3)) > 9), "31f-C3. control: a re-added wr-09 would fail the after-wr-09 rule");
+  // (2) arbitrary / synthetic prefixes are NOT accepted, including near-misses
+  for (const unapproved of ["xx-10", "zz-10", "medterm-10", "p-10", "phh-10"]) {
+    const v = judgeAddition(unapproved, `{ id: "${unapproved}", area: "pathophysiology", question: "x" }`);
+    assert.ok(!v.ok && v.stage === "prefix",
+      `31f-C2c. control: ${unapproved} is rejected by the real predicate — ${v.reason}`);
+    control(`the allowlist rejects the synthetic id ${unapproved}`, !v.ok && v.stage === "prefix");
+  }
+  // (3) a legitimate prefix paired with the WRONG declared area is rejected, both directions
+  const mismatchA = judgeAddition("pp-31", '{ id: "pp-31", area: "physiology", question: "x" }');
+  assert.ok(!mismatchA.ok && mismatchA.stage === "area",
+    `31f-C2d. control: pp-31 declaring physiology is rejected — ${mismatchA.reason}`);
+  const mismatchB = judgeAddition("ph-31", '{ id: "ph-31", area: "pathophysiology", question: "x" }');
+  assert.ok(!mismatchB.ok && mismatchB.stage === "area",
+    `31f-C2e. control: ph-31 declaring pathophysiology is rejected — ${mismatchB.reason}`);
+  control("a prefix/area mismatch is rejected by the same predicate, in both directions",
+    !mismatchA.ok && mismatchA.stage === "area" && !mismatchB.ok && mismatchB.stage === "area");
+  // (4) the rule was NOT generalised to "any <prefix>-NN > 09"; and an original-range id is not an addition
+  const original = judgeAddition("pp-09", '{ id: "pp-09", area: "pathophysiology", question: "x" }');
+  assert.ok(!original.ok && original.stage === "range",
+    `31f-C3. control: pp-09 cannot be treated as an allowed addition — ${original.reason}`);
+  assert.ok(!judgeAddition("wr-09", '{ id: "wr-09", area: "word-roots", question: "x" }').ok,
+    "31f-C3b. control: the after-09 rule holds for every prefix, not just the newest");
+  control("an original-range id is never accepted as an addition", !original.ok && original.stage === "range");
   assert.ok(itemLines('export const MEDTERM_BANK = [\n{ id: "x-01", area: "anatomy" },\nfunction shuffle').length === 1,
     "31f-C4. control: the item extractor really parses item literals");
 
@@ -747,7 +810,7 @@ async function main() {
     oneRaw.scorePercent === 100 && oneRaw.passed === true);
 
   console.log(
-    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order, and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30), 21 suffix items (sf-10..sf-30), 21 anatomy items (an-10..an-30) and 21 physiology items (ph-10..ph-30, AI-assisted draft pending human content review) — taking five areas to 30 and the bank to 159, while the one remaining unexpanded area (pathophysiology) stays byte-identical at 9. The word-root, prefix, suffix and anatomy additions are AI-authored and human-reviewed and approved; only the physiology additions are still awaiting that review. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order (one trailing comma is normalised on both sides, which control 31f-C1c proves cannot mask a content edit), and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30), 21 suffix items (sf-10..sf-30), 21 anatomy items (an-10..an-30), 21 physiology items (ph-10..ph-30) and 21 pathophysiology items (pp-10..pp-30) — taking ALL SIX HOSA areas to 30 and the HOSA bank to 180. Review status: Phase 2a word-roots, 2b prefixes, 2c suffixes, 2d anatomy and 2e physiology are AI-authored and human-reviewed and approved; the Phase 2f pathophysiology additions are AI-assisted draft content pending human review. This is HOSA bank parity, NOT G2 closure — the audit's G2 finding also covers four Debate areas and four DECA areas that remain at 9 questions each, and nothing here asserts anything about those two banks. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

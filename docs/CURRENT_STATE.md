@@ -2,7 +2,69 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2e — HOSA physiology bank 9→30, human-reviewed and approved, local only)_
+_Last updated: 2026-08-07 (M14 Phase 2f — HOSA pathophysiology bank 9→30, HOSA parity, local only, human content review outstanding)_
+
+## M14 Phase 2f — HOSA Medical Terminology reaches six-area parity, in local code only
+
+Audit **G2**, sixth and last **HOSA** slice. **Pathophysiology 9 → 30** (`pp-10`…`pp-30`, +21); bank
+total **159 → 180**. **All six HOSA Medical Terminology areas now hold 30.**
+
+### ⚠ This is HOSA bank parity — it is NOT G2 closure
+
+**G2 as originally audited remains OPEN.** The finding names three bank files
+(`docs/M14_LEARNING_QUALITY_AUDIT.md:573`) and ~14 areas. Phases 2a–2f covered only the six HOSA
+areas. Verified from source, still outstanding:
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 36 | claim-warrant-impact 9 · rebuttal 9 · evidence-evaluation 9 · weighing 9 |
+| `lib/deca-drills.ts` | 36 | performance-indicators 9 · business-reasoning 9 · customer-relations 9 · marketing-fundamentals 9 |
+
+**Eight Debate and DECA areas are still at 9 and still pad a 20-question request to 20 slots over 9
+distinct items** — exactly the P0 defect G2 was raised against. There are also **no per-area depth
+assertions at all** for those two banks, so a green suite does not mean they are covered. Do not
+record G2 as complete, closed, or "all areas at depth".
+
+### What Phase 2f changed
+
+- **Content-only change** — no schema, migration, seed, route, session-protocol, validator, XP,
+  mastery, review or client change. Debate and DECA bank content is untouched.
+- **Boundary held from the pathophysiology side.** Every new item tests an abnormal process, a
+  disease mechanism, or its consequence. None is a structure's location, a normal function, a
+  word-part recall item, diagnostic instruction, treatment advice or clinical management.
+- **The nine legacy items are definition-heavy; they stay unchanged, and the additions deliberately
+  do not extend that pattern** or duplicate their nine topics.
+- Coverage across six mechanism domains: inflammation and immune (5), cardiovascular (4),
+  respiratory and acid–base (3), renal and fluid (3), cell and tissue response (4), perfusion and
+  infection (2).
+- **`pp-09` gained a trailing comma** because it stopped being the final array element. That is
+  punctuation, not content: the integrity check now normalises one trailing comma on **both** sides,
+  and control `31f-C1c` proves the normalisation still leaves a one-word content edit different, so
+  it cannot mask one.
+- **The padding fixture was re-based, not deleted.** No area holds 9 any more, so `11g` now requests
+  **40 from a 30-item area** and asserts **40 served / exactly 30 distinct**. `buildMedTermSession`
+  seeds its result with the entire shuffled pool before appending repeats, so that count is
+  deterministic rather than probabilistic.
+- **The allowlist controls were redesigned, not weakened.** No real area is unapproved any more, so
+  the negatives are synthetic. All controls now run through **one shared predicate** — the same one
+  the real additions are judged by — proving six legitimate prefix→area mappings are accepted, five
+  synthetic ids are rejected, prefix/area mismatches are rejected in both directions, and an
+  original-range id is never treated as an addition.
+- **Dead branches removed.** The `expanded ? 30 : 9` ternary and the "unexpanded area stays
+  byte-identical" else-branch became unreachable at parity; both were replaced with explicit
+  final-parity assertions rather than left in place looking like protection.
+- **A stale claim was corrected.** The evidence-smoke summary still described the Phase 2e
+  physiology additions as pending human review, untrue since 2026-08-07. It is a `console.log`, not
+  an assertion — nothing was failing, it was printing something false.
+
+**⚠ The 21 new pathophysiology items are AI-ASSISTED DRAFT CONTENT and have NOT received human
+content review.** The bank carries that label above `pp-10` per `CLAUDE.md`. **Do not push this
+commit until a human has reviewed `pp-10`…`pp-30`.**
+
+**Weighting after 2f:** all six HOSA areas **16.67%** each (30 ÷ 180). True parity within the HOSA
+bank. Correctness unaffected — breadth counts distinct areas, not proportions.
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Phase 2e — the HOSA physiology bank is 30 deep, human-reviewed, local only
 
@@ -49,8 +111,9 @@ labelled in the source permanently. **The push gate is lifted.**
 **Weighting after 2e:** word-roots / prefixes / suffixes / anatomy / physiology ~18.9% each;
 pathophysiology ~5.7%. Correctness unaffected — breadth counts distinct areas, not proportions.
 
-**G2 roadmap: ONE slice remains — 2f pathophysiology, the final G2 expansion. Full six-area parity
-occurs only after Phase 2f.**
+**G2 roadmap (corrected): 2f pathophysiology is the final HOSA slice — it is NOT the final G2
+slice. Full six-area HOSA parity occurs after Phase 2f, but G2 as audited also covers four Debate
+and four DECA areas that remain at 9 each.**
 
 **Local commit only — not pushed, not deployed. No database operation.**
 
@@ -537,7 +600,9 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2c — HOSA suffix bank depth | Complete, pushed and deployed. Suffixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
-| M14 Phase 2e — HOSA physiology bank depth | **Complete locally.** Physiology 9→30, bank 138→159. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
+| M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
+| M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally** (this commit). Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. **AI-assisted draft — human content review outstanding before push.** |
+| **G2 (audit finding) — overall** | **STILL OPEN.** HOSA parity reached; **4 Debate + 4 DECA areas remain at 9 each** (`lib/debate-drills.ts` 36, `lib/deca-drills.ts` 36) with no per-area depth assertions. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

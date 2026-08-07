@@ -2,6 +2,61 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
+## Latest handoff — M14 Phase 2f: HOSA pathophysiology 9→30, HOSA parity (2026-08-07)
+
+### ⚠ Phase 2f: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/hosa-medterm.ts` gained 21 pathophysiology questions (`pp-10`…`pp-30`), taking pathophysiology
+9→30 and the bank 159→180. **These items were AI-drafted and have NOT been reviewed by a human.** A
+source comment above `pp-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa):
+expand pathophysiology question bank` commit until someone reviews those 21 items.**
+
+### ⚠ READ THIS BEFORE WRITING ANYTHING ABOUT G2
+
+**All six HOSA Medical Terminology areas now hold 30. That is HOSA bank parity. It is NOT G2
+closure, and G2 must not be recorded as complete, closed, or "all areas at depth".**
+
+The audit's G2 finding (`docs/M14_LEARNING_QUALITY_AUDIT.md:573`) names **three** bank files and
+sizes itself at ~14 areas. Phases 2a–2f covered only the six HOSA ones. Verified from source:
+
+| Bank | Total | Per-area | State |
+|---|---|---|---|
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 | **parity reached (locally)** |
+| `lib/debate-drills.ts` | 36 | claim-warrant-impact 9 · rebuttal 9 · evidence-evaluation 9 · weighing 9 | **still 9 — G2 outstanding** |
+| `lib/deca-drills.ts` | 36 | performance-indicators 9 · business-reasoning 9 · customer-relations 9 · marketing-fundamentals 9 | **still 9 — G2 outstanding** |
+
+Those eight areas still pad a 20-question request to 20 slots over 9 distinct items — the original
+P0 defect. There are **no per-area depth assertions for either bank**, so a green suite says nothing
+about them. Closing G2 needs either eight further slices (+168 items, corpus 231 → 399) or an
+explicit recorded decision to re-scope G2 and re-file the Debate/DECA depth gap as its own finding.
+**That decision has not been made. Do not make it silently.**
+
+What Phase 2f changed structurally, and what not to undo:
+
+- **`pp-09` gained a trailing comma** — it stopped being the final array element. That is
+  punctuation, not content. The integrity extractor now strips **one** trailing comma on **both**
+  sides, and control `31f-C1c` proves the same normalisation still leaves a one-word content edit
+  different, so it cannot mask one. **Do not remove that control.**
+- **The padding fixture was RE-BASED, not deleted** (`11g`/`11g2`). No area holds 9 any more, so it
+  requests **40 from a 30-item area** and asserts **40 served / exactly 30 distinct**.
+  `buildMedTermSession` seeds its result with the entire shuffled pool before appending any repeat,
+  so the distinct count is deterministic, not probabilistic. A paired control proves the branch only
+  activates because the request exceeds the pool.
+- **The allowlist controls were redesigned around ONE shared predicate,** `judgeAddition`. Real
+  additions and every control go through it — a control with its own regex would prove nothing about
+  the rule the bank is actually checked against. It proves: six legitimate prefix→area mappings
+  accepted · five synthetic ids rejected (`xx-10`, `zz-10`, `medterm-10`, `p-10`, `phh-10`) ·
+  prefix/area mismatch rejected **in both directions** (`pp-31` as physiology, `ph-31` as
+  pathophysiology) · an original-range id (`pp-09`, `wr-09`) never treated as an addition.
+- **Two dead branches were removed, not left as decoration.** The `expanded ? 30 : 9` ternary and
+  `31f7`'s "unexpanded area stays byte-identical" else became unreachable at parity. Both were
+  replaced with explicit final-parity assertions. **Never reintroduce a branch that cannot run.**
+- `EXPANDED_AREAS` and `ADDITIVE_ALLOWLIST` now contain all six areas. The immutable baseline is
+  still `398860f`. **Never reintroduce a HEAD-relative hash.**
+- **A stale claim was corrected in the same pass.** The evidence-smoke summary still described the
+  Phase 2e physiology additions as pending human review — untrue since 2026-08-07. It is a
+  `console.log`, not an assertion, so nothing was failing; it was printing something false.
+
 ## Latest handoff — M14 Phase 2e: HOSA physiology bank 9→30 (2026-08-07)
 
 ### Phase 2e: content is human-reviewed and APPROVED — clear to push
@@ -537,7 +592,7 @@ than reading a SHA out of this paragraph.
   The AI-authoring label above `ph-10` stays in `lib/hosa-medterm.ts` permanently per `CLAUDE.md`,
   and the push gate stays closed until a human reads `ph-10`…`ph-30`.
 
-### Bank composition after Phase 2e (local)
+### Bank composition after Phase 2f (local)
 
 | Area | Items | Review status |
 |---|---|---|
@@ -546,17 +601,17 @@ than reading a SHA out of this paragraph.
 | suffixes | 30 | AI-authored, human-approved 2026-08-07 |
 | anatomy | 30 | AI-authored, human-approved 2026-08-07 |
 | physiology | 30 | AI-authored, human-approved 2026-08-07 |
-| pathophysiology | 9 | legacy nine; Phase 2f expands it |
-| **`MEDTERM_BANK` total** | **159** | |
+| pathophysiology | 30 | AI-authored — **review OUTSTANDING** |
+| **`MEDTERM_BANK` total** | **180** | six HOSA areas at 30 — HOSA parity, **not** G2 closure |
 
 ### Next intended action
 
-1. **Push the Phase 2e stack** (`feat(hosa): expand physiology question bank`, `fix(hosa): refine
-   physiology question content` and this approval record) and verify the Production deployment.
-   Human review is complete, so nothing else is waiting on it.
-2. **Phase 2f — pathophysiology 9→30**, the final G2 expansion. **Full six-area parity occurs after
-   Phase 2f, not 2e.** Read the Phase 2e notes above first: the padding fixture and the `31f-C2`
-   rejected fixture both need re-basing rather than moving in that slice.
+1. **Human content review of `pp-10`…`pp-30`.** The Phase 2f commit is gated on it; nothing else
+   may happen first.
+2. **Push the Phase 2f commit** once approved, and verify the Production deployment.
+3. **Decide how G2 proceeds.** HOSA parity is reached, but **G2 remains OPEN** — see the block at the
+   top of this file. Either expand the four Debate and four DECA areas (+168 items) or record an
+   explicit decision to re-scope G2. **Do not mark G2 closed on the strength of HOSA parity.**
 
 ## How to run everything
 

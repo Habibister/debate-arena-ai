@@ -28,10 +28,17 @@ claims are gone:
   `components/study/` is verified to make no `fetch`/`prisma` call, so if decks or games ever start
   recording, the suite forces the copy and the check to move together. Five non-vacuous controls.
 
-**Phase 1e (G20) — DECA skill activation — is prepared and NOT executed.** It requires an explicit
-human authorization for a shared-Production database write. The activation plan lives in
-`scripts/seed-deca-drill-skills.ts` (dry run is the default and provably opens no connection);
-`docs/HANDOFF.md` records the exact procedure. No database operation occurred in this pass.
+**Phase 1e (G20) — DECA skill activation — was explicitly authorized and executed 2026-08-06,**
+and the result was unexpected and is recorded honestly: `npm run deca:skills:activate -- --apply`
+reported **0 created, 3 already present, 0 conflicts**. All three `Skill` rows
+(`deca-performance-indicators`, `deca-business-reasoning`, `deca-customer-relations`) already
+existed with **exactly** the approved fields — the script's fail-closed classifier reports
+"already present" only on an all-field match. **The authorized run therefore performed reads and
+zero writes.** When and by what the rows were created cannot be established from this repository
+and is not attributed; the audit's G20 finding was about `prisma/seed.ts` (which still seeds only
+`deca-marketing`) and remains accurate about the code. What matters for learners is verified: all
+four `DECA_DRILL_SKILL_SLUGS` resolve (read-only check), a second `--apply` is idempotent, and
+`deca-mastery:smoke` passes — **every DECA drill area now records mastery and schedules review.**
 
 ## M14 Phase 1d — Debate ballots name only real participants (deployed)
 
@@ -300,7 +307,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1c — DECA judging fails closed | Complete, pushed and deployed (`a29e506`). |
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
-| M14 Phase 1e — G20 DECA skill activation | **Prepared, NOT executed.** Awaits explicit authorization for the shared-Production `Skill` write. |
+| M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
 ## Shipped behavior (as implemented locally)
@@ -479,8 +486,9 @@ used or required by the session design — PostgreSQL is the only store.
 
 - **Phases A and 1a–1d ARE live** (deployment `5785864553` at `a37959c`); the G19 copy fix is
   **not** — it is a local commit only. **Authenticated Production behavior of any M14 change remains
-  untested.** The G20 DECA skill activation has **not** been run: three of four DECA drill areas
-  still record nothing (disclosed honestly in the UI) until it is explicitly authorized.
+  untested.** The G20 activation ran with explicit authorization on
+  2026-08-06 and found all three rows already present — **all four DECA drill areas now verifiably
+  record mastery.**
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for
   the earlier surfaces (HOSA hub wording, Medical-Terminology-specific practice, the HOSA room's
   post-auth fail-closed redirect, the post-auth HOSA `410` contract, the Compete HOSA entry, DECA

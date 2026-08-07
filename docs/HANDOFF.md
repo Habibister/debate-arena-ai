@@ -25,12 +25,17 @@ next. What it changed:
   makes no `fetch`/`prisma` call. **If decks or games ever start recording, that pairing fails on
   purpose — update the copy and the check together.** Five non-vacuous controls.
 
-### G20 — DECA skill activation: prepared, NOT executed, awaits explicit authorization
+### G20 — DECA skill activation: authorized and executed 2026-08-06 — zero writes needed
 
-Three of four DECA drill areas record nothing because their `Skill` rows were never created
-(`prisma/seed.ts` seeds only `deca-marketing`; the submit route returns `skill-missing` and the UI
-says "Not tracked yet"). The remedy is `scripts/seed-deca-drill-skills.ts`, already reviewed in
-full:
+OUTCOME: the owner authorized the activation in chat and `npm run deca:skills:activate -- --apply`
+ran on 2026-08-06. It reported **0 created, 3 already present, 0 conflicts** — all three rows
+already existed with exactly the approved fields (the classifier accepts nothing less), so the
+authorized run performed reads and **zero writes**. Post-verification: a second `--apply` was
+idempotent (3 already present), a read-only check confirmed all four `DECA_DRILL_SKILL_SLUGS`
+resolve as DECA/DECA, and `deca-mastery:smoke` passes. **Every DECA drill area records mastery.**
+Who created the rows, and when, cannot be established from this repository and is not attributed —
+`prisma/seed.ts` still seeds only `deca-marketing`, so the audit's code-level finding was accurate.
+No rollback is applicable; nothing was written. The plan that was authorized, for the record:
 
 - **What changes:** exactly three `Skill` rows are CREATED (never updated):
   `deca-performance-indicators` (order 20), `deca-business-reasoning` (21),
@@ -535,9 +540,8 @@ the OS reaped. Never stage or commit any of it.
 
 1. Re-verify the remote with the command above, then review the stack:
    `git log origin/main..HEAD` and `git diff origin/main..HEAD`.
-2. **Push the Phase 1e G19 commit through GitHub Desktop** and verify its automatic deployment
-   read-only. Then decide G20: authorize `npm run deca:skills:activate -- --apply` explicitly, or
-   defer it.
+2. **Push the Phase 1e G19 commit (and this docs commit) through GitHub Desktop** and verify the
+   automatic deployment read-only. G20 is done — authorized, executed, verified.
 3. Verify the automatic Vercel Production deployment read-only, from commit-linked public GitHub
    metadata. Do not bypass Deployment Protection and do not authenticate into Production.
 4. Perform authenticated verification of the practice flow when a safe session is available: issue,

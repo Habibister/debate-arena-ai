@@ -232,7 +232,19 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // management decision (that is `pathophysiology`, reserved for Phase 2f), and none is a bare
   // word-part or term-definition recall item (those are `word-roots`, `prefixes` and `suffixes`).
   // Deliberately absent: any third insulin/glucose item — ph-02 and ph-08 already overlap there.
-  // AI-ASSISTED DRAFT CONTENT — human content review is still outstanding (see docs/HANDOFF.md).
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // 21 items and approved their physiological accuracy, the physiology/anatomy/pathophysiology
+  // boundary, answer uniqueness, distractors, wording, explanations and mechanism precision —
+  // including the refined ph-10 (systole scoped to the ventricles), ph-11 (impulse spreading
+  // through the atria before the AV node), ph-13 (stroke volume may also rise in exercise),
+  // ph-15 (partial-pressure gradient), ph-16 (healthy person at rest), ph-17 (small intestine
+  // completing most digestion, with many lipids entering lymphatic lacteals), ph-20 (cells and
+  // most large proteins retained, then selective tubular reabsorption/secretion), ph-24 (typical
+  // chemical synapse, synaptic cleft), ph-25 (no simplistic 'opposite' claim) and ph-26 (calcium
+  // binding troponin). Also approved as reviewed judgments: ph-14 is physiology, not anatomy;
+  // the ph-17/ph-19 overlap is acceptable reinforcement. `CLAUDE.md` requires AI-generated
+  // material to stay labelled, so the authoring method is recorded here permanently — the
+  // approval is what changed, not the provenance.
   { id: "ph-10", area: "physiology", question: "During ventricular systole, the ventricles normally:", choices: ["Contract and eject blood into the aorta and pulmonary artery", "Relax and fill with returning blood", "Stop all electrical activity briefly", "Push blood backward into the atria"], correctAnswer: "Contract and eject blood into the aorta and pulmonary artery", explanation: "Ventricular systole is the ventricles' contraction phase: they squeeze and eject blood into the aorta and pulmonary artery. Ventricular filling happens later, during ventricular diastole." },
   { id: "ph-11", area: "physiology", question: "After the SA node initiates the impulse and it spreads through the atria, the impulse next reaches the:", choices: ["AV node", "Purkinje fibers", "Left bundle branch", "Aorta"], correctAnswer: "AV node", explanation: "The normal sequence is SA node, conduction across the atria, AV node, bundle of His, bundle branches, then Purkinje fibers. The aorta is a blood vessel and carries no impulse." },
   { id: "ph-12", area: "physiology", question: "The normal function of the heart valves during the cardiac cycle is to:", choices: ["Keep blood moving in one direction", "Generate the electrical impulse", "Pump blood out of the heart", "Filter waste from the blood"], correctAnswer: "Keep blood moving in one direction", explanation: "Valves open and close passively with pressure changes so blood cannot flow backward. The muscle does the pumping and the SA node generates the impulse." },

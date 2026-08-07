@@ -4,12 +4,22 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Phase 2e: HOSA physiology bank 9→30 (2026-08-07)
 
-### ⚠ Phase 2e: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Phase 2e: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 physiology questions (`ph-10`…`ph-30`), taking physiology 9→30 and
-the bank 138→159. **These items were AI-drafted and have NOT been reviewed by a human.** A source
-comment above `ph-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa): expand
-physiology question bank` commit until someone reviews those 21 items.**
+the bank 138→159. The items were AI-authored, and on **2026-08-07 the repository owner personally
+read all 21 and approved them** — physiological accuracy, the physiology/anatomy/pathophysiology
+boundary, answer uniqueness, distractors, wording, explanations and mechanism precision — including
+the ten refined items and the carried judgments that `ph-14` is physiology rather than anatomy and
+that the `ph-17`/`ph-19` overlap is acceptable educational reinforcement. **The push gate is lifted.**
+
+Two things to keep straight, exactly as for Phases 2a–2d:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently** (`CLAUDE.md`). Approval changed the
+  review status, not the provenance.
 
 **Five of six G2 areas are now at depth. Pathophysiology (9) is the only one left.**
 
@@ -535,16 +545,16 @@ than reading a SHA out of this paragraph.
 | prefixes | 30 | AI-authored, human-approved 2026-08-07 |
 | suffixes | 30 | AI-authored, human-approved 2026-08-07 |
 | anatomy | 30 | AI-authored, human-approved 2026-08-07 |
-| physiology | 30 | AI-authored — **review OUTSTANDING** |
+| physiology | 30 | AI-authored, human-approved 2026-08-07 |
 | pathophysiology | 9 | legacy nine; Phase 2f expands it |
 | **`MEDTERM_BANK` total** | **159** | |
 
 ### Next intended action
 
-1. **Human content review of `ph-10`…`ph-30`.** Nothing else may happen first — the Phase 2e commit
-   is gated on it.
-2. **Push the Phase 2e commit** once approved, and verify the Production deployment.
-3. **Phase 2f — pathophysiology 9→30**, the final G2 expansion. **Full six-area parity occurs after
+1. **Push the Phase 2e stack** (`feat(hosa): expand physiology question bank`, `fix(hosa): refine
+   physiology question content` and this approval record) and verify the Production deployment.
+   Human review is complete, so nothing else is waiting on it.
+2. **Phase 2f — pathophysiology 9→30**, the final G2 expansion. **Full six-area parity occurs after
    Phase 2f, not 2e.** Read the Phase 2e notes above first: the padding fixture and the `31f-C2`
    rejected fixture both need re-basing rather than moving in that slice.
 

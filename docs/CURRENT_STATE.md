@@ -2,9 +2,9 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2e — HOSA physiology bank 9→30, local only, human content review outstanding)_
+_Last updated: 2026-08-07 (M14 Phase 2e — HOSA physiology bank 9→30, human-reviewed and approved, local only)_
 
-## M14 Phase 2e — the HOSA physiology bank is 30 deep, in local code only
+## M14 Phase 2e — the HOSA physiology bank is 30 deep, human-reviewed, local only
 
 Audit **G2**, fifth slice. **Physiology 9 → 30** (`ph-10`…`ph-30`, +21); bank total **138 → 159**.
 Word roots, prefixes, suffixes and anatomy stay at 30; **pathophysiology stays at 9** and is the last
@@ -32,9 +32,19 @@ area left. **Five of the six G2 areas are now at depth.**
   a `console.log`, not an assertion, so nothing was failing — it was simply printing something false.
   No assertion or question content changed with it.
 
-**⚠ The 21 new physiology items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
-review.** The bank carries that label above `ph-10` per `CLAUDE.md`. **Do not push this commit until
-a human has reviewed `ph-10`…`ph-30`.**
+**Human content review is COMPLETE (2026-08-07).** The 21 physiology items were AI-authored and the
+repository owner then personally read all of `ph-10`…`ph-30` and approved their physiological
+accuracy, the physiology/anatomy/pathophysiology boundary, answer uniqueness, distractors, wording,
+explanations, mechanism precision and suitability for CompeteReady — specifically approving the ten
+refined items (`ph-10` ventricles, `ph-11` atrial spread, `ph-13` stroke volume, `ph-15`
+partial-pressure gradient, `ph-16` healthy-at-rest scope, `ph-17` small-intestinal absorption with
+lymphatic lipid transport, `ph-20` glomerular retention plus selective tubular handling, `ph-24`
+chemical-synapse scope, `ph-25` independent autonomic descriptions, `ph-26` calcium–troponin), plus
+the carried judgments that `ph-14` is physiology rather than anatomy and that the `ph-17`/`ph-19`
+overlap is acceptable educational reinforcement. **The governing boundary remains recorded.** **The
+approval rests on that human reading alone; the earlier AI pre-screen was the authoring model
+checking its own output and formed no part of it.** Per `CLAUDE.md` the AI-authoring provenance stays
+labelled in the source permanently. **The push gate is lifted.**
 
 **Weighting after 2e:** word-roots / prefixes / suffixes / anatomy / physiology ~18.9% each;
 pathophysiology ~5.7%. Correctness unaffected — breadth counts distinct areas, not proportions.
@@ -527,7 +537,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2c — HOSA suffix bank depth | Complete, pushed and deployed. Suffixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
-| M14 Phase 2e — HOSA physiology bank depth | **Complete locally** (this commit). Physiology 9→30, bank 138→159. **AI-assisted draft — human content review outstanding before push.** |
+| M14 Phase 2e — HOSA physiology bank depth | **Complete locally.** Physiology 9→30, bank 138→159. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

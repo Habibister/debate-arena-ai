@@ -4,16 +4,24 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Phase 2a: HOSA word-root bank 9→30 (2026-08-06)
 
-**Read this before pushing. TWO local commits are unpushed, and the second needs a human read.**
+**M14 Phase 2a is CLOSED: pushed, deployed and human-reviewed.** Production runs
+`5789e19b2c626b2a9b902c9e2af7018ff523b2b6` (GitHub deployment `5788268138`, `Production`,
+`success`, verified read-only). HOSA word roots are at **30 questions** and the bank at 75, so a
+focused 20-question word-roots session now serves 20 DISTINCT items instead of padding nine.
+Human content review of `wr-10`…`wr-30` is **complete and approved**. Nothing here is pending.
 
-### Phase 2a: content is human-reviewed and APPROVED — clear to push
+**Audit G2 is closed for word roots ONLY.** Five areas remain at 9 questions each and are the
+remaining Phase 2 work, one area per slice: **prefixes, suffixes, anatomy, physiology,
+pathophysiology**.
+
+### Phase 2a: content is human-reviewed and APPROVED — shipped
 
 `lib/hosa-medterm.ts` gained 21 word-root questions (`wr-10`…`wr-30`), taking that area 9→30 and the
 bank 54→75, closing audit G2 for the first area. The items were AI-authored, and on **2026-08-06 the
 repository owner personally read all 21 and approved them** for medical accuracy, clarity, distractor
 quality, originality, explanations and CompeteReady terminology conventions — explicitly confirming
 the dual/standard meanings of `pneum`, `myel` and `cyst`, and the `cerebr/o` / `enter/o` / `col/o`
-refinements. **The push gate is lifted.**
+refinements. **The push gate was lifted on that approval, and the commits shipped.**
 
 Two things to keep straight if this ever comes up again:
 

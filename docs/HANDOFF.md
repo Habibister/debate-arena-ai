@@ -339,10 +339,15 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 ## Repository state
 
 - **Branch:** `main`
-- **origin/main and remote `refs/heads/main`:** `bb39735` — the M13E2 Phase C closeout, deployed.
-- **Local `HEAD`:** the M14 Phase 1e (G19) commit — **1 ahead, 0 behind** `origin/main`, which
-  holds the deployed `a37959c` stack.
-- **Working tree:** clean apart from this pass's own edits to the two documentation files.
+- **origin/main and remote `refs/heads/main`:** `5789e19b2c626b2a9b902c9e2af7018ff523b2b6` — M14
+  Phase 2a, and **this is the SHA Production runs** (deployment `5788268138`).
+- **Local `HEAD`:** `b9e9c2abcffd94b2b53edb2a6fa37a255fc3ad2f` — **2 ahead, 0 behind**.
+- **All M14 implementation work is deployed.** Phase 1 (G23, G18, G21, G24, G25, G19, G20) and
+  Phase 2a (word roots 9→30) are live. The only unpushed commits are the two documentation cleanups
+  that corrected stale narration in this file:
+  - `eec6ebf` — refresh Phase 2a handoff state
+  - `b9e9c2a` — remove stale M14 handoff instructions
+- **Working tree:** clean.
 - `docs/curriculum/` is tracked (committed in `d7efcb5`) and is the approved research record — treat it
   as such, not as app source.
 

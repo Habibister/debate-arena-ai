@@ -2,7 +2,42 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M14 Phase 2a — HOSA word-root bank 9→30, human-reviewed and approved, local only)_
+_Last updated: 2026-08-07 (M14 Phase 2c — HOSA suffix bank 9→30, local only, human content review outstanding)_
+
+## M14 Phase 2c — the HOSA suffix bank is 30 deep, in local code only
+
+Audit **G2**, third slice. **Suffixes 9 → 30** (`sf-10`…`sf-30`, +21); bank total **96 → 117**.
+Word roots and prefixes stay at 30; anatomy, physiology and pathophysiology stay at 9.
+
+- **Content-only change** — no schema, migration, seed, route, session-protocol, validator, XP,
+  mastery, review or client change, the same as 2a and 2b.
+- **Every addition was classified as a TRUE suffix first.** Four candidates from the plan were
+  **deliberately rejected** rather than forced in: `-poiesis` (meaning collides with `-genesis`),
+  `-rrhagia` (too close to `-rrhea`), `-stenosis` (composes `-osis`, which this slice teaches) and
+  **`-edema`** — a standalone term rather than a clean suffix, the same error class that put
+  `olig/o` in the prefix bank in 2b. `-malacia` (softening) was added in their place, pairing with
+  `-sclerosis` (hardening).
+- **A focused 20-question session in EVERY expanded area now serves 20 distinct items** with no
+  padding, and each is still refused review on breadth alone. Padding survival moved to **anatomy**.
+- **The additive allowlist gained one explicit entry** (`sf-*` → suffixes), still anchored to the
+  immutable `398860f`; the `31f-C2` rejected fixture moved `sf-10` → **`an-10`**, and the byte-identical
+  branch is now driven by `MEDTERM_AREAS` rather than a hardcoded list so future slices need one edit.
+
+**⚠ The 21 new suffix items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** The bank carries that label above `sf-10` per `CLAUDE.md`. **Do not push this commit until
+a human has reviewed `sf-10`…`sf-30`.**
+
+**One terminology-convention concern recorded for human review, deliberately NOT acted on:** the
+existing `sf-04` teaches `-ology`, though strictly the ending is `-logy` with the `o` supplied by the
+preceding combining form. `sf-26` (`-logist`) shares that property. `sf-04` was not rewritten — it is
+pre-existing content outside this slice's scope — but the convention should be settled deliberately
+rather than spread further by default.
+
+**Weighting after 2c:** word-roots / prefixes / suffixes ~25.6% each, the three unexpanded areas
+~7.7% each. Better than after 2b (two areas at 31.3%); the skew shrinks with each slice and reaches
+parity at 2e. Correctness unaffected — breadth counts distinct areas, not proportions.
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Phase 2b — the HOSA prefix bank is 30 deep, human-reviewed, local only
 
@@ -397,7 +432,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
 | M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
-| M14 Phase 2b — HOSA prefix bank depth | **Complete locally.** Prefixes 9→30, bank 75→96. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
+| M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
+| M14 Phase 2c — HOSA suffix bank depth | **Complete locally** (this commit). Suffixes 9→30, bank 96→117. **AI-assisted draft — human content review outstanding before push.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

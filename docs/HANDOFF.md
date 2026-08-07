@@ -2,9 +2,37 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 2b: HOSA prefix bank 9→30 (2026-08-07)
+## Latest handoff — M14 Phase 2c: HOSA suffix bank 9→30 (2026-08-07)
 
-### Phase 2b: content is human-reviewed and APPROVED — clear to push
+### ⚠ Phase 2c: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/hosa-medterm.ts` gained 21 suffix questions (`sf-10`…`sf-30`), taking suffixes 9→30 and the bank
+96→117. **These items were AI-drafted and have NOT been reviewed by a human.** A source comment above
+`sf-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa): expand suffix question
+bank` commit until someone reviews those 21 items.**
+
+**Production runs `8f6169f01a981f116dcf69dc3a5958fbe9067060`** (deployment `5796977130`, `Production`,
+`success`) — Phase 2b, whose prefix content IS human-approved.
+
+What Phase 2c changed, and what not to undo:
+
+- **Four candidates were rejected on classification grounds**, not laziness: `-poiesis`, `-rrhagia`,
+  `-stenosis` and **`-edema`** (a standalone term, not a clean suffix). Keep that filter — it is the
+  same check that caught `olig/o` in 2b.
+- **The `31f-C2` rejected fixture moved `sf-10` → `an-10`.** It has now moved twice (pr → sf → an).
+  **Move it again every slice**, or the allowlist silently stops being protected.
+- **Padding survival moved suffixes → anatomy** (`11g`). Always name an area still holding 9.
+- **`11h` now loops over `EXPANDED_AREAS`**, so every expanded area is proven padding-free and still
+  breadth-refused; the byte-identical branch is driven by `MEDTERM_AREAS`. Future slices need one
+  `EXPANDED_AREAS` entry and one allowlist entry.
+- **Open convention question for a human:** `sf-04` teaches `-ology` where the strict form is `-logy`
+  plus a combining vowel; `sf-26` (`-logist`) shares it. `sf-04` was NOT rewritten — pre-existing
+  content, outside scope — but decide the convention before it spreads further.
+
+**G2 status: word roots, prefixes and suffixes at 30; anatomy, physiology and pathophysiology remain
+at 9** — two slices left after this one.
+
+### Phase 2b: content is human-reviewed and APPROVED — deployed
 
 `lib/hosa-medterm.ts` gained 21 prefix questions (`pr-10`…`pr-30`), taking prefixes 9→30 and the bank
 75→96. The items were AI-authored, and on **2026-08-07 the repository owner personally read all 21

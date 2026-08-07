@@ -53,14 +53,25 @@ What Phase 2a changed structurally, and what not to undo:
   HEAD-relative hash.**
 - The remaining five areas stay at 9 by design — one area per Phase 2 slice.
 
-**M13E2 AND the five-commit M14 stack are pushed and deployed.** Production runs
-`a37959c1500c405d0302e769996d9f850020707e` — GitHub deployment `5785864553`, `Production`,
-`success`, tied to that exact SHA and verified read-only (public routes 200/307, zero 5xx; the live
-`/signup` no longer offers Public Speaking). **Authenticated Production behavior remains untested**,
-and no database or Production operation occurred in any M14 pass.
+**Production currently runs `5789e19b2c626b2a9b902c9e2af7018ff523b2b6`** (M14 Phase 2a), GitHub
+deployment `5788268138`, `Production`, `success`, verified read-only. Deployment history for the M14
+work, for the record:
 
-**One commit is local only: M14 Phase 1e (G19)** — the Study Arcade fake-progress copy fix. Push it
-next. What it changed:
+| Stack | Deployed SHA | GitHub deployment |
+|---|---|---|
+| M13E2 Phase C | `bb397350029975520e0b96c1c741e7f873f59086` | `5783679689` |
+| M14 Phases A + 1a–1d | `a37959c1500c405d0302e769996d9f850020707e` | `5785864553` |
+| M14 Phase 1e (G19 + G20 record) | `a217baa6bb5d2eae983662b231c82dc87580deb3` | `5787742198` |
+| M14 Phase 2a (word roots 9→30) | `5789e19b2c626b2a9b902c9e2af7018ff523b2b6` | `5788268138` |
+
+Each was verified read-only from commit-linked GitHub metadata plus public route checks (200/307 to
+sign-in, zero 5xx; the live `/signup` no longer offers Public Speaking).
+**Authenticated Production behavior remains untested**, and no database or Production operation
+occurred in any M14 verification pass.
+
+**M14 Phase 1 is COMPLETE and deployed** — G23, G18, G21, G24, G25, G19 and G20 are all closed, and
+Phase 2a word roots is deployed on top. **G19 shipped in the `a217baa` stack; there is no pending
+G19 push and nothing from Phase 1 or 2a is waiting to go out.** What G19 changed, for reference:
 
 - `app/(app)/study-arcade/page.tsx` — the header's recording claim is scoped to the drills, and the
   record tile attributes its (always-honest) count to real drill sessions; both now state plainly

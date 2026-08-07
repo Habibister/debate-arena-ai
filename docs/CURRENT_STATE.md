@@ -2,7 +2,45 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-06 (M14 Phases A + 1a–1d pushed and deployed; Phase 1e G19 local only)_
+_Last updated: 2026-08-07 (M14 Phase 2a — HOSA word-root bank 9→30, local only, human content review outstanding)_
+
+## M14 Phase 2a — the HOSA word-root bank is 30 deep, in local code only
+
+Audit finding **G2** (P0): every drill area held 9 questions, so a 20-question request served 20
+slots over 9 distinct items and mastery measured recall of those nine. G2 prescribes **≥30 per
+area**, one area per session. Phase 2a takes the **first** area to depth:
+
+- **`lib/hosa-medterm.ts`: word roots 9 → 30** (`wr-10`…`wr-30`, +21). Bank total **54 → 75**. The
+  other five areas are deliberately untouched at 9 and follow in later Phase 2 slices.
+- **Content-only change.** No schema, migration, seed, route, session-protocol, validator, XP,
+  mastery, review or client change was needed — `buildMedTermSession` slices whatever the pool
+  holds, the session route dedups to distinct item rows and pads the order dynamically, and grading
+  reads the issued snapshot rather than the live bank.
+- **Every new root already appeared in this bank** as a distractor or inside an existing
+  explanation (`my`, `cerebr`, `cost`, `cyst`, `hyster`, `hist`, `hydr`, `ot`, `ophthalm`, `dent`,
+  `pneum`, `arthr`, `rhin`, `angi`, `phleb`, `enter`, `col`, `crani`, `myel`, `lip`, `aden`), so
+  nothing widens the event's scope. Verified: 4 choices each, `correctAnswer` present in its own
+  choices, no duplicate choices, no duplicate answers, no duplicate roots, no answer leakage.
+- **The observable effect G2 asked for:** a focused 20-question word-roots session now serves **20
+  distinct** questions with **no padding**. It clears the 10-distinct count floor and is *still*
+  refused review — now on breadth alone (1 area < 3). The padding path itself survives for areas not
+  yet expanded, asserted against prefixes.
+- **Two byte pins were narrowed, neither removed.** `hosa-medterm-evidence:smoke` now proves the
+  bank is **additive-only** against the immutable parent `398860f`: all 54 pre-existing items
+  byte-identical and in original order, the five non-word-root blocks byte-identical, `wr-01`…
+  `wr-09` individually pinned, and the only permitted delta is `wr-NN > 09` in the word-roots area.
+  `review-ladder:smoke` dropped a **HEAD-relative** hash on the bank (it would have gone green the
+  moment this commit landed) in favour of behavioural inertness assertions: no XP symbol, no mastery
+  symbol, no prisma/fetch/session/review reach, the pure persistence request still returning null on
+  insufficient evidence, both evidence floors unchanged, and the neighbouring Debate/DECA banks not
+  importing it — each with non-vacuous controls.
+
+**⚠ The 21 new items are AI-ASSISTED DRAFT CONTENT and have NOT received human content review.**
+`CLAUDE.md` requires AI-generated material to be labelled as such; the bank carries that label in a
+source comment. **Do not push this commit until a human has reviewed the medical accuracy of
+`wr-10`…`wr-30`.** Nothing else in the change is content-dependent.
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 status — Phases A and 1a–1d are DEPLOYED; Phase 1e G19 is local
 
@@ -307,6 +345,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1c — DECA judging fails closed | Complete, pushed and deployed (`a29e506`). |
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
+| M14 Phase 2a — HOSA word-root bank depth | **Complete locally** (this commit). Word roots 9→30, bank 54→75. **AI-assisted draft — human content review outstanding before push.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

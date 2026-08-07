@@ -2,9 +2,36 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 1e: G19 fixed locally; G20 awaits authorization (2026-08-06)
+## Latest handoff — M14 Phase 2a: HOSA word-root bank 9→30 (2026-08-07)
 
-**Read this before pushing the G19 commit or authorizing G20.**
+**Read this before pushing. TWO local commits are unpushed, and the second needs a human read.**
+
+### ⚠ Phase 2a: AI-assisted content awaiting human review
+
+`lib/hosa-medterm.ts` gained 21 word-root questions (`wr-10`…`wr-30`), taking that area 9→30 and the
+bank 54→75, closing audit G2 for the first area. **These items were AI-drafted and have NOT been
+reviewed by a human for medical accuracy.** `CLAUDE.md` requires AI-generated material to be
+labelled; a source comment above `wr-10` carries that label. **Do not push the
+`feat(hosa): expand word-root question bank` commit until someone reviews those 21 items.** Every
+other part of the change is content-independent and verified.
+
+What Phase 2a changed structurally, and what not to undo:
+
+- **Content-only.** No schema, seed, route, session-protocol, validator, XP, mastery, review or
+  client change. `buildMedTermSession` already sliced whatever the pool held; the session route
+  already deduped to distinct item rows and padded the order.
+- **A focused 20-question word-roots session now serves 20 DISTINCT items** — no padding. It clears
+  the 10-distinct count floor and is still refused review on **breadth** (1 area < 3). Both evidence
+  floors are unchanged; the skill stays review-only.
+- **Two byte pins were narrowed, never removed.** `hosa-medterm-evidence:smoke` (31f*) is now the
+  single home of bank content integrity: additive-only against the **immutable** `398860f`, with all
+  54 pre-existing items byte-identical and ordered, the five other areas untouched, and only
+  `wr-NN > 09` additions permitted. `review-ladder:smoke` dropped its **HEAD-relative** bank hash —
+  which would have self-healed on commit — for behavioural inertness assertions (65M*): no XP or
+  mastery symbol, no prisma/fetch/session/review reach, floors unchanged, neighbours don't import it.
+  **If you expand another area, extend 31f's allowlist deliberately; never reintroduce a
+  HEAD-relative hash.**
+- The remaining five areas stay at 9 by design — one area per Phase 2 slice.
 
 **M13E2 AND the five-commit M14 stack are pushed and deployed.** Production runs
 `a37959c1500c405d0302e769996d9f850020707e` — GitHub deployment `5785864553`, `Production`,

@@ -790,8 +790,8 @@ async function main() {
     "26h16. control: the leak scan matches an answer-key field in a response literal");
 
   const hosaBank = await import("../lib/hosa-medterm");
-  assert.equal(hosaBank.MEDTERM_BANK.length, 54, "26i. the HOSA bank still holds 54 questions");
-  assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 54, "26j. with unique ids");
+  assert.equal(hosaBank.MEDTERM_BANK.length, 75, "26i. the HOSA bank holds 75 questions (M14 Phase 2a took word roots to 30)");
+  assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 75, "26j. with unique ids");
   assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "26k. across six areas");
 
   // ---- 25b-25f. what the Debate byte-pins were protecting, asserted exactly ---------------------------

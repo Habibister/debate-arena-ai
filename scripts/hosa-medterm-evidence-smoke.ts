@@ -173,12 +173,21 @@ async function main() {
     "36. no real PrismaClient was constructed — the stub is still the module's client");
 
   // ---- 31. the bank is unchanged ------------------------------------------------------------------
-  assert.equal(MEDTERM_BANK.length, 54, "31. exactly 54 questions");
-  assert.equal(new Set(MEDTERM_BANK.map((q) => q.id)).size, 54, "31b. 54 unique ids");
+  assert.equal(MEDTERM_BANK.length, 75, "31. exactly 75 questions");
+  assert.equal(new Set(MEDTERM_BANK.map((q) => q.id)).size, 75, "31b. 75 unique ids");
   assert.equal(MEDTERM_AREAS.length, 6, "31c. exactly six areas");
+  // M14 Phase 2a (audit G2): word roots is the FIRST area taken to depth; the other five are
+  // deliberately untouched at 9 and are expanded in later Phase 2 slices, one area at a time.
+  assert.equal(byArea("word-roots").length, 30, "31d. word roots holds 30 distinct questions");
   for (const a of MEDTERM_AREAS) {
-    assert.equal(byArea(a.id).length, 9, `31d. area ${a.id} holds exactly nine questions`);
+    const expected = a.id === "word-roots" ? 30 : 9;
+    assert.equal(byArea(a.id).length, expected, `31d2. area ${a.id} holds exactly ${expected} questions`);
   }
+  assert.equal(
+    MEDTERM_AREAS.reduce((sum, a) => sum + byArea(a.id).length, 0),
+    MEDTERM_BANK.length,
+    "31d3. and every bank item belongs to a declared area"
+  );
   assert.equal(MEDTERM_SKILL_SLUG, "hosa-medical-terminology", "31e. the skill slug is unchanged");
   assert.equal(HOSA_MEDTERM_REQUIRED_UNIQUE, 10, "the evidence floor is ten distinct questions");
   assert.equal(HOSA_MEDTERM_REQUIRED_AREAS, 3, "spanning at least three areas");
@@ -250,17 +259,38 @@ async function main() {
   control(`repeats inflated the raw score to ${qiRaw.scorePercent}% while evidence stayed 60%`,
     qiRaw.scorePercent > 60 && qiRaw.passed === true && qiEv.passed === false);
 
-  // ---- 11. focused padding ------------------------------------------------------------------------------
-  const padded = buildMedTermSession(20, ["word-roots"]);
-  assert.equal(padded.length, 20, "11. a focused 20-question session serves 20");
-  assert.equal(new Set(padded.map((q) => q.id)).size, 9, "11b. from only nine distinct questions");
-  const paddedEv = buildMedTermEvidence(padded.map((q) => ({ id: q.id, selected: right(q) })));
-  assert.equal(paddedEv.uniqueTotal, 9, "11c. so the evidence set holds nine");
-  assert.equal(paddedEv.coveredAreaCount, 1, "11d. covering one area");
-  assert.equal(paddedEv.evidenceStatus, "insufficient-evidence", "11e. insufficient on BOTH count and breadth");
-  assert.equal(medTermPersistenceRequest(paddedEv), null, "11f. no review call from a focused session");
-  control("a perfect focused session still records nothing",
-    paddedEv.evidenceScore === 100 && medTermPersistenceRequest(paddedEv) === null);
+  // ---- 11. focused sessions: no padding at 20, and breadth is now the ONLY bar --------------------
+  // Before M14 Phase 2a word roots held 9, so a focused 20-question session served 20 slots over 9
+  // distinct items and failed the evidence floor on BOTH count and breadth. With 30 items the
+  // padding is gone and the count floor is met — so this block now proves the REMAINING protection
+  // stands on its own: one area is still not enough breadth to touch spaced review.
+  const focused = buildMedTermSession(20, ["word-roots"]);
+  assert.equal(focused.length, 20, "11. a focused 20-question session serves 20");
+  assert.equal(new Set(focused.map((q) => q.id)).size, 20,
+    "11b. from 20 DISTINCT questions — no repeated slot, because the bank is deeper than the request");
+  assert.equal(focused.length, new Set(focused.map((q) => q.id)).size,
+    "11b2. so served length equals distinct count: padding is not required at count 20");
+  const focusedEv = buildMedTermEvidence(focused.map((q) => ({ id: q.id, selected: right(q) })));
+  assert.equal(focusedEv.uniqueTotal, 20, "11c. the evidence set holds all 20");
+  assert.ok(focusedEv.uniqueTotal >= HOSA_MEDTERM_REQUIRED_UNIQUE,
+    "11c2. which now SATISFIES the 10-distinct count floor");
+  assert.equal(focusedEv.coveredAreaCount, 1, "11d. but it still covers exactly one area");
+  assert.ok(focusedEv.coveredAreaCount < HOSA_MEDTERM_REQUIRED_AREAS,
+    "11d2. below the 3-area breadth floor");
+  assert.equal(focusedEv.evidenceStatus, "insufficient-evidence",
+    "11e. so it is STILL insufficient — now for breadth alone, not count");
+  assert.equal(medTermPersistenceRequest(focusedEv), null,
+    "11f. and no review call is made, for the correct breadth reason");
+  control("a perfect 20-distinct focused session still records nothing, on breadth alone",
+    focusedEv.evidenceScore === 100 &&
+      focusedEv.uniqueTotal >= HOSA_MEDTERM_REQUIRED_UNIQUE &&
+      focusedEv.coveredAreaCount < HOSA_MEDTERM_REQUIRED_AREAS &&
+      medTermPersistenceRequest(focusedEv) === null);
+  // Padding itself is NOT removed from the engine — it still applies when a request exceeds a pool.
+  const stillPads = buildMedTermSession(20, ["prefixes"]);
+  assert.equal(stillPads.length, 20, "11g. a 20-question request on a 9-item area still serves 20");
+  assert.equal(new Set(stillPads.map((q) => q.id)).size, 9,
+    "11g2. over 9 distinct items — the padding path survives for areas not yet expanded");
 
   // ---- 12-14. dedup, unknown ids, cross-area -------------------------------------------------------------
   const rest = spread(10, 0, THREE).slice(1);
@@ -581,11 +611,69 @@ async function main() {
   assert.ok(hosaCode.indexOf("parseStoredResult(") < hosaCode.indexOf("recordPracticeOutcomeInTransaction("),
     "35d4. a completed retry returns before the transactional review call");
 
-  // ---- 31f. the bank CONTENT is untouched — answers and explanations included --------------------------------------
+  // ---- 31f. the bank CONTENT is additive-only — every pre-existing item byte-identical ------------
+  // Until M14 Phase 2a this asserted the WHOLE bank slice was byte-identical to PRE_M13E1F. Phase 2a
+  // deliberately appends word-root items (audit G2), so a whole-slice hash would forbid an approved
+  // change rather than protect anything. The protection is NARROWED, never removed: every item that
+  // existed at the immutable parent commit must still be present byte-for-byte, and the ONLY
+  // permitted delta is new `wr-NN` entries appearing after `wr-09`. Any silent edit to an existing
+  // id, area, question, choice, answer or explanation still fails here, as does an added item in
+  // any other area, a removed item, or a reordering of the pre-existing ones.
   const bankAtParent = execSync(`git show ${PRE_M13E1F}:lib/hosa-medterm.ts`, { encoding: "utf8" });
   const bankSlice = (src: string) => src.slice(src.indexOf("export const MEDTERM_BANK"), src.indexOf("function shuffle"));
-  assert.equal(bankSlice(read("lib/hosa-medterm.ts")), bankSlice(bankAtParent),
-    "31f. the question bank — text, answers and explanations — is byte-identical to the parent commit");
+  /** One trimmed source line per item literal, in file order. Comments and blanks are ignored. */
+  const itemLines = (src: string) =>
+    bankSlice(src)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("{ id:"));
+  const idOf = (line: string) => (line.match(/^\{ id: "([^"]+)"/) ?? [])[1] ?? "";
+
+  const parentItems = itemLines(bankAtParent);
+  const currentItems = itemLines(read("lib/hosa-medterm.ts"));
+  assert.equal(parentItems.length, 54, "31f. control: the parent commit really held 54 item literals");
+  assert.ok(currentItems.length >= parentItems.length, "31f2. the bank never shrank");
+
+  // (a) Every pre-existing item survives byte-identical, in its original relative order.
+  const currentById = new Map(currentItems.map((line) => [idOf(line), line]));
+  for (const parentLine of parentItems) {
+    const id = idOf(parentLine);
+    assert.equal(currentById.get(id), parentLine,
+      `31f3. pre-existing item ${id} is byte-identical to the parent commit (id, area, question, choices, answer, explanation)`);
+  }
+  const parentOrder = parentItems.map(idOf);
+  const currentOrderOfParentIds = currentItems.map(idOf).filter((id) => parentOrder.includes(id));
+  assert.deepEqual(currentOrderOfParentIds, parentOrder, "31f4. and the pre-existing items keep their original order");
+
+  // (b) The ONLY additions are word-root items numbered after wr-09.
+  const addedIds = currentItems.map(idOf).filter((id) => !parentOrder.includes(id));
+  const currentByIdArea = new Map(currentItems.map((line) => [idOf(line), line]));
+  for (const id of addedIds) {
+    assert.ok(/^wr-\d{2}$/.test(id) && Number(id.slice(3)) > 9,
+      `31f5. the only permitted additions are word-root items after wr-09 — got ${id}`);
+    assert.ok(/area: "word-roots"/.test(currentByIdArea.get(id) ?? ""),
+      `31f6. added item ${id} is declared in the word-roots area`);
+  }
+  // (c) The five non-word-root areas are untouched in both content and count.
+  for (const area of ["prefixes", "suffixes", "anatomy", "physiology", "pathophysiology"] as const) {
+    const parentArea = parentItems.filter((line) => line.includes(`area: "${area}"`));
+    const currentArea = currentItems.filter((line) => line.includes(`area: "${area}"`));
+    assert.deepEqual(currentArea, parentArea, `31f7. the ${area} block is byte-identical to the parent commit`);
+  }
+  // (d) wr-01..wr-09 specifically, called out because Phase 2a appends beside them.
+  for (let n = 1; n <= 9; n += 1) {
+    const id = `wr-0${n}`;
+    assert.equal(currentById.get(id), parentItems.find((line) => idOf(line) === id),
+      `31f8. ${id} is unchanged`);
+  }
+  // Non-vacuous controls: each rule rejects the mutation it exists to reject.
+  const sampleParent = parentItems.find((line) => idOf(line) === "wr-01") as string;
+  assert.notEqual(sampleParent.replace("Kidney", "Liver"), sampleParent,
+    "31f-C1. control: a one-word answer edit produces a different line, so 31f3 would catch it");
+  assert.ok(!/^wr-\d{2}$/.test("pr-10"), "31f-C2. control: an added prefixes item would fail the wr-only rule");
+  assert.ok(!(Number("wr-09".slice(3)) > 9), "31f-C3. control: a re-added wr-09 would fail the after-wr-09 rule");
+  assert.ok(itemLines('export const MEDTERM_BANK = [\n{ id: "x-01", area: "anatomy" },\nfunction shuffle').length === 1,
+    "31f-C4. control: the item extractor really parses item literals");
 
   // ---- 37. the pre-fix defects, proven from the EXPLICIT parent commit ----------------------------------------------
   // PINNED, never `HEAD`: once this milestone commits, HEAD is the commit that REMOVED the defects.
@@ -602,7 +690,7 @@ async function main() {
     oneRaw.scorePercent === 100 && oneRaw.passed === true);
 
   console.log(
-    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a perfect focused 20-question session serving only 9 distinct items is refused on both count and breadth. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The 54-question bank, its answers and its explanations are byte-identical to the parent commit. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order, the five non-word-root areas are untouched at 9 each, and the only delta is 21 new word-root items (wr-10..wr-30, AI-assisted draft pending human content review) taking that area to 30 and the bank to 75. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

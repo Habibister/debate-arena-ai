@@ -529,12 +529,79 @@ async function main() {
   const sha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
   const now = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
   for (const file of ["prisma/seed.ts", "lib/debate-drills.ts", "lib/deca-drills.ts",
-                      "lib/hosa-medterm.ts",
                       // app/api/hosa/medterm/submit/route.ts is deliberately absent from M13E2 C2a
                       // onward: it is now session-backed. What the hash protected is asserted at 65h.
+                      // lib/hosa-medterm.ts is deliberately absent from M14 Phase 2a onward: that
+                      // milestone APPENDS word-root items (audit G2), so a hash here would forbid an
+                      // approved change. It was also HEAD-relative, so it would have turned green the
+                      // moment the expansion commit landed — proving nothing. What it protected is
+                      // asserted behaviourally at 65M below, and the bank's CONTENT integrity lives
+                      // in scripts/hosa-medterm-evidence-smoke.ts (31f*), which diffs against an
+                      // IMMUTABLE parent commit and permits only additive word-root entries.
                       ]) {
     assert.equal(now(file), sha(file), `65-68. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 65M. what the hosa-medterm hash was protecting, asserted exactly ---------------------------
+  // This suite owns the REVIEW LADDER. Its stake in the terminology bank was never the wording of the
+  // questions — it was that the bank stays inert with respect to XP, mastery and the ladder itself.
+  // Every scan below runs over comment-stripped source, because the module explains in prose exactly
+  // what it refrains from doing.
+  const medtermSrc = read("lib/hosa-medterm.ts");
+  const medtermCode = stripComments(medtermSrc);
+
+  // 65M1. No XP of any kind can originate in the bank module.
+  for (const banned of ["xpReward", "XPLog", "xpLog", "awardXp", "XP_REWARDS", "awardXpInTransaction"]) {
+    assert.ok(!medtermCode.includes(banned), `65M1. no XP symbol in the terminology bank (${banned})`);
+  }
+  // 65M2. No mastery behaviour is introduced there — the skill is review-only by design.
+  for (const banned of ["MasteryProgress", "masteryProgress", "recordDrillMastery", "masteryLevel"]) {
+    assert.ok(!medtermCode.includes(banned), `65M2. no mastery symbol in the terminology bank (${banned})`);
+  }
+  // 65M3. The bank module reaches no database, route, session or review writer: adding questions
+  //       cannot change runtime behaviour, only the pool a session is drawn from.
+  for (const banned of ["prisma", "@/lib/prisma", "fetch(", "practiceSession", "recordPracticeOutcome",
+                        "isReviewDue", "nextReviewAt", "REVIEW_INTERVALS_DAYS"]) {
+    assert.ok(!medtermCode.includes(banned), `65M3. the terminology bank stays inert (${banned})`);
+  }
+  // 65M4. Its only export surface into review is the persistence REQUEST, which is a pure decision —
+  //       and it still refuses to emit one without sufficient evidence.
+  assert.ok(/export function medTermPersistenceRequest/.test(medtermCode), "65M4. the pure request helper survives");
+  assert.ok(/insufficient-evidence"\) return null/.test(medtermCode),
+    "65M4b. and still returns null — no ladder call — when evidence is insufficient");
+  // 65M5. The evidence floors the ladder depends on are unchanged by the expansion.
+  assert.ok(/HOSA_MEDTERM_REQUIRED_UNIQUE = 10/.test(medtermCode), "65M5. the 10-distinct floor is unchanged");
+  assert.ok(/HOSA_MEDTERM_REQUIRED_AREAS = 3/.test(medtermCode), "65M5b. the 3-area breadth floor is unchanged");
+  // 65M6. Debate and DECA review contracts are untouched by a HOSA-only content change: those two
+  //       banks are still byte-pinned above, and neither imports the terminology bank.
+  for (const neighbour of ["lib/debate-drills.ts", "lib/deca-drills.ts"]) {
+    assert.ok(!stripComments(read(neighbour)).includes("hosa-medterm"),
+      `65M6. ${neighbour} does not import the terminology bank`);
+  }
+  // 65M7. The real content-integrity protection exists and is immutable-based, not HEAD-relative.
+  const evidenceSuite = read("scripts/hosa-medterm-evidence-smoke.ts");
+  assert.ok(/PRE_M13E1F = "398860fc0a3469459f78750b9a0203c852d32aea"/.test(evidenceSuite),
+    "65M7. the evidence suite pins an IMMUTABLE parent commit");
+  assert.ok(/pre-existing item \$\{id\} is byte-identical to the parent commit/.test(evidenceSuite),
+    "65M7b. and asserts every pre-existing bank item byte-identical there");
+  assert.ok(!/lib\/hosa-medterm\.ts is byte-identical to HEAD/.test(read("scripts/review-ladder-smoke.ts")),
+    "65M7c. while this suite no longer carries the vacuous HEAD-relative bank hash");
+
+  // ---- 65M controls: none of the above can pass merely because HEAD moved -------------------------
+  // The scans read the WORKING TREE and compare against fixed literals, never against `git show HEAD`.
+  // A fixture carrying each banned symbol is detected, so a real regression would fail.
+  assert.ok(stripComments('const x = XP_REWARDS.debateCompleted;').includes("XP_REWARDS"),
+    "65M-C1. control: an XP symbol in code IS detected");
+  assert.ok(stripComments('await prisma.masteryProgress.update({});').includes("masteryProgress"),
+    "65M-C2. control: a mastery write IS detected");
+  assert.ok(!stripComments('// XP_REWARDS mentioned only in prose').includes("XP_REWARDS"),
+    "65M-C3. control: the same symbol inside a comment does NOT trip the scan");
+  assert.ok(medtermCode.length > 2000 && /export const MEDTERM_BANK/.test(medtermCode),
+    "65M-C4. control: the stripped bank source was actually read, so the bans are not scanning an empty string");
+  // The bank genuinely grew in this milestone — so 65M is asserting inertness of a CHANGED file,
+  // which is precisely the case a HEAD-relative hash could not have covered.
+  assert.ok(/id: "wr-30"/.test(medtermCode),
+    "65M-C5. control: the expanded word-root bank is present, so these scans run against the new content");
 
   // ---- 65W. what the writing-client hash was protecting, asserted exactly -----------------------
   // C3b-ii converts this component to the server-issued session protocol, so a blanket hash would

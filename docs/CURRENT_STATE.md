@@ -4,6 +4,45 @@ Factual snapshot. **Rewrite this file after each milestone** — do not append h
 
 _Last updated: 2026-08-06 (M14 Phase 2a — HOSA word-root bank 9→30, human-reviewed and approved, local only)_
 
+## M14 Phase 2b — the HOSA prefix bank is 30 deep, in local code only
+
+Audit finding **G2** continues, one area per slice. Phase 2b takes the **second** area to depth:
+
+- **`lib/hosa-medterm.ts`: prefixes 9 → 30** (`pr-10`…`pr-30`, +21). Bank total **75 → 96**. Word
+  roots stay at 30; suffixes, anatomy, physiology and pathophysiology stay at 9 and follow in later
+  slices.
+- **Content-only change.** No schema, migration, seed, route, session-protocol, validator, XP,
+  mastery, review or client change — the same architecture that absorbed Phase 2a.
+- **Every new prefix is already implied by this bank**: its meaning appears among existing
+  distractors or inside an existing explanation (`hypo-`, `inter-`, `post-`, `pre-`, `re-`, `ad-`,
+  `ab-`, `mono-`, `bi-`, `tri-`, `hemi-`, `trans-`, `epi-`, `extra-`, `retro-`, `macro-`, `micro-`,
+  `neo-`, `mal-`, `anti-`, `olig-`). Verified: 4 choices each, `correctAnswer` in its own choices, no
+  duplicate choices, no duplicate answers across all 30 prefixes, no duplicate stems, no answer
+  leakage.
+- **A focused 20-question prefix session now serves 20 distinct items with no padding**, clears the
+  10-distinct count floor, and is still refused review on **breadth alone** (1 area < 3).
+- **The additive-integrity assertion was extended, not loosened.** `31f*` now carries an explicit
+  per-area allowlist — `wr-*` → word-roots (2a), `pr-*` → prefixes (2b) — still anchored to the
+  immutable `398860f`. Every original item in an expanded area stays byte-identical and ordered; the
+  four unexpanded areas stay byte-identical in content and count; `wr-01`…`wr-09` and `pr-01`…`pr-09`
+  are individually pinned. The control that proved `pr-10` was rejected **inverted**, so it was
+  replaced with `sf-10` plus four more unapproved fixtures, keeping the allowlist non-vacuous.
+- **The padding-survival example moved from prefixes to suffixes**, since prefixes no longer pads at
+  count 20 — that example must always name an area still holding 9.
+
+**⚠ The 21 new prefix items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** `CLAUDE.md` requires AI-generated material to be labelled; the bank carries that label in a
+source comment above `pr-10`. **Do not push this commit until a human has reviewed `pr-10`…`pr-30`.**
+Nothing else in the change is content-dependent.
+
+**Unfiltered-draw weighting, reported not fixed:** with two of six areas at depth, an unfiltered
+session now draws ~31% word-roots, ~31% prefixes and ~9% from each unexpanded area. This does not
+affect correctness — evidence breadth counts distinct areas, not proportions — and it self-corrects
+as the remaining four reach 30. Per-area balancing would be a runtime change and stays out of a
+content-only slice.
+
+**Local commit only — not pushed, not deployed. No database operation.**
+
 ## M14 Phase 2a — the HOSA word-root bank is 30 deep, in local code only
 
 Audit finding **G2** (P0): every drill area held 9 questions, so a 20-question request served 20
@@ -353,7 +392,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1c — DECA judging fails closed | Complete, pushed and deployed (`a29e506`). |
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
-| M14 Phase 2a — HOSA word-root bank depth | **Complete locally.** Word roots 9→30, bank 54→75. AI-authored, **human-reviewed and approved 2026-08-06**. Ready to push. |
+| M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
+| M14 Phase 2b — HOSA prefix bank depth | **Complete locally** (this commit). Prefixes 9→30, bank 75→96. **AI-assisted draft — human content review outstanding before push.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

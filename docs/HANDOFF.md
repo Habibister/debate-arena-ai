@@ -2,17 +2,36 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 2a: HOSA word-root bank 9→30 (2026-08-06)
+## Latest handoff — M14 Phase 2b: HOSA prefix bank 9→30 (2026-08-07)
 
-**M14 Phase 2a is CLOSED: pushed, deployed and human-reviewed.** Production runs
-`5789e19b2c626b2a9b902c9e2af7018ff523b2b6` (GitHub deployment `5788268138`, `Production`,
-`success`, verified read-only). HOSA word roots are at **30 questions** and the bank at 75, so a
-focused 20-question word-roots session now serves 20 DISTINCT items instead of padding nine.
-Human content review of `wr-10`…`wr-30` is **complete and approved**. Nothing here is pending.
+### ⚠ Phase 2b: AI-assisted content awaiting human review — DO NOT PUSH YET
 
-**Audit G2 is closed for word roots ONLY.** Five areas remain at 9 questions each and are the
-remaining Phase 2 work, one area per slice: **prefixes, suffixes, anatomy, physiology,
-pathophysiology**.
+`lib/hosa-medterm.ts` gained 21 prefix questions (`pr-10`…`pr-30`), taking prefixes 9→30 and the bank
+75→96. **These items were AI-drafted and have NOT been reviewed by a human for medical accuracy.**
+A source comment above `pr-10` carries that label per `CLAUDE.md`. **Do not push the
+`feat(hosa): expand prefix question bank` commit until someone reviews those 21 items.** Everything
+else in the change is content-independent and verified.
+
+**Production runs `82cbee67070bee43f46c93ee9ff757e9bb821bd3`** (deployment `5788424169`, `Production`,
+`success`) — Phase 2a plus the handoff cleanups. Phase 2a's word-root content is human-reviewed and
+approved; Phase 2b's prefix content is not.
+
+**Audit G2 status: word roots and prefixes are at 30; four areas remain at 9** and are the remaining
+Phase 2 work, one area per slice: **suffixes, anatomy, physiology, pathophysiology**.
+
+What Phase 2b changed, and what not to undo:
+
+- **`31f*` gained an explicit per-area allowlist** (`wr-*` → word-roots, `pr-*` → prefixes), still
+  anchored to the immutable `398860f`. **Extend it one entry per approved slice — never generalise
+  it to "any id", and never re-anchor it or introduce a HEAD-relative pin.** Originals in an
+  expanded area stay byte-identical and ordered; unexpanded areas stay byte-identical.
+- **The control that proved `pr-10` was rejected inverted** when prefixes were approved, so it was
+  replaced with `sf-10` plus four more unapproved fixtures. **Every future slice must move that
+  control to a still-unapproved id**, or the allowlist silently stops being protected.
+- **The padding-survival example moved from prefixes to suffixes** (`11g`). It must always name an
+  area still holding 9 — move it again in the next slice.
+- Unfiltered draws now skew ~31% word-roots / ~31% prefixes / ~9% each of the other four. Correctness
+  is unaffected (breadth counts distinct areas, not proportions) and it self-corrects as slices land.
 
 ### Phase 2a: content is human-reviewed and APPROVED — shipped
 

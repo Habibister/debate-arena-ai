@@ -677,8 +677,8 @@ async function main() {
   assert.ok('{ correctAnswer: q.correctAnswer }'.includes("correctAnswer"),
     "29h11. control: the leak scan matches an answer-key field in a response literal");
   const hosaBank = await import("../lib/hosa-medterm");
-  assert.equal(hosaBank.MEDTERM_BANK.length, 138, "29i. the HOSA bank holds 138 questions (M14 Phase 2a-2d took word roots, prefixes, suffixes and anatomy to 30 each)");
-  assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 138, "29j. with unique ids");
+  assert.equal(hosaBank.MEDTERM_BANK.length, 159, "29i. the HOSA bank holds 159 questions (M14 Phase 2a-2e took word roots, prefixes, suffixes, anatomy and physiology to 30 each)");
+  assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 159, "29j. with unique ids");
   assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "29k. across six areas");
 
   // ---- 32. no database contact ------------------------------------------------------------------------------

@@ -2,7 +2,47 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2d — HOSA anatomy bank 9→30, human-reviewed and approved, local only)_
+_Last updated: 2026-08-07 (M14 Phase 2e — HOSA physiology bank 9→30, local only, human content review outstanding)_
+
+## M14 Phase 2e — the HOSA physiology bank is 30 deep, in local code only
+
+Audit **G2**, fifth slice. **Physiology 9 → 30** (`ph-10`…`ph-30`, +21); bank total **138 → 159**.
+Word roots, prefixes, suffixes and anatomy stay at 30; **pathophysiology stays at 9** and is the last
+area left. **Five of the six G2 areas are now at depth.**
+
+- **Content-only change** — no schema, migration, seed, route, session-protocol, validator, XP,
+  mastery, review or client change.
+- **The Phase 2d boundary, applied from the physiology side.** Physiology's declared objective is
+  "Normal function of structures and systems", so every NEW item tests a normal function, mechanism,
+  process or regulatory response. **No new item asks for a structure's location** (that is anatomy),
+  **a disease or a disease mechanism** (that is pathophysiology, reserved for Phase 2f), or a bare
+  word-part/term definition (those are the three terminology areas). `ph-01`…`ph-09` are unchanged.
+- **Deliberately absent: a third insulin/glucose item.** `ph-02` and `ph-08` already overlap there,
+  and `pp-03` sits adjacent. Glucose appears in two new items only as a wrong distractor.
+- Coverage across seven system domains: cardiovascular (4), respiratory (3), digestive (3), renal (3),
+  nervous and muscular (4), endocrine (2), blood and hemostasis (2).
+- **A focused 20-question physiology session now serves 20 distinct items** with no padding, and is
+  still refused review on breadth alone. Padding survival moved to **pathophysiology**.
+- **The additive allowlist gained one explicit entry** (`ph-*` → physiology), still anchored to the
+  immutable `398860f`; the `31f-C2` rejected fixture moved `ph-10` → **`pp-10`** and the positive
+  control moved `an-10` → `ph-10`. `ph-10` left the deliberately-rejected list; `pp-10` and `xx-10`
+  stay rejected.
+- **A stale claim in the evidence-smoke summary was corrected.** It still described the Phase 2d
+  anatomy additions as awaiting human review, which stopped being true on 2026-08-07. That summary is
+  a `console.log`, not an assertion, so nothing was failing — it was simply printing something false.
+  No assertion or question content changed with it.
+
+**⚠ The 21 new physiology items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** The bank carries that label above `ph-10` per `CLAUDE.md`. **Do not push this commit until
+a human has reviewed `ph-10`…`ph-30`.**
+
+**Weighting after 2e:** word-roots / prefixes / suffixes / anatomy / physiology ~18.9% each;
+pathophysiology ~5.7%. Correctness unaffected — breadth counts distinct areas, not proportions.
+
+**G2 roadmap: ONE slice remains — 2f pathophysiology, the final G2 expansion. Full six-area parity
+occurs only after Phase 2f.**
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Phase 2d — the HOSA anatomy bank is 30 deep, human-reviewed, local only
 
@@ -486,7 +526,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
 | M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2c — HOSA suffix bank depth | Complete, pushed and deployed. Suffixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
-| M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
+| M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
+| M14 Phase 2e — HOSA physiology bank depth | **Complete locally** (this commit). Physiology 9→30, bank 138→159. **AI-assisted draft — human content review outstanding before push.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

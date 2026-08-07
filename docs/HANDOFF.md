@@ -2,6 +2,44 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
+## Latest handoff — M14 Phase 2e: HOSA physiology bank 9→30 (2026-08-07)
+
+### ⚠ Phase 2e: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/hosa-medterm.ts` gained 21 physiology questions (`ph-10`…`ph-30`), taking physiology 9→30 and
+the bank 138→159. **These items were AI-drafted and have NOT been reviewed by a human.** A source
+comment above `ph-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa): expand
+physiology question bank` commit until someone reviews those 21 items.**
+
+**Five of six G2 areas are now at depth. Pathophysiology (9) is the only one left.**
+
+What Phase 2e changed structurally, and what not to undo:
+
+- **The Phase 2d boundary now runs from the physiology side.** Every new item tests a normal
+  function, mechanism, process or regulatory response. Nothing asks where a structure sits (anatomy),
+  nothing asks about a disease or a disease mechanism (pathophysiology — **Phase 2f needs it**), and
+  nothing is bare word-part or term-definition recall. `ph-01`…`ph-09` are untouched.
+- **No third insulin/glucose item was added.** `ph-02` and `ph-08` already overlap, and `pp-03` is
+  adjacent. Glucose survives in two new items only as a wrong distractor. Do not add another.
+- **Coverage is spread across seven system domains** — cardiovascular 4, respiratory 3, digestive 3,
+  renal 3, nervous/muscular 4, endocrine 2, blood/hemostasis 2 — so no single system dominates.
+- **Padding survival moved physiology → pathophysiology** (`11g`). **Phase 2f cannot simply move it
+  again** — it takes the last 9-item area to 30, so no area will be left to name. That fixture must
+  be re-based on a request that exceeds a 30-item pool instead. Do not delete it; the padding path
+  must stay proven.
+- **`31f-C2` moved `ph-10` → `pp-10`; the positive control moved `an-10` → `ph-10`.** `ph-10` left
+  the deliberately-rejected list. **Phase 2f faces the same wall:** once every real area is
+  allowlisted, only a non-existent prefix such as `xx-10` remains rejectable.
+- `EXPANDED_AREAS` and `ADDITIVE_ALLOWLIST` each gained one entry; everything else keys off them.
+  The immutable baseline is still `398860f`. **Never reintroduce a HEAD-relative hash.**
+- **A stale claim in the evidence-smoke summary was corrected in the same pass.** It still described
+  the Phase 2d anatomy items as awaiting human review, which stopped being true on 2026-08-07. It is
+  a `console.log`, not an assertion, so nothing was failing — it was printing something false. No
+  assertion and no question content changed with it.
+
+**G2 roadmap: after 2e, ONE slice remains — 2f pathophysiology. Full six-area parity occurs only
+after Phase 2f.**
+
 ## Latest handoff — M14 Phase 2d: HOSA anatomy bank 9→30 (2026-08-07)
 
 ### Phase 2d: content is human-reviewed and APPROVED — clear to push
@@ -456,7 +494,7 @@ pushed and deployed, then M13E2 Phase A (`221e07f`).
 
 ## Repository state
 
-Read this as a **handoff snapshot taken at the start of the Phase 2d documentation cleanup**, not as a
+Read this as a **handoff snapshot taken at the start of the Phase 2e implementation pass**, not as a
 live readout. Local SHAs and ahead/behind counts move the moment another commit lands — always
 re-derive them with `git status` and `git log --oneline -5` before acting. The three levels below are
 deliberately kept apart.
@@ -467,49 +505,48 @@ as such, not as app source.
 ### Deployed / remote state — the only claim that survives new local commits
 
 - **Branch:** `main`
-- **origin/main and remote `refs/heads/main`:** `b1f5e85aa81cfa0857c531fe7811dc7b515d215a` — M14
-  Phase 2c, and **this is the SHA Production runs** (deployment `5797883135`, `Production`,
-  `success`).
+- **origin/main and remote `refs/heads/main`:** `90ca112ecd037618b048a42bef300e6b65c1b909` — M14
+  Phase 2d, and **this is the SHA Production runs** (deployment `5798740105`, `Production`,
+  `success`, created automatically by `vercel[bot]`).
 - **Deployed M14 work:** Phase 1 (G23, G18, G21, G24, G25, G19, G20) and Phase 2a (word roots 9→30),
-  2b (prefixes 9→30) and 2c (suffixes 9→30). All three shipped banks are human-reviewed and approved.
+  2b (prefixes 9→30), 2c (suffixes 9→30) and 2d (anatomy 9→30). All four shipped banks are
+  human-reviewed and approved.
 
-### Historical snapshot — the unpushed Phase 2d stack at the start of this cleanup
+### Historical snapshot — the local state at the start of Phase 2e
 
-At the start of this documentation cleanup, local `main` was **3 ahead, 0 behind** `origin/main` and
-contained exactly these three unpushed Phase 2d commits, oldest first:
+At the start of the Phase 2e implementation pass, local `main` was **level with `origin/main`
+(0 ahead, 0 behind)** on the SHA above, with a clean worktree. The whole Phase 2d stack — the anatomy
+expansion, its wording refinement, its human-review approval record and two documentation
+corrections — was pushed and deployed before this pass began.
 
-| Commit | Message | What it did |
+**Phase 2e then added exactly one local commit,** `feat(hosa): expand physiology question bank`,
+taking physiology 9→30 and the bank 138→159. Re-derive the live position with `git status` rather
+than reading a SHA out of this paragraph.
+
+- **Phase 2e state:** implementation is complete locally; **human content review is OUTSTANDING**.
+  The AI-authoring label above `ph-10` stays in `lib/hosa-medterm.ts` permanently per `CLAUDE.md`,
+  and the push gate stays closed until a human reads `ph-10`…`ph-30`.
+
+### Bank composition after Phase 2e (local)
+
+| Area | Items | Review status |
 |---|---|---|
-| `774359f` | `feat(hosa): expand anatomy question bank` | Added `an-10`…`an-30`; anatomy 9→30, bank 117→138 |
-| `da31e3c` | `fix(hosa): refine anatomy question wording` | Refined `an-24`, `an-25`, `an-30`; no count change |
-| `e1d684d` | `docs(hosa): record anatomy human review approval` | Status only — recorded the human approval, lifted the push gate |
-
-The documentation commit that produced this section sits on top of those three, so the local stack is
-one commit taller than the table. **Do not read the table as the current HEAD.**
-
-- **Working tree at snapshot time:** clean.
-- **Phase 2d state:** anatomy implementation, refinement and human-review approval are **complete
-  locally**. Human content review is **complete**; the AI-authorship provenance stays recorded in
-  `lib/hosa-medterm.ts` permanently.
-
-### Bank composition after Phase 2d (local)
-
-| Area | Items |
-|---|---|
-| word-roots | 30 |
-| prefixes | 30 |
-| suffixes | 30 |
-| anatomy | 30 |
-| physiology | 9 |
-| pathophysiology | 9 |
-| **`MEDTERM_BANK` total** | **138** |
+| word-roots | 30 | AI-authored, human-approved 2026-08-06 |
+| prefixes | 30 | AI-authored, human-approved 2026-08-07 |
+| suffixes | 30 | AI-authored, human-approved 2026-08-07 |
+| anatomy | 30 | AI-authored, human-approved 2026-08-07 |
+| physiology | 30 | AI-authored — **review OUTSTANDING** |
+| pathophysiology | 9 | legacy nine; Phase 2f expands it |
+| **`MEDTERM_BANK` total** | **159** | |
 
 ### Next intended action
 
-1. **Push the Phase 2d stack** (a normal fast-forward from `b1f5e85`) and verify the Production
-   deployment. Nothing else is waiting on it.
-2. **Phase 2e — physiology 9→30.**
-3. **Phase 2f — pathophysiology 9→30.** **Full six-area parity occurs after Phase 2f, not 2e.**
+1. **Human content review of `ph-10`…`ph-30`.** Nothing else may happen first — the Phase 2e commit
+   is gated on it.
+2. **Push the Phase 2e commit** once approved, and verify the Production deployment.
+3. **Phase 2f — pathophysiology 9→30**, the final G2 expansion. **Full six-area parity occurs after
+   Phase 2f, not 2e.** Read the Phase 2e notes above first: the padding fixture and the `31f-C2`
+   rejected fixture both need re-basing rather than moving in that slice.
 
 ## How to run everything
 

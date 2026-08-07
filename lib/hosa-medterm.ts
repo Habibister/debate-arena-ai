@@ -93,7 +93,12 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // M14 Phase 2b (audit G2): prefixes extended 9 -> 30, the second area taken to depth. Every prefix
   // below is already implied by this bank — its meaning appears among existing distractors or in an
   // existing explanation — so nothing widens the event's scope.
-  // AI-ASSISTED DRAFT CONTENT — human content review is still outstanding (see docs/HANDOFF.md).
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // 21 items and approved their prefix meanings, answer uniqueness, distractors, wording,
+  // explanations and suitability — including the revised pr-20 (hemithorax) and the replacement
+  // pr-30 (pseudo-, which supersedes an olig- item that mislabelled a combining form as a prefix).
+  // `CLAUDE.md` requires AI-generated material to stay labelled, so the authoring method is
+  // recorded here permanently — the approval is what changed, not the provenance.
   { id: "pr-10", area: "prefixes", question: "The prefix 'hypo-' indicates a level that is:", choices: ["Below normal", "Above normal", "Exactly normal", "Rapidly rising"], correctAnswer: "Below normal", explanation: "'Hypo-' means below normal or deficient (hypoglycemia = low blood sugar). Its opposite is 'hyper-'. Positional 'below' is 'sub-'." },
   { id: "pr-11", area: "prefixes", question: "'Inter-' in a medical term means:", choices: ["Between", "Within", "Around", "Beyond"], correctAnswer: "Between", explanation: "'Inter-' means between (intercostal = between the ribs). 'Intra-' means within — one letter apart with a different meaning." },
   { id: "pr-12", area: "prefixes", question: "The prefix 'post-' means:", choices: ["After", "Before", "During", "Against"], correctAnswer: "After", explanation: "'Post-' means after (postoperative = after surgery). 'Pre-' means before." },

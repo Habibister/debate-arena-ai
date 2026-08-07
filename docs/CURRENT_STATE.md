@@ -4,7 +4,7 @@ Factual snapshot. **Rewrite this file after each milestone** — do not append h
 
 _Last updated: 2026-08-06 (M14 Phase 2a — HOSA word-root bank 9→30, human-reviewed and approved, local only)_
 
-## M14 Phase 2b — the HOSA prefix bank is 30 deep, in local code only
+## M14 Phase 2b — the HOSA prefix bank is 30 deep, human-reviewed, local only
 
 Audit finding **G2** continues, one area per slice. Phase 2b takes the **second** area to depth:
 
@@ -30,10 +30,14 @@ Audit finding **G2** continues, one area per slice. Phase 2b takes the **second*
 - **The padding-survival example moved from prefixes to suffixes**, since prefixes no longer pads at
   count 20 — that example must always name an area still holding 9.
 
-**⚠ The 21 new prefix items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
-review.** `CLAUDE.md` requires AI-generated material to be labelled; the bank carries that label in a
-source comment above `pr-10`. **Do not push this commit until a human has reviewed `pr-10`…`pr-30`.**
-Nothing else in the change is content-dependent.
+**Human content review is COMPLETE (2026-08-07).** The 21 prefix items were AI-authored and the
+repository owner then personally read all of `pr-10`…`pr-30` and approved their prefix meanings,
+answer uniqueness, distractors, wording, explanations and suitability for CompeteReady — specifically
+approving the revised `pr-20` (`hemi-`, using `hemithorax`) and the replacement `pr-30` (`pseudo-`,
+superseding an `olig-` item that mislabelled a combining form as a prefix). **The approval rests on
+that human reading alone; the earlier AI pre-screen was the authoring model checking its own output
+and formed no part of it.** Per `CLAUDE.md` the AI-authoring provenance stays labelled in the source
+permanently — approval changed the review status, not the provenance. **The push gate is lifted.**
 
 **Unfiltered-draw weighting, reported not fixed:** with two of six areas at depth, an unfiltered
 session now draws ~31% word-roots, ~31% prefixes and ~9% from each unexpanded area. This does not
@@ -393,7 +397,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
 | M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
-| M14 Phase 2b — HOSA prefix bank depth | **Complete locally** (this commit). Prefixes 9→30, bank 75→96. **AI-assisted draft — human content review outstanding before push.** |
+| M14 Phase 2b — HOSA prefix bank depth | **Complete locally.** Prefixes 9→30, bank 75→96. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

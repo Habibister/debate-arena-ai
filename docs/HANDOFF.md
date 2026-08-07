@@ -4,13 +4,25 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Phase 2b: HOSA prefix bank 9→30 (2026-08-07)
 
-### ⚠ Phase 2b: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Phase 2b: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 prefix questions (`pr-10`…`pr-30`), taking prefixes 9→30 and the bank
-75→96. **These items were AI-drafted and have NOT been reviewed by a human for medical accuracy.**
-A source comment above `pr-10` carries that label per `CLAUDE.md`. **Do not push the
-`feat(hosa): expand prefix question bank` commit until someone reviews those 21 items.** Everything
-else in the change is content-independent and verified.
+75→96. The items were AI-authored, and on **2026-08-07 the repository owner personally read all 21
+and approved them** — prefix meanings, answer uniqueness, distractors, wording, explanations and
+suitability — including the revised `pr-20` (`hemi-` / hemithorax) and the replacement `pr-30`
+(`pseudo-`, superseding an `olig-` item that mislabelled a combining form as a prefix).
+**The push gate is lifted.**
+
+Two things to keep straight, exactly as for Phase 2a:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently** (`CLAUDE.md`). Approval changed the
+  review status, not the provenance.
+
+Worth carrying into the next slice: the pre-screen's most useful catch was a **combining form
+mislabelled as a prefix** (`olig/o`). Check that class explicitly when expanding suffixes.
 
 **Production runs `82cbee67070bee43f46c93ee9ff757e9bb821bd3`** (deployment `5788424169`, `Production`,
 `success`) — Phase 2a plus the handoff cleanups. Phase 2a's word-root content is human-reviewed and

@@ -170,9 +170,10 @@ What Phase 2a changed structurally, and what not to undo:
   HEAD-relative hash.**
 - The remaining five areas stay at 9 by design — one area per Phase 2 slice.
 
-**Production currently runs `5789e19b2c626b2a9b902c9e2af7018ff523b2b6`** (M14 Phase 2a), GitHub
-deployment `5788268138`, `Production`, `success`, verified read-only. Deployment history for the M14
-work, for the record:
+**Phase 2a was deployed at `5789e19b2c626b2a9b902c9e2af7018ff523b2b6`**, GitHub deployment
+`5788268138`, `Production`, `success`, verified read-only at the time. **Production has advanced past
+that SHA since; this subsection is a Phase 2a record and does not state what Production runs now — see
+the `Repository state` block below for that.** Deployment history for the M14 work, for the record:
 
 | Stack | Deployed SHA | GitHub deployment |
 |---|---|---|

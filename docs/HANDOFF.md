@@ -4,12 +4,31 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Phase 2c: HOSA suffix bank 9→30 (2026-08-07)
 
-### ⚠ Phase 2c: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Phase 2c: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 suffix questions (`sf-10`…`sf-30`), taking suffixes 9→30 and the bank
-96→117. **These items were AI-drafted and have NOT been reviewed by a human.** A source comment above
-`sf-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa): expand suffix question
-bank` commit until someone reviews those 21 items.**
+96→117. The items were AI-authored, and on **2026-08-07 the repository owner personally read all 21
+and approved them** — suffix classification, terminology meanings, answer uniqueness, distractors,
+wording, explanations and examples — including the refined `sf-18` (claustrophobia, replacing
+*photophobia*, which denotes light sensitivity rather than fear), `sf-27` (abnormal condition, generic
+increase sense removed) and `sf-29` (scoped to `-cytosis`). **The push gate is lifted.**
+
+Two things to keep straight, exactly as for Phases 2a and 2b:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently** (`CLAUDE.md`). Approval changed the
+  review status, not the provenance.
+
+One recorded caution for future slices: the Phase 2c pre-screen COMMENTARY wrongly associated
+"rupture" with `-rrhagia` (it is `-rrhexis`). The error never reached tracked content — the three
+`-rrhagia` mentions in source and docs say only "too close to `-rrhea`", which is accurate — and
+`sf-17` was correct and unchanged. **Treat pre-screen commentary as unverified until checked against
+source, exactly as the human review does.**
+
+`sf-04`'s `-ology` convention remains an open, deliberately-unresolved question — do not change it
+without a decision.
 
 **Production runs `8f6169f01a981f116dcf69dc3a5958fbe9067060`** (deployment `5796977130`, `Production`,
 `success`) — Phase 2b, whose prefix content IS human-approved.

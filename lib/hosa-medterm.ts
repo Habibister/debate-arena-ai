@@ -138,7 +138,13 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // (meaning collides with '-genesis'), '-rrhagia' (too close to '-rrhea'), '-stenosis' (composes
   // '-osis', which this slice already teaches) and '-edema' (a standalone term, not cleanly a suffix
   // — the same class of error that put 'olig/o' in the prefix bank in Phase 2b).
-  // AI-ASSISTED DRAFT CONTENT — human content review is still outstanding (see docs/HANDOFF.md).
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // 21 items and approved their suffix CLASSIFICATION, terminology meanings, answer uniqueness,
+  // distractors, wording, explanations and examples — including the refined sf-18 (claustrophobia,
+  // replacing photophobia, which denotes light sensitivity rather than fear), sf-27 (abnormal
+  // condition, with the generic increase sense removed) and sf-29 (scoped to '-cytosis').
+  // `CLAUDE.md` requires AI-generated material to stay labelled, so the authoring method is
+  // recorded here permanently — the approval is what changed, not the provenance.
   { id: "sf-10", area: "suffixes", question: "A term ending in '-otomy' describes:", choices: ["Cutting into (incision)", "Surgical removal", "A new opening", "Visual examination"], correctAnswer: "Cutting into (incision)", explanation: "'-otomy' means cutting into, an incision (tracheotomy). '-ectomy' is removal; '-ostomy' is creating a new opening." },
   { id: "sf-11", area: "suffixes", question: "The suffix '-ostomy' means:", choices: ["Surgical creation of an opening", "Surgical removal", "Cutting into", "Surgical repair"], correctAnswer: "Surgical creation of an opening", explanation: "'-ostomy' means surgically creating an opening (colostomy). '-ectomy' is removal; '-otomy' is cutting into." },
   { id: "sf-12", area: "suffixes", question: "A term ending in '-uria' describes a condition involving:", choices: ["Urine", "Sweat", "Saliva", "Tears"], correctAnswer: "Urine", explanation: "'-uria' names a urine condition (polyuria = excessive urination). '-emia' names a blood condition." },

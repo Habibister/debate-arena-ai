@@ -2,9 +2,9 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2c — HOSA suffix bank 9→30, local only, human content review outstanding)_
+_Last updated: 2026-08-07 (M14 Phase 2c — HOSA suffix bank 9→30, human-reviewed and approved, local only)_
 
-## M14 Phase 2c — the HOSA suffix bank is 30 deep, in local code only
+## M14 Phase 2c — the HOSA suffix bank is 30 deep, human-reviewed, local only
 
 Audit **G2**, third slice. **Suffixes 9 → 30** (`sf-10`…`sf-30`, +21); bank total **96 → 117**.
 Word roots and prefixes stay at 30; anatomy, physiology and pathophysiology stay at 9.
@@ -23,9 +23,19 @@ Word roots and prefixes stay at 30; anatomy, physiology and pathophysiology stay
   immutable `398860f`; the `31f-C2` rejected fixture moved `sf-10` → **`an-10`**, and the byte-identical
   branch is now driven by `MEDTERM_AREAS` rather than a hardcoded list so future slices need one edit.
 
-**⚠ The 21 new suffix items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
-review.** The bank carries that label above `sf-10` per `CLAUDE.md`. **Do not push this commit until
-a human has reviewed `sf-10`…`sf-30`.**
+**Human content review is COMPLETE (2026-08-07).** The 21 suffix items were AI-authored and the
+repository owner then personally read all of `sf-10`…`sf-30` and approved their suffix
+classification, terminology meanings, answer uniqueness, distractors, wording, explanations and
+examples — specifically approving the refined `sf-18` (claustrophobia, replacing *photophobia*, which
+denotes light sensitivity rather than fear), `sf-27` (abnormal condition, generic increase sense
+removed) and `sf-29` (scoped to `-cytosis`), plus the previously reviewed non-blocking conventions.
+**The approval rests on that human reading alone; the earlier AI pre-screen was the authoring model
+checking its own output and formed no part of it.** Per `CLAUDE.md` the AI-authoring provenance stays
+labelled in the source permanently. **The push gate is lifted.**
+
+An error in the pre-screen COMMENTARY — associating "rupture" with `-rrhagia` when `-rrhexis` is
+rupture — was confined to chat and verified absent from tracked content; `sf-17` was correct and was
+not changed.
 
 **One terminology-convention concern recorded for human review, deliberately NOT acted on:** the
 existing `sf-04` teaches `-ology`, though strictly the ending is `-logy` with the `o` supplied by the
@@ -433,7 +443,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
 | M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
 | M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
-| M14 Phase 2c — HOSA suffix bank depth | **Complete locally** (this commit). Suffixes 9→30, bank 96→117. **AI-assisted draft — human content review outstanding before push.** |
+| M14 Phase 2c — HOSA suffix bank depth | **Complete locally.** Suffixes 9→30, bank 96→117. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

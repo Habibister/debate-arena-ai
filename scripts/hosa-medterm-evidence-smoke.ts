@@ -173,14 +173,14 @@ async function main() {
     "36. no real PrismaClient was constructed — the stub is still the module's client");
 
   // ---- 31. the bank is unchanged ------------------------------------------------------------------
-  assert.equal(MEDTERM_BANK.length, 117, "31. exactly 117 questions");
-  assert.equal(new Set(MEDTERM_BANK.map((q) => q.id)).size, 117, "31b. 117 unique ids");
+  assert.equal(MEDTERM_BANK.length, 138, "31. exactly 138 questions");
+  assert.equal(new Set(MEDTERM_BANK.map((q) => q.id)).size, 138, "31b. 138 unique ids");
   assert.equal(MEDTERM_AREAS.length, 6, "31c. exactly six areas");
   // Audit G2 is being closed one area at a time. EXPANDED_AREAS is the single source of truth for
   // which areas have reached depth: Phase 2a took word roots to 30, Phase 2b took prefixes to 30.
   // The remaining four stay at 9 until their own slice. Adding an area here without expanding it
   // (or vice versa) fails immediately, so this list cannot drift from the bank.
-  const EXPANDED_AREAS: readonly MedTermArea[] = ["word-roots", "prefixes", "suffixes"];
+  const EXPANDED_AREAS: readonly MedTermArea[] = ["word-roots", "prefixes", "suffixes", "anatomy"];
   const DEPTH_TARGET = 30;
   const UNEXPANDED_COUNT = 9;
   for (const area of EXPANDED_AREAS) {
@@ -294,9 +294,9 @@ async function main() {
       focusedEv.coveredAreaCount < HOSA_MEDTERM_REQUIRED_AREAS &&
       medTermPersistenceRequest(focusedEv) === null);
   // Padding itself is NOT removed from the engine — it still applies when a request exceeds a pool.
-  // Uses ANATOMY: Phase 2c took suffixes to 30, so suffixes no longer pads at count 20.
+  // Uses PHYSIOLOGY: Phase 2d took anatomy to 30, so anatomy no longer pads at count 20.
   // This example must always name an area still holding 9 — move it again in the next slice.
-  const stillPads = buildMedTermSession(20, ["anatomy"]);
+  const stillPads = buildMedTermSession(20, ["physiology"]);
   assert.equal(stillPads.length, 20, "11g. a 20-question request on a 9-item area still serves 20");
   assert.equal(new Set(stillPads.map((q) => q.id)).size, 9,
     "11g2. over 9 distinct items — the padding path survives for areas not yet expanded");
@@ -672,7 +672,8 @@ async function main() {
   const ADDITIVE_ALLOWLIST: ReadonlyArray<{ idPrefix: string; area: MedTermArea }> = [
     { idPrefix: "wr", area: "word-roots" }, // M14 Phase 2a
     { idPrefix: "pr", area: "prefixes" },   // M14 Phase 2b
-    { idPrefix: "sf", area: "suffixes" }    // M14 Phase 2c
+    { idPrefix: "sf", area: "suffixes" },   // M14 Phase 2c
+    { idPrefix: "an", area: "anatomy" }     // M14 Phase 2d
   ];
   const addedIds = currentItems.map(idOf).filter((id) => !parentOrder.includes(id));
   const currentByIdArea = new Map(currentItems.map((line) => [idOf(line), line]));
@@ -711,14 +712,14 @@ async function main() {
   const sampleParent = parentItems.find((line) => idOf(line) === "wr-01") as string;
   assert.notEqual(sampleParent.replace("Kidney", "Liver"), sampleParent,
     "31f-C1. control: a one-word answer edit produces a different line, so 31f3 would catch it");
-  // This control's fixture MUST move every slice: it proved `pr-10` rejected until Phase 2b approved
-  // prefixes, then `sf-10` until Phase 2c approved suffixes. It now uses `an-10`. Whichever area is
-  // expanded next, move it again — otherwise the allowlist silently stops being protected.
-  assert.ok(!ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test("an-10")),
-    "31f-C2. control: an added anatomy item (an-10) is still rejected by the allowlist");
-  assert.ok(ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test("sf-10")),
-    "31f-C2b. control: and sf-10 IS allowlisted now, so the rule genuinely changed rather than loosening to anything");
-  for (const unapproved of ["an-10", "ph-10", "pp-10", "xx-10"]) {
+  // This control's fixture MUST move every slice: `pr-10` until Phase 2b approved prefixes, `sf-10`
+  // until 2c approved suffixes, `an-10` until 2d approved anatomy. It now uses `ph-10`. Whichever
+  // area is expanded next, move it again — otherwise the allowlist silently stops being protected.
+  assert.ok(!ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test("ph-10")),
+    "31f-C2. control: an added physiology item (ph-10) is still rejected by the allowlist");
+  assert.ok(ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test("an-10")),
+    "31f-C2b. control: and an-10 IS allowlisted now, so the rule genuinely changed rather than loosening to anything");
+  for (const unapproved of ["ph-10", "pp-10", "xx-10"]) {
     assert.ok(!ADDITIVE_ALLOWLIST.some((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test(unapproved)),
       `31f-C2c. control: ${unapproved} remains outside the allowlist`);
   }
@@ -741,7 +742,7 @@ async function main() {
     oneRaw.scorePercent === 100 && oneRaw.passed === true);
 
   console.log(
-    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order, and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30) and 21 suffix items (sf-10..sf-30, AI-assisted draft pending human content review) — taking three areas to 30 and the bank to 117, while the three unexpanded areas (anatomy, physiology, pathophysiology) stay byte-identical at 9. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order, and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30) and 21 suffix items (sf-10..sf-30) and 21 anatomy items (an-10..an-30, AI-assisted draft pending human content review) — taking four areas to 30 and the bank to 138, while the two unexpanded areas (physiology, pathophysiology) stay byte-identical at 9. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

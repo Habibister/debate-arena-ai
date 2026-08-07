@@ -2,9 +2,33 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 2c: HOSA suffix bank 9→30 (2026-08-07)
+## Latest handoff — M14 Phase 2d: HOSA anatomy bank 9→30 (2026-08-07)
 
-### Phase 2c: content is human-reviewed and APPROVED — clear to push
+### ⚠ Phase 2d: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/hosa-medterm.ts` gained 21 anatomy questions (`an-10`…`an-30`), taking anatomy 9→30 and the bank
+117→138. **These items were AI-drafted and have NOT been reviewed by a human.** A source comment
+above `an-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa): expand anatomy
+question bank` commit until someone reviews those 21 items.**
+
+**Production runs `b1f5e85aa81cfa0857c531fe7811dc7b515d215a`** (deployment `5797883135`,
+`Production`, `success`) — Phase 2c, whose suffix content IS human-approved.
+
+What Phase 2d changed, and what not to undo:
+
+- **Option A boundary was chosen deliberately.** Anatomy is declared as "Structures and their
+  locations", but four legacy items (`an-01`, `an-02`, `an-05`, `an-09`) answer with a *function*.
+  New items hold the line: structure, location, region, cavity, plane, directional term or
+  relationship only. **Do not let anatomy absorb physiology material — Phase 2e needs it.**
+- **The `31f-C2` rejected fixture moved `an-10` → `ph-10`** (third move: pr → sf → an → ph) and the
+  positive control moved `sf-10` → `an-10`. **Move both again every slice.**
+- **Padding survival moved anatomy → physiology** (`11g`). Always name an area still holding 9.
+- `EXPANDED_AREAS` and `ADDITIVE_ALLOWLIST` each gained one entry; everything else keyed off them.
+
+**G2 roadmap: after 2d, TWO slices remain — 2e physiology and 2f pathophysiology. Full six-area
+parity occurs after 2f.**
+
+### Phase 2c: content is human-reviewed and APPROVED — deployed
 
 `lib/hosa-medterm.ts` gained 21 suffix questions (`sf-10`…`sf-30`), taking suffixes 9→30 and the bank
 96→117. The items were AI-authored, and on **2026-08-07 the repository owner personally read all 21
@@ -49,7 +73,7 @@ What Phase 2c changed, and what not to undo:
   content, outside scope — but decide the convention before it spreads further.
 
 **G2 status: word roots, prefixes and suffixes at 30; anatomy, physiology and pathophysiology remain
-at 9** — two slices left after this one.
+at 9** — after Phase 2c there were THREE slices left: 2d anatomy, 2e physiology, 2f pathophysiology.
 
 ### Phase 2b: content is human-reviewed and APPROVED — deployed
 

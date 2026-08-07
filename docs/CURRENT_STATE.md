@@ -2,7 +2,42 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2c — HOSA suffix bank 9→30, human-reviewed and approved, local only)_
+_Last updated: 2026-08-07 (M14 Phase 2d — HOSA anatomy bank 9→30, local only, human content review outstanding)_
+
+## M14 Phase 2d — the HOSA anatomy bank is 30 deep, in local code only
+
+Audit **G2**, fourth slice. **Anatomy 9 → 30** (`an-10`…`an-30`, +21); bank total **117 → 138**.
+Word roots, prefixes and suffixes stay at 30; physiology and pathophysiology stay at 9.
+
+- **Content-only change** — no schema, migration, seed, route, session-protocol, validator, XP,
+  mastery, review or client change.
+- **Option A boundary, approved before authoring.** Anatomy's declared objective is "Structures and
+  their locations", but four legacy items (`an-01`, `an-02`, `an-05`, `an-09`) are function-flavoured.
+  Rather than follow that precedent, every NEW item tests a structure, location, region, cavity,
+  plane, directional term or structural relationship. **No new item has a physiological function,
+  process, disease or procedure as its answer** — that material is reserved for Phases 2e and 2f.
+  The four legacy items were deliberately left unchanged.
+- Coverage: directional terminology (superior, distal, anterior, medial, superficial), body cavities
+  (cranial, pelvic, the diaphragm boundary), the sagittal plane, and named structures across the
+  cardiac, skeletal, nervous, vascular, digestive, urinary and muscular systems.
+- **A focused 20-question anatomy session now serves 20 distinct items** with no padding, and is
+  still refused review on breadth alone. Padding survival moved to **physiology**.
+- **The additive allowlist gained one explicit entry** (`an-*` → anatomy), still anchored to the
+  immutable `398860f`; the `31f-C2` rejected fixture moved `an-10` → **`ph-10`** and the positive
+  control moved `sf-10` → `an-10`.
+
+**⚠ The 21 new anatomy items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** The bank carries that label above `an-10` per `CLAUDE.md`. **Do not push this commit until
+a human has reviewed `an-10`…`an-30`.**
+
+**Weighting after 2d:** word-roots / prefixes / suffixes / anatomy ~21.7% each; physiology and
+pathophysiology ~6.5% each. Continues improving from the 40% peak at 2a. Correctness unaffected —
+breadth counts distinct areas, not proportions.
+
+**G2 roadmap: THREE slices remain after 2c — 2d anatomy (this one), 2e physiology, 2f
+pathophysiology. Full six-area parity occurs after Phase 2f.**
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Phase 2c — the HOSA suffix bank is 30 deep, human-reviewed, local only
 
@@ -45,7 +80,7 @@ rather than spread further by default.
 
 **Weighting after 2c:** word-roots / prefixes / suffixes ~25.6% each, the three unexpanded areas
 ~7.7% each. Better than after 2b (two areas at 31.3%); the skew shrinks with each slice and reaches
-parity at 2e. Correctness unaffected — breadth counts distinct areas, not proportions.
+parity after 2f (anatomy, physiology and pathophysiology all remained). Correctness unaffected — breadth counts distinct areas, not proportions.
 
 **Local commit only — not pushed, not deployed. No database operation.**
 
@@ -443,7 +478,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
 | M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
 | M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
-| M14 Phase 2c — HOSA suffix bank depth | **Complete locally.** Suffixes 9→30, bank 96→117. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
+| M14 Phase 2c — HOSA suffix bank depth | Complete, pushed and deployed. Suffixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
+| M14 Phase 2d — HOSA anatomy bank depth | **Complete locally** (this commit). Anatomy 9→30, bank 117→138. **AI-assisted draft — human content review outstanding before push.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

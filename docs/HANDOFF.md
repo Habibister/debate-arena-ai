@@ -2,7 +2,7 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Phase 2a: HOSA word-root bank 9→30 (2026-08-07)
+## Latest handoff — M14 Phase 2a: HOSA word-root bank 9→30 (2026-08-06)
 
 **Read this before pushing. TWO local commits are unpushed, and the second needs a human read.**
 

@@ -4,12 +4,25 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Phase 2f: HOSA pathophysiology 9→30, HOSA parity (2026-08-07)
 
-### ⚠ Phase 2f: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Phase 2f: content is human-reviewed and APPROVED — clear to push
 
 `lib/hosa-medterm.ts` gained 21 pathophysiology questions (`pp-10`…`pp-30`), taking pathophysiology
-9→30 and the bank 159→180. **These items were AI-drafted and have NOT been reviewed by a human.** A
-source comment above `pp-10` carries that label per `CLAUDE.md`. **Do not push the `feat(hosa):
-expand pathophysiology question bank` commit until someone reviews those 21 items.**
+9→30 and the bank 159→180. The items were AI-authored, and on **2026-08-07 the repository owner
+personally read all 21 and approved them** — pathophysiological accuracy, the
+anatomy/physiology/pathophysiology boundary, answer uniqueness, distractors, causal wording,
+explanations, mechanism precision and legacy overlap. **The approved version is the final one**,
+including the refinements in `d449434` and `bf311c8`. **The push gate is lifted.**
+
+**All six HOSA areas are now 30 deep and human-reviewed. That finishes the HOSA portion of G2 — and
+only that portion. Read the next block before writing anything about G2.**
+
+Two things to keep straight, exactly as for Phases 2a–2e:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently** (`CLAUDE.md`). Approval changed the
+  review status, not the provenance. All six slices now carry one.
 
 ### ⚠ READ THIS BEFORE WRITING ANYTHING ABOUT G2
 
@@ -601,17 +614,18 @@ than reading a SHA out of this paragraph.
 | suffixes | 30 | AI-authored, human-approved 2026-08-07 |
 | anatomy | 30 | AI-authored, human-approved 2026-08-07 |
 | physiology | 30 | AI-authored, human-approved 2026-08-07 |
-| pathophysiology | 30 | AI-authored — **review OUTSTANDING** |
-| **`MEDTERM_BANK` total** | **180** | six HOSA areas at 30 — HOSA parity, **not** G2 closure |
+| pathophysiology | 30 | AI-authored, human-approved 2026-08-07 |
+| **`MEDTERM_BANK` total** | **180** | six HOSA areas at 30, all human-approved — HOSA parity, **not** G2 closure |
 
 ### Next intended action
 
-1. **Human content review of `pp-10`…`pp-30`.** The Phase 2f commit is gated on it; nothing else
-   may happen first.
-2. **Push the Phase 2f commit** once approved, and verify the Production deployment.
-3. **Decide how G2 proceeds.** HOSA parity is reached, but **G2 remains OPEN** — see the block at the
-   top of this file. Either expand the four Debate and four DECA areas (+168 items) or record an
-   explicit decision to re-scope G2. **Do not mark G2 closed on the strength of HOSA parity.**
+1. **Push the Phase 2f stack** (`feat(hosa): expand pathophysiology question bank`, the two
+   refinement commits and this approval record) and verify the Production deployment. Human review
+   is complete, so nothing else is waiting on it.
+2. **Address Debate and DECA depth — this is the next G2 work.** Phase 2f completes the HOSA portion
+   of G2; **global G2 remains open for Debate and DECA depth expansion.** Either expand the four
+   Debate and four DECA areas (+168 items, corpus 231 → 399) or record an explicit decision to
+   re-scope G2. **Do not mark G2 closed on the strength of HOSA parity.**
 
 ## How to run everything
 

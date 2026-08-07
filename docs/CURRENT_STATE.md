@@ -2,9 +2,9 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2f — HOSA pathophysiology bank 9→30, HOSA parity, local only, human content review outstanding)_
+_Last updated: 2026-08-07 (M14 Phase 2f — HOSA pathophysiology 9→30, six-area HOSA parity, human-reviewed and approved, local only)_
 
-## M14 Phase 2f — HOSA Medical Terminology reaches six-area parity, in local code only
+## M14 Phase 2f — HOSA Medical Terminology reaches six-area parity, human-reviewed, local only
 
 Audit **G2**, sixth and last **HOSA** slice. **Pathophysiology 9 → 30** (`pp-10`…`pp-30`, +21); bank
 total **159 → 180**. **All six HOSA Medical Terminology areas now hold 30.**
@@ -57,9 +57,20 @@ record G2 as complete, closed, or "all areas at depth".
   physiology additions as pending human review, untrue since 2026-08-07. It is a `console.log`, not
   an assertion — nothing was failing, it was printing something false.
 
-**⚠ The 21 new pathophysiology items are AI-ASSISTED DRAFT CONTENT and have NOT received human
-content review.** The bank carries that label above `pp-10` per `CLAUDE.md`. **Do not push this
-commit until a human has reviewed `pp-10`…`pp-30`.**
+**Human content review is COMPLETE (2026-08-07).** The 21 pathophysiology items were AI-authored and
+the repository owner then personally read all of `pp-10`…`pp-30` and approved their
+pathophysiological accuracy, the anatomy/physiology/pathophysiology boundary, answer uniqueness,
+distractors, causal wording, explanations, mechanism precision and legacy overlap. **The approved
+version is the final one**, including the refinements in `d449434` and `bf311c8` — notably `pp-10`
+(excessive/prolonged inflammation), `pp-17` (conditional cardiac output), `pp-18` (`fill OR pump`),
+`pp-20` (respiratory acidosis), `pp-26` (apoptosis occurs in normal physiology **or** disease),
+`pp-28` (chronic abnormal pressure overload) and `pp-30` (asymptomatic infection permitted). **The
+approval rests on that human reading alone; the earlier AI pre-screen was the authoring model
+checking its own output and formed no part of it.** Per `CLAUDE.md` the AI-authoring provenance stays
+labelled in the source permanently. **The push gate is lifted.**
+
+**All six HOSA Medical Terminology areas are now 30 deep AND human-reviewed.** That is the HOSA
+portion of G2 finished — see the block above for why **global G2 is still open**.
 
 **Weighting after 2f:** all six HOSA areas **16.67%** each (30 ÷ 180). True parity within the HOSA
 bank. Correctness unaffected — breadth counts distinct areas, not proportions.
@@ -601,8 +612,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2c — HOSA suffix bank depth | Complete, pushed and deployed. Suffixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
-| M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally** (this commit). Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. **AI-assisted draft — human content review outstanding before push.** |
-| **G2 (audit finding) — overall** | **STILL OPEN.** HOSA parity reached; **4 Debate + 4 DECA areas remain at 9 each** (`lib/debate-drills.ts` 36, `lib/deca-drills.ts` 36) with no per-area depth assertions. |
+| M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Phase 2f completes the HOSA portion of G2; **global G2 remains open for Debate and DECA depth expansion** — 4 Debate + 4 DECA areas at 9 each (`lib/debate-drills.ts` 36, `lib/deca-drills.ts` 36), with no per-area depth assertions. **The next G2 work must address Debate/DECA depth.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

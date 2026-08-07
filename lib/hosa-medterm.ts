@@ -290,7 +290,17 @@ export const MEDTERM_BANK: MedTermQuestion[] = [
   // deliberately do NOT extend that pattern and do not duplicate their nine topics.
   // NOTE: pp-09 gained a trailing comma here because it stopped being the final array element. That
   // is punctuation, not content — the integrity check normalises one trailing comma on BOTH sides.
-  // AI-ASSISTED DRAFT CONTENT — human content review is still outstanding (see docs/HANDOFF.md).
+  // AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-07: the repository owner read all
+  // 21 items and approved their pathophysiological accuracy, the anatomy/physiology/pathophysiology
+  // boundary, answer uniqueness, distractors, causal wording, explanations, mechanism precision and
+  // legacy overlap. The approved version is the FINAL one — it includes the refinements committed in
+  // d449434 (pp-10 excessive/prolonged inflammation, pp-14, pp-15, pp-16, pp-17 conditional output,
+  // pp-18, pp-20 respiratory acidosis, pp-23 compensation, pp-25, pp-26 necrosis vs apoptosis,
+  // pp-27, pp-28, pp-30 asymptomatic infection) and bf311c8 (pp-18 'fill OR pump', pp-28 chronic
+  // abnormal pressure overload). The approval basis is that human reading of the final checklist;
+  // the AI pre-screen that preceded it was the authoring model checking its own output and formed
+  // no part of it. `CLAUDE.md` requires AI-generated material to stay labelled, so the authoring
+  // method is recorded here permanently — the approval is what changed, not the provenance.
   { id: "pp-10", area: "pathophysiology", question: "When inflammation becomes excessive or prolonged, surrounding tissue can be damaged because:", choices: ["Activated immune cells and inflammatory mediators can also injure nearby healthy cells", "The affected tissue is completely cut off from its blood supply", "White blood cells stop responding to the injury at all", "The body permanently loses the ability to repair any tissue"], correctAnswer: "Activated immune cells and inflammatory mediators can also injure nearby healthy cells", explanation: "Inflammation is normally protective, but the enzymes and reactive substances released by activated immune cells are not perfectly targeted. When the response is excessive or persists, that activity damages nearby healthy tissue as well." },
   { id: "pp-11", area: "pathophysiology", question: "A fever develops during infection because the body:", choices: ["Raises its thermoregulatory set point", "Loses the ability to sweat at all", "Stops producing heat in its tissues", "Resets its set point below normal"], correctAnswer: "Raises its thermoregulatory set point", explanation: "Pyrogens shift the hypothalamic set point upward, so the body actively warms itself toward the new, higher target rather than simply failing to cool." },
   { id: "pp-12", area: "pathophysiology", question: "In an autoimmune disorder, tissue damage occurs because the immune system:", choices: ["Attacks the body's own healthy tissue", "Cannot produce any white blood cells", "Overreacts to a harmless outside substance", "Stops circulating through the bloodstream"], correctAnswer: "Attacks the body's own healthy tissue", explanation: "Autoimmunity is a loss of self-tolerance: immune cells and antibodies target the body's own structures. An allergy instead targets a harmless outside substance." },

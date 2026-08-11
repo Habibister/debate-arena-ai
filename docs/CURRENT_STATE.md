@@ -2,7 +2,55 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Phase 2f — HOSA pathophysiology 9→30, six-area HOSA parity, human-reviewed and approved, local only)_
+_Last updated: 2026-08-07 (M14 Global G2 Slice 0 — Debate/DECA drill banks put under immutable additive protection; no content added)_
+
+## M14 Global G2 Slice 0 — the Debate and DECA drill banks are protected, no content added
+
+**No question content was added or changed in this slice.** `lib/debate-drills.ts` and
+`lib/deca-drills.ts` have **zero diff**. This slice exists so that the eight remaining Global-G2
+expansion slices are provably additive before any of the 168 questions is authored.
+
+**HOSA is done and human-reviewed:** all six Medical Terminology areas are 30 deep,
+`MEDTERM_BANK` = 180, every slice approved. **Global M14 G2 is still OPEN.**
+
+| Bank | Total | Per-area | State |
+|---|---|---|---|
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 | parity, human-reviewed, deployed |
+| `lib/debate-drills.ts` | 36 | claim-warrant-impact 9 · rebuttal 9 · evidence-evaluation 9 · weighing 9 | **G2 outstanding** |
+| `lib/deca-drills.ts` | 36 | performance-indicators 9 · business-reasoning 9 · customer-relations 9 · marketing-fundamentals 9 | **G2 outstanding** |
+
+**Remaining deficit: 168 questions** — 8 areas × 21. Debate 36→120, DECA 36→120, final corpus
+180 + 120 + 120 = **420**.
+
+What Slice 0 established:
+
+- **An immutable content baseline for both banks:** `PRE_G2_EXPANSION =
+  "26149a3127c0bc7f3108c303f57d41a8dd9088c0"` — the deployed pre-expansion commit. Never
+  HEAD-relative, never re-anchored. All 36 original items in each bank must stay byte-identical and
+  in order against it.
+- **Three self-healing `HEAD` guards were replaced, not deleted.** `hosa-medterm-evidence-smoke.ts`,
+  `review-ladder-smoke.ts` and `debate-mastery-smoke.ts` each hashed a drill bank against `HEAD` —
+  a check that fails while a change is uncommitted and passes the moment it commits, so it could
+  never notice what a commit changed. Each is now a durable assertion that the bank's real,
+  immutable-based protection exists.
+- **Slice-by-slice authorization.** An immutable prefix→area registry (4 mappings per bank) is
+  separate from the set of areas currently *authorized* to receive additions. **Slice 0 authorizes
+  zero areas in both banks**, so a structurally valid future item like `rb-10` is rejected today.
+  Each later slice adds exactly one area, in the commit that adds its 21 items, after human review.
+- **Exact per-area depth assertions** replaced the weak `length >= 32` and per-area `>= 6` floors, and
+  were added to both mastery smokes — which is what audit G2's Verification line explicitly asks for.
+- **Append-boundary prepared.** `wg-09` and `mk-09` end their arrays without trailing commas, so the
+  first addition necessarily adds one. The comparison normalizes **one terminal comma only**, and
+  control `G0-C1c` proves that same normalization still leaves a one-word content edit different.
+- **Padding fixtures deliberately unchanged** — 20 requested → 9 distinct is still Production truth.
+  **Slice 1 re-bases them; it must not delete them.**
+
+**No content review applies to Slice 0** — it adds no questions. Human content review is required
+before each of the eight content slices is pushed.
+
+**Next content slice: Debate rebuttal 9 → 30.**
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Phase 2f — HOSA Medical Terminology reaches six-area parity, human-reviewed, local only
 
@@ -613,7 +661,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
 | M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Phase 2f completes the HOSA portion of G2; **global G2 remains open for Debate and DECA depth expansion** — 4 Debate + 4 DECA areas at 9 each (`lib/debate-drills.ts` 36, `lib/deca-drills.ts` 36), with no per-area depth assertions. **The next G2 work must address Debate/DECA depth.** |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Phase 2f completes the HOSA portion of G2; **global G2 remains open for Debate and DECA depth expansion** — 4 Debate + 4 DECA areas at 9 each, deficit 168 questions. Slice 0 has now put both banks under immutable additive protection and added exact per-area depth assertions. **Next: Debate rebuttal 9 → 30.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

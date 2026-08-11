@@ -483,12 +483,38 @@ async function main() {
   // evidence contract is untouched, and the other tracks did not drag HOSA along with them.
   for (const file of [// app/api/hosa/medterm/session/route.ts is deliberately absent from M13E2 C2a
                       // onward: it is now session-backed. Asserted at 30s below instead.
-                      "lib/deca-drills.ts",                                                     // 32 DECA bank
-                      "lib/debate-drills.ts",                                                   // 33 Debate bank
+                      // lib/deca-drills.ts and lib/debate-drills.ts are deliberately absent from
+                      // M14 Global G2 Slice 0 onward. Those hashes were HEAD-relative: they failed
+                      // while an authorised Debate/DECA change was uncommitted and passed the moment
+                      // it committed, so they could never notice what a commit changed. The eight
+                      // Global-G2 slices deliberately expand both banks, so a hash here would forbid
+                      // an approved change rather than protect HOSA. What THIS suite actually needs
+                      // — that neither drill bank reaches into HOSA, and that both banks now carry
+                      // real immutable-baseline protection of their own — is asserted at 32/33 below.
                       "prisma/seed.ts",                                                         // 35 seed
                       "lib/roleplay-lessons.ts", "lib/hosa-events.ts"]) {
-    assert.equal(nowSha(file), headSha(file), `30/32-35. ${file} is byte-identical to HEAD`);
+    assert.equal(nowSha(file), headSha(file), `30/35. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 32/33. what the two drill-bank hashes were protecting, asserted durably -------------------
+  // (a) Track isolation: neither drill bank may reach into the terminology bank.
+  for (const neighbour of ["lib/deca-drills.ts", "lib/debate-drills.ts"]) {
+    assert.ok(!stripComments(read(neighbour)).includes("hosa-medterm"),
+      `32/33. ${neighbour} does not import or reference the HOSA terminology bank`);
+  }
+  // (b) Each bank's own content integrity now lives in its own suite and is IMMUTABLE-based, not
+  //     HEAD-relative — the same distinction that made 31f* real for HOSA.
+  for (const [suite, bank] of [["scripts/debate-drills-smoke.ts", "lib/debate-drills.ts"],
+                               ["scripts/deca-drills-smoke.ts", "lib/deca-drills.ts"]] as const) {
+    const src = read(suite);
+    assert.ok(/PRE_G2_EXPANSION = "26149a3127c0bc7f3108c303f57d41a8dd9088c0"/.test(src),
+      `32/33b. ${suite} pins an IMMUTABLE commit for ${bank}`);
+    assert.ok(!/PRE_G2_EXPANSION = `|PRE_G2_EXPANSION = execSync|git show HEAD:'\$\{|headSha\(/.test(src),
+      `32/33c. and that pin is not HEAD-relative or dynamically resolved`);
+  }
+  control("the drill banks' content protection is immutable-based, not HEAD-relative",
+    /PRE_G2_EXPANSION = "26149a31/.test(read("scripts/debate-drills-smoke.ts")) &&
+      /PRE_G2_EXPANSION = "26149a31/.test(read("scripts/deca-drills-smoke.ts")));
 
   // ---- 30s. what the HOSA session-route hash was protecting, asserted exactly ----------------
   const hosaSession = stripComments(read("app/api/hosa/medterm/session/route.ts"));

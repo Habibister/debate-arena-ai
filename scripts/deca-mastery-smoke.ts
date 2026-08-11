@@ -792,6 +792,24 @@ async function main() {
   const hosaBank = await import("../lib/hosa-medterm");
   assert.equal(hosaBank.MEDTERM_BANK.length, 180, "26i. the HOSA bank holds 180 questions (M14 Phase 2a-2f took all six HOSA areas to 30 each; Debate and DECA banks are untouched and still 9 per area)");
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 180, "26j. with unique ids");
+
+  // ---- 26k. PER-AREA DEPTH, which audit G2 explicitly asks the mastery smokes to assert ----------
+  // AREA_DEPTH is the single source of truth. Each Global-G2 slice raises exactly ONE entry 9 -> 30.
+  const DECA_AREA_DEPTH: Record<string, number> = {
+    "performance-indicators": 9,
+    "business-reasoning": 9,
+    "customer-relations": 9,
+    "marketing-fundamentals": 9
+  };
+  for (const [area, depth] of Object.entries(DECA_AREA_DEPTH)) {
+    assert.equal(DECA_DRILL_BANK.filter((q) => q.area === area).length, depth,
+      `26k. DECA area ${area} holds exactly ${depth} questions`);
+  }
+  assert.equal(DECA_DRILL_BANK.length, Object.values(DECA_AREA_DEPTH).reduce((a, b) => a + b, 0),
+    "26k2. and the DECA bank total is exactly the sum of its declared per-area depths");
+  assert.equal(new Set(DECA_DRILL_BANK.map((q) => q.id)).size, DECA_DRILL_BANK.length, "26k3. with unique ids");
+  control("every DECA question belongs to exactly one declared area",
+    DECA_DRILL_BANK.every((q) => q.area in DECA_AREA_DEPTH));
   assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "26k. across six areas");
 
   // ---- 25b-25f. what the Debate byte-pins were protecting, asserted exactly ---------------------------

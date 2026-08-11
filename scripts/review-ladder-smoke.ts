@@ -528,7 +528,11 @@ async function main() {
   // ---- 65-68. nothing structural changed --------------------------------------------------------------------
   const sha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
   const now = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
-  for (const file of ["prisma/seed.ts", "lib/debate-drills.ts", "lib/deca-drills.ts",
+  // lib/debate-drills.ts and lib/deca-drills.ts are deliberately absent from M14 Global G2 Slice 0
+  // onward: those hashes were HEAD-relative, so they turned green the moment any expansion commit
+  // landed and proved nothing about it — exactly the defect removed from lib/hosa-medterm.ts at
+  // Phase 2a. The eight Global-G2 slices expand both banks. What they protected is asserted at 68G.
+  for (const file of ["prisma/seed.ts",
                       // app/api/hosa/medterm/submit/route.ts is deliberately absent from M13E2 C2a
                       // onward: it is now session-backed. What the hash protected is asserted at 65h.
                       // lib/hosa-medterm.ts is deliberately absent from M14 Phase 2a onward: that
@@ -578,6 +582,19 @@ async function main() {
     assert.ok(!stripComments(read(neighbour)).includes("hosa-medterm"),
       `65M6. ${neighbour} does not import the terminology bank`);
   }
+  // ---- 68G. the drill banks keep their own IMMUTABLE-based content protection --------------------
+  // This replaces the two HEAD-relative hashes removed above. The review ladder does not care what
+  // the banks contain; it cares that neither reaches into HOSA and that neither is left unprotected.
+  for (const bankSuite of ["scripts/debate-drills-smoke.ts", "scripts/deca-drills-smoke.ts"]) {
+    const bankSrc = read(bankSuite);
+    assert.ok(/PRE_G2_EXPANSION = "26149a3127c0bc7f3108c303f57d41a8dd9088c0"/.test(bankSrc),
+      `68G. ${bankSuite} pins an IMMUTABLE commit as its bank baseline`);
+    assert.ok(/is byte-identical to \$\{PRE_G2_EXPANSION/.test(bankSrc),
+      `68G2. and asserts every original item byte-identical against it`);
+    assert.ok(/is not yet authorised for expansion/.test(bankSrc),
+      `68G3. and gates additions on an explicitly authorised area, one slice at a time`);
+  }
+
   // 65M7. The real content-integrity protection exists and is immutable-based, not HEAD-relative.
   const evidenceSuite = read("scripts/hosa-medterm-evidence-smoke.ts");
   assert.ok(/PRE_M13E1F = "398860fc0a3469459f78750b9a0203c852d32aea"/.test(evidenceSuite),

@@ -2,6 +2,71 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
+## Latest handoff — M14 Global G2 Slice 0: Debate/DECA banks protected (2026-08-07)
+
+**No question content was added or changed.** `lib/debate-drills.ts` and `lib/deca-drills.ts` have
+**zero diff**. Slice 0 is groundwork so the eight remaining Global-G2 expansion slices are provably
+additive before any of the 168 questions is authored. **There is no content-review gate on Slice 0**;
+each of the eight content slices keeps one.
+
+### Where G2 actually stands
+
+| Bank | Total | Per-area | State |
+|---|---|---|---|
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 | parity, human-reviewed, deployed |
+| `lib/debate-drills.ts` | 36 | cw 9 · rb 9 · ev 9 · wg 9 | **G2 outstanding** |
+| `lib/deca-drills.ts` | 36 | pi 9 · br 9 · cr 9 · mk 9 | **G2 outstanding** |
+
+**Deficit 168 questions** (8 × 21). Debate 36→120, DECA 36→120, final corpus **420**. **Global M14 G2
+remains OPEN.** Do not record it as closed.
+
+### What Slice 0 established — do not undo any of it
+
+- **Immutable baseline for both banks:** `PRE_G2_EXPANSION =
+  "26149a3127c0bc7f3108c303f57d41a8dd9088c0"`. **Never make it HEAD-relative and never re-anchor it.**
+  Every original item in each bank must stay byte-identical and ordered against that commit.
+- **Three self-healing `HEAD` guards were REPLACED, not deleted.** `hosa-medterm-evidence-smoke.ts`
+  (both banks), `review-ladder-smoke.ts` (both banks) and `debate-mastery-smoke.ts` (`lib/deca-drills.ts`)
+  hashed a drill bank against `HEAD`. That fails while an authorized change is uncommitted and passes
+  the instant it commits — it can never notice what a commit changed. Each site now asserts durably
+  that the bank's real immutable-based protection exists (`32/33`, `68G`, `28G`).
+- **Slice-by-slice authorization — this is the important one.** Each bank has an IMMUTABLE
+  `PREFIX_AREA` registry (4 mappings) *separate from* `EXPANDED_AREAS`, the areas currently authorized
+  to receive additions. **Both `EXPANDED_AREAS` are empty.** A structurally valid future item such as
+  `rb-10` or `pi-10` is rejected TODAY with stage `unauthorised`. **Each later slice adds exactly ONE
+  area, in the same commit that adds its 21 items, after that content passes human review. Never
+  pre-authorize.**
+- **One shared predicate, `judgeAddition`.** Real additions and every control run through it; its
+  `authorised` parameter exists only so a control can probe structural recognition without
+  authorizing a real area. Do not add a second regex implementing the same rule.
+- **Exact per-area depth assertions** replaced `length >= 32` and per-area `>= 6`, and now also live in
+  both mastery smokes (`29k`, `26k`) — what audit G2's Verification line asks for. `AREA_DEPTH` is the
+  single source of truth, so one area can go 9 → 30 without weakening the others.
+- **Append boundary prepared.** `wg-09` and `mk-09` terminate their arrays without trailing commas.
+  The comparison normalizes **one terminal comma only** — not whitespace, not general punctuation,
+  not property order — and `G0-C1b`/`G0-C1c` prove a comma-only difference normalizes identical while
+  a one-word content edit still does not.
+
+### What Slice 1 must do
+
+**Debate rebuttal 9 → 30**, and it must **re-base, not delete, the two padding fixtures** that still
+describe Production truth today (20 requested → 9 distinct):
+
+- `debate-mastery-smoke.ts` — the "20-question focused session still serves 11 repeats of a 9-item
+  pool" control.
+- `review-ladder-smoke.ts:524-526` — the 20-slot padded rebuttal fixture asserting `evidenceScore === 67`.
+
+Both break the moment `rebuttal` crosses 20. Re-base them on a request that exceeds a 30-item pool,
+exactly as HOSA's `11g` was re-based at Phase 2f. Slice 1 also adds `"rebuttal"` to Debate's
+`EXPANDED_AREAS` and raises its `AREA_DEPTH` entry to 30. **Human content review before push.**
+
+### Runtime, untouched
+
+Debate and DECA legitimately write `MasteryProgress` — they are **not** review-only like HOSA. The
+mastery transaction path, the 5-distinct evidence floor per drill area, the 70 pass threshold, replay
+protection, first-answer behaviour, the XP prohibition and session issuance/grading are all unchanged.
+No schema, migration, seed, route, validator or client change.
+
 ## Latest handoff — M14 Phase 2f: HOSA pathophysiology 9→30, HOSA parity (2026-08-07)
 
 ### Phase 2f: content is human-reviewed and APPROVED — clear to push
@@ -39,8 +104,8 @@ sizes itself at ~14 areas. Phases 2a–2f covered only the six HOSA ones. Verifi
 | `lib/deca-drills.ts` | 36 | performance-indicators 9 · business-reasoning 9 · customer-relations 9 · marketing-fundamentals 9 | **still 9 — G2 outstanding** |
 
 Those eight areas still pad a 20-question request to 20 slots over 9 distinct items — the original
-P0 defect. There are **no per-area depth assertions for either bank**, so a green suite says nothing
-about them. Closing G2 needs either eight further slices (+168 items, corpus 231 → 399) or an
+P0 defect. (At the time of Phase 2f there were **no per-area depth assertions for either bank**;
+Global-G2 Slice 0 has since added them — see the Slice 0 block at the top of this file.) Closing G2 needs either eight further slices (+168 items, corpus 231 → 399) or an
 explicit recorded decision to re-scope G2 and re-file the Debate/DECA depth gap as its own finding.
 **That decision has not been made. Do not make it silently.**
 

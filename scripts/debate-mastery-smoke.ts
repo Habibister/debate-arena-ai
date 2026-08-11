@@ -432,7 +432,10 @@ async function main() {
   // due-window winner for BOTH mastery writers. A blanket hash would forbid that approved change
   // rather than protect Debate drills, so it is replaced at 27b-27f by assertions on what matters.
   for (const file of ["lib/debate-skill-practice.ts",                                              // 27 Debate writing grading
-                      "lib/deca-drills.ts",                                                        // 28 DECA bank
+                      // lib/deca-drills.ts is deliberately absent from M14 Global G2 Slice 0 onward:
+                      // that hash was HEAD-relative, so it passed the moment any DECA expansion
+                      // committed. DECA's real IMMUTABLE-based protection lives in
+                      // scripts/deca-drills-smoke.ts and is asserted at 28G below.
                       "prisma/seed.ts",                                                             // 31 seed
                       // app/api/debate/drills/session/route.ts is deliberately absent from M13E2 C2a
                       // onward: it now issues a server-authoritative session. A blanket hash would
@@ -441,6 +444,15 @@ async function main() {
                       "lib/education/registry.ts", "lib/assignments.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27-31. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 28G. what the DECA-bank hash was protecting, asserted durably ---------------------------
+  const decaSuite = read("scripts/deca-drills-smoke.ts");
+  assert.ok(/PRE_G2_EXPANSION = "26149a3127c0bc7f3108c303f57d41a8dd9088c0"/.test(decaSuite),
+    "28G. the DECA bank is protected against an IMMUTABLE commit, not against HEAD");
+  assert.ok(/is not yet authorised for expansion/.test(decaSuite),
+    "28G2. and its additions are gated on an explicitly authorised area");
+  assert.ok(!stripComments(read("lib/deca-drills.ts")).includes("debate-drills"),
+    "28G3. and the DECA bank still does not reach into Debate");
 
   // ---- 27s. what the Debate session-route hash was protecting, asserted exactly -----------------
   const debateSession = stripComments(read("app/api/debate/drills/session/route.ts"));
@@ -679,6 +691,26 @@ async function main() {
   const hosaBank = await import("../lib/hosa-medterm");
   assert.equal(hosaBank.MEDTERM_BANK.length, 180, "29i. the HOSA bank holds 180 questions (M14 Phase 2a-2f took all six HOSA areas to 30 each; Debate and DECA banks are untouched and still 9 per area)");
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 180, "29j. with unique ids");
+
+  // ---- 29k. PER-AREA DEPTH, which audit G2 explicitly asks the mastery smokes to assert ----------
+  // AREA_DEPTH is the single source of truth. Each Global-G2 slice raises exactly ONE entry 9 -> 30,
+  // so one area can evolve without weakening the assertion on any other.
+  const DEBATE_AREA_DEPTH: Record<string, number> = {
+    "claim-warrant-impact": 9,
+    "rebuttal": 9,
+    "evidence-evaluation": 9,
+    "weighing": 9
+  };
+  for (const [area, depth] of Object.entries(DEBATE_AREA_DEPTH)) {
+    assert.equal(DRILL_BANK.filter((q) => q.area === area).length, depth,
+      `29k. Debate area ${area} holds exactly ${depth} questions`);
+  }
+  assert.equal(DRILL_BANK.length, Object.values(DEBATE_AREA_DEPTH).reduce((a, b) => a + b, 0),
+    "29k2. and the Debate bank total is exactly the sum of its declared per-area depths");
+  assert.equal(new Set(DRILL_BANK.map((q) => q.id)).size, DRILL_BANK.length, "29k3. with unique ids");
+  // Non-vacuous: the per-area assertion really discriminates — no two areas share a pool.
+  control("every Debate question belongs to exactly one declared area",
+    DRILL_BANK.every((q) => q.area in DEBATE_AREA_DEPTH));
   assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "29k. across six areas");
 
   // ---- 32. no database contact ------------------------------------------------------------------------------

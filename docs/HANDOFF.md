@@ -2,7 +2,110 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 Slice 6 / DECA Slice 2: BR 9→30 (2026-08-12)
+## Latest handoff — M14 DECA Curriculum Completion: CR + MK curriculum draft (2026-08-12)
+
+### ⛔ DO NOT PUSH — human content review is OUTSTANDING
+
+Status: **`AI-ASSISTED CURRICULUM DRAFT — HUMAN CONTENT REVIEW OUTSTANDING`.**
+**AI self-review does NOT count as human review.** The draft is a local commit only. It must be read
+by a human and explicitly approved before any push, exactly as every drill slice was.
+
+### Why this milestone exists
+
+Slice 7 (CR 9→30) could not start. Planning found that the DECA course teaches **L0–L18 and not one
+lesson covers customer relations or marketing fundamentals** — the course teaches the role-play
+*performance* skill set, which is why PI mapped cleanly to L2/L3 and BR to L9–L12. CR and MK are
+business-*content* areas the course never covered; every prior "customer relations" mention was an
+example PI **title** inside the ⟨D6⟩ lesson. Reordering does not help — the same gap blocks Slice 8.
+The owner chose **Option 1: author the missing curriculum first.**
+
+### What was drafted
+
+Twelve lessons, appended to `docs/curriculum/02-deca-course.md` as a new **DECA Business-Content
+Course** section: **`CR1`–`CR6`** and **`MK1`–`MK6`**, each with a source tier, learning objective,
+core concepts, learner decisions, worked example(s), non-example(s), common mistakes, boundary notes,
+provenance notes and caveats. CR is built on a four-input spine — **facts · policy · options ·
+authority**. MK follows customer → value → position → offering → distribution → communication.
+
+### The architectural rule you must not break
+
+**The section was APPENDED after the old final line 271 (271 → 814). Never insert into L0–L18.**
+26 line-number citations point into this file — 13 in `lib/deca-events.ts`, 13 in
+`scripts/deca-navigator-smoke.ts`, highest cited line 232 — and **no code parses curriculum files**, so
+a shifted citation fails **silently** and becomes false provenance rather than a red test. Verified
+after the append: the first 271 lines are **byte-identical to `HEAD`** (md5 `d1fed6a0…`) and all 51
+distinct cited lines still hold their original text — **zero shift**. If a future edit must go into the
+body of this file, re-run that check and fix the citations deliberately; do not let it slide.
+
+### Sourcing — what is grounded and what is ours
+
+Definitions were verified against **public, non-proprietary** sources: OpenStax *Principles of
+Marketing* (segmentation, target market, positioning, differentiation, value proposition, customer
+value, marketing mix/4 Ps, channels and channel-choice factors, promotion mix, service-quality
+dimensions), OpenStax *Introduction to Business* (authority, delegation, chain of command,
+accountability), OpenStax *Principles of Management* and *College Success* (listening, clarifying
+questions), the AMA's public definitions (second source for positioning), the U.S. SBA business guide
+(second source for target market), U.S. OSHA workplace-violence guidance (used **only** to place
+de-escalation technique out of scope), and the U.S. CFPB complaint-process description (context only —
+**its sector-specific deadlines are not taught and must not be generalized**).
+
+**Labeled as CompeteReady's, not sourced:** the four-input CR model · the seven-step service-recovery
+scaffold ⟨CR-C⟩ · the policy-only/empathy-only failure pair · the two-direction escalation rule · the
+CR1–CR6 / MK1–MK6 grouping. **The 4 Ps are explicitly NOT labeled as ours** — mainstream terminology.
+
+**Every lesson is STABLE-TEACHING**, which doc 00 defines as never a rules source, so the section
+states **no** DECA rule, scoring criterion, judge expectation or score claim. **ISO 10002 is recorded
+as a known reference that was NOT retrieved** (paywalled, HTTP 403); nothing rests on it. **No legal
+conclusion is taught anywhere** — scenario facts govern, and every future CR drill must put the
+policy fact in the stem.
+
+### Legacy debt — contextualized, NOT corrected
+
+**FIVE CR items carry notable curriculum debt: `cr-01`, `cr-04`, `cr-06`, `cr-07`, `cr-09`.** *(An
+earlier planning note said "four" while naming five — the count is FIVE.)* **One MK item does:
+`mk-08`.** `cr-01`/`cr-06` teach fixed sequences, so ⟨CR-C⟩ is deliberately contextual and
+order-variable. `cr-04` puts retention economics in CR, which deployed BR now owns (`br-12`), so CR1
+defines the area by the interaction decision instead. `cr-07` universalizes follow-up, so CR6 teaches
+it as situational with named triggers. `cr-09` implies an unauthorized extra, so ⟨CR-A⟩/⟨CR-B⟩ require
+any extra to be authorized and available and "exceeding expectations" is not taught. `mk-08` puts
+cost-per-acquisition in MK, so MK6 routes campaign measurement to BR. **All 18 legacy items are
+unchanged and immutable; no baseline exception was created; the legacy bank is NOT "corrected".**
+
+### What this milestone deliberately did NOT do
+
+- **No drill change.** `lib/deca-drills.ts`, `scripts/deca-drills-smoke.ts` and
+  `scripts/deca-mastery-smoke.ts` are byte-identical to `HEAD`. `EXPANDED_AREAS`, `SLICE_ADDITIONS`,
+  depth authorization, ids, content and counts are untouched. **No G2 depth credit was earned.**
+- **No registry/seed change.** `deca-customer-relations` still has **no lesson slugs**;
+  `deca-marketing` still has **three title-only slugs** and no authored bodies anywhere. Attaching
+  lessons touches seeded product data and is a **separate approval**. `deca:skills:activate` was NOT
+  run; **no database operation was performed**; no schema, migration, route or runtime change.
+- **No video parity.** `06-videos-deca.md` untouched — videos 9–14 are a selective set, not a
+  lesson-by-lesson mirror, so parity is not owed and no placeholder was created.
+
+**Exactly 3 files changed:** `docs/curriculum/02-deca-course.md`, `docs/CURRENT_STATE.md`,
+`docs/HANDOFF.md`.
+
+### State — unchanged by this milestone
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
+| `lib/deca-drills.ts` | 78 | pi 30 · br 30 · **cr 9** · **mk 9** — all deployed and reviewed |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**DECA 30 / 30 / 9 / 9 = 78. Corpus 378. Deficit 42 (CR 21 + MK 21).**
+
+### Next steps, in order
+
+1. **Human reads all twelve lessons** and approves or requests refinements. Nothing else may proceed.
+2. Refinement pass, then an approval-status commit, then push and deploy.
+3. **Only then** Slice 7 (CR 9→30), then Slice 8 (MK 9→30).
+
+**M14 Global G2 remains OPEN and BLOCKED on human approval of the new Customer Relations and Marketing
+Fundamentals curriculum. Do not record G2, or DECA, as complete or closed.**
+
+## M14 Global G2 Slice 6 / DECA Slice 2: BR 9→30 (2026-08-12)
 
 ### Slice 6: content is human-reviewed and APPROVED — clear to push
 

@@ -2,9 +2,75 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning 9→30, human-reviewed and approved 2026-08-12, local only)_
+_Last updated: 2026-08-12 (M14 DECA Curriculum Completion — CR + MK curriculum drafted, AI-assisted, **HUMAN CONTENT REVIEW OUTSTANDING**, local only. The Slice 6 baseline `dd0cd71` is pushed and deployed — deployment `5864067195`, `Production`, `success`.)_
 
-## M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning is 30 deep, human-reviewed, local only
+## M14 DECA Curriculum Completion — Customer Relations + Marketing Fundamentals curriculum drafted (review outstanding)
+
+**Status: `AI-ASSISTED CURRICULUM DRAFT — HUMAN CONTENT REVIEW OUTSTANDING`.**
+**AI self-review does NOT count as human review. DO NOT PUSH until a human approves the curriculum.**
+
+**This milestone changes no drill content and earns no G2 depth credit.** It exists because Slice 7
+(CR 9→30) was blocked: the DECA course taught **L0–L18 and no lesson covered customer relations or
+marketing fundamentals**. The course teaches the role-play *performance* skill set, which is why PI
+mapped to L2/L3 and BR mapped to L9–L12 — CR and MK are business-*content* areas the course never
+covered. Every prior "customer relations" occurrence in the curriculum was an example PI **title** in
+the ⟨D6⟩ recitation lesson. The owner chose **Option 1 — author the missing curriculum first**.
+
+**Twelve lessons drafted** in a new appended section of `docs/curriculum/02-deca-course.md`:
+**`CR1`–`CR6`** (what a CR decision decides · understanding the concern · acknowledging without
+overpromising · explaining policy and real options · service recovery · authority, escalation and
+follow-through) and **`MK1`–`MK6`** (who the customer is · why they would choose you · how you want to
+be understood · the offering and its price · getting it to the customer · telling them about it).
+
+- **Architecture: appended after the old final line 271, never inserted.** 271 → 814 lines. **26
+  line-number citations point into this file** (13 in `lib/deca-events.ts`, 13 in
+  `scripts/deca-navigator-smoke.ts`), the highest at line 232, and **nothing in the repo parses
+  curriculum files** — so a shifted citation would fail *silently* rather than break a test. Proven
+  after the append: the first 271 lines are **byte-identical** to `HEAD` (md5 `d1fed6a0…` unchanged)
+  and **all 51 distinct cited lines still hold their original text. Zero citations shifted.**
+- **Separate numbering.** `CR1`–`CR6` / `MK1`–`MK6` do **not** extend L0–L18 and can never collide
+  with it.
+- **Source verification was performed** against public, non-proprietary sources — OpenStax *Principles
+  of Marketing*, *Introduction to Business*, *Principles of Management* and *College Success*, the
+  American Marketing Association's public definitions, the U.S. SBA business guide, U.S. OSHA
+  workplace-violence guidance (used only to keep de-escalation technique **out** of scope), and the
+  U.S. CFPB complaint-process description (context only; its sector deadlines are **not** taught).
+  **No DECA exam, role-play prompt, evaluation form, answer key or proprietary text was used.** All
+  learner-facing prose is original synthesis; the curriculum contains **no raw URLs**, matching the
+  existing curriculum style.
+- **Every lesson is tagged STABLE-TEACHING**, which per doc 00 is **never a rules source** — so the
+  section states no DECA rule, no scoring criterion, no judge expectation and no score claim.
+- **One new CompeteReady scaffold**, the seven-step service-recovery sequence ⟨CR-C⟩, labeled exactly
+  as ⟨D7⟩ requires: a CompeteReady teaching scaffold, not official DECA terminology, not a scoring
+  formula, order-variable, steps frequently unnecessary. **The 4 Ps are NOT labeled as ours** — they
+  are mainstream marketing terminology.
+- **Known source gap recorded honestly:** ISO 10002 (complaints-handling guidance) is named as a
+  relevant reference that **was not retrieved** — its text is paywalled and returned HTTP 403 — and
+  **no claim rests on it.**
+- **Legacy debt contextualized, never corrected.** **FIVE** CR items carry notable debt — `cr-01`
+  (fixed sequence) · `cr-04` (CR/BR retention economics, now `br-12`'s) · `cr-06` (fixed sequence) ·
+  `cr-07` (follow-up universalized) · `cr-09` (authority/"small extra") — and **one** MK item does:
+  `mk-08` (MK/BR measurement efficiency). *(The planning record miscounted CR as "four" while naming
+  five; the count is FIVE.)* All 18 legacy items are unchanged and immutable, and **no baseline
+  exception was created.**
+- **Drill banks intentionally untouched.** `lib/deca-drills.ts`, `scripts/deca-drills-smoke.ts` and
+  `scripts/deca-mastery-smoke.ts` are byte-identical to `HEAD`. `EXPANDED_AREAS`, `SLICE_ADDITIONS`,
+  depth authorization, question ids, question content and all counts are unchanged.
+- **Registry/seed attachment DEFERRED.** `deca-customer-relations` still has **no lesson slugs** and
+  `deca-marketing` still has **three title-only slugs** with no authored bodies. Attaching lessons
+  touches seeded product data and is a **separate approval**. `deca:skills:activate` was NOT run and
+  no database operation was performed.
+- **Video parity DEFERRED.** `06-videos-deca.md` is untouched; the DECA video set (videos 9–14) is
+  selective rather than a lesson-by-lesson mirror, so parity is not owed. No placeholder video exists.
+
+**Exactly 3 files changed:** `docs/curriculum/02-deca-course.md`, `docs/CURRENT_STATE.md`,
+`docs/HANDOFF.md`.
+
+**DECA remains 30 / 30 / 9 / 9 = 78. Corpus remains 378. Deficit remains 42 (CR 21 + MK 21).**
+**M14 Global G2 remains OPEN and BLOCKED on human approval of this curriculum. No G2 depth credit has
+been awarded.** Slices 7 and 8 stay blocked until the curriculum is approved.
+
+## M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning is 30 deep, human-reviewed, deployed
 
 **Slice 5 (PI) is deployed and human-reviewed** at `a6dfc86` (deployment `5863473555`, `Production`,
 `success`), so performance-indicators was approved and live before this slice began.

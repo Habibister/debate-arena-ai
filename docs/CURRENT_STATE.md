@@ -44,10 +44,23 @@ Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`c
   guards a real index dependency, not symmetry — no BR equivalent was added because nothing indexes BR.
 - **A second hardcoded `42`** at `deca-drills-smoke.ts` (the predicate control) was found by the build
   and now derives from `EXPECTED_ADDED.length`, so it cannot drift again.
-- **Answer-key length balance was corrected before commit.** The pre-screen found the keyed answer was
-  >1.6× the longest distractor in `cr-20`, `cr-22`, `cr-25`, `cr-26`, `cr-30` — a length tell. Those
-  five were rebalanced; the set now has mean ratio **1.22** and max **1.59**, better than the approved
-  `br-10`–`br-30` slice (mean 1.57) and far better than legacy `cr-01`–`cr-09` (2.25).
+- **Slice 7 was REFINED after the human-review packet — questions are still NOT approved.** The packet
+  found four should-fix issues and all four are resolved: **(F7-1)** the key was the longest choice in
+  **18 of 21**, and because choice order is shuffled at serve time but *length is not*, "always pick the
+  longest" would have scored ≈86% without reading. Ten distractors were given their own reasoning —
+  which makes them more tempting, not less — so the key is now longest in **5 of 21 (24%, essentially
+  chance for four options)**, mean ratio **0.97**, median **0.94**. Neither longest nor shortest is an
+  exploitable strategy, and there is no inverse tell. **(F7-6)** `cr-19`'s key asserted "about five
+  working days", a figure the stem never supplied — the estimate is now stated in the stem, which is
+  what ⟨BC-3⟩ requires of the item itself. **(F7-3)** `cr-25` now states that a manager is on shift and
+  available, so the key offers to seek approval rather than describing it as a dead end. **(F7-4)**
+  `cr-26`'s distractor "check with their neighbours and call back" was genuinely defensible in a real
+  delivery dispute; it is replaced with handing the investigation to the customer, which the supplied
+  facts defeat. **Fact-sufficient and exactly-one-defensible-answer are now 21/21.**
+- **Source-array key position is A in all 21** — an authoring convention shared with the approved PI and
+  BR slices. It is **not learner-visible**: `app/api/deca/drills/session/route.ts` is the only
+  learner-facing consumer and it shuffles choices via `buildServedChoices` with opaque UUID option ids.
+  Recorded as a known convention, not a defect.
 - **NO legacy punctuation changed.** CR is a MIDDLE block, so `cr-09` already carried its comma.
   **`mk-09` remains the final array element and remains comma-less** — the DECA terminal-comma
   boundary is still unexercised and reserved for Slice 8.

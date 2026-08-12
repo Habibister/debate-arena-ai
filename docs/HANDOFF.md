@@ -59,11 +59,34 @@ purpose** — spotting the gap is the learner decision — while still stating t
   names MK specifically, `mk-10` still rejected at stage `unauthorised`. `G0-7b` is now a **63-id**
   guarantee with `G0-7b2d` asserting zero MK additions; forbidden prefixes narrowed to `["mk"]`.
 
-**Answer-key length balance was corrected before commit.** The pre-screen found the key was >1.6× the
-longest distractor in `cr-20`, `cr-22`, `cr-25`, `cr-26`, `cr-30` — a length tell that lets a test-wise
-student score without reasoning. Those five were rebalanced: mean ratio now **1.22**, max **1.59**,
-against **1.57** mean for the approved `br-10`–`br-30` slice and **2.25** for legacy `cr-01`–`cr-09`.
-**Worth applying the same check at Slice 8.**
+### Slice 7 was REFINED after the human-review packet — still NOT approved
+
+The read-only review packet raised four should-fix issues; all four are resolved in the refinement
+commit. **The questions remain unapproved and the do-not-push gate stands.**
+
+**F7-1 — answer-length leakage (the important one).** The key was the longest choice in **18 of 21**.
+Choice *order* is shuffled at serve time by `buildServedChoices`, but choice *length* is not, so
+"always pick the longest" would have scored **≈86%** with no understanding of Customer Relations. Ten
+distractors were rewritten to carry their own reasoning — which makes them genuinely more tempting
+rather than padded — so the key is now longest in **5 of 21 (24%)**, which is essentially chance for
+four options. Mean ratio **1.22 → 0.97**, median **0.94**. Picking the shortest is worse than random
+(2/21), so no inverse tell was introduced. **Run this check on Slice 8 before review, not after.**
+
+**F7-6 — `cr-19` invented a fact.** The key asserted "about five working days" although the stem never
+supplied it — the same error the course teaches against. The estimate is now stated in the stem.
+
+**F7-3 — `cr-25` omitted manager availability.** The stem now states a manager is on shift and
+available, and the key offers to ask them to review the refund instead of implying a dead end.
+
+**F7-4 — `cr-26` had a defensible distractor.** "Ask the customer to check with their neighbours and
+call back" is ordinary practice in a real delivery dispute, so it was not safely wrong. It is replaced
+by handing the investigation to the customer, which the supplied facts defeat.
+
+**Fact-sufficient 21/21 and exactly-one-defensible-answer 21/21** after refinement (both were 20/21).
+
+**Source-array key position is A in all 21** — an authoring convention shared with the approved PI and
+BR slices, and **not learner-visible**, because the session route is the only consumer of the bank and
+it shuffles choices with opaque UUID option ids. Left as-is deliberately; it is a note, not a defect.
 
 Two things to keep straight, as for every slice so far:
 

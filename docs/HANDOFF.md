@@ -68,9 +68,20 @@ commit. **The questions remain unapproved and the do-not-push gate stands.**
 Choice *order* is shuffled at serve time by `buildServedChoices`, but choice *length* is not, so
 "always pick the longest" would have scored **≈86%** with no understanding of Customer Relations. Ten
 distractors were rewritten to carry their own reasoning — which makes them genuinely more tempting
-rather than padded — so the key is now longest in **5 of 21 (24%)**, which is essentially chance for
-four options. Mean ratio **1.22 → 0.97**, median **0.94**. Picking the shortest is worse than random
-(2/21), so no inverse tell was introduced. **Run this check on Slice 8 before review, not after.**
+rather than padded — so the key is now longest in **4 of 21**. Mean ratio **1.22 → 0.94**, median
+**0.93**, max **1.25**. Picking the longest or the shortest both score below chance, and 15 of 21 keys
+are neither, so no inverse tell was introduced. **Run this check on Slice 8 before review, not after.**
+
+**F7-9 — `cr-30` reflexive escalation and hidden authority.** Caught on the second review pass, and the
+substantive half matters more than the form half. The key said to *"bring in the supervisor if more is
+asked"*, but the stem establishes only that **a supervisor is on the floor** — not that they hold any
+remedy the employee lacks, not that the customer asked for them, and not that a raised voice requires
+escalation. That was an unstated-authority implication in the one item whose whole point is that volume
+changes nothing. The key now stays within the two stated remedies, and **reflexive escalation became
+the strongest distractor**, which reinforces CR6's do-not-escalate-when-you-can-solve-it rule. It also
+cleared the form cues: `cr-30` had been key-longest, the slice's highest ratio (1.59), and the only
+choice naming the supervisor — it is now none of those. **Lesson for Slice 8: check that every noun in
+a stem which sounds like authority is actually given a power, or it will leak into the key.**
 
 **F7-6 — `cr-19` invented a fact.** The key asserted "about five working days" although the stem never
 supplied it — the same error the course teaches against. The estimate is now stated in the stem.

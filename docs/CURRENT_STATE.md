@@ -48,9 +48,15 @@ Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`c
   found four should-fix issues and all four are resolved: **(F7-1)** the key was the longest choice in
   **18 of 21**, and because choice order is shuffled at serve time but *length is not*, "always pick the
   longest" would have scored ≈86% without reading. Ten distractors were given their own reasoning —
-  which makes them more tempting, not less — so the key is now longest in **5 of 21 (24%, essentially
-  chance for four options)**, mean ratio **0.97**, median **0.94**. Neither longest nor shortest is an
-  exploitable strategy, and there is no inverse tell. **(F7-6)** `cr-19`'s key asserted "about five
+  which makes them more tempting, not less — so the key is now longest in **4 of 21**, mean ratio
+  **0.94**, median **0.93**, max **1.25**. Neither longest nor shortest is an exploitable strategy
+  (both score below chance), and with 15 of 21 keys neither longest nor shortest there is no inverse
+  tell. **(F7-9)** `cr-30` was refined last: its key both carried the slice's highest ratio and was the
+  only choice naming the supervisor, and — more substantively — it said to *"bring in the supervisor if
+  more is asked"* when the stem establishes only that a supervisor is **present**, not that they hold
+  any remedy the employee lacks. The key now stays with the two stated remedies, and reflexive
+  escalation on a raised voice became the strongest distractor, which reinforces CR6's
+  do-not-reflexively-escalate rule without teaching "never escalate". **(F7-6)** `cr-19`'s key asserted "about five
   working days", a figure the stem never supplied — the estimate is now stated in the stem, which is
   what ⟨BC-3⟩ requires of the item itself. **(F7-3)** `cr-25` now states that a manager is on shift and
   available, so the key offers to seek approval rather than describing it as a dead end. **(F7-4)**

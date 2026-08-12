@@ -118,9 +118,7 @@ question *"can any distractor also be defended without inventing facts?"* — ra
 answer was intended?"* — exposed the rest. **(cr-20)** the rationale added while fixing form leakage
 turned a distractor into a competing answer; rejecting it required the explanation-only claim that
 stating the expired window "is necessary". Replaced with a manager-exception option, defeated by the
-stem's own grant of store-credit authority. **(cr-23)** the key asserted *"It usually arrives in
-about a week"* although the stem supplied **no** lead time — the identical defect fixed in `cr-19` as
-F7-6 and never checked here; the estimate is now in the stem. **(cr-26)** the key assumed the
+stem's own grant of store-credit authority. **(cr-23)** the key asserted a one-week lead time the stem never supplied — the identical defect fixed in `cr-19` as F7-6 and never checked here. **A later spot-review found the same item still invented a second fact: the key's "we'll call you to book the repair" described a callback process the stem did not establish.** Both the timescale and the callback process are now stated in the stem. **(cr-26)** the key assumed the
 employee could obtain proof of delivery when the stem established only tracking visibility; the stem
 now states the capability. **(cr-30)** the waiting option was defensible real-world practice, so the
 stem now states the customer is still listening and actively asking what you can do, which the

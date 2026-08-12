@@ -305,7 +305,10 @@ override policy. Bounded authority is the normal case and is taught as such.
 > carries.**
 
 Those four inputs — **facts · policy · options · authority** — are the spine of all six CR lessons.
-Every CR decision is a question about one of them.
+**Many customer-relations decisions turn on one or more of them**, and they are a practical way to
+check whether a response is grounded in the scenario rather than invented. **They are CompeteReady's
+analytic model, not an exhaustive taxonomy** — tone, sequencing and acknowledgement are real parts
+of an interaction that do not always reduce to one of four boxes.
 
 ⟨CR-A — SCENARIO FACTS CONTROL⟩ The employee may not invent policy, authority, remedies, customer
 rights, or legal obligations. **None of the following is ever taught as a universal rule:** the
@@ -718,8 +721,8 @@ customer is* stays in MK; judging whether a measurement is any good is BR.
     recipients. **Sales promotion** — short-term inducement built around a direct call to action.
   - **Consistency** — coordinating promotional activity so the target audience receives one clear,
     consistent, customer-focused message.
-  - **Audience–message–channel fit** — the message must suit the target market, and the channel must be
-    one that target market actually uses.
+  - **Audience–message–channel fit** — a strong promotion choice matches the message to the intended
+    audience and uses a channel that can realistically reach that audience.
 - **Learner decisions:** Who is this message for? Does the channel reach them? Does the message say
   something the target customer values?
 - **Worked example:** A campus-focused service promoting through campus social accounts and student-org

@@ -4,14 +4,51 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 3: Debate evidence 9→30 (2026-08-12)
 
-### ⚠ Slice 3: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Slice 3: content is human-reviewed and APPROVED — clear to push
 
 `lib/debate-drills.ts` gained 21 evidence-evaluation questions (`ev-10`…`ev-30`), taking evidence 9→30
-and the Debate bank 78→99. **These items were AI-drafted and have NOT been reviewed by a human.** A
-source comment above `ev-10` carries that label. **Do not push the `feat(debate): expand evidence
-evaluation drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+and the Debate bank 78→99. The items were AI-authored, and on **2026-08-11 the repository owner
+personally read all 21 in the FINAL checklist and approved them** — answers, distractors, clarity and
+course appropriateness, the evidence-evaluation/CWI/rebuttal/weighing boundaries, Lesson 11/12/14 fit
+and the exclusion of Lesson 13 official-rule content, source relevance, population and context
+applicability, direct vs indirect support, expertise relevance, institutional role vs technical
+expertise, firsthand scope, bias and conflict of interest, disclosure, advocacy verifiability,
+contextual recency, representativeness, self-selection, comparison-group limits, confounding,
+self-report limits, methodology transparency, timeframe cherry-picking, independent corroboration,
+headline vs full-finding context, legacy and new-item overlap, and explanation quality.
 
-Slices 1 and 2 are deployed and human-reviewed (`46ab46b`).
+**The approved content is implementation commit `ef55134` PLUS curriculum-refinement commit
+`89497a3`.** **The Slice 3 push gate is lifted.**
+
+**`ev-27` was replaced before approval, and that is load-bearing.** The drafted item taught relative
+vs absolute risk. The final review established that relative/absolute risk, base rates and percentage
+interpretation are named **nowhere** in the current Debate curriculum, so the item was an unsupported
+extension even though its arithmetic was exact. It was replaced with a Lesson 12 methodology item on
+**method transparency / evaluability** — a described method lets a reader judge how a result was
+produced and where it is limited, without implying transparency proves truth or that a missing method
+proves falsehood. **No Slice 3 item now extends beyond lessons 11, 12 and 14. Do not reintroduce
+relative-vs-absolute content into this bank without curriculum support.**
+
+Slices 1 and 2 are deployed and human-reviewed (`46ab46b`); rebuttal and CWI were already approved and
+live before this slice.
+
+Two things to keep straight, as for every slice so far:
+
+- **The approval is the human reading, nothing else.** The Claude/AI pre-screen was the authoring
+  model checking its own output; it constituted neither the review nor independent verification.
+- **The AI-authoring label stays in the source permanently.** Approval changed the review status, not
+  the provenance.
+
+Approved judgment calls, recorded so a later reader does not reopen them: `ev-10` vs `ev-12` is
+detection vs calibration, not repetition; `ev-11`/`ev-22`/`ev-23` are applicability, representativeness
+and self-selection; `ev-14`/`ev-15`/`ev-16` are domain expertise, institutional role and firsthand
+scope; `ev-17`/`ev-18`/`ev-19` are conflict response, what disclosure settles, and incentive vs
+verifiability; `ev-18` vs final `ev-27` is acceptable reinforcement rather than duplication;
+`ev-20`/`ev-21`/legacy `ev-02` form a recognition → counter-case → application progression;
+`ev-24`/`ev-25` are no comparison vs a contaminated comparison, and `ev-24` needs no added
+residual-value sentence; `ev-28` is window selection, distinct from `ev-09`'s generic cherry-picking;
+`ev-29` denies independent corroboration without devaluing secondary reporting; `ev-30` stays
+evidence-quality and carries no citation doctrine.
 
 ### Where G2 stands
 
@@ -22,7 +59,9 @@ Slices 1 and 2 are deployed and human-reviewed (`46ab46b`).
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
 **Deficit 105** (was 126): Debate weighing 1 × 21, DECA 4 × 21. Corpus 294 → **315** locally; target
-**420**. **Global M14 G2 remains OPEN — do not record it as complete or closed.**
+**420**. Three of four Debate areas are now at 30 and human-reviewed, so **weighing is the only
+remaining shallow Debate area**. **Global M14 G2 remains OPEN — do not record it as complete or
+closed.**
 
 ### ⚠ WEIGHING IS NOW THE LAST SHALLOW DEBATE AREA — READ BEFORE SLICE 4
 

@@ -172,8 +172,25 @@ export const DRILL_BANK: DrillQuestion[] = [
   // GUARDRAILS held throughout: a biased source is not automatically false, a bigger sample is not
   // automatically better, newer is not automatically better, prestige is not expertise, anecdote and
   // self-report are weak for broad claims rather than useless.
-  // AI-ASSISTED authoring (M14 Global G2 Slice 3, ev-10..ev-30) — HUMAN CONTENT REVIEW OUTSTANDING.
-  // See docs/HANDOFF.md. AI self-review does NOT count as human review.
+  // AI-ASSISTED authoring (M14 Global G2 Slice 3, ev-10..ev-30), HUMAN-REVIEWED AND APPROVED
+  // 2026-08-11: the repository owner personally read all 21 items in the FINAL checklist and
+  // approved their answer defensibility, distractor quality, clarity and course appropriateness,
+  // the evidence-evaluation/CWI/rebuttal/weighing boundaries, Lesson 11/12/14 curriculum fit and
+  // the exclusion of Lesson 13 official-rule content, source relevance, population and context
+  // applicability, direct vs indirect support, expertise relevance, institutional role vs
+  // technical expertise, firsthand scope, bias and conflict of interest, disclosure, advocacy
+  // verifiability, contextual recency, representativeness, self-selection, comparison-group
+  // limits, confounding, self-report limits, methodology transparency, timeframe cherry-picking,
+  // independent corroboration, headline vs full-finding context, legacy and new-item overlap, and
+  // explanation quality.
+  // The approved content is implementation commit ef5513452ffa9fc22aaa12c02fa603faec29f48c PLUS
+  // curriculum-refinement commit 89497a30faf6f05748d26db7cfd42ba45bb60c15: ev-27 was REPLACED
+  // before approval — relative-vs-absolute risk out, method transparency/evaluability in — because
+  // relative/absolute risk is named nowhere in the current curriculum. No item now extends beyond
+  // lessons 11, 12 and 14.
+  // Approval rests on that personal human review. Claude/AI pre-screening did NOT constitute human
+  // review or independent verification, and AI self-review never counts as human review.
+  // See docs/HANDOFF.md.
   { id: "ev-10", area: "evidence-evaluation", question: "A study measures how many people SIGN UP for a job programme. The speaker cites it for \"the programme gets people back into work.\" The evidence:", choices: ["Measures enrolment, not employment — a related but different outcome", "Is irrelevant to the topic entirely", "Proves the claim, since enrolment leads to jobs", "Fails only because it is a few years old"], correctAnswer: "Measures enrolment, not employment — a related but different outcome", explanation: "Enrolment and employment sound close enough to pass unnoticed, which is what makes this gap easy to miss. The study supports a claim about uptake, not about outcomes." },
   { id: "ev-11", area: "evidence-evaluation", question: "A trial of a reading programme in Finnish primary schools is cited to claim it will work in a US high school. The main question is:", choices: ["Whether the studied population and setting are close enough to the one being claimed about", "Whether research from another country can ever be used", "Whether the study was published recently", "How many authors the study had"], correctAnswer: "Whether the studied population and setting are close enough to the one being claimed about", explanation: "Evidence from another population is a starting point, not a dead end. The work is asking how similar the age group, system and setting are, and what would change across that gap." },
   { id: "ev-12", area: "evidence-evaluation", question: "For the claim \"this drug reduces heart attacks\", a trial that measures cholesterol levels is:", choices: ["Indirect support — useful, but weaker than a trial measuring heart attacks", "Direct support, since cholesterol is what causes heart attacks", "Worthless, because indirect evidence proves nothing", "Stronger, because cholesterol is easier to measure"], correctAnswer: "Indirect support — useful, but weaker than a trial measuring heart attacks", explanation: "Indirect evidence sits one step away from the claim: it supports a marker rather than the outcome. That is real support, just weaker than measuring the outcome itself." },

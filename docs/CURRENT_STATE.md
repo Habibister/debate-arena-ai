@@ -2,9 +2,9 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 3 — Debate evidence-evaluation 9→30, local only, human content review outstanding)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 3 — Debate evidence-evaluation 9→30, human-reviewed and approved 2026-08-11, local only)_
 
-## M14 Global G2 Slice 3 — Debate evidence-evaluation is 30 deep, in local code only
+## M14 Global G2 Slice 3 — Debate evidence-evaluation is 30 deep, human-reviewed, local only
 
 **Slices 1 and 2 are deployed and human-reviewed** (`46ab46b`, deployment `5861389721`, `Production`,
 `success`), so rebuttal and CWI were already approved and live before this slice began.
@@ -17,9 +17,27 @@ Slice 3 expands **one** area: **evidence-evaluation 9 → 30** (`ev-10`…`ev-30
 | `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
-**⚠ The 21 new evidence items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
-review.** The bank carries that label above `ev-10`. **Do not push this commit until a human has
-reviewed `ev-10`…`ev-30`.** AI self-review does not count.
+**The 21 new evidence items are AI-ASSISTED content that received HUMAN CONTENT REVIEW on
+2026-08-11.** The repository owner personally read all 21 in the final checklist and approved answers,
+distractors, clarity, the evidence-evaluation/CWI/rebuttal/weighing boundaries, Lesson 11/12/14 fit and
+the Lesson 13 exclusion, source relevance, applicability, direct vs indirect support, expertise and
+institutional role, firsthand scope, bias, disclosure, advocacy verifiability, recency,
+representativeness, self-selection, comparison-group limits, confounding, self-report limits,
+methodology transparency, timeframe cherry-picking, corroboration, headline vs full finding, overlap
+and explanation quality. **The approved content is implementation commit `ef55134` plus
+curriculum-refinement commit `89497a3`. The Slice 3 push gate is lifted.**
+
+The Claude/AI pre-screen was the authoring model checking its own output — it was neither the review
+nor independent verification, and **the AI-authoring label stays in the source permanently**;
+approval changed the review status, not the provenance.
+
+**`ev-27` was replaced before approval.** The drafted item taught relative vs absolute risk. Review
+established that relative/absolute risk, base rates and percentage interpretation appear **nowhere**
+in the current Debate curriculum, so the item extended scope even though its arithmetic was exact. It
+was replaced with a Lesson 12 methodology item on **method transparency / evaluability**: a described
+method lets a reader judge how a result was produced and where it is limited, while transparency does
+not prove truth and a missing method does not prove falsehood. **No Slice 3 item now extends beyond
+lessons 11, 12 and 14.**
 
 - **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
   session-protocol, XP or mastery change.
@@ -46,9 +64,11 @@ reviewed `ev-10`…`ev-30`.** AI self-review does not count.
   with no padding, and the padding branch is still proven at **40 served / exactly 30 distinct**.
 
 **Global M14 G2 remains OPEN.** Deficit **126 → 105**: Debate weighing (1 × 21) plus all four DECA
-areas (4 × 21). Corpus 294 → **315** locally; final target **420**.
+areas (4 × 21). Corpus 294 → **315** locally; final target **420**. Three of four Debate areas are now
+30 deep and human-reviewed, so **weighing is the only remaining shallow Debate area**. DECA stays
+36 (4 × 9) and HOSA stays 180 (6 × 30), both untouched by this slice.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commits only — not pushed, not deployed. No database operation.**
 
 ## M14 Global G2 Slice 2 — Debate claim-warrant-impact is 30 deep, human-reviewed, local only
 
@@ -816,7 +836,10 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
 | M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 3 completes evidence-evaluation depth (review outstanding); **global G2 remains open because Debate weighing and all four DECA areas remain below the ≥30 target.** Deficit **105** (1 × 21 Debate + 4 × 21 DECA). **The next G2 depth work remains outstanding.** |
+| M14 Global G2 Slice 1 — Debate rebuttal depth | **Complete.** Rebuttal 9→30, bank 36→57. AI-authored, human-reviewed and approved 2026-08-11. Pushed and deployed (`e23e982`). |
+| M14 Global G2 Slice 2 — Debate CWI depth | **Complete.** Claim-warrant-impact 9→30, bank 57→78. AI-authored, human-reviewed and approved 2026-08-11. Pushed and deployed (`45f3397`, live at `46ab46b`). |
+| M14 Global G2 Slice 3 — Debate evidence depth | **Complete locally.** Evidence-evaluation 9→30, bank 78→99, three of four Debate areas at 30. AI-authored, **human-reviewed and approved 2026-08-11**; `ev-27` replaced before approval (`ef55134` + `89497a3`) to stay inside the curriculum. Push gate lifted; ready to push. |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 3 completes evidence-evaluation depth and its human review; **global G2 remains open because Debate weighing and all four DECA areas remain below the ≥30 target.** Deficit **105** (1 × 21 Debate + 4 × 21 DECA); weighing is the only remaining shallow Debate area. **The next G2 depth work remains outstanding.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

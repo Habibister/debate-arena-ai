@@ -2,7 +2,71 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 Slice 4: Debate weighing 9→30 (2026-08-12)
+## Latest handoff — M14 Global G2 Slice 5 / DECA Slice 1: PI 9→30 (2026-08-12)
+
+### ⚠ Slice 5: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/deca-drills.ts` gained 21 performance-indicator questions (`pi-10`…`pi-30`), taking PI 9→30 and
+the DECA bank 36→57. **These items were AI-drafted and have NOT been reviewed by a human.** A source
+comment above `pi-10` carries that label. **Do not push the `feat(deca): expand performance indicator
+drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+
+**Debate is finished and live.** All four Debate areas hold 30, all four slices are human-reviewed and
+approved, and Slice 4 is deployed at `09e9bdb` (deployment `5863008892`, `Production`, `success`).
+**Every remaining G2 question is now a DECA question.**
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — **depth COMPLETE, deployed, reviewed** |
+| `lib/deca-drills.ts` | **57** | **pi 30** · br 9 · cr 9 · mk 9 |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Deficit 63** (was 84): DECA br/cr/mk, 3 × 21. Corpus 336 → **357** locally; target **420**.
+**Global M14 G2 remains OPEN — do not record it as complete or closed.**
+
+### ⚠ LEGACY `pi-07` / CURRICULUM B-2 DEBT — READ BEFORE ANY FUTURE PI WORK
+
+**Legacy `pi-07` has a pre-existing tension with current curriculum B-2. Slice 5 leaves `pi-07`
+immutable, does not reinforce it, and does not create contradictory B-2 content. This remains separate
+curriculum debt for later resolution.**
+
+Concretely: `pi-07` keys explicit PI signposting as the recommended practice, while Module 1 lesson 3
+⟨B-2⟩ teaches that whether to speak a PI's title aloud or weave it into conversation is a **genuinely
+contested judgment call** that must never be presented as settled. **B-2 is deliberately untested in
+Slice 5.** Several new distractors reject PI-name recitation as a substitute for *demonstration*
+(`pi-11` D, `pi-13` D, `pi-18` B, `pi-19` C, `pi-29` D) — that is the ⟨D6⟩ demonstration-vs-recitation
+rule, **not** a ruling on speaking style. **B-2 is NOT resolved.**
+
+### What Slice 5 changed — do not undo any of it
+
+- **NO legacy punctuation changed.** PI is the FIRST block, so `pi-09` already carried its comma and
+  the 21 items insert between it and `// --- Business reasoning ---`. **`mk-09` is still the final
+  array element and still comma-less — the DECA terminal-comma boundary is STILL unexercised**, and
+  belongs to the eventual marketing slice. `G0-C1b`/`G0-C1c` are unchanged and untested against real
+  data, exactly as since Slice 0.
+- **First DECA area authorized.** `EXPANDED_AREAS` `[]` → `["performance-indicators"]`. `G0-6b` = 1,
+  `G0-C2b2` = 1 authorized, **`G0-C6b` = 3 still unauthorized**. `G0-C6` proves `br-10`, `cr-10` and
+  `mk-10` are each rejected at stage `unauthorised` under DEFAULT authorization. **Never
+  pre-authorize.** Unlike Debate's final slice, `judgeAddition` still bounds DECA meaningfully.
+- **`G0-7b` is now a 21-id exact set**, driven by a new `SLICE_ADDITIONS` table with one row. The
+  forbidden-prefix loop over `["br","cr","mk"]` is **real and non-vacuous** here.
+- **DEPTH TESTS WERE ADDED, NOT MOVED.** Neither DECA suite had any depth block or shallow control
+  before this slice. Both now prove PI **20/20** and **40/30**, with **business-reasoning** as the
+  still-shallow control at **20/9** and **40/9**. `G0-D5b` asserts three areas remain at 9, so this
+  control may move once more before it must re-base on a >30 overdraw.
+- **No PI fixture was re-based, because none needed it.** Every mastery fixture indexes
+  `PI.slice(0, n≤5)`, `PI[0]` or `PI[5]`, all of which still resolve to legacy items. `G0-D6`/`26m`
+  now **assert** that the legacy nine are still the first nine, rather than assuming it. **The PI
+  bypass fixture is untouched at raw 76 / evidence 20.**
+
+### Runtime, untouched
+
+`skillSlug: "deca-performance-indicators"`, `DECA_DRILL_REQUIRED_UNIQUE = 5`, pass threshold 70,
+`decaDrillPersistenceRequest`, server-issued sessions, replay protection, expiry, first-answer-per-
+distinct-id and the XP prohibition are all unchanged. No schema, migration, seed, skill-activation
+script, route, validator or client change. `deca:skills:activate` was NOT run.
+
+## Previous handoff — M14 Global G2 Slice 4: Debate weighing 9→30 (2026-08-12)
 
 ### Slice 4: content is human-reviewed and APPROVED — clear to push
 

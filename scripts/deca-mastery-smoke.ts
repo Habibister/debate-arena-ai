@@ -19,6 +19,7 @@ import {
   DECA_DRILL_PASS_THRESHOLD,
   DECA_DRILL_REQUIRED_UNIQUE,
   buildDecaDrillEvidence,
+  buildDecaDrillSession,
   decaDrillPersistenceRequest,
   gradeDecaDrillAnswers,
   type DecaDrillAnswer,
@@ -796,7 +797,7 @@ async function main() {
   // ---- 26k. PER-AREA DEPTH, which audit G2 explicitly asks the mastery smokes to assert ----------
   // AREA_DEPTH is the single source of truth. Each Global-G2 slice raises exactly ONE entry 9 -> 30.
   const DECA_AREA_DEPTH: Record<string, number> = {
-    "performance-indicators": 9,
+    "performance-indicators": 30,   // M14 Global G2 Slice 5 / DECA Slice 1
     "business-reasoning": 9,
     "customer-relations": 9,
     "marketing-fundamentals": 9
@@ -810,6 +811,38 @@ async function main() {
   assert.equal(new Set(DECA_DRILL_BANK.map((q) => q.id)).size, DECA_DRILL_BANK.length, "26k3. with unique ids");
   control("every DECA question belongs to exactly one declared area",
     DECA_DRILL_BANK.every((q) => q.area in DECA_AREA_DEPTH));
+
+  // ---- 26m. BUILDER DEPTH for the expanded area. ADDED at Slice 5 -------------------------------
+  // This suite carried NO builder depth block before Slice 5, because no DECA area had ever been
+  // expanded — these are NEW assertions, not moved ones. Builder-level and read-only: no mastery
+  // record is created or altered, and no PI evidenceScore fixture is fabricated. buildDecaDrillSession
+  // seeds `result` with the ENTIRE shuffled pool before appending repeats, so the distinct counts are
+  // deterministic, never probabilistic.
+  const OVERDRAW = 40; // > 30 enters the repeat branch; < 60 makes the while loop append exactly once
+  const piFocused20 = buildDecaDrillSession(20, ["performance-indicators"]);
+  control("a 20-question focused performance-indicators session now serves 20 DISTINCT items — no padding",
+    piFocused20.length === 20 && new Set(piFocused20.map((q) => q.id)).size === 20);
+  const piOverdrawn = buildDecaDrillSession(OVERDRAW, ["performance-indicators"]);
+  control("and performance-indicators still pads above its pool: 40 served over exactly 30 distinct",
+    piOverdrawn.length === OVERDRAW && new Set(piOverdrawn.map((q) => q.id)).size === 30);
+  // Non-vacuous: a still-9-item area DOES still pad, so the results above are a real depth change
+  // rather than a property of the builder. BUSINESS-REASONING is the current shallow control. Three
+  // DECA areas remain at 9, so this control may move to customer-relations or marketing-fundamentals
+  // in a later slice; only when none remains shallow must it re-base onto a >30 overdraw.
+  const shallow20 = buildDecaDrillSession(20, ["business-reasoning"]);
+  control("control: the still-9-item business-reasoning area serves 20 over only 9 distinct",
+    shallow20.length === 20 && new Set(shallow20.map((q) => q.id)).size === 9);
+  const shallow40 = buildDecaDrillSession(OVERDRAW, ["business-reasoning"]);
+  control("control: and 40 requested on that 9-item area still yields only 9 distinct",
+    shallow40.length === OVERDRAW && new Set(shallow40.map((q) => q.id)).size === 9);
+  control("control: three DECA areas remain at 9, so the shallow control need not re-base onto >30 logic yet",
+    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 3);
+  // The PI fixtures above index PI.slice(0, n<=5), PI[0] and PI[5]. Additions append after pi-09, so
+  // the legacy nine are still the first nine — assert that rather than assume it.
+  assert.deepEqual(DECA_DRILL_BANK.filter((q) => q.area === "performance-indicators").map((q) => q.id).slice(0, 9),
+    ["pi-01", "pi-02", "pi-03", "pi-04", "pi-05", "pi-06", "pi-07", "pi-08", "pi-09"],
+    "26m. the legacy nine are still the first nine PI items, so every fixture denominator in this file is stable");
+
   assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "26k. across six areas");
 
   // ---- 25b-25f. what the Debate byte-pins were protecting, asserted exactly ---------------------------

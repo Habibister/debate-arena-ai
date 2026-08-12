@@ -112,6 +112,21 @@ by handing the investigation to the customer, which the supplied facts defeat.
 
 **Fact-sufficient 21/21 and exactly-one-defensible-answer 21/21** after refinement (both were 20/21).
 
+**⚠ An adversarial read-only audit then found two BLOCKERS and two borderlines the earlier passes
+had cleared.** The owner's single blind answer on `cr-20` exposed the first, and re-auditing on the
+question *"can any distractor also be defended without inventing facts?"* — rather than *"which
+answer was intended?"* — exposed the rest. **(cr-20)** the rationale added while fixing form leakage
+turned a distractor into a competing answer; rejecting it required the explanation-only claim that
+stating the expired window "is necessary". Replaced with a manager-exception option, defeated by the
+stem's own grant of store-credit authority. **(cr-23)** the key asserted *"It usually arrives in
+about a week"* although the stem supplied **no** lead time — the identical defect fixed in `cr-19` as
+F7-6 and never checked here; the estimate is now in the stem. **(cr-26)** the key assumed the
+employee could obtain proof of delivery when the stem established only tracking visibility; the stem
+now states the capability. **(cr-30)** the waiting option was defensible real-world practice, so the
+stem now states the customer is still listening and actively asking what you can do, which the
+silence option directly contradicts. **Lesson recorded for Slice 8: form audits and intent-based
+re-reads cannot find these — only adversarially defending every distractor can.**
+
 **Source-array key position is A in all 21** — an authoring convention shared with the approved PI and
 BR slices, and **not learner-visible**, because the session route is the only consumer of the bank and
 it shuffles choices with opaque UUID option ids. Left as-is deliberately; it is a note, not a defect.

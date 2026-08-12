@@ -2,9 +2,50 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 pre-closure remediation (2026-08-12)
+## Latest handoff — M14 GLOBAL G2: CLOSED (2026-08-12)
 
-### Status: Slice 8 DEPLOYED AND PRODUCTION-VERIFIED · remediation committed locally · G2 still OPEN
+### M14 GLOBAL G2: CLOSED — no remaining G2 action
+
+**M14 Global G2 is CLOSED as of 2026-08-12 by explicit project-owner decision.** The accepted
+definition of done is satisfied: final depth **420/420** (Debate **120**, DECA **120**, HOSA **180**),
+bank-count deficit **0**, G2 integrity controls intact, all required deployments and Production
+verifications complete, Slice 8 governance recorded truthfully as owner-waived external human review,
+and the pre-closure fake-mastery invariant violation remediated and verified. **There is no remaining
+G2 action.** Closing G2 resolves this milestone only; it says nothing about unrelated future work.
+
+**Final verified pre-closure state:** SHA **`96bcdaa0abd94790ce683d1df81988e9753637d5`** = local =
+`origin/main`, ahead/behind 0/0 → Production deployment **`5878478987`**, status **SUCCESS**,
+automatic `vercel[bot]` deployment. Health: `/` and `/signin` 200 · protected pages 307 → `/signin` ·
+unauthenticated drill APIs 401 · zero checked 5xx · no DB write, no authentication, no learner
+session, no manual deploy, no rollback.
+
+**Review/provenance truth (permanent):** Slices 1–7 were genuinely human-reviewed. Slice 8 was
+AI-assisted and AI-reviewed; external human review was waived by the project owner on 2026-08-12,
+and the owner separately stated approval. No item-by-item external human review is certified for
+Slice 8. **Never describe the banks as 8/8 human-reviewed.**
+
+**What the pre-closure remediation shipped (`96bcdaa`, do not undo):** Slice 8 provenance corrected
+to the owner-waiver wording · Slice 8 Production verification recorded · the HOSA Event HQ false
+mastery-record claim removed (the page now promises preparation, not persistence; Debate's genuine
+mastery copy untouched) · non-vacuous regression guard `38`–`38-C1b` in
+`scripts/hosa-medterm-evidence-smoke.ts`, verified to fire on the pre-fix page.
+
+**Carried non-blocking debt (outside G2 closure scope; do not silently fix, do not reopen G2):**
+1. `pi-07` / ⟨B-2⟩ — curriculum-consistency debt (legacy items stay byte-immutable).
+2. HOSA `sf-04` `-ology`/`-logy` — terminology/convention debt, deliberately unresolved.
+3. HOSA word-root / combining-form notation — stylistic normalisation debt.
+The HOSA Event HQ claim is **not** open debt — resolved and Production-verified.
+
+### Standing constraints (unchanged by closure)
+
+Never run `auth:smoke` / `team:smoke` / `assignment:smoke` / `deca:skills:activate` (write-capable,
+shared production DB). `PRE_G2_EXPANSION` stays absolute; never HEAD-relative; never re-anchored.
+Legacy bank items stay byte-immutable. No push, deploy, or DB operation without explicit owner
+action. AI-generated content stays labelled; provenance stays truthful.
+
+## Previous handoff — M14 Global G2 pre-closure remediation (2026-08-12)
+
+### Status (superseded): remediation has since been pushed, verified at `5878478987`, and G2 CLOSED
 
 Slice 8 (marketing-fundamentals 9→30) is live: Production deployment **`5878064863`** from
 **`ece9a91a9c6efe1471b3bc4b4ee807fea71180db`**, `vercel[bot]`, **success**; canonical routes 200,
@@ -12,8 +53,10 @@ protected pages 307 → `/signin`, drill/session APIs 401 unauthenticated, zero 
 deploy, no DB write, no authenticated session. DECA 120 · Debate 120 · HOSA 180 · **corpus 420/420,
 bank-count deficit 0**, all integrity controls intact (re-executed at the deployed HEAD).
 
-On top of that sits **ONE local commit** — `fix(g2): clear pre-closure integrity blockers` — that
-resolves the three blockers the final read-only closure audit found. It awaits the owner's push.
+On top of that sat **ONE local commit** — `fix(g2): clear pre-closure integrity blockers`
+(`96bcdaa`) — resolving the three blockers the final read-only closure audit found. It has since been
+pushed and Production-verified (deployment `5878478987`), and G2 was closed by explicit owner
+decision on 2026-08-12 — see the Latest handoff.
 
 ### What the remediation commit contains — do not undo any of it
 
@@ -38,12 +81,7 @@ resolves the three blockers the final read-only closure audit found. It awaits t
    preparation, and the removed sentences are proven still caught by the same predicates. Verified
    to fire on the pre-fix page. Debate/DECA entries are exempt by scope, not by loophole.
 
-### Next steps, in order
-
-1. **Owner pushes** the remediation commit in GitHub Desktop.
-2. **Read-only Production verification** of the resulting deployment.
-3. **Explicit owner G2 closure decision** — only then may anything record Global M14 G2 as closed.
-   The closure record must keep the 7-of-8 human-review truth and name the carried debt.
+### Next steps — all completed (push → verification → owner closure, 2026-08-12)
 
 ### Carried non-blocking debt (recorded, not fixed, do not silently fix)
 

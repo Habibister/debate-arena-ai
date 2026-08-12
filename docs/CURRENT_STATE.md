@@ -2,7 +2,42 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 8 DEPLOYED AND PRODUCTION-VERIFIED at `5878064863` from `ece9a91`; review provenance: AI-assisted / AI-reviewed / **external human review waived by project owner**. G2 pre-closure remediation implemented locally — push + verification + explicit owner closure still required. **Global M14 G2 remains OPEN.**)_
+_Last updated: 2026-08-12 (**M14 GLOBAL G2 — CLOSED 2026-08-12 by explicit project-owner decision.** Final: Debate 120 · DECA 120 · HOSA 180 · **corpus 420/420, deficit 0**. Pre-closure remediation deployed and Production-verified at `5878478987` from `96bcdaa`. Slices 1–7 human-reviewed; Slice 8 owner-waived external human review. No remaining G2 action.)_
+
+## M14 GLOBAL G2 — CLOSED 2026-08-12
+
+**M14 Global G2 is CLOSED as of 2026-08-12 by explicit project-owner decision.** The milestone's
+accepted definition of done is satisfied: final depth is **420/420**, bank-count deficit is **zero**,
+G2 integrity controls remain intact, all required deployments and Production verifications are
+complete, Slice 8 governance is recorded truthfully as owner-waived external human review, and the
+pre-closure fake-mastery invariant violation has been remediated and verified. Named carried debt
+remains outside G2 closure scope. Closing G2 resolves this milestone only — it implies nothing about
+unrelated future milestones.
+
+**Final result:** Debate **120** (cw 30 · rb 30 · ev 30 · wg 30) · DECA **120** (pi 30 · br 30 ·
+cr 30 · mk 30) · HOSA **180** (six areas × 30) · **corpus 420/420 · deficit 0**. All planned G2
+depth slices shipped; integrity controls (immutable `PRE_G2_EXPANSION` baseline, byte-identical
+legacy items, withheld-authority probes, non-vacuous terminal-comma normalisation, depth/overdraw
+controls, mastery duplicate resistance) are intact and re-executed at the final deployed HEAD.
+
+**Review/provenance truth:** Slices 1–7 were genuinely human-reviewed. Slice 8 was AI-assisted and
+AI-reviewed; external human review was waived by the project owner on 2026-08-12, and the owner
+separately stated approval. No item-by-item external human review is certified for Slice 8.
+
+**Final pre-closure Production record:** source SHA
+**`96bcdaa0abd94790ce683d1df81988e9753637d5`**, Production deployment **`5878478987`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment from the Git push. Health: `/` 200 · `/signin` 200 ·
+protected pages 307 → `/signin` · unauthenticated drill APIs 401 · zero checked 5xx. No DB write, no
+authentication, no learner session, no manual deployment, no rollback.
+
+**Carried non-blocking debt (outside G2 closure scope, not reopened by closure):**
+1. `pi-07` / ⟨B-2⟩ — curriculum-consistency debt.
+2. HOSA `sf-04` `-ology`/`-logy` — terminology/convention debt.
+3. HOSA word-root / combining-form notation — stylistic/content-normalisation debt.
+
+The HOSA Event HQ false-mastery claim is **NOT** carried debt — it was resolved by the pre-closure
+remediation and is Production-verified, with a non-vacuous regression guard in
+`hosa-medterm-evidence:smoke`.
 
 ## M14 Global G2 Slice 8 / DECA Slice 4 — DECA marketing-fundamentals 9 → 30 (DEPLOYED AND PRODUCTION-VERIFIED)
 
@@ -44,10 +79,10 @@ exception. **Never describe the bank as 8/8 human-reviewed.**
 - `mk-09` boundary: exactly one comma added; `mk-01`…`mk-08` and all 90 pi/br/cr items byte-identical;
   `PRE_G2_EXPANSION` pin absolute; no HEAD-relative pin.
 
-### G2 pre-closure remediation (local, push pending)
+### G2 pre-closure remediation (pushed as `96bcdaa`, deployed and verified at `5878478987`)
 
-The final read-only closure audit (2026-08-12) found three blockers; all are now fixed in ONE local
-commit on top of `ece9a91`:
+The final read-only closure audit (2026-08-12) found three blockers; all were fixed in ONE commit
+(`96bcdaa`), pushed and Production-verified at deployment `5878478987`:
 
 1. **Slice 8 provenance corrected** — the earlier `HUMAN-APPROVED` headline was stronger than the
    process certified; the source label and these docs now carry the owner-waiver wording above.
@@ -67,10 +102,9 @@ consistency (outside G2 — legacy items are immutable under G2's own controls) 
 convention (HOSA; deliberately-unresolved) · HOSA word-root combining-form notation (stylistic,
 explicitly excluded from Phase 2a). The Event HQ claim is REMOVED from carried debt — resolved above.
 
-**Global M14 G2 status: `OPEN — PRE-CLOSURE REMEDIATION IMPLEMENTED LOCALLY, PUSH/PRODUCTION
-VERIFICATION OF THIS REMEDIATION AND EXPLICIT OWNER CLOSURE STILL REQUIRED`.** Corpus 420/420,
-deficit 0, integrity controls intact — and none of that is closure: closure is a separate explicit
-owner decision after this remediation ships.
+**Global M14 G2 status: `CLOSED 2026-08-12` — see the closure record at the top of this file.** The
+remediation shipped (`96bcdaa` → deployment `5878478987`, verified) and the explicit owner closure
+decision was made on 2026-08-12.
 
 ## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, human-reviewed, deployed
 

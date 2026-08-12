@@ -21,7 +21,7 @@ async function main() {
   // Global-G2 slice raises exactly ONE entry 9 -> 30 and every assertion below follows.
   const AREA_DEPTH: Record<DecaDrillArea, number> = {
     "performance-indicators": 30,   // M14 Global G2 Slice 5 / DECA Slice 1
-    "business-reasoning": 9,
+    "business-reasoning": 30,   // M14 Global G2 Slice 6 / DECA Slice 2
     "customer-relations": 9,
     "marketing-fundamentals": 9
   };
@@ -50,6 +50,8 @@ async function main() {
 
   const s = buildDecaDrillSession(10);
   assert.equal(new Set(s.map((q) => q.id)).size, 10, "10-question session has no repeats");
+  // Area-filter check. BR reached 30 at Slice 6, so 6 <= 30 still holds — this is a filter proof,
+  // not a depth or shallow-area proof, and must not be read as one.
   const focused = buildDecaDrillSession(6, ["business-reasoning"]);
   assert.ok(focused.every((q) => q.area === "business-reasoning"), "focused session restricts to the chosen area");
 
@@ -68,24 +70,35 @@ async function main() {
   assert.equal(new Set(piOverdrawn.map((q) => q.id)).size, 30,
     "G0-D2b. over exactly 30 distinct PI items — the padding branch survives above that pool");
 
+  // Slice 6: the same depth proof for business-reasoning, the second DECA area to reach 30.
+  const brFocused20 = buildDecaDrillSession(20, ["business-reasoning"]);
+  assert.equal(brFocused20.length, 20, "G0-D1c. a 20-question focused BR session serves 20");
+  assert.equal(new Set(brFocused20.map((q) => q.id)).size, 20,
+    "G0-D1d. over 20 DISTINCT items — business-reasoning no longer pads at a normal session size");
+  const brOverdrawn = buildDecaDrillSession(OVERDRAW, ["business-reasoning"]);
+  assert.equal(brOverdrawn.length, OVERDRAW, "G0-D2c. a 40-question request on the 30-item BR pool still serves 40");
+  assert.equal(new Set(brOverdrawn.map((q) => q.id)).size, 30,
+    "G0-D2d. over exactly 30 distinct BR items — the padding branch survives above that pool too");
+
   // Non-vacuity: the depth proofs above only mean something if a still-9-item area DOES still pad.
-  // BUSINESS-REASONING is the current shallow control — it is still 9, and the focused-filter check
-  // above already uses it, so this preserves continuity. THREE DECA areas remain at 9, so this
-  // control can legitimately move to customer-relations or marketing-fundamentals in a later slice.
-  // Only when NO shallow DECA area remains must it re-base onto a >30 overdraw, as HOSA's 11g and
-  // Debate's Slice 4 control did. Do not delete it.
-  const shallow20 = buildDecaDrillSession(20, ["business-reasoning"]);
-  assert.equal(shallow20.length, 20, "G0-D3. control: a 20-question request on the still-9-item business-reasoning area serves 20");
+  // MOVED business-reasoning -> MARKETING-FUNDAMENTALS at Slice 6, because Slice 6 took BR to 30.
+  // MK was chosen over customer-relations deliberately: Slice 7 is expected to expand CR, so parking
+  // the control on CR would force a second move one slice later. MK stays at 9 through Slices 6 AND
+  // 7, so the control moves ONCE, and its eventual re-base lands naturally at Slice 8 — the slice
+  // where MK itself deepens and NO shallow DECA area remains. Only then must it re-base onto a >30
+  // overdraw, as HOSA's 11g and Debate's Slice 4 control did. Do not delete it.
+  const shallow20 = buildDecaDrillSession(20, ["marketing-fundamentals"]);
+  assert.equal(shallow20.length, 20, "G0-D3. control: a 20-question request on the still-9-item marketing-fundamentals area serves 20");
   assert.equal(new Set(shallow20.map((q) => q.id)).size, 9,
-    "G0-D3b. control: over only 9 distinct items — so the 20-distinct PI result above is a real depth change, not a builder quirk");
-  const shallow40 = buildDecaDrillSession(OVERDRAW, ["business-reasoning"]);
+    "G0-D3b. control: over only 9 distinct items — so the 20-distinct PI and BR results above are a real depth change, not a builder quirk");
+  const shallow40 = buildDecaDrillSession(OVERDRAW, ["marketing-fundamentals"]);
   assert.equal(shallow40.length, OVERDRAW, "G0-D4. control: 40 requested on that 9-item area still serves 40");
   assert.equal(new Set(shallow40.map((q) => q.id)).size, 9,
-    "G0-D4b. control: over only 9 distinct items, so the 30-distinct PI overdraw is a real depth change too");
-  assert.equal(AREA_DEPTH["business-reasoning"], 9,
-    "G0-D5. control: business-reasoning really is still 9, so the shallow control is not vacuous");
-  assert.equal(Object.values(AREA_DEPTH).filter((d) => d === 9).length, 3,
-    "G0-D5b. control: THREE DECA areas remain at 9 — this control need not re-base onto >30 logic yet");
+    "G0-D4b. control: over only 9 distinct items, so the 30-distinct overdraw results above are a real depth change too");
+  assert.equal(AREA_DEPTH["marketing-fundamentals"], 9,
+    "G0-D5. control: marketing-fundamentals really is still 9, so the shallow control is not vacuous");
+  assert.equal(Object.values(AREA_DEPTH).filter((d) => d === 9).length, 2,
+    "G0-D5b. control: exactly TWO DECA areas remain at 9 (customer-relations, marketing-fundamentals) — no >30 re-base needed yet");
 
   // Legacy PI ORDER. The mastery suite's fixtures index PI.slice(0, n<=5), PI[0] and PI[5], so their
   // denominators depend on the legacy nine still being the FIRST nine PI entries. Additions append
@@ -178,11 +191,12 @@ async function main() {
   ];
   // Areas CURRENTLY authorised to receive additions. Slice 0 authorises NOTHING. Each later slice
   // adds exactly ONE area here, in the commit that adds its 21 items, after human content review.
-  const EXPANDED_AREAS: readonly DecaDrillArea[] = ["performance-indicators"];   // Slice 5 / DECA 1
-  assert.deepEqual([...EXPANDED_AREAS], ["performance-indicators"],
-    "G0-6. exactly ONE DECA area is authorised — performance-indicators (Slice 5 / DECA Slice 1)");
-  assert.equal(EXPANDED_AREAS.length, 1,
-    "G0-6b. authorising a second area here without its own reviewed slice fails immediately");
+  const EXPANDED_AREAS: readonly DecaDrillArea[] =
+    ["performance-indicators", "business-reasoning"];   // Slices 5 and 6 in order
+  assert.deepEqual([...EXPANDED_AREAS], ["performance-indicators", "business-reasoning"],
+    "G0-6. exactly TWO DECA areas are authorised — performance-indicators (Slice 5), business-reasoning (Slice 6)");
+  assert.equal(EXPANDED_AREAS.length, 2,
+    "G0-6b. authorising a third area here without its own reviewed slice fails immediately");
 
   /** THE single predicate. Real additions and every control run through it. `authorised` is a
    *  parameter only so a control can probe structural recognition WITHOUT authorising a real area. */
@@ -211,14 +225,18 @@ async function main() {
   // SLICE_ADDITIONS table with one row per reviewed DECA slice. It is never relaxed into "any
   // recognised prefix above 09" — each future DECA slice adds exactly one row.
   const SLICE_ADDITIONS: ReadonlyArray<{ idPrefix: string; area: DecaDrillArea }> = [
-    { idPrefix: "pi", area: "performance-indicators" }   // Slice 5 / DECA Slice 1
+    { idPrefix: "pi", area: "performance-indicators" },   // Slice 5 / DECA Slice 1
+    { idPrefix: "br", area: "business-reasoning" }        // Slice 6 / DECA Slice 2
   ];
   const EXPECTED_ADDED = SLICE_ADDITIONS.flatMap(({ idPrefix }) =>
     Array.from({ length: 21 }, (_, i) => `${idPrefix}-${i + 10}`));
-  assert.equal(EXPECTED_ADDED.length, 21, "G0-7b0. control: one reviewed DECA slice means exactly 21 expected ids");
+  assert.equal(SLICE_ADDITIONS.length, 2, "G0-7b0a. control: exactly two reviewed DECA slices so far");
+  assert.equal(EXPECTED_ADDED.length, 42, "G0-7b0. control: two reviewed DECA slices means exactly 42 expected ids");
   assert.deepEqual([...addedIds].sort(), [...EXPECTED_ADDED].sort(),
-    "G0-7b. the additions are exactly pi-10..pi-30 — no other id was added");
-  assert.equal(addedIds.length, 21, "G0-7b2. exactly 21 additions exist relative to the immutable baseline");
+    "G0-7b. the additions are exactly pi-10..pi-30 and br-10..br-30 — no other id was added");
+  assert.equal(addedIds.length, 42, "G0-7b2. exactly 42 additions exist relative to the immutable baseline");
+  assert.equal(addedIds.filter((id) => id.startsWith("pi-")).length, 21, "G0-7b2a. 21 of them are PI additions");
+  assert.equal(addedIds.filter((id) => id.startsWith("br-")).length, 21, "G0-7b2b. and 21 are BR additions");
   for (const id of addedIds) {
     const slice = SLICE_ADDITIONS.find((a) => id.startsWith(`${a.idPrefix}-`));
     assert.ok(slice, `G0-7b3. every addition belongs to a reviewed slice — got ${id}`);
@@ -227,18 +245,19 @@ async function main() {
   }
   // Three DECA areas still have no reviewed slice, so this loop is REAL — unlike Debate's, which went
   // empty at its final slice. Keep it until every DECA area has been expanded.
-  for (const forbidden of ["br", "cr", "mk"]) {
+  const FORBIDDEN_PREFIXES = ["cr", "mk"];   // Slice 6 removed "br"; still REAL, unlike Debate's final slice
+  for (const forbidden of FORBIDDEN_PREFIXES) {
     assert.equal(addedIds.filter((id) => id.startsWith(`${forbidden}-`)).length, 0,
       `G0-7b4. zero ${forbidden}-* additions exist — that area has had no reviewed slice`);
   }
-  assert.equal(["br", "cr", "mk"].length, 3,
-    "G0-7b4b. control: the forbidden-prefix loop really covers three unexpanded areas, so it is not vacuous");
-  for (const outside of ["pi-31", "pi-09", "br-10", "xx-10"]) {
+  assert.equal(FORBIDDEN_PREFIXES.length, 2,
+    "G0-7b4b. control: the forbidden-prefix loop still covers two unexpanded areas, so it is not vacuous");
+  for (const outside of ["pi-31", "br-31", "pi-09", "br-09", "cr-10", "xx-10"]) {
     assert.ok(!EXPECTED_ADDED.includes(outside),
       `G0-7b4c. control: ${outside} is outside the expected set, so G0-7b would reject it`);
   }
   control("every real DECA addition is judged permitted by the same predicate the controls use",
-    addedIds.length === 21 && addedIds.every((id) => judgeAddition(id, currentById.get(id) ?? "").ok));
+    addedIds.length === 42 && addedIds.every((id) => judgeAddition(id, currentById.get(id) ?? "").ok));
 
   for (const { idPrefix } of PREFIX_AREA) {
     for (let n = 1; n <= 9; n += 1) {
@@ -295,8 +314,8 @@ async function main() {
     assert.ok(v.ok, `G0-C2b. control: ${idPrefix}-10 is accepted under default authorisation — ${v.reason}`);
     control(`${area} is authorised: ${idPrefix}-10 passes with no override`, v.ok);
   }
-  assert.equal(PREFIX_AREA.filter((a) => EXPANDED_AREAS.includes(a.area)).length, 1,
-    "G0-C2b2. control: exactly ONE DECA area is authorised, so that loop is not vacuous");
+  assert.equal(PREFIX_AREA.filter((a) => EXPANDED_AREAS.includes(a.area)).length, 2,
+    "G0-C2b2. control: exactly TWO DECA areas are authorised, so that loop is not vacuous");
 
   // THE authorisation control: the three areas NOT authorised must still be rejected under DEFAULT
   // authorisation. This is what proves Slice 5 did not pre-authorise the remaining DECA slices.
@@ -306,13 +325,13 @@ async function main() {
       `G0-C6. control: ${idPrefix}-10 is a valid FUTURE ${area} addition and is rejected TODAY — ${v.reason}`);
     control(`a valid future ${area} addition is rejected while that area is unauthorised`, v.stage === "unauthorised");
   }
-  assert.equal(PREFIX_AREA.filter((a) => !EXPANDED_AREAS.includes(a.area)).length, 3,
-    "G0-C6b. control: THREE recognised DECA areas remain unauthorised, so that loop is not vacuous");
+  assert.equal(PREFIX_AREA.filter((a) => !EXPANDED_AREAS.includes(a.area)).length, 2,
+    "G0-C6b. control: TWO recognised DECA areas remain unauthorised (customer-relations, marketing-fundamentals), so that loop is not vacuous");
 
   assert.equal(itemLines('export const DECA_DRILL_BANK = [\n{ id: "x-01", area: "business-reasoning" },\nexport function y').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} questions across ${DECA_DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once. CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — all 36 original items are byte-identical and keep their order, one terminal comma is normalised on both sides for the still-unexercised append boundary at mk-09, and additions are permitted only for an explicitly authorised area. ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 21 reviewed-slice items pi-10..pi-30 (Slice 5 / DECA Slice 1, whose pi-19 and pi-30 were refined before approval so the listed indicator is load-bearing in both), AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-12. Structurally valid future additions in the three unauthorised areas (br-10, cr-10, mk-10) are still rejected today, pi-09 already carried its comma so NO legacy punctuation changed, and mk-09 is still the final array element. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} questions across ${DECA_DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once. CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — all 36 original items are byte-identical and keep their order, one terminal comma is normalised on both sides for the still-unexercised append boundary at mk-09, and additions are permitted only for an explicitly authorised area. ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 42 reviewed-slice items pi-10..pi-30 (Slice 5 / DECA Slice 1, whose pi-19 and pi-30 were refined before approval so the listed indicator is load-bearing in both — AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-12) and br-10..br-30 (Slice 6 / DECA Slice 2, AI-assisted draft, HUMAN CONTENT REVIEW OUTSTANDING). Structurally valid future additions in the two unauthorised areas (cr-10, mk-10) are still rejected today; br-09 already carried its comma so NO legacy punctuation changed at Slice 6 either, and mk-09 is still the final array element. The shallow negative control MOVED business-reasoning -> marketing-fundamentals, which stays at 9 through Slice 7 as well, so it moves once rather than twice. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

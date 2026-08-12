@@ -798,7 +798,7 @@ async function main() {
   // AREA_DEPTH is the single source of truth. Each Global-G2 slice raises exactly ONE entry 9 -> 30.
   const DECA_AREA_DEPTH: Record<string, number> = {
     "performance-indicators": 30,   // M14 Global G2 Slice 5 / DECA Slice 1
-    "business-reasoning": 9,
+    "business-reasoning": 30,   // M14 Global G2 Slice 6 / DECA Slice 2
     "customer-relations": 9,
     "marketing-fundamentals": 9
   };
@@ -825,18 +825,27 @@ async function main() {
   const piOverdrawn = buildDecaDrillSession(OVERDRAW, ["performance-indicators"]);
   control("and performance-indicators still pads above its pool: 40 served over exactly 30 distinct",
     piOverdrawn.length === OVERDRAW && new Set(piOverdrawn.map((q) => q.id)).size === 30);
+  // Slice 6: the same depth proof for business-reasoning, the second DECA area to reach 30.
+  const brFocused20 = buildDecaDrillSession(20, ["business-reasoning"]);
+  control("a 20-question focused business-reasoning session now serves 20 DISTINCT items — no padding",
+    brFocused20.length === 20 && new Set(brFocused20.map((q) => q.id)).size === 20);
+  const brOverdrawn = buildDecaDrillSession(OVERDRAW, ["business-reasoning"]);
+  control("and business-reasoning still pads above its pool: 40 served over exactly 30 distinct",
+    brOverdrawn.length === OVERDRAW && new Set(brOverdrawn.map((q) => q.id)).size === 30);
   // Non-vacuous: a still-9-item area DOES still pad, so the results above are a real depth change
-  // rather than a property of the builder. BUSINESS-REASONING is the current shallow control. Three
-  // DECA areas remain at 9, so this control may move to customer-relations or marketing-fundamentals
-  // in a later slice; only when none remains shallow must it re-base onto a >30 overdraw.
-  const shallow20 = buildDecaDrillSession(20, ["business-reasoning"]);
-  control("control: the still-9-item business-reasoning area serves 20 over only 9 distinct",
+  // rather than a property of the builder. MOVED business-reasoning -> MARKETING-FUNDAMENTALS at
+  // Slice 6. MK was chosen over customer-relations on purpose: Slice 7 is expected to expand CR, so
+  // parking the control there would force a second move one slice later. MK stays at 9 through
+  // Slices 6 AND 7, so this control moves ONCE and only re-bases onto a >30 overdraw at Slice 8,
+  // when no shallow DECA area remains.
+  const shallow20 = buildDecaDrillSession(20, ["marketing-fundamentals"]);
+  control("control: the still-9-item marketing-fundamentals area serves 20 over only 9 distinct",
     shallow20.length === 20 && new Set(shallow20.map((q) => q.id)).size === 9);
-  const shallow40 = buildDecaDrillSession(OVERDRAW, ["business-reasoning"]);
+  const shallow40 = buildDecaDrillSession(OVERDRAW, ["marketing-fundamentals"]);
   control("control: and 40 requested on that 9-item area still yields only 9 distinct",
     shallow40.length === OVERDRAW && new Set(shallow40.map((q) => q.id)).size === 9);
-  control("control: three DECA areas remain at 9, so the shallow control need not re-base onto >30 logic yet",
-    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 3);
+  control("control: exactly two DECA areas remain at 9, so the shallow control need not re-base onto >30 logic yet",
+    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 2);
   // The PI fixtures above index PI.slice(0, n<=5), PI[0] and PI[5]. Additions append after pi-09, so
   // the legacy nine are still the first nine — assert that rather than assume it.
   assert.deepEqual(DECA_DRILL_BANK.filter((q) => q.area === "performance-indicators").map((q) => q.id).slice(0, 9),

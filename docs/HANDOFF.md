@@ -2,7 +2,68 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 Slice 5 / DECA Slice 1: PI 9→30 (2026-08-12)
+## Latest handoff — M14 Global G2 Slice 6 / DECA Slice 2: BR 9→30 (2026-08-12)
+
+### ⚠ Slice 6: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/deca-drills.ts` gained 21 business-reasoning questions (`br-10`…`br-30`), taking BR 9→30 and the
+DECA bank 57→78. **These items were AI-drafted and have NOT been reviewed by a human.** A source
+comment above `br-10` carries that label. **Do not push the `feat(deca): expand business reasoning
+drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+
+**Slice 5 (PI) is deployed and human-reviewed** at `a6dfc86` (deployment `5863473555`, `Production`,
+`success`), so performance-indicators was approved and live before this slice began.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — **depth COMPLETE, deployed, reviewed** |
+| `lib/deca-drills.ts` | **78** | pi 30 (deployed, reviewed) · **br 30 (review outstanding)** · cr 9 · mk 9 |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Deficit 42** (was 63): DECA cr/mk, 2 × 21. Corpus 357 → **378** locally; target **420**.
+
+**Three distinctions, none of which this slice closes:** **`PI depth complete` is NOT `DECA depth
+complete`** · **`PI + BR depth complete` is NOT `DECA depth complete`** — customer-relations and
+marketing-fundamentals are still at 9 · **`Debate depth complete` is NOT `Global M14 G2 complete`.**
+**Global M14 G2 remains OPEN — do not record it, or DECA, as complete or closed.**
+
+### What Slice 6 changed — do not undo any of it
+
+- **NO legacy punctuation changed, again.** BR is a MIDDLE block, so `br-09` already carried its comma
+  and the items insert before `// --- Customer relations ---`. **`mk-09` is still the final array
+  element and still comma-less — the DECA terminal-comma boundary remains unexercised** and belongs to
+  the eventual MK slice. `G0-C1b`/`G0-C1c` unchanged.
+- **Second DECA area authorized.** `EXPANDED_AREAS` = `["performance-indicators", "business-reasoning"]`.
+  `G0-6b` = 2, `G0-C2b2` = 2 authorized, **`G0-C6b` = 2 still unauthorized**. CR and MK are each still
+  rejected at stage `unauthorised` under DEFAULT authorization. **Never pre-authorize.**
+- **`G0-7b` is now a 42-id exact set** — `pi-10`…`pi-30` plus `br-10`…`br-30`, with `G0-7b2a`/`G0-7b2b`
+  proving 21 of each. `SLICE_ADDITIONS` has two rows. The forbidden-prefix loop narrowed to
+  `["cr","mk"]` and is **still real**, unlike Debate's final slice where it went empty.
+- **⚠ THE SHALLOW CONTROL MOVED business-reasoning → MARKETING-FUNDAMENTALS, in BOTH suites.** MK was
+  chosen over customer-relations **deliberately**: Slice 7 is expected to expand CR, so parking the
+  control there would force a second move one slice later. MK stays at 9 through Slices 6 **and** 7,
+  so the control moves **once**, and its eventual >30 re-base lands naturally at Slice 8 — the slice
+  where MK itself deepens and no shallow DECA area remains. `G0-D5b` asserts exactly **two** areas
+  remain at 9. **Do not call business-reasoning shallow anywhere.**
+- **The `buildDecaDrillSession(6, ["business-reasoning"])` filter check was kept**, with its comment
+  clarified: 6 ≤ 30 still holds, and it is a filter proof, never a depth or shallow-area proof.
+- **No BR fixture needed re-basing, because none exists.** The mastery suite defines only `PI` and
+  `CR` consts; nothing indexes BR. **No BR legacy-order assertion was added** — unlike PI, no fixture
+  depends on BR ordering, and the immutable-baseline controls already protect `br-01`…`br-09`. Adding
+  one would be ceremony. **`CR.slice(0, 2)` is untouched — that is a Slice 7 concern.**
+- **⟨D7⟩ and ⟨B-8⟩ are enforced across the whole bank.** The five-part scaffold is labelled
+  CompeteReady's teaching method, never official DECA terminology (`br-29` says so in its
+  explanation), and **no item claims implementation or measurement improves scores.** B-8 is an
+  authoring guardrail here — deliberately **not** the learner skill of any question.
+
+### Runtime, untouched
+
+`skillSlug: "deca-business-reasoning"`, `DECA_DRILL_REQUIRED_UNIQUE = 5`, pass threshold 70,
+`decaDrillPersistenceRequest`, server-issued sessions, replay protection, expiry, first-answer-per-
+distinct-id and the XP prohibition are all unchanged. No schema, migration, seed, skill-activation
+script, route, validator or client change. `deca:skills:activate` was NOT run.
+
+## Previous handoff — M14 Global G2 Slice 5 / DECA Slice 1: PI 9→30 (2026-08-12)
 
 ### Slice 5: content is human-reviewed and APPROVED — clear to push
 

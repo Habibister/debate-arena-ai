@@ -2,9 +2,57 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 5 / DECA Slice 1 — DECA performance-indicators 9→30, human-reviewed and approved 2026-08-12, local only)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning 9→30, local only, human content review outstanding)_
 
-## M14 Global G2 Slice 5 / DECA Slice 1 — DECA performance-indicators is 30 deep, human-reviewed, local only
+## M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning is 30 deep, in local code only
+
+**Slice 5 (PI) is deployed and human-reviewed** at `a6dfc86` (deployment `5863473555`, `Production`,
+`success`), so performance-indicators was approved and live before this slice began.
+
+Slice 6 expands **one** DECA area: **business-reasoning 9 → 30** (`br-10`…`br-30`, +21). DECA
+**57 → 78**.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — **depth COMPLETE, deployed, human-reviewed** |
+| `lib/deca-drills.ts` | **78** | performance-indicators 30 (deployed, reviewed) · **business-reasoning 30 (review outstanding)** · customer-relations 9 · marketing-fundamentals 9 |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**⚠ The 21 new BR items are AI-ASSISTED DRAFT CONTENT and have NOT received human content review.**
+The bank carries that label above `br-10`. **Do not push this commit until a human has reviewed
+`br-10`…`br-30`.** AI self-review does not count.
+
+- **Content + tests + docs only.** No schema, migration, seed, skill-activation script, route,
+  validator, client, session-protocol, XP or mastery change. `deca:skills:activate` was NOT run.
+- **NO legacy punctuation changed.** BR is a MIDDLE block, so `br-09` already carried its comma.
+  **`mk-09` remains the final array element and remains comma-less** — the DECA terminal-comma
+  boundary is still unexercised.
+- **Scope came from Module 2 lessons 9–12** — attaching the "because" (revenue, cost, retention,
+  loyalty, brand, risk), implementation and feasibility (who does what by when with what resources),
+  cost/risk/tradeoffs, and measuring success (the one or two metrics the business would watch).
+- **⟨D7⟩ and ⟨B-8⟩ enforced bank-wide.** The five-part scaffold is CompeteReady's teaching method,
+  never presented as official DECA terminology, and **no item claims implementation or measurement
+  improves scores.** B-8 is an authoring guardrail, deliberately not the learner skill of any item.
+- **Second DECA area authorized:** `EXPANDED_AREAS` is `["performance-indicators", "business-reasoning"]`.
+  **Two recognised areas remain unauthorised** — `G0-C6b` asserts that count is **2**, and `cr-10`/
+  `mk-10` are each still rejected at stage `unauthorised` under default authorization.
+- **`G0-7b` is now a 42-id guarantee** — `pi-10`…`pi-30` plus `br-10`…`br-30`, 21 each. The
+  forbidden-prefix loop narrowed to `["cr","mk"]` and remains genuinely non-vacuous.
+- **⚠ The shallow control moved business-reasoning → marketing-fundamentals in BOTH suites.** MK was
+  chosen over customer-relations because Slice 7 is expected to expand CR; MK stays at 9 through
+  Slices 6 and 7, so the control moves once and re-bases onto a >30 overdraw only at Slice 8.
+- **No BR fixture needed re-basing, because none exists** — nothing indexes BR, and no BR
+  legacy-order assertion was added since no invariant depends on it. `CR.slice(0, 2)` is untouched.
+
+**Global M14 G2 remains OPEN.** Deficit **63 → 42**: DECA customer-relations and
+marketing-fundamentals (2 × 21). Corpus 357 → **378** locally; final target **420**. Every remaining
+G2 question is a DECA question. **`PI depth complete` is NOT `DECA depth complete`**, **`PI + BR depth
+complete` is NOT `DECA depth complete`**, and **`Debate depth complete` is NOT `Global M14 G2
+complete`** — do not mark any of them closed.
+
+**Local commit only — not pushed, not deployed. No database operation.**
+
+## M14 Global G2 Slice 5 / DECA Slice 1 — DECA performance-indicators is 30 deep, human-reviewed, deployed
 
 **Debate is finished and live.** All four Debate areas hold 30, all four slices are human-reviewed and
 approved, and Slice 4 is deployed at `09e9bdb` (deployment `5863008892`, `Production`, `success`).
@@ -986,7 +1034,8 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Global G2 Slice 3 — Debate evidence depth | **Complete.** Evidence-evaluation 9→30, bank 78→99, three of four Debate areas at 30. AI-authored, **human-reviewed and approved 2026-08-11**; `ev-27` replaced before approval (`ef55134` + `89497a3`) to stay inside the curriculum. Pushed and deployed (`61b19de`). |
 | M14 Global G2 Slice 4 — Debate weighing depth | **Complete locally.** Weighing 9→30, bank 99→120, **all four Debate areas at 30 — Debate depth COMPLETE and human-reviewed.** First slice to exercise the `wg-09` terminal-comma append boundary; all four areas now authorized. AI-authored, **human-reviewed and approved 2026-08-11**; `wg-24` refined before approval (`9c20282` + `a250e40`) to remove a magnitude/probability ambiguity. Push gate lifted; ready to push. |
 | M14 Global G2 Slice 5 / DECA Slice 1 — DECA PI depth | **Complete locally.** Performance-indicators 9→30, DECA bank 36→57. First DECA area authorized; depth tests and a shallow control ADDED to both DECA suites (neither had any). No legacy punctuation changed — `mk-09` boundary still unexercised. AI-authored, **human-reviewed and approved 2026-08-12**; `pi-19` and `pi-30` refined before approval (`b72cba2` + `1340cdb`) to make the listed indicator load-bearing, `pi-28` approved without rewrite as a reviewed PI/BR boundary case. Push gate lifted; ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Debate depth is complete at 4 × 30 and deployed; Slice 5 takes DECA performance-indicators to 30 and it is human-reviewed. **Global G2 remains open because DECA business-reasoning, customer-relations and marketing-fundamentals remain at 9, below the ≥30 target.** Deficit **63** (3 × 21 DECA) — every remaining G2 question is a DECA question. `PI depth complete` is NOT `DECA depth complete`, and `Debate depth complete` is NOT `Global M14 G2 complete`. **The next G2 depth work remains outstanding.** |
+| M14 Global G2 Slice 6 / DECA Slice 2 — DECA BR depth | **Complete locally.** Business-reasoning 9→30, DECA bank 57→78. Second DECA area authorized; shallow control MOVED business-reasoning → marketing-fundamentals in both suites (chosen over CR because Slice 7 expands CR, so it moves once not twice). No legacy punctuation changed — `mk-09` boundary still unexercised. AI-authored, **HUMAN CONTENT REVIEW OUTSTANDING** — do-not-push gate active. |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Debate depth is complete at 4 × 30 and deployed; DECA performance-indicators is 30 and human-reviewed; Slice 6 takes business-reasoning to 30 locally. **Global G2 remains open because DECA customer-relations and marketing-fundamentals remain at 9, below the ≥30 target.** Deficit **42** (2 × 21 DECA) — every remaining G2 question is a DECA question. `PI depth complete` is NOT `DECA depth complete`, `PI + BR depth complete` is NOT `DECA depth complete`, and `Debate depth complete` is NOT `Global M14 G2 complete`. **The next G2 depth work remains outstanding.** |
 | Legacy `pi-07` / curriculum B-2 | **OPEN DEBT — not resolved.** `pi-07` keys explicit PI signposting as recommended; Module 1 lesson 3 ⟨B-2⟩ teaches that speaking a PI title aloud vs weaving it in is a genuinely contested judgment call. Slice 5 leaves `pi-07` immutable, does not reinforce it, and authors no contradictory content. Separate curriculum debt for later resolution. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |

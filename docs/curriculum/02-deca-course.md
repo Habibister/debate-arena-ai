@@ -801,9 +801,26 @@ anything cluster-specific defers to sourced instructional-area material.
 
 ### Business-content course — status
 
-⟨BC-5 — REVIEW STATUS⟩ **AI-ASSISTED authoring, 2026-08-12. HUMAN CONTENT REVIEW OUTSTANDING.** AI
-self-review does not count as human review. This section is drafted and locally committed only; it has
-**not** been approved, and no drill-bank content depends on it yet.
+⟨BC-5 — REVIEW STATUS⟩ **AI-ASSISTED authoring, HUMAN-REVIEWED AND APPROVED 2026-08-12.** The
+repository owner personally read all twelve lessons in the final post-refinement checklist and
+approved the CR and MK core definitions, each lesson's concepts, examples, non-examples, common
+mistakes and boundaries, ⟨CR-C⟩ and its labeling, the 21-row provenance map, the five CR and one MK
+legacy-debt records, and the depth-sufficiency judgement for both areas. **The approved curriculum is
+the cumulative content of the draft commit plus its focused refinement commit.**
+
+Two points were refined before approval. The four-input model's exhaustive wording was removed, so
+the scope block now states that the model is **CompeteReady's analytic model, not an exhaustive
+taxonomy**; and MK6's absolute audience/channel `must` became contextual audience–message–channel
+fit. Six further review notes — the paraphrase-source disclosure (CR2), the AMA brand-positioning
+scope (MK3), the narrow CFPB context (CR5), the CR3/CR4 layering, the source-verification wording in
+⟨BC-2⟩, and the ⟨BC-3⟩ policy-fact rule — were personally reviewed and approved **without rewrite**.
+**⟨BC-3⟩'s requirement that a scenario supply the policy fact its answer turns on is deliberately
+preserved and binds future Customer Relations drill authoring**, so no drill may require a learner to
+guess hidden company policy.
+
+**Claude/AI pre-screening did not constitute this approval, and AI self-review never counts as human
+approval.** The **AI-ASSISTED** label stays in this section permanently — approval changed the review
+status, not the provenance.
 
 ⟨BC-6 — DEPTH INTENT⟩ These twelve lessons are written to stand alone: a learner who reads them should
 be able to reason through realistic Customer Relations and Marketing Fundamentals application

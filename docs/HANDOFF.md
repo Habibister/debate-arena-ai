@@ -2,13 +2,49 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 DECA Curriculum Completion: CR + MK curriculum draft (2026-08-12)
+## Latest handoff — M14 DECA Curriculum Completion: CR + MK curriculum APPROVED (2026-08-12)
 
-### ⛔ DO NOT PUSH — human content review is OUTSTANDING
+### Curriculum is human-reviewed and APPROVED — clear to push
 
-Status: **`AI-ASSISTED CURRICULUM DRAFT — HUMAN CONTENT REVIEW OUTSTANDING`.**
-**AI self-review does NOT count as human review.** The draft is a local commit only. It must be read
-by a human and explicitly approved before any push, exactly as every drill slice was.
+Status: **`AI-ASSISTED CURRICULUM, HUMAN-REVIEWED AND APPROVED 2026-08-12`.**
+
+On **2026-08-12 the repository owner personally read all twelve lessons in the final post-refinement
+checklist and approved them** — the CR and MK core definitions, each lesson's concepts, examples,
+non-examples, common mistakes and boundaries, ⟨CR-C⟩ and its labeling, the 21-row provenance map, the
+five CR and one MK legacy-debt records, source/provenance honesty, D7 labeling, legal/policy scope,
+age-appropriateness, and depth sufficiency for both areas. **The approved curriculum is the cumulative
+content of `afe9c94` PLUS refinement commit `07068f1`. The curriculum push gate is lifted.**
+
+**Two points were refined before approval.** The four-input CR model no longer claims to be
+exhaustive — the scope block now states it is **CompeteReady's analytic model, not an exhaustive
+taxonomy**, naming tone, sequencing and acknowledgement as parts of an interaction that do not always
+reduce to one of four boxes. MK6's absolute audience/channel `must` became **"a strong promotion
+choice matches the message to the intended audience and uses a channel that can realistically reach
+that audience"** — contextual fit, with room for broad-awareness activity.
+
+**Six notes were reviewed and approved WITHOUT rewrite**, recorded so a later reader does not reopen
+them: the **paraphrase-source disclosure** (CR2 — the strongest source defines paraphrase for written
+text; spoken-service use is labeled as ours) · the **AMA scope** (MK3 — AMA covers brand positioning
+and is a second source, never a rules source; OpenStax carries the broader grounding) · the **narrow
+CFPB context** (CR5 — supports only that complaint handling is a defined organizational process in
+regulated settings; its sector deadlines are not taught and do not generalize) · the **CR3/CR4
+layering** (the unauthorized-commitment error appears in both because the primary decisions differ —
+acknowledgement vs. asserting a cause, versus which real option to offer) · the **⟨BC-2⟩
+source-verification wording** · and the **⟨BC-3⟩ policy-fact rule**.
+
+**⟨BC-3⟩ IS BINDING ON SLICE 7 — do not weaken it.** If a CR question's correctness depends on refund
+or exchange eligibility, store-credit availability, warranty handling, employee authority, an
+escalation requirement, an available compensation or remedy, or any other policy-dependent outcome,
+**the scenario must supply that fact.** No drill may require a learner to guess hidden company policy.
+This is a CompeteReady question-quality constraint — not law, not official DECA terminology, and not a
+claim about real-world customer service.
+
+Two things to keep straight, as for every slice so far:
+
+- **The approval is the human reading, nothing else.** The Claude/AI pre-screen was the authoring
+  model checking its own output; it constituted neither the review nor independent verification.
+- **The AI-ASSISTED label stays in the source permanently.** Approval changed the review status, not
+  the provenance.
 
 ### Why this milestone exists
 
@@ -98,12 +134,18 @@ unchanged and immutable; no baseline exception was created; the legacy bank is N
 
 ### Next steps, in order
 
-1. **Human reads all twelve lessons** and approves or requests refinements. Nothing else may proceed.
-2. Refinement pass, then an approval-status commit, then push and deploy.
-3. **Only then** Slice 7 (CR 9→30), then Slice 8 (MK 9→30).
+1. Push the three curriculum commits and verify the Production deployment.
+2. **Slice 7 — CR 9→30**, authored against CR1–CR6 and bound by ⟨BC-3⟩.
+3. **Slice 8 — MK 9→30**, authored against MK1–MK6.
 
-**M14 Global G2 remains OPEN and BLOCKED on human approval of the new Customer Relations and Marketing
-Fundamentals curriculum. Do not record G2, or DECA, as complete or closed.**
+Still deferred, each its own approval: **registry/seed attachment** (`deca-customer-relations` has no
+lesson slugs; `deca-marketing` has three title-only slugs — seeded product data) and **video parity**
+(`06-videos-deca.md` untouched; videos 9–14 are a selective set, not a lesson-by-lesson mirror).
+
+**Curriculum approval awards no G2 question-depth credit.** The curriculum-first prerequisite is
+COMPLETE and source verification is COMPLETE, so **Global M14 G2 is OPEN and ready to resume with
+Slice 7 Customer Relations depth implementation.** **Do not record CR depth, MK depth, DECA, or Global
+G2 as complete or closed** — the deficit is still 42.
 
 ## M14 Global G2 Slice 6 / DECA Slice 2: BR 9→30 (2026-08-12)
 

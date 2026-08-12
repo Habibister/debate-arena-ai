@@ -2,12 +2,37 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 DECA Curriculum Completion — CR + MK curriculum drafted, AI-assisted, **HUMAN CONTENT REVIEW OUTSTANDING**, local only. The Slice 6 baseline `dd0cd71` is pushed and deployed — deployment `5864067195`, `Production`, `success`.)_
+_Last updated: 2026-08-12 (M14 DECA Curriculum Completion — CR + MK curriculum **HUMAN-REVIEWED AND APPROVED 2026-08-12**, AI-assisted, local only. The Slice 6 baseline `dd0cd71` is pushed and deployed — deployment `5864067195`, `Production`, `success`.)_
 
-## M14 DECA Curriculum Completion — Customer Relations + Marketing Fundamentals curriculum drafted (review outstanding)
+## M14 DECA Curriculum Completion — Customer Relations + Marketing Fundamentals curriculum is human-reviewed and approved
 
-**Status: `AI-ASSISTED CURRICULUM DRAFT — HUMAN CONTENT REVIEW OUTSTANDING`.**
-**AI self-review does NOT count as human review. DO NOT PUSH until a human approves the curriculum.**
+**Status: `AI-ASSISTED CURRICULUM, HUMAN-REVIEWED AND APPROVED 2026-08-12`.**
+
+**The repository owner personally read all twelve lessons in the final post-refinement checklist and
+approved them** — the CR and MK core definitions, each lesson's concepts, examples, non-examples,
+common mistakes and boundaries, ⟨CR-C⟩ and its labeling, the 21-row provenance map, the five CR and
+one MK legacy-debt records, source/provenance honesty, D7 labeling, legal/policy scope,
+age-appropriateness, and depth sufficiency for both areas. **The approved curriculum is the cumulative
+content of `afe9c94` plus refinement commit `07068f1`.** The Claude/AI pre-screen was the authoring
+model checking its own output — neither the review nor independent verification — and **the
+AI-ASSISTED label stays in the source permanently**; approval changed the review status, not the
+provenance. **The curriculum push gate is lifted.**
+
+**Two points were refined before approval.** The four-input CR model's exhaustive wording was removed,
+so the scope block now says explicitly that it is **CompeteReady's analytic model, not an exhaustive
+taxonomy**, and names tone, sequencing and acknowledgement as parts of an interaction that do not
+always reduce to one of four boxes. MK6's absolute *"the message must suit… the channel must be one
+that target market actually uses"* became **"a strong promotion choice matches the message to the
+intended audience and uses a channel that can realistically reach that audience"**, which keeps
+contextual fit while leaving room for broad-awareness activity.
+
+**Six further notes were personally reviewed and approved WITHOUT rewrite** — the paraphrase-source
+disclosure (CR2), the AMA brand-positioning scope (MK3), the narrow CFPB context (CR5), the CR3/CR4
+layering, the ⟨BC-2⟩ source-verification wording, and the ⟨BC-3⟩ policy-fact rule. **⟨BC-3⟩ is
+deliberately preserved and binds Slice 7 authoring:** if a CR question's correctness depends on refund
+or exchange eligibility, store-credit availability, warranty handling, employee authority, an
+escalation requirement, or any other policy-dependent remedy, **the scenario must state that fact — no
+drill may require guessing hidden company policy.**
 
 **This milestone changes no drill content and earns no G2 depth credit.** It exists because Slice 7
 (CR 9→30) was blocked: the DECA course taught **L0–L18 and no lesson covered customer relations or
@@ -67,8 +92,10 @@ be understood · the offering and its price · getting it to the customer · tel
 `docs/HANDOFF.md`.
 
 **DECA remains 30 / 30 / 9 / 9 = 78. Corpus remains 378. Deficit remains 42 (CR 21 + MK 21).**
-**M14 Global G2 remains OPEN and BLOCKED on human approval of this curriculum. No G2 depth credit has
-been awarded.** Slices 7 and 8 stay blocked until the curriculum is approved.
+**Curriculum approval awards no G2 question-depth credit.** The curriculum-first prerequisite is
+COMPLETE, source verification is COMPLETE, and **Global M14 G2 is OPEN and ready to resume with Slice 7
+Customer Relations depth implementation.** CR depth, MK depth, DECA and Global G2 all remain
+incomplete — do not record any of them as complete or closed.
 
 ## M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning is 30 deep, human-reviewed, deployed
 

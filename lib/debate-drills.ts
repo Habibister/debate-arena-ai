@@ -57,8 +57,17 @@ export const DRILL_BANK: DrillQuestion[] = [
   // automatically warrantless). NOT weighing (nothing compares two sides' impacts).
   // cw-01..cw-09 already teach the basics three times over; nothing below is another "which sentence
   // is the claim/warrant/impact" item.
-  // AI-ASSISTED authoring (M14 Global G2 Slice 2, cw-10..cw-30) — HUMAN CONTENT REVIEW OUTSTANDING.
-  // See docs/HANDOFF.md. AI self-review does NOT count as human review.
+  // AI-ASSISTED authoring (M14 Global G2 Slice 2, cw-10..cw-30), HUMAN-REVIEWED AND APPROVED
+  // 2026-08-11: the repository owner personally read all 21 items in the final packet and approved
+  // their answer defensibility, distractors, clarity, the CWI/rebuttal/evidence-evaluation/weighing
+  // boundaries, claim/evidence/warrant/mechanism/impact terminology, causal-chain and
+  // chronology-vs-causation accuracy, hidden-premise logic, warrant quality, evidence-to-claim
+  // bridging, intermediate-consequence vs final-impact handling, claim scope and specificity,
+  // legacy and new-item overlap, and Module 2 fit. The approved content is exactly the content of
+  // implementation commit 45f3397937725ef35c9ad7b0f10d6fc55b2339d8. Approval rests on that human
+  // reading alone — the Claude/AI pre-screen was the authoring model checking its own output and
+  // did NOT constitute the human review or any independent verification. AI authorship stays
+  // recorded here permanently; the approval is what changed, not the provenance.
   { id: "cw-10", area: "claim-warrant-impact", question: "A contention runs: \"Free transit raises ridership, higher ridership cuts car trips, and fewer car trips lower injuries.\" Only the first link is explained. What still needs work?", choices: ["The reasoning for why higher ridership actually removes car trips", "A citation for the injury figure", "A shorter way of stating the claim", "A completely different impact"], correctAnswer: "The reasoning for why higher ridership actually removes car trips", explanation: "Every arrow in a chain needs its own support. The first link is explained; the ridership-to-car-trips step is only asserted, so the chain stalls there even though the conclusion sounds plausible." },
   { id: "cw-11", area: "claim-warrant-impact", question: "In \"later starts raise sleep, more sleep raises test scores, and higher scores widen college access\", the step \"more sleep raises test scores\" is:", choices: ["An internal link — a middle step the argument must cross to reach its impact", "The terminal impact, because scores are what matter", "The claim being defended", "Evidence supporting the conclusion"], correctAnswer: "An internal link — a middle step the argument must cross to reach its impact", explanation: "Internal links are the intermediate steps; the terminal impact is the final reason the argument matters, here college access. Naming them separately keeps each arrow checkable." },
   { id: "cw-12", area: "claim-warrant-impact", question: "An argument says: \"Banning single-use plastics will cut microplastics in the food chain.\" No middle step is given. What is missing?", choices: ["How the ban changes what actually enters the water", "A more dramatic final consequence", "A sentence saying plastics are harmful", "The name of the country adopting the ban"], correctAnswer: "How the ban changes what actually enters the water", explanation: "The chain jumps from a policy straight to a downstream outcome. The mechanism between them — less plastic produced, so less reaching waterways — has to be stated before the conclusion follows." },

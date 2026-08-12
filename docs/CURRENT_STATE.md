@@ -2,9 +2,9 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 2 — Debate claim-warrant-impact 9→30, local only, human content review outstanding)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 2 — Debate claim-warrant-impact 9→30, human-reviewed and approved, local only)_
 
-## M14 Global G2 Slice 2 — Debate claim-warrant-impact is 30 deep, in local code only
+## M14 Global G2 Slice 2 — Debate claim-warrant-impact is 30 deep, human-reviewed, local only
 
 **Slice 1 is deployed and human-reviewed** (`e23e982`, deployment `5861050099`, `Production`,
 `success`), so rebuttal was already approved and live before this slice began.
@@ -17,9 +17,21 @@ Slice 2 expands **one** area: **claim-warrant-impact 9 → 30** (`cw-10`…`cw-3
 | `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
-**⚠ The 21 new CWI items are AI-ASSISTED DRAFT CONTENT and have NOT received human content review.**
-The bank carries that label above `cw-10`. **Do not push this commit until a human has reviewed
-`cw-10`…`cw-30`.** AI self-review does not count.
+**Human content review is COMPLETE (2026-08-11).** The 21 CWI items were AI-authored and the
+repository owner then personally read all of `cw-10`…`cw-30` in the final packet and approved their
+answer defensibility, distractors, clarity, the CWI/rebuttal/evidence-evaluation/weighing boundaries,
+claim/evidence/warrant/mechanism/impact terminology, causal-chain and chronology-vs-causation
+accuracy, hidden-premise logic, warrant quality, evidence-to-claim bridging, intermediate-consequence
+vs final-impact handling, claim scope and specificity, overlap and Module 2 fit. **The approved
+content is exactly the content of implementation commit `45f3397`.** Also approved as judgment calls:
+`cw-10`'s "every arrow needs support" means reasoning, not a separate citation per arrow;
+`cw-12`/`cw-15`, `cw-16`/`cw-17`, `cw-18`/`cw-19`, `cw-23`/`cw-26`, `cw-26`/legacy `cw-03` and
+`cw-29`/`cw-30` are distinct learner decisions; the `cw-20`/`cw-21`/`cw-22` progression is useful
+rather than quantity theatre; and `cw-14` and `cw-15` remain argument analysis, distinct from `rb-18`
+and `rb-19`. **The approval rests on that human reading alone; the Claude/AI pre-screen was the
+authoring model checking its own output and constituted neither the review nor independent
+verification.** AI-authoring provenance stays labelled in the source permanently. **The Slice 2 push
+gate is lifted.**
 
 - **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
   session-protocol, XP or mastery change. Debate still writes `MasteryProgress` legitimately.
@@ -758,7 +770,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
 | M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** HOSA done; Slice 0 protected both drill banks; Slice 1 rebuttal 9→30 (approved, deployed); **Slice 2 claim-warrant-impact 9→30 (local, review outstanding)**. Deficit **126**: Debate ev/wg (2 × 21) + all four DECA areas (4 × 21). **The next G2 content slice is still outstanding.** |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 2 completes CWI depth and human review; **global G2 remains open because Debate evidence-evaluation/weighing and all four DECA areas remain below the ≥30 target.** Deficit **126** (2 × 21 Debate + 4 × 21 DECA). **The next Debate G2 depth work remains outstanding.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

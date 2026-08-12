@@ -4,14 +4,30 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 2: Debate CWI 9→30 (2026-08-12)
 
-### ⚠ Slice 2: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Slice 2: content is human-reviewed and APPROVED — clear to push
 
 `lib/debate-drills.ts` gained 21 claim-warrant-impact questions (`cw-10`…`cw-30`), taking CWI 9→30 and
-the Debate bank 57→78. **These items were AI-drafted and have NOT been reviewed by a human.** A source
-comment above `cw-10` carries that label. **Do not push the `feat(debate): expand claim warrant impact
-drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+the Debate bank 57→78. The items were AI-authored, and on **2026-08-11 the repository owner personally
+read all 21 in the final packet and approved them** — answers, distractors, clarity, the
+CWI/rebuttal/evidence-evaluation/weighing boundaries, causal-chain and chronology-vs-causation
+accuracy, hidden-premise logic, warrant quality, evidence-to-claim bridging, intermediate-vs-final
+impact handling, claim scope and specificity, overlap and Module 2 fit. **The approved content is
+exactly implementation commit `45f3397`.** **The Slice 2 push gate is lifted.**
 
 Slice 1 is deployed and human-reviewed (`e23e982`), so rebuttal was already approved and live.
+
+Two things to keep straight, as for every slice so far:
+
+- **The approval is the human reading, nothing else.** The Claude/AI pre-screen was the authoring
+  model checking its own output; it constituted neither the review nor independent verification.
+- **The AI-authoring label stays in the source permanently.** Approval changed the review status, not
+  the provenance.
+
+Approved judgment calls, recorded so a later reader does not reopen them: `cw-10`'s "every arrow needs
+support" means reasoning, not a citation per arrow; `cw-12`/`cw-15`, `cw-16`/`cw-17`, `cw-18`/`cw-19`,
+`cw-23`/`cw-26`, `cw-26`/legacy `cw-03` and `cw-29`/`cw-30` are distinct learner decisions; the
+`cw-20`/`cw-21`/`cw-22` identify-diagnose-build progression is useful rather than quantity theatre;
+`cw-14` and `cw-15` remain argument analysis, distinct from `rb-18` and `rb-19`.
 
 ### Where G2 stands
 
@@ -22,7 +38,9 @@ Slice 1 is deployed and human-reviewed (`e23e982`), so rebuttal was already appr
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
 **Deficit 126** (was 147): Debate ev/wg 2 × 21, DECA 4 × 21. Corpus 273 → **294** locally; target
-**420**. **Global M14 G2 remains OPEN — do not record it as complete or closed.**
+**420**. **Slice 2 completes CWI depth and human review; global G2 remains OPEN because Debate
+evidence-evaluation/weighing and all four DECA areas remain below the ≥30 target. Do not record G2 as
+complete or closed.**
 
 ### What Slice 2 changed — do not undo any of it
 

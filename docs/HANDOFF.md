@@ -2,7 +2,78 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 Slice 3: Debate evidence 9→30 (2026-08-12)
+## Latest handoff — M14 Global G2 Slice 4: Debate weighing 9→30 (2026-08-12)
+
+### ⚠ Slice 4: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/debate-drills.ts` gained 21 weighing questions (`wg-10`…`wg-30`), taking weighing 9→30 and the
+Debate bank 99→120. **These items were AI-drafted and have NOT been reviewed by a human.** A source
+comment above `wg-10` carries that label. **Do not push the `feat(debate): expand weighing drill bank`
+commit until someone reviews those 21 items.** AI self-review does not count.
+
+Slices 1, 2 and 3 are deployed and human-reviewed (`61b19de`, deployment `5861953872`, `Production`,
+`success`), so rebuttal, CWI and evidence-evaluation were already approved and live before this slice.
+
+### Debate depth is complete locally — GLOBAL G2 IS NOT
+
+**All four Debate areas now hold 30.** That is `Debate depth complete`, and it is **not** the same
+claim as `Global M14 G2 complete`. **Global M14 G2 remains OPEN** because all four DECA areas are
+still at 9. Do not record G2 as complete or closed.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **120** | cw 30 · rb 30 · ev 30 · **wg 30** — all four at target |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Deficit 84** (was 105): DECA 4 × 21, and nothing else. Corpus 315 → **336** locally; target **420**.
+**Every remaining G2 question is a DECA question.**
+
+### What Slice 4 changed — do not undo any of it
+
+- **The append boundary was finally exercised.** `wg-09` was the last array element and carried no
+  comma; it now carries **exactly one**. That is the ONLY change to any legacy item, and it is
+  punctuation. `G0-C1d`…`G0-C1d5` assert the real transition against the immutable baseline —
+  including **`G0-C1d3`, that the RAW lines differ**, without which the normalisation could silently
+  stop doing work. The synthetic `G0-C1b`/`G0-C1c` are unchanged and still prove a one-word content
+  edit survives the same normalisation.
+- **All four areas authorised.** `EXPANDED_AREAS` = `["rebuttal", "claim-warrant-impact",
+  "evidence-evaluation", "weighing"]`, slice order preserved. `G0-6b` 3 → 4, `G0-C2b2` 3 → 4.
+- **The unauthorised-area control became unreachable and was REPLACED, not deleted.** No recognised
+  Debate area can now return `unauthorised` in production (`G0-C6b` asserts that count is **0**). The
+  stage is still tested: `G0-C6c` calls the SAME `judgeAddition` with a **test-only withheld**
+  authorisation set per area, and `G0-C6c2` proves the identical literal passes under real
+  authorisation — so the rejection is caused by the withheld set alone. **Production
+  `EXPANDED_AREAS` is never mutated and no fake fifth area was invented.**
+- **`G0-7b` is now an 84-id exact set**, driven by `SLICE_ADDITIONS` with its fourth and final row.
+- **The forbidden-prefix loop was replaced, not left empty.** All four prefixes are legitimate now, so
+  `for (const p of ["wg"])` would have become `for (const p of [])`. It is now a direct per-id range
+  assertion plus `G0-7b4b` proving it ran over **84** real additions.
+- **⚠ `G0-7b` IS NOW THE FINAL BOUND ON DEBATE BANK GROWTH.** With every area authorised,
+  `judgeAddition("wg-31", …)` returns **ok** — the predicate alone no longer limits anything.
+  `G0-7b5` asserts exactly that, and `G0-7b5b` that only the exact 84-id set stops it. **Never relax
+  `G0-7b` into "any known prefix above 09."**
+- **The shallow-area control was RE-BASED, not deleted.** No Debate area holds 9, so it could not move
+  a fourth time. Both suites now prove **40 served / exactly 30 distinct / exactly 10 repeated
+  positions**, with a boundary partner at **30 served / 30 distinct / no padding** — the HOSA `11g`
+  pattern. **Do not call weighing shallow or still-9-item anywhere.**
+- **No weighing fixture needed re-basing, because none existed.** Every `% 9` / `slice(0, 9)` in the
+  repo is rebuttal-pinned or synthetic. No weighing `evidenceScore` or `uniqueTotal` fixture was
+  invented, and no mastery or evidence score moved.
+- **Curriculum scope: Module 5 lesson 37 plus the seeded `debate-weighing` skill only.** Nothing
+  introduces scope as a fifth axis (`wg-01` keeps it inside magnitude), "turns the case", a
+  prerequisite/gateway framework, or systemic-outweighs-individual. **V-3** is enforced by `wg-28`
+  (weighing without naming a category) and **V-4** by `wg-27` ("even if" is one move, not a norm).
+- **No axis ever "always wins."** Several distractors state the right axis for a universal-rule reason
+  and are keyed **wrong** (`wg-16` D, `wg-21` C, `wg-24` C).
+
+### Runtime, untouched
+
+`skillSlug: "debate-weighing"`, `DEBATE_DRILL_REQUIRED_UNIQUE = 5`, pass threshold 70,
+`recordDrillMasteryInTransaction`, replay protection, session expiry, first-answer-per-distinct-id and
+the XP prohibition are all unchanged. No schema, migration, seed, route, validator or client change.
+
+## Previous handoff — M14 Global G2 Slice 3: Debate evidence 9→30 (2026-08-12)
 
 ### Slice 3: content is human-reviewed and APPROVED — clear to push
 
@@ -63,15 +134,13 @@ evidence-quality and carries no citation doctrine.
 remaining shallow Debate area**. **Global M14 G2 remains OPEN — do not record it as complete or
 closed.**
 
-### ⚠ WEIGHING IS NOW THE LAST SHALLOW DEBATE AREA — READ BEFORE SLICE 4
+### ~~⚠ WEIGHING IS THE LAST SHALLOW DEBATE AREA~~ — DISCHARGED BY SLICE 4
 
-The shallow-area non-vacuity control (both suites) proves a still-9-item area gives 20 served / 9
-distinct and 40 served / 9 distinct. It has now moved twice: evidence-evaluation → **weighing**.
-**Slice 4 takes weighing to 30, so it cannot move a third time** — no shallow Debate area will remain.
-It must then **re-base on a request that exceeds a 30-item pool**, exactly as HOSA's `11g` did at
-Phase 2f. **Do not delete it; the padding branch must stay proven.** Slice 4 is also the slice that
-finally appends after `wg-09`, so expect the **one-character trailing-comma change** there and let
-`G0-C1b`/`G0-C1c` do their job.
+This warning told Slice 4 to re-base the shallow-area control instead of moving it a third time, and
+to expect the trailing-comma change at `wg-09`. **Slice 4 did both.** The control now proves 40 served
+/ 30 distinct / 10 repeated positions with a 30-served / 30-distinct boundary partner, and the real
+`wg-09` comma transition is asserted by `G0-C1d`…`G0-C1d5`. See the Slice 4 handoff at the top of this
+file for the current state. Nothing here is outstanding.
 
 ### What Slice 3 changed — do not undo any of it
 

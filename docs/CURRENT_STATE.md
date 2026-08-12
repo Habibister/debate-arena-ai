@@ -2,9 +2,68 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 3 — Debate evidence-evaluation 9→30, human-reviewed and approved 2026-08-11, local only)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 4 — Debate weighing 9→30, all four Debate areas at 30, local only, human content review outstanding)_
 
-## M14 Global G2 Slice 3 — Debate evidence-evaluation is 30 deep, human-reviewed, local only
+## M14 Global G2 Slice 4 — Debate weighing is 30 deep, in local code only
+
+**Slices 1, 2 and 3 are deployed and human-reviewed** (`61b19de`, deployment `5861953872`,
+`Production`, `success`), so rebuttal, CWI and evidence-evaluation were approved and live before this
+slice began.
+
+Slice 4 expands **one** area: **weighing 9 → 30** (`wg-10`…`wg-30`, +21). Debate **99 → 120**.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **120** | claim-warrant-impact 30 · rebuttal 30 · evidence-evaluation 30 · **weighing 30** |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**⚠ The 21 new weighing items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** The bank carries that label above `wg-10`. **Do not push this commit until a human has
+reviewed `wg-10`…`wg-30`.** AI self-review does not count.
+
+**`Debate depth complete` is NOT `Global M14 G2 complete`.** All four Debate areas now hold 30, which
+completes Debate depth locally. **Global M14 G2 remains OPEN** because all four DECA areas are still
+at 9 — every remaining G2 question is a DECA question.
+
+- **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
+  session-protocol, XP or mastery change.
+- **THE APPEND BOUNDARY WAS EXERCISED FOR REAL.** `wg-09` was the final array element and carried no
+  trailing comma; it now carries **exactly one**. That is the only change to any legacy item and it
+  is punctuation, proven by `G0-C1d`…`G0-C1d5` against the immutable baseline — **including
+  `G0-C1d3`, that the RAW lines differ**, so the normalisation cannot silently stop doing work. The
+  synthetic `G0-C1b`/`G0-C1c` are unchanged.
+- **Scope came from Module 5 lesson 37 and the seeded `debate-weighing` skill only** — when weighing
+  matters, explicit comparison, and magnitude / probability / timeframe / reversibility. **V-3** is
+  enforced by `wg-28` (a real comparison that names no category still counts as weighing) and **V-4**
+  by `wg-27` ("even if" is one useful move, never required wording). Scope stays inside magnitude
+  exactly as legacy `wg-01` defines it; no "turns the case", gateway framework or impact-calculus
+  jargon was introduced.
+- **All four areas are now authorized:** `EXPANDED_AREAS` is `["rebuttal", "claim-warrant-impact",
+  "evidence-evaluation", "weighing"]`. **No recognised Debate area remains unauthorised** — `G0-C6b`
+  asserts that count is **0**, and the authorisation stage is now probed with a **test-only withheld**
+  set through the same `judgeAddition`, never by mutating production.
+- **`G0-7b` is now an 84-id guarantee** — `rb`/`cw`/`ev`/`wg`-10…30, each declaring its slice's area.
+  The now-empty forbidden-prefix loop was **replaced** with a direct range assertion over 84 real ids.
+- **⚠ `G0-7b` is the FINAL bound on Debate bank growth.** With every area authorised, a structurally
+  valid `wg-31` passes `judgeAddition` outright (`G0-7b5`); only the exact 84-id set stops it. Never
+  relax it into "any known prefix above 09".
+- **The shallow-area control was RE-BASED, not deleted.** No Debate area holds 9, so it could not move
+  again. Both suites now prove **40 served / exactly 30 distinct / exactly 10 repeated positions**,
+  with a **30 served / 30 distinct** boundary partner showing padding activates only above the pool —
+  the HOSA `11g` pattern.
+- **No weighing fixture needed re-basing, because none existed.** No weighing `evidenceScore` or
+  `uniqueTotal` fixture was invented; the CWI bypass (raw 76 / evidence 20) and rebuttal legacy-nine
+  (evidence 67) fixtures are untouched.
+- **The observable G2 effect:** a focused 20-question weighing session now serves **20 distinct**
+  items with no padding, and the padding branch is still proven at **40 served / exactly 30 distinct**.
+
+**Global M14 G2 remains OPEN.** Deficit **105 → 84**: all four DECA areas (4 × 21). Corpus 315 →
+**336** locally; final target **420**.
+
+**Local commit only — not pushed, not deployed. No database operation.**
+
+## M14 Global G2 Slice 3 — Debate evidence-evaluation is 30 deep, human-reviewed, deployed
 
 **Slices 1 and 2 are deployed and human-reviewed** (`46ab46b`, deployment `5861389721`, `Production`,
 `success`), so rebuttal and CWI were already approved and live before this slice began.
@@ -838,8 +897,9 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
 | M14 Global G2 Slice 1 — Debate rebuttal depth | **Complete.** Rebuttal 9→30, bank 36→57. AI-authored, human-reviewed and approved 2026-08-11. Pushed and deployed (`e23e982`). |
 | M14 Global G2 Slice 2 — Debate CWI depth | **Complete.** Claim-warrant-impact 9→30, bank 57→78. AI-authored, human-reviewed and approved 2026-08-11. Pushed and deployed (`45f3397`, live at `46ab46b`). |
-| M14 Global G2 Slice 3 — Debate evidence depth | **Complete locally.** Evidence-evaluation 9→30, bank 78→99, three of four Debate areas at 30. AI-authored, **human-reviewed and approved 2026-08-11**; `ev-27` replaced before approval (`ef55134` + `89497a3`) to stay inside the curriculum. Push gate lifted; ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 3 completes evidence-evaluation depth and its human review; **global G2 remains open because Debate weighing and all four DECA areas remain below the ≥30 target.** Deficit **105** (1 × 21 Debate + 4 × 21 DECA); weighing is the only remaining shallow Debate area. **The next G2 depth work remains outstanding.** |
+| M14 Global G2 Slice 3 — Debate evidence depth | **Complete.** Evidence-evaluation 9→30, bank 78→99, three of four Debate areas at 30. AI-authored, **human-reviewed and approved 2026-08-11**; `ev-27` replaced before approval (`ef55134` + `89497a3`) to stay inside the curriculum. Pushed and deployed (`61b19de`). |
+| M14 Global G2 Slice 4 — Debate weighing depth | **Complete locally.** Weighing 9→30, bank 99→120, **all four Debate areas at 30 — Debate depth complete locally.** First slice to exercise the `wg-09` terminal-comma append boundary; all four areas now authorized. AI-authored, **HUMAN CONTENT REVIEW OUTSTANDING** — do-not-push gate active. |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 4 completes Debate depth at 4 × 30; **global G2 remains open because all four DECA areas remain at 9, below the ≥30 target.** Deficit **84** (4 × 21 DECA) — every remaining G2 question is a DECA question. `Debate depth complete` is NOT `Global M14 G2 complete`. **The next G2 depth work remains outstanding.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

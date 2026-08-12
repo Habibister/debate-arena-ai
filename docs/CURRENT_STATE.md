@@ -2,7 +2,73 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 DECA Curriculum Completion — CR + MK curriculum **HUMAN-REVIEWED AND APPROVED 2026-08-12**, AI-assisted, local only. The Slice 6 baseline `dd0cd71` is pushed and deployed — deployment `5864067195`, `Production`, `success`.)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH**. The curriculum baseline `8cb181e` is pushed and deployed — deployment `5864802348`, `Production`, `success`.)_
+
+## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, local only
+
+**Status: `IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH`.**
+**AI self-review does NOT count as human review.**
+
+**The CR/MK curriculum is deployed and human-reviewed** at `8cb181e` (deployment `5864802348`,
+`Production`, `success`), so the approved **CR1–CR6** lessons were the source of truth for this slice.
+**That curriculum approval is untouched and is NOT reopened by new drill questions.**
+
+Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`cr-30`, +21). DECA **78 → 99**.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
+| `lib/deca-drills.ts` | **99** | pi 30 (deployed, reviewed) · br 30 (deployed, reviewed) · **cr 30 (review outstanding)** · mk 9 |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+- **⟨BC-3⟩ / F-8 enforced across all 21.** Every item states in its stem the policy and authority facts
+  its keyed answer turns on. **Hidden policy required: 0 of 21. Hidden authority required: 0 of 21.**
+  Where policy is not material (`cr-15`, `cr-17`, `cr-19`) none was invented to fill a template.
+  `cr-13`, `cr-16`, `cr-17` and `cr-26` leave one fact unknown **by design**, because identifying that
+  gap is the learner decision — the policy and authority frames are still fully stated.
+- **Coverage:** CR1 `cr-10`–`cr-12` · CR2 `cr-13`–`cr-16` · CR3 `cr-17`–`cr-19` · CR4 `cr-20`–`cr-23` ·
+  CR5 `cr-24`–`cr-26` · CR6 `cr-27`–`cr-30`. All six lessons represented, max 4 per lesson, 21 distinct
+  learner decisions, **zero definition-recall items** — six of the legacy nine are recall, so this is a
+  depth change, not just a count change.
+- **The five legacy CR debts are not reinforced.** `cr-17`, `cr-19`, `cr-24` and `cr-26` are keyed
+  *against* the `cr-01`/`cr-06` fixed-sequence pattern (`cr-26` requires establishing facts before
+  accepting fault; `cr-19` makes a habitual apology the wrong move on a routine question). `cr-29`
+  keys follow-up to named triggers, against `cr-07`. No item keys retention economics (`cr-04`) or an
+  unauthorised extra (`cr-09`). **All nine legacy items are byte-identical and immutable.**
+- **`G0-7b4c` control moved `cr-10` → `cr-31`.** `cr-10` was an out-of-set probe through Slice 6 and is
+  now a legitimate addition, so leaving it would have inverted the assertion. New `G0-7b4d` proves
+  `cr-10` and `cr-30` ARE inside the expected set, so the boundary provably moved rather than silently
+  loosening.
+- **CR legacy-order guard added** (`G0-D7` in drills, `26m2` in mastery): the mastery suite indexes
+  **`CR.slice(0, 2)`** for its cross-area attribution tests, so `cr-01`/`cr-02` must stay first. This
+  guards a real index dependency, not symmetry — no BR equivalent was added because nothing indexes BR.
+- **A second hardcoded `42`** at `deca-drills-smoke.ts` (the predicate control) was found by the build
+  and now derives from `EXPECTED_ADDED.length`, so it cannot drift again.
+- **Answer-key length balance was corrected before commit.** The pre-screen found the keyed answer was
+  >1.6× the longest distractor in `cr-20`, `cr-22`, `cr-25`, `cr-26`, `cr-30` — a length tell. Those
+  five were rebalanced; the set now has mean ratio **1.22** and max **1.59**, better than the approved
+  `br-10`–`br-30` slice (mean 1.57) and far better than legacy `cr-01`–`cr-09` (2.25).
+- **NO legacy punctuation changed.** CR is a MIDDLE block, so `cr-09` already carried its comma.
+  **`mk-09` remains the final array element and remains comma-less** — the DECA terminal-comma
+  boundary is still unexercised and reserved for Slice 8.
+- **Third DECA area authorized:** `EXPANDED_AREAS` is `["performance-indicators", "business-reasoning",
+  "customer-relations"]`. **Marketing-fundamentals stays unauthorised** — `G0-C6b` asserts that count is
+  **1**, `G0-C6b2` asserts it is MK specifically, and `mk-10` is still rejected at stage `unauthorised`.
+- **`G0-7b` is now a 63-id guarantee** — `pi-10`…`pi-30`, `br-10`…`br-30`, `cr-10`…`cr-30`, 21 each,
+  with `G0-7b2d` asserting **zero** MK additions. The forbidden-prefix loop narrowed to `["mk"]` and
+  stays non-vacuous via an explicit exact-prefix assertion.
+- **MK remains the shallow control in BOTH suites** and did **not** move — parking it on MK at Slice 6
+  was correct, so it has moved exactly ONCE. **MK is now the only shallow DECA area**, so Slice 8 must
+  re-base it onto a >30 overdraw (the HOSA `11g` / Debate Slice 4 precedent). Both exact-count
+  assertions changed TWO → **ONE**.
+- **Content + tests + docs only.** No schema, migration, seed, registry, route, validator, client,
+  session-protocol, XP or mastery-runtime change. `deca:skills:activate` was NOT run and no database
+  operation was performed. The curriculum file was NOT modified.
+
+**DECA is locally 30 / 30 / 30 / 9 = 99. Corpus 399. Remaining G2 deficit 21, entirely
+marketing-fundamentals.** **Global M14 G2 remains OPEN.** *PI depth complete ≠ DECA depth complete ·
+PI + BR ≠ DECA depth complete · **PI + BR + CR ≠ DECA depth complete** · Debate depth complete ≠ Global
+M14 G2 complete.* Do not record CR, DECA or Global G2 as complete.
 
 ## M14 DECA Curriculum Completion — Customer Relations + Marketing Fundamentals curriculum is human-reviewed and approved
 

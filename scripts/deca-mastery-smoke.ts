@@ -799,7 +799,7 @@ async function main() {
   const DECA_AREA_DEPTH: Record<string, number> = {
     "performance-indicators": 30,   // M14 Global G2 Slice 5 / DECA Slice 1
     "business-reasoning": 30,   // M14 Global G2 Slice 6 / DECA Slice 2
-    "customer-relations": 9,
+    "customer-relations": 30,   // M14 Global G2 Slice 7 / DECA Slice 3
     "marketing-fundamentals": 9
   };
   for (const [area, depth] of Object.entries(DECA_AREA_DEPTH)) {
@@ -832,25 +832,37 @@ async function main() {
   const brOverdrawn = buildDecaDrillSession(OVERDRAW, ["business-reasoning"]);
   control("and business-reasoning still pads above its pool: 40 served over exactly 30 distinct",
     brOverdrawn.length === OVERDRAW && new Set(brOverdrawn.map((q) => q.id)).size === 30);
+  // Slice 7: the same depth proof for customer-relations, the third DECA area to reach 30.
+  const crFocused20 = buildDecaDrillSession(20, ["customer-relations"]);
+  control("a 20-question focused customer-relations session now serves 20 DISTINCT items — no padding",
+    crFocused20.length === 20 && new Set(crFocused20.map((q) => q.id)).size === 20);
+  const crOverdrawn = buildDecaDrillSession(OVERDRAW, ["customer-relations"]);
+  control("and customer-relations still pads above its pool: 40 served over exactly 30 distinct",
+    crOverdrawn.length === OVERDRAW && new Set(crOverdrawn.map((q) => q.id)).size === 30);
   // Non-vacuous: a still-9-item area DOES still pad, so the results above are a real depth change
   // rather than a property of the builder. MOVED business-reasoning -> MARKETING-FUNDAMENTALS at
-  // Slice 6. MK was chosen over customer-relations on purpose: Slice 7 is expected to expand CR, so
-  // parking the control there would force a second move one slice later. MK stays at 9 through
-  // Slices 6 AND 7, so this control moves ONCE and only re-bases onto a >30 overdraw at Slice 8,
-  // when no shallow DECA area remains.
+  // Slice 6. MK was chosen over customer-relations on purpose: Slice 7 was expected to expand CR, so
+  // parking the control there would have forced a second move one slice later. That played out — CR
+  // reached 30 at Slice 7 and this control did NOT move, so it has moved exactly ONCE. MK is now the
+  // ONLY shallow DECA area, so Slice 8 must re-base it onto a >30 overdraw.
   const shallow20 = buildDecaDrillSession(20, ["marketing-fundamentals"]);
   control("control: the still-9-item marketing-fundamentals area serves 20 over only 9 distinct",
     shallow20.length === 20 && new Set(shallow20.map((q) => q.id)).size === 9);
   const shallow40 = buildDecaDrillSession(OVERDRAW, ["marketing-fundamentals"]);
   control("control: and 40 requested on that 9-item area still yields only 9 distinct",
     shallow40.length === OVERDRAW && new Set(shallow40.map((q) => q.id)).size === 9);
-  control("control: exactly two DECA areas remain at 9, so the shallow control need not re-base onto >30 logic yet",
-    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 2);
+  control("control: exactly ONE DECA area remains at 9, so Slice 8 must re-base this shallow control onto >30 logic",
+    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 1);
   // The PI fixtures above index PI.slice(0, n<=5), PI[0] and PI[5]. Additions append after pi-09, so
   // the legacy nine are still the first nine — assert that rather than assume it.
   assert.deepEqual(DECA_DRILL_BANK.filter((q) => q.area === "performance-indicators").map((q) => q.id).slice(0, 9),
     ["pi-01", "pi-02", "pi-03", "pi-04", "pi-05", "pi-06", "pi-07", "pi-08", "pi-09"],
     "26m. the legacy nine are still the first nine PI items, so every fixture denominator in this file is stable");
+  // Slice 7: the SAME guard for CR, because test 10/10b/10c below index CR.slice(0, 2). cr-10..cr-30
+  // append after cr-09, so cr-01/cr-02 are still the first two — assert it rather than assume it.
+  assert.deepEqual(DECA_DRILL_BANK.filter((q) => q.area === "customer-relations").map((q) => q.id).slice(0, 9),
+    ["cr-01", "cr-02", "cr-03", "cr-04", "cr-05", "cr-06", "cr-07", "cr-08", "cr-09"],
+    "26m2. the legacy nine are still the first nine CR items, so CR.slice(0, 2) still resolves to cr-01/cr-02");
 
   assert.equal(hosaBank.MEDTERM_AREAS.length, 6, "26k. across six areas");
 

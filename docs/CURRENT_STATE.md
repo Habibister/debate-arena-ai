@@ -2,23 +2,25 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS, HUMAN REVIEW GATE NOT FULLY PERFORMED — DO NOT PUSH**. The curriculum baseline `8cb181e` is pushed and deployed — deployment `5864802348`, `Production`, `success`.)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **HUMAN-REVIEWED AND APPROVED 2026-08-12, READY FOR MANUAL PUSH — not yet pushed, not yet deployed**. The curriculum baseline `8cb181e` is pushed and deployed — deployment `5864802348`, `Production`, `success`.)_
 
-## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, local only
+## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, human-reviewed, ready for push
 
-**Status: `IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS (AI ADVERSARIAL AUDIT) — HUMAN REVIEW GATE NOT FULLY PERFORMED — DO NOT PUSH`.**
+**Status: `CONTENT-QUALITY GATE PASS — HUMAN REVIEW GATE PASS — READY FOR MANUAL PUSH`.**
 
-**Two separate gates, deliberately not merged.** **(1) Content-quality gate: PASS** by AI adversarial
-audit — 21/21 exactly one defensible answer, 21/21 fact-sufficient, 0 hidden policy, 0 hidden
-authority, 0 hidden capability/access, 0 explanation-only defects, 0 item-level form leaks, 0 boundary
-defects, 0 legacy-debt defects. **(2) Human review gate: NOT FULLY PERFORMED.** Human feedback
-materially shaped the refinement — a human identified the item-level answer-form leakage the
+**Two separate gates, both met, kept distinct in the record.** **(1) Content-quality gate: PASS** by AI
+adversarial audit — 21/21 exactly one defensible answer, 21/21 fact-sufficient, 0 hidden policy, 0
+hidden authority, 0 hidden capability/access, 0 explanation-only defects, 0 item-level form leaks, 0
+boundary defects, 0 legacy-debt defects. **(2) Human review gate: PASS (2026-08-12)** — an **external
+human reviewer personally reviewed all 21 final Customer Relations questions, `cr-10` through `cr-30`,
+at the final shipping content and approved the complete set without requested changes.** Earlier human
+feedback had already shaped the content: a human identified the item-level answer-form leakage the
 slice-wide metrics had masked, and a human blind-quiz answer surfaced the `cr-20` ambiguity, both of
-which triggered adversarial work that found real defects. **No complete item-by-item human approval of
-the final 21 was given.** The later reviews of `cr-20`, `cr-23`, `cr-26` and `cr-30` were performed by
-another AI system. **AI self-review does NOT count as human review, and neither does review by another
-AI system.** This slice therefore carries weaker review provenance than every prior slice in the M14
-chain, each of which had a full human read of all 21 items.
+which triggered adversarial work that found real defects. **A separate Google Gemini review also found
+no content changes necessary — that is supplementary AI QA and does NOT count as human review**, which
+the external human reviewer alone satisfies. **AI self-review does NOT count as human review, and
+neither does review by another AI system.** **The review gate no longer blocks the push; pushing
+remains a manual action requiring explicit approval, and nothing has been pushed or deployed.**
 
 **The CR/MK curriculum is deployed and human-reviewed** at `8cb181e` (deployment `5864802348`,
 `Production`, `success`), so the approved **CR1–CR6** lessons were the source of truth for this slice.
@@ -29,7 +31,7 @@ Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`c
 | Bank | Total | Per-area |
 |---|---|---|
 | `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
-| `lib/deca-drills.ts` | **99** | pi 30 (deployed, reviewed) · br 30 (deployed, reviewed) · **cr 30 (review outstanding)** · mk 9 |
+| `lib/deca-drills.ts` | **99** | pi 30 (deployed, reviewed) · br 30 (deployed, reviewed) · **cr 30 (human-reviewed, ready for push)** · mk 9 |
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
 - **⟨BC-3⟩ / F-8 enforced across all 21.** Every item states in its stem the policy and authority facts

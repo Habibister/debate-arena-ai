@@ -4,27 +4,29 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 7 / DECA Slice 3: CR 9→30 (2026-08-12)
 
-### ⛔ DO NOT PUSH — the human review gate was NOT fully performed
+### Both gates PASS — READY FOR MANUAL PUSH (not yet pushed, not yet deployed)
 
-Status: **`IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS (AI ADVERSARIAL AUDIT) — HUMAN REVIEW GATE NOT FULLY PERFORMED — DO NOT PUSH`.**
+Status: **`IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS — HUMAN REVIEW GATE PASS — READY FOR MANUAL PUSH`.**
 
-**Two separate gates. Do not merge them.**
+**Two separate gates, both now met. Keep them distinct in the record.**
 
 **1. Content-quality gate — PASS**, by AI adversarial audit: 21/21 exactly one defensible answer ·
 21/21 fact-sufficient · 0 hidden policy · 0 hidden authority · 0 hidden capability/access · 0
 explanation-only defects · 0 item-level form leaks · 0 boundary defects · 0 legacy-debt defects.
 
-**2. Human review gate — NOT FULLY PERFORMED.** Human feedback materially shaped the refinement: a
-human identified the item-level answer-form leakage that the slice-wide metrics had masked, and a
-human blind-quiz answer surfaced the `cr-20` ambiguity — both triggered further adversarial work that
-found defects nothing else had. **But no complete item-by-item human approval of the final 21 was
-given.** The later reviews of `cr-20`, `cr-23`, `cr-26` and `cr-30` were performed by another AI
-system, which **does not** satisfy this gate any more than my own self-review does.
+**2. Human review gate — PASS (2026-08-12).** An **external human reviewer personally reviewed all 21
+final Customer Relations questions, `cr-10` through `cr-30`, at the final shipping content** and
+approved the complete set **without requested changes**. Earlier human feedback had already shaped the
+content: a human identified the item-level answer-form leakage the slice-wide metrics had masked, and
+a human blind-quiz answer surfaced the `cr-20` ambiguity — both triggered adversarial work that found
+defects nothing else had.
 
-**This slice therefore has weaker review provenance than every prior slice in the M14 chain**, all of
-which carried a full human read of all 21 items. Whether the project's governance permits a push in
-this state is a decision for the repository owner; the default is that an unmet gate stays blocking.
-Do not lift it by relabelling it.
+**A separate Google Gemini review also found no content changes necessary.** That is **supplementary
+AI QA and does NOT count as human review** — the gate is satisfied by the external human reviewer
+alone. Neither AI self-review nor review by another AI system satisfies it.
+
+**Push is now unblocked by the review gate.** Pushing remains a manual action requiring explicit
+approval per CLAUDE.md; nothing has been pushed or deployed.
 
 **The CR/MK curriculum approval is a separate, completed thing and is NOT reopened.** It is deployed
 and human-reviewed at `8cb181e` (deployment `5864802348`, `Production`, `success`), and the approved
@@ -37,7 +39,7 @@ DECA bank 78→99.
 | Bank | Total | Per-area |
 |---|---|---|
 | `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
-| `lib/deca-drills.ts` | **99** | pi 30 · br 30 (both deployed, reviewed) · **cr 30 (review outstanding)** · mk 9 |
+| `lib/deca-drills.ts` | **99** | pi 30 · br 30 (both deployed, reviewed) · **cr 30 (human-reviewed, ready for push)** · mk 9 |
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
 **Deficit 21** (was 42), **entirely marketing-fundamentals**. Corpus 378 → **399** locally; target 420.
@@ -152,9 +154,9 @@ Two things to keep straight, as for every slice so far:
 
 ### Next steps, in order
 
-1. **Human reads all 21 `cr-10`…`cr-30` items** and approves or requests refinements.
-2. Refinement pass if needed, then an approval-status commit, then push and verify deployment.
-3. **Slice 8 — MK 9→30**, the final G2 depth slice, which must also re-base the shallow control and
+1. **Push the eight local Slice 7 commits** and verify the Production deployment. Both review gates
+   are met; pushing is a manual action requiring explicit approval per CLAUDE.md.
+2. **Slice 8 — MK 9→30**, the final G2 depth slice, which must also re-base the shallow control and
    exercise the `mk-09` terminal-comma boundary.
 
 **Global M14 G2 remains OPEN. Do not record CR depth, DECA, or Global G2 as complete or closed** —

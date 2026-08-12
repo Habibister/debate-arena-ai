@@ -2,12 +2,71 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 Slice 8 / DECA Slice 4: MK 9→30 (2026-08-12)
+## Latest handoff — M14 Global G2 pre-closure remediation (2026-08-12)
 
-### Status: HUMAN-APPROVED — FOUR LOCAL COMMITS AWAIT THE OWNER'S PUSH
+### Status: Slice 8 DEPLOYED AND PRODUCTION-VERIFIED · remediation committed locally · G2 still OPEN
 
-**`HUMAN-APPROVED 2026-08-12 — READY FOR OWNER PUSH — NOT YET PUSHED, NOT DEPLOYED`.** Four local
-commits on `main`, ahead of `origin/main` by four:
+Slice 8 (marketing-fundamentals 9→30) is live: Production deployment **`5878064863`** from
+**`ece9a91a9c6efe1471b3bc4b4ee807fea71180db`**, `vercel[bot]`, **success**; canonical routes 200,
+protected pages 307 → `/signin`, drill/session APIs 401 unauthenticated, zero checked 5xx, no manual
+deploy, no DB write, no authenticated session. DECA 120 · Debate 120 · HOSA 180 · **corpus 420/420,
+bank-count deficit 0**, all integrity controls intact (re-executed at the deployed HEAD).
+
+On top of that sits **ONE local commit** — `fix(g2): clear pre-closure integrity blockers` — that
+resolves the three blockers the final read-only closure audit found. It awaits the owner's push.
+
+### What the remediation commit contains — do not undo any of it
+
+1. **Slice 8 provenance corrected to the truth.** The `HUMAN-APPROVED` headline is gone. The source
+   label in `lib/deca-drills.ts` and both docs now read: **AI-ASSISTED AND AI-REVIEWED — EXTERNAL
+   HUMAN REVIEW WAIVED BY PROJECT OWNER 2026-08-12.** The owner received the final 21-question packet
+   (choices permuted for independence) and separately stated approval; **no item-by-item external
+   human review is certified**; AI review is supplementary QA and does not count as human review.
+   **Slices 1–7 were genuinely human-reviewed; Slice 8's waiver is the recorded exception. Never
+   claim 8/8 human-reviewed.**
+2. **Slice 8 Production verification recorded** (details above and in CURRENT_STATE).
+3. **HOSA Event HQ false mastery claim fixed.** The event page told learners *"Everything on this
+   page feeds the same real mastery record"* — false for review-only HOSA MedTerm (no MasteryProgress,
+   no XP; flashcards persist nothing) and a violation of the global **no fake mastery/progress**
+   invariant (G19 class; the Study Arcade fix and guard never covered this page). The HOSA overview
+   now promises preparation, not persistence ("Use the activities on this page together to prepare
+   for the exam") and the "Skills & lessons" tile no longer claims a mastery record. Debate's
+   "real mastery + spaced review" copy is untouched — Debate genuinely writes MasteryProgress.
+4. **Regression guard** in `scripts/hosa-medterm-evidence-smoke.ts` (controls `38`–`38-C1b`): the
+   mastery-record claim pattern is banned from the page's learner-facing text (comments stripped),
+   the review-only HOSA entry may not mention mastery at all, the replacement copy must promise
+   preparation, and the removed sentences are proven still caught by the same predicates. Verified
+   to fire on the pre-fix page. Debate/DECA entries are exempt by scope, not by loophole.
+
+### Next steps, in order
+
+1. **Owner pushes** the remediation commit in GitHub Desktop.
+2. **Read-only Production verification** of the resulting deployment.
+3. **Explicit owner G2 closure decision** — only then may anything record Global M14 G2 as closed.
+   The closure record must keep the 7-of-8 human-review truth and name the carried debt.
+
+### Carried non-blocking debt (recorded, not fixed, do not silently fix)
+
+- `pi-07` / ⟨B-2⟩ — legacy item presupposes explicit PI signposting is settled; curriculum treats it
+  as a contested judgment call. Legacy items are immutable under G2's own controls; separate
+  curriculum debt.
+- `sf-04` `-ology`/`-logy` — dictionary-convention wording; deliberately-unresolved HOSA decision.
+- HOSA word-root combining-form notation mix — stylistic follow-up, explicitly excluded from Phase 2a.
+- The HOSA Event HQ mastery claim is **no longer** carried debt — resolved by this remediation.
+
+### Standing constraints (unchanged)
+
+Never run `auth:smoke` / `team:smoke` / `assignment:smoke` / `deca:skills:activate` (write-capable,
+shared production DB). `PRE_G2_EXPANSION` stays absolute; never HEAD-relative. Legacy bank items stay
+byte-immutable. No push, deploy, or DB operation without explicit owner action.
+
+## Previous handoff — M14 Global G2 Slice 8 / DECA Slice 4: MK 9→30 (2026-08-12)
+
+### Status (superseded; provenance wording corrected 2026-08-12): four local commits awaited the owner's push
+
+**`READY FOR OWNER PUSH — NOT YET PUSHED, NOT DEPLOYED`** *(historical; the push has since happened
+and the provenance headline was corrected — see the Latest handoff)*. Four local commits on `main`,
+ahead of `origin/main` by four:
 
 1. `c27729d` — implementation: `mk-10`…`mk-30` (+21), both smoke suites (depth 30, `FORBIDDEN_PREFIXES`
    retired into the withheld-authority probe, shallow control re-based onto pool-vs-overdraw), docs.
@@ -20,17 +79,17 @@ The push is a manual owner action in GitHub Desktop. After the push: read-only P
 then the **separate** Global G2 closure decision. **Do not mark G2 complete or closed before both.**
 
 `lib/deca-drills.ts` is 120 questions: pi 30 · br 30 · cr 30 (deployed, reviewed) · **mk 30
-(human-approved, push pending)**. Debate 120 and HOSA 180 untouched. Corpus 420, bank-count deficit 0.
+(AI-reviewed; external human review owner-waived; push pending)**. Debate 120 and HOSA 180 untouched. Corpus 420, bank-count deficit 0.
 
 ### Review provenance — keep it exactly this truthful
 
 - AI authored and adversarially audited the 21 items (labelled AI-ASSISTED in source).
 - An AI reviewer approved the content. That is **supplementary AI QA, not human review**; AI
   self-review does not count either. Nothing in the record represents AI review as human review.
-- **HUMAN-APPROVED 2026-08-12:** the project owner, a human, was given the complete final 21-question
-  review packet — choices deterministically permuted per item so the authored answer position carried
-  no signal — and approved the final set in their own words. That approval, not any AI verdict, is
-  what satisfied the review gate.
+- **EXTERNAL HUMAN REVIEW WAIVED BY PROJECT OWNER 2026-08-12** *(wording corrected from the original
+  `HUMAN-APPROVED` headline)*: the owner received the final 21-question packet — choices permuted per
+  item so the authored answer position carried no signal — and separately stated approval of the
+  final set; no item-by-item external human review is certified.
 
 ### The content standard the final text was verified against — keep it
 

@@ -2,67 +2,75 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 8 / DECA Slice 4 — DECA marketing-fundamentals 9→30, **HUMAN-APPROVED 2026-08-12, four local commits READY FOR OWNER PUSH — NOT YET PUSHED, NOT DEPLOYED**. Slice 7 remains deployed and Production-verified at `5874440794`.)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 8 DEPLOYED AND PRODUCTION-VERIFIED at `5878064863` from `ece9a91`; review provenance: AI-assisted / AI-reviewed / **external human review waived by project owner**. G2 pre-closure remediation implemented locally — push + verification + explicit owner closure still required. **Global M14 G2 remains OPEN.**)_
 
-## M14 Global G2 Slice 8 / DECA Slice 4 — DECA marketing-fundamentals 9 → 30 (HUMAN-APPROVED, PUSH PENDING)
+## M14 Global G2 Slice 8 / DECA Slice 4 — DECA marketing-fundamentals 9 → 30 (DEPLOYED AND PRODUCTION-VERIFIED)
 
-**Status: `HUMAN-APPROVED 2026-08-12 — FOUR LOCAL COMMITS READY FOR OWNER PUSH`.**
+**Status: `DEPLOYED AND PRODUCTION-VERIFIED`. Review provenance: `AI-ASSISTED AND AI-REVIEWED —
+EXTERNAL HUMAN REVIEW WAIVED BY PROJECT OWNER 2026-08-12`.**
 
-**Not yet pushed, not deployed, no database operation performed.** Pushing is a manual owner action in
-GitHub Desktop. Slice 8 lands as four local commits on `main`:
+**Production verification (read-only, performed 2026-08-12):** Production deployment **`5878064863`**
+from source SHA **`ece9a91a9c6efe1471b3bc4b4ee807fea71180db`**, created automatically by `vercel[bot]`
+from the owner's Git push, status **success**. Local HEAD = `origin/main` = remote main, ahead/behind
+0 / 0. Canonical checks: `/` and `/signin` **200** · protected pages (`/dashboard`,
+`/training/deca/practice`, `/training/debate/practice`) **307 → `/signin`** with correct callback ·
+unauthenticated DECA / Debate / HOSA session APIs **401** · unauthenticated DECA / Debate submit APIs
+**401** · checked 5xx **0**. **No manual deploy, no rollback, no DB write, no authenticated learner
+session.**
 
-1. `c27729d` `feat(deca): expand marketing fundamentals drill bank` — `mk-10`…`mk-30` (+21), both
-   smoke suites re-based (depth 30, withheld-authority probe, overdraw re-base), docs.
-2. `6fa3c0b` `fix(deca): remove Slice 8 authoring meta-language` — learner-facing "the stem"/"this
-   question" wording removed (7 hits → 0).
-3. `3cd1e2c` `fix(deca): finalize Slice 8 marketing content` — the post-implementation hardening
-   cycle: substantive correctness repairs, choice de-justification, answer-construction-artifact
-   removal, same-session leak fixes. All 21 items at final shipping text.
-4. The provenance commit containing this doc update and the source-label approval record.
-
-Slice 8 expands **one** DECA area: **marketing-fundamentals 9 → 30** (`mk-10`…`mk-30`, +21).
-DECA **99 → 120**.
+Slice 8 expanded **one** DECA area: **marketing-fundamentals 9 → 30** (`mk-10`…`mk-30`, +21).
+DECA **99 → 120**. Pushed as four commits (`c27729d` implementation · `6fa3c0b` meta-language ·
+`3cd1e2c` final content quality · `ece9a91` provenance), all deployed at `5878064863`.
 
 | Bank | Total | Per-area |
 |---|---|---|
-| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
-| `lib/deca-drills.ts` | **120** | pi 30 · br 30 · cr 30 (deployed, reviewed) · **mk 30 (human-approved, push pending)** |
-| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — deployed, human-reviewed |
+| `lib/deca-drills.ts` | **120** | pi 30 · br 30 · cr 30 (deployed, human-reviewed) · **mk 30 (deployed, AI-reviewed — external human review owner-waived)** |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — deployed, human-reviewed |
 
-- **Source of truth: the approved MK1–MK6 lessons** in `docs/curriculum/02-deca-course.md` (deployed
-  and human-reviewed at `8cb181e`). That file is byte-unchanged by all four commits; ⟨BC-5⟩ NOT reopened.
-- **Design contract, verified on the final shipping text:** choices state candidate decisions, the stem
-  supplies the evidence, the explanation supplies the reasoning. Every wrong option is defeated by a
-  printed stem fact or the printed decision requirement — never by a general claim about how marketing
-  works — and every key is grounded clause-by-clause in printed facts.
-- **Final independent adversarial audit (blind solve per item):** exactly-one defensible **21/21** ·
-  key grounding **21/21** · explanation grounding **21/21** · stem necessity **21/21** · application
-  depth **21/21** · definition recall **0** · CR drift **0** · keyed BR economics **0** (BR content
-  survives only inside wrong options/explanation contrasts: the CPA option in `mk-29`; `mk-22`'s
-  explanation separating what a price earns from what it says).
-- **Deterministic form battery all clean:** no unique-longest/shortest key, no length leak, modality
-  correlation broken, no back-reference-only-in-key, no poisoned twin, no repeated-subject 2×2, no
-  coverage/deferral/scale archetypes, no key-only justification clause, no verbatim cross-item key leak.
-- **Same-session answer leakage: 0 real leaks** (two independent analysts; all remaining overlaps
-  classified shared-curriculum-only, which is not leakage).
-- **Stem-blind measurement, recorded for transparency (not a gate):** LLM analysts given only shuffled
-  option texts scored ~59–60% vs 25% chance — but clue-type classification shows clues they called
-  FORM predicted at **33% (~chance)** while clues they called MARKETING predicted at **78%**. The
-  residual solvability is subject knowledge, not answer-form leakage.
-- **`mk-09` append boundary intact:** exactly one comma added (controls `G0-C1e`…), `mk-01`…`mk-08`
-  and all 90 pi/br/cr items byte-identical across all four commits, ID order unchanged, the immutable
-  `PRE_G2_EXPANSION` pin absolute, no HEAD-relative pin.
+**Review provenance, kept truthful.** The 21 `mk-10`…`mk-30` questions are AI-assisted and
+AI-adversarially audited; a separate AI reviewer approved the content — **supplementary AI QA that
+does NOT count as human review**, and neither does AI self-review. **EXTERNAL HUMAN REVIEW WAIVED BY
+PROJECT OWNER 2026-08-12:** the owner received the final 21-question review packet (choices permuted
+for independence) and separately stated approval of the final set; **no item-by-item external human
+review is certified.** Slices 1–7 were genuinely human-reviewed; Slice 8's waiver is the recorded
+exception. **Never describe the bank as 8/8 human-reviewed.**
 
-**Review provenance, kept truthful.** Content-quality approval came from an AI reviewer — that is
-**supplementary AI QA and does NOT count as human review**, and neither does AI self-review.
-**HUMAN-APPROVED 2026-08-12:** the project owner, a human, was given the complete final 21-question
-review packet (choices deterministically permuted so the authored answer position carried no signal)
-and approved the final set in their own words. The push itself remains a separate manual owner action.
+- Design contract verified on the shipping text: choices state candidate decisions, the stem supplies
+  the evidence, the explanation supplies the reasoning; every wrong option defeated by a printed stem
+  fact or printed decision requirement; final audit exactly-one 21/21 · key grounding 21/21 ·
+  explanation grounding 21/21 · stem necessity 21/21 · application depth 21/21 · CR drift 0 · keyed
+  BR economics 0. Deterministic form battery clean; real same-session leakage 0.
+- `mk-09` boundary: exactly one comma added; `mk-01`…`mk-08` and all 90 pi/br/cr items byte-identical;
+  `PRE_G2_EXPANSION` pin absolute; no HEAD-relative pin.
 
-**DECA is locally 30 / 30 / 30 / 30 = 120. Corpus 420. Remaining G2 bank-count deficit 0.**
-**Global M14 G2 remains OPEN** — it stays open until the four commits are pushed, Production is
-verified read-only, and the separate explicit closure decision is taken. `DECA depth complete` is NOT
-`Global M14 G2 complete`.
+### G2 pre-closure remediation (local, push pending)
+
+The final read-only closure audit (2026-08-12) found three blockers; all are now fixed in ONE local
+commit on top of `ece9a91`:
+
+1. **Slice 8 provenance corrected** — the earlier `HUMAN-APPROVED` headline was stronger than the
+   process certified; the source label and these docs now carry the owner-waiver wording above.
+2. **Slice 8 Production verification recorded** (block above).
+3. **HOSA Event HQ false mastery claim FIXED.** `app/(app)/training/[track]/event/[eventSlug]/page.tsx`
+   claimed *"Everything on this page feeds the same real mastery record"* (and "Guided lessons feeding
+   the same mastery record") for HOSA Medical Terminology, which is REVIEW-ONLY — no MasteryProgress,
+   no XP; flashcards persist nothing. This violated the global **no fake mastery/progress** invariant
+   (the G19 defect class; the earlier Study Arcade fix and its guard never covered this page). The
+   copy now promises preparation, not persistence, and `hosa-medterm-evidence:smoke` gained guard
+   controls `38`–`38-C1b`: the banned mastery-record claim pattern is asserted absent from
+   learner-facing text, the review-only HOSA entry may not mention mastery at all, and the removed
+   sentences are proven still caught by the same predicates (verified to fire on the pre-fix page).
+
+**Carried non-blocking debt (recorded, deliberately NOT fixed here):** `pi-07`/⟨B-2⟩ curriculum
+consistency (outside G2 — legacy items are immutable under G2's own controls) · `sf-04` `-ology`
+convention (HOSA; deliberately-unresolved) · HOSA word-root combining-form notation (stylistic,
+explicitly excluded from Phase 2a). The Event HQ claim is REMOVED from carried debt — resolved above.
+
+**Global M14 G2 status: `OPEN — PRE-CLOSURE REMEDIATION IMPLEMENTED LOCALLY, PUSH/PRODUCTION
+VERIFICATION OF THIS REMEDIATION AND EXPLICIT OWNER CLOSURE STILL REQUIRED`.** Corpus 420/420,
+deficit 0, integrity controls intact — and none of that is closure: closure is a separate explicit
+owner decision after this remediation ships.
 
 ## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, human-reviewed, deployed
 

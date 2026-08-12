@@ -44,14 +44,17 @@ const EVENT_HQ: Record<
     specEvent: "Medical Terminology",
     title: "Medical Terminology",
     overview:
-      "HOSA's written knowledge event: a timed multiple-choice exam over medical prefixes, suffixes, roots, and clinical language. Everything on this page feeds the same real mastery record.",
+      // M14 G2 pre-closure fix: this line previously claimed "Everything on this page feeds the same
+      // real mastery record" — false for HOSA MedTerm, which is REVIEW-ONLY (no MasteryProgress, no
+      // XP; flashcards persist nothing). The copy now promises preparation, not persistence.
+      "HOSA's written knowledge event: a timed multiple-choice exam over medical prefixes, suffixes, roots, and clinical language. Use the activities on this page together to prepare for the exam.",
     rubricEventType: "HEALTH_SCIENCE_EVENT",
     studyTopics: MEDTERM_AREAS.map((a) => ({ label: a.label })),
     sections: [
       { label: "Timed practice + official 50q mode", detail: "The knowledge engine with confidence checks, explanations, and spaced review.", href: "/training/hosa/practice", icon: "sim" },
       { label: "Flashcards", detail: "Term, definition, example, and a quick check per card.", href: "/study-arcade?track=hosa", icon: "cards" },
       { label: "Practice tests", detail: "Original generated sets in the official format where verified.", href: "/tests?track=hosa", icon: "tests" },
-      { label: "Skills & lessons", detail: "Guided lessons feeding the same mastery record.", href: "/skills?track=hosa", icon: "skills" }
+      { label: "Skills & lessons", detail: "Guided lessons that build the event's language step by step.", href: "/skills?track=hosa", icon: "skills" }
     ]
   },
   "deca/hotel-lodging-management": {

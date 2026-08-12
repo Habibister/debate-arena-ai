@@ -835,8 +835,39 @@ async function main() {
   control(`the pre-fix contract passed on ONE correct question (${oneRaw.scorePercent}%, passed=${oneRaw.passed})`,
     oneRaw.scorePercent === 100 && oneRaw.passed === true);
 
+  // ---- 38. Event HQ honesty: the page must not claim mastery recording HOSA never performs ---------
+  // The G19 guard in games-smoke covers components/study/ only, so the Event HQ page escaped it and
+  // shipped "Everything on this page feeds the same real mastery record" for a skill this very suite
+  // proves is REVIEW-ONLY (the stub above throws on any MasteryProgress write). Guard the page here.
+  // Comments are stripped first: the ban is on LEARNER-FACING strings, and the fix deliberately keeps
+  // a source comment documenting the removed sentence.
+  const eventHqRaw = read("app/(app)/training/[track]/event/[eventSlug]/page.tsx");
+  const eventHq = eventHqRaw.replace(/^\s*\/\/.*$/gm, "");
+  const MASTERY_RECORD_CLAIM =
+    /(everything|all)[^.]{0,80}(feeds?|updates?)[^.]{0,40}mastery|feed(s|ing)? the same (real )?mastery record/i;
+  assert.ok(!MASTERY_RECORD_CLAIM.test(eventHq),
+    "38. the Event HQ page no longer claims (in learner-facing text) that everything on it feeds a mastery record");
+  const hosaEntryStart = eventHq.indexOf('"hosa/medical-terminology"');
+  const hosaEntryEnd = eventHq.indexOf('"deca/');
+  assert.ok(hosaEntryStart >= 0 && hosaEntryEnd > hosaEntryStart, "38b. control: the HOSA Event HQ entry was located");
+  const hosaEntry = eventHq.slice(hosaEntryStart, hosaEntryEnd);
+  // The HOSA entry is review-only end to end, so its learner-facing strings may not mention mastery at
+  // all. Debate/DECA entries are exempt: those tracks genuinely write MasteryProgress.
+  assert.ok(!/mastery/i.test(hosaEntry),
+    "38c. the review-only HOSA entry makes no mastery claim of any kind in learner-facing strings");
+  assert.ok(/prepare for the exam/i.test(hosaEntry),
+    "38d. and the replacement copy promises preparation, not persistence");
+  // Non-vacuous: the exact removed sentences are still caught by the same predicates.
+  assert.ok(MASTERY_RECORD_CLAIM.test("Everything on this page feeds the same real mastery record."),
+    "38-C1. control: the banned pattern catches the removed overview claim");
+  assert.ok(/mastery/i.test("Guided lessons feeding the same mastery record."),
+    "38-C1b. control: the HOSA-entry mastery ban catches the removed section claim");
+  control("the Event HQ mastery-record guard detects both removed claims",
+    MASTERY_RECORD_CLAIM.test("Everything on this page feeds the same real mastery record.") &&
+      /mastery/i.test("Guided lessons feeding the same mastery record."));
+
   console.log(
-    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order (one trailing comma is normalised on both sides, which control 31f-C1c proves cannot mask a content edit), and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30), 21 suffix items (sf-10..sf-30), 21 anatomy items (an-10..an-30), 21 physiology items (ph-10..ph-30) and 21 pathophysiology items (pp-10..pp-30) — taking ALL SIX HOSA areas to 30 and the HOSA bank to 180. Review status: every slice is AI-authored and human-reviewed and approved — 2a word-roots, 2b prefixes, 2c suffixes, 2d anatomy, 2e physiology and 2f pathophysiology. HOSA bank parity is achieved and human-reviewed. That is still NOT G2 closure — the audit's G2 finding also covers four Debate areas and four DECA areas that remain at 9 questions each, and nothing here asserts anything about those two banks. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order (one trailing comma is normalised on both sides, which control 31f-C1c proves cannot mask a content edit), and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30), 21 suffix items (sf-10..sf-30), 21 anatomy items (an-10..an-30), 21 physiology items (ph-10..ph-30) and 21 pathophysiology items (pp-10..pp-30) — taking ALL SIX HOSA areas to 30 and the HOSA bank to 180. Review status: every slice is AI-authored and human-reviewed and approved — 2a word-roots, 2b prefixes, 2c suffixes, 2d anatomy, 2e physiology and 2f pathophysiology. HOSA bank parity is achieved and human-reviewed. That is still NOT G2 closure — the audit's G2 finding also covers the Debate and DECA banks, since expanded to 30 per area under their own suites' controls - nothing here asserts anything about those two banks. The Event HQ page is additionally held honest: no learner-facing copy may claim this review-only skill feeds a mastery record. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

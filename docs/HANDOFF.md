@@ -4,9 +4,15 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 7 / DECA Slice 3: CR 9→30 (2026-08-12)
 
-### Both gates PASS — READY FOR MANUAL PUSH (not yet pushed, not yet deployed)
+### Slice 7 is DEPLOYED, HUMAN-REVIEWED, and PRODUCTION-VERIFIED
 
-Status: **`IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS — HUMAN REVIEW GATE PASS — READY FOR MANUAL PUSH`.**
+Status: **`DEPLOYED, HUMAN-REVIEWED, AND PRODUCTION-VERIFIED`.**
+
+Production deployment **`5874440794`** from source SHA **`d877d2ed7339e6bbf2ec82c81f6c612484fea4e9`**,
+created automatically by `vercel[bot]` from the Git push, status **success**. Local HEAD = `origin/main`
+= remote main, **0 / 0**. Post-deploy checks: canonical public routes 200 · protected learner routes and
+dashboard 307 to `/signin` · the five drill APIs 401 unauthenticated · **zero 5xx** · **no DB write, no
+manual deploy, no rollback**.
 
 **Two separate gates, both now met. Keep them distinct in the record.**
 
@@ -25,8 +31,8 @@ defects nothing else had.
 AI QA and does NOT count as human review** — the gate is satisfied by the external human reviewer
 alone. Neither AI self-review nor review by another AI system satisfies it.
 
-**Push is now unblocked by the review gate.** Pushing remains a manual action requiring explicit
-approval per CLAUDE.md; nothing has been pushed or deployed.
+Both gates were met **before** the push, in that order, and the push was a manual action taken with
+explicit approval per CLAUDE.md.
 
 **The CR/MK curriculum approval is a separate, completed thing and is NOT reopened.** It is deployed
 and human-reviewed at `8cb181e` (deployment `5864802348`, `Production`, `success`), and the approved
@@ -154,10 +160,31 @@ Two things to keep straight, as for every slice so far:
 
 ### Next steps, in order
 
-1. **Push the eight local Slice 7 commits** and verify the Production deployment. Both review gates
-   are met; pushing is a manual action requiring explicit approval per CLAUDE.md.
-2. **Slice 8 — MK 9→30**, the final G2 depth slice, which must also re-base the shallow control and
-   exercise the `mk-09` terminal-comma boundary.
+**Next active work: M14 G2 Slice 8 — Marketing Fundamentals expansion from 9 to 30.** It is the final
+G2 depth slice. Nothing about Slice 7 remains outstanding.
+
+Slice 8 carries twelve obligations, all already earned by earlier slices — do not rediscover them:
+
+1. Expand marketing-fundamentals `mk-10`…`mk-30`, taking MK 9 → 30 and DECA 99 → 120.
+2. **`mk-09` is the final array element and is comma-less.** This is the one legacy byte that must
+   change, and the terminal-comma normalisation exists precisely for it. Change nothing else.
+3. `EXPANDED_AREAS` becomes all four DECA areas.
+4. **`FORBIDDEN_PREFIXES = ["mk"]` cannot survive** — MK becomes authorised, so the list empties.
+5. **Do not let that control go vacuous.** Replace it with a non-vacuous future/out-of-range authority
+   test, the way Debate's Slice 4 handled its final area (`G0-C6c` test-only withheld sets).
+6. **Re-base the MK shallow-depth controls.** No DECA area will remain at 9, so the 20/9 and 40/9
+   controls must move onto a >30 overdraw — the HOSA `11g` precedent. Do not delete them.
+7. Preserve every pre-G2 legacy byte except the mechanically necessary `mk-09` comma.
+8. **Run the per-item answer-form detector BEFORE human review, not the aggregate after it.** The
+   slice-wide average masked a real per-item leak in Slice 7.
+9. **Adversarially audit every distractor for a second defensible answer** — ask "can this also be
+   defended without inventing facts?", never "which answer was intended?".
+10. **Verify every factual claim in every key is supplied by the stem** — including process and
+    capability claims, not just numbers. Slice 7's `cr-23` invented a lead time *and* a callback
+    process, in the same sentence, and three review passes missed the second one.
+11. Preserve AI-assisted provenance permanently in the source label.
+12. **Genuine human content review is required before Slice 8 is pushed** — AI self-review does not
+    satisfy it, and neither does review by another AI system.
 
 **Global M14 G2 remains OPEN. Do not record CR depth, DECA, or Global G2 as complete or closed** —
 the deficit is 21, entirely marketing-fundamentals.

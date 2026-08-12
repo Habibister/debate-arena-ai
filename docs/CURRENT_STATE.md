@@ -2,11 +2,20 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **HUMAN-REVIEWED AND APPROVED 2026-08-12, READY FOR MANUAL PUSH — not yet pushed, not yet deployed**. The curriculum baseline `8cb181e` is pushed and deployed — deployment `5864802348`, `Production`, `success`.)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **HUMAN-REVIEWED AND APPROVED 2026-08-12, PUSHED AND PRODUCTION-VERIFIED** — deployment `5874440794`, `Production`, `success`, from `d877d2ed`.)_
 
-## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, human-reviewed, ready for push
+## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, human-reviewed, deployed
 
-**Status: `CONTENT-QUALITY GATE PASS — HUMAN REVIEW GATE PASS — READY FOR MANUAL PUSH`.**
+**Status: `DEPLOYED, HUMAN-REVIEWED, AND PRODUCTION-VERIFIED`.**
+
+**SLICE 7 CUSTOMER RELATIONS: DEPLOYED, HUMAN-REVIEWED, AND PRODUCTION-VERIFIED.** Implementation
+complete; human-reviewed and approved 2026-08-12; pushed to `main`; **Production deployment
+`5874440794`** from source SHA **`d877d2ed7339e6bbf2ec82c81f6c612484fea4e9`**, created automatically by
+`vercel[bot]` from the Git push, status **success**, with no manual deployment and no rollback.
+Post-deploy verification passed: local HEAD = `origin/main` = remote main, ahead/behind **0 / 0**;
+canonical public routes 200; protected learner routes and the dashboard auth-gated with 307 redirects
+to `/signin`; the five drill APIs return 401 unauthenticated; **zero 5xx**; **no database write and no
+manual deploy performed**.
 
 **Two separate gates, both met, kept distinct in the record.** **(1) Content-quality gate: PASS** by AI
 adversarial audit — 21/21 exactly one defensible answer, 21/21 fact-sufficient, 0 hidden policy, 0

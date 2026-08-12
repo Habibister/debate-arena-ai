@@ -2,6 +2,65 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
+## Latest handoff — M14 Global G2 Slice 2: Debate CWI 9→30 (2026-08-12)
+
+### ⚠ Slice 2: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/debate-drills.ts` gained 21 claim-warrant-impact questions (`cw-10`…`cw-30`), taking CWI 9→30 and
+the Debate bank 57→78. **These items were AI-drafted and have NOT been reviewed by a human.** A source
+comment above `cw-10` carries that label. **Do not push the `feat(debate): expand claim warrant impact
+drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+
+Slice 1 is deployed and human-reviewed (`e23e982`), so rebuttal was already approved and live.
+
+### Where G2 stands
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **78** | **cw 30** · **rb 30** · ev 9 · wg 9 |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Deficit 126** (was 147): Debate ev/wg 2 × 21, DECA 4 × 21. Corpus 273 → **294** locally; target
+**420**. **Global M14 G2 remains OPEN — do not record it as complete or closed.**
+
+### What Slice 2 changed — do not undo any of it
+
+- **Insertion point.** The 21 items sit INSIDE the CWI block, after `cw-09` and before
+  `// --- Rebuttal ---`. `cw-09` already carried its comma. **`wg-09` is still the final array element
+  and byte-identical — the terminal-comma append boundary is STILL not exercised.** It will be when
+  `weighing` expands; leave `G0-C1b`/`G0-C1c` in place until then.
+- **Two areas authorized.** `EXPANDED_AREAS = ["rebuttal", "claim-warrant-impact"]`, in slice order.
+  `G0-C6` still proves `ev-10` and `wg-10` are `unauthorised`, and **`G0-C6b` moved 3 → 2** so the
+  loop cannot go vacuous. `G0-C2b` now loops the AUTHORISED areas and proves each is accepted under
+  DEFAULT authorisation, with its own `=== 2` companion. **Never pre-authorize an area.**
+- **`G0-7b` is a 42-id exact set**, driven by a `SLICE_ADDITIONS` table (one entry per reviewed slice).
+  It proves exactly 42 additions, the exact id set, each addition declaring its slice's area, zero
+  `ev-*`/`wg-*` additions, and every addition passing the shared `judgeAddition`. **Each future slice
+  adds one entry to that table — never relax it into "any recognised prefix above 09".**
+- **No CWI fixture was re-based, because none needed it.** Unlike rebuttal, no CWI fixture depended on
+  a 9-item pool. The bypass fixtures (raw 76 / evidence 20) slice a fixed head; `CWI[0]`, `CWI[5]`,
+  `CWI.slice(0, 3)`, `CWI.slice(0, 5)`, `DRILL_BANK.slice(0, 8)`, `DRILL_BANK[0]`/`[1]` all still point
+  at the same legacy items because additions go after `cw-09`. **Do not "tidy" them.**
+- **Depth proofs added in BOTH suites** (the audit's Verification line names the mastery smokes):
+  CWI 20 → 20 distinct, and 40 → exactly 30 distinct. Each is paired with a live counter-example from
+  a still-9-item area (evidence-evaluation in the drills suite, weighing in the mastery suite) so the
+  result cannot be mistaken for a builder property.
+
+### What the next Debate slice must do
+
+Pick `evidence-evaluation` or `weighing`; add its 21 items inside its own block; append that area to
+`EXPANDED_AREAS`; raise its entry in BOTH `AREA_DEPTH` and `DEBATE_AREA_DEPTH`; add one row to
+`SLICE_ADDITIONS` (making the expected set 63); move `G0-C6b` 2 → 1 and `G0-C2b2` 2 → 3.
+**`weighing` is the slice that finally exercises the `wg-09` append boundary** — expect a one-character
+comma change there and let `G0-C1b`/`G0-C1c` do their job.
+
+### Runtime, untouched
+
+`DEBATE_DRILL_REQUIRED_UNIQUE = 5`, pass threshold 70, `recordDrillMasteryInTransaction`, replay
+protection, session expiry, first-answer-per-distinct-id and the XP prohibition are all unchanged. No
+schema, migration, seed, route, validator or client change.
+
 ## Latest handoff — M14 Global G2 Slice 1: Debate rebuttal 9→30 (2026-08-11)
 
 ### Slice 1: content is human-reviewed and APPROVED — clear to push

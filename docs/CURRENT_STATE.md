@@ -2,12 +2,23 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH**. The curriculum baseline `8cb181e` is pushed and deployed — deployment `5864802348`, `Production`, `success`.)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS, HUMAN REVIEW GATE NOT FULLY PERFORMED — DO NOT PUSH**. The curriculum baseline `8cb181e` is pushed and deployed — deployment `5864802348`, `Production`, `success`.)_
 
 ## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, local only
 
-**Status: `IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — USER IDENTIFIED ITEM-LEVEL ANSWER-FORM LEAKAGE — DO NOT PUSH`.**
-**AI self-review does NOT count as human review.**
+**Status: `IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS (AI ADVERSARIAL AUDIT) — HUMAN REVIEW GATE NOT FULLY PERFORMED — DO NOT PUSH`.**
+
+**Two separate gates, deliberately not merged.** **(1) Content-quality gate: PASS** by AI adversarial
+audit — 21/21 exactly one defensible answer, 21/21 fact-sufficient, 0 hidden policy, 0 hidden
+authority, 0 hidden capability/access, 0 explanation-only defects, 0 item-level form leaks, 0 boundary
+defects, 0 legacy-debt defects. **(2) Human review gate: NOT FULLY PERFORMED.** Human feedback
+materially shaped the refinement — a human identified the item-level answer-form leakage the
+slice-wide metrics had masked, and a human blind-quiz answer surfaced the `cr-20` ambiguity, both of
+which triggered adversarial work that found real defects. **No complete item-by-item human approval of
+the final 21 was given.** The later reviews of `cr-20`, `cr-23`, `cr-26` and `cr-30` were performed by
+another AI system. **AI self-review does NOT count as human review, and neither does review by another
+AI system.** This slice therefore carries weaker review provenance than every prior slice in the M14
+chain, each of which had a full human read of all 21 items.
 
 **The CR/MK curriculum is deployed and human-reviewed** at `8cb181e` (deployment `5864802348`,
 `Production`, `success`), so the approved **CR1–CR6** lessons were the source of truth for this slice.

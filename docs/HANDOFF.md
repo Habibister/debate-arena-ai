@@ -4,11 +4,27 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 7 / DECA Slice 3: CR 9→30 (2026-08-12)
 
-### ⛔ DO NOT PUSH — human content review of the 21 new CR questions is OUTSTANDING
+### ⛔ DO NOT PUSH — the human review gate was NOT fully performed
 
-Status: **`IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — USER IDENTIFIED ITEM-LEVEL ANSWER-FORM LEAKAGE — DO NOT PUSH`.**
-**AI self-review does NOT count as human review.** The 21 items must be read by a human and explicitly
-approved before any push, exactly as every prior slice was.
+Status: **`IMPLEMENTED LOCALLY — CONTENT-QUALITY GATE PASS (AI ADVERSARIAL AUDIT) — HUMAN REVIEW GATE NOT FULLY PERFORMED — DO NOT PUSH`.**
+
+**Two separate gates. Do not merge them.**
+
+**1. Content-quality gate — PASS**, by AI adversarial audit: 21/21 exactly one defensible answer ·
+21/21 fact-sufficient · 0 hidden policy · 0 hidden authority · 0 hidden capability/access · 0
+explanation-only defects · 0 item-level form leaks · 0 boundary defects · 0 legacy-debt defects.
+
+**2. Human review gate — NOT FULLY PERFORMED.** Human feedback materially shaped the refinement: a
+human identified the item-level answer-form leakage that the slice-wide metrics had masked, and a
+human blind-quiz answer surfaced the `cr-20` ambiguity — both triggered further adversarial work that
+found defects nothing else had. **But no complete item-by-item human approval of the final 21 was
+given.** The later reviews of `cr-20`, `cr-23`, `cr-26` and `cr-30` were performed by another AI
+system, which **does not** satisfy this gate any more than my own self-review does.
+
+**This slice therefore has weaker review provenance than every prior slice in the M14 chain**, all of
+which carried a full human read of all 21 items. Whether the project's governance permits a push in
+this state is a decision for the repository owner; the default is that an unmet gate stays blocking.
+Do not lift it by relabelling it.
 
 **The CR/MK curriculum approval is a separate, completed thing and is NOT reopened.** It is deployed
 and human-reviewed at `8cb181e` (deployment `5864802348`, `Production`, `success`), and the approved

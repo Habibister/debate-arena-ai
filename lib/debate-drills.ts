@@ -63,8 +63,17 @@ export const DRILL_BANK: DrillQuestion[] = [
   // warrant- vs impact-level, IDENTIFY-ANSWER-EXPLAIN-COMPARE) and frontlining/rebuilding.
   // rb-01, rb-03 and rb-06 already teach "actually engage what they said"; nothing below adds a
   // fourth pass at that idea.
-  // AI-ASSISTED DRAFT CONTENT (M14 Global G2 Slice 1, rb-10..rb-30) — HUMAN CONTENT REVIEW
-  // OUTSTANDING. See docs/HANDOFF.md. AI self-review does not count as human review.
+  // AI-ASSISTED authoring (M14 Global G2 Slice 1, rb-10..rb-30), HUMAN-REVIEWED AND APPROVED
+  // 2026-08-11: the repository owner read all 21 items and approved their answer defensibility,
+  // distractor quality, clarity, the rebuttal/CWI/evidence-evaluation/weighing boundaries,
+  // strategic accuracy, causal reasoning, the no-link vs link-turn vs impact-turn distinctions,
+  // double-turn logic, indict vs turn, offense/defense framing, frontlining, counterexample scope,
+  // legacy and new-item overlap, and curriculum fit. The approved content is the FINAL version,
+  // including refinement commit fbeec2c7320fa869f95dd2e0717b12a1a95b4bcb (rb-14, rb-15, rb-16,
+  // rb-17, rb-18, rb-20, rb-25 and rb-30). The approval basis is that human reading of the final
+  // checklist; the AI pre-screen that preceded it was the authoring model checking its own output
+  // and formed no part of it. AI authorship stays recorded here permanently — the approval is what
+  // changed, not the provenance.
   { id: "rb-10", area: "rebuttal", question: "An opponent argues: \"Later start times will raise grades, because teens get more sleep.\" A warrant-level rebuttal targets:", choices: ["The claim that extra sleep is what actually produces the better grades", "The fact that the school day would end later in the afternoon", "Whether grades matter to college admissions", "The speed at which the opponent delivered the argument"], correctAnswer: "The claim that extra sleep is what actually produces the better grades", explanation: "The warrant is the reasoning connecting sleep to grades. Attacking it denies the argument its engine. The other options change the subject or answer nothing." },
   { id: "rb-11", area: "rebuttal", question: "Answering \"even if teens do sleep more, the grade gain is far too small to matter\" is:", choices: ["An impact-level answer, because it contests how much the result matters", "A warrant-level answer, because it contests the reasoning", "A turn, because it makes their argument support your side", "A concession of the entire argument"], correctAnswer: "An impact-level answer, because it contests how much the result matters", explanation: "Warrant-level answers attack whether the reasoning works; impact-level answers grant it and attack how much it matters. Knowing which you are making keeps the clash clean." },
   { id: "rb-12", area: "rebuttal", question: "In four-step refutation (THEY SAY / BUT / BECAUSE / THEREFORE), the THEREFORE step exists to:", choices: ["State what the round looks like once their argument fails", "Give the reason their argument fails", "Repeat the opponent's claim more precisely", "Introduce a new contention of your own"], correctAnswer: "State what the round looks like once their argument fails", explanation: "BECAUSE supplies the reason; THEREFORE cashes it out for the judge. Without it the judge hears an objection but not what it changes." },

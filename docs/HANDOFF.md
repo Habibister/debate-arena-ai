@@ -4,14 +4,30 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 1: Debate rebuttal 9→30 (2026-08-11)
 
-### ⚠ Phase Slice 1: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Slice 1: content is human-reviewed and APPROVED — clear to push
 
 `lib/debate-drills.ts` gained 21 rebuttal questions (`rb-10`…`rb-30`), taking rebuttal 9→30 and the
-Debate bank 36→57. **These items were AI-drafted and have NOT been reviewed by a human.** A source
-comment above `rb-10` carries that label. **Do not push the `feat(debate): expand rebuttal drill
-bank` commit until someone reviews those 21 items.** AI self-review does not count as human review.
+Debate bank 36→57. The items were AI-authored, and on **2026-08-11 the repository owner personally
+read all 21 and approved them** — answer defensibility, distractors, clarity, the
+rebuttal/CWI/evidence-evaluation/weighing boundaries, strategic accuracy, causal reasoning, the
+no-link vs link-turn vs impact-turn distinctions, double-turn logic, indict vs turn, offense/defense
+framing, frontlining, counterexample scope, overlap and curriculum fit. **The approved content is the
+final version, including refinement commit `fbeec2c`.** **The Slice 1 push gate is lifted.**
 
 Slice 0 is deployed (`f1b5064`), so both banks were already protected before this content landed.
+
+Two things to keep straight, exactly as for the HOSA slices:
+
+- **The approval is the human reading, nothing else.** The AI pre-screen that preceded it was the
+  authoring model checking its own output; it was not independent verification and formed no part of
+  the approval basis. Do not cite it as review.
+- **The AI-authoring label stays in the source permanently.** Approval changed the review status, not
+  the provenance.
+
+Approved judgment calls, recorded so a later reader does not reopen them: the `rb-13`/`rb-16` overlap
+is reinforcement rather than duplication; `rb-13`/`rb-17`/`rb-30` test three distinct decisions;
+`rb-11`'s "even if" phrasing does not duplicate legacy `rb-08`; `rb-24` and `rb-28` remain
+rebuttal/frontlining rather than standalone weighing.
 
 ### Where G2 stands
 
@@ -22,7 +38,8 @@ Slice 0 is deployed (`f1b5064`), so both banks were already protected before thi
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
 **Global M14 G2 remains OPEN.** Deficit **147** (was 168): Debate cw/ev/wg 3 × 21, DECA 4 × 21.
-Corpus 252 → **273** locally; final target **420**.
+Corpus 252 → **273** locally; final target **420**. **The next G2 content slice is still outstanding
+— do not record G2 as complete or closed.**
 
 ### What Slice 1 changed — do not undo any of it
 

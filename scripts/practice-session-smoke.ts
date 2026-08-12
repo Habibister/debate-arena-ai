@@ -508,19 +508,44 @@ async function main() {
     "132. it grades against the scenario saved on the issued session");
   assert.ok(wSubmit.indexOf("parseStoredResult(") < wSubmit.indexOf("gradeDebateWritingResponse("),
     "133. a completed retry returns the stored result BEFORE the grader runs");
-  assert.ok(wSubmit.indexOf("parseStoredResult(") < wSubmit.indexOf("awardXpInTransaction("),
-    "134. and before any XP effect");
-  assert.equal((wSubmit.match(/awardXpInTransaction\(/g) ?? []).length, 1, "135. XP is awarded from exactly one site");
-  assert.ok(/XP_REWARDS\.lessonCompleted/.test(wSubmit), "136. at the unchanged amount");
-  assert.ok(/gradeDebateWritingResponse\(/.test(wSubmit) && /feedback\.score >= 70/.test(wSubmit),
-    "137. the grader and its threshold are unchanged");
+  // M15 S1A A1: the writing SUBMIT is now as write-free as issuance — the 129 ban list governs both.
+  for (const bannedWrite of ["XP_REWARDS", "xPLog", "awardXpInTransaction", "MasteryProgress", "masteryProgress",
+                             "practiceAttempt", "questionAttempt", "recordPracticeOutcome", "txMasteryMayDecrease"]) {
+    assert.ok(!wSubmit.includes(bannedWrite), `134. formative submission writes nothing authoritative (${bannedWrite})`);
+  }
+  assert.ok(/formative: true/.test(wSubmit), "135. the submit response declares formative: true");
+  assert.ok(/gradeDebateWritingResponse\(/.test(wSubmit), "137. the formative grader still runs");
+  // NON-VACUOUS, pinned to the FROZEN G2-closure commit (never HEAD-relative): the pre-A1 submit
+  // route contained every banned token, so 134 catches exactly the defect it exists to prevent.
+  const PRE_M15_S1A = "338a88df64127c6f995167f84556d0df5a98ff22";
+  const wSubmitAtA1Baseline = stripC(require("node:child_process")
+    .execSync(`git show ${PRE_M15_S1A}:app/api/skills/debate-writing/route.ts`, { encoding: "utf8" }) as string);
+  for (const wasThere of ["xPLog", "awardXpInTransaction", "masteryProgress", "practiceAttempt", "questionAttempt"]) {
+    assert.ok(wSubmitAtA1Baseline.includes(wasThere),
+      `134-C1. control: the pre-A1 route contained ${wasThere}, so the ban is non-vacuous`);
+  }
+  // Learner-facing honesty for the same feature: the component labels the practice formative, frames
+  // the number as checklist coverage rather than skill measurement, and the skills page no longer
+  // promises XP or mastery for finishing a round.
+  const writingUiSrc = read("components/skills/debate-writing-practice.tsx");
+  assert.ok(/Formative writing practice/.test(writingUiSrc) && /does not affect mastery or XP/.test(writingUiSrc),
+    "135b. the writing UI says the practice is formative and does not affect mastery or XP");
+  assert.ok(/Writing checklist: \{feedback\.score\}%/.test(writingUiSrc) &&
+    /not a mastery, readiness, or competition score/.test(writingUiSrc),
+    "135c. the heuristic number is framed as checklist coverage, not skill measurement");
+  assert.ok(!/feedback\.score >= 80 \? "accent"/.test(writingUiSrc),
+    "135d. and the score badge no longer uses an achievement variant");
+  const skillsPageSrc = read("app/(app)/skills/[slug]/page.tsx");
+  assert.ok(!/awards 10 XP/.test(skillsPageSrc) && !/updates this skill(&apos;|\x27)s mastery/.test(skillsPageSrc),
+    "135e. the skills page no longer promises XP or mastery for writing practice");
   assert.ok(/status: "COMPLETED"/.test(wSubmit) && /resultJson: result/.test(wSubmit),
     "138. the result and the completion are stored together, atomically");
   assert.ok(/sessionExpired\(\)/.test(wSubmit) && /sessionNotFound\(\)/.test(wSubmit),
     "139. expiry and ownership are enforced without disclosing existence");
 
-  // --- the three XP writers are all atomic, and none writes an absolute stale value ---
-  for (const [name, src] of [["writing", wSubmit], ["tests/grade", grade], ["judge", judge]] as const) {
+  // --- the remaining XP writers are all atomic, and none writes an absolute stale value ---
+  // (M15 S1A A1 removed the writing route from this set: formative writing awards no XP at all.)
+  for (const [name, src] of [["tests/grade", grade], ["judge", judge]] as const) {
     assert.ok(/awardXpInTransaction\(/.test(src), `140. ${name} awards XP through the atomic helper`);
     assert.ok(!/xp:\s*nextXp/.test(src), `141. ${name} writes no absolute stale XP value`);
     assert.ok(!/rank:\s*calculateRank\(nextXp\)/.test(src), `142. ${name} derives no rank from a pre-increment value`);

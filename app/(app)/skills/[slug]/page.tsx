@@ -109,9 +109,9 @@ export default function SkillCompatibilityPage({ params }: { params: { slug: str
         </CardContent>
       </Card>
 
-      {/* XP appears ONLY beside an action that genuinely awards it: Debate writing practice, which
-          posts to /api/skills/debate-writing and records XP_REWARDS.lessonCompleted. No other branch
-          of this page shows XP, because no other branch can earn any. */}
+      {/* M15 S1A A1: Debate writing practice is FORMATIVE — its keyword-checklist grading is not
+          trustworthy enough to write mastery or XP, so the route no longer does and this copy must
+          not promise either. No branch of this page shows XP, because no branch can earn any. */}
       {practiceSupported ? (
         <Card>
           <CardHeader>
@@ -122,8 +122,8 @@ export default function SkillCompatibilityPage({ params }: { params: { slug: str
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="leading-7 text-muted-foreground">
-              You can still practise this Debate skill in writing and get scored feedback. Finishing a
-              round awards 10 XP and updates this skill&apos;s mastery.
+              You can still practise this Debate skill in writing and get instant formative feedback on
+              your response. This practice does not affect mastery or XP.
             </p>
             <Link
               href={`/skills/${params.slug}/practice` as Route}

@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { apiError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
-import { XP_REWARDS } from "@/lib/constants";
 import { gradeDebateWritingResponse } from "@/lib/debate-skill-practice";
 import {
   completedPurgeAfter,
@@ -13,8 +12,6 @@ import {
   sessionNotFound
 } from "@/lib/practice-session";
 import { prisma } from "@/lib/prisma";
-import { recordPracticeOutcomeInTransaction, txMasteryMayDecrease } from "@/lib/spaced-review";
-import { awardXpInTransaction } from "@/lib/xp";
 import { writingSessionSubmitRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -25,24 +22,16 @@ export const runtime = "nodejs";
 // a `scenarioIndex`, so a client can no longer choose its own prompt, and the scenario graded is the
 // one this learner was actually issued.
 //
-// ONE ISSUED SESSION AWARDS XP AT MOST ONCE. A completed session replays its stored result before
-// the grader or any XP path runs, so a retry after a lost response costs nothing and is not an error.
-// Requesting a NEW session and completing it still awards the current amount, exactly as before —
-// broader XP-farming policy is deferred, not silently changed here.
-//
-// The grader, its threshold, the feedback shape and the XP amount are all unchanged.
-function masteryLevel(score: number) {
-  if (score >= 85) {
-    return "MASTERED" as const;
-  }
-
-  if (score >= 70) {
-    return "PRACTICING" as const;
-  }
-
-  return "LEARNING" as const;
-}
-
+// FORMATIVE ONLY (M15 S1A A1). The grader is a keyword/structure checklist, not a semantic
+// assessment: a keyword-stuffed non-argument can max it out. Coaching value and progression
+// authority are therefore separated — this route returns the full heuristic feedback (score,
+// checklist rubric, strengths, missing elements, suggestions, stronger version) and stores the
+// completed result on the issued session for replay, but it writes NO authoritative learner
+// evidence: no MasteryProgress, no mastery level, no XP, no XPLog, no rank movement, no
+// review-ladder advancement, and no PracticeAttempt/QuestionAttempt rows (a COMPLETED
+// PracticeAttempt with a lessonId is valid LESSON assignment evidence, which formative writing
+// practice must never mint). The response carries `formative: true` so clients can label it
+// truthfully. Restoring any progression here requires a trustworthy grading basis first.
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -65,9 +54,10 @@ export async function POST(request: Request) {
       });
       if (!issued) sessionNotFound();
 
-      // Completed: replay the stored result BEFORE the grader and before any XP path.
+      // Completed: replay the stored result BEFORE the grader runs. Older stored results predate the
+      // formative flag, so it is asserted on the way out rather than trusted from storage.
       if (issued.status === "COMPLETED") {
-        return { ...parseStoredResult(issued.resultJson), alreadyCompleted: true };
+        return { ...parseStoredResult(issued.resultJson), formative: true, alreadyCompleted: true };
       }
       if (issued.expiresAt <= now) sessionExpired();
 
@@ -85,124 +75,6 @@ export async function POST(request: Request) {
         scenarioIndex
       });
 
-      const skill = await tx.skill.findFirst({
-        where: {
-          organization: "DEBATE",
-          OR: [
-            { slug: scenario.skillSlug },
-            {
-              lessons: {
-                some: { slug: scenario.skillSlug }
-              }
-            }
-          ]
-        },
-        include: {
-          lessons: {
-            orderBy: { order: "asc" },
-            take: 1
-          }
-        }
-      });
-
-      if (skill) {
-        const passed = feedback.score >= 70;
-        // Review FIRST; its result decides what mastery may do. No independent due check.
-        const review = await recordPracticeOutcomeInTransaction(tx, {
-          userId,
-          skillId: skill.id,
-          scorePercent: feedback.score,
-          passed,
-          now
-        });
-
-        const lesson = skill.lessons[0] ?? null;
-        const existing = await tx.masteryProgress.findUnique({
-          where: { userId_skillId: { userId, skillId: skill.id } }
-        });
-        // A failed DUE reassessment is the only branch that may lower mastery.
-        const nextMastery = txMasteryMayDecrease(review)
-          ? Math.min(existing?.masteryPercent ?? 0, feedback.score)
-          : Math.min(100, Math.max(existing?.masteryPercent ?? 0, feedback.score));
-
-        const attempt = await tx.practiceAttempt.create({
-          data: {
-            userId,
-            skillId: skill.id,
-            lessonId: lesson?.id,
-            status: "COMPLETED",
-            score: feedback.score,
-            correctCount: feedback.score >= 70 ? 1 : 0,
-            totalQuestions: 1,
-            weakSkills: feedback.weakSkills,
-            masteredConcepts: feedback.score >= 85 ? [scenario.skillName] : [],
-            reviewConcepts: feedback.weakSkills,
-            completedAt: now
-          }
-        });
-
-        await tx.questionAttempt.create({
-          data: {
-            attemptId: attempt.id,
-            userId,
-            skillId: skill.id,
-            lessonId: lesson?.id,
-            prompt: scenario.prompt,
-            selectedAnswer: input.response,
-            correctAnswer: feedback.improvedVersion,
-            isCorrect: feedback.score >= 70,
-            explanation: feedback.missing.join(" "),
-            skillTag: scenario.skillName,
-            retryPrompt: feedback.nextPrompt
-          }
-        });
-
-        if (existing) {
-          await tx.masteryProgress.update({
-            where: { id: existing.id },
-            data: {
-              masteryLevel: masteryLevel(nextMastery),
-              masteryPercent: nextMastery,
-              xpEarned: { increment: XP_REWARDS.lessonCompleted },
-              correctCount: { increment: feedback.score >= 70 ? 1 : 0 },
-              incorrectCount: { increment: feedback.score >= 70 ? 0 : 1 },
-              weakSkillCount: { increment: feedback.weakSkills.length > 0 ? 1 : 0 },
-              recommendedLessonId: lesson?.id,
-              lastPracticedAt: now
-            }
-          });
-        } else {
-          await tx.masteryProgress.create({
-            data: {
-              userId,
-              skillId: skill.id,
-              masteryLevel: masteryLevel(nextMastery),
-              masteryPercent: nextMastery,
-              xpEarned: XP_REWARDS.lessonCompleted,
-              correctCount: feedback.score >= 70 ? 1 : 0,
-              incorrectCount: feedback.score >= 70 ? 0 : 1,
-              weakSkillCount: feedback.weakSkills.length > 0 ? 1 : 0,
-              recommendedLessonId: lesson?.id,
-              lastPracticedAt: now
-            }
-          });
-        }
-
-        await tx.xPLog.create({
-          data: {
-            userId,
-            amount: XP_REWARDS.lessonCompleted,
-            reason: `Completed debate writing practice: ${scenario.skillName}`,
-            sourceType: "LESSON",
-            sourceId: attempt.id
-          }
-        });
-
-        // Atomic increment, with rank derived from the value the increment RETURNED. A plain SELECT
-        // never blocks under MVCC, so the old read-add-write could be erased by a concurrent writer.
-        await awardXpInTransaction(tx, userId, XP_REWARDS.lessonCompleted);
-      }
-
       const result = {
         scenario: {
           skillSlug: scenario.skillSlug,
@@ -216,6 +88,7 @@ export async function POST(request: Request) {
           rubricFocus: scenario.rubricFocus
         },
         feedback,
+        formative: true,
         sessionId: issued.id,
         completedAtIso: now.toISOString()
       };

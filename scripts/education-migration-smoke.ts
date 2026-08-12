@@ -388,13 +388,13 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     "4b6e. and a valid skill slug is required before persistence is attempted");
   assert.ok(debateCode.indexOf("parseStoredResult(") < debateCode.indexOf("recordDrillMasteryInTransaction("),
     "4b6f. a completed retry returns before mastery is touched");
-  // 4b13. Debate WRITING keeps its response shape, its XP and its grading; only the order changed.
+  // 4b13. Debate WRITING is FORMATIVE (M15 S1A A1): it still grades and coaches, but awards no XP
+  // and writes no mastery/evidence — the migration surface it protects is unchanged by that removal.
   const writing = stripComments(read("app/api/skills/debate-writing/route.ts"));
-  assert.ok(/xPLog\.create/.test(writing) && /XP_REWARDS\.lessonCompleted/.test(writing),
-    "4b13. Debate writing still awards XP");
+  assert.ok(!/xPLog\.create/.test(writing) && !/XP_REWARDS\.lessonCompleted/.test(writing),
+    "4b13. formative Debate writing awards no XP");
   assert.ok(/gradeDebateWritingResponse\(/.test(writing), "4b13b. and still grades the same way");
-  assert.ok(writing.indexOf("recordPracticeOutcome(") < writing.indexOf("prisma.$transaction"),
-    "4b13c. with review resolved BEFORE the mastery/XP transaction");
+  assert.ok(/formative: true/.test(writing), "4b13c. and its result is declared formative");
   assert.ok(!/isReviewDue\(/.test(writing), "4b13d. and no independent due-check remains");
   // 4b9. The LESSON practice path is what this suite protects, and it is untouched by M13E1E: the one
   // authored lesson using LessonPractice reuses the Debate drill endpoints, so prove the lesson

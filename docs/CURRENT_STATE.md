@@ -2,7 +2,41 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (**M14 GLOBAL G2 — CLOSED 2026-08-12 by explicit project-owner decision.** Final: Debate 120 · DECA 120 · HOSA 180 · **corpus 420/420, deficit 0**. Pre-closure remediation deployed and Production-verified at `5878478987` from `96bcdaa`. Slices 1–7 human-reviewed; Slice 8 owner-waived external human review. No remaining G2 action.)_
+_Last updated: 2026-08-12 (M15 S1A A1 — Debate writing practice made FORMATIVE: fabricatable mastery/XP/review/assignment-evidence writes removed, coaching feedback preserved, five suites re-pinned non-vacuously. **LOCAL COMMIT, NOT PUSHED.** M14 Global G2 remains CLOSED and frozen.)_
+
+## M15 S1A A1 — Debate writing practice is FORMATIVE (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+First implementation batch of **M15 Slice 1A (Evidence Integrity)**. The Debate writing-practice
+grader is a keyword/structure checklist (`lib/debate-skill-practice.ts`): a keyword-stuffed
+non-argument scores 96. Before this batch, one such submission wrote **MASTERED**-level
+`MasteryProgress` on the same Skill row as the strong server-graded drill path, +10 XP with rank
+recompute, advanced the spaced-review ladder, and minted a COMPLETED `PracticeAttempt` with a
+`lessonId` — **valid LESSON assignment evidence**. All of that is fabricatable, so it is gone.
+
+**The principle this batch establishes: COACHING VALUE ≠ PROGRESSION AUTHORITY.**
+
+- The submit route (`app/api/skills/debate-writing/route.ts`) keeps the session lifecycle, grader,
+  full feedback payload and stored-result replay, and now returns `formative: true`. It writes **no**
+  MasteryProgress, XP, XPLog, rank, review-ladder movement, PracticeAttempt or QuestionAttempt.
+- Formative writing can therefore no longer satisfy an evidence-gated LESSON assignment; the
+  assignments engine itself is untouched.
+- UI honesty in the same feature: the component labels the surface "Formative writing practice",
+  states it does not affect mastery or XP, frames the number as "Writing checklist: N%" (never an
+  achievement variant), and the skills page no longer promises "10 XP and updates this skill's
+  mastery".
+- Non-vacuous regression controls across five suites (`debate-mastery`, `practice-session`,
+  `education-migration`, `review-ladder`, `skills-compat`): the authoritative-write ban lists are
+  proven against the **frozen pre-A1 pin `338a88d`** (the old route contains every banned token),
+  and the keyword-salad exploit is exercised as a pure function — it still maxes the checklist at
+  96, and that 96 now has no write path. `deca-mastery`'s HEAD-relative byte-pin on the shared
+  skills page was retired per repo convention and replaced by direct assertions (24b).
+- Debate/DECA/HOSA drill mastery, the review ladder's real writers, XP for drills/tests/judge, G2
+  banks, schema, and all engines are **byte-unchanged** (verified per-file).
+
+Remaining S1A batches — **not implemented**: A2 judge/tests-grade idempotency, A3 ballot progression
+policy, A4 test-XP + streak truth.
 
 ## M14 GLOBAL G2 — CLOSED 2026-08-12
 

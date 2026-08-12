@@ -594,10 +594,21 @@ async function main() {
   // assertions on what actually matters: DECA is untouched, and Debate did not drag DECA along with it.
   for (const file of ["lib/assignments.ts", "lib/assignment-types.ts",                       // 24 assignments
                       "prisma/seed.ts",                                                      // 28 seed
-                      "lib/education/registry.ts", "lib/education/tracks/debate.ts",
-                      "app/(app)/skills/[slug]/page.tsx"]) {
+                      // app/(app)/skills/[slug]/page.tsx is deliberately absent from M15 S1A A1
+                      // onward: its writing-practice card copy changed when Debate writing became
+                      // FORMATIVE. That hash was HEAD-relative and protected DECA only against a
+                      // shared-page regression; what it was protecting is asserted at 24b below.
+                      "lib/education/registry.ts", "lib/education/tracks/debate.ts"]) {
     assert.equal(nowSha(file), headSha(file), `24-28. ${file} is byte-identical to HEAD`);
   }
+  // 24b. what the page pin was protecting for DECA, asserted exactly: the Debate writing card is
+  // gated on the DEBATE-only support helper (a DECA slug never sees a debate motion), and the page
+  // no longer promises XP or mastery for that card (formative writing awards neither).
+  const sharedSkillsPage = read("app/(app)/skills/[slug]/page.tsx");
+  assert.ok(/debateWritingPracticeSupported\(params\.slug\)/.test(sharedSkillsPage),
+    "24b. the writing card is gated by the DEBATE-only practice-support helper");
+  assert.ok(!/awards 10 XP/.test(sharedSkillsPage) && /does not affect mastery or XP/.test(sharedSkillsPage),
+    "24b2. and the page promises no XP or mastery for formative writing practice");
 
   // ---- 24L. what the lesson-practice hash was protecting, asserted exactly -----------------------
   // C3b-i converts this component to the server-issued session protocol, so a blanket hash would

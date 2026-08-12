@@ -536,7 +536,8 @@ async function main() {
   // ---- 27i. what the debate-writing byte-pin was protecting, asserted exactly ------------------------
   const writingRoute = stripComments(read("app/api/skills/debate-writing/route.ts"));
   assert.ok(/gradeDebateWritingResponse\(/.test(writingRoute), "27i. grading is unchanged");
-  assert.ok(/feedback\.score >= 70/.test(writingRoute), "27i2. and so is the threshold");
+  // 27i2 retired by M15 S1A A1: the >=70 pass threshold existed only to gate mastery/XP writes,
+  // which formative writing no longer performs; the grader itself is untouched (27i above).
   // C2b assembles the response into a named `result` before storing it, so the shape is asserted on
   // that object rather than on the json() literal. `scenario` and `feedback` still carry the same
   // meaning, and no review field was added.
@@ -546,10 +547,10 @@ async function main() {
   assert.ok(!/\breview:/.test(writingResult), "27i3b. and no review field entered it");
   assert.ok(!/review:/.test(writingRoute.slice(writingRoute.indexOf("NextResponse.json"))),
     "27i4. and no review result leaks into it");
-  assert.ok(/XP_REWARDS\.lessonCompleted/.test(writingRoute) && /xPLog\.create/.test(writingRoute),
-    "27i5. XP behaviour is unchanged");
-  assert.ok(writingRoute.indexOf("recordPracticeOutcome(") < writingRoute.indexOf("prisma.$transaction"),
-    "27i6. review is resolved BEFORE the mastery/XP transaction, so one due window has one winner");
+  assert.ok(!/XP_REWARDS\.lessonCompleted/.test(writingRoute) && !/xPLog\.create/.test(writingRoute),
+    "27i5. formative writing awards no XP (M15 S1A A1)");
+  assert.ok(/formative: true/.test(writingRoute) && !/recordPracticeOutcome/.test(writingRoute),
+    "27i6. the result is declared formative and no review/mastery core is called");
   // C2b: `sessionId` is now REQUIRED on this route — binding the submission to a server-issued
   // session is the milestone. The other bans stand: rate-limit redesign, an evidence floor and a
   // bearer-token scheme all remain out of scope and must not appear.

@@ -401,44 +401,41 @@ async function main() {
   assert.ok(!/(?<!InTransaction)\brecordDrillMastery\(/.test(debateRoute),
     "38c. the Debate route no longer calls the boolean helper");
 
-  // Debate writing: review BEFORE the transaction, XP untouched, no floor or limit added.
-  // C2b: writing is session-backed, so review now runs INSIDE the one transaction that also claims
-  // the session and awards XP. The invariant is unchanged — review still elects the window and still
-  // gates the knock-down — but it is the transaction-native core that does it.
-  assert.ok(writingRoute.indexOf("lockUserRow(tx") < writingRoute.indexOf("recordPracticeOutcomeInTransaction("),
-    "53. Debate writing locks the user row BEFORE its review/mastery/XP work");
-  assert.ok(!/isReviewDue\(/.test(writingRoute), "54. and the stale independent due-check is gone");
-  assert.ok(/txMasteryMayDecrease\(review\)/.test(writingRoute), "54b. the knock-down is gated on the review result");
-  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(writingRoute),
-    "54c. through the transaction-native review core");
-  assert.ok(!/recordPracticeOutcome\(/.test(writingRoute.replace(/recordPracticeOutcomeInTransaction\(/g, "X(")),
-    "54d. and never the public non-transactional helper");
-  // C2b: the session claim under the user lock replaces the winner-only branch with a stronger
-  // guarantee — the second submitter never reaches mastery, it returns the stored result.
+  // Debate writing is FORMATIVE (M15 S1A A1): it left the review ladder, mastery and XP entirely.
+  // The ladder's only writers are the drill routes asserted at 38/38b — a keyword-checklist grade
+  // may no longer advance, create or knock down any schedule.
+  for (const bannedWrite of ["recordPracticeOutcome", "txMasteryMayDecrease", "awardXpInTransaction",
+                             "masteryProgress", "practiceAttempt", "questionAttempt", "XP_REWARDS", "xPLog"]) {
+    assert.ok(!writingRoute.includes(bannedWrite),
+      `53. formative writing no longer touches the ladder, mastery or XP (${bannedWrite})`);
+  }
+  assert.ok(!/isReviewDue\(/.test(writingRoute), "54. and no independent due-check reappeared");
+  assert.ok(/formative: true/.test(writingRoute), "54b. the submission result is declared formative");
   assert.ok(writingRoute.indexOf("parseStoredResult(") < writingRoute.indexOf("gradeDebateWritingResponse("),
-    "56. a second concurrent submit returns the stored result before the grader, so mastery runs once");
-  assert.ok(/awardXpInTransaction\(/.test(writingRoute), "56b. and XP is awarded atomically, once");
-  assert.equal((writingRoute.match(/awardXpInTransaction\(/g) ?? []).length, 1,
-    "56c. from exactly one call site");
-  // XP is proven unchanged against the PARENT COMMIT rather than a hard-coded number.
-  const parentWriting = stripComments(
-    execSync(`git show ${PRE_M13E1G}:app/api/skills/debate-writing/route.ts`, { encoding: "utf8" }));
-  assert.equal((writingRoute.match(/XP_REWARDS\.lessonCompleted/g) ?? []).length,
-               (parentWriting.match(/XP_REWARDS\.lessonCompleted/g) ?? []).length,
-    "55. XP references are identical in number to the parent commit");
+    "56. a second concurrent submit returns the stored result before the grader");
+  // NON-VACUOUS, pinned to the FROZEN G2-closure commit (never HEAD-relative): the pre-A1 route ran
+  // the ladder core and awarded XP, so the bans above catch exactly what they exist to prevent.
+  const PRE_M15_S1A = "338a88df64127c6f995167f84556d0df5a98ff22";
+  const writingAtA1Baseline = stripComments(
+    execSync(`git show ${PRE_M15_S1A}:app/api/skills/debate-writing/route.ts`, { encoding: "utf8" }));
+  assert.ok(/recordPracticeOutcomeInTransaction\(/.test(writingAtA1Baseline) &&
+    /awardXpInTransaction\(/.test(writingAtA1Baseline) &&
+    (writingAtA1Baseline.match(/XP_REWARDS\.lessonCompleted/g) ?? []).length > 0,
+    "55. control: the pre-A1 route did advance the ladder and award XP — the bans are non-vacuous");
   // C2b: rank is no longer derived in this route from a pre-read xp. `awardXpInTransaction` performs
   // an atomic increment and derives rank from the value it RETURNS — the same thresholds, computed
   // from an authoritative number instead of a stale one.
   assert.ok(!/calculateRank\(nextXp\)/.test(writingRoute),
     "55b. the stale pre-increment rank derivation is gone");
-  assert.ok(/awardXpInTransaction\(/.test(writingRoute), "55b2. replaced by the atomic XP/rank helper");
+  // 55b2 retired by M15 S1A A1: formative writing awards no XP at all, so there is no helper to
+  // assert here — the atomic-helper contract is still proven on lib/xp.ts itself at 55b3/55b4.
   const xpHelper = read("lib/xp.ts");
   assert.ok(/calculateRank\(updatedUser\.xp\)/.test(xpHelper),
     "55b3. whose rank comes from the value the increment returned");
   assert.ok(/RANK_THRESHOLDS/.test(xpHelper), "55b4. against the unchanged rank thresholds");
   assert.ok(!/enforceRateLimit|REQUIRED_UNIQUE|reviewToken/.test(writingRoute),
     "58. no rate limit, evidence floor or token scheme was added");
-  assert.ok(/xPLog\.create/.test(writingRoute), "55b. XP is still written");
+  assert.ok(!/xPLog\.create/.test(writingRoute), "58b. formative writing writes no XP log (M15 S1A A1)");
 
   // HOSA stays review-only and may ignore the detailed result truthfully.
   for (const banned of ["recordDrillMastery", "recordDrillMasteryDetailed", "MasteryProgress", "masteryProgress"]) {

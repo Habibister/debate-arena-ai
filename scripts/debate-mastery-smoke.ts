@@ -594,19 +594,36 @@ async function main() {
   m13e2Rejects("a removed unique constraint", (s) => s.replace("@@unique([sessionId, bankQuestionId])", ""));
   m13e2Rejects("a PROCESSING status", (s) => s.replace(/(enum PracticeSessionStatus \{\n[ \t]+ISSUED)/, "$1\n  PROCESSING"));
   m13e2Rejects("a claimedAt column", (s) => s.replace(/([ \t]+purgeAfter[ \t]+DateTime\n)/, "$1  claimedAt DateTime?\n"));
-  // 27b. Debate WRITING keeps its grading, threshold, response shape and XP; only the ORDER changed.
+  // 27b. Debate WRITING is FORMATIVE (M15 S1A A1). The keyword-checklist grader still returns full
+  // coaching feedback, but the route writes NO authoritative learner evidence: no mastery, no XP, no
+  // review-ladder movement, and no PracticeAttempt/QuestionAttempt rows — a COMPLETED attempt with a
+  // lessonId is valid LESSON assignment evidence, which formative writing must never mint.
   const writingRoute = stripComments(read("app/api/skills/debate-writing/route.ts"));
-  assert.ok(/gradeDebateWritingResponse\(/.test(writingRoute), "27b. Debate writing grading is unchanged");
-  assert.ok(/feedback\.score >= 70/.test(writingRoute), "27b2. and its threshold");
-  assert.ok(/XP_REWARDS\.lessonCompleted/.test(writingRoute) && /xPLog\.create/.test(writingRoute),
-    "27b3. XP is still awarded exactly as before");
-  // C2b: writing is session-backed, so review, mastery and XP all run inside ONE transaction whose
-  // first statement is the user row lock. That subsumes the M13E1G winner-only construct with a
-  // stronger guarantee — a second concurrent submission cannot reach mastery at all, because it
-  // blocks on the lock and then finds the session COMPLETED.
-  assert.ok(writingRoute.indexOf("lockUserRow(tx") < writingRoute.indexOf("recordPracticeOutcomeInTransaction("),
-    "27c. with the user row locked BEFORE any review/mastery/XP work, so one due window has one winner");
-  assert.ok(!/isReviewDue\(/.test(writingRoute), "27c2. and the stale independent due-check is gone");
+  assert.ok(/gradeDebateWritingResponse\(/.test(writingRoute), "27b. Debate writing grading still runs");
+  for (const bannedWrite of ["masteryProgress", "MasteryProgress", "xPLog", "XP_REWARDS", "awardXpInTransaction",
+                             "recordPracticeOutcome", "txMasteryMayDecrease", "practiceAttempt", "questionAttempt"]) {
+    assert.ok(!writingRoute.includes(bannedWrite),
+      `27b2. formative writing writes no authoritative evidence (${bannedWrite})`);
+  }
+  assert.ok(/formative: true/.test(writingRoute), "27b3. and the response declares itself formative");
+  // NON-VACUOUS, pinned to the FROZEN G2-closure commit (never HEAD-relative): the pre-A1 route DID
+  // write mastery, XP and attempt evidence, so the bans above catch exactly the defect they prevent.
+  const PRE_M15_S1A = "338a88df64127c6f995167f84556d0df5a98ff22";
+  const writingAtA1Baseline = stripComments(
+    execSync(`git show ${PRE_M15_S1A}:app/api/skills/debate-writing/route.ts`, { encoding: "utf8" }));
+  assert.ok(/masteryProgress/.test(writingAtA1Baseline) && /xPLog\.create/.test(writingAtA1Baseline) &&
+    /awardXpInTransaction\(/.test(writingAtA1Baseline) && /practiceAttempt\.create/.test(writingAtA1Baseline),
+    "27b-C1. control: the pre-A1 route really wrote mastery, XP and attempt evidence");
+  // 27b-C2. the keyword exploit still maxes the CHECKLIST — coaching value is preserved — but with
+  // every persistence token banned above, a 96 now has no write path to mastery, XP or evidence.
+  const { gradeDebateWritingResponse: gradeWritingHeuristic } = await import("../lib/debate-skill-practice");
+  const keywordSalad =
+    "First, we should because since therefore students schools data for example our contention voter judge prefer outweigh matters benefit harm more likely community study impact.";
+  const saladFeedback = gradeWritingHeuristic({ slug: "debate-claim-building", level: "BEGINNER", response: keywordSalad });
+  assert.equal(saladFeedback.score, 96, "27b-C2. control: the keyword salad still maxes the checklist at 96");
+  assert.ok(saladFeedback.rubric.length === 7 && saladFeedback.strengths.length > 0 && saladFeedback.missing.length > 0,
+    "27b-C2b. and the formative feedback payload remains complete");
+  assert.ok(!/isReviewDue\(/.test(writingRoute), "27c2. and no independent due-check reappeared");
   assert.ok(writingRoute.indexOf("parseStoredResult(") < writingRoute.indexOf("gradeDebateWritingResponse("),
     "27c3. a completed session returns its stored result BEFORE the grader — no second mastery write");
   assert.ok(/status: "COMPLETED"/.test(writingRoute) && /resultJson: result/.test(writingRoute),

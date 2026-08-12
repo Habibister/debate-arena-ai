@@ -209,8 +209,11 @@ export function DebateWritingPractice({ slug }: DebateWritingPracticeProps) {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <Badge variant="secondary">Debate writing practice</Badge>
+              <Badge variant="secondary">Formative writing practice</Badge>
               <CardTitle className="mt-3">{scenario.skillName}</CardTitle>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Use this feedback to improve your response. This practice does not affect mastery or XP.
+              </p>
             </div>
             <Badge variant="outline">{level.toLowerCase()}</Badge>
           </div>
@@ -276,14 +279,20 @@ export function DebateWritingPractice({ slug }: DebateWritingPracticeProps) {
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <CardTitle>Feedback</CardTitle>
-                <Badge variant={feedback.score >= 80 ? "accent" : "secondary"}>{feedback.score}%</Badge>
+                {/* M15 S1A A1: the number is a keyword/structure checklist result, not a mastery or
+                    competition score, so it is labeled as checklist coverage and never celebrated
+                    with an achievement variant. */}
+                <Badge variant="secondary">Writing checklist: {feedback.score}%</Badge>
               </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Formative feedback from a writing checklist — not a mastery, readiness, or competition score.
+              </p>
             </CardHeader>
             <CardContent className="space-y-5">
               {alreadyCompleted ? (
                 <p className="text-sm text-muted-foreground">You already finished this session. Here are your results.</p>
               ) : null}
-              <Progress value={feedback.score} />
+              <Progress value={feedback.score} aria-label="Writing checklist coverage" />
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-lg border bg-background p-4">
                   <p className="font-semibold">Strong</p>

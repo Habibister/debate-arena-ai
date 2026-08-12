@@ -4,12 +4,41 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 5 / DECA Slice 1: PI 9→30 (2026-08-12)
 
-### ⚠ Slice 5: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Slice 5: content is human-reviewed and APPROVED — clear to push
 
 `lib/deca-drills.ts` gained 21 performance-indicator questions (`pi-10`…`pi-30`), taking PI 9→30 and
-the DECA bank 36→57. **These items were AI-drafted and have NOT been reviewed by a human.** A source
-comment above `pi-10` carries that label. **Do not push the `feat(deca): expand performance indicator
-drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+the DECA bank 36→57. The items were AI-authored, and on **2026-08-12 the repository owner personally
+read all 21 in the FINAL checklist and approved them** — answer defensibility, distractor quality,
+wording, curriculum fit, verb interpretation, PI-method stage accuracy, scenario role/authority/
+constraint handling, the PI/BR, PI/CR and PI/MK boundaries, PI-essentiality under the remove-the-PI
+diagnostic, B-2 safety, legacy `pi-07` handling, scoring and preparation claims, measurement
+boundaries, legacy and new-item overlap, and copyright/provenance.
+
+**The approved content is implementation commit `b72cba2` PLUS content-refinement commit `1340cdb`.**
+**The Slice 5 push gate is lifted.**
+
+**Two items were refined before approval, both for failing the remove-the-PI diagnostic.** `pi-19`
+named no specific indicator, so a generic "proposal without a success measure" question survived
+stripping the PI; it now carries an **employee-retention** indicator whose outcome deliberately
+differs from the action's stated rationale (associates having no way to raise problems), so the
+indicator — not the rationale — decides what success means. `pi-30` was the more serious case: its old
+*"win-back email to lapsed members"* already telegraphed retention and sat close to legacy `br-03`,
+whose own keyed answer contains the word *retention*; the action is now a **targeted offer email to
+members inactive for sixty days**, which could plausibly be judged on reach, on immediate response, or
+on retention, so open rate and first-week redemptions are real competing metrics and only the listed
+indicator picks the winner. **Keep the indicator load-bearing in any future PI measurement item.**
+
+**`pi-28` was explicitly human-reviewed and APPROVED WITHOUT REWRITE** as a PI/BR boundary case. Its
+shape looks business-reasoning-adjacent once the indicator is stripped, but its keyed axis is the
+completeness of the PI demonstration chain — decision, reasoning, implementation, feasibility,
+measurement — never the commercial merit of the action. Recorded so a later reader does not reopen it.
+
+Two things to keep straight, as for every slice so far:
+
+- **The approval is the human reading, nothing else.** The Claude/AI pre-screen was the authoring
+  model checking its own output; it constituted neither the review nor independent verification.
+- **The AI-authoring label stays in the source permanently.** Approval changed the review status, not
+  the provenance.
 
 **Debate is finished and live.** All four Debate areas hold 30, all four slices are human-reviewed and
 approved, and Slice 4 is deployed at `09e9bdb` (deployment `5863008892`, `Production`, `success`).
@@ -18,11 +47,15 @@ approved, and Slice 4 is deployed at `09e9bdb` (deployment `5863008892`, `Produc
 | Bank | Total | Per-area |
 |---|---|---|
 | `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — **depth COMPLETE, deployed, reviewed** |
-| `lib/deca-drills.ts` | **57** | **pi 30** · br 9 · cr 9 · mk 9 |
+| `lib/deca-drills.ts` | **57** | **pi 30 — human-reviewed and approved 2026-08-12** · br 9 · cr 9 · mk 9 |
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
 **Deficit 63** (was 84): DECA br/cr/mk, 3 × 21. Corpus 336 → **357** locally; target **420**.
-**Global M14 G2 remains OPEN — do not record it as complete or closed.**
+
+**Two distinctions to keep straight, neither of which this slice closes:**
+**`PI depth complete` is NOT `DECA depth complete`** — business-reasoning, customer-relations and
+marketing-fundamentals are still at 9. **`Debate depth complete` is NOT `Global M14 G2 complete`.**
+**Global M14 G2 remains OPEN — do not record it, or DECA, as complete or closed.**
 
 ### ⚠ LEGACY `pi-07` / CURRICULUM B-2 DEBT — READ BEFORE ANY FUTURE PI WORK
 

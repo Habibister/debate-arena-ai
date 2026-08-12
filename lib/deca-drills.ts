@@ -76,8 +76,29 @@ export const DECA_DRILL_BANK: DecaDrillQuestion[] = [
   // official DECA competency statement, exam item, sample role-play, or evaluation form. No official
   // PI code, cluster or list-year is named, and no per-PI exam weighting is claimed — pi-26 keys on
   // the curriculum's own point that published weighting is instructional-area level only.
-  // AI-ASSISTED authoring (M14 Global G2 Slice 5 / DECA Slice 1, pi-10..pi-30) — HUMAN CONTENT REVIEW
-  // OUTSTANDING. See docs/HANDOFF.md. AI self-review does NOT count as human review.
+  // AI-ASSISTED authoring (M14 Global G2 Slice 5 / DECA Slice 1, pi-10..pi-30), HUMAN-REVIEWED AND
+  // APPROVED 2026-08-12: the repository owner personally read all 21 items in the FINAL checklist and
+  // approved their answer defensibility, distractor quality, wording, curriculum fit, verb
+  // interpretation, PI-method stage accuracy, scenario role/authority/constraint handling, the
+  // PI/business-reasoning, PI/customer-relations and PI/marketing-fundamentals boundaries,
+  // PI-essentiality under the remove-the-PI diagnostic, B-2 safety, legacy pi-07 handling, the
+  // scoring and preparation claims, the measurement boundaries, legacy and new-item overlap, and
+  // copyright/provenance.
+  // The approved content is implementation commit b72cba239a65a1212531817ed76957179f4a816d PLUS
+  // content-refinement commit 1340cdbced2df7d3761bd2ceb4432fc070909691.
+  // Two items were REFINED before approval, both because they failed this file's own
+  // remove-the-PI diagnostic: pi-19 named no specific indicator, so it now carries an
+  // employee-retention indicator whose outcome differs from the action's stated rationale, making the
+  // indicator decide what success means; and pi-30's old "win-back email to lapsed members" already
+  // telegraphed retention and sat close to br-03, so the action became a targeted offer email that
+  // could plausibly be judged on reach, on immediate response, or on retention — only the listed
+  // indicator now picks the measure.
+  // pi-28 was explicitly human-reviewed and APPROVED WITHOUT REWRITE as a PI/BR boundary case: its
+  // shape looks business-reasoning-adjacent once the indicator is stripped, but its keyed axis is the
+  // completeness of the PI demonstration chain, never the commercial merit of the action.
+  // Approval rests on that personal human review. Claude/AI pre-screening did NOT constitute human
+  // review or independent verification, and AI self-review never counts as human approval.
+  // See docs/HANDOFF.md.
   { id: "pi-10", area: "performance-indicators", question: "A listed indicator reads \"Analyze the effect of a supplier delay on store operations.\" A response that only defines what a supplier delay is:", choices: ["Misses what the verb asks — analyzing means breaking the delay down into which operations it hits and how those knock into each other", "Fully satisfies the indicator, because the topic was addressed", "Fails only because it is too short", "Should instead calculate the store's total cost of the delay"], correctAnswer: "Misses what the verb asks — analyzing means breaking the delay down into which operations it hits and how those knock into each other", explanation: "'Analyze' asks you to take the situation apart — which operations are affected, in what order, and how they interact. A definition names the topic without doing any of that. Costing the delay out is a different task from analyzing it." },
   { id: "pi-11", area: "performance-indicators", question: "Two listed indicators cover the same topic: one reads \"Identify the store's primary customer group,\" the other \"Explain why that group is the store's priority.\" The difference in what you must do is:", choices: ["Identify asks you to name the right group; explain asks for the reasoning that makes it the priority", "There is no real difference — both ask for the same answer", "Identify requires more detail than explain", "Both are satisfied by stating the indicator's wording first"], correctAnswer: "Identify asks you to name the right group; explain asks for the reasoning that makes it the priority", explanation: "The verb sets the work. Naming the group satisfies the first; the second needs the reasoning behind that choice. Covering one does not automatically cover the other, even though the two usually sit together in a response." },
   { id: "pi-12", area: "performance-indicators", question: "A listed indicator reads \"Evaluate two shipping options for the store.\" A response that describes both options accurately and stops:", choices: ["Has not evaluated — an evaluation needs a judgment plus the criteria behind it", "Has evaluated, because both options were covered", "Has evaluated, as long as the descriptions are accurate", "Should have chosen the cheaper option, since cost always decides"], correctAnswer: "Has not evaluated — an evaluation needs a judgment plus the criteria behind it", explanation: "Describing is not evaluating. The indicator asks you to come down somewhere and say what you weighed — speed, reliability, cost — to get there. Which of those should dominate depends on the scenario, not on a rule." },

@@ -403,11 +403,23 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   for (const file of ["lib/lessons.ts"]) {
     assert.equal(shaNow(file), sha(file), `4b9. ${file} is byte-identical to HEAD`);
   }
-  // And the Debate bank's QUESTION DATA is unchanged — only the evidence layer was added.
+  // The Debate bank's ORIGINAL question data is unchanged. This pinned 36 through M13E1E, when the
+  // only change was the evidence layer. M14 Global G2 Slice 1 deliberately APPENDS rebuttal items
+  // (audit G2), so a flat 36 would forbid an approved change rather than protect this suite. What
+  // this suite actually needs is that the migration did not disturb the bank's SHAPE: the original
+  // 36 ids all survive, the area set is still four, and ids stay unique. Bank CONTENT integrity is
+  // owned by scripts/debate-drills-smoke.ts, which diffs against the IMMUTABLE commit 26149a3.
   const { DRILL_BANK, DRILL_AREAS } = await import("../lib/debate-drills");
-  assert.equal(DRILL_BANK.length, 36, "4b10. the Debate bank still holds exactly 36 questions");
+  const ORIGINAL_DEBATE_IDS = ["cw", "rb", "ev", "wg"]
+    .flatMap((p) => Array.from({ length: 9 }, (_, i) => `${p}-0${i + 1}`));
+  assert.equal(ORIGINAL_DEBATE_IDS.length, 36, "4b10. control: the original Debate bank was 36 items");
+  const presentIds = new Set(DRILL_BANK.map((q) => q.id));
+  for (const id of ORIGINAL_DEBATE_IDS) {
+    assert.ok(presentIds.has(id), `4b10b. original Debate question ${id} is still present`);
+  }
+  assert.ok(DRILL_BANK.length >= 36, "4b10c. and the bank never shrank below its original 36");
   assert.equal(DRILL_AREAS.length, 4, "4b11. across exactly four areas");
-  assert.equal(new Set(DRILL_BANK.map((q) => q.id)).size, 36, "4b12. with no duplicate ids");
+  assert.equal(presentIds.size, DRILL_BANK.length, "4b12. with no duplicate ids");
   // (iii) M13E1D introduces no second lesson or mastery renderer. The lesson component set is fixed,
   //       and the one component M13E1D touched reaches no lesson or education module.
   const lessonComponents = readdirSync("components/lessons").filter((f) => /\.tsx?$/.test(f)).sort();

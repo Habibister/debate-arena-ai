@@ -516,9 +516,19 @@ async function main() {
                                              { id: CWI[0].id, selected: wrong(CWI[0]) }]);
   assert.equal(rightThenWrong[0].uniqueCorrect, 1, "41. first occurrence still controls");
   assert.equal(buildDrillEvidence([{ id: "nope", selected: "x" }]).length, 0, "42. unknown ids remain inert");
-  const REB = DRILL_BANK.filter((q) => q.area === "rebuttal");
+  // This fixture is about the EVIDENCE contract (first-answer-per-distinct-id defeats repeat
+  // inflation), not about the session builder — builder depth is owned by the two Debate suites.
+  // Its denominator is pinned to the LEGACY NINE so that 67 keeps meaning "six of nine distinct"
+  // after Global-G2 Slice 1 took rebuttal to 30. Additions append after rb-09, so this is stable.
+  const REB = DRILL_BANK.filter((q) => q.area === "rebuttal").slice(0, 9);
+  assert.deepEqual(REB.map((q) => q.id),
+    ["rb-01", "rb-02", "rb-03", "rb-04", "rb-05", "rb-06", "rb-07", "rb-08", "rb-09"],
+    "43-pre. the legacy nine are still the first nine rebuttal items");
   const padded = REB.map((q, i) => ({ id: q.id, selected: i < 6 ? q.correctAnswer : wrong(q) }));
   while (padded.length < 20) { const q = REB[padded.length % 9]; padded.push({ id: q.id, selected: q.correctAnswer }); }
+  assert.equal(buildDrillEvidence(padded)[0].uniqueTotal, 9,
+    "43a. twenty answers resolve to nine distinct questions — the denominator behind 67, stated explicitly");
+  assert.equal(buildDrillEvidence(padded)[0].uniqueCorrect, 6, "43b. six were correct on first exposure");
   assert.equal(buildDrillEvidence(padded)[0].evidenceScore, 67, "43. the honest 6-of-9 padding is still 67");
   for (const banned of ["xpReward", "XPLog", "xpLog", "awardXp", "XP_REWARDS"]) {
     assert.ok(!stripComments(read("lib/debate-drills.ts")).includes(banned), `45. no XP in Debate drills (${banned})`);

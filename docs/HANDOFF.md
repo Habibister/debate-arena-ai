@@ -2,6 +2,70 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
+## Latest handoff — M14 Global G2 Slice 1: Debate rebuttal 9→30 (2026-08-11)
+
+### ⚠ Phase Slice 1: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/debate-drills.ts` gained 21 rebuttal questions (`rb-10`…`rb-30`), taking rebuttal 9→30 and the
+Debate bank 36→57. **These items were AI-drafted and have NOT been reviewed by a human.** A source
+comment above `rb-10` carries that label. **Do not push the `feat(debate): expand rebuttal drill
+bank` commit until someone reviews those 21 items.** AI self-review does not count as human review.
+
+Slice 0 is deployed (`f1b5064`), so both banks were already protected before this content landed.
+
+### Where G2 stands
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **57** | cw 9 · **rb 30** · ev 9 · wg 9 |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Global M14 G2 remains OPEN.** Deficit **147** (was 168): Debate cw/ev/wg 3 × 21, DECA 4 × 21.
+Corpus 252 → **273** locally; final target **420**.
+
+### What Slice 1 changed — do not undo any of it
+
+- **Insertion point.** The 21 items sit INSIDE the rebuttal block, after `rb-09` and before
+  `// --- Evidence evaluation ---`. `rb-09` already carried its comma. **`wg-09` is still the final
+  array element and is byte-identical — the terminal-comma append boundary is NOT exercised yet.**
+  It will be, whenever `weighing` is expanded. Leave `G0-C1b`/`G0-C1c` in place until then.
+- **Only rebuttal is authorized.** `EXPANDED_AREAS = ["rebuttal"]`. `G0-C6` still proves `cw-10`,
+  `ev-10` and `wg-10` are rejected as `unauthorised`, and `G0-C6b` asserts three areas remain
+  unauthorised so that loop cannot go vacuous. **Never pre-authorize an area without its own
+  reviewed slice.**
+- **`G0-7b` is now a real additive guarantee**, not "zero additions exist": the additions must be
+  exactly `rb-10`…`rb-30`, exactly 21 of them, each declaring the rebuttal area, each passing the
+  shared `judgeAddition` predicate.
+- **FOUR fixtures were re-based, not deleted.** Every one assumed a 9-item rebuttal pool:
+  1. `debate-drills-smoke.ts` evidence fixture → `reb9 = …slice(0, 9)`
+  2. `debate-mastery-smoke.ts` honest-padding fixture (`9`…`9g`) → `NINE = REB.slice(0, 9)`, and its
+     `morePadding` control repeats the SAME nine rather than the wider pool
+  3. `review-ladder-smoke.ts` `43` → `slice(0, 9)`, plus new `43a`/`43b` stating `uniqueTotal === 9`
+     and `uniqueCorrect === 6` explicitly
+  4. `debate-mastery-smoke.ts` precondition `24` hard-coded `=== 9` per area → now reads the
+     module-scope `DEBATE_AREA_DEPTH`, so the precondition and the `29k` G2 block cannot disagree
+  **67 still means "six of nine distinct".** It was not changed to a new magic number; its
+  denominator was made explicit. `slice(0, 9)` is stable because additions append after `rb-09`.
+- **Builder depth is proven separately from the evidence contract.** A 20-question focused rebuttal
+  session now serves **20 distinct** items (no padding — the observable G2 effect), and the padding
+  branch is still proven at **40 served / exactly 30 distinct**. Do not collapse these back together.
+
+### What the next Debate slice must do
+
+Pick ONE of `claim-warrant-impact`, `evidence-evaluation`, `weighing`; add its 21 items inside its own
+block; add that area to `EXPANDED_AREAS`; raise its entry in BOTH `AREA_DEPTH`
+(`debate-drills-smoke.ts`) and `DEBATE_AREA_DEPTH` (`debate-mastery-smoke.ts`); extend `G0-7b`'s
+expected-id set. **`weighing` is the one that will finally exercise the `wg-09` append boundary** —
+expect a one-character comma change there and let `G0-C1b`/`G0-C1c` do their job.
+
+### Runtime, untouched
+
+Debate legitimately writes `MasteryProgress`. `DEBATE_DRILL_REQUIRED_UNIQUE = 5`, pass threshold 70,
+`recordDrillMasteryInTransaction`, completed-session replay protection, session expiry,
+first-answer-per-distinct-id and the XP prohibition are all unchanged. No schema, migration, seed,
+route, validator or client change.
+
 ## Latest handoff — M14 Global G2 Slice 0: Debate/DECA banks protected (2026-08-07)
 
 **No question content was added or changed.** `lib/debate-drills.ts` and `lib/deca-drills.ts` have
@@ -105,7 +169,7 @@ sizes itself at ~14 areas. Phases 2a–2f covered only the six HOSA ones. Verifi
 
 Those eight areas still pad a 20-question request to 20 slots over 9 distinct items — the original
 P0 defect. (At the time of Phase 2f there were **no per-area depth assertions for either bank**;
-Global-G2 Slice 0 has since added them — see the Slice 0 block at the top of this file.) Closing G2 needs either eight further slices (+168 items, corpus 231 → 399) or an
+Global-G2 Slice 0 has since added them — see the Slice 0 block at the top of this file.) Closing G2 needs either eight further slices (+168 items, corpus **252 → 420**) or an
 explicit recorded decision to re-scope G2 and re-file the Debate/DECA depth gap as its own finding.
 **That decision has not been made. Do not make it silently.**
 
@@ -689,7 +753,7 @@ than reading a SHA out of this paragraph.
    is complete, so nothing else is waiting on it.
 2. **Address Debate and DECA depth — this is the next G2 work.** Phase 2f completes the HOSA portion
    of G2; **global G2 remains open for Debate and DECA depth expansion.** Either expand the four
-   Debate and four DECA areas (+168 items, corpus 231 → 399) or record an explicit decision to
+   Debate and four DECA areas (+168 items, corpus 252 → 420) or record an explicit decision to
    re-scope G2. **Do not mark G2 closed on the strength of HOSA parity.**
 
 ## How to run everything

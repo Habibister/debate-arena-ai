@@ -124,6 +124,16 @@ function control(label: string, holds: boolean) {
 // --- fixtures ------------------------------------------------------------------------------------
 
 const byArea = (area: DrillArea) => DRILL_BANK.filter((q) => q.area === area);
+
+/** Per-area Debate depth, which audit G2 asks the mastery smokes to assert. SINGLE SOURCE OF TRUTH:
+ *  a Global-G2 slice raises exactly ONE entry 9 -> 30, so one area can evolve without weakening the
+ *  assertion on any other. Both the precondition block (24) and the G2 depth block (29k) read it. */
+const DEBATE_AREA_DEPTH: Record<DrillArea, number> = {
+  "claim-warrant-impact": 9,
+  "rebuttal": 30,   // M14 Global G2 Slice 1
+  "evidence-evaluation": 9,
+  "weighing": 9
+};
 const right = (q: { correctAnswer: string }) => q.correctAnswer;
 const wrongFor = (q: { choices: string[]; correctAnswer: string }) => {
   const other = q.choices.find((c) => c !== q.correctAnswer);
@@ -186,7 +196,8 @@ async function main() {
   assert.equal(DRILL_PASS_THRESHOLD, 70, "the threshold is unchanged at 70%");
   for (const area of DRILL_AREAS) {
     const pool = DRILL_BANK.filter((q) => q.area === area.id);
-    assert.equal(pool.length, 9, `24. area ${area.id} has exactly nine distinct questions`);
+    assert.equal(pool.length, DEBATE_AREA_DEPTH[area.id],
+      `24. area ${area.id} has exactly ${DEBATE_AREA_DEPTH[area.id]} distinct questions`);
     assert.ok(pool.length >= DEBATE_DRILL_REQUIRED_UNIQUE, `24b. and can therefore reach the floor`);
     assert.ok(SEEDED_SKILL_SLUGS.includes(area.skillSlug), `24c. "${area.skillSlug}" is seeded, so writes land`);
     // Two of the four are allowlisted canonical redirects to authored Debate lessons (M13E1C), so
@@ -252,8 +263,15 @@ async function main() {
   // ---- 9. THE HONEST-PADDING CASE -------------------------------------------------------------------
   // No bad intent: the drill itself serves repeats above the nine-item pool, and the learner has
   // already been shown the answer, so they get the repeats right.
-  const padded: DrillAnswer[] = REB.map((q, i) => ({ id: q.id, selected: i < 6 ? right(q) : wrongFor(q) }));
-  while (padded.length < 20) { const q = REB[padded.length % 9]; padded.push({ id: q.id, selected: right(q) }); }
+  // The denominator is pinned to the LEGACY NINE, not to the rebuttal pool. Slice 1 took rebuttal to
+  // 30; 67 must keep meaning "six of nine distinct", not drift because the bank grew. Additions
+  // append after rb-09, so slice(0, 9) is stable.
+  const NINE = REB.slice(0, 9);
+  assert.deepEqual(NINE.map((q) => q.id),
+    ["rb-01", "rb-02", "rb-03", "rb-04", "rb-05", "rb-06", "rb-07", "rb-08", "rb-09"],
+    "9-pre. the legacy nine are still the first nine rebuttal items");
+  const padded: DrillAnswer[] = NINE.map((q, i) => ({ id: q.id, selected: i < 6 ? right(q) : wrongFor(q) }));
+  while (padded.length < 20) { const q = NINE[padded.length % 9]; padded.push({ id: q.id, selected: right(q) }); }
   const paddedRaw = gradeDrillAnswers(padded).perSkill.find((s) => s.area === "rebuttal");
   const paddedEv = evidenceFor(padded, "rebuttal");
   assert.equal(paddedEv.uniqueTotal, 9, "9. nine distinct rebuttal questions were seen");
@@ -269,9 +287,12 @@ async function main() {
   control(`the raw padded score reached ${paddedRaw?.scorePercent}% (>=85 = MASTERED) for a true 6-of-9`,
     paddedRaw !== undefined && paddedRaw.scorePercent === 85 && paddedRaw.passed === true);
   // CONTROL: later correct repeats genuinely cannot move the evidence score.
-  const morePadding = [...padded, ...REB.map((q) => ({ id: q.id, selected: right(q) }))];
+  // Repeats of the SAME legacy nine — not of the wider pool, which would add new distinct ids and
+  // legitimately change the score. The invariant under test is "repeats cannot move evidence".
+  const morePadding = [...padded, ...NINE.map((q) => ({ id: q.id, selected: right(q) }))];
+  const moreEv = evidenceFor(morePadding, "rebuttal");
   control("adding nine more correct repeats leaves the evidence score at 67",
-    evidenceFor(morePadding, "rebuttal").evidenceScore === 67);
+    moreEv.evidenceScore === 67 && moreEv.uniqueTotal === 9);
 
   // ---- 10. conflicting duplicate: FIRST occurrence controls -------------------------------------------
   const rightThenWrong = evidenceFor([
@@ -693,14 +714,8 @@ async function main() {
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 180, "29j. with unique ids");
 
   // ---- 29k. PER-AREA DEPTH, which audit G2 explicitly asks the mastery smokes to assert ----------
-  // AREA_DEPTH is the single source of truth. Each Global-G2 slice raises exactly ONE entry 9 -> 30,
-  // so one area can evolve without weakening the assertion on any other.
-  const DEBATE_AREA_DEPTH: Record<string, number> = {
-    "claim-warrant-impact": 9,
-    "rebuttal": 9,
-    "evidence-evaluation": 9,
-    "weighing": 9
-  };
+  // Reads the module-scope DEBATE_AREA_DEPTH declared above, so the precondition block (24) and this
+  // block cannot disagree about how deep an area is.
   for (const [area, depth] of Object.entries(DEBATE_AREA_DEPTH)) {
     assert.equal(DRILL_BANK.filter((q) => q.area === area).length, depth,
       `29k. Debate area ${area} holds exactly ${depth} questions`);
@@ -753,13 +768,19 @@ async function main() {
   control(`the pre-fix contract wrote ${oneRaw.scorePercent}% (>=85 = MASTERED) from ONE correct question`,
     oneRaw.scorePercent === 100 && oneRaw.passed === true);
 
-  // Padding is real and unchanged — the session builder still serves repeats above the pool.
-  const padded20 = buildDrillSession(20, ["rebuttal"]);
-  control("the UI's own 20-question focused session still serves 11 repeats of a 9-item pool",
-    padded20.length === 20 && new Set(padded20.map((q) => q.id)).size === 9);
+  // BUILDER DEPTH, split from the evidence contract above. Slice 1 took rebuttal to 30, so the UI's
+  // own 20-question focused session no longer pads — that is exactly the effect audit G2 asked for.
+  // The padding BRANCH is proven separately above the pool, so this coverage was re-based, not lost.
+  const focused20 = buildDrillSession(20, ["rebuttal"]);
+  control("the UI's own 20-question focused rebuttal session now serves 20 DISTINCT items — no padding",
+    focused20.length === 20 && new Set(focused20.map((q) => q.id)).size === 20);
+  const OVERDRAW = 40; // > 30 enters the repeat branch; < 60 makes the while loop append exactly once
+  const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
+  control("and the padding branch still exists above the pool: 40 served over exactly 30 distinct",
+    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 30);
 
   console.log(
-    `Debate-mastery smoke passed: General Debate drill progress is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to the question's own bank area — and needs ${DEBATE_DRILL_REQUIRED_UNIQUE} distinct questions before anything is written. All three live fake-mastery paths are closed: one correct question scored 100%/MASTERED and now records nothing; the duplicate bypass scored 76% and now scores 20%; and the honest six-of-nine learner whom the drill's OWN padding pushed to 85%/MASTERED now scores exactly 67 and does not pass. Four distinct all-correct questions still record nothing. Repeats, conflicting resubmits and unknown ids cannot raise evidence, and below the floor the persistence helper is not called at all, so no mastery, no review and no due-review knock-down can follow. The boolean recordDrillMastery contract is unchanged and lib/spaced-review.ts is untouched; a false result renders as "Progress not saved", never as an unseeded skill, and nothing claims a review was scheduled. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `Debate-mastery smoke passed: General Debate drill progress is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to the question's own bank area — and needs ${DEBATE_DRILL_REQUIRED_UNIQUE} distinct questions before anything is written. All three live fake-mastery paths are closed: one correct question scored 100%/MASTERED and now records nothing; the duplicate bypass scored 76% and now scores 20%; and the honest six-of-nine learner whom the drill's OWN padding pushed to 85%/MASTERED now scores exactly 67 and does not pass (that fixture is pinned to the legacy nine rb-01..rb-09, so it survives the bank growing). Four distinct all-correct questions still record nothing. Repeats, conflicting resubmits and unknown ids cannot raise evidence, and below the floor the persistence helper is not called at all, so no mastery, no review and no due-review knock-down can follow. The boolean recordDrillMastery contract is unchanged and lib/spaced-review.ts is untouched; a false result renders as "Progress not saved", never as an unseeded skill, and nothing claims a review was scheduled. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

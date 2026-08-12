@@ -2,7 +2,51 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-07 (M14 Global G2 Slice 0 — Debate/DECA drill banks put under immutable additive protection; no content added)_
+_Last updated: 2026-08-11 (M14 Global G2 Slice 1 — Debate rebuttal 9→30, local only, human content review outstanding)_
+
+## M14 Global G2 Slice 1 — Debate rebuttal is 30 deep, in local code only
+
+**Slice 0 is deployed** (`f1b5064`, deployment `5860557516`, `Production`, `success`), so both drill
+banks were already under immutable additive protection before any question was authored.
+
+Slice 1 expands **one** area: **rebuttal 9 → 30** (`rb-10`…`rb-30`, +21). Debate bank **36 → 57**.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **57** | claim-warrant-impact 9 · **rebuttal 30** · evidence-evaluation 9 · weighing 9 |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**⚠ The 21 new rebuttal items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** The bank carries that label above `rb-10`. **Do not push this commit until a human has
+reviewed `rb-10`…`rb-30`.** AI self-review does not count.
+
+- **Content-only for the bank; tests and docs otherwise.** No schema, migration, seed, route,
+  validator, client, session-protocol, XP or mastery change. Debate still writes `MasteryProgress`
+  legitimately — HOSA's review-only semantics were not imported.
+- **Inserted inside the rebuttal block**, after `rb-09` and before `// --- Evidence evaluation ---`,
+  so area grouping holds. `rb-09` already had its comma; **`wg-09` remains the final array element and
+  is untouched, so the terminal-comma append boundary is not exercised by this slice.**
+- **Only rebuttal is authorized.** `EXPANDED_AREAS` went `[]` → `["rebuttal"]`. `cw-10`, `ev-10` and
+  `wg-10` are still rejected as `unauthorised` under default authorization — the control that proves
+  Slice 1 did not pre-authorize the remaining three Debate slices.
+- **`G0-7b` was replaced, not deleted.** It asserted "zero additions exist"; it now asserts the
+  additions are **exactly `rb-10`…`rb-30`**, that there are exactly 21, that each declares the
+  rebuttal area, and that each passes the shared `judgeAddition` predicate.
+- **Four fixtures were re-based, not deleted.** Three padded-rebuttal fixtures plus a per-area
+  precondition all assumed a 9-item pool. Each now pins its denominator to the **legacy nine**
+  (`slice(0, 9)` = `rb-01`…`rb-09`, stable because additions append after them), so **67 still means
+  "six of nine distinct"** rather than drifting to a new number. `uniqueTotal === 9` is now asserted
+  explicitly so the denominator is no longer implicit.
+- **The observable G2 effect:** a focused 20-question rebuttal session now serves **20 distinct**
+  items with no padding. The padding branch is proven separately at **40 served / exactly 30
+  distinct**, so growing the bank did not delete that coverage.
+
+**Global M14 G2 remains OPEN.** Remaining deficit **168 → 147** after this local slice: Debate
+claim-warrant-impact, evidence-evaluation and weighing (3 × 21) plus all four DECA areas (4 × 21).
+Corpus 252 → **273** locally, final target **420**.
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Global G2 Slice 0 — the Debate and DECA drill banks are protected, no content added
 
@@ -661,7 +705,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
 | M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Phase 2f completes the HOSA portion of G2; **global G2 remains open for Debate and DECA depth expansion** — 4 Debate + 4 DECA areas at 9 each, deficit 168 questions. Slice 0 has now put both banks under immutable additive protection and added exact per-area depth assertions. **Next: Debate rebuttal 9 → 30.** |
+| **G2 (audit finding) — overall** | **STILL OPEN.** HOSA is done; global G2 remains open for Debate/DECA depth. Slice 0 protected both banks; **Slice 1 took Debate rebuttal 9→30 (local, review outstanding)**. Deficit **147**: Debate cw/ev/wg (3 × 21) + all four DECA areas (4 × 21). **Next after approval and deploy: the next Debate depth slice.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

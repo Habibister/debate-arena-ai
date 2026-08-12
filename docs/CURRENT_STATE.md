@@ -6,7 +6,7 @@ _Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA custome
 
 ## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, local only
 
-**Status: `IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH`.**
+**Status: `IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — USER IDENTIFIED ITEM-LEVEL ANSWER-FORM LEAKAGE — DO NOT PUSH`.**
 **AI self-review does NOT count as human review.**
 
 **The CR/MK curriculum is deployed and human-reviewed** at `8cb181e` (deployment `5864802348`,
@@ -48,10 +48,20 @@ Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`c
   found four should-fix issues and all four are resolved: **(F7-1)** the key was the longest choice in
   **18 of 21**, and because choice order is shuffled at serve time but *length is not*, "always pick the
   longest" would have scored ≈86% without reading. Ten distractors were given their own reasoning —
-  which makes them more tempting, not less — so the key is now longest in **4 of 21**, mean ratio
-  **0.94**, median **0.93**, max **1.25**. Neither longest nor shortest is an exploitable strategy
-  (both score below chance), and with 15 of 21 keys neither longest nor shortest there is no inverse
-  tell. **(F7-9)** `cr-30` was refined last: its key both carried the slice's highest ratio and was the
+  which makes them more tempting, not less.
+- **⚠ The aggregate metric was NOT sufficient, and the user's own review caught it.** After the
+  slice-wide figure reached 4 of 21 key-longest, the repository owner read `cr-10` and saw that its key
+  still visibly announced itself: it was the only choice combining policy *and* authority, the only
+  fully reasoned option, and the distractors were far simpler. **A bank can pass a global
+  "pick-the-longest" test and still leak on individual items.** A per-item detector was then written
+  — flagging unique length, uniquely multi-clause structure, unique policy/authority vocabulary, unique
+  qualifiers, and distractors much simpler than the key — and it found **9 of 21 leaking**, not 4. All
+  nine were fixed by **strengthening distractors into equally serious misconceptions**, never by
+  trimming keys. **Item-level form leaks are now 0 of 21.** Final distribution: key longest **5 of 21**,
+  shortest **4 of 21**, neither **12 of 21**, mean **0.90**, median **0.92**, max **1.09**, min 0.45 —
+  deliberately restored toward chance after an interim pass had pushed key-longest down to 2 of 21,
+  which was itself becoming an inverse tell ("the longest answer is almost always wrong").
+  **For Slice 8: run the per-item check, not the average.** **(F7-9)** `cr-30` was refined last: its key both carried the slice's highest ratio and was the
   only choice naming the supervisor, and — more substantively — it said to *"bring in the supervisor if
   more is asked"* when the stem establishes only that a supervisor is **present**, not that they hold
   any remedy the employee lacks. The key now stays with the two stated remedies, and reflexive

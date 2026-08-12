@@ -6,7 +6,7 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ### ⛔ DO NOT PUSH — human content review of the 21 new CR questions is OUTSTANDING
 
-Status: **`IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH`.**
+Status: **`IMPLEMENTED LOCALLY — HUMAN CONTENT REVIEW OUTSTANDING — USER IDENTIFIED ITEM-LEVEL ANSWER-FORM LEAKAGE — DO NOT PUSH`.**
 **AI self-review does NOT count as human review.** The 21 items must be read by a human and explicitly
 approved before any push, exactly as every prior slice was.
 
@@ -68,9 +68,26 @@ commit. **The questions remain unapproved and the do-not-push gate stands.**
 Choice *order* is shuffled at serve time by `buildServedChoices`, but choice *length* is not, so
 "always pick the longest" would have scored **≈86%** with no understanding of Customer Relations. Ten
 distractors were rewritten to carry their own reasoning — which makes them genuinely more tempting
-rather than padded — so the key is now longest in **4 of 21**. Mean ratio **1.22 → 0.94**, median
-**0.93**, max **1.25**. Picking the longest or the shortest both score below chance, and 15 of 21 keys
-are neither, so no inverse tell was introduced. **Run this check on Slice 8 before review, not after.**
+rather than padded.
+
+**F7-10 — the aggregate metric was not enough, and the user caught it.** This is the most important
+lesson in the slice. With the slice-wide figure at 4 of 21 key-longest, the repository owner read
+`cr-10` and saw the key still announced itself: the only choice combining policy *and* authority, the
+only fully reasoned option, distractors far simpler. **A bank can pass a global "pick-the-longest" test
+and still leak item by item — the learner answers one question, not the average.** A per-item detector
+was written (unique length · uniquely multi-clause · unique policy/authority vocabulary · unique
+qualifiers · distractors much simpler) and found **9 of 21 leaking**, not 4: `cr-10`, `cr-13`, `cr-16`,
+`cr-17`, `cr-20`, `cr-23`, `cr-24`, `cr-27`, `cr-30`. All nine were fixed by **making the wrong answers
+equally serious**, never by trimming keys — e.g. `cr-10`'s "said more warmly" became "skipped the
+acknowledgement the customer was owed before any remedy was discussed", and `cr-24` gained an
+escalation distractor with the same four-step shape as the key.
+
+**Item-level form leaks: 0 of 21.** Final distribution: key longest **5 of 21**, shortest **4 of 21**,
+neither **12 of 21**, mean **0.90**, median **0.92**, max **1.09**, min **0.45**. An interim pass drove
+key-longest down to 2 of 21 with max ratio 1.02, which was becoming the **inverse** tell — "the longest
+answer is almost always wrong" gives a real edge — so three keys were naturally lengthened to bring the
+rate back toward chance. **Two guards, not one: no per-item form cue AND no slice-wide rule in either
+direction. Run the per-item check on Slice 8 before review, not the average after it.**
 
 **F7-9 — `cr-30` reflexive escalation and hidden authority.** Caught on the second review pass, and the
 substantive half matters more than the form half. The key said to *"bring in the supervisor if more is

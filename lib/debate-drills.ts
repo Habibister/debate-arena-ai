@@ -249,8 +249,29 @@ export const DRILL_BANK: DrillQuestion[] = [
   // GUARDRAILS: no axis ever "always wins". Every correct answer is correct because of the SPECIFIC
   // facts in its scenario, and several distractors state the right axis for a universal-rule reason
   // and are keyed WRONG (wg-16 D, wg-21 C, wg-24 C).
-  // AI-ASSISTED authoring (M14 Global G2 Slice 4, wg-10..wg-30) — HUMAN CONTENT REVIEW OUTSTANDING.
-  // See docs/HANDOFF.md. AI self-review does NOT count as human review.
+  // AI-ASSISTED authoring (M14 Global G2 Slice 4, wg-10..wg-30), HUMAN-REVIEWED AND APPROVED
+  // 2026-08-11: the repository owner personally read all 21 items in the FINAL checklist and
+  // approved their answer defensibility, distractor quality, scenario sufficiency and
+  // course-appropriate wording, the weighing/CWI, weighing/rebuttal and weighing/evidence-evaluation
+  // boundaries, Lesson 37 and seeded debate-weighing fit, magnitude, probability, timeframe,
+  // reversibility, framework use, V-3 and V-4, contextual rather than universal weighing claims,
+  // legacy and new-item overlap, explanation quality, and protection against unsupported weighing
+  // frameworks.
+  // The approved content is implementation commit 9c202821387ebff723cee6d8b18b2756dd19eb89 PLUS
+  // content-refinement commit a250e40f00977501cfe517ead8e5cdaa5d295eef: wg-24 was REFINED before
+  // approval to remove a magnitude/probability ambiguity — the old stem quantified probability but
+  // left magnitude qualitative, so a large enough catastrophe could rationally reverse it. The
+  // approved wg-24 is the quantified version: 25,000 vs 20,000 people, well under one percent vs
+  // near-certain, so their real but modest magnitude edge sits against a far larger likelihood gap.
+  // Recorded judgment calls, so a later reader does not reopen them: wg-12 requires the contention
+  // to be BOTH fully answered AND no longer defended, so attacked never means lost; wg-20 is an
+  // ordering comparison, not a turns-the-case or prerequisite framework; wg-21 is scoped to
+  // reversibility and never claims irreversible wins overall; wg-29's "the one the judge is holding"
+  // describes the practical effect of an uncontested standard, not an automatic-binding rule; wg-30
+  // is deliberately procedural — it asks for the next move, not which dimension objectively wins.
+  // Approval rests on that personal human review. Claude/AI pre-screening did NOT constitute human
+  // review or independent verification, and AI self-review never counts as human approval.
+  // See docs/HANDOFF.md.
   { id: "wg-10", area: "weighing", question: "By the final speech your opponents' only impact has been conceded away, and yours still stands. Weighing here:", choices: ["Is not the missing task — with only one surviving impact there is nothing to compare it against", "Is still required, because a final speech must always contain explicit weighing", "Is impossible, so the judge has no way to decide the round", "Would be stronger if you named a weighing category out loud"], correctAnswer: "Is not the missing task — with only one surviving impact there is nothing to compare it against", explanation: "Weighing compares two surviving impacts. When only one is left the work is showing the judge that it stands, not ranking it against something no longer in the round. That is a fact about this round, not a claim that weighing is generally optional." },
   { id: "wg-11", area: "weighing", question: "Both teams end the round with a real impact standing, and neither team ever says why theirs should matter more. For the judge, this is:", choices: ["Exactly the situation weighing exists to resolve — otherwise the judge supplies the comparison", "A tie, so the judge must vote for the first speaking team", "Resolved by whichever impact was described in more detail", "A sign that neither team made a complete argument"], correctAnswer: "Exactly the situation weighing exists to resolve — otherwise the judge supplies the comparison", explanation: "Two unweighed impacts pass in the night. When both survive and neither side compares them, the judge picks the comparison — and it may not be the one you wanted. Detail is not comparison, and both arguments here are complete." },
   { id: "wg-12", area: "weighing", question: "Your first contention was fully answered and you have stopped defending it. In the last speech you argue that its impact outweighs everything else. The problem is:", choices: ["You are weighing an impact that no longer survives, so the comparison has nothing to stand on", "You should have attacked their response to it instead", "Weighing is not permitted in the last speech", "You named the wrong weighing category"], correctAnswer: "You are weighing an impact that no longer survives, so the comparison has nothing to stand on", explanation: "Weighing compares offense that is still standing. An impact you have stopped defending cannot outweigh anything, because it is no longer in the round to compare. Whether to have contested their response is a separate, earlier decision." },

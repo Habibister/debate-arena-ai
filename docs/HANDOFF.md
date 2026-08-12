@@ -4,21 +4,61 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 4: Debate weighing 9→30 (2026-08-12)
 
-### ⚠ Slice 4: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Slice 4: content is human-reviewed and APPROVED — clear to push
 
 `lib/debate-drills.ts` gained 21 weighing questions (`wg-10`…`wg-30`), taking weighing 9→30 and the
-Debate bank 99→120. **These items were AI-drafted and have NOT been reviewed by a human.** A source
-comment above `wg-10` carries that label. **Do not push the `feat(debate): expand weighing drill bank`
-commit until someone reviews those 21 items.** AI self-review does not count.
+Debate bank 99→120. The items were AI-authored, and on **2026-08-11 the repository owner personally
+read all 21 in the FINAL checklist and approved them** — answer defensibility, distractor quality,
+scenario sufficiency, course-appropriate wording, the weighing/CWI, weighing/rebuttal and
+weighing/evidence-evaluation boundaries, Lesson 37 and seeded `debate-weighing` fit, magnitude,
+probability, timeframe, reversibility, framework use, V-3 and V-4, contextual rather than universal
+weighing claims, legacy and new-item overlap, explanation quality, and protection against unsupported
+weighing frameworks.
+
+**The approved content is implementation commit `9c20282` PLUS content-refinement commit `a250e40`.**
+**The Slice 4 push gate is lifted.**
+
+**`wg-24` was refined before approval, and that is load-bearing.** The drafted stem quantified
+probability ("well under one percent" vs near-certain) but left magnitude qualitative ("catastrophic"
+vs "moderate"), so a large enough catastrophe could rationally reverse the comparison — and its
+explanation claimed "the numbers decide which way" on facts covering only one side of the tradeoff.
+The approved `wg-24` quantifies **both**: their harm reaches **25,000** at well under one percent,
+yours reaches **20,000** and is near-certain, so their real but modest magnitude edge sits against a
+far larger likelihood gap. **Keep both sides of any future tradeoff item quantified.**
 
 Slices 1, 2 and 3 are deployed and human-reviewed (`61b19de`, deployment `5861953872`, `Production`,
 `success`), so rebuttal, CWI and evidence-evaluation were already approved and live before this slice.
 
-### Debate depth is complete locally — GLOBAL G2 IS NOT
+Two things to keep straight, as for every slice so far:
 
-**All four Debate areas now hold 30.** That is `Debate depth complete`, and it is **not** the same
-claim as `Global M14 G2 complete`. **Global M14 G2 remains OPEN** because all four DECA areas are
-still at 9. Do not record G2 as complete or closed.
+- **The approval is the human reading, nothing else.** The Claude/AI pre-screen was the authoring
+  model checking its own output; it constituted neither the review nor independent verification.
+- **The AI-authoring label stays in the source permanently.** Approval changed the review status, not
+  the provenance. All four Debate slice labels now carry the same two-part form.
+
+Approved judgment calls, recorded so a later reader does not reopen them: `wg-10`/`wg-11`/`wg-12` are
+distinct (nothing to compare · both survive uncompared · offense that no longer survives); **`wg-12`
+requires the contention to be BOTH fully answered AND no longer defended, so attacked never means
+lost**; `wg-13` is contextual magnitude and says changing the severities can reverse it; `wg-14`'s
+"$2 billion / 900 lives" is an illustrative example of unlike units, not a hidden stem fact;
+`wg-05`/`wg-15`/`wg-26` are a recognition → rejection → discrimination progression; `wg-16`/`wg-17`/
+`wg-18`/`wg-24` are four distinct probability decisions; **`wg-17` supplies the chain rather than
+asking the learner to repair it, and names link-attack as a different rebuttal task**; `wg-19` rejects
+both sooner-always and later-always; **`wg-20` is an ordering comparison, NOT a turns-the-case or
+prerequisite framework**; `wg-21` is scoped to reversibility and never claims irreversible wins
+overall; `wg-22` rejects a reversibility claim that contradicts the facts; `wg-23`/`wg-24`/`wg-25` are
+three different decisions; `wg-25` diagnoses a non-separating axis where legacy `wg-09` breaks a
+stated tie; `wg-27` and `wg-28` implement V-4 and V-3; **`wg-29`'s "the one the judge is holding"
+describes the practical effect of an uncontested standard, not an automatic-binding rule**; and
+**`wg-30` is deliberately procedural — it asks for the next move, not which dimension objectively
+wins.**
+
+### Debate depth is COMPLETE and human-reviewed — GLOBAL G2 IS NOT
+
+**All four Debate areas hold 30, and all four are human-reviewed and approved** — rebuttal, CWI and
+evidence-evaluation deployed at `61b19de`, weighing approved 2026-08-11 and ready to push. That is
+`Debate depth complete`, and it is **not** the same claim as `Global M14 G2 complete`. **Global M14 G2
+remains OPEN** because all four DECA areas are still at 9. Do not record G2 as complete or closed.
 
 | Bank | Total | Per-area |
 |---|---|---|

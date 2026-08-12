@@ -4,23 +4,51 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M14 Global G2 Slice 6 / DECA Slice 2: BR 9→30 (2026-08-12)
 
-### ⚠ Slice 6: AI-assisted content awaiting human review — DO NOT PUSH YET
+### Slice 6: content is human-reviewed and APPROVED — clear to push
 
 `lib/deca-drills.ts` gained 21 business-reasoning questions (`br-10`…`br-30`), taking BR 9→30 and the
-DECA bank 57→78. **These items were AI-drafted and have NOT been reviewed by a human.** A source
-comment above `br-10` carries that label. **Do not push the `feat(deca): expand business reasoning
-drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+DECA bank 57→78. The items were AI-authored, and on **2026-08-12 the repository owner personally read
+all 21 in the FINAL checklist and approved them** — answer defensibility, fact sufficiency, absence of
+hidden business assumptions, distractor quality, wording, BR curriculum fit, the BR/PI, BR/CR and
+BR/MK boundaries, cost, feasibility, risk/tradeoff and measurement reasoning, numeric accuracy, legacy
+and new-item overlap, B-8 score-claim honesty, D7 labeling honesty, universal-rule and
+unsupported-framework safety, and copyright/provenance.
+
+**The approved content is implementation commit `40a473b` PLUS content-refinement commit `7fd6798`.**
+**The Slice 6 push gate is lifted.**
+
+**`br-16` was refined before approval.** Its original stem omitted the new-system go-live timing needed
+to separate before-peak from after-peak training, so **both** readings avoided pulling staff during the
+peak and the keyed answer rested on an unstated fact. The final stem states that the till system **goes
+live just before the peak**, which makes training beforehand uniquely defensible and makes the
+after-June option wrong on **timing** rather than merely weakly argued. **Keep every BR scenario's
+deciding facts in the stem.**
+
+**Three items were explicitly human-reviewed and APPROVED WITHOUT REWRITE**, recorded so a later
+reader does not reopen them: **`br-19`** as an L10 operational-dependency case (the order comes from
+supplied dependencies; no sequencing framework is invented) · **`br-27`** despite conceptual adjacency
+to legacy `br-03`, because constructing a measurement answer and interpreting an isolated number are
+different learner decisions · **`br-29`** with its learner-facing D7 disclaimer intact, which is
+accurate, correctly placed and does not obscure the business reasoning.
 
 **Slice 5 (PI) is deployed and human-reviewed** at `a6dfc86` (deployment `5863473555`, `Production`,
 `success`), so performance-indicators was approved and live before this slice began.
 
+Two things to keep straight, as for every slice so far:
+
+- **The approval is the human reading, nothing else.** The Claude/AI pre-screen was the authoring
+  model checking its own output; it constituted neither the review nor independent verification.
+- **The AI-authoring label stays in the source permanently.** Approval changed the review status, not
+  the provenance.
+
 | Bank | Total | Per-area |
 |---|---|---|
 | `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — **depth COMPLETE, deployed, reviewed** |
-| `lib/deca-drills.ts` | **78** | pi 30 (deployed, reviewed) · **br 30 (review outstanding)** · cr 9 · mk 9 |
+| `lib/deca-drills.ts` | **78** | pi 30 (deployed, reviewed) · **br 30 (human-reviewed and approved 2026-08-12)** · cr 9 · mk 9 |
 | `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
 
-**Deficit 42** (was 63): DECA cr/mk, 2 × 21. Corpus 357 → **378** locally; target **420**.
+**Deficit 42** (was 63): **customer-relations 21 + marketing-fundamentals 21**, and nothing else.
+Corpus 357 → **378** locally; target **420**.
 
 **Three distinctions, none of which this slice closes:** **`PI depth complete` is NOT `DECA depth
 complete`** · **`PI + BR depth complete` is NOT `DECA depth complete`** — customer-relations and

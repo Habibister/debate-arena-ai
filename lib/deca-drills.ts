@@ -166,8 +166,30 @@ export const DECA_DRILL_BANK: DecaDrillQuestion[] = [
   // introduced that project source does not support — no fixed vs variable cost, no opportunity cost,
   // no leading vs lagging metrics, no stakeholder or resource-allocation framework, and br-19 works
   // out an order from stated dependencies rather than naming a sequencing method.
-  // AI-ASSISTED authoring (M14 Global G2 Slice 6 / DECA Slice 2, br-10..br-30) — HUMAN CONTENT REVIEW
-  // OUTSTANDING. See docs/HANDOFF.md. AI self-review does NOT count as human review.
+  // AI-ASSISTED authoring (M14 Global G2 Slice 6 / DECA Slice 2, br-10..br-30), HUMAN-REVIEWED AND
+  // APPROVED 2026-08-12: the repository owner personally read all 21 items in the FINAL checklist and
+  // approved answer defensibility, fact sufficiency, absence of hidden business assumptions,
+  // distractor quality, wording, BR curriculum fit, the BR/performance-indicators,
+  // BR/customer-relations and BR/marketing-fundamentals boundaries, cost, feasibility, risk/tradeoff
+  // and measurement reasoning, numeric accuracy, legacy and new-item overlap, B-8 score-claim
+  // honesty, D7 labeling honesty, universal-rule and unsupported-framework safety, and
+  // copyright/provenance.
+  // The approved content is implementation commit 40a473b132e6f354a37c78c6b4b297eeda5e7219 PLUS
+  // content-refinement commit 7fd67988830bb5517ae9995a753d332c0564e5af.
+  // br-16 was REFINED before approval: its original stem omitted the new-system go-live timing needed
+  // to separate before-peak from after-peak training, so both readings avoided pulling staff during
+  // the peak and the keyed answer rested on an unstated fact. The final stem states that the till
+  // system goes live just before the peak, which makes training beforehand uniquely defensible and
+  // makes the after-June option wrong on timing rather than merely weakly argued.
+  // Three items were explicitly human-reviewed and APPROVED WITHOUT REWRITE: br-19 as an L10
+  // operational-dependency boundary case (order derived from supplied dependencies, no sequencing
+  // framework invented); br-27 despite conceptual adjacency to legacy br-03, because constructing a
+  // measurement answer and interpreting an isolated number are different learner decisions; and
+  // br-29 with its learner-facing D7 disclaimer intact, which is accurate, correctly placed and does
+  // not obscure the business reasoning.
+  // Approval rests on that personal human review. Claude/AI pre-screening did NOT constitute human
+  // review or independent verification, and AI self-review never counts as human approval.
+  // See docs/HANDOFF.md.
   { id: "br-10", area: "business-reasoning", question: "A cafe closes at 4pm. Staff are already scheduled and paid until 6pm, and the manager logs 30 to 40 people a week asking about evening hours. Which reason best explains how staying open until 7pm would affect revenue?", choices: ["It sells to demand that is already turning up and asking, during hours the cafe is largely paying for anyway", "Longer hours make the cafe look more professional", "Competitors in the area also stay open later", "Evening customers usually spend more than morning customers"], correctAnswer: "It sells to demand that is already turning up and asking, during hours the cafe is largely paying for anyway", explanation: "The revenue case rests on the two facts given: demand that already shows up asking, and staffing the cafe is paying for until 6pm regardless. Appearance and what competitors do are not revenue reasons, and nothing here says evening customers spend more — that would be an assumption rather than a because." },
   { id: "br-11", area: "business-reasoning", question: "A print shop pays an $85 rush-delivery surcharge on about 12 orders a month, because client artwork arrives too late to schedule normally. Which reason best supports requiring artwork three business days ahead?", choices: ["It removes the cause of a surcharge currently costing about $1,020 a month", "It makes the shop's process look more organized", "Clients generally prefer having clear deadlines", "It would let the shop raise its prices"], correctAnswer: "It removes the cause of a surcharge currently costing about $1,020 a month", explanation: "The cost case is concrete: 12 orders at $85 is roughly $1,020 a month, and late artwork is what triggers every one of them. Tidiness and client preference are not cost reasons, and raising prices is a different decision these facts do not support." },
   { id: "br-12", area: "business-reasoning", question: "At a gym, 40% of all cancellations happen in a member's first 90 days, and members who get past 90 days stay about two more years on average. Which reason best supports adding a coached check-in at day 30?", choices: ["It targets the window where most cancellations happen, and clearing that window is worth about two more years of membership", "Members enjoy getting attention from staff", "Check-ins are common practice at gyms", "It gives staff something to do during quiet hours"], correctAnswer: "It targets the window where most cancellations happen, and clearing that window is worth about two more years of membership", explanation: "Both numbers do the work: cancellation risk is concentrated early, and getting past it is worth a long tail of membership. Enjoyment, industry habit and staff scheduling are not retention reasons — and note this is the business case for the check-in, not advice on what to say during one." },

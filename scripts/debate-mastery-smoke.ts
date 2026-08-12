@@ -131,7 +131,7 @@ const byArea = (area: DrillArea) => DRILL_BANK.filter((q) => q.area === area);
 const DEBATE_AREA_DEPTH: Record<DrillArea, number> = {
   "claim-warrant-impact": 30,   // M14 Global G2 Slice 2
   "rebuttal": 30,   // M14 Global G2 Slice 1
-  "evidence-evaluation": 9,
+  "evidence-evaluation": 30,   // M14 Global G2 Slice 3
   "weighing": 9
 };
 const right = (q: { correctAnswer: string }) => q.correctAnswer;
@@ -787,11 +787,24 @@ async function main() {
   const cwiOverdrawn = buildDrillSession(OVERDRAW, ["claim-warrant-impact"]);
   control("and CWI still pads above its pool: 40 served over exactly 30 distinct",
     cwiOverdrawn.length === OVERDRAW && new Set(cwiOverdrawn.map((q) => q.id)).size === 30);
-  // Non-vacuous: a still-unexpanded area DOES still pad at 20, so the two results above are a real
-  // depth change rather than a property of the builder.
+  // Slice 3: the same G2 depth proof for evidence-evaluation. Builder-level and read-only — no
+  // mastery record is created or altered, and no evidenceScore fixture is fabricated for evidence.
+  const evFocused20 = buildDrillSession(20, ["evidence-evaluation"]);
+  control("a 20-question focused evidence session now serves 20 DISTINCT items — no padding",
+    evFocused20.length === 20 && new Set(evFocused20.map((q) => q.id)).size === 20);
+  const evOverdrawn = buildDrillSession(OVERDRAW, ["evidence-evaluation"]);
+  control("and evidence-evaluation still pads above its pool: 40 served over exactly 30 distinct",
+    evOverdrawn.length === OVERDRAW && new Set(evOverdrawn.map((q) => q.id)).size === 30);
+  // Non-vacuous: a still-unexpanded area DOES still pad, so the results above are a real depth change
+  // rather than a property of the builder. WEIGHING is now the LAST shallow Debate area — Slice 4
+  // takes it to 30, so this control must then re-base on a request exceeding a 30-item pool rather
+  // than moving to another area. Do not delete it.
   const unexpanded20 = buildDrillSession(20, ["weighing"]);
-  control("control: a still-9-item Debate area (weighing) still serves 20 over only 9 distinct",
+  control("control: the last still-9-item Debate area (weighing) still serves 20 over only 9 distinct",
     unexpanded20.length === 20 && new Set(unexpanded20.map((q) => q.id)).size === 9);
+  const unexpanded40 = buildDrillSession(OVERDRAW, ["weighing"]);
+  control("control: and 40 requested on that 9-item area still yields only 9 distinct",
+    unexpanded40.length === OVERDRAW && new Set(unexpanded40.map((q) => q.id)).size === 9);
 
   console.log(
     `Debate-mastery smoke passed: General Debate drill progress is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to the question's own bank area — and needs ${DEBATE_DRILL_REQUIRED_UNIQUE} distinct questions before anything is written. All three live fake-mastery paths are closed: one correct question scored 100%/MASTERED and now records nothing; the duplicate bypass scored 76% and now scores 20%; and the honest six-of-nine learner whom the drill's OWN padding pushed to 85%/MASTERED now scores exactly 67 and does not pass (that fixture is pinned to the legacy nine rb-01..rb-09, so it survives the bank growing). Four distinct all-correct questions still record nothing. Repeats, conflicting resubmits and unknown ids cannot raise evidence, and below the floor the persistence helper is not called at all, so no mastery, no review and no due-review knock-down can follow. The boolean recordDrillMastery contract is unchanged and lib/spaced-review.ts is untouched; a false result renders as "Progress not saved", never as an unseeded skill, and nothing claims a review was scheduled. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`

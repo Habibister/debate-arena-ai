@@ -2,7 +2,53 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 2 — Debate claim-warrant-impact 9→30, human-reviewed and approved, local only)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 3 — Debate evidence-evaluation 9→30, local only, human content review outstanding)_
+
+## M14 Global G2 Slice 3 — Debate evidence-evaluation is 30 deep, in local code only
+
+**Slices 1 and 2 are deployed and human-reviewed** (`46ab46b`, deployment `5861389721`, `Production`,
+`success`), so rebuttal and CWI were already approved and live before this slice began.
+
+Slice 3 expands **one** area: **evidence-evaluation 9 → 30** (`ev-10`…`ev-30`, +21). Debate **78 → 99**.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **99** | claim-warrant-impact 30 · rebuttal 30 · **evidence-evaluation 30** · weighing 9 |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**⚠ The 21 new evidence items are AI-ASSISTED DRAFT CONTENT and have NOT received human content
+review.** The bank carries that label above `ev-10`. **Do not push this commit until a human has
+reviewed `ev-10`…`ev-30`.** AI self-review does not count.
+
+- **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
+  session-protocol, XP or mastery change.
+- **Inserted inside the evidence block**, after `ev-09` and before `// --- Weighing ---`. `ev-09`
+  already carried its comma, so **no legacy punctuation changed**; `wg-09` is still the final array
+  element and the terminal-comma append boundary is again **not** exercised.
+- **Scope came from Module 2 lessons 11, 12 and 14 only** — finding and judging a source, evidence
+  quality and source credibility (explicitly **TIER-2 heuristics**, never stated as rules), and
+  correlation vs causation. **Lesson 13, the official citation-rules layer, was deliberately excluded
+  from AI-authored content** — official rules must be sourced, not guessed.
+- **Three areas are now authorized:** `EXPANDED_AREAS` is `["rebuttal", "claim-warrant-impact",
+  "evidence-evaluation"]`. **`wg-10` is still rejected as `unauthorised`**, with the companion counts
+  moved to 3 authorized / **1** unauthorized so neither loop can go vacuous.
+- **`G0-7b` is now a 63-id guarantee** — additions must be exactly `rb-10`…`rb-30`, `cw-10`…`cw-30`
+  and `ev-10`…`ev-30`, each declaring its slice's area, each passing the shared predicate, with zero
+  `wg-*` additions. `SLICE_ADDITIONS` grew by exactly one row.
+- **The shallow-area non-vacuity control MOVED from evidence-evaluation to weighing** — it was
+  asserting 20 served / 9 distinct on evidence, which Slice 3 invalidates. It was moved, not deleted,
+  and now has an overdraw partner (40 served / 9 distinct). **Weighing is now the LAST shallow Debate
+  area: Slice 4 takes it to 30, so that control cannot move again — it must then re-base on a request
+  exceeding a 30-item pool, exactly as HOSA's `11g` did at Phase 2f.**
+- **No legacy evidence fixture needed re-basing** — none depended on a 9-item evidence pool.
+- **The observable G2 effect:** a focused 20-question evidence session now serves **20 distinct** items
+  with no padding, and the padding branch is still proven at **40 served / exactly 30 distinct**.
+
+**Global M14 G2 remains OPEN.** Deficit **126 → 105**: Debate weighing (1 × 21) plus all four DECA
+areas (4 × 21). Corpus 294 → **315** locally; final target **420**.
+
+**Local commit only — not pushed, not deployed. No database operation.**
 
 ## M14 Global G2 Slice 2 — Debate claim-warrant-impact is 30 deep, human-reviewed, local only
 
@@ -770,7 +816,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
 | M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 2 completes CWI depth and human review; **global G2 remains open because Debate evidence-evaluation/weighing and all four DECA areas remain below the ≥30 target.** Deficit **126** (2 × 21 Debate + 4 × 21 DECA). **The next Debate G2 depth work remains outstanding.** |
+| **G2 (audit finding) — overall** | **STILL OPEN.** Slice 3 completes evidence-evaluation depth (review outstanding); **global G2 remains open because Debate weighing and all four DECA areas remain below the ≥30 target.** Deficit **105** (1 × 21 Debate + 4 × 21 DECA). **The next G2 depth work remains outstanding.** |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 

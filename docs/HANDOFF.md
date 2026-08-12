@@ -2,6 +2,64 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
+## Latest handoff — M14 Global G2 Slice 3: Debate evidence 9→30 (2026-08-12)
+
+### ⚠ Slice 3: AI-assisted content awaiting human review — DO NOT PUSH YET
+
+`lib/debate-drills.ts` gained 21 evidence-evaluation questions (`ev-10`…`ev-30`), taking evidence 9→30
+and the Debate bank 78→99. **These items were AI-drafted and have NOT been reviewed by a human.** A
+source comment above `ev-10` carries that label. **Do not push the `feat(debate): expand evidence
+evaluation drill bank` commit until someone reviews those 21 items.** AI self-review does not count.
+
+Slices 1 and 2 are deployed and human-reviewed (`46ab46b`).
+
+### Where G2 stands
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | **99** | cw 30 · rb 30 · **ev 30** · wg 9 |
+| `lib/deca-drills.ts` | 36 | four areas × 9 — untouched |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Deficit 105** (was 126): Debate weighing 1 × 21, DECA 4 × 21. Corpus 294 → **315** locally; target
+**420**. **Global M14 G2 remains OPEN — do not record it as complete or closed.**
+
+### ⚠ WEIGHING IS NOW THE LAST SHALLOW DEBATE AREA — READ BEFORE SLICE 4
+
+The shallow-area non-vacuity control (both suites) proves a still-9-item area gives 20 served / 9
+distinct and 40 served / 9 distinct. It has now moved twice: evidence-evaluation → **weighing**.
+**Slice 4 takes weighing to 30, so it cannot move a third time** — no shallow Debate area will remain.
+It must then **re-base on a request that exceeds a 30-item pool**, exactly as HOSA's `11g` did at
+Phase 2f. **Do not delete it; the padding branch must stay proven.** Slice 4 is also the slice that
+finally appends after `wg-09`, so expect the **one-character trailing-comma change** there and let
+`G0-C1b`/`G0-C1c` do their job.
+
+### What Slice 3 changed — do not undo any of it
+
+- **Insertion point.** Items sit INSIDE the evidence block, after `ev-09`, before `// --- Weighing ---`.
+  `ev-09` already carried its comma. `wg-09` is still final and byte-identical.
+- **Curriculum scope was deliberately narrowed.** Lessons 11, 12 and 14 only. **Lesson 13 — the
+  official citation/paraphrase/penalty layer — was excluded from AI authoring** because official rules
+  must be sourced. Lesson 12 is TIER-2 heuristic material, so no item states a credibility heuristic as
+  a rule. **Keep that exclusion for any future evidence slice.**
+- **Three areas authorized.** `EXPANDED_AREAS = ["rebuttal", "claim-warrant-impact",
+  "evidence-evaluation"]`. `G0-C2b2` 2 → 3 and `G0-C6b` 2 → 1, both exact.
+- **`G0-7b` is a 63-id exact set**, still driven by `SLICE_ADDITIONS` — one new row, forbidden-prefix
+  set narrowed to `["wg"]`. Never relax it into "any recognised prefix above 09".
+- **No evidence fixture was re-based, because none needed it.** Every `% 9` / `slice(0, 9)` in the repo
+  remains rebuttal-pinned or synthetic. No evidence evidenceScore was invented.
+- **Guardrails held in the content:** a biased source is not automatically false (`ev-17`/`ev-18`/`ev-19`),
+  a bigger sample is not automatically better (`ev-22`), newer is not automatically better
+  (`ev-20`/`ev-21`), prestige is not expertise (`ev-14`/`ev-15`), anecdote and self-report are weak for
+  broad claims rather than useless (`ev-16`/`ev-26`). `ev-25` is design-oriented confounding, kept
+  distinct from `ev-04`, `cw-14` and `rb-18`.
+
+### Runtime, untouched
+
+`skillSlug: "debate-evidence"`, `DEBATE_DRILL_REQUIRED_UNIQUE = 5`, pass threshold 70,
+`recordDrillMasteryInTransaction`, replay protection, session expiry, first-answer-per-distinct-id and
+the XP prohibition are all unchanged. No schema, migration, seed, route, validator or client change.
+
 ## Latest handoff — M14 Global G2 Slice 2: Debate CWI 9→30 (2026-08-12)
 
 ### Slice 2: content is human-reviewed and APPROVED — clear to push

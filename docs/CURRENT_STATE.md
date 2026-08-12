@@ -2,7 +2,88 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations 9→30, **HUMAN-REVIEWED AND APPROVED 2026-08-12, PUSHED AND PRODUCTION-VERIFIED** — deployment `5874440794`, `Production`, `success`, from `d877d2ed`.)_
+_Last updated: 2026-08-12 (M14 Global G2 Slice 8 / DECA Slice 4 — DECA marketing-fundamentals 9→30, **LOCAL COMMIT ONLY — HUMAN CONTENT REVIEW OUTSTANDING — NOT PUSHED, NOT DEPLOYED**. Slice 7 remains deployed and Production-verified at `5874440794`.)_
+
+## M14 Global G2 Slice 8 / DECA Slice 4 — DECA marketing-fundamentals 9 → 30 (LOCAL ONLY)
+
+**Status: `LOCAL IMPLEMENTATION COMPLETE — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH`.**
+
+One local commit on `main`. **Not pushed, not deployed, no database operation performed.** The 21 new
+marketing-fundamentals questions carry an **AI-ASSISTED authoring** label in the source and are
+**NOT approved**. AI self-review does NOT count as human review, and neither does review by another
+AI system. Human content review is required before this slice is pushed.
+
+Slice 8 expands **one** DECA area: **marketing-fundamentals 9 → 30** (`mk-10`…`mk-30`, +21).
+DECA **99 → 120**.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
+| `lib/deca-drills.ts` | **120** | pi 30 · br 30 · cr 30 (all deployed, reviewed) · **mk 30 (review OUTSTANDING)** |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+- **Source of truth: the approved MK1–MK6 lessons** in `docs/curriculum/02-deca-course.md`, deployed
+  and human-reviewed at `8cb181e` (deployment `5864802348`). **That curriculum file is byte-unchanged
+  by this slice and ⟨BC-5⟩ is NOT reopened.**
+- **Coverage:** MK1 `mk-10`–`mk-13` · MK2 `mk-14`–`mk-16` · MK3 `mk-17`–`mk-19` · MK4 `mk-20`–`mk-23` ·
+  MK5 `mk-24`–`mk-26` · MK6 `mk-27`–`mk-30`. All six lessons represented, max 4 per lesson,
+  **zero definition-recall items** — all nine legacy MK items are definition recall, so these 21 carry
+  the application depth.
+- **Every key combines at least TWO facts printed in its own stem, and every distractor is defeated by
+  a printed fact, never by a general claim about how marketing works.** This is the rule the slice was
+  authored and audited against; any future MK item must satisfy it.
+- **The MK/BR boundary is held explicitly.** No key turns on profitability, ROI, cost per acquisition,
+  budget efficiency or campaign measurement — those stay with business-reasoning and appear only as
+  keyed-**wrong** traps in `mk-16`, `mk-22` and `mk-29`. `mk-22` is the deliberate boundary item: the
+  stem prints the competitor price, the own price and the build cost, the key holds position at the
+  printed own price, and the margin-maximising option is keyed wrong. `mk-29` carries the relocated
+  `mk-08` CPA/promotion-efficiency debt as a wrong action-level option — **recorded, not reinforced**.
+- **No item is a customer-relations interaction**, and MK1 targeting uses purchase context and product
+  use only — never sensitive or protected characteristics.
+- **Per-item form-leak audit ran BEFORE review, not the slice average after it** (the Slice 7 lesson).
+  First pass flagged **11 of 21**; final state is **0 of 21**. Key longest 7/21 · shortest 5/21 ·
+  neither 9/21; mean key/distractor length ratio 0.93, median 0.94, max 1.10, min 0.38.
+- **Grounding audit found and fixed one real defect**: `mk-17`'s key claimed both sides of the page
+  stay usable, which only *followed* from the stem — the stem now states it. Six other probe flags
+  were verified as probe false positives and are recorded as such rather than "fixed".
+
+### The `mk-09` append boundary — the one legacy byte that changed, and why it is safe
+
+`mk-09` was the **final element** of `DECA_DRILL_BANK` and carried **no terminal comma**. Slice 8 is
+the first slice to append after it, so `mk-09` gained **exactly one comma and nothing else**. This is
+the boundary the Slice 0 normaliser (`.trim().replace(/,$/, "")`, anchored and non-global, applied to
+both sides) was written for, finally exercised. Controls `G0-C1e`…`G0-C1e6` prove the raw lines
+differ, the normalised content is identical, and exactly one comma was added. **`mk-01`…`mk-08` and
+all 90 pi/br/cr items are byte-identical.** The immutable pin `PRE_G2_EXPANSION` is unchanged and
+still absolute — no HEAD-relative pin was introduced.
+
+### Controls that went empty by design were RE-BASED, never deleted
+
+- **`FORBIDDEN_PREFIXES` is now empty** — every DECA prefix is authorised. It is replaced, not
+  dropped: `G0-7b4b` asserts zero **by design** and points at the replacement, `G0-7b4b2` ties
+  `PREFIX_AREA.length` to `SLICE_ADDITIONS.length`, and the unauthorised-area proof moves to a
+  **test-only withheld-authority probe** (`G0-C6b` zero-unauthorised-by-design · `G0-C6c0` the
+  withheld set really removed one · `G0-C6c` the withheld area is rejected · `G0-C6c2` the *identical*
+  literal passes under production authority, isolating authority as the cause · `G0-C6d` the
+  four-area set is real). **No real area was authorised to make a control pass.**
+- **The shallow control re-based in BOTH suites.** It was a still-9-item area proving 20/9 and 40/9;
+  MK was its last home. It now proves **padding activates ONLY above the pool**: 30 requested serves
+  30 distinct for every area, 40 requested serves 40 over exactly 30 distinct, `OVERDRAW > 30` is
+  asserted so the comparison is not vacuous, and **zero DECA areas remain at 9 BY DESIGN**.
+- `G0-7b4c`'s out-of-set probe moved `mk-10` → `mk-31` (`mk-10` is now legitimate), matching the
+  `cr-10` → `cr-31` move at Slice 7. `G0-7b4d`'s in-set list gained `mk-10` and `mk-30`.
+
+### Verification actually run
+
+`db:generate` · `tsc --noEmit` · `lint` · `build` — all pass. **All 29 safe smoke suites pass**,
+including `deca-drills:smoke` (21 controls, each demonstrating the failure it exists to demonstrate)
+and `deca-mastery:smoke`. **Never run here:** `auth:smoke`, `team:smoke`, `assignment:smoke`,
+`deca:skills:activate` — all write-capable. **No DB write, no push, no deploy.**
+
+**DECA is locally 30 / 30 / 30 / 30 = 120. Corpus 399 → 420 locally. Remaining G2 bank-count deficit
+0.** **Global M14 G2 is NOT complete and NOT closed** — the final slice's 21 questions are unreviewed
+and unpushed, and a bank-count deficit of zero is not a completed milestone. `DECA depth complete` is
+NOT `DECA complete`, and it is NOT `Global M14 G2 complete`.
 
 ## M14 Global G2 Slice 7 / DECA Slice 3 — DECA customer-relations is 30 deep, human-reviewed, deployed
 

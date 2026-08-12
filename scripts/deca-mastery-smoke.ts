@@ -800,7 +800,7 @@ async function main() {
     "performance-indicators": 30,   // M14 Global G2 Slice 5 / DECA Slice 1
     "business-reasoning": 30,   // M14 Global G2 Slice 6 / DECA Slice 2
     "customer-relations": 30,   // M14 Global G2 Slice 7 / DECA Slice 3
-    "marketing-fundamentals": 9
+    "marketing-fundamentals": 30   // M14 Global G2 Slice 8 / DECA Slice 4
   };
   for (const [area, depth] of Object.entries(DECA_AREA_DEPTH)) {
     assert.equal(DECA_DRILL_BANK.filter((q) => q.area === area).length, depth,
@@ -839,20 +839,26 @@ async function main() {
   const crOverdrawn = buildDecaDrillSession(OVERDRAW, ["customer-relations"]);
   control("and customer-relations still pads above its pool: 40 served over exactly 30 distinct",
     crOverdrawn.length === OVERDRAW && new Set(crOverdrawn.map((q) => q.id)).size === 30);
-  // Non-vacuous: a still-9-item area DOES still pad, so the results above are a real depth change
-  // rather than a property of the builder. MOVED business-reasoning -> MARKETING-FUNDAMENTALS at
-  // Slice 6. MK was chosen over customer-relations on purpose: Slice 7 was expected to expand CR, so
-  // parking the control there would have forced a second move one slice later. That played out — CR
-  // reached 30 at Slice 7 and this control did NOT move, so it has moved exactly ONCE. MK is now the
-  // ONLY shallow DECA area, so Slice 8 must re-base it onto a >30 overdraw.
-  const shallow20 = buildDecaDrillSession(20, ["marketing-fundamentals"]);
-  control("control: the still-9-item marketing-fundamentals area serves 20 over only 9 distinct",
-    shallow20.length === 20 && new Set(shallow20.map((q) => q.id)).size === 9);
-  const shallow40 = buildDecaDrillSession(OVERDRAW, ["marketing-fundamentals"]);
-  control("control: and 40 requested on that 9-item area still yields only 9 distinct",
-    shallow40.length === OVERDRAW && new Set(shallow40.map((q) => q.id)).size === 9);
-  control("control: exactly ONE DECA area remains at 9, so Slice 8 must re-base this shallow control onto >30 logic",
-    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 1);
+  // Slice 8: the same depth proof for marketing-fundamentals, the fourth and final DECA area to reach 30.
+  const mkFocused20 = buildDecaDrillSession(20, ["marketing-fundamentals"]);
+  control("a 20-question focused marketing-fundamentals session now serves 20 DISTINCT items — no padding",
+    mkFocused20.length === 20 && new Set(mkFocused20.map((q) => q.id)).size === 20);
+  const mkOverdrawn = buildDecaDrillSession(OVERDRAW, ["marketing-fundamentals"]);
+  control("and marketing-fundamentals still pads above its pool: 40 served over exactly 30 distinct",
+    mkOverdrawn.length === OVERDRAW && new Set(mkOverdrawn.map((q) => q.id)).size === 30);
+  // RE-BASED at Slice 8. The old control was a still-9-item area that DID pad, parked on MK. Slice 8
+  // expands MK, so no shallow DECA area remains and it is re-based rather than deleted: what it proves
+  // now is that padding activates ONLY above the pool, which is what the 40 -> 30 results depend on.
+  for (const area of Object.keys(DECA_AREA_DEPTH)) {
+    const atPool = buildDecaDrillSession(30, [area as never]);
+    control(`control: ${area} serves 30 over 30 DISTINCT at pool size — the padding branch is OFF there`,
+      atPool.length === 30 && new Set(atPool.map((q) => q.id)).size === 30);
+  }
+  control("control: the overdraw request really exceeds every pool, so the padding comparison is not vacuous",
+    OVERDRAW > 30);
+  control("control: ZERO DECA areas remain at 9 BY DESIGN — every area is exactly 30 and the shallow control is re-based, not deleted",
+    Object.values(DECA_AREA_DEPTH).filter((d) => d === 9).length === 0 &&
+      Object.values(DECA_AREA_DEPTH).every((d) => d === 30));
   // The PI fixtures above index PI.slice(0, n<=5), PI[0] and PI[5]. Additions append after pi-09, so
   // the legacy nine are still the first nine — assert that rather than assume it.
   assert.deepEqual(DECA_DRILL_BANK.filter((q) => q.area === "performance-indicators").map((q) => q.id).slice(0, 9),

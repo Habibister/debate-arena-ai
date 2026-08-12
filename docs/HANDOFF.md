@@ -2,7 +2,110 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M14 Global G2 Slice 7 / DECA Slice 3: CR 9→30 (2026-08-12)
+## Latest handoff — M14 Global G2 Slice 8 / DECA Slice 4: MK 9→30 (2026-08-12)
+
+### Status: LOCAL COMMIT ONLY — DO NOT PUSH
+
+**`LOCAL IMPLEMENTATION COMPLETE — HUMAN CONTENT REVIEW OUTSTANDING — DO NOT PUSH`.** One local commit
+on `main`. **Not pushed. Not deployed. No database operation performed.** The push gate is
+`CLAUDE.md:56` / `CLAUDE.md:79` plus the standing rule that **human content review is required before
+each of the eight content slices is pushed** — see `docs/CURRENT_STATE.md`.
+
+The 21 new questions carry an **AI-ASSISTED authoring** label in `lib/deca-drills.ts` and are **NOT
+approved**. **AI self-review does NOT count as human review, and neither does review by another AI
+system.** Do not remove or weaken that label until a real human has reviewed the final shipping
+content — the Slice 7 precedent is an external human reviewer who read all 21 items themselves.
+
+`lib/deca-drills.ts` gained 21 marketing-fundamentals questions (`mk-10`…`mk-30`), taking MK 9→30 and
+the DECA bank 99→120.
+
+| Bank | Total | Per-area |
+|---|---|---|
+| `lib/debate-drills.ts` | 120 | cw 30 · rb 30 · ev 30 · wg 30 — depth COMPLETE, deployed, reviewed |
+| `lib/deca-drills.ts` | **120** | pi 30 · br 30 · cr 30 (all deployed, reviewed) · **mk 30 (review OUTSTANDING)** |
+| `lib/hosa-medterm.ts` | 180 | six areas × 30 — untouched |
+
+**Bank-count deficit 21 → 0.** Corpus 399 → **420** locally; target 420. **This does NOT close G2** —
+see "What is still open" below.
+
+### The content rule that governs MK quality — keep it
+
+**Every key combines at least TWO facts printed in its own stem, and every distractor is defeated by a
+printed fact, never by a general claim about how marketing works.** That is the rule these 21 were
+authored and audited against, and it is the direct descendant of Slice 7's ⟨BC-3⟩ / F-8 rule. Any
+future MK item must satisfy it.
+
+**The MK/BR boundary is held explicitly and must stay held.** No key turns on profitability, ROI, cost
+per acquisition, budget efficiency or campaign measurement — those belong to business-reasoning and
+appear only as keyed-**wrong** traps in `mk-16`, `mk-22` and `mk-29`. `mk-22` is the deliberate
+boundary item (competitor price, own price and build cost all printed; key holds at the printed own
+price; the margin-maximising option is keyed wrong) and it deliberately does **not** rely on the
+general idea that copying a competitor's price adopts their position. `mk-29` carries the relocated
+`mk-08` CPA/promotion-efficiency debt as a wrong action-level option — **recorded, not reinforced**.
+No item is a customer-relations interaction. MK1 targeting uses purchase context and product use only,
+never sensitive or protected characteristics.
+
+### What the audits actually found — do not re-derive this
+
+- **Per-item form leak: 11 of 21 on the first pass → 0 of 21 final.** The per-item check ran **before**
+  review, not the slice average after it — that is exactly the Slice 7 lesson, applied. Final spread:
+  key longest 7/21 · shortest 5/21 · neither 9/21; mean ratio 0.93, median 0.94, max 1.10, min 0.38.
+  Do not "improve" this toward keys being uniformly short — that is an inverse tell, and Slice 7
+  overcorrected into one before restoring balance.
+- **Grounding audit: one real defect.** `mk-17`'s key claimed both sides of every page stay usable,
+  which only *followed* from the stem rather than being stated in it; the stem now states it. **Six
+  other flags were verified as false positives of my own probe** and are recorded as such — they were
+  not "fixed", because there was nothing wrong with them.
+
+### The `mk-09` boundary — the single legacy byte that changed
+
+`mk-09` was the **final array element** and carried **no terminal comma**. Slice 8 is the first slice
+to append after it, so it gained **exactly one comma and nothing else**. This finally exercises the
+boundary the Slice 0 normaliser (`.trim().replace(/,$/, "")` — anchored, non-global, applied to both
+sides) was written for. `G0-C1e`…`G0-C1e6` prove the raw lines differ, the normalised content is
+identical, and exactly one comma was added. **`mk-01`…`mk-08` and all 90 pi/br/cr items are
+byte-identical**, order is preserved, nothing was removed, and the immutable `PRE_G2_EXPANSION` pin is
+unchanged — **no HEAD-relative pin exists anywhere.**
+
+### Controls that went empty were RE-BASED, never deleted — do not undo this
+
+- **`FORBIDDEN_PREFIXES` is now empty** because every DECA prefix is authorised. It was **replaced**:
+  `G0-7b4b` asserts zero **by design** and names its replacement, `G0-7b4b2` ties `PREFIX_AREA.length`
+  to `SLICE_ADDITIONS.length`, and the unauthorised-area proof moved to a **test-only withheld-authority
+  probe** — `G0-C6b` (zero unauthorised by design) · `G0-C6c0` (the withheld set really removed one) ·
+  `G0-C6c` (the withheld area is rejected) · `G0-C6c2` (the *identical* literal passes under production
+  authority, isolating authority as the cause) · `G0-C6d` (the four-area set is real). **No real area
+  was authorised in order to make a control pass.** This is the Debate Slice 4 pattern.
+- **The shallow control re-based in BOTH suites** (`deca-drills-smoke.ts` and `deca-mastery-smoke.ts`).
+  It used to be a still-9-item area proving 20/9 and 40/9, parked on MK since Slice 6 — it has now
+  moved exactly once and re-based, per the HOSA `11g` precedent. It now proves **padding activates ONLY
+  above the pool**: 30 requested → 30 distinct for every area · 40 requested → 40 served over exactly
+  30 distinct · `OVERDRAW > 30` asserted so the comparison is not vacuous · **zero DECA areas remain at
+  9 BY DESIGN** and all four are exactly 30. The mastery suite's duplicate-resistance controls
+  (first-answer-per-distinct-id, no mastery from repeats) are untouched and still pass.
+- `G0-7b4c`'s out-of-set probe moved `mk-10` → `mk-31`, matching Slice 7's `cr-10` → `cr-31`.
+  `G0-7b4d`'s in-set list gained `mk-10` and `mk-30`.
+
+### Verification actually run
+
+`db:generate` · `npx tsc --noEmit` · `lint` · `npm run build` — all pass. **All 29 safe smoke suites
+pass.** **Never run here, and never run without explicit approval:** `auth:smoke`, `team:smoke`,
+`assignment:smoke`, `deca:skills:activate` — all write-capable against the shared production database.
+**No DB write. No push. No deploy. No history rewrite.** Exactly three code paths changed:
+`lib/deca-drills.ts`, `scripts/deca-drills-smoke.ts`, `scripts/deca-mastery-smoke.ts`, plus these two
+docs. `docs/curriculum/02-deca-course.md` is byte-unchanged and ⟨BC-5⟩ is **not** reopened.
+
+### What is still open — read this before claiming anything is finished
+
+1. **Human content review of `mk-10`…`mk-30` at the final shipping content.** Nothing else blocks the
+   push, and the push itself is a manual human action.
+2. **Then, and only then:** record the approval truthfully (naming who reviewed and what they read),
+   commit the provenance change, human pushes in GitHub Desktop, read-only Production verification.
+3. **`Bank-count deficit 0` is NOT `Global M14 G2 complete`.** G2 remains **OPEN**: the final slice is
+   unreviewed and unpushed. `DECA depth complete` is not `DECA complete`. Do not mark G2 or DECA
+   complete, closed, or done — closing G2 is a separate explicit decision after this slice ships.
+
+## Previous handoff — M14 Global G2 Slice 7 / DECA Slice 3: CR 9→30 (2026-08-12)
 
 ### Slice 7 is DEPLOYED, HUMAN-REVIEWED, and PRODUCTION-VERIFIED
 
@@ -160,7 +263,9 @@ Two things to keep straight, as for every slice so far:
 
 ### Next steps, in order
 
-**Next active work: M14 G2 Slice 8 — Marketing Fundamentals expansion from 9 to 30.** It is the final
+**Next active work: M14 G2 Slice 8 — Marketing Fundamentals expansion from 9 to 30.** *(SUPERSEDED —
+Slice 8 is now implemented locally and awaiting human content review; see the Slice 8 handoff at the
+top of this file. The twelve obligations below were all discharged by that slice.)* It is the final
 G2 depth slice. Nothing about Slice 7 remains outstanding.
 
 Slice 8 carries twelve obligations, all already earned by earlier slices — do not rediscover them:

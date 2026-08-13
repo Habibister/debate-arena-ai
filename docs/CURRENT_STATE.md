@@ -2,12 +2,18 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1B-LC1 — all 17 authored learning-content entries protected by a canonical snapshot; the last two moving-HEAD learning-content pins retired. **LOCAL COMMIT, NOT PUSHED.** S1B-1 is shipped and Production-verified at `5892804337`; all of S1A is shipped and **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1B-LC1 — all 17 authored learning-content entries protected by a canonical snapshot; the last two moving-HEAD learning-content pins retired. **SHIPPED and Production-verified at `5894098786`** (commit `c9b0a1d`). All of S1A and S1B-1 are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
 
-## M15 S1B-LC1 — Authored learning content is protected (LOCAL, push pending)
+## M15 S1B-LC1 — Authored learning content is protected (shipped; Production-verified at `5894098786`)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
-DB OPERATION, NO SCHEMA CHANGE`.** Baseline `e5aeefd`. **Zero production changes.**
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Commit `c9b0a1dd41698bdb6b5f719f7c710c0a96199745`, Production deployment **`5894098786`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment from the Git push — no manual deploy, no rollback,
+nothing superseded it. Previous baseline `e5aeefd`. **Zero production changes.**
+
+**Production verification passed:** exact SHA deployed, 8-file scope, production trees byte-identical,
+snapshot fidelity re-derived from the deployed module, 24/24 mutation probes matched with 0 harness
+errors and 0 survivors, 30/30 safe suites green.
 
 `lib/learning-content.ts` holds **17** authored entries. Only **4** are published through the
 education registry; the other **13** are held. The published four had presence checks
@@ -47,22 +53,34 @@ can change source, snapshot and marker in one commit — that is fine, because t
 is explicit in the diff. The retired pins were different in kind: committing **alone** changed the
 expected bytes. Nothing here is ever derived from HEAD.
 
-**Mutation proof (25 probes, all mutations committed first so the old pins could not create false
-kills):** title, prose, `workedExample.prompt`, `whyItWorks`, `estimatedMinutes`, category and
-organization changes all FAIL on **both** a published (`debate-signposting`) and a held
-(`hosa-healthcare-ethics`, `debate-weighing`) entry; removed field, renamed id, broken `lesson.slug`
-relation, duplicate id, unknown runtime field, diverging `retryPrompt`, swapped and appended `steps`
-all FAIL; comments, helper rename and inert `order` changes all PASS.
+**Mutation evidence, as re-verified at Production verification against the deployed artifact:**
+**24 probes · 19 expected FAIL · 5 expected PASS · 24/24 matched · 0 harness errors · 0 unnamed kills
+· 0 unexpected survivors.** Every mutation was committed before the run, so the retired hashes could
+not manufacture a kill, and only the new suite was executed. Killed: title, prose,
+`workedExample.prompt`, field deletion and association change on **both** a published
+(`debate-signposting`) and a held (`hosa-healthcare-ethics`, `debate-weighing`) entry;
+`estimatedMinutes`; renamed id; duplicate slug; broken `lesson.slug` relation; unknown runtime field;
+diverging `retryPrompt`; entry removal; new entry without a snapshot block; **swapped and appended
+`steps`**. Passed: new entry **with** a reviewed snapshot block; inert `order`-only change; comment,
+helper rename and catalog declaration-order refactors.
 
-**Moving-HEAD debt: 20 → 18** (Class B 12, Class C seed 6; held-back learning-content **0**).
-**Safe suite set 29 → 30**; registered inventory 32 → 33 (`hosa-practice-scope` control `43b` updated
-to the exact new count — it is what stops a suite existing as a dead script).
+**Moving-HEAD debt: 20 → 18** — Class B **12**, Class C seed **6**, learning-content **0**. The two
+former learning-content pins (`education-migration` `4.`, `skills-compat` `27.`) are **RETIRED**, and
+were retired only after the replacement control passed the mutation gate.
 
-**Still separate:** the 24 `indexOf(a) < indexOf(b)` controls across 7 suites, which can pass
-vacuously when the first anchor is absent. Pre-existing, unrepaired, and deliberately not mixed in.
+**Safe suite set 29 → 30**; registered `*:smoke` inventory 32 → 33.
+`scripts/learning-content-integrity-smoke.ts` is registered and part of the safe 30 — not a dead
+script. `hosa-practice-scope` control `43b` was updated to the exact new count, kept as equality.
+
+**Still separate, not repaired:** **24** controls across **7** suites use a pattern equivalent to
+`indexOf(a) < indexOf(b)` without first establishing that `a` exists, so they **can** pass vacuously
+when the first anchor is absent (`indexOf` returns `-1`, and `-1 < anything` holds). **One** instance
+has been empirically demonstrated so far; the remaining 23 match the pattern structurally and have
+**not** been individually proven vacuous. Pre-existing — introduced by neither S1B-1 nor S1B-LC1.
 
 **Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
-**30/30 safe suites green while still uncommitted with HEAD at `e5aeefd`**. No database access.
+**30/30 safe suites green while still uncommitted with HEAD at `e5aeefd`**, and again after
+deployment. No database access.
 
 ## M15 S1A A4b — Practice-session copy matches real activity (shipped; Production-verified at `5884961320`)
 
@@ -100,8 +118,9 @@ frozen. **No database access.**
 ### Still open
 
 **S1B, open:** 18 HEAD-relative test pins (Class B 12 · Class C seed 6; learning-content **0** —
-retired by S1B-LC1) · 24 `indexOf(a) < indexOf(b)` ordering controls across 7 suites that can pass
-vacuously when the first anchor is absent · `/debates/history` soft-redirect gating · stale
+retired by S1B-LC1) · **24 controls across 7 suites using a pattern that CAN pass vacuously when the
+first anchor is absent** (`indexOf(a) < indexOf(b)`; 1 of 24 empirically demonstrated, the other 23
+match structurally and are unproven either way) · `/debates/history` soft-redirect gating · stale
 "Reassess now" CTA · skills-compat prose. **M16:** semantic judging, authoritative winner,
 readiness, snapshot/wins restoration.
 

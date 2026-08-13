@@ -4,11 +4,17 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M15 S1B-LC1: authored learning content is protected (2026-08-13)
 
-### One local commit awaits the owner push; then read-only Production verification
+### SHIPPED and Production-verified — nothing awaits a push
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
-DB OPERATION, NO SCHEMA CHANGE`.** Baseline `e5aeefd`. **Zero production changes** — two new test
-files, four modified test/registry files, two docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Commit `c9b0a1dd41698bdb6b5f719f7c710c0a96199745`, Production deployment **`5894098786`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment — no manual deploy, no rollback. Previous baseline
+`e5aeefd`. **Zero production changes** — two new test files, four modified test/registry files,
+two docs.
+
+Production verification confirmed the exact SHA deployed, the 8-file scope, byte-identical
+production trees, snapshot fidelity re-derived from the deployed module, **24/24** mutation probes
+matched with **0** harness errors and **0** survivors, and **30/30** safe suites green.
 
 **THE SAFE GATE IS NOW 30/30, PERMANENTLY.** Registered `*:smoke` inventory 32 → 33, safe set 29 → 30.
 Every later S1B prompt must expect 30; a report of **29/29 no longer means full coverage**.
@@ -52,17 +58,32 @@ bytes. **Nothing here derives from HEAD.**
   evidence.
 - **Editing an existing entry (published OR held):** source change + snapshot change + bump
   `LEARNING_CONTENT_BASELINE` + a `docs/CURRENT_STATE.md` line naming the affected slug(s).
+  This is **review policy, enforced by review** — the suite asserts only that the marker is declared,
+  never that it changed, and it does not read the docs. What the suite *does* enforce is
+  source ≠ approved snapshot → FAIL.
+
+### What actually protects the curriculum
+
+Four things, none of which is an authorization boundary: **explicit checked-in reviewed
+expectations**, a **visible git diff** of any prose change, **fail-closed schema handling**, and
+**safe-suite enforcement**. A deliberate developer can change source + snapshot + marker in one
+commit; the point is that the change is legible in review, not that it is impossible.
 
 ### Next steps, in order
 
-1. Owner pushes the S1B-LC1 commit. **Do not push automatically.**
-2. **The 24 `indexOf(a) < indexOf(b)` controls** across 7 suites — they can pass vacuously when the
-   first anchor is absent (`-1 < anything`). One instance empirically confirmed; the rest match
-   structurally. Pre-existing, not introduced by any S1B batch.
-3. **S1B-2** — the 12 Class B pins.
-4. **S1B-3** — the 6 `prisma/seed.ts` Class C pins.
-5. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
-6. **M16** — semantic judging.
+1. **The 24 `indexOf(a) < indexOf(b)` controls** across 7 suites — a pattern that **can** pass
+   vacuously when the first anchor is absent (`indexOf` gives `-1`, and `-1 < anything` holds).
+   **1 of 24** empirically demonstrated; the other 23 match structurally and are unproven either way.
+   Pre-existing, introduced by neither S1B-1 nor S1B-LC1. Start with a read-only inventory: which are
+   genuinely vacuous, which already have an independent existence guard, and the smallest semantic
+   repair for each — before touching a single assertion.
+2. **S1B-2** — the 12 Class B pins.
+3. **S1B-3** — the 6 `prisma/seed.ts` Class C pins.
+4. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
+5. **M16** — semantic judging.
+
+Learning-content moving-HEAD debt is **ZERO**. Remaining moving-HEAD debt is **18**: Class B 12,
+Class C seed 6.
 
 ## Previous handoff — M15 S1B-1: redundant moving-HEAD pins retired (2026-08-13)
 
@@ -152,13 +173,15 @@ redundant and **not** Class B. A dedicated design audit decides the additive-onl
 
 **Remaining: 20** — Class B 12, Class C 6, held-back 2.
 
-**Separate open debt — 24 vacuous ordering controls across 7 suites.** Controls shaped like
-`indexOf(a) < indexOf(b)` never prove `a` exists first. `indexOf(a)` is `-1` when absent, and
-`-1 < anything` holds, so **deleting the guarded thing turns the control green**. Surfaced while
-mutation-testing the `4b9.` retirement: renaming `parseStoredResult` throughout the Debate drill
-submit route left `education-migration`'s `4b6f` passing (the property itself was still caught, by
-`practice-session` and `review-ladder`). Count is **identical at `d82e714`** — pre-existing, not
-introduced by S1B-1. Not repaired; keep it out of the `learning-content.ts` design batch.
+**Separate open debt — 24 controls across 7 suites using a pattern that CAN pass vacuously.**
+Controls shaped like `indexOf(a) < indexOf(b)` never prove `a` exists first. `indexOf(a)` is `-1`
+when absent, and `-1 < anything` holds, so **deleting the guarded thing can turn the control green**.
+**1 of the 24 has been empirically demonstrated**; the other 23 match the pattern structurally and
+have not been individually proven vacuous — do not describe all 24 as proven defective. Surfaced
+while mutation-testing the `4b9.` retirement: renaming `parseStoredResult` throughout the Debate
+drill submit route left `education-migration`'s `4b6f` passing (the property itself was still caught,
+by `practice-session` and `review-ladder`). Count is **identical at `d82e714`** — pre-existing, not
+introduced by S1B-1 or S1B-LC1. Not repaired.
 
 **Never reintroduce a HEAD-relative pin.** Isolated proof of why, on `lib/roleplay-lessons.ts`: a
 cosmetic uncommitted edit makes the hash FAIL (false alarm), committing it makes the hash PASS, and a

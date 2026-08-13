@@ -324,8 +324,31 @@ async function main() {
     "26. the index lists the five real Debate lessons in teaching order");
 
   // ---- 27-29. M13E1B education is untouched --------------------------------------------------------
-  for (const file of ["lib/learning-content.ts", "lib/lessons.ts", "lib/roleplay-lessons.ts",
-                      "lib/education/registry.ts", "lib/education/tracks/debate.ts",
+  // M15 S1B-1 — four entries are deliberately absent from here onward: lib/lessons.ts,
+  // lib/roleplay-lessons.ts, lib/education/registry.ts and
+  // lib/education/tracks/debate.ts. All four were HEAD-RELATIVE byte freezes, failing only while a
+  // change sat uncommitted and passing again as soon as HEAD advanced onto it, so none could protect
+  // anything across a commit. This suite's contract is that legacy /skills slugs keep resolving to
+  // registered, learner-visible education lessons, and that contract is asserted EXECUTABLY here and
+  // in the safe corpus, against runtime values rather than bytes:
+  //   - lib/education/registry.ts    -> 3b/3c above (every legacy slug redirects to a REGISTERED
+  //     lesson whose visibility is "learner") and 28/29 below (still exactly seven canonical lessons;
+  //     each held lesson stays unregistered); education-registry-smoke 10a/10b/10c pin the exact
+  //     per-track id lists, so a registry change that crossed tracks fails there.
+  //   - lib/education/tracks/debate.ts -> 26 immediately above (the index lists the five real Debate
+  //     lessons in teaching order) and education-migration-smoke 1/2/3d/14a-c (exactly four migrated
+  //     lessons, exact ids in teaching order, shared provenance object by identity).
+  //   - lib/lessons.ts               -> tracks-smoke (getLesson("claim-warrant-impact").skillSlug is
+  //     still "debate-claim-building") and education-migration-smoke 31a.
+  //   - lib/roleplay-lessons.ts      -> tracks-smoke 17/18 (per-lesson organization and cross-track
+  //     vocabulary isolation) and hosa-practice-scope-smoke.
+  // Every one of those four was proven to FIRE by scratch mutation in S1B-1.
+  //
+  // lib/learning-content.ts DELIBERATELY REMAINS PINNED — see the full note in
+  // scripts/education-migration-smoke.ts. Its authored CONTENT is asserted nowhere in the safe
+  // corpus (three scratch mutations survived all 29 suites), so the hash stays until S1B-2 supplies
+  // a real content control.
+  for (const file of ["lib/learning-content.ts",
                       "components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",
                       "components/lessons/lesson-view.tsx",

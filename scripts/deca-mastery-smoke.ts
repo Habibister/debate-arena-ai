@@ -603,7 +603,17 @@ async function main() {
                       // onward: its writing-practice card copy changed when Debate writing became
                       // FORMATIVE. That hash was HEAD-relative and protected DECA only against a
                       // shared-page regression; what it was protecting is asserted at 24b below.
-                      "lib/education/registry.ts", "lib/education/tracks/debate.ts"]) {
+                      // lib/education/registry.ts and lib/education/tracks/debate.ts are deliberately
+                      // absent from M15 S1B-1 onward — the same HEAD-RELATIVE flaw as the entries
+                      // above. DECA's concern with either file is track isolation: neither the
+                      // education registry nor the DEBATE track module may leak a lesson into DECA.
+                      // A byte freeze was only ever a proxy for that. The property is retained
+                      // EXECUTABLY by education-registry-smoke 10b, which asserts the DECA slice is
+                      // exactly ["how-deca-roleplay-works"] by deepEqual (10a and 10c do the same for
+                      // Debate and HOSA), and by tracks-smoke, which owns cross-track isolation. Both
+                      // run in the safe validation set, and both fail on a leak that a hash of an
+                      // unchanged-but-committed file would wave through.
+                      ]) {
     assert.equal(nowSha(file), headSha(file), `24-28. ${file} is byte-identical to HEAD`);
   }
   // ---- 24A. what the retired lib/assignments.ts pin protected FOR DECA -----------------------------

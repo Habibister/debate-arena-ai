@@ -35,11 +35,54 @@ sourceType in the ledger. **Prefer asserting the property over banning the token
 
 ### Next steps, in order
 
-1. Owner pushes the A4b commit. **Do not push automatically.**
-2. Read-only Production verification. Then **A4 is complete** and S1A's reward work is done.
-3. **S1B** — `/debates/history` gating, stale Reassess CTA, skills-compat prose, and the 50
-   HEAD-relative pins.
-4. **M16** — semantic judging, and only then any restoration of authoritative competitive progression.
+1. Owner pushes the **S1B-1** commit (`test(m15): retire redundant head-relative pins`).
+   **Do not push automatically.** A4a/A4b are already shipped and Production-verified.
+2. **S1B-2** — the 12 Class B pins (lesson components, `[slug]/page.tsx`, `assignment-types.ts`) get
+   real semantic replacements. **It must also resolve `lib/learning-content.ts`**, which S1B-1 held
+   back: its authored content is asserted nowhere, so it needs a content control written from
+   scratch, not a deletion. See the S1B-1 section below.
+3. **S1B-3** — the 6 `prisma/seed.ts` Class C pins become one immutable-baseline additive-only
+   control, following the `31f*` pattern in `hosa-medterm-evidence-smoke.ts`.
+4. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
+5. **M16** — semantic judging, and only then any restoration of authoritative competitive progression.
+
+### M15 S1B-1 — redundant HEAD-relative pins retired (LOCAL, not pushed)
+
+Baseline `PRE_M15_S1B = d82e714`. **Zero production changes** — five test files plus these docs.
+
+The debt is **34** entries across **6** suites and 16 files, not the previously recorded 50 across 4
+(that figure summed every file loop in four suites, including non-HEAD ones, and missed
+`hosa-medterm-evidence-smoke.ts` and `review-ladder-smoke.ts`).
+
+**14 retired.** Each removal required a named executable control that imports the module and asserts
+runtime values — a comment saying "covered elsewhere" was never accepted as sufficient:
+
+| retired pin | retained control (all in the safe 29) |
+| --- | --- |
+| `lib/lessons.ts` ×3 (education-migration `4.` + `4b9.`, skills-compat `27.`) | education-migration `31a`; tracks-smoke `getLesson(...).skillSlug === "debate-claim-building"` |
+| `lib/roleplay-lessons.ts` ×3 | tracks-smoke `17`/`18`; hosa-practice-scope |
+| `lib/education/registry.ts` ×3 | education-registry `10a`/`10b`/`10c` (exact per-track id lists), `1`, `2b` |
+| `lib/education/tracks/debate.ts` ×2 | education-migration `1`/`2`/`3d`/`14a-c`; skills-compat `26` |
+| `lib/authored-lesson-progress.ts` ×1 | lesson-progress (versioned key, word gate, index clamp) |
+| `lib/debate-skill-practice.ts` ×1 | debate-mastery `27b-C2` — imports the grader; keyword salad still scores exactly 96 with a 7-row rubric |
+| `lib/hosa-events.ts` ×1 | hosa-navigator (`hosaEventById` fails closed, never falls back to `HOSA_EVENTS[0]`) |
+
+The duplicate `lib/lessons.ts` pin was treated as **two** entries protecting **different** facts: the
+`4.` entry stood for "the authored lesson still resolves" and the `4b9.` entry for "the drill-bank
+expansion did not reach the lesson path" (retained at `4b6*`). Both were mapped independently.
+
+**2 held back — `lib/learning-content.ts`.** Classified Class A on controls `3b`/`17b`; that was
+wrong. `3b` asserts the registry entry **is** the catalog object (strict `===`), so `17b` compares
+that object's strings to themselves — a tautology that cannot fail on a content change. A changed
+title, a renamed authored field and a replaced prose block each survived **all 29** suites. Nothing
+asserts this file's authored content. The pin stays; **S1B-2 must write a real content control.**
+
+**Remaining: 20** — Class B 12, Class C 6, held-back 2.
+
+**Never reintroduce a HEAD-relative pin.** Isolated proof of why, on `lib/roleplay-lessons.ts`: a
+cosmetic uncommitted edit makes the hash FAIL (false alarm), committing it makes the hash PASS, and a
+**committed property break also PASSES** — the hash waves through exactly what it claims to guard.
+The retained controls pass every cosmetic case and fail the break in both commit states.
 
 ### Standing constraints (unchanged)
 
@@ -110,6 +153,11 @@ assertion, treat it as decoration, not protection.** The replacements are semant
 **50 more HEAD-relative pins remain** in those same four files (education-migration 20, skills-compat
 16, deca-mastery 8, debate-mastery 6). All have the identical flaw. They are recorded as S1B
 test-integrity debt and were deliberately not touched here.
+
+*(Superseded by the S1B audit — kept as written to record what was believed at the time. The exact
+figure is **34** entries across **6** suites: this estimate counted every `for (const file of [...])`
+loop in four suites, including ordinary content-assertion loops that use no HEAD helper, and omitted
+`hosa-medterm-evidence-smoke.ts` and `review-ladder-smoke.ts`. S1B-1 retired 14; 20 remain.)*
 
 ### Things that will look like bugs but are deliberate
 

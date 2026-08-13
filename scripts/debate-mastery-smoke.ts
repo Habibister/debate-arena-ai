@@ -452,8 +452,14 @@ async function main() {
   // until M13E1G, which deliberately due-gates the shared ladder and makes the review result elect the
   // due-window winner for BOTH mastery writers. A blanket hash would forbid that approved change
   // rather than protect Debate drills, so it is replaced at 27b-27f by assertions on what matters.
-  for (const file of ["lib/debate-skill-practice.ts",                                              // 27 Debate writing grading
-                      // lib/deca-drills.ts is deliberately absent from M14 Global G2 Slice 0 onward:
+  // M15 S1B-1 — lib/debate-skill-practice.ts is deliberately absent from here onward. Its byte hash
+  // was HEAD-RELATIVE and therefore could never notice what a commit changed, and it sat beside a
+  // control that is strictly stronger: 27b-C2 below IMPORTS the module and asserts its runtime
+  // scoring behaviour — the keyword-salad exploit still returns exactly 96 with a 7-row rubric and a
+  // complete formative payload (27b-C2b). That control executes the grader, so it fails on any real
+  // change to the scoring logic; the hash only failed on uncommitted bytes. Retiring it removes a
+  // duplicate, not a property.
+  for (const file of [// lib/deca-drills.ts is deliberately absent from M14 Global G2 Slice 0 onward:
                       // that hash was HEAD-relative, so it passed the moment any DECA expansion
                       // committed. DECA's real IMMUTABLE-based protection lives in
                       // scripts/deca-drills-smoke.ts and is asserted at 28G below.
@@ -467,7 +473,14 @@ async function main() {
                       // failed only while a change was uncommitted and passed again the moment HEAD
                       // advanced onto that same change. A3b-3 relabels the Debate evidence PICKER.
                       // The Debate qualification contract it was standing in for is asserted at 27A.
-                      "lib/education/registry.ts"]) {
+                      // lib/education/registry.ts is deliberately absent from M15 S1B-1 onward, for
+                      // the same reason. What this suite needs from the registry is that the DEBATE
+                      // slice is intact; that is retained EXECUTABLY by education-registry-smoke 10a,
+                      // which deepEquals the Debate lesson ids in teaching order, alongside 1 and 2b
+                      // (exactly seven lessons, exact id set). A registry edit that dropped, renamed
+                      // or reordered a Debate lesson fails there; the byte hash would have passed the
+                      // moment that edit was committed.
+                      ]) {
     assert.equal(nowSha(file), headSha(file), `27-31. ${file} is byte-identical to HEAD`);
   }
 

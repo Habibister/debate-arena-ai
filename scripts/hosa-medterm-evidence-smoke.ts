@@ -491,8 +491,20 @@ async function main() {
                       // an approved change rather than protect HOSA. What THIS suite actually needs
                       // — that neither drill bank reaches into HOSA, and that both banks now carry
                       // real immutable-baseline protection of their own — is asserted at 32/33 below.
-                      "prisma/seed.ts",                                                         // 35 seed
-                      "lib/roleplay-lessons.ts", "lib/hosa-events.ts"]) {
+                      // lib/roleplay-lessons.ts and lib/hosa-events.ts are deliberately absent from
+                      // M15 S1B-1 onward — the same HEAD-RELATIVE flaw already called out above for
+                      // the two drill banks: the hash failed only while a change was uncommitted and
+                      // passed again the moment HEAD advanced onto it. Both properties are retained
+                      // EXECUTABLY, by suites that import the modules and assert runtime values:
+                      //   - lib/hosa-events.ts      -> hosa-navigator-smoke (hosaEventById fails
+                      //     closed on unknown, null and undefined ids and never falls back to
+                      //     HOSA_EVENTS[0]) and hosa-practice-scope-smoke, source-freshness-smoke and
+                      //     tracks-smoke, which assert the event/source contract this suite relies on.
+                      //   - lib/roleplay-lessons.ts -> tracks-smoke 17/18 (the HOSA lesson is HOSA and
+                      //     carries no DECA vocabulary; the DECA lesson carries no HOSA vocabulary) and
+                      //     its practiceStatus is still "temporarily-unavailable" — the HOSA scope
+                      //     facts this suite cares about — plus hosa-practice-scope-smoke.
+                      "prisma/seed.ts"]) {                                                      // 35 seed
     assert.equal(nowSha(file), headSha(file), `30/35. ${file} is byte-identical to HEAD`);
   }
 

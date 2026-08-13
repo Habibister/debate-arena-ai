@@ -150,7 +150,27 @@ async function main() {
   //
   // The canonical lesson ROUTES are added here — M13E1B's renderers were pinned but the two routes
   // that mount them were not, so a change there would have gone unnoticed.
-  for (const file of ["lib/learning-content.ts", "lib/lessons.ts", "lib/roleplay-lessons.ts",
+  // M15 S1B-1 — lib/lessons.ts and lib/roleplay-lessons.ts are deliberately absent from here onward.
+  // Both were HEAD-RELATIVE byte freezes: they failed only while a change sat uncommitted and passed
+  // again the moment HEAD advanced onto that same change, so neither could protect anything across a
+  // commit. Each property is retained by an executable control that imports the module and asserts
+  // its runtime values, and each was proven to FIRE by scratch mutation in S1B-1:
+  //   - lib/lessons.ts          -> 31a here (the CWI lesson still resolves through its legacy lookup)
+  //     and tracks-smoke (getLesson("claim-warrant-impact").skillSlug === "debate-claim-building").
+  //     Mutating that slug fails education-migration, education-registry, skills-compat and tracks.
+  //   - lib/roleplay-lessons.ts -> tracks-smoke 17/18 (each roleplay lesson's organization, no HOSA
+  //     vocabulary in the DECA lesson and no DECA vocabulary in the HOSA one) and hosa-practice-scope.
+  //     Flipping the HOSA practiceStatus value fails ten suites.
+  //
+  // lib/learning-content.ts DELIBERATELY REMAINS PINNED. S1B-1 classified it as retirable on the
+  // strength of 3b/17b, and that was wrong: because 3b asserts the registry entry IS the catalog
+  // object (strict ===), 17b then compares that object's strings against themselves, so it is a
+  // tautology that cannot fail on an authored-content change. Three scratch mutations — a changed
+  // lesson title, a renamed authored field and a wholesale prose replacement — each survived ALL 29
+  // safe suites. Nothing in the corpus asserts this file's authored CONTENT. The hash is a poor
+  // guard (it self-heals on commit), but it is the only reference that exists, so it stays until
+  // S1B-2 writes a real content control for the authored catalog.
+  for (const file of ["lib/learning-content.ts",
                       "components/lessons/lesson-view.tsx",
                       "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
                       "components/lessons/concept-education-lesson-view.tsx",
@@ -162,7 +182,13 @@ async function main() {
                       // lib/debate-drills.ts is deliberately absent from M13E1E onward: that milestone
                       // gives Debate the duplicate-resistant evidence contract. What this suite needs
                       // to protect is the LESSON path, which is asserted at 4b9 below.
-                      "lib/authored-lesson-progress.ts",
+                      // lib/authored-lesson-progress.ts is deliberately absent from M15 S1B-1 onward —
+                      // the same HEAD-RELATIVE flaw called out above. The guided-lesson progress
+                      // contract is retained EXECUTABLY by scripts/lesson-progress-smoke.ts, which
+                      // imports the module and asserts its runtime behaviour: the storage key is
+                      // versioned with AUTHORED_LESSON_PROGRESS_VERSION, countResponseWords gates on
+                      // MIN_MEANINGFUL_RESPONSE_WORDS, and normalizeRestoredProgress clamps an
+                      // out-of-range identifyIndex. That suite is part of the safe validation set.
                       // app/(app)/skills/[slug]/page.tsx is deliberately absent: M13E1C rewrites that
                       // route. The compatibility contract that replaced its body is owned by
                       // scripts/skills-compat-smoke.ts. Its INDEX page was pinned here until M14
@@ -419,12 +445,17 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   assert.ok(/formative: true/.test(writing), "4b13c. and its result is declared formative");
   assert.ok(!/isReviewDue\(/.test(writing), "4b13d. and no independent due-check remains");
   // 4b9. The LESSON practice path is what this suite protects, and it is untouched by M13E1E: the one
-  // authored lesson using LessonPractice reuses the Debate drill endpoints, so prove the lesson
-  // renderer and its component are byte-identical even though the drill bank changed.
+  // authored lesson using LessonPractice reuses the Debate drill endpoints.
   // lesson-practice.tsx is deliberately absent from M13E2 C3b-i onward — see 4L above.
-  for (const file of ["lib/lessons.ts"]) {
-    assert.equal(shaNow(file), sha(file), `4b9. ${file} is byte-identical to HEAD`);
-  }
+  //
+  // M15 S1B-1 — the lib/lessons.ts byte freeze that stood here is retired. It was this suite's SECOND
+  // pin on that same file (the first sat in the 4. list above) and both were HEAD-RELATIVE, so
+  // neither could survive a commit. The two protected DIFFERENT facts, and both are retained
+  // executably: the 4. entry stood for "the authored lesson still resolves", retained at 31a below
+  // (getLesson("claim-warrant-impact") resolves) and in tracks-smoke (its skillSlug is still
+  // debate-claim-building); this 4b9 entry stood for "the drill-bank expansion did not reach the
+  // LESSON path", retained at 4b6* above, which asserts the Debate drill route's own contract
+  // directly rather than freezing the lesson module's bytes as a proxy for it.
   // The Debate bank's ORIGINAL question data is unchanged. This pinned 36 through M13E1E, when the
   // only change was the evidence layer. M14 Global G2 Slice 1 deliberately APPENDS rebuttal items
   // (audit G2), so a flat 36 would forbid an approved change rather than protect this suite. What

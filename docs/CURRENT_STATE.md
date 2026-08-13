@@ -38,9 +38,53 @@ frozen. **No database access.**
 
 ### Still open
 
-**S1B:** `/debates/history` soft-redirect gating, stale "Reassess now" CTA, skills-compat prose, 50
-HEAD-relative test pins. **M16:** semantic judging, authoritative winner, readiness, snapshot/wins
-restoration.
+**S1B:** `/debates/history` soft-redirect gating, stale "Reassess now" CTA, skills-compat prose, 20
+HEAD-relative test pins (see S1B-1 below). **M16:** semantic judging, authoritative winner,
+readiness, snapshot/wins restoration.
+
+## M15 S1B-1 — Redundant HEAD-relative pins retired (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+DB OPERATION, NO SCHEMA CHANGE`.** Baseline `PRE_M15_S1B = d82e714`.
+
+The read-only S1B audit corrected the debt figure: **34** HEAD-relative pin entries, not 50, across
+**6** suites (not 4) and 16 production files. The old 50 summed every `for (const file of [...])`
+loop in only four suites — including ordinary content-assertion loops with no HEAD helper — and
+omitted `hosa-medterm-evidence-smoke.ts` and `review-ladder-smoke.ts` entirely.
+
+A HEAD-relative pin compares a file against `git show HEAD:<file>`. It therefore fails only while a
+change is *uncommitted* and passes again the moment HEAD advances onto that same change. Isolated on
+a scratch clone against `lib/roleplay-lessons.ts`:
+
+| state | byte pin | retained control (`tracks:smoke`) |
+| --- | --- | --- |
+| clean | PASS | PASS |
+| cosmetic edit, uncommitted | **FAIL** (false alarm) | PASS |
+| cosmetic edit, committed | PASS | PASS |
+| property broken, uncommitted | FAIL | **FAIL** |
+| property broken, **committed** | **PASS** — waves the break through | **FAIL** |
+
+**14 of the 16 authorized Class A entries were retired**, each only after its property was mapped to
+a named executable control that imports the module and asserts runtime values. Seven distinct
+semantic properties were mutation-proved to fire.
+
+**Two entries were held back, both `lib/learning-content.ts`** (in `education-migration-smoke.ts` and
+`skills-compat-smoke.ts`). The audit classified them Class A on the strength of controls `3b`/`17b`,
+and that was wrong: `3b` asserts the registry entry **is** the catalog object (strict `===`), so
+`17b` compares that object's strings against themselves and is a tautology that cannot fail on a
+content change. Three scratch mutations — a changed lesson title, a renamed authored field, a
+wholesale prose replacement — each survived **all 29** safe suites. The file's authored content is
+asserted nowhere in the corpus, so the (weak, self-healing) hash stays until S1B-2 writes a real
+content control. This entry is **not** Class B by default; it is an unclassified gap S1B-2 must
+resolve deliberately.
+
+**Remaining HEAD-relative debt: 20** — Class B 12, Class C 6 (`prisma/seed.ts`, all six untouched),
+plus these 2 held-back entries.
+
+**Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning in
+`components/profile/user-avatar.tsx`, untouched) · `build` · **29/29 safe suites green while still
+uncommitted with HEAD at `d82e714`**. **Zero production changes** — test files and docs only. A4, A3,
+A2, A1, G2 and the schema byte-identical. **No database access.**
 
 ## M15 S1A A4a — Daily XP bounded, practice unlimited (shipped; Production-verified at `5884247160`)
 
@@ -119,7 +163,8 @@ concurrency-tested, exactly as with A2.
 ### Still open
 
 **A4b:** the false "debates, tests, and lessons" copy in `components/app/xp-progress-card.tsx`.
-**S1B:** `/debates/history` gating, stale Reassess CTA, skills-compat prose, 50 HEAD-relative pins.
+**S1B:** `/debates/history` gating, stale Reassess CTA, skills-compat prose, 50 HEAD-relative pins
+*(estimate as of this batch; the S1B audit later measured 34, and S1B-1 retired 14 of them)*.
 **M16:** semantic judging.
 
 ## M15 S1A A3b-3 — Coach and assignment labels align (shipped; Production-verified at `5883101376`)
@@ -178,6 +223,9 @@ matched. Both paths are now bound independently.
 **Carried test-integrity debt (inventoried, not fixed):** 50 further HEAD-relative pins remain across
 those four files — 20 in education-migration, 16 in skills-compat, 8 in deca-mastery, 6 in
 debate-mastery. Each has the same self-healing flaw. Not broadened into this batch.
+*(Superseded — the S1B audit measured this exactly: **34** entries across **6** suites, not 50 across
+4. The estimate above counted every file loop in four suites, including non-HEAD content-assertion
+loops, and missed two suites. Kept as written to record what was believed at the time.)*
 
 ### Preserved
 

@@ -162,16 +162,19 @@ async function main() {
   //     vocabulary in the DECA lesson and no DECA vocabulary in the HOSA one) and hosa-practice-scope.
   //     Flipping the HOSA practiceStatus value fails ten suites.
   //
-  // lib/learning-content.ts DELIBERATELY REMAINS PINNED. S1B-1 classified it as retirable on the
-  // strength of 3b/17b, and that was wrong: because 3b asserts the registry entry IS the catalog
-  // object (strict ===), 17b then compares that object's strings against themselves, so it is a
-  // tautology that cannot fail on an authored-content change. Three scratch mutations — a changed
-  // lesson title, a renamed authored field and a wholesale prose replacement — each survived ALL 29
-  // safe suites. Nothing in the corpus asserts this file's authored CONTENT. The hash is a poor
-  // guard (it self-heals on commit), but it is the only reference that exists, so it stays until
-  // S1B-2 writes a real content control for the authored catalog.
-  for (const file of ["lib/learning-content.ts",
-                      "components/lessons/lesson-view.tsx",
+  // lib/learning-content.ts is deliberately absent from M15 S1B-LC1 onward. S1B-1 held its pin back
+  // because the supposed replacement (3b/17b) was a tautology: 3b asserts the registry entry IS the
+  // catalog object (strict ===), so 17b compared that object's strings against themselves and could
+  // never fail on a content change. S1B-LC1 replaced the pin with a real control —
+  // scripts/learning-content-integrity-smoke.ts — which canonicalises the module's RUNTIME values and
+  // compares them against a checked-in reviewed snapshot (scripts/learning-content-baseline.json).
+  // It protects all 17 entries, the 13 held ones included, and was mutation-proved to fail on a
+  // changed title, changed prose, a changed workedExample, a changed estimatedMinutes, a removed
+  // field, a renamed id, a retracked entry, reordered or appended steps, an unclassified new field
+  // and a diverging retry field — on BOTH a published and a held entry — while passing comments,
+  // formatting, helper renames and declaration-order changes. Unlike the hash it never derives its
+  // expectation from HEAD, so committing cannot make it green.
+  for (const file of ["components/lessons/lesson-view.tsx",
                       "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
                       "components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",

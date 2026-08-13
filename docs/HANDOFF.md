@@ -2,9 +2,71 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B-1: redundant moving-HEAD pins retired (2026-08-13)
+## Latest handoff — M15 S1B-LC1: authored learning content is protected (2026-08-13)
 
-### SHIPPED and Production-verified — nothing awaits a push
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+DB OPERATION, NO SCHEMA CHANGE`.** Baseline `e5aeefd`. **Zero production changes** — two new test
+files, four modified test/registry files, two docs.
+
+**THE SAFE GATE IS NOW 30/30, PERMANENTLY.** Registered `*:smoke` inventory 32 → 33, safe set 29 → 30.
+Every later S1B prompt must expect 30; a report of **29/29 no longer means full coverage**.
+`hosa-practice-scope` control `43b` asserts the exact inventory — that is what stops a new suite from
+existing as a dead script nobody runs. Never loosen it to a lower bound.
+
+### What this batch established
+
+`lib/learning-content.ts` holds 17 authored entries: 4 published through the education registry, 13
+held. The published four had presence checks; **the held thirteen had no coverage at all** once the
+moving-HEAD pins self-healed. One contract now covers all 17 —
+`scripts/learning-content-integrity-smoke.ts` canonicalises the module's **runtime values** and
+compares them to `scripts/learning-content-baseline.json`.
+
+- **Array, sorted by slug — not an object keyed by slug.** JSON allows duplicate keys and
+  `JSON.parse` keeps the last silently, which would make "no duplicate baseline ids" unprovable.
+- **Full snapshot, not hashes.** A hash cannot reconstruct prior prose. An edit is a **2-line diff
+  naming the exact sentence**; adding a lesson is a ~100-line additive block.
+- **Runtime values, not source text** — immune to comments, formatting, imports, helper renames and
+  declaration order by construction.
+- **ID-set equality both ways** — a new entry without a snapshot block FAILS, so nothing lands
+  permanently unprotected; a removed or renamed entry FAILS as an orphan.
+- **Fail-closed key sets** at every layer (8/5/8/4/9). Honest limit: a **type-only** optional field
+  that no entry carries at runtime leaves the suite green; it fails the moment an entry carries it.
+  The suite asserts runtime shape and cannot read type declarations — do not claim otherwise.
+- **Protected:** identity, association, every authored string, learner-visible `estimatedMinutes`,
+  and the **order** of `steps`/`choices`/`practiceQuestions`/`masteryCheck`.
+- **Excluded with live guards:** `retry*` only because all 85 questions are provably derived (an
+  invariant fires if one diverges); seed-level `order` only because nothing reads it (re-proved each
+  run).
+
+**`LEARNING_CONTENT_BASELINE` is a REVIEW SIGNAL, not a security boundary.** A deliberate developer
+can change source + snapshot + marker in one commit; that is acceptable because the prose delta is
+explicit in review. The retired pins were different in kind — committing alone changed the expected
+bytes. **Nothing here derives from HEAD.**
+
+### Changing curriculum after this batch
+
+- **New entry:** add the source entry and its canonical snapshot block in the same commit. Unique
+  slug, `lesson.slug === slug + "-lesson"`. No marker bump needed — the ~100-line block is the review
+  evidence.
+- **Editing an existing entry (published OR held):** source change + snapshot change + bump
+  `LEARNING_CONTENT_BASELINE` + a `docs/CURRENT_STATE.md` line naming the affected slug(s).
+
+### Next steps, in order
+
+1. Owner pushes the S1B-LC1 commit. **Do not push automatically.**
+2. **The 24 `indexOf(a) < indexOf(b)` controls** across 7 suites — they can pass vacuously when the
+   first anchor is absent (`-1 < anything`). One instance empirically confirmed; the rest match
+   structurally. Pre-existing, not introduced by any S1B batch.
+3. **S1B-2** — the 12 Class B pins.
+4. **S1B-3** — the 6 `prisma/seed.ts` Class C pins.
+5. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
+6. **M16** — semantic judging.
+
+## Previous handoff — M15 S1B-1: redundant moving-HEAD pins retired (2026-08-13)
+
+### SHIPPED and Production-verified
 
 **Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
 Commit `9c66b04f31ea0316dc3b4365a9ff8936ec5965e4`, Production deployment **`5892804337`**, status
@@ -44,21 +106,10 @@ Two of the A4b controls were wrong on first write and would have blocked honest 
 shipped versions test the real properties instead: no visible "streak" wording, and no `LESSON`
 sourceType in the ledger. **Prefer asserting the property over banning the token.**
 
-### Next steps, in order
+### Next steps as of that batch (superseded by S1B-LC1 above)
 
-1. **`lib/learning-content.ts` authored-text integrity — READ-ONLY DESIGN AUDIT FIRST.** Decide what
-   an "additive-only immutable content baseline" is *allowed to change* before any control is
-   written. 765 lines of authored lesson prose is too important to guess the contract. Note the
-   sharpened finding below: field **presence** is already covered; **text values** are not. Its own
-   batch — do not fold it into the Class B work.
-2. **The 24 vacuous `indexOf(a) < indexOf(b)` ordering controls** across 7 suites. Separate defect,
-   separate fix; keep out of the content-control design.
-3. **S1B-2** — the 12 Class B pins (lesson components, `[slug]/page.tsx`, `assignment-types.ts`) get
-   real semantic replacements.
-4. **S1B-3** — the 6 `prisma/seed.ts` Class C pins become one immutable-baseline additive-only
-   control, following the `31f*` pattern in `hosa-medterm-evidence-smoke.ts`.
-5. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
-6. **M16** — semantic judging, and only then any restoration of authoritative competitive progression.
+The learning-content design audit and its control are now DONE. The remaining order is the 24
+`indexOf` controls, then Class B, then Class C.
 
 ### M15 S1B-1 — redundant HEAD-relative pins retired (SHIPPED, Production-verified `5892804337`)
 

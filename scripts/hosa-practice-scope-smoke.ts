@@ -196,7 +196,10 @@ async function main() {
   const pkg = JSON.parse(read("package.json")) as { scripts: Record<string, string>; dependencies?: unknown };
   assert.ok(pkg.scripts["hosa-practice-scope:smoke"], "43. this suite is registered");
   const smokes = Object.keys(pkg.scripts).filter((k) => k.endsWith(":smoke"));
-  assert.equal(smokes.length, 32, `43b. the registered smoke inventory is 32 (found ${smokes.length})`);
+  // M15 S1B-LC1 raised this from 32 to 33: `learning-content-integrity:smoke` was added, which owns
+  // the authored-text contract for lib/learning-content.ts. Keep this an EXACT count — it is what
+  // stops a new suite from existing as a dead script nobody runs. Never loosen it to a lower bound.
+  assert.equal(smokes.length, 33, `43b. the registered smoke inventory is 33 (found ${smokes.length})`);
 
   // ---- NON-VACUOUS CONTROLS -------------------------------------------------------------------------
   // Each check above is re-run against a fixture carrying the OLD behaviour and must trip. Production

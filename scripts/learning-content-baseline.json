@@ -1,0 +1,1694 @@
+[
+  {
+    "slug": "debate-case-topic-definitions",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Parliamentary debate",
+    "name": "Case Topic and Definitions",
+    "description": "Turn a resolution into a fair, debatable case.",
+    "lesson": {
+      "title": "Set a fair case topic",
+      "slug": "debate-case-topic-definitions-lesson",
+      "summary": "Learn resolution, case topic, definitions, and contentions.",
+      "estimatedMinutes": 8,
+      "content": {
+        "objective": "Create a case topic with clear definitions and contentions.",
+        "explanation": "A resolution is the broad prompt. A case topic is the specific debate you create from it. Definitions explain key terms, and contentions are the main reasons the case should win.",
+        "whyMatters": "A fair case topic invites clash. If it is too vague, too narrow, or dependent on hidden knowledge, the round becomes less educational.",
+        "steps": [
+          "Start from the resolution.",
+          "Choose a clear case topic.",
+          "Define key terms fairly.",
+          "Write distinct contentions."
+        ],
+        "workedExample": {
+          "prompt": "Resolution: This House values education reform.",
+          "weakAnswer": "Education should be better.",
+          "strongAnswer": "Case topic: public high schools should require a financial literacy course. Definitions: require means graduation requirement. Contentions: student debt prevention and practical career readiness.",
+          "whyItWorks": "The strong answer turns a broad resolution into a specific, debatable case."
+        },
+        "guidedQuestion": {
+          "prompt": "What is a case topic?",
+          "choices": [
+            "The specific issue debated from a resolution",
+            "The speaker's name",
+            "The judge report",
+            "The timer"
+          ],
+          "correctAnswer": "The specific issue debated from a resolution",
+          "hint": "It narrows the broad prompt.",
+          "explanation": "A case topic is the actual issue the round will debate.",
+          "skillTag": "Case topic"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Why should definitions be clear?",
+            "choices": [
+              "To set fair boundaries",
+              "To confuse opposition",
+              "To avoid contentions",
+              "To replace impacts"
+            ],
+            "correctAnswer": "To set fair boundaries",
+            "hint": "Definitions shape the debate.",
+            "explanation": "Clear definitions help both sides understand what is being debated.",
+            "skillTag": "Definitions"
+          },
+          {
+            "prompt": "What is a contention?",
+            "choices": [
+              "A main reason for the case",
+              "A random fact",
+              "A speech order",
+              "A side badge"
+            ],
+            "correctAnswer": "A main reason for the case",
+            "hint": "Contentions support the case.",
+            "explanation": "Contentions are the major arguments for the proposal.",
+            "skillTag": "Contentions"
+          },
+          {
+            "prompt": "What makes a fair case topic?",
+            "choices": [
+              "It creates clear clash",
+              "It hides the issue",
+              "It depends on secret knowledge",
+              "It has no definitions"
+            ],
+            "correctAnswer": "It creates clear clash",
+            "hint": "Fair topics can be debated by both sides.",
+            "explanation": "A fair case gives both sides a meaningful path to argue.",
+            "skillTag": "Case topic"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A case topic is so narrow that opposition has no answer. What is the issue?",
+            "choices": [
+              "Unfair case design",
+              "Strong signposting",
+              "Good weighing",
+              "A clear voter"
+            ],
+            "correctAnswer": "Unfair case design",
+            "hint": "A topic should invite clash.",
+            "explanation": "A case should be specific but still debatable.",
+            "skillTag": "Case topic"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-claim-warrant-impact",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate foundations",
+    "name": "Claim, Warrant, Impact",
+    "description": "Turn an idea into a complete argument the judge can evaluate.",
+    "lesson": {
+      "title": "Build a complete argument",
+      "slug": "debate-claim-warrant-impact-lesson",
+      "summary": "Learn the claim-warrant-impact pattern for stronger speeches.",
+      "estimatedMinutes": 8,
+      "content": {
+        "objective": "Write an argument with a clear claim, warrant, and impact.",
+        "explanation": "A complete argument has three parts: the claim says what you believe, the warrant explains why it is true, and the impact explains why it matters in the round.",
+        "whyMatters": "Judges cannot give full credit to an idea they cannot follow. This pattern makes your reasoning visible and gives later speeches something to extend.",
+        "steps": [
+          "Name the claim in one direct sentence.",
+          "Add a warrant that explains the cause or logic.",
+          "End with the impact: who is affected, how much, and why it matters more than the other side."
+        ],
+        "workedExample": {
+          "prompt": "Schools should teach practical AI literacy.",
+          "weakAnswer": "AI literacy is important because AI is everywhere.",
+          "strongAnswer": "Schools should teach practical AI literacy because students already use AI tools for research and writing. If they learn limits, bias checks, and responsible use, they make fewer mistakes and are better prepared for college and work.",
+          "whyItWorks": "The strong answer states a claim, explains the mechanism, and gives a concrete impact."
+        },
+        "guidedQuestion": {
+          "prompt": "Which sentence is the warrant?",
+          "choices": [
+            "Schools should teach practical AI literacy.",
+            "Students already use AI tools for research and writing.",
+            "Prepared students make fewer mistakes in college and work.",
+            "This debate is about education policy."
+          ],
+          "correctAnswer": "Students already use AI tools for research and writing.",
+          "hint": "The warrant is the reason the claim is true.",
+          "explanation": "This sentence explains why AI literacy belongs in school: students are already using the tools.",
+          "skillTag": "Warrant"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Which answer has all three parts?",
+            "choices": [
+              "We affirm because the plan is good.",
+              "The plan improves safety because trained students can identify AI errors before relying on them, which reduces academic and workplace harm.",
+              "AI errors are bad.",
+              "The negative side has no evidence."
+            ],
+            "correctAnswer": "The plan improves safety because trained students can identify AI errors before relying on them, which reduces academic and workplace harm.",
+            "hint": "Look for claim, reason, and why it matters.",
+            "explanation": "This choice includes the position, the mechanism, and the impact.",
+            "skillTag": "Complete argument"
+          },
+          {
+            "prompt": "What should come after a claim?",
+            "choices": [
+              "A new topic",
+              "A warrant",
+              "A thank-you",
+              "A speaker score"
+            ],
+            "correctAnswer": "A warrant",
+            "hint": "The next step is explaining why the claim is true.",
+            "explanation": "A warrant connects the claim to logic or evidence.",
+            "skillTag": "Warrant"
+          },
+          {
+            "prompt": "What is an impact?",
+            "choices": [
+              "The rule for speaking order",
+              "The reason a point matters",
+              "The first sentence only",
+              "A citation title"
+            ],
+            "correctAnswer": "The reason a point matters",
+            "hint": "Ask: why should the judge care?",
+            "explanation": "The impact explains the importance or consequence of the argument.",
+            "skillTag": "Impact"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A judge asks why your argument matters. Which part are they asking for?",
+            "choices": [
+              "Claim",
+              "Impact",
+              "Signpost",
+              "Definition"
+            ],
+            "correctAnswer": "Impact",
+            "hint": "The word matters points to the consequence.",
+            "explanation": "Impact tells the judge why the argument should affect the decision.",
+            "skillTag": "Impact"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-clash",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate foundations",
+    "name": "Clash",
+    "description": "Find the real disagreement and answer it directly.",
+    "lesson": {
+      "title": "Create direct clash",
+      "slug": "debate-clash-lesson",
+      "summary": "Learn how to identify and resolve the main disagreement.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Identify what both sides disagree about and answer that point directly.",
+        "explanation": "Clash happens when two arguments meet. Instead of repeating your case, explain why your answer beats the other side's claim.",
+        "whyMatters": "Rounds are won on comparison. Clash shows the judge that you are not just speaking well, you are winning the debate.",
+        "steps": [
+          "Name the opponent's claim.",
+          "State your answer.",
+          "Explain why your answer matters more or proves their claim wrong."
+        ],
+        "workedExample": {
+          "prompt": "Opponent says the plan costs too much.",
+          "weakAnswer": "Our plan is still good.",
+          "strongAnswer": "On cost, they assume a new class is required. Our plan uses existing advisory time, so their budget objection does not apply.",
+          "whyItWorks": "The strong answer names the opposing argument and directly removes its assumption."
+        },
+        "guidedQuestion": {
+          "prompt": "Which response creates clash?",
+          "choices": [
+            "Our case is important.",
+            "On cost, their objection assumes a new class, but our plan uses advisory time.",
+            "I will move on.",
+            "This topic is interesting."
+          ],
+          "correctAnswer": "On cost, their objection assumes a new class, but our plan uses advisory time.",
+          "hint": "Look for a direct answer to the other side.",
+          "explanation": "This response meets the cost argument directly.",
+          "skillTag": "Clash"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is the first step in clash?",
+            "choices": [
+              "Name the opposing claim",
+              "Start a new contention",
+              "Ignore the flow",
+              "Ask for prep time"
+            ],
+            "correctAnswer": "Name the opposing claim",
+            "hint": "You cannot answer what you have not identified.",
+            "explanation": "Naming the claim helps both you and the judge see the point of disagreement.",
+            "skillTag": "Clash"
+          },
+          {
+            "prompt": "Which is weakest?",
+            "choices": [
+              "They say cost, we answer with existing time.",
+              "They say safety, we answer with training.",
+              "Our first contention is still true.",
+              "They say delay, we answer with phase-in."
+            ],
+            "correctAnswer": "Our first contention is still true.",
+            "hint": "Repeating your case is not direct clash.",
+            "explanation": "This does not answer a specific opposing argument.",
+            "skillTag": "Clash"
+          },
+          {
+            "prompt": "Why is clash important?",
+            "choices": [
+              "It resolves disagreement",
+              "It hides weak evidence",
+              "It makes speeches shorter only",
+              "It avoids comparison"
+            ],
+            "correctAnswer": "It resolves disagreement",
+            "hint": "Debate needs direct comparison.",
+            "explanation": "Clash helps the judge decide between competing claims.",
+            "skillTag": "Clash"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If the opponent says your plan is unrealistic, what should you answer first?",
+            "choices": [
+              "The feasibility objection",
+              "A new unrelated benefit",
+              "Your speaking time",
+              "The ballot color"
+            ],
+            "correctAnswer": "The feasibility objection",
+            "hint": "Answer their exact pressure point.",
+            "explanation": "Directly answering feasibility creates clash.",
+            "skillTag": "Clash"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-constructive-speeches",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate speeches",
+    "name": "Constructive Speeches",
+    "description": "Build the first version of your case clearly and strategically.",
+    "lesson": {
+      "title": "Build a constructive speech",
+      "slug": "debate-constructive-speeches-lesson",
+      "summary": "Learn what belongs in the first major speech.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Write a constructive speech with definitions, contentions, and impacts.",
+        "explanation": "A constructive speech builds the foundation of the round. It should define the topic, present major contentions, and explain impacts.",
+        "whyMatters": "Later speeches depend on this foundation. If the constructive is vague, rebuttals become harder and the judge has less to evaluate.",
+        "steps": [
+          "Define key terms.",
+          "Present two or three contentions.",
+          "Explain the warrant and impact for each contention."
+        ],
+        "workedExample": {
+          "prompt": "Opening government speech on AI literacy.",
+          "weakAnswer": "AI literacy is good and students need it.",
+          "strongAnswer": "We define AI literacy as practical training in responsible tool use. Contention one: it improves academic integrity because students learn limits and citation habits. Contention two: it improves career readiness because students practice safe workplace use.",
+          "whyItWorks": "The strong answer defines terms and creates organized contentions."
+        },
+        "guidedQuestion": {
+          "prompt": "What belongs in a constructive speech?",
+          "choices": [
+            "Definitions and contentions",
+            "Only new rebuttal",
+            "Only jokes",
+            "The final ballot"
+          ],
+          "correctAnswer": "Definitions and contentions",
+          "hint": "Constructives build the case.",
+          "explanation": "A constructive speech sets terms and introduces major arguments.",
+          "skillTag": "Constructive"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is a contention?",
+            "choices": [
+              "A major line of argument",
+              "A speaker rank",
+              "A timer",
+              "A room rule"
+            ],
+            "correctAnswer": "A major line of argument",
+            "hint": "Contentions are case pillars.",
+            "explanation": "A contention is a main argument supporting the case.",
+            "skillTag": "Contention"
+          },
+          {
+            "prompt": "Why define terms?",
+            "choices": [
+              "To clarify the debate",
+              "To avoid all clash",
+              "To hide your case",
+              "To replace evidence"
+            ],
+            "correctAnswer": "To clarify the debate",
+            "hint": "Definitions set boundaries.",
+            "explanation": "Clear definitions prevent confusion and focus the round.",
+            "skillTag": "Definitions"
+          },
+          {
+            "prompt": "How many contentions are usually easier for beginners?",
+            "choices": [
+              "Two or three",
+              "Ten",
+              "Zero",
+              "One hundred"
+            ],
+            "correctAnswer": "Two or three",
+            "hint": "Enough depth, not overload.",
+            "explanation": "Two or three contentions are manageable and distinct.",
+            "skillTag": "Constructive"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If the judge cannot tell what your plan means, what did you likely miss?",
+            "choices": [
+              "Definitions",
+              "A trophy",
+              "Speaker rank",
+              "A closing thank-you"
+            ],
+            "correctAnswer": "Definitions",
+            "hint": "Terms make the plan understandable.",
+            "explanation": "Definitions clarify the case and prevent confusion.",
+            "skillTag": "Definitions"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-parliamentary-roles",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Parliamentary debate",
+    "name": "Parliamentary Debate Roles",
+    "description": "Understand what each side and speech is trying to do.",
+    "lesson": {
+      "title": "Know your parliamentary role",
+      "slug": "debate-parliamentary-roles-lesson",
+      "summary": "Learn the jobs of government and opposition speakers.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Match your speech choices to your role in parliamentary debate.",
+        "explanation": "Government builds and defends a case. Opposition tests the case, offers counter-pressure, and explains why the proposal should not stand.",
+        "whyMatters": "Knowing the role prevents scattered speeches and helps teams coordinate.",
+        "steps": [
+          "Government defines and builds the case.",
+          "Opposition answers the case and creates clash.",
+          "Later speeches extend, refute, and weigh."
+        ],
+        "workedExample": {
+          "prompt": "Opposition hears a vague government case.",
+          "weakAnswer": "We have our own unrelated topic.",
+          "strongAnswer": "We challenge the definition because it is too broad, then argue the plan does not solve the stated problem.",
+          "whyItWorks": "The strong answer performs the opposition role by testing the case."
+        },
+        "guidedQuestion": {
+          "prompt": "What is the government's first job?",
+          "choices": [
+            "Build a clear case",
+            "Ignore definitions",
+            "Only rebut",
+            "Judge the round"
+          ],
+          "correctAnswer": "Build a clear case",
+          "hint": "Government starts the proposal.",
+          "explanation": "Government must define and defend the case.",
+          "skillTag": "Role awareness"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is the opposition's job?",
+            "choices": [
+              "Test and answer the case",
+              "Agree with everything",
+              "Write the ballot",
+              "Avoid clash"
+            ],
+            "correctAnswer": "Test and answer the case",
+            "hint": "Opposition creates pressure.",
+            "explanation": "Opposition should explain why the government case fails or is not best.",
+            "skillTag": "Role awareness"
+          },
+          {
+            "prompt": "Why do roles matter?",
+            "choices": [
+              "They guide speech strategy",
+              "They replace arguments",
+              "They make evidence illegal",
+              "They remove time limits"
+            ],
+            "correctAnswer": "They guide speech strategy",
+            "hint": "Roles tell each speaker what to do.",
+            "explanation": "Role awareness keeps the team coordinated.",
+            "skillTag": "Role awareness"
+          },
+          {
+            "prompt": "Who usually introduces definitions?",
+            "choices": [
+              "Government",
+              "Judge",
+              "Audience",
+              "Tab room"
+            ],
+            "correctAnswer": "Government",
+            "hint": "The case-setting side defines terms.",
+            "explanation": "Government should clarify the terms of its case.",
+            "skillTag": "Definitions"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If you are opposition, what should you do with a weak definition?",
+            "choices": [
+              "Challenge how it shapes the debate",
+              "Ignore it forever",
+              "Accept every loophole",
+              "Stop speaking"
+            ],
+            "correctAnswer": "Challenge how it shapes the debate",
+            "hint": "Definitions affect fairness and focus.",
+            "explanation": "Opposition can pressure definitions that make the debate unclear or unfair.",
+            "skillTag": "Definitions"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-rebuttal-speeches",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate speeches",
+    "name": "Rebuttal Speeches",
+    "description": "Collapse to the arguments that decide the round.",
+    "lesson": {
+      "title": "Win the rebuttal",
+      "slug": "debate-rebuttal-speeches-lesson",
+      "summary": "Learn how rebuttals should answer, extend, and weigh.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Use rebuttal time to resolve the round, not restart it.",
+        "explanation": "A rebuttal speech should answer the most important opposing arguments, extend your best offense, and explain the voters.",
+        "whyMatters": "Rebuttals are where judges often decide the round. A focused rebuttal is stronger than a rushed list.",
+        "steps": [
+          "Pick the key issues.",
+          "Answer the opponent's best argument.",
+          "Extend your best argument.",
+          "Weigh and name voters."
+        ],
+        "workedExample": {
+          "prompt": "Final rebuttal after many arguments.",
+          "weakAnswer": "I will answer everything quickly.",
+          "strongAnswer": "This round comes down to feasibility versus preparedness. We win feasibility because the plan uses advisory time, and we win preparedness because the impact is immediate and long term.",
+          "whyItWorks": "The strong answer collapses to the central comparison."
+        },
+        "guidedQuestion": {
+          "prompt": "What should a rebuttal prioritize?",
+          "choices": [
+            "Key issues and weighing",
+            "Every minor sentence",
+            "New contentions",
+            "Unrelated examples"
+          ],
+          "correctAnswer": "Key issues and weighing",
+          "hint": "Final speeches decide the ballot.",
+          "explanation": "Rebuttals should focus on the arguments most likely to decide the round.",
+          "skillTag": "Rebuttal"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is collapsing?",
+            "choices": [
+              "Focusing on fewer winning issues",
+              "Dropping every argument",
+              "Speaking faster only",
+              "Adding a new case"
+            ],
+            "correctAnswer": "Focusing on fewer winning issues",
+            "hint": "Collapse means narrow the debate.",
+            "explanation": "Collapsing helps the judge see the decisive issues.",
+            "skillTag": "Rebuttal"
+          },
+          {
+            "prompt": "What is a voter?",
+            "choices": [
+              "A reason the judge should decide for you",
+              "A random example",
+              "A definition only",
+              "A team name"
+            ],
+            "correctAnswer": "A reason the judge should decide for you",
+            "hint": "Voters decide ballots.",
+            "explanation": "A voter tells the judge why your side should win.",
+            "skillTag": "Voter"
+          },
+          {
+            "prompt": "What should rebuttals avoid?",
+            "choices": [
+              "New arguments",
+              "Weighing",
+              "Direct answers",
+              "Extending offense"
+            ],
+            "correctAnswer": "New arguments",
+            "hint": "Late new material is usually unfair and confusing.",
+            "explanation": "Rebuttals should resolve existing arguments rather than introduce fresh case offense.",
+            "skillTag": "New arguments"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A final speech introduces a brand-new contention. What is the problem?",
+            "choices": [
+              "It is a new argument in rebuttal",
+              "It is too clear",
+              "It is a signpost",
+              "It is a definition"
+            ],
+            "correctAnswer": "It is a new argument in rebuttal",
+            "hint": "New content belongs earlier.",
+            "explanation": "Rebuttal speeches should not surprise opponents with new major arguments.",
+            "skillTag": "New arguments"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-refutation",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate responses",
+    "name": "Refutation",
+    "description": "Use a repeatable pattern to answer opposing arguments.",
+    "lesson": {
+      "title": "Answer with refutation",
+      "slug": "debate-refutation-lesson",
+      "summary": "Use they say, but, because, therefore to build strong rebuttal answers.",
+      "estimatedMinutes": 8,
+      "content": {
+        "objective": "Write a direct refutation using a clear four-part structure.",
+        "explanation": "Refutation is the skill of answering the other side. A simple structure is: they say, but, because, therefore.",
+        "whyMatters": "This keeps rebuttals from becoming scattered. It also makes your answer easy for the judge to evaluate.",
+        "steps": [
+          "They say: identify the argument.",
+          "But: state your answer.",
+          "Because: explain why.",
+          "Therefore: tell the judge what to do with it."
+        ],
+        "workedExample": {
+          "prompt": "They say AI literacy wastes class time.",
+          "weakAnswer": "No it does not.",
+          "strongAnswer": "They say AI literacy wastes class time, but it can fit inside existing advisory lessons because schools already use that time for digital citizenship. Therefore, the time-cost argument is smaller than our preparedness benefit.",
+          "whyItWorks": "The strong answer identifies, answers, explains, and weighs the argument."
+        },
+        "guidedQuestion": {
+          "prompt": "Which part explains the reason the answer is true?",
+          "choices": [
+            "They say",
+            "But",
+            "Because",
+            "Therefore"
+          ],
+          "correctAnswer": "Because",
+          "hint": "The word because usually introduces the warrant.",
+          "explanation": "The because part gives the reasoning behind the refutation.",
+          "skillTag": "Refutation"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What does 'therefore' do?",
+            "choices": [
+              "Tells the judge the result of the answer",
+              "Starts a new claim only",
+              "Copies the opponent",
+              "Gives speaker points"
+            ],
+            "correctAnswer": "Tells the judge the result of the answer",
+            "hint": "It closes the loop.",
+            "explanation": "Therefore explains how the judge should treat the argument after your answer.",
+            "skillTag": "Refutation"
+          },
+          {
+            "prompt": "Which refutation is best?",
+            "choices": [
+              "They are wrong.",
+              "They say it costs too much, but the plan uses existing resources because advisory time already exists, so cost is not a voter.",
+              "Our case is nice.",
+              "I disagree strongly."
+            ],
+            "correctAnswer": "They say it costs too much, but the plan uses existing resources because advisory time already exists, so cost is not a voter.",
+            "hint": "Look for all four parts.",
+            "explanation": "This answer identifies the claim, answers it, explains why, and gives a result.",
+            "skillTag": "Refutation"
+          },
+          {
+            "prompt": "What should refutation avoid?",
+            "choices": [
+              "Direct answers",
+              "Specific warrants",
+              "Vague denial",
+              "Clear therefore statements"
+            ],
+            "correctAnswer": "Vague denial",
+            "hint": "Saying no is not enough.",
+            "explanation": "Vague denial does not explain why the opposing argument fails.",
+            "skillTag": "Refutation"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "In 'They say X, but Y because Z,' what is Y?",
+            "choices": [
+              "The answer",
+              "The judge",
+              "The impact",
+              "The topic"
+            ],
+            "correctAnswer": "The answer",
+            "hint": "But introduces the response.",
+            "explanation": "Y is the direct answer to the opponent's claim.",
+            "skillTag": "Refutation"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-signposting",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate foundations",
+    "name": "Signposting",
+    "description": "Make your speech easy to flow with clear labels and transitions.",
+    "lesson": {
+      "title": "Guide the judge through your speech",
+      "slug": "debate-signposting-lesson",
+      "summary": "Use labels, numbers, and transitions so the judge never gets lost.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Use signposts to organize arguments out loud.",
+        "explanation": "A signpost is a short label that tells listeners where you are in the speech. Good signposting sounds like: first, on their evidence, now on impact comparison.",
+        "whyMatters": "Debate judges track arguments quickly. If they cannot place your response on the flow, even a smart answer may be missed.",
+        "steps": [
+          "Preview the order.",
+          "Label each argument before explaining it.",
+          "Use transition phrases when you move to a new issue."
+        ],
+        "workedExample": {
+          "prompt": "Respond to two arguments about cost and safety.",
+          "weakAnswer": "That is wrong because the cost is lower and safety is better too.",
+          "strongAnswer": "I have two answers. First, on cost: the plan uses existing advisory time, so the budget impact is small. Second, on safety: teaching responsible use reduces risky shortcuts.",
+          "whyItWorks": "The strong answer numbers the responses and names the issue before explaining."
+        },
+        "guidedQuestion": {
+          "prompt": "Which phrase is the clearest signpost?",
+          "choices": [
+            "That is not true",
+            "Next, on their cost argument",
+            "Everyone knows this",
+            "We win"
+          ],
+          "correctAnswer": "Next, on their cost argument",
+          "hint": "A signpost names where the judge should place the response.",
+          "explanation": "This phrase tells the judge the speaker is moving to the cost argument.",
+          "skillTag": "Signposting"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What should a preview do?",
+            "choices": [
+              "Tell the judge the order of the speech",
+              "Replace evidence",
+              "Hide the main claim",
+              "End the round"
+            ],
+            "correctAnswer": "Tell the judge the order of the speech",
+            "hint": "A preview is a roadmap.",
+            "explanation": "A preview helps the judge follow the structure before details begin.",
+            "skillTag": "Speech organization"
+          },
+          {
+            "prompt": "Which transition is strongest?",
+            "choices": [
+              "Also stuff",
+              "Moving to their second contention",
+              "Anyway",
+              "Like I said"
+            ],
+            "correctAnswer": "Moving to their second contention",
+            "hint": "The best transition names the next flow location.",
+            "explanation": "This transition clearly identifies where the response belongs.",
+            "skillTag": "Signposting"
+          },
+          {
+            "prompt": "Why does signposting improve scores?",
+            "choices": [
+              "It makes arguments easier to follow",
+              "It makes speeches longer",
+              "It avoids all clash",
+              "It replaces warrants"
+            ],
+            "correctAnswer": "It makes arguments easier to follow",
+            "hint": "Think about what helps a judge flow.",
+            "explanation": "Judges reward arguments they can understand and place on the flow.",
+            "skillTag": "Clarity"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "You are answering the opponent's evidence. What should your signpost mention?",
+            "choices": [
+              "Evidence",
+              "Your lunch",
+              "The room",
+              "A random voter"
+            ],
+            "correctAnswer": "Evidence",
+            "hint": "Name the argument area you are answering.",
+            "explanation": "A targeted signpost tells the judge this answer belongs on the evidence flow.",
+            "skillTag": "Signposting"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "debate-weighing",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate responses",
+    "name": "Weighing Arguments",
+    "description": "Compare impacts so the judge knows which argument matters more.",
+    "lesson": {
+      "title": "Explain why your impact wins",
+      "slug": "debate-weighing-lesson",
+      "summary": "Use magnitude, probability, and timeframe to compare arguments.",
+      "estimatedMinutes": 8,
+      "content": {
+        "objective": "Compare impacts instead of only listing them.",
+        "explanation": "Weighing explains why one argument matters more than another. Common weighing tools are magnitude, probability, timeframe, and reversibility.",
+        "whyMatters": "Judges often believe both sides have some truth. Weighing tells them which truth should decide the round.",
+        "steps": [
+          "Identify both impacts.",
+          "Pick a weighing lens.",
+          "Explain why your impact wins under that lens."
+        ],
+        "workedExample": {
+          "prompt": "Aff says preparedness; Neg says class time.",
+          "weakAnswer": "Preparedness is more important.",
+          "strongAnswer": "Preparedness outweighs class time on timeframe and reversibility. Lost class time is small and adjustable, but students using AI irresponsibly can create immediate academic and career consequences.",
+          "whyItWorks": "The strong answer names weighing lenses and compares both impacts."
+        },
+        "guidedQuestion": {
+          "prompt": "Which phrase is weighing?",
+          "choices": [
+            "Our impact is bigger and happens sooner",
+            "We have an impact",
+            "They are wrong",
+            "I have two points"
+          ],
+          "correctAnswer": "Our impact is bigger and happens sooner",
+          "hint": "Weighing compares importance.",
+          "explanation": "This phrase compares magnitude and timeframe.",
+          "skillTag": "Weighing"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Which is a weighing lens?",
+            "choices": [
+              "Magnitude",
+              "Font size",
+              "Ballot color",
+              "Email address"
+            ],
+            "correctAnswer": "Magnitude",
+            "hint": "It asks how large the impact is.",
+            "explanation": "Magnitude is a standard way to compare impacts.",
+            "skillTag": "Weighing"
+          },
+          {
+            "prompt": "What does probability compare?",
+            "choices": [
+              "How likely impacts are",
+              "How loud speakers are",
+              "How many cards exist",
+              "How long the room is"
+            ],
+            "correctAnswer": "How likely impacts are",
+            "hint": "Probability is about chance.",
+            "explanation": "Probability tells the judge which impact is more likely to happen.",
+            "skillTag": "Weighing"
+          },
+          {
+            "prompt": "Why weigh arguments?",
+            "choices": [
+              "To help the judge decide between impacts",
+              "To avoid rebuttal",
+              "To skip definitions",
+              "To make speeches confusing"
+            ],
+            "correctAnswer": "To help the judge decide between impacts",
+            "hint": "Think about decision-making.",
+            "explanation": "Weighing turns competing impacts into a clear decision.",
+            "skillTag": "Weighing"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If your impact happens sooner, which lens are you using?",
+            "choices": [
+              "Timeframe",
+              "Magnitude",
+              "Vocabulary",
+              "Definition"
+            ],
+            "correctAnswer": "Timeframe",
+            "hint": "Sooner means when.",
+            "explanation": "Timeframe compares when impacts happen.",
+            "skillTag": "Weighing"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "deca-identifying-problem",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA roleplay",
+    "name": "Identifying the Problem",
+    "description": "Separate symptoms from the real business issue.",
+    "lesson": {
+      "title": "Find the root business problem",
+      "slug": "deca-identifying-problem-lesson",
+      "summary": "Choose a recommendation that solves the real issue.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "State the root problem before proposing a solution.",
+        "explanation": "A symptom is what you notice. The root problem is why it is happening. Strong DECA answers solve the root problem.",
+        "whyMatters": "Judges want business reasoning, not just activity. Identifying the real problem makes your solution more strategic.",
+        "steps": [
+          "Name the symptom.",
+          "Ask what causes it.",
+          "Choose the problem your solution can affect."
+        ],
+        "workedExample": {
+          "prompt": "A cafe has many first-time customers but few return.",
+          "weakAnswer": "The problem is not enough customers.",
+          "strongAnswer": "The problem is weak customer retention, not awareness. The solution should focus on loyalty and post-visit engagement.",
+          "whyItWorks": "The strong answer separates awareness from retention."
+        },
+        "guidedQuestion": {
+          "prompt": "A cafe has many first visits but few repeat visits. What is the root problem?",
+          "choices": [
+            "Customer retention",
+            "No awareness",
+            "Too many employees",
+            "Medical accuracy"
+          ],
+          "correctAnswer": "Customer retention",
+          "hint": "Repeat visits are about coming back.",
+          "explanation": "The issue is retaining customers after the first visit.",
+          "skillTag": "Problem identification"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is a symptom?",
+            "choices": [
+              "An observable sign of a deeper issue",
+              "The final solution",
+              "A judge question",
+              "A performance score"
+            ],
+            "correctAnswer": "An observable sign of a deeper issue",
+            "hint": "Symptoms are clues.",
+            "explanation": "Symptoms help you infer the root problem.",
+            "skillTag": "Problem identification"
+          },
+          {
+            "prompt": "Why state the problem first?",
+            "choices": [
+              "It makes the solution relevant",
+              "It replaces the solution",
+              "It hides constraints",
+              "It lowers confidence"
+            ],
+            "correctAnswer": "It makes the solution relevant",
+            "hint": "Problem before solution.",
+            "explanation": "A clear problem frames the recommendation.",
+            "skillTag": "Problem identification"
+          },
+          {
+            "prompt": "Which solution fits retention?",
+            "choices": [
+              "Loyalty program",
+              "Random billboard only",
+              "Ignore customers",
+              "Cut all products"
+            ],
+            "correctAnswer": "Loyalty program",
+            "hint": "Retention means repeat behavior.",
+            "explanation": "A loyalty program directly targets repeat visits.",
+            "skillTag": "Choosing response"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If sales are down because checkout is slow, what should you target?",
+            "choices": [
+              "Operations speed",
+              "Only brand awareness",
+              "Medical terms",
+              "Definitions"
+            ],
+            "correctAnswer": "Operations speed",
+            "hint": "Find the cause.",
+            "explanation": "Slow checkout points to operations, not only promotion.",
+            "skillTag": "Problem identification"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "deca-professional-communication",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA roleplay",
+    "name": "Professional Communication",
+    "description": "Present recommendations with executive clarity and confidence.",
+    "lesson": {
+      "title": "Sound like a business advisor",
+      "slug": "deca-professional-communication-lesson",
+      "summary": "Use concise structure, business vocabulary, and a confident close.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Communicate with a clear opening, numbered points, and professional tone.",
+        "explanation": "Professional communication is not fancy language. It means the judge can trust you because your answer is clear, calm, and business-focused.",
+        "whyMatters": "DECA judges often score delivery and organization alongside the business idea.",
+        "steps": [
+          "Open with the problem and goal.",
+          "Give two or three numbered recommendations.",
+          "Close with the expected result and how to measure it."
+        ],
+        "workedExample": {
+          "prompt": "Recommend a promotion plan.",
+          "weakAnswer": "I would do social media and stuff.",
+          "strongAnswer": "I recommend a two-part promotion plan: first, targeted short-form videos for local students; second, a referral offer measured by new customer sign-ups.",
+          "whyItWorks": "The strong answer is organized, specific, and measurable."
+        },
+        "guidedQuestion": {
+          "prompt": "Which opening sounds most professional?",
+          "choices": [
+            "I have a two-part plan to improve repeat visits.",
+            "This is easy.",
+            "I guess maybe ads.",
+            "Whatever works."
+          ],
+          "correctAnswer": "I have a two-part plan to improve repeat visits.",
+          "hint": "Professional means clear and credible.",
+          "explanation": "This opening frames the goal and structure.",
+          "skillTag": "Professional communication"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "How many recommendation points are usually manageable?",
+            "choices": [
+              "Two or three",
+              "Ten",
+              "None",
+              "Every idea possible"
+            ],
+            "correctAnswer": "Two or three",
+            "hint": "Clear beats crowded.",
+            "explanation": "Two or three points allow enough depth without overload.",
+            "skillTag": "Organization"
+          },
+          {
+            "prompt": "What should the close include?",
+            "choices": [
+              "Expected result and measurement",
+              "A new unrelated idea",
+              "An apology only",
+              "No conclusion"
+            ],
+            "correctAnswer": "Expected result and measurement",
+            "hint": "Business judges like outcomes.",
+            "explanation": "A measurable close shows business reasoning.",
+            "skillTag": "Professional communication"
+          },
+          {
+            "prompt": "Which phrase is strongest?",
+            "choices": [
+              "Measured by referral sign-ups",
+              "It will be good",
+              "People like things",
+              "Trust me"
+            ],
+            "correctAnswer": "Measured by referral sign-ups",
+            "hint": "Look for measurable business language.",
+            "explanation": "This phrase gives the judge a concrete metric.",
+            "skillTag": "Evidence-based reasoning"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "What does executive clarity mean?",
+            "choices": [
+              "Clear, organized, decision-ready communication",
+              "Longer words only",
+              "Speaking fast",
+              "No structure"
+            ],
+            "correctAnswer": "Clear, organized, decision-ready communication",
+            "hint": "Think useful to a decision-maker.",
+            "explanation": "Executive clarity helps the judge understand and trust the recommendation.",
+            "skillTag": "Professional communication"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "deca-reading-scenarios",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA roleplay",
+    "name": "Reading Scenarios",
+    "description": "Quickly identify role, task, audience, and constraints in a DECA prompt.",
+    "lesson": {
+      "title": "Read a business scenario",
+      "slug": "deca-reading-scenarios-lesson",
+      "summary": "Find the job to be done before building your recommendation.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Extract the role, problem, audience, and constraints from a scenario.",
+        "explanation": "Before solving, pause and mark four things: who you are, who you are speaking to, what problem matters most, and what limits your solution.",
+        "whyMatters": "DECA roleplays reward relevant solutions. If you miss the real scenario, even a polished presentation can score low.",
+        "steps": [
+          "Identify your role.",
+          "Identify the decision-maker.",
+          "Name the business problem.",
+          "List constraints such as budget, time, staff, or brand."
+        ],
+        "workedExample": {
+          "prompt": "You are a marketing assistant speaking to a store owner about low repeat visits.",
+          "weakAnswer": "I would make more ads.",
+          "strongAnswer": "My role is marketing assistant, the audience is the owner, the problem is low repeat visits, and the solution must improve loyalty without assuming a huge budget.",
+          "whyItWorks": "The strong answer reads the situation before solving it."
+        },
+        "guidedQuestion": {
+          "prompt": "Which detail is the business problem?",
+          "choices": [
+            "Low repeat visits",
+            "Marketing assistant",
+            "Store owner",
+            "The speech room"
+          ],
+          "correctAnswer": "Low repeat visits",
+          "hint": "The problem is what needs to improve.",
+          "explanation": "Low repeat visits is the challenge the recommendation must solve.",
+          "skillTag": "Scenario reading"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What should you identify first?",
+            "choices": [
+              "Role and audience",
+              "Random slogan",
+              "A price discount only",
+              "Judge score"
+            ],
+            "correctAnswer": "Role and audience",
+            "hint": "Know who you are and who hears the answer.",
+            "explanation": "Role and audience shape tone and recommendation.",
+            "skillTag": "Scenario reading"
+          },
+          {
+            "prompt": "Why list constraints?",
+            "choices": [
+              "To keep the solution realistic",
+              "To avoid solving",
+              "To make the answer longer",
+              "To skip performance indicators"
+            ],
+            "correctAnswer": "To keep the solution realistic",
+            "hint": "Constraints test feasibility.",
+            "explanation": "Constraints help you recommend something the business can actually do.",
+            "skillTag": "Feasibility"
+          },
+          {
+            "prompt": "Which is a constraint?",
+            "choices": [
+              "Limited staff",
+              "The word roleplay",
+              "A trophy",
+              "A speaker rank"
+            ],
+            "correctAnswer": "Limited staff",
+            "hint": "Constraints limit implementation.",
+            "explanation": "Limited staff affects what solution is realistic.",
+            "skillTag": "Scenario reading"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If the judge is a store owner, how should your tone sound?",
+            "choices": [
+              "Professional and practical",
+              "Random and casual",
+              "Medical",
+              "Courtroom-like"
+            ],
+            "correctAnswer": "Professional and practical",
+            "hint": "Match the audience.",
+            "explanation": "A business owner expects concise, useful recommendations.",
+            "skillTag": "Professional communication"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "hosa-healthcare-ethics",
+    "organization": "HOSA",
+    "track": "HOSA",
+    "category": "Health communication",
+    "name": "Healthcare Ethics",
+    "description": "Make responsible choices using safety, privacy, and respect.",
+    "lesson": {
+      "title": "Reason through healthcare ethics",
+      "slug": "hosa-healthcare-ethics-lesson",
+      "summary": "Use privacy, consent, safety, and fairness to evaluate scenarios.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Use ethical principles to choose a safe and respectful response.",
+        "explanation": "Healthcare ethics often involves balancing values like privacy, patient choice, safety, and professional responsibility.",
+        "whyMatters": "HOSA scenarios may test what you do when the easy answer is not the most responsible answer.",
+        "steps": [
+          "Identify the people affected.",
+          "Name the ethical issue.",
+          "Choose the safest professional action.",
+          "Explain why it respects the patient."
+        ],
+        "workedExample": {
+          "prompt": "A friend asks about a patient's condition.",
+          "weakAnswer": "Tell them if they promise not to share.",
+          "strongAnswer": "I cannot share private patient information. I would direct them to the proper contact process and protect confidentiality.",
+          "whyItWorks": "The strong answer protects privacy and gives a professional next step."
+        },
+        "guidedQuestion": {
+          "prompt": "Which principle is involved when protecting patient information?",
+          "choices": [
+            "Privacy",
+            "Marketing",
+            "Weighing",
+            "Pricing"
+          ],
+          "correctAnswer": "Privacy",
+          "hint": "Think about information access.",
+          "explanation": "Patient information should be protected unless sharing is authorized.",
+          "skillTag": "Healthcare ethics"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What should you do with private patient information?",
+            "choices": [
+              "Share only through appropriate authorized channels",
+              "Tell friends",
+              "Post it",
+              "Guess publicly"
+            ],
+            "correctAnswer": "Share only through appropriate authorized channels",
+            "hint": "Privacy rules matter.",
+            "explanation": "Professional ethics requires protecting patient information.",
+            "skillTag": "Healthcare ethics"
+          },
+          {
+            "prompt": "Which is an ethical response?",
+            "choices": [
+              "Respect patient dignity",
+              "Ignore consent",
+              "Embarrass the patient",
+              "Skip safety"
+            ],
+            "correctAnswer": "Respect patient dignity",
+            "hint": "Ethics centers people.",
+            "explanation": "Respecting dignity supports professional care.",
+            "skillTag": "Professionalism"
+          },
+          {
+            "prompt": "Why explain your ethical choice?",
+            "choices": [
+              "To show reasoning and professionalism",
+              "To make it longer only",
+              "To avoid action",
+              "To confuse the judge"
+            ],
+            "correctAnswer": "To show reasoning and professionalism",
+            "hint": "Judges need to see your decision process.",
+            "explanation": "Explaining the principle makes the answer stronger.",
+            "skillTag": "Evidence-based reasoning"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A scenario involves risk of harm. What principle becomes urgent?",
+            "choices": [
+              "Safety",
+              "Advertising",
+              "Speaker rank",
+              "Budget"
+            ],
+            "correctAnswer": "Safety",
+            "hint": "Health scenarios prioritize harm reduction.",
+            "explanation": "Safety is central when someone could be harmed.",
+            "skillTag": "Healthcare ethics"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "hosa-medical-terminology-basics",
+    "organization": "HOSA",
+    "track": "HOSA",
+    "category": "Health science",
+    "name": "Medical Terminology Basics",
+    "description": "Break clinical words into roots, prefixes, and suffixes.",
+    "lesson": {
+      "title": "Decode medical terms",
+      "slug": "hosa-medical-terminology-basics-lesson",
+      "summary": "Use word parts to understand unfamiliar health terms.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Break medical terms into word parts and explain them accurately.",
+        "explanation": "Many medical terms are built from prefixes, roots, and suffixes. If you can identify parts, you can understand unfamiliar terms more safely.",
+        "whyMatters": "HOSA events reward accurate health science language. Terminology also helps you communicate clearly with patients and judges.",
+        "steps": [
+          "Find the prefix.",
+          "Find the root.",
+          "Find the suffix.",
+          "Put the meaning together and check context."
+        ],
+        "workedExample": {
+          "prompt": "Tachycardia",
+          "weakAnswer": "A heart problem.",
+          "strongAnswer": "Tachy means fast and cardia relates to the heart, so tachycardia means a fast heart rate.",
+          "whyItWorks": "The strong answer uses word parts and avoids vague guessing."
+        },
+        "guidedQuestion": {
+          "prompt": "In tachycardia, what does tachy mean?",
+          "choices": [
+            "Fast",
+            "Slow",
+            "Lung",
+            "Skin"
+          ],
+          "correctAnswer": "Fast",
+          "hint": "Think of tachometer: speed.",
+          "explanation": "Tachy means fast.",
+          "skillTag": "Medical terminology"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What does cardi relate to?",
+            "choices": [
+              "Heart",
+              "Liver",
+              "Bone",
+              "Skin"
+            ],
+            "correctAnswer": "Heart",
+            "hint": "Cardiology studies the heart.",
+            "explanation": "Cardi/cardio refers to the heart.",
+            "skillTag": "Medical terminology"
+          },
+          {
+            "prompt": "Why use word parts?",
+            "choices": [
+              "To infer meaning safely",
+              "To diagnose without context",
+              "To avoid communication",
+              "To skip definitions"
+            ],
+            "correctAnswer": "To infer meaning safely",
+            "hint": "Word parts are clues, not the whole clinical picture.",
+            "explanation": "Word parts help decode terms while still respecting context.",
+            "skillTag": "Medical terminology"
+          },
+          {
+            "prompt": "Which is most precise?",
+            "choices": [
+              "Tachycardia means fast heart rate",
+              "Tachycardia is bad stuff",
+              "Tachycardia is always fatal",
+              "Tachycardia means slow breathing"
+            ],
+            "correctAnswer": "Tachycardia means fast heart rate",
+            "hint": "Avoid exaggeration.",
+            "explanation": "This answer is accurate and appropriately limited.",
+            "skillTag": "Medical accuracy"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "What does hypo usually mean?",
+            "choices": [
+              "Low or under",
+              "High",
+              "Heart",
+              "Bone"
+            ],
+            "correctAnswer": "Low or under",
+            "hint": "Hypo means below.",
+            "explanation": "Hypo often means low, under, or deficient.",
+            "skillTag": "Medical terminology"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "hosa-patient-communication",
+    "organization": "HOSA",
+    "track": "HOSA",
+    "category": "Health communication",
+    "name": "Patient Communication",
+    "description": "Explain health information clearly, respectfully, and safely.",
+    "lesson": {
+      "title": "Communicate with patients clearly",
+      "slug": "hosa-patient-communication-lesson",
+      "summary": "Use empathy, plain language, and confirmation checks.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Explain health information in plain language and confirm understanding.",
+        "explanation": "Patient communication combines accuracy and empathy. A strong response avoids jargon, listens to concerns, and checks understanding.",
+        "whyMatters": "In healthcare, communication affects safety. Patients need to understand next steps, risks, and when to ask for help.",
+        "steps": [
+          "Acknowledge the concern.",
+          "Explain in plain language.",
+          "Give the next step.",
+          "Ask a teach-back question."
+        ],
+        "workedExample": {
+          "prompt": "A patient is nervous about a blood pressure reading.",
+          "weakAnswer": "Your systolic is elevated; just calm down.",
+          "strongAnswer": "I understand this number can feel stressful. Blood pressure can change for many reasons, so we will recheck it and share it with the provider. Can you tell me what step we are taking next?",
+          "whyItWorks": "The strong answer is empathetic, clear, and checks understanding."
+        },
+        "guidedQuestion": {
+          "prompt": "Which response best uses plain language?",
+          "choices": [
+            "We will recheck your blood pressure and talk with the provider.",
+            "Your systolic parameter requires clinical correlation.",
+            "Do not worry about it.",
+            "This is definitely a diagnosis."
+          ],
+          "correctAnswer": "We will recheck your blood pressure and talk with the provider.",
+          "hint": "Plain language is accurate and understandable.",
+          "explanation": "This response avoids jargon and gives a safe next step.",
+          "skillTag": "Patient communication"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is teach-back?",
+            "choices": [
+              "Asking the patient to explain the next step in their own words",
+              "Repeating jargon faster",
+              "Ignoring questions",
+              "Giving a diagnosis"
+            ],
+            "correctAnswer": "Asking the patient to explain the next step in their own words",
+            "hint": "It checks understanding.",
+            "explanation": "Teach-back helps confirm the patient understands.",
+            "skillTag": "Patient communication"
+          },
+          {
+            "prompt": "Which tone is best?",
+            "choices": [
+              "Calm and respectful",
+              "Dismissive",
+              "Sarcastic",
+              "Rushed"
+            ],
+            "correctAnswer": "Calm and respectful",
+            "hint": "Healthcare communication needs trust.",
+            "explanation": "A calm tone supports professionalism and patient safety.",
+            "skillTag": "Professionalism"
+          },
+          {
+            "prompt": "Why avoid jargon?",
+            "choices": [
+              "Patients may not understand it",
+              "It is always illegal",
+              "It makes answers shorter",
+              "It replaces accuracy"
+            ],
+            "correctAnswer": "Patients may not understand it",
+            "hint": "Communication is about understanding.",
+            "explanation": "Plain language improves comprehension without sacrificing accuracy.",
+            "skillTag": "Patient communication"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A patient says they are confused. What should you do?",
+            "choices": [
+              "Pause and explain again in simpler language",
+              "Move on immediately",
+              "Use more abbreviations",
+              "Ignore the concern"
+            ],
+            "correctAnswer": "Pause and explain again in simpler language",
+            "hint": "Respond to the concern.",
+            "explanation": "Clear communication includes adapting when the patient is confused.",
+            "skillTag": "Patient communication"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "public-speaking-evidence-reasoning",
+    "organization": "PUBLIC_SPEAKING",
+    "track": "PUBLIC_SPEAKING",
+    "category": "Public speaking",
+    "name": "Evidence-Based Reasoning",
+    "description": "Support claims with examples, reasoning, and responsible evidence.",
+    "lesson": {
+      "title": "Support your message with evidence",
+      "slug": "public-speaking-evidence-reasoning-lesson",
+      "summary": "Make speeches more credible with support and explanation.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Use evidence and reasoning to support a public speaking claim.",
+        "explanation": "Evidence can be an example, data point, expert idea, or personal story. Reasoning explains how the evidence proves the claim.",
+        "whyMatters": "Audiences are more likely to trust a message when they can see why it is true.",
+        "steps": [
+          "State the claim.",
+          "Give specific support.",
+          "Explain the connection.",
+          "Tie it back to the audience."
+        ],
+        "workedExample": {
+          "prompt": "Claim: practice improves confidence.",
+          "weakAnswer": "Practice is obviously helpful.",
+          "strongAnswer": "Practice improves confidence because repeated rehearsal makes the speech feel familiar. For example, a student who practices the opening five times is less likely to freeze when starting.",
+          "whyItWorks": "The strong answer gives reasoning and a concrete example."
+        },
+        "guidedQuestion": {
+          "prompt": "What does reasoning do?",
+          "choices": [
+            "Explains how evidence proves the claim",
+            "Starts the timer",
+            "Removes examples",
+            "Changes the topic"
+          ],
+          "correctAnswer": "Explains how evidence proves the claim",
+          "hint": "Reasoning is the bridge.",
+          "explanation": "Reasoning connects support to the claim.",
+          "skillTag": "Evidence-based reasoning"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Which is evidence?",
+            "choices": [
+              "A specific example",
+              "A vague feeling only",
+              "No support",
+              "A transition word"
+            ],
+            "correctAnswer": "A specific example",
+            "hint": "Evidence supports a claim.",
+            "explanation": "Examples can function as evidence when they prove a point.",
+            "skillTag": "Evidence"
+          },
+          {
+            "prompt": "Why explain evidence?",
+            "choices": [
+              "So the audience understands its meaning",
+              "To make it confusing",
+              "To avoid claims",
+              "To skip the conclusion"
+            ],
+            "correctAnswer": "So the audience understands its meaning",
+            "hint": "Do not make listeners infer everything.",
+            "explanation": "Explanation turns evidence into persuasion.",
+            "skillTag": "Evidence-based reasoning"
+          },
+          {
+            "prompt": "Which is strongest?",
+            "choices": [
+              "Practice helps because familiarity reduces fear at the start.",
+              "Practice good.",
+              "I like practice.",
+              "No one needs examples."
+            ],
+            "correctAnswer": "Practice helps because familiarity reduces fear at the start.",
+            "hint": "Look for claim plus why.",
+            "explanation": "This answer gives a reason that supports the claim.",
+            "skillTag": "Evidence-based reasoning"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A story supports your point only if you also do what?",
+            "choices": [
+              "Explain the connection",
+              "Hide the claim",
+              "Skip the audience",
+              "Use no structure"
+            ],
+            "correctAnswer": "Explain the connection",
+            "hint": "Evidence needs interpretation.",
+            "explanation": "The speaker must show how the story proves the message.",
+            "skillTag": "Evidence-based reasoning"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "public-speaking-presentation-structure",
+    "organization": "PUBLIC_SPEAKING",
+    "track": "PUBLIC_SPEAKING",
+    "category": "Public speaking",
+    "name": "Presentation Structure",
+    "description": "Organize speeches with a clear opening, body, and close.",
+    "lesson": {
+      "title": "Structure a clear speech",
+      "slug": "public-speaking-presentation-structure-lesson",
+      "summary": "Build a speech listeners can follow from start to finish.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Use a simple structure: hook, thesis, main points, and close.",
+        "explanation": "Strong speeches feel easy to follow because each part has a job. The opening earns attention, the thesis states the message, the body proves it, and the close makes it memorable.",
+        "whyMatters": "Structure lowers anxiety and helps audiences remember your message.",
+        "steps": [
+          "Start with a hook.",
+          "State the thesis.",
+          "Organize two or three main points.",
+          "Close by returning to the main message."
+        ],
+        "workedExample": {
+          "prompt": "Speech about why students should learn public speaking.",
+          "weakAnswer": "Public speaking is good and helps people.",
+          "strongAnswer": "Have you ever had a great idea but felt too nervous to say it? Public speaking helps students turn ideas into action. I will show how it builds confidence, clarity, and leadership.",
+          "whyItWorks": "The strong answer has a hook, thesis, and preview."
+        },
+        "guidedQuestion": {
+          "prompt": "What does a thesis do?",
+          "choices": [
+            "States the main message",
+            "Ends the timer",
+            "Adds a random example",
+            "Replaces the body"
+          ],
+          "correctAnswer": "States the main message",
+          "hint": "The thesis tells the audience what the speech argues.",
+          "explanation": "A thesis gives the speech direction.",
+          "skillTag": "Presentation structure"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What belongs in the opening?",
+            "choices": [
+              "Hook and thesis",
+              "Only citations",
+              "No topic",
+              "A hidden conclusion"
+            ],
+            "correctAnswer": "Hook and thesis",
+            "hint": "Openings orient listeners.",
+            "explanation": "The opening should earn attention and state the message.",
+            "skillTag": "Presentation structure"
+          },
+          {
+            "prompt": "Why use two or three main points?",
+            "choices": [
+              "They are easier to remember",
+              "They make the speech endless",
+              "They avoid structure",
+              "They replace delivery"
+            ],
+            "correctAnswer": "They are easier to remember",
+            "hint": "Audiences remember organized chunks.",
+            "explanation": "A small number of main points improves clarity.",
+            "skillTag": "Organization"
+          },
+          {
+            "prompt": "What should a close do?",
+            "choices": [
+              "Return to the main message",
+              "Introduce five new topics",
+              "Apologize for speaking",
+              "Skip the thesis"
+            ],
+            "correctAnswer": "Return to the main message",
+            "hint": "The close should land the speech.",
+            "explanation": "A strong close reinforces the central idea.",
+            "skillTag": "Presentation structure"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "If an audience cannot tell your main point, what is likely missing?",
+            "choices": [
+              "Clear thesis",
+              "More volume only",
+              "A random joke",
+              "A longer timer"
+            ],
+            "correctAnswer": "Clear thesis",
+            "hint": "The thesis is the main message.",
+            "explanation": "A clear thesis helps the audience understand the speech's purpose.",
+            "skillTag": "Presentation structure"
+          }
+        ]
+      }
+    }
+  }
+]

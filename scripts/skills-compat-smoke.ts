@@ -344,12 +344,11 @@ async function main() {
   //     vocabulary isolation) and hosa-practice-scope-smoke.
   // Every one of those four was proven to FIRE by scratch mutation in S1B-1.
   //
-  // lib/learning-content.ts DELIBERATELY REMAINS PINNED — see the full note in
-  // scripts/education-migration-smoke.ts. Its authored CONTENT is asserted nowhere in the safe
-  // corpus (three scratch mutations survived all 29 suites), so the hash stays until S1B-2 supplies
-  // a real content control.
-  for (const file of ["lib/learning-content.ts",
-                      "components/lessons/concept-education-lesson-view.tsx",
+  // lib/learning-content.ts is deliberately absent from M15 S1B-LC1 onward — see the full note in
+  // scripts/education-migration-smoke.ts. Its authored CONTENT is now owned by
+  // scripts/learning-content-integrity-smoke.ts, which compares canonicalised RUNTIME values against
+  // a checked-in reviewed snapshot rather than hashing source bytes against a moving HEAD.
+  for (const file of ["components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",
                       "components/lessons/lesson-view.tsx",
                       // app/(app)/lessons/page.tsx is deliberately absent from M14 Phase 1a onward:

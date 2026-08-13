@@ -2,7 +2,67 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1B-1 — redundant moving-HEAD pins retired. **SHIPPED and Production-verified at `5892804337`** (commit `9c66b04`). All of S1A — A1, A2, the complete A3 sequence, A4a and A4b — is shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1B-LC1 — all 17 authored learning-content entries protected by a canonical snapshot; the last two moving-HEAD learning-content pins retired. **LOCAL COMMIT, NOT PUSHED.** S1B-1 is shipped and Production-verified at `5892804337`; all of S1A is shipped and **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 S1B-LC1 — Authored learning content is protected (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+DB OPERATION, NO SCHEMA CHANGE`.** Baseline `e5aeefd`. **Zero production changes.**
+
+`lib/learning-content.ts` holds **17** authored entries. Only **4** are published through the
+education registry; the other **13** are held. The published four had presence checks
+(`education-migration` 15b–16c); the held thirteen had **nothing** once the moving-HEAD pins
+self-healed. Owner decision: **one contract for all 17** — "held" governs whether a learner can reach
+a lesson, not whether reviewed authored content may silently mutate.
+
+**Mechanism.** `scripts/learning-content-integrity-smoke.ts` canonicalises the module's **runtime
+values** and compares them to a checked-in reviewed snapshot,
+`scripts/learning-content-baseline.json` (**1694 lines**, an **array sorted by stable slug** — not an
+object keyed by slug, because JSON permits duplicate keys and `JSON.parse` silently keeps the last,
+which would make "no duplicate baseline ids" unprovable). Canonicalising runtime values is what makes
+the control immune to comments, formatting, imports, helper renames and declaration order while still
+catching every authored-text change. A full snapshot rather than hashes: a hash cannot reconstruct the
+previous prose, so an edit shows as a **2-line diff naming the exact sentence** instead of an opaque
+hash transition.
+
+**Protected:** identity (`slug`, `lesson.slug`), association (`organization`, `track`, `category`),
+every authored string, learner-visible `lesson.estimatedMinutes`, and the **order** of `steps`,
+`choices`, `practiceQuestions` and `masteryCheck` — all four are rendered to learners in array order.
+**Excluded, each with a live guard:** `retryPrompt`/`retryChoices`/`retryCorrectAnswer` are excluded
+only because all **85** questions are provably derived from `prompt`/`choices`/`correctAnswer`, and an
+executable invariant fails the moment one diverges; seed-level `order` is excluded only because
+nothing reads it, re-proved each run against `lib/education/tracks/debate.ts`.
+
+**Fail-closed.** Every runtime layer asserts its key set exactly (seed 8, lesson 5, content 8,
+workedExample 4, question 9). An unclassified learner-facing field fails with the layer and slug
+named. Stated honestly: a **type-only** edit adding an optional field that no entry carries at runtime
+leaves the suite green — there is no learner-visible content yet. The moment any entry carries the
+field, it fails until classified. The suite asserts runtime shape; it does not read type declarations.
+
+**ID-set equality, both directions.** A new entry without its snapshot block FAILS, so a new lesson
+cannot land permanently unprotected; a removed or renamed entry FAILS as an orphan.
+
+**`LEARNING_CONTENT_BASELINE` is a review signal, not a security boundary.** A deliberate developer
+can change source, snapshot and marker in one commit — that is fine, because the reviewed prose delta
+is explicit in the diff. The retired pins were different in kind: committing **alone** changed the
+expected bytes. Nothing here is ever derived from HEAD.
+
+**Mutation proof (25 probes, all mutations committed first so the old pins could not create false
+kills):** title, prose, `workedExample.prompt`, `whyItWorks`, `estimatedMinutes`, category and
+organization changes all FAIL on **both** a published (`debate-signposting`) and a held
+(`hosa-healthcare-ethics`, `debate-weighing`) entry; removed field, renamed id, broken `lesson.slug`
+relation, duplicate id, unknown runtime field, diverging `retryPrompt`, swapped and appended `steps`
+all FAIL; comments, helper rename and inert `order` changes all PASS.
+
+**Moving-HEAD debt: 20 → 18** (Class B 12, Class C seed 6; held-back learning-content **0**).
+**Safe suite set 29 → 30**; registered inventory 32 → 33 (`hosa-practice-scope` control `43b` updated
+to the exact new count — it is what stops a suite existing as a dead script).
+
+**Still separate:** the 24 `indexOf(a) < indexOf(b)` controls across 7 suites, which can pass
+vacuously when the first anchor is absent. Pre-existing, unrepaired, and deliberately not mixed in.
+
+**Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**30/30 safe suites green while still uncommitted with HEAD at `e5aeefd`**. No database access.
 
 ## M15 S1A A4b — Practice-session copy matches real activity (shipped; Production-verified at `5884961320`)
 
@@ -39,16 +99,16 @@ frozen. **No database access.**
 
 ### Still open
 
-**S1B, open:** 20 HEAD-relative test pins (Class B 12 · Class C seed 6 · held-back
-`lib/learning-content.ts` 2) · 24 vacuous `indexOf(a) < indexOf(b)` ordering controls across 7 suites
-· `/debates/history` soft-redirect gating · stale "Reassess now" CTA · skills-compat prose. See
-S1B-1 below for all four pin/control findings. **M16:** semantic judging, authoritative winner,
+**S1B, open:** 18 HEAD-relative test pins (Class B 12 · Class C seed 6; learning-content **0** —
+retired by S1B-LC1) · 24 `indexOf(a) < indexOf(b)` ordering controls across 7 suites that can pass
+vacuously when the first anchor is absent · `/debates/history` soft-redirect gating · stale
+"Reassess now" CTA · skills-compat prose. **M16:** semantic judging, authoritative winner,
 readiness, snapshot/wins restoration.
 
-**Recommended order for the next batches:** (1) a read-only design audit for `lib/learning-content.ts`
-authored-text integrity — decide what an additive-only immutable content baseline may change *before*
-writing the control, since 765 lines of lesson prose is too important to guess at; (2) the 24 vacuous
-`indexOf` controls; (3) the 12 Class B pins; (4) Class C seed strategy.
+**Recommended order for the next batches:** (1) the 24 `indexOf` ordering controls; (2) the 12
+Class B pins; (3) Class C seed strategy. The learning-content design audit and its control are DONE
+(S1B-LC1). **The safe gate is now 30/30, permanently — a report of 29/29 no longer means full
+coverage.**
 
 ## M15 S1B-1 — Redundant HEAD-relative pins retired (shipped; Production-verified at `5892804337`)
 

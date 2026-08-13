@@ -677,7 +677,15 @@ async function main() {
   assert.equal((hosaCode.match(/(?<!InTransaction)\brecordPracticeOutcome\(/g) ?? []).length, 0,
     "35d2. and never the public non-transactional helper");
   assert.ok(!/recordDrillMastery/.test(hosaCode), "35d3. and no mastery call exists at all");
-  assert.ok(hosaCode.indexOf("parseStoredResult(") < hosaCode.indexOf("recordPracticeOutcomeInTransaction("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const storedResultIdx = hosaCode.indexOf("parseStoredResult(");
+  const reviewCallIdx = hosaCode.indexOf("recordPracticeOutcomeInTransaction(");
+  assert.ok(storedResultIdx >= 0 && reviewCallIdx >= 0,
+    "35d4-anchors. both the stored-result short-circuit and the transactional review call are present");
+  assert.ok(storedResultIdx < reviewCallIdx,
     "35d4. a completed retry returns before the transactional review call");
 
   // ---- 31f. the bank CONTENT is additive-only — every pre-existing item byte-identical ------------

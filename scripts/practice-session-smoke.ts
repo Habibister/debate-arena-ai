@@ -506,7 +506,15 @@ async function main() {
   }
   assert.ok(/parsePracticeSessionSnapshot\(issued\.scenarioJson, "WRITING"\)/.test(wSubmit),
     "132. it grades against the scenario saved on the issued session");
-  assert.ok(wSubmit.indexOf("parseStoredResult(") < wSubmit.indexOf("gradeDebateWritingResponse("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const storedResultIdx = wSubmit.indexOf("parseStoredResult(");
+  const graderIdx = wSubmit.indexOf("gradeDebateWritingResponse(");
+  assert.ok(storedResultIdx >= 0 && graderIdx >= 0,
+    "133-anchors. both the stored-result short-circuit and the grader call are present");
+  assert.ok(storedResultIdx < graderIdx,
     "133. a completed retry returns the stored result BEFORE the grader runs");
   // M15 S1A A1: the writing SUBMIT is now as write-free as issuance — the 129 ban list governs both.
   for (const bannedWrite of ["XP_REWARDS", "xPLog", "awardXpInTransaction", "MasteryProgress", "masteryProgress",

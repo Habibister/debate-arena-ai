@@ -766,7 +766,15 @@ async function main() {
   for (const masteryPath of ["recordDrillMasteryInTransaction", "recordDrillMasteryDetailed", "recordDrillMastery("]) {
     assert.ok(!hosaRoute.includes(masteryPath), `26c2. and no mastery path at all (${masteryPath})`);
   }
-  assert.ok(hosaRoute.indexOf("parseStoredResult(") < hosaRoute.indexOf("recordPracticeOutcomeInTransaction("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const hosaStoredIdx = hosaRoute.indexOf("parseStoredResult(");
+  const hosaReviewIdx = hosaRoute.indexOf("recordPracticeOutcomeInTransaction(");
+  assert.ok(hosaStoredIdx >= 0 && hosaReviewIdx >= 0,
+    "26c3-anchors. both the stored-result short-circuit and the review effect are present");
+  assert.ok(hosaStoredIdx < hosaReviewIdx,
     "26c3. a completed retry returns before any review effect");
   // Non-vacuous: the scan does detect an injected mastery write.
   assert.ok(/recordDrillMasteryInTransaction/.test("await recordDrillMasteryInTransaction(tx, {})"),
@@ -1024,7 +1032,15 @@ async function main() {
     "29f2e. wroteSkills changes only for an actual mastery update");
   assert.ok(/persistenceStatus = "skill-missing"/.test(routeSrc),
     "29f2f. an unseeded skill is reported as skill-missing, never as success");
-  assert.ok(routeSrc.indexOf("parseStoredResult(") < routeSrc.indexOf("recordPracticeOutcomeInTransaction("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const decaStoredIdx = routeSrc.indexOf("parseStoredResult(");
+  const decaPersistenceIdx = routeSrc.indexOf("recordPracticeOutcomeInTransaction(");
+  assert.ok(decaStoredIdx >= 0 && decaPersistenceIdx >= 0,
+    "29f2g-anchors. both the stored-result short-circuit and the persistence effect are present");
+  assert.ok(decaStoredIdx < decaPersistenceIdx,
     "29f2g. a completed retry returns BEFORE any persistence effect");
   assert.ok(!/let persistenceStatus: PersistenceStatus = "updated"/.test(routeSrc),
     "29f2h. there is no unconditional success initializer");

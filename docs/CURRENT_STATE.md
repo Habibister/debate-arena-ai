@@ -2,7 +2,74 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1B-LC1 — all 17 authored learning-content entries protected by a canonical snapshot; the last two moving-HEAD learning-content pins retired. **SHIPPED and Production-verified at `5894098786`** (commit `c9b0a1d`). All of S1A and S1B-1 are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1B indexOf Batch I — the nine completed-retry ordering controls now prove both anchors present before asserting order. **LOCAL COMMIT, acceptance pending.** S1B-LC1 and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 S1B — indexOf ordering controls, Batch I: completed-retry (LOCAL, acceptance pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+DB OPERATION, NO SCHEMA CHANGE`.** Baseline `0127177`. **Zero production changes** — six test suites
+plus these docs.
+
+### The audited denominator, corrected
+
+**48 ordering comparisons across 14 safe suites** (26 direct + 22 captured; 43 `<` + 5 `>`). The
+earlier figure of **"24 vacuous ordering controls" was incomplete**: it counted only direct same-line
+`<` comparisons, so it missed every captured-index comparison and every `>` comparison — and it
+asserted a defect rate the evidence did not support. **Not all 48 were defective.**
+
+**Audited state before this batch:** **30 safe as written** — an executable guard on the vulnerable
+operand fires first (an explicit `>= 0` / `!== -1` check, an `includes(anchor)` assertion, or a
+preceding conjunct in a comparison chain). **18 empirically defective**: **10** where the suite
+survived entirely and **8** where a different named control caught the mutation while the ordering
+assertion itself still passed. **0 unresolved.**
+
+Vulnerability follows the operand, not the first anchor: for `a < b` the exposed side is the **left**
+(`-1 < n` holds); for `a > b` it is the **right** (`n > -1` holds).
+
+### What Batch I repaired
+
+The **completed-retry** family — 9 of 9 were defective, the weakest family in the corpus. Each read
+`recv.indexOf("parseStoredResult(") < recv.indexOf(<effect>)`, so deleting the very short-circuit the
+control exists to protect made `indexOf` return `-1` and left `-1 < n` true. Each now computes both
+indices, asserts both are present under a `<label>-anchors` control, and only then asserts the order:
+
+| IDX | Suite | Ordering control |
+| --- | --- | --- |
+| IDX-03 | debate-mastery | `27c3` |
+| IDX-04 | debate-mastery | `29c4` |
+| IDX-11 | deca-mastery | `26c3` |
+| IDX-13 | deca-mastery | `29f2g` |
+| IDX-15 | education-migration | `4b6f` |
+| IDX-19 | hosa-medterm-evidence | `35d4` |
+| IDX-36 | practice-session | `133` |
+| IDX-40 | review-ladder | `56` |
+| IDX-42 | review-ladder | `65h9` |
+
+Three of the nine (IDX-36, 40, 42) were Category C — a different control happened to catch the
+mutation. Duplicate coverage was **not** accepted as sufficient: each repaired target was proven to
+fire on its own.
+
+**Mutation evidence:** every target assertion was evaluated in isolation at its real call site.
+**9/9 fire on all three of their own mutations** — presence fails when the short-circuit anchor is
+absent, presence fails when the effect anchor is absent, and ordering fails when both are present but
+reversed. Harmless source-form changes pass. **0 harness errors.**
+
+**Family after Batch I: completed-retry 9/9 safe, 0 defective.**
+
+### Ordering-control state
+
+**Safe 30 → 39 · defective 18 → 9 · unresolved 0.** Remaining defective, all still open:
+
+- **Batch II — evidence-before-mastery (4):** IDX-01, IDX-08, IDX-17, IDX-39
+- **Batch III — transaction (1):** IDX-30
+- **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
+
+**The auth/rate-limit family (9 of 9) is safe as written and needs no change** — every member guards
+its operands today.
+
+**Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**30/30 safe suites green**. Moving-HEAD debt unchanged at **18** (Class B 12, Class C seed 6). LC1
+files byte-identical. No database access.
 
 ## M15 S1B-LC1 — Authored learning content is protected (shipped; Production-verified at `5894098786`)
 
@@ -118,9 +185,9 @@ frozen. **No database access.**
 ### Still open
 
 **S1B, open:** 18 HEAD-relative test pins (Class B 12 · Class C seed 6; learning-content **0** —
-retired by S1B-LC1) · **24 controls across 7 suites using a pattern that CAN pass vacuously when the
-first anchor is absent** (`indexOf(a) < indexOf(b)`; 1 of 24 empirically demonstrated, the other 23
-match structurally and are unproven either way) · `/debates/history` soft-redirect gating · stale
+retired by S1B-LC1) · **9 defective ordering controls** remaining of 48 audited across 14 suites
+(Batch II 4 · Batch III 1 · Batch IV 4; Batch I's 9 completed-retry controls are repaired locally,
+and 30 were safe as written) · `/debates/history` soft-redirect gating · stale
 "Reassess now" CTA · skills-compat prose. **M16:** semantic judging, authoritative winner,
 readiness, snapshot/wins restoration.
 

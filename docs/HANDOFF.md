@@ -2,7 +2,34 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B-LC1: authored learning content is protected (2026-08-13)
+## Latest handoff — M15 S1B indexOf Batch I: completed-retry ordering hardened (2026-08-13)
+
+### One local commit awaits acceptance audit; nothing pushed
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
+Baseline `0127177`. **Zero production changes** — six test suites plus two docs.
+
+**The audited denominator is 48 ordering comparisons across 14 safe suites**, not the 24 previously
+recorded: that figure counted only direct same-line `<` comparisons and missed every captured-index
+and every `>` comparison. Of the 48, **30 are safe as written** (an executable guard on the vulnerable
+operand fires first) and **18 were empirically defective** — 10 suite-survivors, 8 duplicate-protected.
+**Do not describe all 48 as defective.**
+
+Vulnerability follows the operand: `a < b` exposes the **left**, `a > b` exposes the **right**.
+
+**Batch I repaired the completed-retry family (9 of 9 defective — the weakest family).** Each now
+computes both indices, asserts both present under a `<label>-anchors` control, then asserts order.
+Every target was proven to fire on its own three mutations (short-circuit absent, effect absent,
+order reversed); duplicate coverage was not accepted for the three Category C members. 0 harness
+errors.
+
+**Ordering state: safe 30 → 39, defective 18 → 9.** Remaining: Batch II evidence-before-mastery
+(IDX-01, 08, 17, 39) · Batch III transaction (IDX-30) · Batch IV route resolution/gating (IDX-16, 45,
+46, 47). **The auth/rate-limit family (9/9) is safe as written — it needs no repair at all.**
+
+Moving-HEAD debt unchanged at 18 (Class B 12, Class C seed 6). LC1 frozen.
+
+## Previous handoff — M15 S1B-LC1: authored learning content is protected (2026-08-13)
 
 ### SHIPPED and Production-verified — nothing awaits a push
 

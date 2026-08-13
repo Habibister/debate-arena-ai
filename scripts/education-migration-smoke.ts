@@ -437,7 +437,15 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     "4b6d. an unseeded skill reports skill-missing");
   assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(debateCode),
     "4b6e. and a valid skill slug is required before persistence is attempted");
-  assert.ok(debateCode.indexOf("parseStoredResult(") < debateCode.indexOf("recordDrillMasteryInTransaction("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const storedResultIdx = debateCode.indexOf("parseStoredResult(");
+  const masteryIdx = debateCode.indexOf("recordDrillMasteryInTransaction(");
+  assert.ok(storedResultIdx >= 0 && masteryIdx >= 0,
+    "4b6f-anchors. both the stored-result short-circuit and the mastery writer are present");
+  assert.ok(storedResultIdx < masteryIdx,
     "4b6f. a completed retry returns before mastery is touched");
   // 4b13. Debate WRITING is FORMATIVE (M15 S1A A1): it still grades and coaches, but awards no XP
   // and writes no mastery/evidence — the migration surface it protects is unchanged by that removal.

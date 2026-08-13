@@ -411,7 +411,15 @@ async function main() {
   }
   assert.ok(!/isReviewDue\(/.test(writingRoute), "54. and no independent due-check reappeared");
   assert.ok(/formative: true/.test(writingRoute), "54b. the submission result is declared formative");
-  assert.ok(writingRoute.indexOf("parseStoredResult(") < writingRoute.indexOf("gradeDebateWritingResponse("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const writingStoredIdx = writingRoute.indexOf("parseStoredResult(");
+  const writingGraderIdx = writingRoute.indexOf("gradeDebateWritingResponse(");
+  assert.ok(writingStoredIdx >= 0 && writingGraderIdx >= 0,
+    "56-anchors. both the stored-result short-circuit and the grader call are present");
+  assert.ok(writingStoredIdx < writingGraderIdx,
     "56. a second concurrent submit returns the stored result before the grader");
   // NON-VACUOUS, pinned to the FROZEN G2-closure commit (never HEAD-relative): the pre-A1 route ran
   // the ladder core and awarded XP, so the bans above catch exactly what they exist to prevent.
@@ -699,7 +707,15 @@ async function main() {
                         "practiceAttempt", "questionAttempt"]) {
     assert.ok(!hosaSubmit.includes(banned), `65h8. HOSA stays review-only (${banned})`);
   }
-  assert.ok(hosaSubmit.indexOf("parseStoredResult(") < hosaSubmit.indexOf("recordPracticeOutcomeInTransaction("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const hosaStoredIdx = hosaSubmit.indexOf("parseStoredResult(");
+  const hosaReviewIdx = hosaSubmit.indexOf("recordPracticeOutcomeInTransaction(");
+  assert.ok(hosaStoredIdx >= 0 && hosaReviewIdx >= 0,
+    "65h9-anchors. both the stored-result short-circuit and the review effect are present");
+  assert.ok(hosaStoredIdx < hosaReviewIdx,
     "65h9. a completed retry returns the stored result BEFORE any review effect");
   assert.ok(/status: "COMPLETED"/.test(hosaSubmit) && /resultJson: result/.test(hosaSubmit),
     "65h10. the result and the completion are stored together in the same transaction");

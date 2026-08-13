@@ -683,7 +683,15 @@ async function main() {
   assert.ok(saladFeedback.rubric.length === 7 && saladFeedback.strengths.length > 0 && saladFeedback.missing.length > 0,
     "27b-C2b. and the formative feedback payload remains complete");
   assert.ok(!/isReviewDue\(/.test(writingRoute), "27c2. and no independent due-check reappeared");
-  assert.ok(writingRoute.indexOf("parseStoredResult(") < writingRoute.indexOf("gradeDebateWritingResponse("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const writingStoredIdx = writingRoute.indexOf("parseStoredResult(");
+  const writingGraderIdx = writingRoute.indexOf("gradeDebateWritingResponse(");
+  assert.ok(writingStoredIdx >= 0 && writingGraderIdx >= 0,
+    "27c3-anchors. both the stored-result short-circuit and the grader call are present");
+  assert.ok(writingStoredIdx < writingGraderIdx,
     "27c3. a completed session returns its stored result BEFORE the grader — no second mastery write");
   assert.ok(/status: "COMPLETED"/.test(writingRoute) && /resultJson: result/.test(writingRoute),
     "27c4. and completion is stored with the result in the same transaction");
@@ -730,7 +738,15 @@ async function main() {
   for (const xp of ["XP_REWARDS", "xPLog", "awardXpInTransaction"]) {
     assert.ok(!hosaRoute.includes(xp), `29c3. and no XP path (${xp})`);
   }
-  assert.ok(hosaRoute.indexOf("parseStoredResult(") < hosaRoute.indexOf("recordPracticeOutcomeInTransaction("),
+  // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
+  // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
+  // short-circuit this control exists to protect turned it green. Both anchors are now
+  // proven present before the ordering is accepted.
+  const hosaStoredIdx = hosaRoute.indexOf("parseStoredResult(");
+  const hosaReviewIdx = hosaRoute.indexOf("recordPracticeOutcomeInTransaction(");
+  assert.ok(hosaStoredIdx >= 0 && hosaReviewIdx >= 0,
+    "29c4-anchors. both the stored-result short-circuit and the review effect are present");
+  assert.ok(hosaStoredIdx < hosaReviewIdx,
     "29c4. a completed retry returns the stored result BEFORE any review effect");
   assert.ok(/recordDrillMasteryInTransaction/.test("await recordDrillMasteryInTransaction(tx, {})"),
     "29c5. control: that mastery scan matches a real call");

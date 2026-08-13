@@ -2,13 +2,20 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1B indexOf Batch I — the nine completed-retry ordering controls now prove both anchors present before asserting order. **LOCAL COMMIT, acceptance pending.** S1B-LC1 and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1B indexOf Batch I — the nine completed-retry ordering controls now prove both anchors present before asserting order. **SHIPPED and Production-verified at `5895669302`** (commit `b71fc34`). Everything before it is shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
 
-## M15 S1B — indexOf ordering controls, Batch I: completed-retry (LOCAL, acceptance pending)
+## M15 S1B — indexOf ordering controls, Batch I: completed-retry (shipped; Production-verified at `5895669302`)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
-DB OPERATION, NO SCHEMA CHANGE`.** Baseline `0127177`. **Zero production changes** — six test suites
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Commit `b71fc34723603fa295fab0737f92a152a5cc6c9d`, Production deployment **`5895669302`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment from the Git push — no manual deploy, no rollback,
+nothing superseded it. Previous baseline `0127177`. **Zero production changes** — six test suites
 plus these docs.
+
+**Production verification passed:** exact SHA deployed, 8-file scope, production trees byte-identical,
+all 9 repairs verified in the deployed artifact, 6/6 affected suites and 30/30 safe suites green, and
+a mutation spot-check on one former Category B target (IDX-15) and one former Category C target
+(IDX-42) confirmed the repaired **target** guards fire — 0 harness errors.
 
 ### The audited denominator, corrected
 
@@ -65,11 +72,18 @@ reversed. Harmless source-form changes pass. **0 harness errors.**
 - **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
 
 **The auth/rate-limit family (9 of 9) is safe as written and needs no change** — every member guards
-its operands today.
+its operands today, and Batch I did not touch it. **Batch I was test-integrity only: it repaired no
+runtime behaviour and no security defect.**
+
+**Recommended next implementation order:** (1) **Batch II — evidence-before-mastery**: IDX-01, IDX-08,
+IDX-17, IDX-39 (same inline mechanism, four controls); (2) **Batch III — transaction**: IDX-30, kept
+isolated because it sits on the transaction/exactly-once evidence boundary even though the change is
+test-only; (3) **Batch IV — route resolution / gating**: IDX-16, IDX-45, IDX-46, IDX-47.
 
 **Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
-**30/30 safe suites green**. Moving-HEAD debt unchanged at **18** (Class B 12, Class C seed 6). LC1
-files byte-identical. No database access.
+**30/30 safe suites green**, before the commit and again against the deployed artifact. Moving-HEAD
+debt unchanged at **18** (Class B 12, Class C seed 6). LC1 CLOSED and byte-identical. A2 unchanged;
+A4 remains CLOSED. No database access.
 
 ## M15 S1B-LC1 — Authored learning content is protected (shipped; Production-verified at `5894098786`)
 

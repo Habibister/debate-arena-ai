@@ -4,10 +4,17 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M15 S1B indexOf Batch I: completed-retry ordering hardened (2026-08-13)
 
-### One local commit awaits acceptance audit; nothing pushed
+### SHIPPED and Production-verified — nothing awaits a push
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
-Baseline `0127177`. **Zero production changes** — six test suites plus two docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Commit `b71fc34723603fa295fab0737f92a152a5cc6c9d`, Production deployment **`5895669302`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment — no manual deploy, no rollback. Previous baseline
+`0127177`. **Zero production changes** — six test suites plus two docs.
+
+Production verification confirmed the exact SHA deployed, the 8-file scope, byte-identical production
+trees, all 9 repairs present in the deployed artifact, 6/6 affected and 30/30 safe suites green, and
+a spot-check proving the repaired **target** guards fire on a former Category B control (IDX-15) and
+a former Category C control (IDX-42), with 0 harness errors.
 
 **The audited denominator is 48 ordering comparisons across 14 safe suites**, not the 24 previously
 recorded: that figure counted only direct same-line `<` comparisons and missed every captured-index
@@ -23,11 +30,24 @@ Every target was proven to fire on its own three mutations (short-circuit absent
 order reversed); duplicate coverage was not accepted for the three Category C members. 0 harness
 errors.
 
-**Ordering state: safe 30 → 39, defective 18 → 9.** Remaining: Batch II evidence-before-mastery
-(IDX-01, 08, 17, 39) · Batch III transaction (IDX-30) · Batch IV route resolution/gating (IDX-16, 45,
-46, 47). **The auth/rate-limit family (9/9) is safe as written — it needs no repair at all.**
+**Ordering state: safe 30 → 39, defective 18 → 9, unresolved 0.** completed-retry is now **closed:
+9 total, 9 safe, 0 defective**.
 
-Moving-HEAD debt unchanged at 18 (Class B 12, Class C seed 6). LC1 frozen.
+### Next implementation order — none started
+
+1. **Batch II — evidence-before-mastery:** IDX-01, IDX-08, IDX-17, IDX-39. Same inline mechanism as
+   Batch I (capture both indices, assert both present, then assert order), four controls, smaller.
+2. **Batch III — transaction:** IDX-30 alone. Keep it isolated: it sits on the transaction /
+   exactly-once evidence boundary, so its message should name that rule. Still test-only.
+3. **Batch IV — route resolution / gating:** IDX-16, IDX-45, IDX-46, IDX-47.
+
+**The auth/rate-limit family (9/9) is safe as written — it needs no repair at all**, and Batch I did
+not touch it. **Batch I was test-integrity only: no runtime behaviour and no security defect was
+repaired.**
+
+Moving-HEAD debt unchanged at 18 (Class B 12, Class C seed 6, learning-content 0). LC1 CLOSED.
+A2 unchanged; A4 CLOSED. Still open elsewhere in S1B: `/debates/history` soft redirect, the stale
+Reassess CTA, and the skills-compat stale XP prose. M16 not started.
 
 ## Previous handoff — M15 S1B-LC1: authored learning content is protected (2026-08-13)
 

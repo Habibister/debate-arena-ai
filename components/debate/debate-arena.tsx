@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { DebateFormat, DebateMode, DebateSide, DebateStatus, Level, MessageRole, Organization, PracticeMode } from "@prisma/client";
 import {
   ArrowLeft,
+  ArrowUpRight,
   Bot,
   CheckCircle2,
   CircleAlert,
@@ -14,8 +15,11 @@ import {
   Gavel,
   Loader2,
   MessageSquareText,
+  Star,
   Swords,
+  Target,
   Timer,
+  TrendingUp,
   Trophy,
   X
 } from "lucide-react";
@@ -291,6 +295,26 @@ function winnerLabel(report: JudgeReport) {
   }
 
   return report.teamWinner === "GOVERNMENT" ? "Government / Affirmative" : "Opposition / Negative";
+}
+
+/**
+ * M15 S1A A3b-1 — turn one formative band into a word.
+ *
+ * `judgeReport.ratingChange.*` stores a signed number produced by a band lookup over the practice
+ * ballot's category scores. Nothing measured a rating, and no rating moved, so rendering "+9" in
+ * green stated something that never happened. The stored numbers are LEFT AS THEY ARE — every
+ * historical ballot keeps its shape and replays identically — and the conversion happens here at
+ * render time, which is also why ballots judged before A3b-1 show the honest wording too.
+ *
+ * Bands mirror `skillDelta` in the judge route (14 / 9 / 4 / -3 / else). Each state carries its own
+ * word AND icon; colour is never the only signal.
+ */
+function focusLabel(delta: number) {
+  if (delta >= 14) return { text: "Strength", tone: "text-emerald-200", Icon: Star };
+  if (delta >= 9) return { text: "On track", tone: "text-emerald-200", Icon: TrendingUp };
+  if (delta >= 4) return { text: "Developing", tone: "text-neutral-200", Icon: ArrowUpRight };
+  if (delta >= -3) return { text: "Focus", tone: "text-amber-200", Icon: Target };
+  return { text: "Priority", tone: "text-rose-200", Icon: CircleAlert };
 }
 
 function losingLabel(report: JudgeReport) {
@@ -1013,17 +1037,38 @@ function JudgeDecisionModal({
       <div className="my-8 w-full max-w-5xl rounded-lg border border-white/10 bg-neutral-950 text-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
           <div>
+            {/* M15 S1A A3b-1 — "Judge decision" was the exact phrase a real tournament uses, on a
+                ballot whose score and winner come from CompeteReady's local practice rubric. The
+                trophy and the win stay: this IS a result worth feeling. Only its status changes. */}
             <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-100">
               <Trophy className="mr-1 h-3.5 w-3.5" aria-hidden />
-              Judge decision
+              Practice ballot
             </Badge>
-            <h2 className="mt-3 text-3xl font-bold">{winnerLabel(report)} wins</h2>
-            <p className="mt-2 text-sm text-neutral-400">
-              Losing side: {losingLabel(report)}
-              {report.confidenceLevel ? ` · ${titleCase(report.confidenceLevel)} confidence` : ""}
+            {/* PATH B (DECA role-play) has no opposing side, so `PerformanceJudgeResult` carries no
+                `teamWinner`. Before this branch existed the modal rendered the literal headline
+                "Winner unavailable wins" and a "Losing side: Government / Affirmative" line invented
+                by a ?? fallback — nonsense on a solo role-play, and adding "this practice round"
+                would have made it worse. A two-sided round keeps the two-sided copy; a role-play
+                gets copy that fits what it is. */}
+            {report.teamWinner ? (
+              <>
+                <h2 className="mt-3 text-3xl font-bold">{winnerLabel(report)} wins this practice round</h2>
+                <p className="mt-2 text-sm text-neutral-400">
+                  Losing side: {losingLabel(report)}
+                  {report.confidenceLevel ? ` · ${titleCase(report.confidenceLevel)} confidence` : ""}
+                </p>
+              </>
+            ) : (
+              <h2 className="mt-3 text-3xl font-bold">Practice round scored</h2>
+            )}
+            {/* ONE statement of status, at the top, where the result is claimed. It is deliberately
+                not repeated beside every score below — that would read as an apology rather than a
+                label. */}
+            <p className="mt-1 text-sm text-neutral-400">
+              CompeteReady practice decision — for coaching, not your competition record.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="focus-ring rounded-md p-2 text-neutral-400 hover:bg-white/10 hover:text-white" aria-label="Close decision">
+          <button type="button" onClick={onClose} className="focus-ring rounded-md p-2 text-neutral-400 hover:bg-white/10 hover:text-white" aria-label="Close practice ballot">
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
@@ -1039,11 +1084,14 @@ function JudgeDecisionModal({
           {/* Compact default view — the whole result in about 15 seconds. */}
           <div className="grid gap-3 md:grid-cols-[0.55fr_1.45fr]">
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5 text-center">
-              <p className="text-sm font-semibold text-neutral-400">Overall score</p>
-              <p className="mt-3 text-6xl font-bold">{overallScore ?? report.overallScore}</p>
-              {/* XP is real (earned this round). The synthetic "Debate Rating" delta is no longer
-                  shown — per-skill deltas below derive from real judge category scores and stay. */}
-              <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned</p>
+              <p className="text-sm font-semibold text-neutral-400">Practice ballot score</p>
+              {/* 6xl -> 5xl: still the biggest number on the page, no longer dominating the decision
+                  itself. The value is unchanged. */}
+              <p className="mt-3 text-5xl font-bold">{overallScore ?? report.overallScore}</p>
+              <p className="mt-2 text-xs leading-5 text-neutral-500">Formative coaching score — not mastery or readiness.</p>
+              {/* XP is real and earned for COMPLETING the round (M15 A3a), not for this score or for
+                  winning — so it is stated separately and never as a consequence of the number above. */}
+              <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned for completing the round</p>
             </div>
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
               <div className="flex items-center justify-between gap-2">
@@ -1186,6 +1234,13 @@ function JudgeDecisionModal({
             </div>
           ) : null}
 
+          {/* ONE parent framing for all sixteen cards. Labelling each card individually would be
+              clutter and would drown the coaching the cards actually carry. */}
+          <div>
+            <p className="font-semibold">Practice feedback by area</p>
+            <p className="mt-1 text-sm text-neutral-400">Where the practice judge saw strengths and areas to improve.</p>
+          </div>
+
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             {report.categoryScores.slice(0, 16).map((category) => (
               <div key={category.key} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
@@ -1202,7 +1257,7 @@ function JudgeDecisionModal({
           {report.ratingChange ? (
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="font-semibold">Rating movement</p>
+                <p className="font-semibold">Where to focus next</p>
                 {report.ratingChange.recommendedBot ? (
                   <Badge className="border border-blue-400/30 bg-blue-500/10 text-blue-100">Next bot: {report.ratingChange.recommendedBot}</Badge>
                 ) : null}
@@ -1215,18 +1270,24 @@ function JudgeDecisionModal({
                   ["Evidence", report.ratingChange.evidence, report.ratingChange.reasons?.evidence],
                   ["Organization", report.ratingChange.organization, report.ratingChange.reasons?.organization],
                   ["Delivery", report.ratingChange.deliveryStyle, report.ratingChange.reasons?.deliveryStyle]
-                ].map(([label, value, reason]) => (
-                  <div key={String(label)} className="rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold">{label}</span>
-                      <span className={cn("font-bold", Number(value) >= 0 ? "text-emerald-200" : "text-rose-200")}>
-                        {Number(value) >= 0 ? "+" : ""}
-                        {String(value)}
-                      </span>
+                ].map(([label, value, reason]) => {
+                  const focus = focusLabel(Number(value));
+                  return (
+                    <div key={String(label)} className="rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold">{label}</span>
+                        {/* The state is a WORD, never colour alone, and the icon repeats it — so it
+                            survives with every colour class stripped and reads correctly to a screen
+                            reader. The old signed "+9" claimed measured rating movement. */}
+                        <span className={cn("flex items-center gap-1 font-semibold", focus.tone)}>
+                          <focus.Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          {focus.text}
+                        </span>
+                      </div>
+                      {reason ? <p className="mt-2 text-xs leading-5 text-neutral-400">{String(reason)}</p> : null}
                     </div>
-                    {reason ? <p className="mt-2 text-xs leading-5 text-neutral-400">{String(reason)}</p> : null}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}

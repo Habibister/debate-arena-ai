@@ -2,7 +2,61 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A3a: formative ballot authority removed (2026-08-12)
+## Latest handoff — M15 S1A A3b-1: the Debate ballot is a practice ballot (2026-08-13)
+
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+A3a removed false progression authority; A3b-1 removes false **presentation** authority from the
+ballot. Wording and hierarchy only. Read the A3b-1 section of `docs/CURRENT_STATE.md` for the exact
+final copy.
+
+Three production files: `components/debate/debate-arena.tsx`, `lib/ai.ts`,
+`app/api/debates/[debateId]/judge/route.ts` (prose only). `lib/ai-providers.ts` was deliberately NOT
+touched — the ballot stopped consuming the generic banner instead, so the banner stays truthful
+everywhere else.
+
+### Things that will look like bugs but are deliberate
+
+- **The signed rating deltas are gone on purpose.** `judgeReport.ratingChange.*` still STORES the
+  numbers; the ballot derives a word from them at render time. That is what makes pre-A3b-1 ballots
+  replay honestly. Do not "restore" the `+9` display, and do not migrate the stored shape.
+- **A solo DECA role-play shows `Practice round scored`, not a winner.** DECA's result type has no
+  `teamWinner`; the old code rendered "Winner unavailable wins" and a fabricated losing side. The
+  branch is intentional — do not collapse it back to one headline.
+- **No provider name appears on the ballot.** On Path A the provider never scores, so naming it beside
+  the score misled. Other AI features keep their banner.
+- **The mastery/readiness line appears exactly once**, and a smoke control enforces that. Adding the
+  same disclaimer to each of the sixteen category cards is a regression, not an improvement.
+
+### The line A3b-1 must not cross
+
+A3a authority is frozen and byte-verified: completion-only XP, no `XP_REWARDS.debateWon`, no wins
+write, no snapshot write, `progressionBasis: "completion-only"`, `scoredBy` from the real
+`scoringMode`, `assisted` from `assistedPractice`, A2 claim first in the transaction. The judge route
+may be edited for **wording only**; if a copy change ever seems to need progression logic, stop.
+
+### Next steps, in order
+
+1. Owner pushes the A3b-1 commit. **Do not push automatically.**
+2. Read-only Production verification (SHA/deployment identity, route health, deployed copy, A3a
+   authority controls, A2, A1, G2, 29 suites). No DB access, no authentication.
+3. Owner reviews the rendered ballot before A3b-2 begins.
+4. **A3b-2:** dashboard legacy wins + practice-score labels, profile legacy wins + recent-debate
+   score label, replay score wording. **A3b-3:** coach roster wins, coach average-score label,
+   assignment picker label. Terminology dictionary is in the A3b plan — keep `practice ballot score`
+   consistent; do not invent a second name for the same number.
+5. **A4** then follows: uncapped Debate creation, completion-XP farming, PracticeTest XP, streak.
+
+### Standing constraints (unchanged)
+
+No push, deploy, schema change, migration, `db push`/seed, dependency install, or destructive git
+without explicit approval. Never run `auth:smoke`, `team:smoke`, `assignment:smoke`, or
+`deca:skills:activate`. **Never open `.env`, read `DATABASE_URL`, or query any shared database.**
+M14 Global G2 remains **CLOSED**.
+
+## Previous handoff — M15 S1A A3a: formative ballot authority removed (2026-08-12)
 
 ### One local commit awaits the owner push; then read-only Production verification
 

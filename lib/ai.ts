@@ -1290,7 +1290,14 @@ export function mergeJudgeEnhancement(base: DebateJudgeResult, raw: JudgeEnhance
 
   const merged: DebateJudgeResult = { ...base };
   merged.aiProvider = provider;
-  merged.aiNotice = providerBanner(provider) ?? undefined;
+  // M15 S1A A3b-1 — NO provider-brand banner on a practice ballot. This used to set
+  // `providerBanner(provider)` ("Gemini AI is active."), which on this path told the learner the
+  // provider was running while they looked at a score the provider never touched: the numbers and
+  // the winner come from the local practice rubric, and the provider only rewrites prose. Which
+  // vendor wrote that prose is not information a learner needs, and stating it beside the score
+  // implies the vendor produced it. `aiProvider` is still recorded for diagnostics, and
+  // `providerBanner` is untouched for the features where it IS truthful (side coach, generation).
+  merged.aiNotice = undefined;
 
   if (shortReason) {
     merged.shortReasonForDecision = shortReason;
@@ -1316,7 +1323,14 @@ export function mergeJudgeEnhancement(base: DebateJudgeResult, raw: JudgeEnhance
   return merged;
 }
 
-const JUDGE_LOCAL_FALLBACK_NOTICE = "Live AI judge unavailable — showing the local rubric judge.";
+// M15 S1A A3b-1 — this used to read "Live AI judge unavailable — showing the local rubric judge",
+// which implied the provider normally decides the score and that an outage swapped in a different
+// scorer. Neither is true on this path: the local practice rubric produces the numbers and the
+// winner in BOTH provider-up and provider-down states, and the provider is only ever asked for
+// prose. Only the written feedback degrades, so only the written feedback is what the notice
+// mentions. DECA (Path B) never reaches this string — it fails closed instead.
+const JUDGE_LOCAL_FALLBACK_NOTICE =
+  "Extra AI-written feedback isn't available right now. Your practice ballot score still comes from CompeteReady's practice rubric.";
 
 // --- Argument-flow analyzer (debate replay) ---------------------------------------------------
 // Converts a completed transcript into an argument map. Reuses jsonCompletion (same AI path as the

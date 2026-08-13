@@ -177,11 +177,26 @@ function skillDelta(score: number | undefined, fallbackScore: number) {
   return -8;
 }
 
-function ratingReason(label: string, delta: number, category: CategoryScore | undefined, fallback: string) {
-  const movement = delta > 0 ? "increased" : delta < 0 ? "decreased" : "stayed flat";
+// M15 S1A A3b-1 — WORDING ONLY. This used to emit "Argument rating increased because …", which
+// claimed a measured rating change that never happened: `delta` is a band lookup over a formative
+// practice-ballot score, not movement of any stored rating. The band still selects the sentence, so
+// no number, threshold or scoring input changes here — only what the learner reads. `focusLabel`
+// below turns the same band into the visible word.
+function focusReason(area: string, delta: number, category: CategoryScore | undefined, fallback: string) {
   const evidence = category?.reason ?? fallback;
-  return `${label} ${movement} because ${evidence}`;
+  if (delta >= 9) {
+    return `The practice judge scored ${area} highly because ${evidence}`;
+  }
+  if (delta >= 0) {
+    return `${area} is developing because ${evidence}`;
+  }
+  return `${area} is a focus area because ${evidence}`;
 }
+
+// The band is deliberately NOT converted to a word here. The visible label is derived in the ballot
+// component instead, so ballots judged before A3b-1 — which stored these deltas as bare numbers and
+// carry no label field — render the same honest wording on replay as new ones. Keeping the stored
+// shape unchanged also means A3b-1 rewrites no history.
 
 function overallRatingDelta(input: { wonDebate: boolean; overallScore: number; completedTurns: number; requiredTurns: number }) {
   const resultSwing = input.wonDebate ? 14 : -10;
@@ -392,13 +407,13 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           deliveryStyle: deliveryDelta,
           recommendedBot: nearestAiPersona(projectedRating).name,
           reasons: {
-            overall: `${ratingDelta >= 0 ? "Overall rating increased" : "Overall rating decreased"} because the student ${wonDebate ? "won" : "lost"} this judged round with a ${overallScore} overall performance score.`,
-            argument: ratingReason("Argument rating", argumentDelta, argumentCategory, "the judge's argument score came from the student's claim clarity."),
-            refutation: ratingReason("Refutation rating", refutationDelta, refutationCategory, "the judge evaluated how specifically the student answered the opponent."),
-            weighing: ratingReason("Weighing rating", weighingDelta, weighingCategory, "the judge evaluated impact comparison and ballot framing."),
-            evidence: ratingReason("Evidence rating", evidenceDelta, evidenceCategory, "the judge evaluated examples, evidence, and support."),
-            organization: ratingReason("Organization rating", organizationDelta, organizationCategory, "the judge evaluated structure and signposting."),
-            deliveryStyle: ratingReason("Delivery/style rating", deliveryDelta, deliveryCategory, "the judge evaluated style, clarity, and communication.")
+            overall: `The practice judge gave ${wonDebate ? "this round" : "the other side"} the decision on a ${overallScore} practice ballot score.`,
+            argument: focusReason("argument", argumentDelta, argumentCategory, "of how clearly the student stated their claim."),
+            refutation: focusReason("refutation", refutationDelta, refutationCategory, "of how specifically the student answered the opponent."),
+            weighing: focusReason("weighing", weighingDelta, weighingCategory, "of how impacts were compared and framed for the ballot."),
+            evidence: focusReason("evidence", evidenceDelta, evidenceCategory, "of the examples, evidence, and support given."),
+            organization: focusReason("organization", organizationDelta, organizationCategory, "of the speech structure and signposting."),
+            deliveryStyle: focusReason("delivery and style", deliveryDelta, deliveryCategory, "of the style, clarity, and communication shown.")
           }
         },
         // A3a basis metadata — written into `judgeReport` on every judged round from here on.

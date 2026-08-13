@@ -369,6 +369,105 @@ async function main() {
       "A3a-12-C. control: and the pre-A3a coach page DID render that fabricated Losses chip");
   }
 
+  // ---- A3b-1. practice-ballot PRESENTATION honesty (M15 S1A A3b-1) -------------------------------
+  // A3a removed false progression AUTHORITY; A3b-1 removes false presentation authority from the
+  // ballot itself. The ballot still shows a winner, a score, categories, an RFD and a next step —
+  // only its status changes. Learner-facing copy is checked comment-stripped so the explanatory
+  // comments (which necessarily quote the OLD strings) cannot satisfy or defeat these.
+  const ballotSrc = strip(readFileSync("components/debate/debate-arena.tsx", "utf8"));
+  const aiSrcA3b = strip(readFileSync("lib/ai.ts", "utf8"));
+
+  assert.ok(/Practice ballot/.test(ballotSrc), "A3b-1. the ballot badge says Practice ballot");
+  assert.ok(!/Judge decision/.test(ballotSrc), "A3b-2. and no longer says 'Judge decision'");
+  assert.ok(/wins this practice round/.test(ballotSrc),
+    "A3b-3. the winner headline frames the result as a practice round");
+  assert.ok(/CompeteReady practice decision — for coaching, not your competition record\./.test(ballotSrc),
+    "A3b-4. one supporting line states the status of the decision");
+  assert.ok(/Practice ballot score/.test(ballotSrc) && !/>Overall score</.test(ballotSrc),
+    "A3b-5. the score is labelled Practice ballot score, not Overall score");
+  assert.ok(/Formative coaching score — not mastery or readiness\./.test(ballotSrc),
+    "A3b-6. and carries the mastery/readiness disclaimer exactly once");
+  assert.equal((ballotSrc.match(/not mastery or readiness/g) ?? []).length, 1,
+    "A3b-6b. exactly once — the ballot must not become a wall of disclaimers");
+  assert.ok(/Practice feedback by area/.test(ballotSrc) && /Where the practice judge saw strengths and areas to improve\./.test(ballotSrc),
+    "A3b-7. the category grid has one parent framing");
+  assert.ok(/Where to focus next/.test(ballotSrc) && !/Rating movement/.test(ballotSrc),
+    "A3b-8. the rating-movement panel is now Where to focus next");
+
+  // A3b-9. The signed deltas are GONE from render. Bound to the render expression that produced
+  // them, not to a loose "+" search.
+  assert.ok(!/Number\(value\) >= 0 \? "\+" : ""/.test(ballotSrc),
+    "A3b-9. no signed +/- rating delta is rendered");
+  assert.ok(/function focusLabel\(delta: number\)/.test(ballotSrc),
+    "A3b-10. a qualitative label is derived from the stored band instead");
+  for (const word of ["Strength", "On track", "Developing", "Focus", "Priority"]) {
+    assert.ok(new RegExp(`text: "${word}"`).test(ballotSrc), `A3b-10b. focus state "${word}" exists as a WORD`);
+  }
+  // Every focus state pairs its colour with an icon, so status is never colour-only (CLAUDE.md).
+  const focusBody = ballotSrc.slice(ballotSrc.indexOf("function focusLabel(delta: number)"));
+  for (const line of focusBody.slice(0, focusBody.indexOf("\n}")).split("\n").filter((l) => l.includes("text:"))) {
+    assert.ok(/Icon:/.test(line) && /tone:/.test(line), `A3b-10c. that state carries an icon too: ${line.trim()}`);
+  }
+
+  // A3b-11. Server prose no longer claims a rating moved.
+  assert.ok(!/rating increased|rating decreased|Rating movement/.test(judgeRouteSrc),
+    "A3b-11. the judge route emits no rating-movement prose");
+  assert.ok(/The practice judge scored \$\{area\} highly because/.test(judgeRouteSrc) &&
+            /is a focus area because/.test(judgeRouteSrc),
+    "A3b-11b. and emits practice-feedback prose instead");
+
+  // A3b-12/13. Provider attribution. Path A never scores with the provider, in either state.
+  assert.ok(!/Live AI judge unavailable/.test(aiSrcA3b),
+    "A3b-12. the misleading 'live AI judge unavailable' notice is gone");
+  assert.ok(/Extra AI-written feedback isn't available right now\./.test(aiSrcA3b),
+    "A3b-12b. the failure notice scopes the outage to written feedback only");
+  assert.ok(/practice ballot score still comes from CompeteReady's practice rubric/.test(aiSrcA3b),
+    "A3b-12c. and states the score basis is unchanged by the outage");
+  assert.ok(/merged\.aiNotice = undefined;/.test(aiSrcA3b) && !/merged\.aiNotice = providerBanner/.test(aiSrcA3b),
+    "A3b-13. a successful ballot shows no provider-brand banner");
+  // ...while the shared helper stays truthful and untouched for its other consumers.
+  assert.ok(/Gemini AI is active\./.test(readFileSync("lib/ai-providers.ts", "utf8")),
+    "A3b-13b. control: providerBanner itself is unchanged for non-ballot features");
+  assert.ok(/const banner = providerBanner\(provider\);/.test(aiSrcA3b),
+    "A3b-13c. control: its other consumer in lib/ai.ts still uses it");
+
+  // A3b-14. Path B (DECA) is not flattened into Path A's copy: with no teamWinner the ballot must
+  // not render the two-sided headline, which previously read "Winner unavailable wins".
+  // Bound to the ternary's STRUCTURE — the two-sided copy in the truthy branch, the role-play
+  // headline after the `) : (` — rather than to a character distance that reformatting would break.
+  assert.ok(/report\.teamWinner \?[\s\S]{0,600}wins this practice round[\s\S]{0,300}\) : \([\s\S]{0,150}Practice round scored/.test(ballotSrc),
+    "A3b-14. a role-play with no opposing side gets its own headline");
+  assert.ok(!/Winner unavailable wins/.test(ballotSrc),
+    "A3b-14b. and never renders 'Winner unavailable wins'");
+
+  // A3b-15. COACHING SURVIVES. A3b-1 is wording and hierarchy only.
+  for (const kept of ["categoryScores", "strengths", "weaknesses", "recommendedLessons",
+                      "shortReasonForDecision", "transcriptFeedback", "judgeFairnessReport",
+                      "betterSentence", "reasonForDecision"]) {
+    assert.ok(ballotSrc.includes(kept), `A3b-15. the ballot still renders ${kept}`);
+  }
+
+  // NON-VACUOUS: every A3b-1 assertion above must FAIL against the frozen pre-A3b-1 pin.
+  const PRE_M15_A3B1 = "9b396753b235dd9fd0ac08768194b1253d6138c5";
+  const ballotAtA3a = strip(
+    execSync(`git show ${PRE_M15_A3B1}:components/debate/debate-arena.tsx`, { encoding: "utf8" }));
+  const aiAtA3a = strip(execSync(`git show ${PRE_M15_A3B1}:lib/ai.ts`, { encoding: "utf8" }));
+  const routeAtA3a = strip(
+    execSync(`git show ${PRE_M15_A3B1}:'app/api/debates/[debateId]/judge/route.ts'`, { encoding: "utf8" }));
+  assert.ok(/Judge decision/.test(ballotAtA3a), "A3b-C1. control: the pre-A3b-1 ballot DID say 'Judge decision'");
+  assert.ok(/>Overall score</.test(ballotAtA3a), "A3b-C2. control: and DID label the score 'Overall score'");
+  assert.ok(/Rating movement/.test(ballotAtA3a), "A3b-C3. control: and DID show a 'Rating movement' panel");
+  assert.ok(/Number\(value\) >= 0 \? "\+" : ""/.test(ballotAtA3a),
+    "A3b-C4. control: and DID render signed rating deltas");
+  assert.ok(/text-6xl/.test(ballotAtA3a) && !/text-6xl/.test(ballotSrc),
+    "A3b-C5. control: the score dropped one hierarchy level from 6xl");
+  assert.ok(/Live AI judge unavailable/.test(aiAtA3a),
+    "A3b-C6. control: the pre-A3b-1 failure notice WAS the misleading one");
+  assert.ok(/merged\.aiNotice = providerBanner\(provider\)/.test(aiAtA3a),
+    "A3b-C7. control: and a provider banner WAS attached to the ballot");
+  assert.ok(/rating increased/.test(routeAtA3a),
+    "A3b-C8. control: and the route DID emit 'rating increased' prose");
+
   // NON-VACUOUS: at the FROZEN pre-A3a pin every one of these authorities WAS present. Without this
   // the assertions above could pass against a route that never had them.
   const PRE_M15_A3 = "bb7c4dcc3d6f0af76dd624a0b77dea5f9dabf7c2";

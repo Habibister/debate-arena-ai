@@ -2,7 +2,75 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M15 S1A A3a — formative ballot output can no longer create authoritative progression: no win-bonus XP, no `User.wins` increment, no `SpeakingSkillSnapshot` row, truthful scorer provenance, and the coach-facing fabricated win/loss record removed. **LOCAL COMMIT, NOT PUSHED.** A1 and A2 are shipped and Production-verified at `5879894892`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1A A3b-1 — the Debate ballot is now framed as a practice ballot: practice-ballot badge/score labels, one status line, no fake signed rating deltas, truthful provider attribution. **LOCAL COMMIT, NOT PUSHED.** A1, A2 and A3a are shipped and Production-verified at `5881331565`; M14 Global G2 remains CLOSED.)_
+
+## M15 S1A A3b-1 — The Debate ballot is a PRACTICE ballot (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+A3a removed false progression **authority**. A3b-1 removes false **presentation** authority from the
+primary Debate ballot. Wording and hierarchy only — no scoring, winner, XP or persistence logic
+changed. The learner still gets a trophy, a winner, a score, category feedback, an RFD, strengths,
+weaknesses, recommendations and AI-written coaching; the page simply names it accurately.
+
+**Ballot copy now:** badge `Practice ballot` (was `Judge decision`) · headline
+`{side} wins this practice round` · one status line
+`CompeteReady practice decision — for coaching, not your competition record.` ·
+`Practice ballot score` with `Formative coaching score — not mastery or readiness.` (stated exactly
+once) · score hierarchy `text-6xl` → `text-5xl` · XP relabelled
+`+N XP earned for completing the round`, so it is never read as a consequence of the score ·
+new parent framing `Practice feedback by area` / `Where the practice judge saw strengths and areas
+to improve.`
+
+**`Rating movement` → `Where to focus next`.** The signed deltas (`+14/+9/+4/-3/-8`) are no longer
+rendered: they came from a band lookup over a formative score, so a green `+9` claimed measured
+rating movement that never occurred. Each area now shows a **word plus an icon** — `Strength`,
+`On track`, `Developing`, `Focus`, `Priority` — never colour alone. The per-area explanation, which
+is the genuinely useful part, is kept. The stored numbers in `judgeReport.ratingChange` are
+**unchanged**, and the word is derived at render time, so ballots judged before A3b-1 replay with
+the same honest wording and no history is rewritten.
+
+**Judge-route prose (wording only, owner-approved).** `ratingReason` emitted
+`"Argument rating increased because …"`; it is now `focusReason`, emitting
+`"The practice judge scored argument highly because …"` / `"… is a focus area because …"`. The same
+band still selects the sentence — no number, threshold or scoring input changed. Every A3a authority
+control was re-run unchanged on that file.
+
+**Provider attribution corrected.** On Path A the provider *never* scores: the local practice rubric
+produces the numbers and the winner whether the provider is up or down, and the provider is only
+asked for prose. So the failure notice `"Live AI judge unavailable — showing the local rubric judge"`
+became `"Extra AI-written feedback isn't available right now. Your practice ballot score still comes
+from CompeteReady's practice rubric."`, and the success-path provider banner (`"Gemini AI is
+active."`) is no longer attached to a ballot at all — it implied the vendor produced the score.
+`lib/ai-providers.ts` is **untouched**: the banner stays truthful for side coach and generation.
+
+**Path B (DECA) defect found and fixed.** `PerformanceJudgeResult` carries no `teamWinner`, so the
+modal was rendering the literal headline **"Winner unavailable wins"** plus a `Losing side:` line
+invented by a `??` fallback — nonsense for a solo role-play with no opposing side. A role-play now
+gets `Practice round scored` and no losing-side line; two-sided rounds keep the two-sided copy.
+
+### Preserved
+
+A3a authority is byte-verified intact (completion-only XP, no `debateWon`, no wins write, no
+snapshot, `progressionBasis: "completion-only"`, `scoredBy` from the real `scoringMode`, `assisted`
+from `assistedPractice`, A2 claim still first in transaction). A1, `lib/debate-judge-analysis.ts`,
+`lib/ai-providers.ts`, `lib/coach-progress.ts`, all four G2 banks and `prisma/schema.prisma` are
+byte-identical to `9b396753`. All A3b-2 and A3b-3 target files are untouched.
+
+### Validation
+
+`db:generate` (client generation only) · `tsc --noEmit` · `lint` (1 pre-existing `<img>` warning) ·
+`build` · **29/29 safe suites green**. **No database was accessed**; no secrets were read.
+
+### Still open
+
+**A3b-2:** dashboard legacy wins + practice-score labels, profile legacy wins + recent-debate score
+label, replay score wording. **A3b-3:** coach roster wins, coach average-score label, assignment
+picker score label. **A4:** uncapped Debate creation, completion-XP farming, PracticeTest XP policy,
+streak semantics, reward design. **M16:** semantic judging and any restoration of authoritative
+competitive progression.
+
+## M15 S1A A3a — Formative ballot authority REMOVED (shipped; Production-verified at `5881331565`)
 
 ## M15 S1A A3a — Formative ballot authority REMOVED (LOCAL, push pending)
 

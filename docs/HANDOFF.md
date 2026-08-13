@@ -2,9 +2,92 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A2: judged attempts exactly-once (2026-08-12)
+## Latest handoff — M15 S1A A3a: formative ballot authority removed (2026-08-12)
 
 ### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+A3a installs one rule: **a formative ballot may coach the learner but may not create authoritative
+competition progression.** Read the A3a section of `docs/CURRENT_STATE.md` first — it carries the
+full evidence, including the measurement showing a marker-stuffed circular speech beating genuine
+reasoning **98–65 from either seat** on the local lexical judge.
+
+### ⚠ ROTATE THE DATABASE CREDENTIAL BEFORE FURTHER DEVELOPMENT
+
+During pre-commit review an automated review process read the database connection string from the
+environment file and ran **read-only** queries directly against the shared production database. That
+access was **not authorized**. No writes were reported, so this is not a data-corruption incident,
+but the credential must no longer be trusted. Rotate it at the provider, update the Production
+environment secret, and replace the local secret through normal secret management. Do not paste the
+value into any assistant, doc, or commit. The final A3a validation was run **source-only with no
+database access**, so nothing below depends on that credential.
+
+### What A3a changed — do not undo any of it
+
+Six files. Production: `app/api/debates/[debateId]/judge/route.ts`, `lib/coach-progress.ts`,
+`app/(app)/coach/students/[studentId]/page.tsx`. Suites: `scripts/judge-shape-smoke.ts`,
+`scripts/practice-session-smoke.ts`, `scripts/hosa-practice-scope-smoke.ts`.
+
+- **No win-bonus XP** (`xpEarned = XP_REWARDS.debateCompleted`). **Keep `XP_REWARDS.debateWon` in
+  `lib/constants.ts`** — it is retained on purpose for a validated M16 judge.
+- **No `User.wins` write.** `wins` is still read for the internal bot-matching projection and still
+  returned. History is untouched — never reset, backfill, or "repair" it.
+- **No `SpeakingSkillSnapshot` row on any path, DECA included.** Model, schema and historical rows
+  retained; M16 may resume writing behind a trust gate.
+- **`scoredBy` follows the real scoring mode, never the organization.** DECA may be labelled
+  `ai-registry-weighted` **only** when `result.scoringMode === "registry-weighted"`; today its point
+  split is unsourced, so `ai-seed-rubric` is the truthful value. Hardcoding the DECA label was a
+  defect caught in adversarial review — do not reintroduce it.
+- **`progressionBasis: "completion-only"` on every path.** `"scored"` is not a permitted value.
+- **`assisted`** mirrors the stored `Debate.assistedPractice`.
+- **Coach fabricated-loss regression fixed.** `losses = judgedRounds - wins` is gone, and the
+  Wins/Losses chip pair is gone from the coach student-detail page. A3a froze `wins` while
+  `judgedRounds` keeps climbing, so that subtraction would have reported every future judged round
+  as a loss. If you ever restore a coach win/loss record, it needs a real recorded outcome first.
+
+### The winner still exists — that is intentional
+
+`didStudentWin` / `teamWinner` are still computed, stored and displayed, because the practice
+decision is useful coaching. What changed is that no write depends on them. **Two suite assertions
+were inverted** (`practice-session-smoke.ts` 144, `hosa-practice-scope-smoke.ts` 46d) because they
+positively pinned the retired `wins: wonDebate ? user.wins + 1 : user.wins` contract; both now
+assert the opposite and both carry frozen-baseline controls proving they still bite.
+
+### Test discipline that must survive
+
+The anti-leak control checks **value flow**, not proximity. An earlier line-local version was killed
+in review: every write in that route is multi-line, so it passed against the pre-A3a route AND let
+`const winBonus = wonDebate ? 50 : 0; … xpEarned + winBonus` ship green. The current controls extract
+each write's full balanced argument block and pin the XP flow to a bare identifier. Eight mutation
+probes (source-only, scratch copies) run **8/8 killed, 0 survivors**. Do not weaken these to
+line-based or global-substring checks.
+
+### Next steps, in order
+
+1. Owner pushes the A3a commit through GitHub Desktop. **Do not push automatically.**
+2. Read-only Production verification: SHA/deployment identity, route health, deployed-source policy
+   checks (no win bonus, no wins write, no snapshot write, basis fields present, `scoredBy` derived
+   from `scoringMode`), A2 claims intact, A1 intact, G2 frozen, 29 suites green. No authenticated
+   simulation, no DB-writing test.
+3. **Rotate the database credential** (above) — do not let this slip into the backlog.
+4. Then **A3b**: practice-ballot framing, the 6xl score, category framing, "Rating movement", the
+   misleading provider/fallback notice, and **all six** visible historical `Wins` surfaces — the
+   owner has decided terminology must be consistent everywhere, not partially relabelled. Review the
+   exact strings with the owner before implementing.
+5. **A4** stays deferred: uncapped low-effort Debate creation and completion-XP farming, PracticeTest
+   XP policy, streak semantics, reward design.
+
+### Standing constraints (unchanged)
+
+No push, deploy, schema change, migration, `db push`/seed, dependency install, or destructive git
+without explicit approval. Never run `auth:smoke`, `team:smoke`, `assignment:smoke`, or
+`deca:skills:activate`. **Never open `.env`, read `DATABASE_URL`, or query any shared database.**
+M14 Global G2 remains **CLOSED** — do not reopen it.
+
+## Previous handoff — M15 S1A A2: judged attempts exactly-once (2026-08-12)
+
+### Shipped and Production-verified at `5879894892`
 
 **Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 

@@ -116,10 +116,16 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
             <p className="text-sm text-muted-foreground">No debate rounds yet.</p>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {/* M15 S1A A3a: the Wins/Losses pair is gone. "Losses" was derived as
+                  judgedRounds - wins, and once A3a stopped the judge route incrementing User.wins
+                  that subtraction reported every future judged round as a loss. The two chips only
+                  read as a competitive record TOGETHER, so showing "Wins 0" beside a growing round
+                  count would state the same false record by implication. What remains is what the
+                  database actually records: how many rounds were judged, and their average
+                  formative ballot score. Relabelling the historical "Wins" counters elsewhere is
+                  A3b; nothing here deletes or rewrites that stored history. */}
+              <div className="grid grid-cols-2 gap-2">
                 <StatChip label="Judged rounds" value={`${debate.judgedRounds}`} />
-                <StatChip label="Wins" value={`${debate.wins}`} />
-                <StatChip label="Losses" value={`${debate.losses}`} />
                 <StatChip label="Avg judge score" value={debate.averageScore !== null ? `${debate.averageScore}` : "—"} />
               </div>
 

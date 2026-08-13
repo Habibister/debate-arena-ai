@@ -47,6 +47,27 @@ type JudgeResult = {
     rationale: string;
     nextMilestone: string;
   };
+  // M15 S1A A3a — judging-basis metadata, persisted into the existing `Debate.judgeReport` Json
+  // column. No schema migration. These record WHO SCORED THE ROUND separately from WHAT WAS ALLOWED
+  // TO MOVE AUTHORITATIVE PROGRESSION — the two are not the same question and must never be
+  // collapsed into one field. Rows judged before A3a simply lack these keys; absent must be read as
+  // UNKNOWN basis, never as a trusted one.
+  // Set by judgeDecaRoleplay only: "registry-weighted" when a FULLY SOURCED per-category point split
+  // exists for the event, "seed" otherwise. Read here so `scoredBy` reports what actually happened
+  // instead of what the organization implies.
+  scoringMode?: "registry-weighted" | "seed";
+  scoredBy?: "local-lexical-rubric" | "ai-seed-rubric" | "ai-registry-weighted";
+  // Always "completion-only" while this route exists in its A3a form. Both scoring paths produce
+  // FORMATIVE numbers: Path A is demonstrably gameable, and Path B, though semantically stronger and
+  // registry-grounded, has never been validated against human judge ballots. So no ballot NUMBER and
+  // no winner has authority here — only the server-verified fact that the round was completed.
+  // "scored" is deliberately not a permitted value: writing it for DECA would claim an authority
+  // that A3a does not grant.
+  progressionBasis?: "completion-only";
+  // Whether Side Coach was used during this round, read from the stored `Debate.assistedPractice`
+  // flag the side-coach route already sets. An assisted round is still real completed activity; it
+  // just must not be mistaken later for unassisted skill evidence.
+  assisted?: boolean;
   ratingChange?: {
     overall: number;
     argument: number;
@@ -288,8 +309,18 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           : undefined
     };
     const overallScore = normalizeScore(result.overallScore);
+    // M15 S1A A3a — the winner is still COMPUTED and still shown, because it is useful coaching. It
+    // simply has no progression authority any more. Every use of `wonDebate` below is confined to
+    // the formative ballot payload (rating-movement prose, decision copy); it reaches no write.
     const wonDebate = didStudentWin(result, debate.studentSide, overallScore);
-    const xpEarned = XP_REWARDS.debateCompleted + (wonDebate ? XP_REWARDS.debateWon : 0);
+    // A3a: completion-only. The bonus is gone because the winner that would have earned it is not
+    // trustworthy on EITHER scoring path. Path A (Debate/MT/PS/MUN) derives the winner from lexical
+    // marker counts, and a marker-stuffed circular speech was measured beating genuine reasoning
+    // 98-65 from either seat. Path B (DECA) never has an opponent at all, so `didStudentWin`'s
+    // `overallScore >= 80` fallback calls a solo role-play a "win". `XP_REWARDS.debateWon` is
+    // deliberately LEFT IN lib/constants.ts: M16's validated semantic judge may legitimately earn it
+    // back behind a trust gate. Removing the constant would make that restoration a rewrite.
+    const xpEarned = XP_REWARDS.debateCompleted;
     const completedSpeechCount = debate.messages.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length;
     const argumentCategory = findCategory(result, ["argument"]);
     const refutationCategory = findCategory(result, ["refutation"]);
@@ -332,11 +363,15 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       // Award FIRST, atomically, so every XP-derived value below uses the authoritative result. The
       // previous read-add-write could be erased by a concurrent writer: a plain SELECT does not block
       // under MVCC, so ordering the write did not stop a stale value being written.
-      // Wins and streak keep their existing behaviour and their own pre-read staleness — carried work.
+      // Streak keeps its existing behaviour and its own pre-read staleness — carried work.
       const awarded = await awardXpInTransaction(tx, session.user.id, xpEarned);
+      // A3a: `user.wins` is read but NEVER incremented. It feeds only this projection, which selects
+      // the recommended sparring bot — an internal difficulty heuristic, not a displayed rating. The
+      // old `wonDebate ? user.wins + 1 : user.wins` speculatively counted a win this route no longer
+      // records, so the projection now uses the stored value as it actually stands.
       const projectedRating = calculateDebateRating({
         xp: awarded.xp,
-        wins: wonDebate ? user.wins + 1 : user.wins
+        wins: user.wins
       });
       const argumentDelta = skillDelta(scores.logic, overallScore);
       const refutationDelta = skillDelta(scores.rebuttal, overallScore);
@@ -365,7 +400,31 @@ export async function POST(request: Request, { params }: { params: { debateId: s
             organization: ratingReason("Organization rating", organizationDelta, organizationCategory, "the judge evaluated structure and signposting."),
             deliveryStyle: ratingReason("Delivery/style rating", deliveryDelta, deliveryCategory, "the judge evaluated style, clarity, and communication.")
           }
-        }
+        },
+        // A3a basis metadata — written into `judgeReport` on every judged round from here on.
+        //
+        // `scoredBy` reports what ACTUALLY scored the round, never what the organization implies.
+        // Deriving it from `debate.organization` alone would have been false today: DECA's
+        // per-category point split is still unsourced (the seeded categories carry `points: null`
+        // and PLACEHOLDER descriptions, so `getWeightedScoringRubric` returns null and
+        // `judgeDecaRoleplay` sets scoringMode "seed"). Labelling those rounds "registry-weighted"
+        // would have written a fabricated provenance claim into the database — the exact failure
+        // this batch exists to prevent. Reading the real `scoringMode` also makes the label
+        // self-correcting: it upgrades on its own the day a genuine sourced split lands.
+        //
+        // Note the naming trap on Path A: the local rubric is reached through a function called
+        // `fallbackDebateJudge`, but it is the PRIMARY and only scorer in both provider-up and
+        // provider-down states — the provider is asked for prose alone and cannot alter a number or
+        // the winner. So no `degradedJudge` flag is written: there is no degraded numeric state to
+        // describe, and inventing one would imply the live path scores when it does not.
+        scoredBy:
+          debate.organization !== "DECA"
+            ? "local-lexical-rubric"
+            : result.scoringMode === "registry-weighted"
+              ? "ai-registry-weighted"
+              : "ai-seed-rubric",
+        progressionBasis: "completion-only",
+        assisted: debate.assistedPractice
       };
 
       const savedDebate = await tx.debate.update({
@@ -391,10 +450,13 @@ export async function POST(request: Request, { params }: { params: { debateId: s
         }
       });
 
+      // A3a: `wins` is GONE from this update — a formative ballot may not mint a competition win.
+      // Historical values are left exactly as they stand: no reset, no backfill, no migration.
+      // Streak stays; it is an activity counter (the dashboard already labels it "Practice
+      // sessions"), and it rests on the completion fact rather than on any score.
       const savedUser = await tx.user.update({
         where: { id: session.user.id },
         data: {
-          wins: wonDebate ? user.wins + 1 : user.wins,
           streak: user.streak + 1
         }
       });
@@ -403,31 +465,27 @@ export async function POST(request: Request, { params }: { params: { debateId: s
         data: {
           userId: session.user.id,
           amount: xpEarned,
-          reason: wonDebate ? "Completed and won AI debate" : "Completed AI debate",
+          // The award is completion-only, so the ledger entry may not say "won". A reason string
+          // branching on `wonDebate` would put the untrustworthy winner back into a progression
+          // write through the back door.
+          reason: "Completed AI debate",
           sourceType: "DEBATE",
           sourceId: debate.id
         }
       });
 
-      if (result.sharedSpeaking) {
-        await tx.speakingSkillSnapshot.create({
-          data: {
-            userId: session.user.id,
-            organization: debate.organization,
-            eventType: debate.eventType,
-            sourceType: debate.practiceMode,
-            sourceId: debate.id,
-            clarity: result.sharedSpeaking.clarity,
-            confidence: result.sharedSpeaking.confidence,
-            pacing: result.sharedSpeaking.pacing,
-            volume: result.sharedSpeaking.volume,
-            organizationScore: result.sharedSpeaking.organization,
-            vocabulary: result.sharedSpeaking.vocabulary,
-            persuasion: result.sharedSpeaking.persuasion,
-            professionalism: result.sharedSpeaking.professionalism
-          }
-        });
-      }
+      // A3a: NO SpeakingSkillSnapshot is written, on any path. `result.sharedSpeaking` still exists
+      // and still feeds the visible ballot — only the persisted row is gone.
+      //
+      // Path A projects those eight dimensions out of the same lexical counts, and two of them
+      // ("pacing", "volume") describe audio this route never receives. Path B's values come from an
+      // AI reading a real transcript against a sourced rubric — genuinely stronger, but still not
+      // validated against human judge ballots, so still formative. No path currently clears the bar
+      // for a row that a future learner model would read as measured skill.
+      //
+      // The table has zero readers today, so nothing observable regresses; the model, its schema and
+      // every historical row are retained untouched, and M16 may resume writing behind a validated
+      // trust gate.
 
       return [savedDebate, savedUser] as const;
     });

@@ -132,7 +132,17 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
 
   const judgedRounds = judgedDebates.length;
   const wins = student.wins ?? 0;
-  const losses = Math.max(0, judgedRounds - wins);
+  // M15 S1A A3a — the derived `losses` field is GONE. It was `judgedRounds - wins`, which was only
+  // ever an inference, and A3a made it strictly false: the judge route was the sole writer of
+  // `User.wins`, and it no longer increments it (a lexical/formative ballot may not mint a
+  // competition win). So `wins` is now a frozen historical counter while `judgedRounds` keeps
+  // climbing — the subtraction would have reported EVERY future judged round as a loss, showing a
+  // coach "0 wins / 12 losses" for a student whose ballots mostly said they won. No `losses` column
+  // and no `winner` column exist on Debate; that number corresponded to no recorded event, which is
+  // fabricated progress in the negative direction.
+  //
+  // `wins` itself is still returned: it is a real stored value, it is untouched history, and no
+  // UI reads it after this change. Relabelling the remaining historical "Wins" surfaces is A3b.
   const averageDebateScore = average(judgedDebates.map((d) => d.overallScore).filter((s): s is number => typeof s === "number"));
   const latest = judgedDebates[0] ?? null;
   const latestFeedback = latest
@@ -214,7 +224,6 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
     debate: {
       judgedRounds,
       wins,
-      losses,
       averageScore: averageDebateScore,
       recent: recentDebates,
       latestFeedback

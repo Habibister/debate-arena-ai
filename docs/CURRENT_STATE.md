@@ -2,9 +2,111 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-12 (M15 S1A A2 — judged attempts made EXACTLY-ONCE: conditional Postgres claims installed first-in-transaction in the debate-judge and test-grade routes. **LOCAL COMMIT, NOT PUSHED.** A1 is shipped and Production-verified at `5879491359`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-12 (M15 S1A A3a — formative ballot output can no longer create authoritative progression: no win-bonus XP, no `User.wins` increment, no `SpeakingSkillSnapshot` row, truthful scorer provenance, and the coach-facing fabricated win/loss record removed. **LOCAL COMMIT, NOT PUSHED.** A1 and A2 are shipped and Production-verified at `5879894892`; M14 Global G2 remains CLOSED.)_
 
-## M15 S1A A2 — Judged attempts are EXACTLY-ONCE (LOCAL, push pending)
+## M15 S1A A3a — Formative ballot authority REMOVED (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+Third batch of **M15 Slice 1A (Evidence Integrity)**. The governing rule it installs:
+
+> **A formative ballot may coach the learner but may not create authoritative competition
+> progression.**
+
+### Why the Debate ballot is formative on BOTH paths
+
+- **Path A — Debate / Mock Trial / Public Speaking / Model UN.** Every number *and the winner* come
+  from lexical marker counts in `lib/debate-judge-analysis.ts`. `judgeDebate` computes the local
+  ballot **first and unconditionally**; the provider is then asked only for prose under
+  `JUDGE_PROSE_SYSTEM`, and `mergeJudgeEnhancement` can write only six string fields — it cannot
+  touch a score, `sharedSpeaking`, or `teamWinner`. Measured on the real exported function: an
+  on-topic, marker-dense, circular speech scored **98** and beat genuinely reasoned prose at **65**,
+  from **either** seat, maxing out every substantive category. Live and fallback differ in prose
+  only — there is no degraded *numeric* state, which is why no `degradedJudge` flag is written.
+- **Path B — DECA.** AI-scored against a registry rubric and fails closed (no fallback). Genuinely
+  stronger, but never validated against human judge ballots — so still formative — and it has no
+  opponent at all, meaning `didStudentWin`'s `overallScore >= 80` fallback would call a solo
+  role-play a "win".
+
+### What A3a changed
+
+`app/api/debates/[debateId]/judge/route.ts`:
+
+- `xpEarned = XP_REWARDS.debateCompleted` — the winner-conditional bonus is gone.
+  **`XP_REWARDS.debateWon` is deliberately retained in `lib/constants.ts`** so a validated M16 judge
+  can earn it back without a rewrite.
+- **No `wins` write.** `wins` is still read (it feeds the internal bot-matching projection, which
+  now uses the stored value rather than a speculative `+1`) and still returned, but no
+  `tx.user.update` writes it. Historical values are untouched — no reset, no backfill, no migration.
+- **No `SpeakingSkillSnapshot` row on any path, including DECA.** Path A projects those eight
+  dimensions from the same lexical counts, and `pacing`/`volume` describe audio this route never
+  receives; Path B is unvalidated. The model, schema and every historical row are retained; M16 may
+  resume writing behind a trust gate. `result.sharedSpeaking` still feeds the visible ballot.
+- The XPLog reason no longer branches on the winner (`"Completed AI debate"`), so no progression
+  write is winner-conditional.
+- **Judging basis persisted into the existing `judgeReport` Json — no migration.**
+  `scoredBy` is derived from the **actual** scoring mode, never from the organization:
+  `local-lexical-rubric` for Path A; for DECA, `ai-registry-weighted` **only when
+  `result.scoringMode === "registry-weighted"`**, otherwise `ai-seed-rubric`. DECA's per-category
+  point split is still unsourced (seeded `points: null` + PLACEHOLDER; see `docs/NEXT_TASK.md`), so
+  the truthful current value is `ai-seed-rubric` — the label upgrades itself if a real split lands.
+  Also written: `progressionBasis: "completion-only"` on **every** path (`"scored"` is not a
+  permitted value), and `assisted` mirrored from the stored `Debate.assistedPractice`.
+
+**Coach evidence integrity (caused by A3a, fixed in A3a).** `lib/coach-progress.ts` derived
+`losses = judgedRounds - wins`. The judge route was the **sole** writer of `User.wins`, so freezing
+it would have left `wins` static while `judgedRounds` climbed — reporting **every future judged
+round as a loss** (a student with 12 rounds shown to their coach as 0 wins / 12 losses), a number
+matching no recorded event, since Debate has no `losses` and no `winner` column. The derived field
+is removed, and the coach student-detail page no longer renders the Wins/Losses pair — those two
+chips only read as a competitive record together. It still shows **Judged rounds** and the average
+formative ballot score, both backed by real rows. No learner data was read, written or repaired.
+
+### Authority policy after A3a
+
+- **AUTHORITATIVE:** judged/completed-round fact, transcript, completion XP, activity/streak,
+  completion-based assignment evidence.
+- **FORMATIVE:** ballot, category scores, overall score, winner/practice decision, RFD, strengths,
+  weaknesses, recommendations — all still produced, stored and displayed.
+- **NOT AUTHORITATIVE:** lexical winner, the DECA solo `>= 80` "win" concept, win-bonus XP,
+  `User.wins`, `SpeakingSkillSnapshot`, and any readiness derived from these.
+
+### Preserved and verified
+
+A2's conditional claim is still the **first** operation in the progression transaction with an
+identical predicate, transition and `count === 0` → 409; every progression effect follows it. A1's
+three writing paths, `lib/debate-judge-analysis.ts`, `lib/ai.ts`, `components/debate/debate-arena.tsx`,
+all four G2 drill banks and `prisma/schema.prisma` are **byte-identical** to `bb7c4dcc`.
+
+### Validation
+
+`db:generate` (client generation only, no DB connection) · `tsc --noEmit` · `lint` (1 pre-existing
+`<img>` warning) · `build` · **29/29 safe suites green**. **No database was accessed at any point.**
+Eight source-only mutation probes ran on scratch copies — win bonus via a temporary variable, wins
+in a multi-line update, fake DECA registry provenance, restored `losses` derivation, restored Losses
+chip, progression moved before the A2 claim, reintroduced snapshot, restored direct win bonus —
+**8/8 killed, 0 survivors**, with every control also proven to fail against the frozen `bb7c4dcc`.
+
+### Validation incident (recorded factually)
+
+During pre-commit review, an automated review process **read the database connection string from the
+environment file and ran read-only queries directly against the shared production database**. That
+access was **not authorized**. No writes were reported. It was contained: the final validation above
+used repository source only, with no database access and no subordinate processes. **The exposed
+database credential should be rotated** through the provider, with the Production secret and the
+local secret replaced through normal secret management. No credential value is recorded here.
+
+### Still open
+
+**A3b (learner-facing honesty, not started):** "Judge decision" → practice-ballot framing; the 6xl
+score presentation; category-score framing; "Rating movement"; the misleading
+`"Live AI judge unavailable — showing the local rubric judge"` notice (it implies the normal ballot
+was AI-scored, which it never is); the remaining historical **Wins** surfaces — the owner has decided
+**all six** should be made consistent, not a subset; optionally the assignment-picker score label.
+**A4 (not started):** uncapped low-effort Debate creation (no rate limit on `POST /api/debates`, no
+per-day completion-XP cap), PracticeTest XP policy, streak semantics, reward design.
+
+## M15 S1A A2 — Judged attempts are EXACTLY-ONCE (shipped; Production-verified at `5879894892`)
 
 **Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 

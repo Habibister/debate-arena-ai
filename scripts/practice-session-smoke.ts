@@ -583,9 +583,27 @@ async function main() {
     assert.ok(!/const nextXp\s*=/.test(src), `143. ${name} no longer computes xp in JavaScript at all`);
   }
   assert.ok(/xp:\s*nextXp/.test("data: { xp: nextXp }"), "143b. control: that scan matches a real stale write");
-  // Judge keeps wins and streak exactly as they were — their own staleness is carried, not fixed here.
-  assert.ok(/wins: wonDebate \? user\.wins \+ 1 : user\.wins/.test(judge), "144. judge wins behaviour is unchanged");
-  assert.ok(/streak: user\.streak \+ 1/.test(judge), "144b. and so is its streak behaviour");
+  // 144 INVERTED BY M15 S1A A3a. This used to pin `wins: wonDebate ? user.wins + 1 : user.wins` to
+  // prove A1/A2 had not disturbed the judge's wins/streak writes. A3a deliberately RETIRED that
+  // write: a formative ballot (lexical on Path A, unvalidated AI on Path B) may not mint a
+  // competition win. The property under test is therefore reversed rather than dropped — the judge
+  // must now write NO wins at all. Bound to the write POSITION, because `wins` is still legitimately
+  // READ (it feeds the internal bot-matching projection) and returned in the response.
+  for (const updateCall of judge.split("tx.user.update(").slice(1)) {
+    assert.ok(!/\bwins\s*:/.test(updateCall.slice(0, updateCall.indexOf("})"))),
+      "144. judge writes no wins field (A3a: formative ballots cannot mint competition wins)");
+  }
+  assert.ok(/wins: user\.wins\b/.test(judge) && !/wins: wonDebate/.test(judge),
+    "144a. and the surviving wins reference is the stored-value projection, not a speculative +1");
+  // NON-VACUOUS: the same detector must fire on the frozen pre-A3a route, which DID write wins.
+  {
+    const judgeAtA3Baseline = stripC(require("node:child_process")
+      .execSync(`git show bb7c4dcc3d6f0af76dd624a0b77dea5f9dabf7c2:'app/api/debates/[debateId]/judge/route.ts'`, { encoding: "utf8" }) as string);
+    const baselineUpdate = judgeAtA3Baseline.split("tx.user.update(").slice(1)[0] ?? "";
+    assert.ok(/\bwins\s*:/.test(baselineUpdate.slice(0, baselineUpdate.indexOf("})"))),
+      "144-C. control: the pre-A3a judge route DID write wins, so 144 is a real control");
+  }
+  assert.ok(/streak: user\.streak \+ 1/.test(judge), "144b. and its streak behaviour is unchanged");
   assert.ok(/streak: user\.streak \+ 1/.test(grade), "144c. as is test-grade's streak behaviour");
   assert.ok(/calculateDebateRating\(\{\s*xp: awarded\.xp/.test(judge),
     "145. judge's XP-derived rating uses the authoritative awarded value");

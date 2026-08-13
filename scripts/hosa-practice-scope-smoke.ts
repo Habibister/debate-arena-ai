@@ -336,8 +336,24 @@ async function main() {
     "46b. no other organization is refused at creation");
   assert.ok(createSrc.includes("trackPracticeConfigForOrganization"),
     "46c. the organization-specific practice config path is untouched");
-  assert.ok(/wins: wonDebate \? user\.wins \+ 1 : user\.wins/.test(judgeSrc) && /streak: user\.streak \+ 1/.test(judgeSrc),
-    "46d. Debate wins/streak behaviour is byte-for-byte what practice-session:smoke 144 pins");
+  // 46d INVERTED BY M15 S1A A3a, in step with practice-session:smoke 144. The old pin required
+  // `wins: wonDebate ? user.wins + 1 : user.wins`; A3a retired that write because a formative
+  // ballot may not mint a competition win. What this control still guards is unchanged in purpose —
+  // that the non-HOSA judging path keeps its own progression behaviour — so it now asserts the
+  // CURRENT contract: no wins write survives, and streak is untouched.
+  for (const updateCall of judgeSrc.split("tx.user.update(").slice(1)) {
+    assert.ok(!/\bwins\s*:/.test(updateCall.slice(0, updateCall.indexOf("})"))),
+      "46d. the Debate judge route writes no wins field, matching practice-session:smoke 144");
+  }
+  assert.ok(/streak: user\.streak \+ 1/.test(judgeSrc), "46d2. and its streak behaviour is preserved");
+  // NON-VACUOUS against the frozen A3a baseline, which DID write wins from the winner.
+  {
+    const judgeAtA3Baseline = code(require("node:child_process")
+      .execSync(`git show bb7c4dcc3d6f0af76dd624a0b77dea5f9dabf7c2:'app/api/debates/[debateId]/judge/route.ts'`, { encoding: "utf8" }) as string);
+    const baselineUpdate = judgeAtA3Baseline.split("tx.user.update(").slice(1)[0] ?? "";
+    assert.ok(/\bwins\s*:/.test(baselineUpdate.slice(0, baselineUpdate.indexOf("})"))),
+      "46d-C. control: the pre-A3a route DID write wins, so 46d is a real control");
+  }
   // 47 — auth and ownership protections are intact (asserted inside the ordering predicates too).
   assert.ok(judgeSrc.includes("{ createdById: session.user.id }, { studentId: session.user.id }, { opponentUserId: session.user.id }"),
     "47. the ownership OR-filter still gates the judge fetch");

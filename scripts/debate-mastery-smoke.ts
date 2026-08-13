@@ -342,7 +342,15 @@ async function main() {
     "13a. and exactly one mastery call site");
   assert.ok(!/(?<!Detailed)(?<!InTransaction)\brecordDrillMastery\(/.test(routeSrc),
     "13a2. and it is not the boolean form");
-  assert.ok(routeSrc.indexOf("recordPracticeOutcomeInTransaction(") < routeSrc.indexOf("recordDrillMasteryInTransaction("),
+  // M15 S1B Batch II: the ordering comparison alone was vacuous — with the evidence
+  // anchor absent indexOf returns -1 and `-1 < n` still holds, so deleting the evidence
+  // write this control exists to sequence turned it green. Both anchors are now proven
+  // present before the ordering is accepted.
+  const reviewIdx = routeSrc.indexOf("recordPracticeOutcomeInTransaction(");
+  const masteryIdx = routeSrc.indexOf("recordDrillMasteryInTransaction(");
+  assert.ok(reviewIdx >= 0 && masteryIdx >= 0,
+    "13b-anchors. both the review (evidence) writer and the mastery writer are present");
+  assert.ok(reviewIdx < masteryIdx,
     "13b. review runs BEFORE mastery, and mastery consumes its result");
   assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(routeSrc),
     "13c. the call is guarded by the evidence floor — below it, persistence is not attempted at all");

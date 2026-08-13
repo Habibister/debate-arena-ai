@@ -390,7 +390,15 @@ async function main() {
     // above are untouched and still asserted in full; these routes simply no longer call them.
     assert.ok(/recordPracticeOutcomeInTransaction\(/.test(src), `38. the ${label} route uses the tx-native review core`);
     assert.ok(/recordDrillMasteryInTransaction\(/.test(src), `38b. and the tx-native mastery core`);
-    assert.ok(src.indexOf("recordPracticeOutcomeInTransaction(") < src.indexOf("recordDrillMasteryInTransaction("),
+    // M15 S1B Batch II: the ordering comparison alone was vacuous — with the evidence
+    // anchor absent indexOf returns -1 and `-1 < n` still holds, so deleting the evidence
+    // write this control exists to sequence turned it green. Both anchors are now proven
+    // present before the ordering is accepted.
+    const reviewIdx = src.indexOf("recordPracticeOutcomeInTransaction(");
+    const masteryIdx = src.indexOf("recordDrillMasteryInTransaction(");
+    assert.ok(reviewIdx >= 0 && masteryIdx >= 0,
+      `38b2-anchors. ${label}: both the review (evidence) writer and the mastery writer are present`);
+    assert.ok(reviewIdx < masteryIdx,
       `38b2. review first, mastery consuming its result (${label})`);
     assert.ok(/const now = new Date\(\);/.test(src), `52. one server timestamp per submission`);
     assert.ok(/if \(mastery\.status === "updated"\) wroteSkills\.push/.test(src),

@@ -2,7 +2,53 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1B indexOf Batch I — the nine completed-retry ordering controls now prove both anchors present before asserting order. **SHIPPED and Production-verified at `5895669302`** (commit `b71fc34`). Everything before it is shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1B indexOf Batch II — the four evidence-before-mastery ordering controls now prove both anchors present before asserting order. **LOCAL COMMIT, acceptance pending.** Batch I and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 S1B — indexOf ordering controls, Batch II: evidence-before-mastery (LOCAL, acceptance pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+DB OPERATION, NO SCHEMA CHANGE`.** Baseline `0abdff1`. **Zero production changes** — four test suites
+plus these docs.
+
+The **evidence-before-mastery** family had 5 controls: 1 already safe, 4 defective (IDX-17 Category B;
+IDX-01, IDX-08, IDX-39 Category C). Each defective control compared an evidence anchor against a
+mastery anchor, so with the evidence anchor absent `indexOf` returned `-1` and `-1 < n` still held —
+deleting the evidence write the control exists to sequence turned it green.
+
+| IDX | Suite | Control | Evidence anchor → mastery anchor |
+| --- | --- | --- | --- |
+| IDX-01 | debate-mastery | `13b` | `recordPracticeOutcomeInTransaction(` → `recordDrillMasteryInTransaction(` |
+| IDX-08 | deca-mastery | `11c` | `recordPracticeOutcomeInTransaction(` → `recordDrillMasteryInTransaction(` |
+| IDX-17 | hosa-medterm-evidence | `28b` | `const hasEnoughEvidence` → `recordPracticeOutcomeInTransaction(` |
+| IDX-39 | review-ladder | `38b2` | `recordPracticeOutcomeInTransaction(` → `recordDrillMasteryInTransaction(` |
+
+Each now captures both indices, asserts both present under a `<label>-anchors` control, then asserts
+the order — inline, no shared helper, original ordering label and message preserved verbatim. The
+already-safe fifth member (**IDX-38**) was not touched.
+
+**Mutation evidence:** every target assertion was evaluated in isolation at its real call site.
+**4/4 satisfy all four states** — presence fails when the evidence anchor is absent, presence fails
+when the mastery anchor is absent, ordering fails when both are present but reversed, and harmless
+source-form changes pass. **0 harness errors.** Duplicate coverage was not accepted for the three
+Category C members. At suite level IDX-17 fires by its own name (`28b-anchors`); for IDX-08 and
+IDX-39 an earlier control sharing the same anchor throws first, which is why per-target isolation is
+the decisive evidence.
+
+**Family after Batch II: evidence-before-mastery 5/5 safe, 0 defective.**
+
+**Ordering-control state: safe 39 → 43 · defective 9 → 5 · unresolved 0.** Remaining, all still open:
+
+- **Batch III — transaction (1):** IDX-30
+- **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
+
+The audited denominator is unchanged: **48 ordering comparisons across 14 safe suites**, of which
+**30 were safe as written** and **18 defective** before any repair. **Not all 48 were defective.**
+Batch II was **test-integrity only** — no runtime behaviour and no security defect was repaired.
+
+**Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**30/30 safe suites green**. Batch I's nine guards intact; moving-HEAD debt unchanged at **18**
+(Class B 12, Class C seed 6). LC1 CLOSED and byte-identical. IDX-30 and Batch IV untouched. A2
+unchanged; A4 remains CLOSED. No database access.
 
 ## M15 S1B — indexOf ordering controls, Batch I: completed-retry (shipped; Production-verified at `5895669302`)
 
@@ -199,9 +245,9 @@ frozen. **No database access.**
 ### Still open
 
 **S1B, open:** 18 HEAD-relative test pins (Class B 12 · Class C seed 6; learning-content **0** —
-retired by S1B-LC1) · **9 defective ordering controls** remaining of 48 audited across 14 suites
-(Batch II 4 · Batch III 1 · Batch IV 4; Batch I's 9 completed-retry controls are repaired locally,
-and 30 were safe as written) · `/debates/history` soft-redirect gating · stale
+retired by S1B-LC1) · **5 defective ordering controls** remaining of 48 audited across 14 suites
+(Batch III 1 · Batch IV 4; Batch I's 9 completed-retry and Batch II's 4 evidence-before-mastery
+controls are repaired, and 30 were safe as written) · `/debates/history` soft-redirect gating · stale
 "Reassess now" CTA · skills-compat prose. **M16:** semantic judging, authoritative winner,
 readiness, snapshot/wins restoration.
 

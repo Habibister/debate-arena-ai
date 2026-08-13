@@ -466,7 +466,15 @@ async function main() {
   // explicit predicate; the invariants are identical.
   assert.equal((routeSrc.match(/recordPracticeOutcomeInTransaction\(/g) ?? []).length, 1,
     "28. exactly one review call site");
-  assert.ok(routeSrc.indexOf("const hasEnoughEvidence") < routeSrc.indexOf("recordPracticeOutcomeInTransaction("),
+  // M15 S1B Batch II: the ordering comparison alone was vacuous — with the evidence
+  // anchor absent indexOf returns -1 and `-1 < n` still holds, so deleting the evidence
+  // write this control exists to sequence turned it green. Both anchors are now proven
+  // present before the ordering is accepted.
+  const evidenceDecisionIdx = routeSrc.indexOf("const hasEnoughEvidence");
+  const evidenceReviewCallIdx = routeSrc.indexOf("recordPracticeOutcomeInTransaction(");
+  assert.ok(evidenceDecisionIdx >= 0 && evidenceReviewCallIdx >= 0,
+    "28b-anchors. both the evidence-floor decision and the review call are present");
+  assert.ok(evidenceDecisionIdx < evidenceReviewCallIdx,
     "28b. the decision is made BEFORE the call");
   assert.ok(/if \(hasEnoughEvidence\) \{/.test(routeSrc),
     "28c. guarded by both floors — 10 unique across 3 areas");

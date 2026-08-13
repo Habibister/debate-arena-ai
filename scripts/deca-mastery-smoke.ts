@@ -306,7 +306,15 @@ async function main() {
     "11a. and the mastery core in exactly one place");
   assert.ok(!/(?<!InTransaction)\brecordDrillMastery\(/.test(routeSrc),
     "11b. and never the undifferentiated boolean form");
-  assert.ok(routeSrc.indexOf("recordPracticeOutcomeInTransaction(") < routeSrc.indexOf("recordDrillMasteryInTransaction("),
+  // M15 S1B Batch II: the ordering comparison alone was vacuous — with the evidence
+  // anchor absent indexOf returns -1 and `-1 < n` still holds, so deleting the evidence
+  // write this control exists to sequence turned it green. Both anchors are now proven
+  // present before the ordering is accepted.
+  const reviewIdx = routeSrc.indexOf("recordPracticeOutcomeInTransaction(");
+  const masteryIdx = routeSrc.indexOf("recordDrillMasteryInTransaction(");
+  assert.ok(reviewIdx >= 0 && masteryIdx >= 0,
+    "11c-anchors. both the review (evidence) writer and the mastery writer are present");
+  assert.ok(reviewIdx < masteryIdx,
     "11c. review decides the window BEFORE mastery is touched");
   assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(routeSrc),
     "11d. the call is guarded by the evidence floor");

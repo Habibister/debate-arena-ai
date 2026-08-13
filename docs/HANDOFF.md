@@ -2,7 +2,41 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B indexOf Batch I: completed-retry ordering hardened (2026-08-13)
+## Latest handoff — M15 S1B indexOf Batch II: evidence-before-mastery hardened (2026-08-13)
+
+### One local commit awaits acceptance audit; nothing pushed
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
+Baseline `0abdff1`. **Zero production changes** — four test suites plus two docs.
+
+Batch II repaired the **evidence-before-mastery** family: 5 controls, 1 already safe, 4 defective
+(IDX-17 Category B; IDX-01, IDX-08, IDX-39 Category C). Each compared an evidence anchor against a
+mastery anchor, so an absent evidence anchor gave `-1` and `-1 < n` still held. Each now captures
+both indices, asserts both present under a `<label>-anchors` control, then asserts order — inline,
+no helper, original ordering messages preserved. **IDX-38, the already-safe fifth member, was not
+touched.**
+
+**4/4 targets proved on their own assertions** (evidence absent → presence fails; mastery absent →
+presence fails; reversed → ordering fails; harmless change → passes), 0 harness errors. At suite
+level IDX-17 fires as `28b-anchors`; for IDX-08 and IDX-39 an earlier control sharing the anchor
+throws first, so per-target isolation is the decisive evidence — the same characterised artifact as
+Batch I.
+
+**Ordering state: safe 39 → 43, defective 9 → 5, unresolved 0.** evidence-before-mastery is now
+**closed: 5 total, 5 safe, 0 defective**.
+
+### Next implementation order — none started
+
+1. **Batch III — transaction:** IDX-30 alone. Keep it isolated: it sits on the transaction /
+   exactly-once evidence boundary, so its message should name that rule. Still test-only.
+2. **Batch IV — route resolution / gating:** IDX-16, IDX-45, IDX-46, IDX-47.
+
+**auth/rate-limit (9/9) remains safe as written and untouched.** Batch II was **test-integrity only**:
+no runtime behaviour and no security defect was repaired. Moving-HEAD debt unchanged at 18
+(Class B 12, Class C seed 6). LC1 CLOSED. A2 unchanged; A4 CLOSED. Still open elsewhere in S1B:
+`/debates/history`, the stale Reassess CTA, skills-compat stale XP prose. M16 not started.
+
+## Previous handoff — M15 S1B indexOf Batch I: completed-retry ordering hardened (2026-08-13)
 
 ### SHIPPED and Production-verified — nothing awaits a push
 

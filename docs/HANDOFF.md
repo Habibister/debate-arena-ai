@@ -2,11 +2,22 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A4b: practice-session copy truth (2026-08-13)
+## Latest handoff — M15 S1B-1: redundant moving-HEAD pins retired (2026-08-13)
 
-### One local commit awaits the owner push; then read-only Production verification
+### SHIPPED and Production-verified — nothing awaits a push
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Commit `9c66b04f31ea0316dc3b4365a9ff8936ec5965e4`, Production deployment **`5892804337`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment from the Git push — no manual deploy, no rollback.
+**Zero production-code changes:** five test files and two docs.
+
+All of M15 S1A is now shipped and Production-verified (A1, A2, the full A3 sequence, A4a, A4b);
+**A4 is CLOSED**. M14 Global G2 remains **CLOSED**. Full detail in the S1B-1 section below.
+
+## Previous handoff — M15 S1A A4b: practice-session copy truth (2026-08-13)
+
+**Status: `SHIPPED — PRODUCTION-VERIFIED`.** Commit `d82e714`, Production deployment
+**`5884961320`**, status **SUCCESS**, automatic `vercel[bot]` deployment.
 
 One production file (`components/app/xp-progress-card.tsx`), one suite, two docs. Copy only.
 
@@ -35,18 +46,21 @@ sourceType in the ledger. **Prefer asserting the property over banning the token
 
 ### Next steps, in order
 
-1. Owner pushes the **S1B-1** commit (`test(m15): retire redundant head-relative pins`).
-   **Do not push automatically.** A4a/A4b are already shipped and Production-verified.
-2. **S1B-2** — the 12 Class B pins (lesson components, `[slug]/page.tsx`, `assignment-types.ts`) get
-   real semantic replacements. **It must also resolve `lib/learning-content.ts`**, which S1B-1 held
-   back: its authored content is asserted nowhere, so it needs a content control written from
-   scratch, not a deletion. See the S1B-1 section below.
-3. **S1B-3** — the 6 `prisma/seed.ts` Class C pins become one immutable-baseline additive-only
+1. **`lib/learning-content.ts` authored-text integrity — READ-ONLY DESIGN AUDIT FIRST.** Decide what
+   an "additive-only immutable content baseline" is *allowed to change* before any control is
+   written. 765 lines of authored lesson prose is too important to guess the contract. Note the
+   sharpened finding below: field **presence** is already covered; **text values** are not. Its own
+   batch — do not fold it into the Class B work.
+2. **The 24 vacuous `indexOf(a) < indexOf(b)` ordering controls** across 7 suites. Separate defect,
+   separate fix; keep out of the content-control design.
+3. **S1B-2** — the 12 Class B pins (lesson components, `[slug]/page.tsx`, `assignment-types.ts`) get
+   real semantic replacements.
+4. **S1B-3** — the 6 `prisma/seed.ts` Class C pins become one immutable-baseline additive-only
    control, following the `31f*` pattern in `hosa-medterm-evidence-smoke.ts`.
-4. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
-5. **M16** — semantic judging, and only then any restoration of authoritative competitive progression.
+5. **S1B, remaining** — `/debates/history` gating, stale Reassess CTA, skills-compat prose.
+6. **M16** — semantic judging, and only then any restoration of authoritative competitive progression.
 
-### M15 S1B-1 — redundant HEAD-relative pins retired (LOCAL, not pushed)
+### M15 S1B-1 — redundant HEAD-relative pins retired (SHIPPED, Production-verified `5892804337`)
 
 Baseline `PRE_M15_S1B = d82e714`. **Zero production changes** — five test files plus these docs.
 
@@ -73,11 +87,27 @@ expansion did not reach the lesson path" (retained at `4b6*`). Both were mapped 
 
 **2 held back — `lib/learning-content.ts`.** Classified Class A on controls `3b`/`17b`; that was
 wrong. `3b` asserts the registry entry **is** the catalog object (strict `===`), so `17b` compares
-that object's strings to themselves — a tautology that cannot fail on a content change. A changed
-title, a renamed authored field and a replaced prose block each survived **all 29** suites. Nothing
-asserts this file's authored content. The pin stays; **S1B-2 must write a real content control.**
+that object's strings to themselves — a tautology that cannot fail on a content change.
+
+**Read the distinction before designing the replacement — this file is NOT untested:**
+
+| | Covered? | Evidence |
+| --- | --- | --- |
+| Authored field **presence** | **YES** | emptying `whyItWorks` on a migrated lesson is killed by 4 suites (`15b`–`15e` require non-empty authored fields) |
+| Authored **text values** | **NO** | changed title, replaced prose, rewritten `workedExample.prompt` each survived **all 29** suites with the mutation committed so the hash self-healed |
+
+The gap is *content integrity over authored text*, nothing broader. The pins stay; they are **not**
+redundant and **not** Class B. A dedicated design audit decides the additive-only contract first.
 
 **Remaining: 20** — Class B 12, Class C 6, held-back 2.
+
+**Separate open debt — 24 vacuous ordering controls across 7 suites.** Controls shaped like
+`indexOf(a) < indexOf(b)` never prove `a` exists first. `indexOf(a)` is `-1` when absent, and
+`-1 < anything` holds, so **deleting the guarded thing turns the control green**. Surfaced while
+mutation-testing the `4b9.` retirement: renaming `parseStoredResult` throughout the Debate drill
+submit route left `education-migration`'s `4b6f` passing (the property itself was still caught, by
+`practice-session` and `review-ladder`). Count is **identical at `d82e714`** — pre-existing, not
+introduced by S1B-1. Not repaired; keep it out of the `learning-content.ts` design batch.
 
 **Never reintroduce a HEAD-relative pin.** Isolated proof of why, on `lib/roleplay-lessons.ts`: a
 cosmetic uncommitted edit makes the hash FAIL (false alarm), committing it makes the hash PASS, and a

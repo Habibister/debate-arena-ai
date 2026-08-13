@@ -2,11 +2,12 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1A A4b — the practice-session card no longer claims lessons count toward it. **LOCAL COMMIT, NOT PUSHED.** A1, A2, the complete A3 sequence and A4a are shipped and Production-verified at `5884247160`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1B-1 — redundant moving-HEAD pins retired. **SHIPPED and Production-verified at `5892804337`** (commit `9c66b04`). All of S1A — A1, A2, the complete A3 sequence, A4a and A4b — is shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
 
-## M15 S1A A4b — Practice-session copy matches real activity (LOCAL, push pending)
+## M15 S1A A4b — Practice-session copy matches real activity (shipped; Production-verified at `5884961320`)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.** Commit `d82e714`,
+Production deployment **`5884961320`**, status **SUCCESS**, automatic `vercel[bot]` deployment.
 
 The last reward-honesty batch. **One production file, copy only.**
 
@@ -38,14 +39,23 @@ frozen. **No database access.**
 
 ### Still open
 
-**S1B:** `/debates/history` soft-redirect gating, stale "Reassess now" CTA, skills-compat prose, 20
-HEAD-relative test pins (see S1B-1 below). **M16:** semantic judging, authoritative winner,
+**S1B, open:** 20 HEAD-relative test pins (Class B 12 · Class C seed 6 · held-back
+`lib/learning-content.ts` 2) · 24 vacuous `indexOf(a) < indexOf(b)` ordering controls across 7 suites
+· `/debates/history` soft-redirect gating · stale "Reassess now" CTA · skills-compat prose. See
+S1B-1 below for all four pin/control findings. **M16:** semantic judging, authoritative winner,
 readiness, snapshot/wins restoration.
 
-## M15 S1B-1 — Redundant HEAD-relative pins retired (LOCAL, push pending)
+**Recommended order for the next batches:** (1) a read-only design audit for `lib/learning-content.ts`
+authored-text integrity — decide what an additive-only immutable content baseline may change *before*
+writing the control, since 765 lines of lesson prose is too important to guess at; (2) the 24 vacuous
+`indexOf` controls; (3) the 12 Class B pins; (4) Class C seed strategy.
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
-DB OPERATION, NO SCHEMA CHANGE`.** Baseline `PRE_M15_S1B = d82e714`.
+## M15 S1B-1 — Redundant HEAD-relative pins retired (shipped; Production-verified at `5892804337`)
+
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Commit `9c66b04f31ea0316dc3b4365a9ff8936ec5965e4`, Production deployment **`5892804337`**, status
+**SUCCESS**, automatic `vercel[bot]` deployment from the Git push — no manual deploy, no rollback,
+and nothing has superseded it. Baseline `PRE_M15_S1B = d82e714`. **Zero production-code changes.**
 
 The read-only S1B audit corrected the debt figure: **34** HEAD-relative pin entries, not 50, across
 **6** suites (not 4) and 16 production files. The old 50 summed every `for (const file of [...])`
@@ -72,14 +82,33 @@ semantic properties were mutation-proved to fire.
 `skills-compat-smoke.ts`). The audit classified them Class A on the strength of controls `3b`/`17b`,
 and that was wrong: `3b` asserts the registry entry **is** the catalog object (strict `===`), so
 `17b` compares that object's strings against themselves and is a tautology that cannot fail on a
-content change. Three scratch mutations — a changed lesson title, a renamed authored field, a
-wholesale prose replacement — each survived **all 29** safe suites. The file's authored content is
-asserted nowhere in the corpus, so the (weak, self-healing) hash stays until S1B-2 writes a real
-content control. This entry is **not** Class B by default; it is an unclassified gap S1B-2 must
-resolve deliberately.
+content change.
+
+The finding was then sharpened during Production verification, and the distinction matters for
+whoever designs the replacement — **do not read this as "the file is untested":**
+
+- **Authored field PRESENCE *is* covered.** Emptying `whyItWorks` on an audited migrated lesson is
+  killed by four suites (`15b`–`15e` require every authored field to be non-empty).
+- **Authored TEXT VALUES are *not* covered.** Changing that same lesson's title, replacing its prose,
+  or rewriting `workedExample.prompt` each survived **all 29** safe suites when the mutation was
+  committed so the moving-HEAD hash self-healed.
+
+So the gap is specifically *content integrity over authored text*, not coverage in general. The
+(weak, self-healing) hash stays until a dedicated batch writes a real content control. These two
+entries are **not** redundant and **not** Class B by default; they need their own control design.
 
 **Remaining HEAD-relative debt: 20** — Class B 12, Class C 6 (`prisma/seed.ts`, all six untouched),
 plus these 2 held-back entries.
+
+**Separate open S1B test-integrity debt — 24 vacuous ordering controls.** Twenty-four controls across
+**seven** suites use ordering logic equivalent to `indexOf(a) < indexOf(b)` without first proving `a`
+exists. When `a` is absent `indexOf(a)` returns `-1`, and `-1 < anything` is true, so the assertion
+passes vacuously — deleting the very thing it guards makes it green. Found while mutation-testing the
+`4b9.` retirement: renaming `parseStoredResult` throughout the Debate drill submit route left
+`education-migration`'s `4b6f` passing (the property was still caught, by `practice-session` and
+`review-ladder`). The count is **identical at the S1B-1 baseline `d82e714`**, so this is pre-existing
+and **not introduced by S1B-1**. Not repaired. Keep it separate from the `learning-content.ts`
+content-control design — different defect, different fix.
 
 **Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning in
 `components/profile/user-avatar.tsx`, untouched) · `build` · **29/29 safe suites green while still

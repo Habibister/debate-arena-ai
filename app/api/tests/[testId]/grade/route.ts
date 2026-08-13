@@ -102,6 +102,23 @@ export async function POST(request: Request, { params }: { params: { testId: str
     }
 
     await prisma.$transaction(async (tx) => {
+      // M15 S1A A2 — EXACTLY-ONCE CLAIM, before ANY write in this transaction (including the
+      // answer upserts below). The COMPLETED pre-read above is a fast path only; this conditional
+      // transition is the correctness mechanism: the losing concurrent grade blocks on the row
+      // lock, re-evaluates against the committed row, matches zero rows and exits with 409 having
+      // written nothing. A later failure rolls the claim back with the transaction, so an
+      // ungraded test stays gradable. Eligibility is exactly the pre-read's set
+      // ({GENERATED, IN_PROGRESS} -> COMPLETED); the full result update below keeps writing
+      // score/weakAreas/recommendations as before. Actual simultaneous-request behavior relies on
+      // PostgreSQL conditional-update semantics; no DB-writing concurrency test was executed.
+      const claim = await tx.practiceTest.updateMany({
+        where: { id: test.id, userId: session.user.id, status: { not: "COMPLETED" } },
+        data: { status: "COMPLETED" }
+      });
+      if (claim.count === 0) {
+        throw new HttpError("Practice test has already been graded", 409);
+      }
+
       // XP is no longer read here. A plain SELECT never blocks under MVCC, so reading xp, adding in
       // JavaScript and writing the sum back could be erased by a concurrent writer that committed in
       // between — a row lock orders that write but cannot repair a value already stale when read.

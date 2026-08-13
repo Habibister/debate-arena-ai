@@ -306,6 +306,24 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     let resultWithRating: JudgeResult = result;
 
     const [updatedDebate, updatedUser] = await prisma.$transaction(async (tx) => {
+      // M15 S1A A2 — EXACTLY-ONCE CLAIM, the first operation in this transaction. The pre-read 409
+      // above is a fast path, not the correctness mechanism: two racing requests can both pass it
+      // and both finish the judge work. This conditional transition is authoritative — under
+      // Postgres READ COMMITTED the losing transaction's updateMany blocks on the row lock,
+      // re-evaluates its predicate against the committed row (status now JUDGED), matches zero
+      // rows and exits before ANY progression write. If a later statement in the winning
+      // transaction fails, the claim rolls back with it and the debate stays retryable.
+      // Eligibility is exactly the pre-read's set ({SETUP, ACTIVE} -> JUDGED). Actual
+      // simultaneous-request behavior relies on PostgreSQL conditional-update semantics; no
+      // DB-writing concurrency test was executed.
+      const claim = await tx.debate.updateMany({
+        where: { id: debate.id, status: { notIn: ["JUDGED", "ARCHIVED"] } },
+        data: { status: "JUDGED" }
+      });
+      if (claim.count === 0) {
+        throw new HttpError("This debate has already been judged", 409);
+      }
+
       const user = await tx.user.findUniqueOrThrow({
         where: { id: session.user.id },
         select: { wins: true, streak: true }

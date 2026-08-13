@@ -2,7 +2,48 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A1: Debate writing practice is FORMATIVE (2026-08-12)
+## Latest handoff — M15 S1A A2: judged attempts exactly-once (2026-08-12)
+
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+Second batch of **M15 Slice 1A (Evidence Integrity)**: one learner attempt can now produce
+authoritative progression **at most once**, even under racing requests. Both duplicate-progression
+routes gained a conditional PostgreSQL claim as the **first operation inside their existing
+progression transaction** — before any read or write:
+
+- **Debate judge** (`app/api/debates/[debateId]/judge/route.ts`):
+  `tx.debate.updateMany({ where: { id, status: { notIn: ["JUDGED","ARCHIVED"] } }, data: { status: "JUDGED" } })`,
+  `count === 0` → the existing 409. Eligibility is provably identical to the pre-read
+  ({SETUP, ACTIVE} → JUDGED). Previously a race duplicated XP, XPLog, wins+1, streak+1 and a
+  SpeakingSkillSnapshot row across the whole AI-call window.
+- **Practice-test grade** (`app/api/tests/[testId]/grade/route.ts`): same pattern with
+  `{ id, userId, status: { not: "COMPLETED" } } → COMPLETED`, placed **before the answer upserts
+  and the streak read**. Previously a race duplicated XP, XPLog and streak.
+
+The outside-transaction pre-reads remain as fast paths only — **the claim is the correctness
+mechanism**. Under READ COMMITTED the losing transaction blocks on the row lock, re-evaluates its
+predicate against the committed row, matches zero rows and exits with the same 409 sequential
+duplicates already receive; a post-claim failure rolls the claim back with the transaction, so the
+attempt stays retryable. Both UI callers already render 409 safely — zero UI change. *Actual
+simultaneous-request behavior relies on PostgreSQL conditional-update semantics; no DB-writing
+concurrency test was executed.*
+
+Scoring, winner, fallback policy, XP amounts, win/streak policy, ballots, Side Coach: **unchanged**
+(A3/A4 remain not implemented). A1 formative writing, all G2 banks, schema, `lib/xp.ts`,
+`lib/spaced-review.ts`, `lib/ai.ts`, `lib/assignments.ts`: **byte-unchanged**. Regression controls in
+`judge-shape` (A2-1…C2) and `practice-session` (A2-10…C10b) bind model + id + exact eligibility +
+transition + count check + claim-is-first-tx-op + every-effect-after-claim, proven non-vacuous
+against the frozen pre-A2 pin `b476ce6`.
+
+**Carried future integrity debt (recorded, deliberately NOT in A2):** ① `startAssignment` racing a
+submit can regress a COMPLETED assignment to IN_PROGRESS (status only, no XP) · ② `messages`/
+`opponent` routes can insert duplicate speech rows (no unique on debateId+round+role; inflates the
+speech-completeness gate, duplicates AI spend, no progression) · ③ `XPLog` lacks a
+`(sourceType, sourceId, userId)` uniqueness backstop (schema change, deferred).
+
+## Previous handoff — M15 S1A A1: Debate writing practice is FORMATIVE (2026-08-12)
 
 ### One local commit awaits the owner push; then read-only Production verification
 

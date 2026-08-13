@@ -543,6 +543,37 @@ async function main() {
   assert.ok(/sessionExpired\(\)/.test(wSubmit) && /sessionNotFound\(\)/.test(wSubmit),
     "139. expiry and ownership are enforced without disclosing existence");
 
+  // ---- A2. exactly-once graded-test claim (M15 S1A A2) ----------------------------------------------
+  // The COMPLETED pre-read outside the transaction is a fast path only; correctness is the
+  // conditional transition INSIDE the grading transaction, placed before EVERY write including the
+  // answer upserts. Actual simultaneous-request behavior relies on PostgreSQL conditional-update
+  // semantics; no DB-writing concurrency test was executed.
+  const gradeTxn = grade.slice(grade.indexOf("prisma.$transaction(async (tx) =>"));
+  assert.ok(gradeTxn.length > 100, "A2-10. the grading transaction was located");
+  const gradeClaimIdx = gradeTxn.indexOf("await tx.practiceTest.updateMany(");
+  assert.ok(gradeClaimIdx >= 0, "A2-11. the transaction claims the test with a conditional updateMany");
+  assert.ok(/where: \{ id: test\.id, userId: session\.user\.id, status: \{ not: "COMPLETED" \} \}/.test(gradeTxn),
+    "A2-12. the claim binds test id, OWNER, and exactly the pre-read eligibility ({GENERATED, IN_PROGRESS} -> COMPLETED)");
+  assert.ok(/data: \{ status: "COMPLETED" \}/.test(gradeTxn), "A2-13. and performs the COMPLETED transition itself");
+  assert.ok(/if \(claim\.count === 0\)[\s\S]{0,160}409/.test(gradeTxn),
+    "A2-14. a zero-count loser exits with the existing 409 before any mutation");
+  assert.equal(gradeTxn.indexOf("await tx."), gradeClaimIdx,
+    "A2-15. the claim is the FIRST tx operation — before the streak read and before every write");
+  for (const effect of ["tx.practiceAnswer.upsert(", "tx.practiceTest.update(", "tx.xPLog.create(",
+                        "awardXpInTransaction(", "tx.user.update("]) {
+    assert.ok(gradeTxn.indexOf(effect) > gradeClaimIdx, `A2-16. ${effect} happens only AFTER a successful claim`);
+  }
+  // NON-VACUOUS against the FROZEN pre-A2 pin: the baseline transaction upserted answers and paid
+  // XP/streak with no claim at all — the detector distinguishes the defect from the fix.
+  const PRE_M15_A2 = "b476ce68bbbeac606f9af8ef1f375e9824d4508b";
+  const gradeAtA2Baseline = stripC(require("node:child_process")
+    .execSync(`git show ${PRE_M15_A2}:'app/api/tests/[testId]/grade/route.ts'`, { encoding: "utf8" }) as string);
+  const gradeBaselineTxn = gradeAtA2Baseline.slice(gradeAtA2Baseline.indexOf("prisma.$transaction(async (tx) =>"));
+  assert.ok(!gradeBaselineTxn.includes("tx.practiceTest.updateMany("),
+    "A2-C10. control: the pre-A2 grading transaction had no conditional claim");
+  assert.ok(gradeBaselineTxn.includes("tx.practiceAnswer.upsert(") && gradeBaselineTxn.includes("tx.xPLog.create("),
+    "A2-C10b. control: yet it already carried the answer upserts and XP writes the claim now guards");
+
   // --- the remaining XP writers are all atomic, and none writes an absolute stale value ---
   // (M15 S1A A1 removed the writing route from this set: formative writing awards no XP at all.)
   for (const [name, src] of [["tests/grade", grade], ["judge", judge]] as const) {

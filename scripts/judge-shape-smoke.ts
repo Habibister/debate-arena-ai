@@ -18,6 +18,7 @@
  * Run with: npm run judge-shape:smoke
  */
 import assert from "node:assert/strict";
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
 function loadEnv(file: string) {
@@ -146,6 +147,46 @@ async function main() {
   // C4: moving the attribution above the judge call IS rejected by the ordering predicate.
   const mutatedOrder = 'if (registry) { result.rubricSource = registry.tag; } ' + decaSlice.replace(/if \(registry\) \{\s*result\.rubricSource = registry\.tag;\s*\}/, "");
   assert.ok(!attributionOrdered(mutatedOrder), "P1c-C4. control: attribution moved before the judge call is rejected");
+
+  // ---- A2. exactly-once judged-attempt claim (M15 S1A A2) -------------------------------------------
+  // The pre-read 409 outside the transaction is a fast path only: two racers can both pass it and
+  // both finish the judge work. Correctness is the conditional status transition INSIDE the
+  // progression transaction. These assertions bind the claim's model, id, exact eligibility set,
+  // transition, count check and ordering — not merely "source contains updateMany".
+  // Actual simultaneous-request behavior relies on PostgreSQL conditional-update semantics; no
+  // DB-writing concurrency test was executed.
+  const judgeRouteSrc = strip(readFileSync("app/api/debates/[debateId]/judge/route.ts", "utf8"));
+  const judgeTxn = judgeRouteSrc.slice(judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>"));
+  assert.ok(judgeTxn.length > 100, "A2-1. the judge persistence transaction was located");
+  const claimIdx = judgeTxn.indexOf("await tx.debate.updateMany(");
+  assert.ok(claimIdx >= 0, "A2-2. the transaction claims the debate with a conditional updateMany");
+  assert.ok(/where: \{ id: debate\.id, status: \{ notIn: \["JUDGED", "ARCHIVED"\] \} \}/.test(judgeTxn),
+    "A2-3. the claim binds the debate id and EXACTLY the pre-read eligibility set ({SETUP, ACTIVE} -> JUDGED)");
+  assert.ok(/data: \{ status: "JUDGED" \}/.test(judgeTxn), "A2-4. and performs the JUDGED transition itself");
+  assert.ok(/if \(claim\.count === 0\)[\s\S]{0,160}409/.test(judgeTxn),
+    "A2-5. a zero-count loser exits with the existing 409 before any progression");
+  assert.equal(judgeTxn.indexOf("await tx."), claimIdx,
+    "A2-6. the claim is the FIRST tx operation — nothing, read or write, precedes it");
+  for (const effect of ["awardXpInTransaction(", "tx.debate.update(", "tx.user.update(",
+                        "tx.xPLog.create(", "tx.speakingSkillSnapshot.create("]) {
+    const effectIdx = judgeTxn.indexOf(effect);
+    assert.ok(effectIdx > claimIdx, `A2-7. ${effect} happens only AFTER a successful claim`);
+    assert.ok(judgeRouteSrc.indexOf(effect) > judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>"),
+      `A2-7b. and ${effect} exists nowhere outside the progression transaction`);
+  }
+  // NON-VACUOUS: at the FROZEN pre-A2 pin the same transaction had the progression writes but NO
+  // claim — the detector demonstrably distinguishes the defective baseline from the fix.
+  const PRE_M15_A2 = "b476ce68bbbeac606f9af8ef1f375e9824d4508b";
+  const judgeAtBaseline = strip(
+    execSync(`git show ${PRE_M15_A2}:'app/api/debates/[debateId]/judge/route.ts'`, { encoding: "utf8" }));
+  const baselineTxn = judgeAtBaseline.slice(judgeAtBaseline.indexOf("prisma.$transaction(async (tx) =>"));
+  assert.ok(!baselineTxn.includes("tx.debate.updateMany("),
+    "A2-C1. control: the pre-A2 transaction had no conditional claim");
+  assert.ok(baselineTxn.includes("awardXpInTransaction(") && baselineTxn.includes("tx.xPLog.create("),
+    "A2-C1b. control: yet it already carried the progression writes the claim now guards");
+  assert.ok(/where: \{ id: x\.id, status: \{ notIn: \["JUDGED", "ARCHIVED"\] \} \}/.test(
+    'await tx.debate.updateMany({ where: { id: x.id, status: { notIn: ["JUDGED", "ARCHIVED"] } }, data: { status: "JUDGED" } });'),
+    "A2-C2. control: the eligibility detector matches a correctly structured synthetic claim");
 
   // 3. Live: a real judge call returns the correct shape.
   const { judgeDecaRoleplay } = await import("../lib/ai");

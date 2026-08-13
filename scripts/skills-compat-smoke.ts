@@ -333,7 +333,13 @@ async function main() {
                       // that milestone makes track resolution async, so the page becomes an async
                       // server component. What the hash protected is asserted at 27P below.
                       "app/(app)/lessons/[slug]/page.tsx",
-                      "lib/assignments.ts", "lib/assignment-types.ts",
+                      "lib/assignment-types.ts",
+                      // lib/assignments.ts is deliberately absent from M15 S1A A3b-3 onward. That pin
+                      // was HEAD-RELATIVE: it failed only while a change sat uncommitted and passed
+                      // again as soon as HEAD moved onto that same change, so it protected nothing
+                      // across commits. A3b-3 changes the Debate evidence picker LABEL there. This
+                      // suite's contract is that legacy /skills slugs keep resolving for stored coach
+                      // assignments, and that is asserted directly at 27A below.
                       // lib/spaced-review.ts is deliberately absent — see 27b. M13E1D adds a detailed
                       // persistence result there on purpose, so a blanket hash would forbid an
                       // approved change instead of protecting the compatibility contract.
@@ -342,6 +348,25 @@ async function main() {
                       "prisma/seed.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 27A. what the retired lib/assignments.ts pin protected FOR THIS SUITE -----------------------
+  // The compatibility contract is that a coach assignment holding a legacy skill slug still resolves,
+  // with no foreign key behind it. Assignments reach lessons only through the stored `targetId`, so
+  // that coupling — not any ballot wording — is what this suite must hold.
+  const assignSrcSC = read("lib/assignments.ts");
+  assert.ok(/lesson: \{ slug: assignment\.targetId \}/.test(assignSrcSC),
+    "27A. a LESSON assignment still resolves its target by stored slug, so legacy slugs keep working");
+  assert.ok(!/resolveSkillsSlug|skills-compat/.test(assignSrcSC),
+    "27A2. and the assignment engine still takes no direct dependency on the skills-compat layer");
+  // 27A3. lib/assignment-types.ts keeps its entry in the HEAD list above (untouched by this batch),
+  // but that form self-heals once HEAD advances, so the real protection is this IMMUTABLE pin. The
+  // assignment type catalogue defines what each assignment MEANS to a coach and a learner; A3b-3
+  // changed only a picker label and must not have touched it.
+  const PRE_M15_A3B3_SC = "e652cbe365c7dc6faa618d989f51d4232adb381d";
+  assert.equal(
+    nowSha("lib/assignment-types.ts"),
+    execSync(`git show ${PRE_M15_A3B3_SC}:'lib/assignment-types.ts' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0],
+    "27A3. lib/assignment-types.ts is byte-identical to the IMMUTABLE A3b-3 baseline, not merely to HEAD");
 
 
   // ---- 27P. what the /lessons index hash was protecting, asserted exactly -------------------------

@@ -467,9 +467,18 @@ export async function getStudentEvidenceOptions(userId: string, assignmentType: 
       take: 20,
       select: { id: true, topic: true, completedAt: true, overallScore: true }
     });
+    // M15 S1A A3b-3 — PRESENTATION ONLY. The label was `${topic} (${score})`; a bare parenthesised
+    // number beside a piece of assignment evidence reads as a grade. The value is real but formative,
+    // so it is named the way the ballot names it. A round with no score keeps the completion-only
+    // label — the old form emitted a trailing space there, and nothing is invented to fill the gap.
+    // Qualification is untouched: the `where` above still governs eligibility (ownership + JUDGED
+    // status + format), and no score threshold has ever gated Debate-round evidence.
     return debates.map((debate) => ({
       id: debate.id,
-      label: `${debate.topic} ${typeof debate.overallScore === "number" ? `(${debate.overallScore})` : ""}`,
+      label:
+        typeof debate.overallScore === "number"
+          ? `${debate.topic} — practice ballot score ${debate.overallScore}`
+          : debate.topic,
       detail: debate.completedAt ? `Completed ${debate.completedAt.toLocaleDateString()}` : "Judged debate"
     }));
   }

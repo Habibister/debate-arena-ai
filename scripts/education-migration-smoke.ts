@@ -170,9 +170,31 @@ async function main() {
                       // app/api/skills/debate-writing/route.ts is deliberately absent from M13E1G
                       // onward: that milestone reorders its review/mastery writes so a due window has
                       // one winner. What this suite protects is asserted at 4b13 below.
-                      "lib/assignments.ts", "prisma/seed.ts"]) {
+                      // lib/assignments.ts is deliberately absent from M15 S1A A3b-3 onward. That entry
+                      // was a HEAD-RELATIVE byte freeze, so it only ever failed while a change to the
+                      // file was uncommitted and passed again the moment HEAD advanced onto that same
+                      // change — it could not protect anything across commits. A3b-3 relabels the
+                      // Debate evidence PICKER there. What this suite actually needs from assignments
+                      // is that the education migration did not disturb how a LESSON assignment
+                      // accepts evidence; that is asserted directly at 4A below.
+                      "prisma/seed.ts"]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 4A. what the retired lib/assignments.ts pin protected FOR THIS SUITE ------------------------
+  // This suite's domain is the education/lesson migration. The only thing it needs from the assignment
+  // engine is that a LESSON assignment still accepts exactly one kind of evidence — a COMPLETED
+  // PracticeAttempt owned by the submitting learner, optionally narrowed to the assignment's target
+  // lesson slug — because the migration moved lessons around. Bound to the real branch, not a hash.
+  const assignmentsSrc = read("lib/assignments.ts");
+  assert.ok(/const attempt = await prisma\.practiceAttempt\.findFirst\(\{/.test(assignmentsSrc),
+    "4A. LESSON evidence still resolves against a PracticeAttempt");
+  assert.ok(/id: input\.evidenceId,\s*userId,\s*status: "COMPLETED",/.test(assignmentsSrc),
+    "4A2. and still requires the attempt to be COMPLETED and owned by the submitting learner");
+  assert.ok(/lesson: \{ slug: assignment\.targetId \}/.test(assignmentsSrc),
+    "4A3. and still narrows to the assignment's target lesson slug when one is set");
+  assert.ok(/evidenceType: "LESSON_ATTEMPT"/.test(assignmentsSrc),
+    "4A4. and records it as LESSON_ATTEMPT evidence");
 
 
 // ---- M14 Phase 1a: the two pages this suite pinned are now ASYNC ---------------------------------

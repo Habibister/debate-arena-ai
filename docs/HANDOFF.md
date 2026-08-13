@@ -2,7 +2,56 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A3b-2: learner stats speak the ballot's language (2026-08-13)
+## Latest handoff — M15 S1A A3b-3: coach and assignment labels align (2026-08-13)
+
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+Three production files (coach roster, coach student detail, `lib/assignments.ts`) plus five suites and
+docs. This closes the A3 honesty pass. Read the A3b-3 section of `docs/CURRENT_STATE.md` for details.
+
+### The important part: four vacuous HEAD-relative pins were replaced
+
+Four suites byte-pinned `lib/assignments.ts` against **`git show HEAD:`**. That form fails only while
+a change is uncommitted and passes again the instant HEAD advances onto it — committing would have
+produced a green suite that verified nothing. **If you ever see a `${file} is byte-identical to HEAD`
+assertion, treat it as decoration, not protection.** The replacements are semantic and per-suite.
+
+**50 more HEAD-relative pins remain** in those same four files (education-migration 20, skills-compat
+16, deca-mastery 8, debate-mastery 6). All have the identical flaw. They are recorded as S1B
+test-integrity debt and were deliberately not touched here.
+
+### Things that will look like bugs but are deliberate
+
+- **The debate qualification controls are scoped per function, not per file.** `validateEvidence` and
+  `getStudentEvidenceOptions` both contain the same JUDGED / ownership / `PRACTICE_REBUTTAL` lines. A
+  file-wide search passes while one copy is missing — a mutant that stripped JUDGED from the
+  *accepting* path survived an earlier draft. Do not "simplify" these back to a global search.
+- **Coach roster activity is `xp > 0` alone.** Not an oversight: `User.wins` is frozen, and XP is a
+  strict superset because every win came with completion XP in the same transaction.
+- **`lib/assignment-types.ts` now has two pins** — the old HEAD one (left untouched, it is not this
+  batch's business) and a new immutable one against `e652cbe3`. The immutable one is the real guard.
+
+### Next steps, in order
+
+1. Owner pushes the A3b-3 commit. **Do not push automatically.**
+2. Read-only Production verification. Note for that run: the four repaired suites will pass whether or
+   not the commit landed, so **verify the deployed SHA from git and the deployment record**, not from
+   suite colour.
+3. **A4** — the last major part of S1A: uncapped Debate creation, completion-XP farming, PracticeTest
+   XP policy, streak semantics, reward design.
+4. **S1B** — `/debates/history` gating style, stale "Reassess now" CTA, skills-compat prose, and the
+   50 HEAD-relative pins above.
+
+### Standing constraints (unchanged)
+
+No push, deploy, schema change, migration, `db push`/seed, dependency install, or destructive git
+without explicit approval. Never run `auth:smoke`, `team:smoke`, `assignment:smoke`, or
+`deca:skills:activate`. **Never open `.env`, read `DATABASE_URL`, or query any shared database.**
+M14 Global G2 remains **CLOSED**.
+
+## Previous handoff — M15 S1A A3b-2: learner stats speak the ballot's language (2026-08-13)
 
 ### One local commit awaits the owner push; then read-only Production verification
 

@@ -462,9 +462,55 @@ async function main() {
                       // onward: it now issues a server-authoritative session. A blanket hash would
                       // forbid that approved change rather than protect anything, so what it was
                       // guarding is asserted directly at 27s below.
-                      "lib/education/registry.ts", "lib/assignments.ts"]) {
+                      // lib/assignments.ts is deliberately absent from M15 S1A A3b-3 onward — the same
+                      // HEAD-RELATIVE flaw already called out for lib/deca-drills.ts above: the hash
+                      // failed only while a change was uncommitted and passed again the moment HEAD
+                      // advanced onto that same change. A3b-3 relabels the Debate evidence PICKER.
+                      // The Debate qualification contract it was standing in for is asserted at 27A.
+                      "lib/education/registry.ts"]) {
     assert.equal(nowSha(file), headSha(file), `27-31. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 27A. what the retired lib/assignments.ts pin protected FOR DEBATE ---------------------------
+  // This is the suite that owns Debate evidence, so it carries the full qualification contract: a
+  // DEBATE_ROUND / REBUTTAL_PRACTICE submission must still be a JUDGED debate the learner owns, and a
+  // rebuttal assignment must still additionally require the PRACTICE_REBUTTAL format. A3b-3 changed
+  // only the picker's LABEL, so every one of these must survive it unchanged.
+  //
+  // These are scoped to EACH FUNCTION, not to the file. `validateEvidence` (which accepts a
+  // submission) and `getStudentEvidenceOptions` (which lists selectable rounds) contain the same
+  // three gate lines, so a file-wide search passes while one copy is missing — an early draft of
+  // these controls did exactly that, and a mutation probe removing the JUDGED gate from the
+  // ACCEPTING path survived it. Each block is extracted and asserted separately.
+  const assignSrcDeb = read("lib/assignments.ts");
+  const debBlock = (fnMarker: string) => {
+    const from = assignSrcDeb.indexOf(fnMarker);
+    assert.ok(from >= 0, `27A-0. control: located ${fnMarker}`);
+    const rest = assignSrcDeb.slice(from);
+    const end = rest.indexOf("\nexport async function", 1);
+    return end > 0 ? rest.slice(0, end) : rest;
+  };
+  const validateBlock = debBlock("async function validateEvidence(");
+  const pickerBlock = debBlock("export async function getStudentEvidenceOptions(");
+
+  assert.ok(/if \(assignment\.type === "DEBATE_ROUND" \|\| assignment\.type === "REBUTTAL_PRACTICE"\)/.test(validateBlock),
+    "27A. Debate evidence is still accepted only through the DEBATE_ROUND / REBUTTAL_PRACTICE branch");
+  for (const [where, block, typeVar] of [
+    ["accepts a submission", validateBlock, "assignment.type"],
+    ["lists selectable rounds", pickerBlock, "assignmentType"]
+  ] as const) {
+    assert.ok(/status: "JUDGED",/.test(block),
+      `27A2. the path that ${where} still requires the debate to be JUDGED`);
+    assert.ok(/OR: \[\{ createdById: userId \}, \{ studentId: userId \}, \{ opponentUserId: userId \}\]/.test(block),
+      `27A3. the path that ${where} still requires the learner to own or have taken part in it`);
+    assert.ok(new RegExp(`${typeVar.replace(".", "\\.")} === "REBUTTAL_PRACTICE" \\? \\{ format: "PRACTICE_REBUTTAL" \\} : \\{\\}`).test(block),
+      `27A4. the path that ${where} still additionally requires PRACTICE_REBUTTAL for a rebuttal assignment`);
+  }
+  assert.ok(/evidenceType: "DEBATE"/.test(validateBlock),
+    "27A5. and accepted evidence is recorded as DEBATE evidence");
+  // No score has ever gated Debate evidence — A3b-3 must not have introduced one alongside the label.
+  assert.ok(!/overallScore: \{/.test(assignSrcDeb) && !/overallScore: \{ gte/.test(assignSrcDeb),
+    "27A7. and no ballot-score threshold gates Debate evidence");
 
   // ---- 28G. what the DECA-bank hash was protecting, asserted durably ---------------------------
   const decaSuite = read("scripts/deca-drills-smoke.ts");

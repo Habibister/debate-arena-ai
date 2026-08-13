@@ -158,7 +158,16 @@ export default async function CoachPage() {
                   <p className="text-xs font-semibold uppercase text-muted-foreground">{team.members.length} student{team.members.length === 1 ? "" : "s"}</p>
                   {team.members.map((member) => {
                     const u = member.user;
-                    const hasActivity = u.xp > 0 || u.wins > 0;
+                    // M15 S1A A3b-3: `u.wins > 0` dropped from this condition. A3a stopped the judge
+                    // route incrementing User.wins, so it is a frozen historical counter and can no
+                    // longer answer "does this student have activity NOW". XP alone is a strict
+                    // superset here and hides nobody: every win was awarded inside the same
+                    // transaction as the round's completion XP, and XP is only ever incremented, so
+                    // any student who ever earned a win necessarily has xp > 0. This gates
+                    // presentation only — the XP line and the rank line below — never membership,
+                    // permissions or the coach/student relationship. `lastActivity` is also already
+                    // in scope from an existing query, but XP is the smaller, sufficient change.
+                    const hasActivity = u.xp > 0;
                     const lastSeen = lastActivity.get(u.id);
                     return (
                       <Link
@@ -178,8 +187,11 @@ export default async function CoachPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right text-sm">
-                            {/* Real evidence only: XP and wins from recorded activity — no synthetic rating bands. */}
-                            <p className="font-semibold">{hasActivity ? `${u.xp} XP · ${u.wins} ${u.wins === 1 ? "win" : "wins"}` : "Not started"}</p>
+                            {/* A3b-3: the frozen wins counter is no longer shown. It is NOT relabelled
+                                ("Practice wins" / "Legacy wins" would keep a dead number in front of a
+                                coach) and NOT deleted — User.wins stays in the database untouched. XP
+                                is real, still accumulating, and remains the honest at-a-glance signal. */}
+                            <p className="font-semibold">{hasActivity ? `${u.xp} XP` : "Not started"}</p>
                             <p className="text-xs text-muted-foreground">{hasActivity ? String(u.rank).replace("_", " ").toLowerCase() : ""}</p>
                           </div>
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">

@@ -126,7 +126,10 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
                   A3b; nothing here deletes or rewrites that stored history. */}
               <div className="grid grid-cols-2 gap-2">
                 <StatChip label="Judged rounds" value={`${debate.judgedRounds}`} />
-                <StatChip label="Avg judge score" value={debate.averageScore !== null ? `${debate.averageScore}` : "—"} />
+                {/* A3b-3: "Avg judge score" implied a verified result. The number is real — it
+                    averages stored ballot scores — but formative, so it carries the same name the
+                    ballot itself uses. Value, null handling and query are unchanged. */}
+                <StatChip label="Avg practice ballot score" value={debate.averageScore !== null ? `${debate.averageScore}` : "—"} />
               </div>
 
               {debate.recent.length > 0 ? (

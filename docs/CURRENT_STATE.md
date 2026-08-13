@@ -2,7 +2,83 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1A A3b-2 — practice-ballot terminology now follows the learner to the dashboard, profile and replay; the frozen legacy wins counter is hidden everywhere in those surfaces. **LOCAL COMMIT, NOT PUSHED.** A1, A2, A3a and A3b-1 are shipped and Production-verified at `5882198754`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1A A3b-3 — the coach roster, coach student detail and assignment evidence picker now use the same practice-ballot language, and four vacuous HEAD-relative byte-pins on `lib/assignments.ts` were replaced with real semantic controls. **LOCAL COMMIT, NOT PUSHED.** A1, A2, A3a, A3b-1 and A3b-2 are shipped and Production-verified at `5882568067`; M14 Global G2 remains CLOSED.)_
+
+## M15 S1A A3b-3 — Coach and assignment labels align (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+The last batch of the A3 honesty pass. Presentation only; no historical data changed.
+
+**Coach roster** ([page.tsx](app/(app)/coach/page.tsx)) — `{xp} XP · {n} wins` → **`{xp} XP`**. The frozen
+counter is hidden, not relabelled and not deleted. Its activity condition was
+`hasActivity = u.xp > 0 || u.wins > 0` and is now **`u.xp > 0`**: A3a froze `User.wins`, so it can no
+longer answer "does this student have activity now". XP is a strict superset and hides nobody — every
+win was awarded in the same transaction as the round's completion XP, and XP is only ever incremented.
+The condition gates the XP line and the rank line only, never membership or permissions. **No new
+query**; `lastActivity` was already in scope but XP was the smaller sufficient change.
+
+**Coach student detail** — `Avg judge score` → **`Avg practice ballot score`**. `Judged rounds` and
+A3a's removal of the fabricated win/loss record both preserved.
+
+**Assignment evidence picker** ([assignments.ts](lib/assignments.ts)) — `{topic} ({87})` →
+**`{topic} — practice ballot score 87`**. A bare parenthesised number read as a grade. A round with
+no score keeps the completion-only label (the old form emitted a trailing space there); nothing is
+invented. **Qualification is untouched** — ownership, `status: "JUDGED"`, and the `PRACTICE_REBUTTAL`
+format filter all unchanged, and no score has ever gated Debate evidence.
+
+### Test-integrity correction (found by this batch, not a production defect)
+
+Four suites carried a blanket **HEAD-relative** byte-pin on `lib/assignments.ts`:
+`education-migration` (`4.`), `skills-compat` (`27.`), `deca-mastery` (`24-28.`),
+`debate-mastery` (`27-31.`). Each compared the working tree against `git show HEAD:<path>`, so it
+**failed only while a change was uncommitted and passed again the moment HEAD advanced onto that same
+change** — it could not protect the file across commits. Committing would have turned all four green
+without anything being verified.
+
+Only the `lib/assignments.ts` entries were retired, each replaced with semantic controls matched to
+that suite's own domain rather than one pasted assertion:
+
+- **education-migration `4A`** — LESSON evidence still resolves to a COMPLETED `PracticeAttempt` owned
+  by the learner, narrowed to the assignment's target lesson slug, recorded as `LESSON_ATTEMPT`.
+- **skills-compat `27A`** — assignments still resolve their target by stored slug (so legacy `/skills`
+  slugs keep working) and take no dependency on the skills-compat layer; plus `27A3`, an **immutable**
+  pin of `lib/assignment-types.ts` against `e652cbe3` rather than HEAD.
+- **deca-mastery `24A`** — `PRACTICE_TEST` evidence still requires a COMPLETED test owned by the
+  learner, and the assignment engine still writes no mastery or XP of its own.
+- **debate-mastery `27A`** — the full Debate qualification contract, **scoped per function**:
+  `validateEvidence` (which accepts a submission) and `getStudentEvidenceOptions` (which lists
+  selectable rounds) are asserted separately for JUDGED, ownership and `PRACTICE_REBUTTAL`, plus no
+  ballot-score threshold.
+
+That per-function scoping matters: an earlier draft searched the file globally, and a mutation probe
+removing the JUDGED gate from the **accepting** path survived it because the picker's copy still
+matched. Both paths are now bound independently.
+
+**Carried test-integrity debt (inventoried, not fixed):** 50 further HEAD-relative pins remain across
+those four files — 20 in education-migration, 16 in skills-compat, 8 in deca-mastery, 6 in
+debate-mastery. Each has the same self-healing flaw. Not broadened into this batch.
+
+### Preserved
+
+A3b-2's three surfaces, A3b-1's ballot files, the A3a authority route, `lib/coach-progress.ts`,
+`lib/assignment-types.ts`, A1, all four G2 banks and `prisma/schema.prisma` are byte-identical to
+`e652cbe3`. The only production change in `lib/assignments.ts` is the picker label.
+
+### Validation
+
+`db:generate` · `tsc --noEmit` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**29/29 safe suites green WHILE STILL UNCOMMITTED**, with HEAD unmoved — the repaired controls are
+valid before commit, not self-healed. **10/10 presentation mutants and 11/11 qualification mutants
+killed, 0 survivors.** **No database access.**
+
+### Still open
+
+**A4:** uncapped Debate creation, completion-XP farming, PracticeTest XP policy, streak semantics,
+reward design. **S1B:** `/debates/history` soft-redirect gating style, stale "Reassess now" CTA,
+skills-compat summary prose, the HEAD-relative pin debt above. **M16:** semantic judging.
+
+## M15 S1A A3b-2 — Learner stats speak the ballot's language (shipped; Production-verified at `5882568067`)
 
 ## M15 S1A A3b-2 — Learner stats speak the ballot's language (LOCAL, push pending)
 

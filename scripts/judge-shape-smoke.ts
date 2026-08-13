@@ -466,8 +466,12 @@ async function main() {
   //     legacy wins counter and unframed judge scores.
   // Each control below pins the commit where the defect it guards actually existed. Neither is
   // HEAD-relative, so neither self-heals on the next commit.
+  //   PRE_M15_A3B3 (e652cbe3) — the last commit where the COACH ROSTER still rendered the frozen
+  //     wins counter and derived activity from it, the coach detail said "Avg judge score", and the
+  //     assignment picker formatted a formative score as a bare "(n)".
   const PRE_M15_A3B1 = "9b396753b235dd9fd0ac08768194b1253d6138c5";
   const PRE_M15_A3B2 = "7b4f78ac51f313b53937ca944a65b5eff7d847de";
+  const PRE_M15_A3B3 = "e652cbe365c7dc6faa618d989f51d4232adb381d";
   const ballotAtA3a = strip(
     execSync(`git show ${PRE_M15_A3B1}:components/debate/debate-arena.tsx`, { encoding: "utf8" }));
   const aiAtA3a = strip(execSync(`git show ${PRE_M15_A3B1}:lib/ai.ts`, { encoding: "utf8" }));
@@ -579,6 +583,72 @@ async function main() {
       "A3b-2-C2. control: the pre-A3b-2 profile DID render a wins chip and a '% judge score' label");
     assert.ok(/Overall score: \{debate\.overallScore\}/.test(replayAt) && /`Overall score \$\{debate\.overallScore\}\.`/.test(replayAt),
       "A3b-2-C3. control: the pre-A3b-2 replay DID say 'Overall score' both visibly and aloud");
+  }
+
+  // ---- A3b-3. coach and assignment surfaces speak the same language ------------------------------
+  // The last of the honesty pass. A coach must not read a frozen counter as a current record, and an
+  // assignment picker must not present a formative number as a grade. Presentation only: no query,
+  // no qualification rule and no stored value changes.
+  const rosterSrc = strip(readFileSync("app/(app)/coach/page.tsx", "utf8"));
+  const detailSrc = strip(readFileSync("app/(app)/coach/students/[studentId]/page.tsx", "utf8"));
+  const assignSrc = strip(readFileSync("lib/assignments.ts", "utf8"));
+
+  // COACH ROSTER.
+  assert.ok(!/\$\{u\.wins\} \$\{u\.wins === 1 \? "win" : "wins"\}/.test(rosterSrc),
+    "A3b-3a. the coach roster renders no historical wins copy");
+  for (const renamed of ["Practice wins", "Legacy wins", "AI wins", "Competition wins"]) {
+    assert.ok(!new RegExp(renamed).test(rosterSrc), `A3b-3b. and no renamed frozen counter ("${renamed}")`);
+  }
+  assert.ok(/\$\{u\.xp\} XP/.test(rosterSrc), "A3b-3c. XP is still rendered for active students");
+  // The activity signal may no longer consult the retired counter.
+  assert.ok(/const hasActivity = u\.xp > 0;/.test(rosterSrc),
+    "A3b-3d. roster activity state is derived from XP alone");
+  assert.ok(!/hasActivity = [^;]*wins/.test(rosterSrc),
+    "A3b-3e. and never from User.wins");
+  // A3b-3 added no query: the roster's Prisma call count is unchanged from the frozen baseline.
+  assert.equal((rosterSrc.match(/prisma\.\w+\.\w+\(/g) ?? []).length,
+    (strip(execSync(`git show ${PRE_M15_A3B3}:'app/(app)/coach/page.tsx'`, { encoding: "utf8" })).match(/prisma\.\w+\.\w+\(/g) ?? []).length,
+    "A3b-3f. no new query was added to the roster");
+
+  // COACH STUDENT DETAIL.
+  assert.ok(!/Avg judge score/.test(detailSrc), "A3b-3g. the coach detail no longer says 'Avg judge score'");
+  assert.ok(/label="Avg practice ballot score"/.test(detailSrc),
+    "A3b-3h. it says 'Avg practice ballot score'");
+  assert.ok(/label="Judged rounds"/.test(detailSrc), "A3b-3i. and still shows the judged-round count");
+  assert.ok(!/label="Wins"/.test(detailSrc) && !/label="Losses"/.test(detailSrc),
+    "A3b-3j. with no Wins/Losses record restored");
+  // A3a's fabricated-loss derivation must stay gone from the helper too.
+  assert.ok(!/judgedRounds\s*-\s*wins/.test(strip(readFileSync("lib/coach-progress.ts", "utf8"))),
+    "A3b-3j2. and coach-progress still derives no losses");
+
+  // ASSIGNMENT EVIDENCE PICKER.
+  assert.ok(!/\(\$\{debate\.overallScore\}\)/.test(assignSrc),
+    "A3b-3k. the assignment picker no longer formats the score as a bare (n)");
+  assert.ok(/`\$\{debate\.topic\} — practice ballot score \$\{debate\.overallScore\}`/.test(assignSrc),
+    "A3b-3l. a scored round is labelled a practice ballot score");
+  // Null score: the completion-only label, with nothing invented to fill the gap.
+  assert.ok(/: debate\.topic,/.test(assignSrc),
+    "A3b-3m. a round with no score falls back to the topic alone — no fabricated 0 or dash");
+  assert.ok(!/practice ballot score 0/.test(assignSrc) && !/practice ballot score —/.test(assignSrc),
+    "A3b-3m2. and no placeholder score string exists");
+  // Qualification is untouched: eligibility still comes from ownership + JUDGED + format.
+  assert.ok(/status: "JUDGED"/.test(assignSrc) &&
+            /OR: \[\{ createdById: userId \}, \{ studentId: userId \}, \{ opponentUserId: userId \}\]/.test(assignSrc),
+    "A3b-3n. assignment qualification rules are unchanged");
+
+  // NON-VACUOUS against the frozen pre-A3b-3 pin.
+  {
+    const rosterAt = strip(execSync(`git show ${PRE_M15_A3B3}:'app/(app)/coach/page.tsx'`, { encoding: "utf8" }));
+    const detailAt = strip(execSync(`git show ${PRE_M15_A3B3}:'app/(app)/coach/students/[studentId]/page.tsx'`, { encoding: "utf8" }));
+    const assignAt = strip(execSync(`git show ${PRE_M15_A3B3}:lib/assignments.ts`, { encoding: "utf8" }));
+    assert.ok(/\$\{u\.wins\} \$\{u\.wins === 1 \? "win" : "wins"\}/.test(rosterAt),
+      "A3b-3-C1. control: the pre-A3b-3 roster DID render the frozen wins counter");
+    assert.ok(/hasActivity = u\.xp > 0 \|\| u\.wins > 0;/.test(rosterAt),
+      "A3b-3-C2. control: and DID derive activity state from it");
+    assert.ok(/Avg judge score/.test(detailAt),
+      "A3b-3-C3. control: the pre-A3b-3 coach detail DID say 'Avg judge score'");
+    assert.ok(/\(\$\{debate\.overallScore\}\)/.test(assignAt),
+      "A3b-3-C4. control: the pre-A3b-3 assignment picker DID use a bare (n) score");
   }
 
   // NON-VACUOUS: at the FROZEN pre-A3a pin every one of these authorities WAS present. Without this

@@ -2,7 +2,78 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1A A3b-1 — the Debate ballot is now framed as a practice ballot: practice-ballot badge/score labels, one status line, no fake signed rating deltas, truthful provider attribution. **LOCAL COMMIT, NOT PUSHED.** A1, A2 and A3a are shipped and Production-verified at `5881331565`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1A A3b-2 — practice-ballot terminology now follows the learner to the dashboard, profile and replay; the frozen legacy wins counter is hidden everywhere in those surfaces. **LOCAL COMMIT, NOT PUSHED.** A1, A2, A3a and A3b-1 are shipped and Production-verified at `5882198754`; M14 Global G2 remains CLOSED.)_
+
+## M15 S1A A3b-2 — Learner stats speak the ballot's language (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+A3b-1 made the ballot truthful. A3b-2 carries the same terminology to the three surfaces that re-showed
+the same formative numbers under stronger names. **Presentation only** — no stored value is read
+differently, written, reset or backfilled, and no new query was added.
+
+**Dashboard** ([page.tsx](app/(app)/dashboard/page.tsx)) — the "Judged rounds" card detail was
+`{n} wins · avg judge score {x}.` and is now `Avg practice ballot score {x}.`; the judged-round panel
+chip was `{n} wins · avg judge score {x}` and is now
+`{n} judged rounds · avg practice ballot score {x}`, using the judged-round count the page already
+computes.
+
+**Profile** ([page.tsx](app/(app)/profile/page.tsx)) — the `{n} wins` chip is **removed**, not
+relabelled: "Legacy wins" or "Practice wins" would keep a permanently frozen number prominent. The
+stat grid drops to one column so the surviving "practice sessions" chip does not sit beside an empty
+cell, and the now-unused `Trophy` import goes with it. Recent debates read
+`Judged · practice ballot score {n}` instead of `Judged · {n}% judge score` — the percent sign made a
+formative number look like a graded mastery percentage.
+
+**Replay** ([page.tsx](app/(app)/debates/[debateId]/replay/page.tsx)) — **three** score surfaces, not
+the two originally listed: the visible `Overall score: {n}`, the separate **read-aloud** string
+`Overall score {n}.`, and the attempt-list `· Overall {n}`. All three now say practice ballot, so the
+spoken experience makes exactly the same claim as the visible one.
+
+### Two carried test-quality fixes, both implemented
+
+1. **Disclaimer-density checks are now case-insensitive.** The A3b-1 control counted
+   `not mastery or readiness` case-sensitively, so a duplicate that merely re-capitalised the
+   sentence slipped through — a mutation probe demonstrated that escape. Both qualifiers are now
+   counted case-insensitively, and the competition-record qualifier is counted too, which it never
+   was. A control proves the new counter catches a capitalisation-only duplicate.
+2. **Explicit frozen-baseline proof of the DECA defect.** The old `Winner unavailable wins` headline
+   was never one literal — it was composed at render time from `winnerLabel()` returning
+   `"Winner unavailable"` plus the template appending `" wins"`. `A3b-C9`…`C9e` rebuild that
+   composition from the A3b-1 baseline's own source and show the current ballot routes the same case
+   to `Practice round scored`.
+
+**Two immutable pins are now in play and are not interchangeable:** `PRE_M15_A3B1` (`9b396753`) for
+ballot-era defects, `PRE_M15_A3B2` (`7b4f78ac`) for the stat surfaces. Each control pins the commit
+where its defect actually existed. Neither is HEAD-relative.
+
+### Corrections to the A3b plan found while implementing
+
+- The dashboard's `hasActivity` does **not** use `wins` (it is
+  `xp > 0 || recentTests.length > 0 || judgedDebateCount > 0`), so no activity-logic change was
+  needed. The `xp > 0 || wins > 0` condition is in the **coach roster**, which is A3b-3.
+- The replay file had a **third** score surface (the attempt list) that the plan's inventory missed.
+
+### Preserved
+
+A3b-1's ballot files, the A3a authority route, `lib/ai.ts`, `lib/ai-providers.ts`,
+`lib/debate-judge-analysis.ts`, A1's three paths, all four G2 banks, `prisma/schema.prisma`, and
+**every A3b-3 target** (`coach/page.tsx`, coach student detail, `lib/assignments.ts`,
+`lib/coach-progress.ts`) are byte-identical to `7b4f78ac`. `User.wins` is still selected on the
+profile — A3b-2 hides it, it does not delete or reset data. **No historical data changed.**
+
+### Validation
+
+`db:generate` · `tsc --noEmit` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**29/29 safe suites green** · **11/11 mutation probes killed, 0 survivors**. **No database access.**
+
+### Still open
+
+**A3b-3:** coach roster wins, coach average-score label, assignment picker score label.
+**A4:** uncapped Debate creation, completion-XP farming, PracticeTest XP policy, streak semantics,
+reward design. **M16:** semantic judging and any restoration of authoritative progression.
+
+## M15 S1A A3b-1 — The Debate ballot is a PRACTICE ballot (shipped; Production-verified at `5882198754`)
 
 ## M15 S1A A3b-1 — The Debate ballot is a PRACTICE ballot (LOCAL, push pending)
 

@@ -2,7 +2,58 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A3b-1: the Debate ballot is a practice ballot (2026-08-13)
+## Latest handoff — M15 S1A A3b-2: learner stats speak the ballot's language (2026-08-13)
+
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+Three production files — dashboard, profile, replay — plus `scripts/judge-shape-smoke.ts` and docs.
+Presentation only. Read the A3b-2 section of `docs/CURRENT_STATE.md` for the exact final copy.
+
+### Things that will look like bugs but are deliberate
+
+- **The profile wins chip is gone, not renamed.** A frozen counter under any label ("Legacy wins",
+  "Practice wins") stays a prominent dead metric. `User.wins` is still selected and still stored —
+  hiding is not deleting. Do not "restore" it and do not reset the column.
+- **The profile stat grid is one column now.** Removing one of two chips from a `grid-cols-2` would
+  otherwise leave a half-width card beside an empty cell.
+- **Replay changed in three places, not two.** Visible label, read-aloud string, and the attempt
+  list. If you ever touch replay copy again, change all three together — a spoken "Overall score"
+  after a visible "Practice ballot score" reintroduces the exact claim we retired.
+- **The dashboard's `wins` variable still exists.** It feeds `calculateDebateRating` for internal
+  bot matching, which is never displayed as a rating. Only the rendered copy was removed.
+
+### Two immutable pins — do not merge them
+
+`PRE_M15_A3B1` = `9b396753` (ballot-era defects: "Judge decision", "Overall score",
+"Rating movement", the composed "Winner unavailable wins").
+`PRE_M15_A3B2` = `7b4f78ac` (stat-surface defects: legacy wins copy, "avg judge score",
+"% judge score", replay "Overall score").
+Each control pins the commit where its own defect existed. Neither is HEAD-relative. A control that
+pins the wrong baseline silently stops proving anything.
+
+### Next steps, in order
+
+1. Owner pushes the A3b-2 commit. **Do not push automatically.**
+2. Read-only Production verification (SHA/deployment identity, route health, deployed copy on all
+   three surfaces, A3b-1 ballot intact, A3a authority intact, A2, A1, G2, 29 suites). No DB access,
+   no authentication.
+3. **A3b-3** — the last of the honesty pass: coach roster wins (note its `hasActivity = xp > 0 ||
+   wins > 0` still references the frozen counter), coach average-score label, assignment picker score
+   label. Keep the same dictionary: `judged rounds`, `practice ballot score`, `avg practice ballot
+   score`. Do not invent a second name for the same number.
+4. **A4** then finishes reward integrity: uncapped Debate creation, completion-XP farming,
+   PracticeTest XP, streak semantics.
+
+### Standing constraints (unchanged)
+
+No push, deploy, schema change, migration, `db push`/seed, dependency install, or destructive git
+without explicit approval. Never run `auth:smoke`, `team:smoke`, `assignment:smoke`, or
+`deca:skills:activate`. **Never open `.env`, read `DATABASE_URL`, or query any shared database.**
+M14 Global G2 remains **CLOSED**.
+
+## Previous handoff — M15 S1A A3b-1: the Debate ballot is a practice ballot (2026-08-13)
 
 ### One local commit awaits the owner push; then read-only Production verification
 

@@ -88,7 +88,10 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
 
   // Read-aloud text for the judge feedback — reuses the same speech-synthesis engine as the transcript.
   const judgeSpeech = [
-    typeof debate.overallScore === "number" ? `Overall score ${debate.overallScore}.` : "",
+    // A3b-2: the SPOKEN wording must match the visible label below. A screen-reader/read-aloud path
+    // still saying "Overall score" after the page says "Practice ballot score" would leave the
+    // audio experience making the stronger claim the UI just retired.
+    typeof debate.overallScore === "number" ? `Practice ballot score ${debate.overallScore}.` : "",
     debate.strengths.length ? `Strengths: ${debate.strengths.join(". ")}.` : "",
     debate.weaknesses.length ? `To improve: ${debate.weaknesses.join(". ")}.` : "",
     debate.recommendations.length ? `Recommendations: ${debate.recommendations.join(". ")}.` : ""
@@ -163,7 +166,7 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
           ) : (
             <>
               {typeof debate.overallScore === "number" ? (
-                <p className="text-sm font-semibold">Overall score: {debate.overallScore}</p>
+                <p className="text-sm font-semibold">Practice ballot score: {debate.overallScore}</p>
               ) : null}
               {categoryRows(debate).length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -226,7 +229,9 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold">
                       <LocalDate value={attempt.createdAt} /> · {sideLabel(attempt.studentSide)}
-                      {typeof attempt.overallScore === "number" ? ` · Overall ${attempt.overallScore}` : ""}
+                      {/* A3b-2: a THIRD score surface in this file — the attempt list. "Overall {n}"
+                          is the same claim abbreviated, so it takes the same honest name. */}
+                      {typeof attempt.overallScore === "number" ? ` · practice ballot ${attempt.overallScore}` : ""}
                       {attempt.assistedPractice ? (
                         <Badge variant="outline" className="ml-2 align-middle text-[10px]">
                           Assisted Practice

@@ -224,11 +224,15 @@ export default async function DashboardPage() {
         <XpProgressCard xp={xp} rank={rank} streak={streak} />
       </div>
 
+      {/* M15 S1A A3b-2: the historical wins counter is no longer shown on this card. A3a stopped the
+          judge route incrementing it, so it is frozen for every account from here on. The average is
+          real — it aggregates stored ballot scores — but formative, so it is named as a practice
+          ballot score, matching the ballot itself. User.wins is untouched in the database. */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Judged rounds"
           value={String(judgedDebateCount)}
-          detail={`${wins} ${wins === 1 ? "win" : "wins"} · avg judge score ${avgJudgeScore ?? "—"}.`}
+          detail={`Avg practice ballot score ${avgJudgeScore ?? "—"}.`}
           icon={Trophy}
         />
         <StatCard label="XP" value={String(xp)} detail="Earn XP from debates, lessons, and generated practice tests." icon={Medal} />
@@ -297,7 +301,8 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">
-              {wins} {wins === 1 ? "win" : "wins"} · avg judge score {avgJudgeScore ?? "—"}
+              {judgedDebateCount} judged {judgedDebateCount === 1 ? "round" : "rounds"} · avg practice ballot score{" "}
+              {avgJudgeScore ?? "—"}
             </div>
           </div>
         </CardContent>

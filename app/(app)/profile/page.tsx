@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { Edit3, Flame, Medal, School, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+// Trophy dropped with the wins chip in M15 S1A A3b-2 — it had no other consumer on this page.
+import { Edit3, Flame, Medal, School, ShieldCheck, Sparkles } from "lucide-react";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -122,14 +123,16 @@ export default async function ProfilePage() {
                 <span className="text-muted-foreground">{user.xp} XP</span>
               </div>
               <Progress value={xpProgress} />
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              {/* M15 S1A A3b-2: the "{n} wins" chip is gone. A3a stopped the judge route
+                  incrementing User.wins, so the counter is frozen — celebrating it on a profile
+                  would promote a statistic that can no longer move and was never a competition
+                  record. It is NOT relabelled ("Legacy wins" / "Practice wins" would keep a dead
+                  number prominent) and NOT deleted: the stored value is untouched. The grid drops to
+                  one column so the surviving chip does not sit beside an empty cell. */}
+              <div className="grid grid-cols-1 gap-3 text-sm">
                 <div className="rounded-md border bg-background p-3">
                   <Flame className="mb-2 h-4 w-4 text-accent" aria-hidden />
                   <p className="font-bold">{user.streak} practice sessions</p>
-                </div>
-                <div className="rounded-md border bg-background p-3">
-                  <Trophy className="mb-2 h-4 w-4 text-accent" aria-hidden />
-                  <p className="font-bold">{user.wins} wins</p>
                 </div>
               </div>
             </CardContent>
@@ -146,8 +149,12 @@ export default async function ProfilePage() {
                 user.studentDebates.map((debate) => (
                   <Link key={debate.id} href={`/debate/${debate.id}`} className="block rounded-md border bg-background p-4 transition hover:bg-muted">
                     <p className="font-semibold">{debate.topic}</p>
+                    {/* A3b-2: was "· {n}% judge score". The percent sign made a formative practice
+                        number read like a graded mastery percentage, and "judge score" implied a
+                        verified result. Same value, honest name, no percent. */}
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {titleCase(debate.status.toLowerCase())} {typeof debate.overallScore === "number" ? `· ${debate.overallScore}% judge score` : ""}
+                      {titleCase(debate.status.toLowerCase())}{" "}
+                      {typeof debate.overallScore === "number" ? `· practice ballot score ${debate.overallScore}` : ""}
                     </p>
                   </Link>
                 ))

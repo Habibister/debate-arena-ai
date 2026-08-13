@@ -387,8 +387,20 @@ async function main() {
     "A3b-5. the score is labelled Practice ballot score, not Overall score");
   assert.ok(/Formative coaching score — not mastery or readiness\./.test(ballotSrc),
     "A3b-6. and carries the mastery/readiness disclaimer exactly once");
-  assert.equal((ballotSrc.match(/not mastery or readiness/g) ?? []).length, 1,
-    "A3b-6b. exactly once — the ballot must not become a wall of disclaimers");
+  // A3b-2 hardening (carried from the A3b-1 Production verification). These counts were
+  // case-SENSITIVE, so a duplicate that merely re-capitalised the sentence — "Not mastery or
+  // readiness." — slipped through while an exact copy-paste was caught. A mutation probe
+  // demonstrated exactly that escape. Both qualifiers are now counted case-insensitively, and the
+  // competition-record qualifier is counted too, which it never was.
+  assert.equal((ballotSrc.match(/not mastery or readiness/gi) ?? []).length, 1,
+    "A3b-6b. the mastery/readiness qualifier appears exactly once (case-insensitive)");
+  assert.equal((ballotSrc.match(/for coaching, not your competition record/gi) ?? []).length, 1,
+    "A3b-6c. and the competition-record qualifier appears exactly once (case-insensitive)");
+  // Control: the case-insensitive counter really does catch a capitalisation-only duplicate, which
+  // the previous case-sensitive form did not.
+  assert.equal(
+    ("x not mastery or readiness y Not Mastery Or Readiness z".match(/not mastery or readiness/gi) ?? []).length, 2,
+    "A3b-6d. control: a capitalisation-only duplicate is now detected");
   assert.ok(/Practice feedback by area/.test(ballotSrc) && /Where the practice judge saw strengths and areas to improve\./.test(ballotSrc),
     "A3b-7. the category grid has one parent framing");
   assert.ok(/Where to focus next/.test(ballotSrc) && !/Rating movement/.test(ballotSrc),
@@ -447,8 +459,15 @@ async function main() {
     assert.ok(ballotSrc.includes(kept), `A3b-15. the ballot still renders ${kept}`);
   }
 
-  // NON-VACUOUS: every A3b-1 assertion above must FAIL against the frozen pre-A3b-1 pin.
+  // NON-VACUOUS. Two immutable pins are in play and they are NOT interchangeable:
+  //   PRE_M15_A3B1 (9b396753) — the last commit where the BALLOT still said "Judge decision",
+  //     "Overall score", "Rating movement" and composed "Winner unavailable wins".
+  //   PRE_M15_A3B2 (7b4f78ac) — the last commit where the DASHBOARD/PROFILE/REPLAY still showed a
+  //     legacy wins counter and unframed judge scores.
+  // Each control below pins the commit where the defect it guards actually existed. Neither is
+  // HEAD-relative, so neither self-heals on the next commit.
   const PRE_M15_A3B1 = "9b396753b235dd9fd0ac08768194b1253d6138c5";
+  const PRE_M15_A3B2 = "7b4f78ac51f313b53937ca944a65b5eff7d847de";
   const ballotAtA3a = strip(
     execSync(`git show ${PRE_M15_A3B1}:components/debate/debate-arena.tsx`, { encoding: "utf8" }));
   const aiAtA3a = strip(execSync(`git show ${PRE_M15_A3B1}:lib/ai.ts`, { encoding: "utf8" }));
@@ -467,6 +486,100 @@ async function main() {
     "A3b-C7. control: and a provider banner WAS attached to the ballot");
   assert.ok(/rating increased/.test(routeAtA3a),
     "A3b-C8. control: and the route DID emit 'rating increased' prose");
+
+  // A3b-C9 (added in A3b-2, carried from the A3b-1 Production verification).
+  //
+  // The DECA defect A3b-1 fixed was never a single literal in the source: the headline
+  // "Winner unavailable wins" was COMPOSED at render time from two fragments — winnerLabel()
+  // returning the string "Winner unavailable" whenever `teamWinner` was absent, and the headline
+  // template appending " wins". So the earlier controls could only assert the corrected branch
+  // exists, not that the broken output was real. This control proves the composition by rebuilding
+  // it from the frozen baseline's own source, which is what makes A3b-14 non-vacuous rather than
+  // merely unfalsified.
+  //
+  // PIN NOTE: this control pins `PRE_M15_A3B1` (9b396753 — the A3b-1 baseline), NOT the A3b-2
+  // baseline, because that is the only commit where the defect existed. The A3b-2 controls above
+  // pin 7b4f78ac. Both pins are immutable SHAs; neither is HEAD-relative.
+  {
+    const winnerLabelFn = ballotAtA3a.slice(ballotAtA3a.indexOf("function winnerLabel(report: JudgeReport)"));
+    const fnBody = winnerLabelFn.slice(0, winnerLabelFn.indexOf("\n}"));
+    assert.ok(/if \(!report\.teamWinner\)/.test(fnBody) && /return "Winner unavailable";/.test(fnBody),
+      "A3b-C9. control: at the A3b-1 baseline, winnerLabel() returned 'Winner unavailable' with no teamWinner");
+    assert.ok(/\{winnerLabel\(report\)\} wins/.test(ballotAtA3a),
+      "A3b-C9b. control: and the headline appended ' wins' to whatever it returned");
+    assert.ok(!/report\.teamWinner \?/.test(ballotAtA3a),
+      "A3b-C9c. control: with NO branch for a result that has no winner — so a DECA role-play composed the literal headline 'Winner unavailable wins'");
+    // The composition, rebuilt: this is the exact string a DECA learner saw.
+    const composedAtBaseline = "Winner unavailable" + " wins";
+    assert.equal(composedAtBaseline, "Winner unavailable wins",
+      "A3b-C9d. control: the two fragments compose to the reported defect");
+    // ...and the current ballot can no longer produce it, because the no-winner case has its own copy.
+    assert.ok(/\) : \([\s\S]{0,150}Practice round scored/.test(ballotSrc),
+      "A3b-C9e. while the current ballot routes that same case to 'Practice round scored'");
+  }
+
+  // ---- A3b-2. the same terminology follows the learner off the ballot -----------------------------
+  // A3b-1 made the ballot truthful. These surfaces re-showed the SAME formative numbers under
+  // stronger names — and a frozen legacy `wins` counter that A3a retired. Presentation only: no
+  // stored value changes, and `User.wins` is neither read differently nor written.
+  const dashSrc = strip(readFileSync("app/(app)/dashboard/page.tsx", "utf8"));
+  const profileSrc = strip(readFileSync("app/(app)/profile/page.tsx", "utf8"));
+  const replaySrc = strip(readFileSync("app/(app)/debates/[debateId]/replay/page.tsx", "utf8"));
+
+  // DASHBOARD. `wins` may still be READ (it feeds the internal bot-matching projection), so these
+  // bind the RENDERED copy, not the identifier.
+  // Matches BOTH render forms — JSX children `{wins} {wins === 1 ...}` and template interpolation
+  // `${wins} ${wins === 1 ...}` — because the two dashboard sites used one each, and a control that
+  // only knew one form would have left the other resting on sibling assertions.
+  assert.ok(!/\$?\{wins\} \$?\{wins === 1 \? "win" : "wins"\}/.test(dashSrc),
+    "A3b-2a. the dashboard renders no historical wins copy, in either render form");
+  assert.ok(/\$?\{wins\} \$?\{wins === 1 \? "win" : "wins"\}/.test('${wins} ${wins === 1 ? "win" : "wins"}') &&
+            /\$?\{wins\} \$?\{wins === 1 \? "win" : "wins"\}/.test('{wins} {wins === 1 ? "win" : "wins"}'),
+    "A3b-2a2. control: that detector matches both the template and the JSX form");
+  assert.ok(!/avg judge score/i.test(dashSrc), "A3b-2b. and no 'avg judge score'");
+  assert.ok(/Avg practice ballot score \$\{avgJudgeScore \?\? "—"\}\./.test(dashSrc),
+    "A3b-2c. the stat card shows an average practice ballot score");
+  assert.ok(/\{judgedDebateCount\} judged \{judgedDebateCount === 1 \? "round" : "rounds"\}/.test(dashSrc),
+    "A3b-2d. the judged-round panel uses the real existing judged-round count");
+  assert.ok(/avg practice ballot score/.test(dashSrc), "A3b-2e. and the practice-ballot wording");
+  // No new query was introduced to replace wins: the aggregate count is the pre-existing one.
+  assert.equal((dashSrc.match(/prisma\.debate\.count\(/g) ?? []).length,
+    (strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/dashboard/page.tsx'`, { encoding: "utf8" })).match(/prisma\.debate\.count\(/g) ?? []).length,
+    "A3b-2f. no new debate count query was added");
+  assert.equal((dashSrc.match(/prisma\.\w+\.(aggregate|count|findMany|findFirst|findUnique)\(/g) ?? []).length,
+    (strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/dashboard/page.tsx'`, { encoding: "utf8" })).match(/prisma\.\w+\.(aggregate|count|findMany|findFirst|findUnique)\(/g) ?? []).length,
+    "A3b-2f2. and the dashboard's total query count is unchanged");
+
+  // PROFILE.
+  assert.ok(!/\{user\.wins\} wins/.test(profileSrc), "A3b-2g. the profile renders no wins chip");
+  assert.ok(!/% judge score/.test(profileSrc), "A3b-2h. and no '% judge score' label");
+  assert.ok(/practice ballot score \$\{debate\.overallScore\}/.test(profileSrc),
+    "A3b-2i. recent debates use the practice-ballot wording, with no percent sign");
+  // History is untouched: the field is still selected and still stored; only the render is gone.
+  assert.ok(/wins: true/.test(profileSrc),
+    "A3b-2j. User.wins is still selected — A3b-2 hides it, it does not delete or reset data");
+
+  // REPLAY — visible AND spoken wording must agree.
+  assert.ok(!/Overall score/.test(replaySrc), "A3b-2k. replay no longer says 'Overall score' anywhere");
+  assert.ok(/<p className="text-sm font-semibold">Practice ballot score: \{debate\.overallScore\}<\/p>/.test(replaySrc),
+    "A3b-2k2. the visible replay score is a practice ballot score");
+  assert.ok(/`Practice ballot score \$\{debate\.overallScore\}\.`/.test(replaySrc),
+    "A3b-2l. the read-aloud string uses the same wording");
+  assert.ok(!/ · Overall \$\{attempt\.overallScore\}/.test(replaySrc) && /practice ballot \$\{attempt\.overallScore\}/.test(replaySrc),
+    "A3b-2m. and so does the attempt list");
+
+  // NON-VACUOUS against the frozen pre-A3b-2 pin.
+  {
+    const dashAt = strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/dashboard/page.tsx'`, { encoding: "utf8" }));
+    const profileAt = strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/profile/page.tsx'`, { encoding: "utf8" }));
+    const replayAt = strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/debates/[debateId]/replay/page.tsx'`, { encoding: "utf8" }));
+    assert.ok(/avg judge score/i.test(dashAt) && /\{wins\} \{wins === 1 \? "win" : "wins"\}/.test(dashAt),
+      "A3b-2-C1. control: the pre-A3b-2 dashboard DID render wins and 'avg judge score'");
+    assert.ok(/\{user\.wins\} wins/.test(profileAt) && /% judge score/.test(profileAt),
+      "A3b-2-C2. control: the pre-A3b-2 profile DID render a wins chip and a '% judge score' label");
+    assert.ok(/Overall score: \{debate\.overallScore\}/.test(replayAt) && /`Overall score \$\{debate\.overallScore\}\.`/.test(replayAt),
+      "A3b-2-C3. control: the pre-A3b-2 replay DID say 'Overall score' both visibly and aloud");
+  }
 
   // NON-VACUOUS: at the FROZEN pre-A3a pin every one of these authorities WAS present. Without this
   // the assertions above could pass against a route that never had them.

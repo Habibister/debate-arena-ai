@@ -2,7 +2,87 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1A A3b-3 — the coach roster, coach student detail and assignment evidence picker now use the same practice-ballot language, and four vacuous HEAD-relative byte-pins on `lib/assignments.ts` were replaced with real semantic controls. **LOCAL COMMIT, NOT PUSHED.** A1, A2, A3a, A3b-1 and A3b-2 are shipped and Production-verified at `5882568067`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1A A4a — daily XP is now bounded while practice stays unlimited: 3 XP-eligible Debates and 3 XP-eligible PracticeTests per UTC day, serialized on the existing user row lock, with truthful reward copy on both result surfaces. **LOCAL COMMIT, NOT PUSHED.** The complete A3 sequence is shipped and Production-verified at `5883101376`; M14 Global G2 remains CLOSED.)_
+
+## M15 S1A A4a — Daily XP bounded, practice unlimited (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+The A4 audit measured the exploit: Debate creation had **no rate limit at all**, so 300 judged rounds
+per hour was reachable — **7,500 XP/hr, MASTER rank in about an hour** of scripted requests — and
+~18 meaningful words satisfied a rewarded round. A4a bounds the reward without touching the practice.
+
+### Policy
+
+Per **UTC** day: the first **3** qualifying Debate completions earn 25 XP each, the first **3**
+qualifying PracticeTest completions earn 20 XP each. **Quotas are separate.** Past the quota a round
+still completes, is still judged or graded, keeps all coaching, still counts as a practice session and
+remains valid assignment evidence — it simply pays 0. **Practice itself is never limited.**
+Neither a Debate's score/winner nor a PracticeTest's score gates XP: a bad result is exactly when more
+practice helps.
+
+### Transaction protocol (identical in both writers)
+
+1. **A2 same-source claim — still the FIRST operation** (unchanged)
+2. `lockUserRow` — the existing `SELECT … FOR UPDATE`, reused rather than duplicated. This is what
+   makes the quota exact across **distinct** sources; without it two concurrent judgements could both
+   read "2 awards today" and both award a third.
+3. one server `now`, captured **after** the lock — the lock can block, so a request starting at
+   23:59:58 UTC could otherwise be billed to the wrong day
+4. count same-day XPLog rows with `amount > 0` for that `sourceType`
+5. award only when under quota — `awardXpInTransaction` is **not** called with 0
+6. write the ledger row (always)
+7. increment the practice-session counter (always)
+
+### Z1 — a ledger row on every completion, `amount: 0` past the quota
+
+XPLog's only reader is `getLastActivityForUsers`, which takes `max(createdAt)` for the coach's
+"active" date. Omitting post-cap rows would make a student who practised three more rounds today look
+inactive since yesterday. The zero row also **is** the persisted reward fact the PracticeTest results
+page reads. Nothing sums XPLog into `User.xp` and nothing filters on `amount`, so zero rows are
+harmless — and the quota query excludes them explicitly.
+
+### `User.streak` deliberately NOT converted
+
+It has no date field, no comparison and no reset anywhere: it is a **lifetime count of completed
+practice activities**, and the UI already calls it "Practice sessions". Capping only future increments
+while grandfathering the stored value would make one column mean "sessions" below some row and "days"
+above it. It now uses `{ increment: 1 }` — same semantics, but the stale read-add-write that could
+lose a concurrent update is gone. A real consecutive-day streak needs its own date-aware model later.
+
+### Reward truth on both result surfaces
+
+**Debate** consumes the judge response, so it gets a real `xpEarned` plus `rewardLimitReached` and
+never renders a bare "+0 XP". **PracticeTest could not** — the client parses the grade response only
+for `error`, discards it, and navigates to a server component. The results page therefore reads the
+persisted XPLog row for that test. Its hardcoded `+20` is gone. **A missing row renders nothing**: it
+is not proof of an award and not proof the limit was hit, and pre-A4a tests have no row at all.
+
+### Preserved
+
+A3 fully frozen (no score/winner reward, no `User.wins` write, no snapshot, ballot framing intact),
+A2 claim first, A1 formative, G2 banks and `prisma/schema.prisma` byte-identical, all **eight**
+pre-existing `lockUserRow` callers unchanged (`sessionNotFound` remains the default), assignments
+untouched, history grandfathered. **No schema change, no migration, no backfill.**
+
+### Validation
+
+`db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` · **29/29 safe suites green
+while still uncommitted with HEAD at the A4 baseline** — the controls are valid before commit, not
+self-healed. **20/20 mutation probes killed.** **No database access.**
+
+**Structural concurrency limitation, stated honestly:** the quota's exactness under truly simultaneous
+requests rests on PostgreSQL `SELECT … FOR UPDATE` semantics and is proven **structurally** — the lock
+is taken, in the right order, and no read-add-write survives. It was **not** empirically
+concurrency-tested, exactly as with A2.
+
+### Still open
+
+**A4b:** the false "debates, tests, and lessons" copy in `components/app/xp-progress-card.tsx`.
+**S1B:** `/debates/history` gating, stale Reassess CTA, skills-compat prose, 50 HEAD-relative pins.
+**M16:** semantic judging.
+
+## M15 S1A A3b-3 — Coach and assignment labels align (shipped; Production-verified at `5883101376`)
 
 ## M15 S1A A3b-3 — Coach and assignment labels align (LOCAL, push pending)
 

@@ -73,6 +73,54 @@ export function debateRatingProgress(rating: number) {
  * staleness is a separate pre-existing defect that this helper does not claim to fix.
  * No XP amount changes here — callers pass the amount their route already awarded.
  */
+// ---- M15 S1A A4a: daily reward eligibility --------------------------------------------------------
+//
+// Practice is UNLIMITED. Only the XP is bounded: the first N qualifying completions of each activity
+// type in a UTC day earn XP, and everything after that still completes, is still judged/graded, still
+// keeps its coaching, still counts as a practice session, and is still valid assignment evidence —
+// it just pays 0.
+//
+// Eligibility is decided from real, server-verifiable completion facts only. It never consults a
+// Debate's ballot score or winner (M15 A3 established both as FORMATIVE), and it never consults a
+// PracticeTest's score — a bad result is exactly when more practice helps, so scoring low must not
+// also cost the learner the reward for doing the work.
+
+export const DAILY_REWARD_QUOTA = 3;
+
+export type RewardSourceType = "DEBATE" | "PRACTICE_TEST";
+
+const REWARD_AMOUNT: Record<RewardSourceType, number> = {
+  DEBATE: XP_REWARDS.debateCompleted,
+  PRACTICE_TEST: XP_REWARDS.practiceTest
+};
+
+/**
+ * UTC day containing `now`, as a half-open interval: `start <= createdAt < end`.
+ *
+ * Half-open is what makes exactly-midnight unambiguous — 00:00:00.000Z belongs to the NEW day and to
+ * only one day, so no row can be counted twice or fall through a gap. UTC because no learner
+ * timezone is stored anywhere; inventing one would be worse than being explicit about the basis.
+ */
+export function utcDayBounds(now: Date): { start: Date; end: Date } {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const end = new Date(start.getTime());
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+}
+
+/**
+ * How much XP this completion earns, given how many POSITIVE awards of the same type the learner
+ * already has today. Pure — the caller does the counting inside its locked transaction.
+ *
+ * Zero-amount ledger rows ARE written after the quota — they keep the coach's "active" date truthful
+ * and give the results page a persisted reward fact — so they must never be counted as awards. The
+ * caller's query filters `amount > 0`; this function assumes that filtering has already happened and
+ * receives only the positive-award count.
+ */
+export function rewardAmountForCompletion(sourceType: RewardSourceType, positiveAwardsToday: number): number {
+  return positiveAwardsToday < DAILY_REWARD_QUOTA ? REWARD_AMOUNT[sourceType] : 0;
+}
+
 export async function awardXpInTransaction(
   tx: Prisma.TransactionClient,
   userId: string,

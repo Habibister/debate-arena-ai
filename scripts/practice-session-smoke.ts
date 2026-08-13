@@ -603,8 +603,16 @@ async function main() {
     assert.ok(/\bwins\s*:/.test(baselineUpdate.slice(0, baselineUpdate.indexOf("})"))),
       "144-C. control: the pre-A3a judge route DID write wins, so 144 is a real control");
   }
-  assert.ok(/streak: user\.streak \+ 1/.test(judge), "144b. and its streak behaviour is unchanged");
-  assert.ok(/streak: user\.streak \+ 1/.test(grade), "144c. as is test-grade's streak behaviour");
+  // M15 S1A A4a: this pinned the stale `streak: user.streak + 1`. That read-add-write could lose a
+  // concurrent update, so A4a made it an atomic `{ increment: 1 }`. The PROPERTY is unchanged and is
+  // what is asserted now — a completed round still counts as a practice session, and the counter is
+  // no longer written from a value read earlier in the transaction.
+  assert.ok(/streak: \{ increment: 1 \}/.test(judge),
+    "144b. the judge route still counts the practice session, now atomically");
+  assert.ok(!/streak: user\.streak \+ 1/.test(judge),
+    "144b2. and no stale streak read-add-write survives");
+  assert.ok(/streak: \{ increment: 1 \}/.test(grade) && !/streak: user\.streak \+ 1/.test(grade),
+    "144c. and test-grade counts its practice session atomically too");
   assert.ok(/calculateDebateRating\(\{\s*xp: awarded\.xp/.test(judge),
     "145. judge's XP-derived rating uses the authoritative awarded value");
   for (const cut of ["app/api/debate/drills/submit/route.ts", "app/api/deca/drills/submit/route.ts",

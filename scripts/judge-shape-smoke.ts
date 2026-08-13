@@ -116,7 +116,13 @@ async function main() {
     // XP ledger entry instead. The PROPERTY under test is unchanged and still fully covered: every
     // progression write sits after the judge call, so a DECA throw leaves the debate retryable.
     ["XP ledger entry", "tx.xPLog.create("],
-    ["streak update", "streak: user.streak + 1"]
+    // M15 S1A A4a: the stale `streak: user.streak + 1` became the atomic `{ increment: 1 }` so a
+    // concurrent activity cannot lose an update. Same write, same position, same property under
+    // test — only the token moves.
+    ["practice-session counter", "streak: { increment: 1 }"],
+    // A4a adds the per-user serialization point; it must also sit after the judge call, or a DECA
+    // throw would leave a learner's row locked for no reason.
+    ["user row lock", "lockUserRow(tx,"]
   ] as const) {
     const at = routePost.indexOf(token);
     assert.ok(at !== -1 && judgeCallAt < at, `P1c-8b. the ${what} sits after the judge call, so a throw skips it`);
@@ -204,9 +210,17 @@ async function main() {
   // call a solo role-play a "win". Neither may create authoritative progression. These assertions
   // bind the STRUCTURES that could carry that authority, not a global absence of a word.
 
-  // A3a-1. XP from judging is exactly the completion reward — no winner-conditional term.
-  assert.ok(/const xpEarned = XP_REWARDS\.debateCompleted;/.test(judgeRouteSrc),
-    "A3a-1. xpEarned is exactly XP_REWARDS.debateCompleted");
+  // A3a-1. XP from judging carries no winner-conditional term.
+  //
+  // M15 S1A A4a retargeted this control. It used to pin the literal
+  // `const xpEarned = XP_REWARDS.debateCompleted;`, but A4a moved the AMOUNT decision into the
+  // transaction (it now depends on how many awards the learner already has today). The A3a property
+  // is unchanged and is what is asserted here: the amount comes from the completion-based reward
+  // helper, and nothing winner-derived can reach it.
+  assert.ok(/xpEarned = rewardAmountForCompletion\("DEBATE", positiveAwardsToday\);/.test(judgeRouteSrc),
+    "A3a-1. the Debate XP amount comes from the completion-based reward helper");
+  assert.ok(!/xpEarned\s*=\s*[^;]*(wonDebate|teamWinner|overallScore)/.test(judgeRouteSrc),
+    "A3a-1b. and no winner or score term is ever assigned into it");
   assert.ok(!/XP_REWARDS\.debateWon/.test(judgeRouteSrc),
     "A3a-2. the judge route never references the win bonus");
   // ...while the constant itself SURVIVES for M16's validated judge to earn back.
@@ -282,8 +296,14 @@ async function main() {
     "A3a-5f. the XP award receives xpEarned with no arithmetic");
   assert.ok(/amount: xpEarned,/.test(judgeRouteSrc) && !/amount: xpEarned\s*[+\-*/]/.test(judgeRouteSrc),
     "A3a-5g. the XP ledger amount is xpEarned with no arithmetic");
-  assert.equal((judgeRouteSrc.match(/const xpEarned =/g) ?? []).length, 1,
-    "A3a-5h. xpEarned has exactly one definition, so A3a-1 pins the only value in play");
+  // A4a: `xpEarned` is now declared `let xpEarned = 0` and decided once inside the transaction. The
+  // zero initialiser is a safe default, not a decision, so it is excluded — what must stay unique is
+  // the place the VALUE is chosen. Fails closed: two reward decisions, or one that bypasses the
+  // helper, both break this.
+  assert.ok(/let xpEarned = 0;/.test(judgeRouteSrc),
+    "A3a-5h. xpEarned defaults to 0 before the transaction decides it");
+  assert.equal((judgeRouteSrc.match(/xpEarned = (?!0;)/g) ?? []).length, 1,
+    "A3a-5h2. and is decided in exactly one place, so A3a-1 pins the only value in play");
   // Control: the arithmetic detectors actually fire on the mutant adversarial review demonstrated.
   assert.ok(!/awardXpInTransaction\(tx, session\.user\.id, xpEarned\)/.test(
     "awardXpInTransaction(tx, session.user.id, xpEarned + winBonus)"),
@@ -330,9 +350,12 @@ async function main() {
   // A3a-10. Completion authority is UNCHANGED: status, XP ledger and streak all survive.
   assert.ok(/tx\.xPLog\.create\(/.test(judgeTxn) && /sourceType: "DEBATE"/.test(judgeTxn),
     "A3a-10. the completion XP ledger entry still exists");
-  assert.ok(/streak: user\.streak \+ 1/.test(judgeTxn), "A3a-10b. the activity streak still increments");
-  assert.ok(!/reason: wonDebate \?/.test(judgeTxn) && /reason: "Completed AI debate"/.test(judgeTxn),
-    "A3a-10c. the ledger reason no longer branches on the winner");
+  // A4a made this atomic; the property (a completed round still counts as practice) is unchanged.
+  assert.ok(/streak: \{ increment: 1 \}/.test(judgeTxn), "A3a-10b. the practice-session counter still increments");
+  // A4a: the reason now branches on whether the daily quota paid out — never on the winner.
+  assert.ok(!/reason: wonDebate \?/.test(judgeTxn) && /reason: xpEarned > 0 \?/.test(judgeTxn) &&
+            /"Completed AI debate"/.test(judgeTxn),
+    "A3a-10c. the ledger reason branches on the reward outcome, never on the winner");
 
   // A3a-11/12. COACH EVIDENCE INTEGRITY — the downstream half of retiring the wins write.
   //
@@ -520,6 +543,151 @@ async function main() {
     // ...and the current ballot can no longer produce it, because the no-winner case has its own copy.
     assert.ok(/\) : \([\s\S]{0,150}Practice round scored/.test(ballotSrc),
       "A3b-C9e. while the current ballot routes that same case to 'Practice round scored'");
+  }
+
+  // ---- A4a. daily XP is bounded; practice is not ---------------------------------------------------
+  // Practice stays unlimited. Only the XP is capped: the first 3 qualifying completions of each type
+  // per UTC day pay, everything after still completes, is still judged, keeps its coaching, still
+  // counts as a practice session and is still assignment evidence — it just pays 0.
+
+  // PURE FUNCTION: the reward curve itself, both types, across and past the quota.
+  const { rewardAmountForCompletion, utcDayBounds, DAILY_REWARD_QUOTA } = await import("../lib/xp");
+  assert.equal(DAILY_REWARD_QUOTA, 3, "A4a-1. the daily quota is 3 per activity type");
+  for (const [n, want] of [[0, 25], [1, 25], [2, 25], [3, 0], [4, 0], [99, 0]] as const) {
+    assert.equal(rewardAmountForCompletion("DEBATE", n), want, `A4a-2. Debate with ${n} awards today -> ${want} XP`);
+  }
+  for (const [n, want] of [[0, 20], [1, 20], [2, 20], [3, 0], [4, 0], [99, 0]] as const) {
+    assert.equal(rewardAmountForCompletion("PRACTICE_TEST", n), want, `A4a-3. Test with ${n} awards today -> ${want} XP`);
+  }
+  // The helper takes ONLY a count — there is no score parameter, so no ballot score or test score can
+  // reach reward eligibility even by accident.
+  assert.equal(rewardAmountForCompletion.length, 2, "A4a-4. reward eligibility depends on type and count alone");
+
+  // PURE FUNCTION: UTC day bounds, half-open so exact midnight belongs to one day only.
+  {
+    const mid = new Date("2026-08-13T00:00:00.000Z");
+    const b = utcDayBounds(mid);
+    assert.equal(b.start.toISOString(), "2026-08-13T00:00:00.000Z", "A4a-5. exact midnight starts the NEW day");
+    assert.equal(b.end.toISOString(), "2026-08-14T00:00:00.000Z", "A4a-5b. and the window ends at the next midnight");
+    const justBefore = utcDayBounds(new Date("2026-08-12T23:59:59.999Z"));
+    assert.equal(justBefore.start.toISOString(), "2026-08-12T00:00:00.000Z",
+      "A4a-5c. a moment before midnight belongs to the PRIOR day");
+    assert.ok(b.start.getTime() === justBefore.end.getTime(),
+      "A4a-5d. the windows abut exactly — end is exclusive, so no row is double-counted or dropped");
+    // Month/year rollover must not produce an invalid window.
+    const ny = utcDayBounds(new Date("2026-12-31T12:00:00.000Z"));
+    assert.equal(ny.end.toISOString(), "2027-01-01T00:00:00.000Z", "A4a-5e. year rollover is handled");
+  }
+
+  // SOURCE-LEVEL: the transaction protocol in BOTH writers.
+  const gradeSrc = strip(readFileSync("app/api/tests/[testId]/grade/route.ts", "utf8"));
+  for (const [name, src, claimCall, sourceType] of [
+    ["judge", judgeRouteSrc, "await tx.debate.updateMany(", "DEBATE"],
+    ["grade", gradeSrc, "await tx.practiceTest.updateMany(", "PRACTICE_TEST"]
+  ] as const) {
+    const txn = src.slice(src.indexOf("prisma.$transaction(async (tx) =>"));
+    const claimAt = txn.indexOf(claimCall);
+    const lockAt = txn.indexOf("lockUserRow(tx,");
+    const nowAt = txn.indexOf("const now = new Date();");
+    const countAt = txn.indexOf("tx.xPLog.count(");
+    assert.ok(claimAt >= 0 && lockAt >= 0 && nowAt >= 0 && countAt >= 0,
+      `A4a-6. ${name}: claim, lock, now and ledger count all present`);
+    assert.equal(txn.indexOf("await tx."), claimAt,
+      `A4a-6b. ${name}: the A2 same-source claim is still the FIRST tx operation`);
+    assert.ok(claimAt < lockAt, `A4a-6c. ${name}: the user lock comes AFTER the claim, never before`);
+    assert.ok(lockAt < nowAt, `A4a-6d. ${name}: 'now' is captured AFTER the lock, so waiting past midnight cannot bill the wrong day`);
+    assert.ok(nowAt < countAt, `A4a-6e. ${name}: the day window is derived before the ledger is read`);
+    // The quota query: positive awards only, this type only, inside the derived window.
+    const countBlock = txn.slice(countAt, countAt + 420);
+    assert.ok(new RegExp(`sourceType: "${sourceType}"`).test(countBlock),
+      `A4a-7. ${name}: the quota counts only its own sourceType, so the two quotas stay independent`);
+    assert.ok(/amount: \{ gt: 0 \}/.test(countBlock),
+      `A4a-7b. ${name}: zero-amount rows do NOT consume quota`);
+    assert.ok(/createdAt: \{ gte: dayStart, lt: dayEnd \}/.test(countBlock),
+      `A4a-7c. ${name}: the window is half-open [dayStart, dayEnd)`);
+    // Z1: a ledger row is written on EVERY completion, and the award helper is skipped at zero.
+    assert.ok(/xpEarned > 0/.test(txn) && !/awardXpInTransaction\(tx, session\.user\.id, 0\)/.test(txn),
+      `A4a-8. ${name}: awardXpInTransaction is skipped past the quota, never called with 0`);
+    assert.ok(/amount: xpEarned/.test(txn), `A4a-8b. ${name}: the ledger row records the ACTUAL amount, including 0`);
+    // The session counter is atomic and unconditional.
+    assert.ok(/streak: \{ increment: 1 \}/.test(txn),
+      `A4a-9. ${name}: the practice-session counter increments atomically`);
+    assert.ok(!/streak: user\.streak \+ 1/.test(src),
+      `A4a-9b. ${name}: the stale read-add-write is gone`);
+  }
+
+  // SOURCE-LEVEL: reward eligibility never consults a score or a winner.
+  const judgeTxnA4 = judgeRouteSrc.slice(judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>"));
+  // String literals are stripped first: the lock's failure message legitimately contains the word
+  // "scored", and matching prose rather than identifiers would fail on honest copy.
+  const withoutStrings = (src: string) => src.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, '""');
+  const eligibilityRegion = withoutStrings(
+    judgeTxnA4.slice(judgeTxnA4.indexOf("lockUserRow(tx,"), judgeTxnA4.indexOf("rewardAmountForCompletion") + 120));
+  assert.ok(!/\b(overallScore|wonDebate|teamWinner|didStudentWin|scores)\b/.test(eligibilityRegion),
+    "A4a-10. Debate reward eligibility references no score and no winner identifier");
+  // Sliced from the TRANSACTION, not the whole file. Slicing the file found the `import
+  // { rewardAmountForCompletion }` line near the top, which sits BEFORE `tx.xPLog.count(`, so the
+  // slice was empty and the assertion passed vacuously — a mutation probe adding a real
+  // `score >= 70 ?` gate survived it. Caught before commit; the judge equivalent above was already
+  // transaction-scoped and unaffected.
+  const gradeTxnA4 = gradeSrc.slice(gradeSrc.indexOf("prisma.$transaction(async (tx) =>"));
+  const testEligibility = withoutStrings(
+    gradeTxnA4.slice(gradeTxnA4.indexOf("tx.xPLog.count("), gradeTxnA4.indexOf("rewardAmountForCompletion") + 120));
+  assert.ok(testEligibility.length > 100, "A4a-10b0. control: the grade eligibility region is non-empty");
+  assert.ok(!/\bscore\b/.test(testEligibility),
+    "A4a-10b. PracticeTest reward eligibility applies no minimum-score gate");
+  // Control: the region really does contain the decision it is meant to police.
+  assert.ok(/rewardAmountForCompletion/.test(testEligibility),
+    "A4a-10b2. control: and it spans the reward decision itself");
+  // Control: the identifier detector still fires on a real score reference.
+  assert.ok(/\b(overallScore|wonDebate)\b/.test(withoutStrings('if (overallScore >= 70) { grant(); }')),
+    "A4a-10c. control: the detector catches a genuine score gate");
+
+  // SOURCE-LEVEL: the results page reads PERSISTED reward truth and can never invent one.
+  const resultsSrc = strip(readFileSync("app/(app)/tests/[testId]/results/page.tsx", "utf8"));
+  assert.ok(!/\+20/.test(resultsSrc), "A4a-11. the results page no longer hardcodes +20");
+  assert.ok(/sourceType: "PRACTICE_TEST", sourceId: test\.id/.test(resultsSrc),
+    "A4a-11b. it reads the persisted reward event for THIS test");
+  assert.ok(/rewardEvent === null \? null :/.test(resultsSrc),
+    "A4a-11c. a missing ledger row renders NOTHING — it cannot claim an award or claim the limit was hit");
+  assert.ok(/rewardEvent\.amount > 0 \?/.test(resultsSrc) && /\+\{rewardEvent\.amount\}/.test(resultsSrc),
+    "A4a-11d. a positive row renders its ACTUAL amount");
+  assert.ok(/today&apos;s XP limit is reached/.test(resultsSrc),
+    "A4a-11e. a zero row explains the limit while keeping the diagnosis");
+
+  // SOURCE-LEVEL: the arena never shows a bare "+0 XP".
+  const arenaA4 = strip(readFileSync("components/debate/debate-arena.tsx", "utf8"));
+  assert.ok(/rewardLimitReached \?/.test(arenaA4), "A4a-12. the arena branches on the limit state");
+  assert.ok(/No XP for this round — today&apos;s XP limit is reached|No XP for this round — today's XP limit is reached/.test(arenaA4),
+    "A4a-12b. and explains it rather than rendering a bare zero");
+  assert.ok(/rewardLimitReached,/.test(judgeRouteSrc), "A4a-12c. the judge response carries the limit state");
+
+  // SOURCE-LEVEL: the lock primitive is reused, never duplicated.
+  const sessionLib = strip(readFileSync("lib/practice-session.ts", "utf8"));
+  assert.equal((sessionLib.match(/FOR UPDATE/g) ?? []).length, 1,
+    "A4a-13. exactly one FOR UPDATE primitive exists in lib/practice-session.ts");
+  for (const [name, src] of [["judge", judgeRouteSrc], ["grade", gradeSrc]] as const) {
+    assert.ok(!/FOR UPDATE/.test(src), `A4a-13b. ${name} reuses lockUserRow rather than copying the raw lock`);
+  }
+  assert.ok(/onMissing: \(\) => never = sessionNotFound/.test(sessionLib),
+    "A4a-13c. the existing eight callers keep sessionNotFound as the default, so their behaviour is unchanged");
+
+  // NON-VACUOUS against the frozen pre-A4a pin.
+  {
+    const PRE_M15_A4 = "5e372cc027c0e920afde9c56bbfcca16781592f1";
+    const judgeAt = strip(execSync(`git show ${PRE_M15_A4}:'app/api/debates/[debateId]/judge/route.ts'`, { encoding: "utf8" }));
+    const gradeAt = strip(execSync(`git show ${PRE_M15_A4}:'app/api/tests/[testId]/grade/route.ts'`, { encoding: "utf8" }));
+    const resultsAt = strip(execSync(`git show ${PRE_M15_A4}:'app/(app)/tests/[testId]/results/page.tsx'`, { encoding: "utf8" }));
+    assert.ok(/const xpEarned = XP_REWARDS\.debateCompleted;/.test(judgeAt),
+      "A4a-C1. control: the pre-A4a judge route awarded XP unconditionally");
+    assert.ok(/XP_REWARDS\.practiceTest/.test(gradeAt) && !/xPLog\.count\(/.test(gradeAt),
+      "A4a-C2. control: the pre-A4a grade route awarded XP unconditionally with no ledger check");
+    assert.ok(/streak: user\.streak \+ 1/.test(judgeAt) && /streak: user\.streak \+ 1/.test(gradeAt),
+      "A4a-C3. control: both writers used the stale streak read-add-write");
+    assert.ok(/\+20/.test(resultsAt),
+      "A4a-C4. control: the pre-A4a results page hardcoded +20");
+    assert.ok(!/lockUserRow/.test(judgeAt) && !/lockUserRow/.test(gradeAt),
+      "A4a-C5. control: neither writer previously serialized on the user row");
   }
 
   // ---- A3b-2. the same terminology follows the learner off the ballot -----------------------------

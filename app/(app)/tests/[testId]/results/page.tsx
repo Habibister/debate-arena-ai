@@ -83,6 +83,20 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
     notFound();
   }
 
+  // M15 S1A A4a — PERSISTED REWARD TRUTH.
+  //
+  // This page is reached by `router.push` after grading, and the client discards the grade response
+  // (it parses it only for `error`), so no response field can reach here. The XP shown must therefore
+  // come from what was actually written. The grade route records exactly one XPLog row per completed
+  // test — `amount` = the real award, or 0 once the daily XP limit is reached — so that row IS the
+  // reward fact. It previously rendered a hardcoded "+20", correct only while every completion paid
+  // 20; under a daily limit that would have told a learner they earned XP they did not.
+  const rewardEvent = await prisma.xPLog.findFirst({
+    where: { userId: session.user.id, sourceType: "PRACTICE_TEST", sourceId: test.id },
+    orderBy: { createdAt: "desc" },
+    select: { amount: true }
+  });
+
   if (test.status !== "COMPLETED") {
     redirect(`/tests/${test.id}`);
   }
@@ -131,11 +145,26 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
               <p className="mt-3 text-sm font-semibold">Lessons</p>
               <p className="mt-1 text-2xl font-bold">{lessonRecommendations.length}</p>
             </div>
-            <div className="rounded-lg border bg-background p-4">
-              <ClipboardList className="h-5 w-5 text-accent" aria-hidden />
-              <p className="mt-3 text-sm font-semibold">XP earned</p>
-              <p className="mt-1 text-2xl font-bold">+20</p>
-            </div>
+            {/* M15 S1A A4a — three states, and the third is the important one. A MISSING ledger row
+                is not proof of an award and not proof that the limit was hit: tests graded before
+                A4a have no row at all. So the tile is omitted rather than inventing either claim.
+                The score, weak areas and recommendations below are unaffected in every case. */}
+            {rewardEvent === null ? null : rewardEvent.amount > 0 ? (
+              <div className="rounded-lg border bg-background p-4">
+                <ClipboardList className="h-5 w-5 text-accent" aria-hidden />
+                <p className="mt-3 text-sm font-semibold">XP earned</p>
+                <p className="mt-1 text-2xl font-bold">+{rewardEvent.amount}</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border bg-background p-4">
+                <ClipboardList className="h-5 w-5 text-accent" aria-hidden />
+                <p className="mt-3 text-sm font-semibold">XP earned</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  No XP — today&apos;s XP limit is reached. Your score, weak areas and recommendations are all
+                  still here.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

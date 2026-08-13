@@ -345,6 +345,8 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const [judgeReport, setJudgeReport] = useState<JudgeReport | null>(coerceJudgeReport(initialJudgeReport));
   const [decisionOpen, setDecisionOpen] = useState(Boolean(coerceJudgeReport(initialJudgeReport)));
   const [xpEarned, setXpEarned] = useState<number | null>(null);
+  // A4a: distinguishes "0 XP because today's limit is reached" from any other zero.
+  const [rewardLimitReached, setRewardLimitReached] = useState(false);
   const [aiNotice, setAiNotice] = useState(
     coerceJudgeReport(initialJudgeReport)?.aiNotice ?? coerceJudgeReport(initialJudgeReport)?.fallbackNotice ?? null
   );
@@ -555,7 +557,12 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
     setError(null);
 
     try {
-      const result = await requestJson<{ debate: ArenaDebate; judge: JudgeReport; xpEarned: number }>(`/api/debates/${debate.id}/judge`, {
+      const result = await requestJson<{
+        debate: ArenaDebate;
+        judge: JudgeReport;
+        xpEarned: number;
+        rewardLimitReached?: boolean;
+      }>(`/api/debates/${debate.id}/judge`, {
         method: "POST",
         body: JSON.stringify({})
       });
@@ -563,6 +570,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
       setJudgeReport(result.judge);
       setDecisionOpen(true);
       setXpEarned(result.xpEarned);
+      setRewardLimitReached(result.rewardLimitReached ?? false);
       setAiNotice(result.judge.aiNotice ?? result.judge.fallbackNotice ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to judge this round.");
@@ -997,7 +1005,13 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
       </div>
 
       {judgeReport && decisionOpen ? (
-        <JudgeDecisionModal report={judgeReport} xpEarned={xpEarned} overallScore={debate.overallScore} onClose={() => setDecisionOpen(false)} />
+        <JudgeDecisionModal
+          report={judgeReport}
+          xpEarned={xpEarned}
+          rewardLimitReached={rewardLimitReached}
+          overallScore={debate.overallScore}
+          onClose={() => setDecisionOpen(false)}
+        />
       ) : null}
     </div>
   );
@@ -1006,11 +1020,13 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 function JudgeDecisionModal({
   report,
   xpEarned,
+  rewardLimitReached,
   overallScore,
   onClose
 }: {
   report: JudgeReport;
   xpEarned: number | null;
+  rewardLimitReached: boolean;
   overallScore: number | null;
   onClose: () => void;
 }) {
@@ -1091,7 +1107,17 @@ function JudgeDecisionModal({
               <p className="mt-2 text-xs leading-5 text-neutral-500">Formative coaching score — not mastery or readiness.</p>
               {/* XP is real and earned for COMPLETING the round (M15 A3a), not for this score or for
                   winning — so it is stated separately and never as a consequence of the number above. */}
-              <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned for completing the round</p>
+              {/* A4a: never render a bare "+0 XP". Past the daily limit the round still counted as
+                  practice and still carries its full ballot — the copy says so instead of showing a
+                  zero the learner has to interpret. */}
+              {rewardLimitReached ? (
+                <p className="mt-3 text-xs leading-5 text-neutral-400">
+                  No XP for this round — today&apos;s XP limit is reached. It still counts as practice, and your
+                  full ballot and coaching are below.
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned for completing the round</p>
+              )}
             </div>
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
               <div className="flex items-center justify-between gap-2">

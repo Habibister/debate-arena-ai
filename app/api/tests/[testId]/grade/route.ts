@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { lockUserRow } from "@/lib/practice-session";
 import { practiceTestGradeSchema } from "@/lib/validators";
-import { XP_REWARDS } from "@/lib/constants";
-import { awardXpInTransaction } from "@/lib/xp";
+import { awardXpInTransaction, rewardAmountForCompletion, utcDayBounds } from "@/lib/xp";
 
 export const runtime = "nodejs";
 
@@ -119,15 +119,35 @@ export async function POST(request: Request, { params }: { params: { testId: str
         throw new HttpError("Practice test has already been graded", 409);
       }
 
-      // XP is no longer read here. A plain SELECT never blocks under MVCC, so reading xp, adding in
-      // JavaScript and writing the sum back could be erased by a concurrent writer that committed in
-      // between — a row lock orders that write but cannot repair a value already stale when read.
-      // `awardXpInTransaction` increments atomically instead. Streak keeps its existing behaviour
-      // exactly, including its own pre-read staleness, which remains carried work.
-      const user = await tx.user.findUniqueOrThrow({
-        where: { id: session.user.id },
-        select: { streak: true }
+      // M15 S1A A4a — SECOND: serialize this learner's reward path. The A2 claim above already made
+      // THIS test exactly-once; the lock is what makes the DAILY QUOTA exact across DISTINCT tests.
+      // Without it two concurrent grades of two different tests could both read "2 awards today" and
+      // both award a third. Reuses the existing `FOR UPDATE` primitive rather than a second copy.
+      await lockUserRow(tx, session.user.id, () => {
+        throw new HttpError("Your account could not be loaded, so this test was not graded. Try again.", 409);
       });
+
+      // THIRD: one server timestamp, captured AFTER the lock — the lock can block behind another
+      // transaction, so a request that began at 23:59:58 UTC could otherwise be judged against the
+      // previous day's quota.
+      const now = new Date();
+      const { start: dayStart, end: dayEnd } = utcDayBounds(now);
+
+      // FOURTH: count only POSITIVE PracticeTest awards today. Zero-amount rows record post-quota
+      // completions (keeping the coach's "active" date truthful) and must not consume quota. DEBATE
+      // rows are a separate quota, excluded by sourceType.
+      const positiveAwardsToday = await tx.xPLog.count({
+        where: {
+          userId: session.user.id,
+          sourceType: "PRACTICE_TEST",
+          amount: { gt: 0 },
+          createdAt: { gte: dayStart, lt: dayEnd }
+        }
+      });
+      // Note what is NOT consulted: `score`. A legitimately completed test earns its reward on the
+      // completion fact alone. Gating XP on the result would penalise exactly the learner who most
+      // needs to keep practising.
+      const xpEarned = rewardAmountForCompletion("PRACTICE_TEST", positiveAwardsToday);
 
       for (const item of gradedQuestions) {
         await tx.practiceAnswer.upsert({
@@ -170,22 +190,40 @@ export async function POST(request: Request, { params }: { params: { testId: str
         }
       });
 
+      // A4a — Z1: ONE ledger row per completed source, always, even when it earned nothing. This row
+      // is also the ONLY persisted record of what this test paid: the results page is a separate
+      // server component reached by navigation, and the grade response is discarded by the client,
+      // so `amount` here is what that page reads back. Omitting it past the quota would both hide
+      // real activity from the coach's "active" date and leave the results page with nothing true
+      // to show.
       await tx.xPLog.create({
         data: {
           userId: session.user.id,
-          amount: XP_REWARDS.practiceTest,
-          reason: `Completed ${test.organization} practice test`,
+          amount: xpEarned,
+          reason:
+            xpEarned > 0
+              ? `Completed ${test.organization} practice test`
+              : `Completed ${test.organization} practice test (daily XP limit reached)`,
           sourceType: "PRACTICE_TEST",
-          sourceId: test.id
+          sourceId: test.id,
+          createdAt: now
         }
       });
 
-      // Same amount, same eligibility, same response contract — only the write is made safe.
-      await awardXpInTransaction(tx, session.user.id, XP_REWARDS.practiceTest);
+      // Award atomically when eligible. Past the quota `awardXpInTransaction` is NOT called with 0 —
+      // that would be two pointless writes and a rank re-derivation from an unchanged value.
+      if (xpEarned > 0) {
+        await awardXpInTransaction(tx, session.user.id, xpEarned);
+      }
+      // A4a: `User.streak` is a LIFETIME count of completed practice activities, not a
+      // consecutive-day streak — no date field or reset exists anywhere. It increments on every
+      // completed test, including past the XP quota, because the learner really did complete another
+      // practice session. `{ increment: 1 }` replaces a stale read-add-write that could lose a
+      // concurrent update.
       await tx.user.update({
         where: { id: session.user.id },
         data: {
-          streak: user.streak + 1
+          streak: { increment: 1 }
         }
       });
     });

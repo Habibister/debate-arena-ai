@@ -143,17 +143,30 @@ export function buildServedChoices(
 // ---- transaction helpers -------------------------------------------------------------------------
 
 /**
- * MUST be the first database statement of every session-start and final-submit transaction.
- *
- * This is the serialization point for one learner: it makes two concurrent starts produce one active
+ * The serialization point for ONE learner. For a practice session it must be the first database
+ * statement of the start/submit transaction: it makes two concurrent starts produce one active
  * session, and it makes the loser of two concurrent submits wait and then observe the winner's
  * committed COMPLETED row instead of grading a second time.
+ *
+ * M15 S1A A4a — the reward writers reuse this exact primitive rather than duplicating the raw
+ * `FOR UPDATE`, because a second copy of a security-critical lock is the kind of thing that drifts.
+ * They call it as the SECOND statement, immediately after their own A2 same-source claim, which is
+ * what serializes the daily XP quota across DISTINCT sources.
+ *
+ * `onMissing` exists only so those callers can report an accurate error. The default is unchanged,
+ * so all eight practice-session callers keep byte-identical behaviour: a vanished user row still
+ * produces `sessionNotFound()`. A judge or grade route has no session, and answering
+ * "this practice session is no longer available" there would be a false statement about what failed.
  */
-export async function lockUserRow(tx: Prisma.TransactionClient, userId: string): Promise<void> {
+export async function lockUserRow(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  onMissing: () => never = sessionNotFound
+): Promise<void> {
   const rows = await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
   // No row means the authenticated user no longer exists. Fail rather than continue unserialized:
   // every guarantee below this line assumes this lock is held.
-  if (!Array.isArray(rows) || rows.length !== 1) sessionNotFound();
+  if (!Array.isArray(rows) || rows.length !== 1) onMissing();
 }
 
 /**

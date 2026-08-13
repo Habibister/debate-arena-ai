@@ -6,10 +6,10 @@ import { clientIp } from "@/lib/api-auth";
 import { authOptions } from "@/lib/auth";
 import { nearestAiPersona } from "@/lib/ai-personas";
 import { getNextSpeech, isSpeechComplete, parseFormatConfig } from "@/lib/debate-formats";
+import { lockUserRow } from "@/lib/practice-session";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { awardXpInTransaction, calculateDebateRating } from "@/lib/xp";
-import { XP_REWARDS } from "@/lib/constants";
+import { awardXpInTransaction, calculateDebateRating, rewardAmountForCompletion, utcDayBounds } from "@/lib/xp";
 
 export const runtime = "nodejs";
 
@@ -335,7 +335,11 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     // `overallScore >= 80` fallback calls a solo role-play a "win". `XP_REWARDS.debateWon` is
     // deliberately LEFT IN lib/constants.ts: M16's validated semantic judge may legitimately earn it
     // back behind a trust gate. Removing the constant would make that restoration a rewrite.
-    const xpEarned = XP_REWARDS.debateCompleted;
+    // A4a: the AMOUNT is no longer fixed here — it is decided inside the transaction, after the user
+    // row lock, from how many positive Debate awards this learner already has today. Declared here so
+    // the response payload below can report what was actually granted.
+    let xpEarned = 0;
+    let rewardLimitReached = false;
     const completedSpeechCount = debate.messages.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length;
     const argumentCategory = findCategory(result, ["argument"]);
     const refutationCategory = findCategory(result, ["refutation"]);
@@ -370,16 +374,48 @@ export async function POST(request: Request, { params }: { params: { debateId: s
         throw new HttpError("This debate has already been judged", 409);
       }
 
-      const user = await tx.user.findUniqueOrThrow({
-        where: { id: session.user.id },
-        select: { wins: true, streak: true }
+      // M15 S1A A4a — SECOND: serialize this learner's reward path. The A2 claim above already made
+      // THIS debate exactly-once; the lock is what makes the DAILY QUOTA exact across DISTINCT
+      // debates. Without it two concurrent judgements of two different rounds could both read
+      // "2 awards today" and both award a third. Reuses the existing `FOR UPDATE` primitive rather
+      // than a second copy of it, with an error that describes what actually failed here.
+      await lockUserRow(tx, session.user.id, () => {
+        throw new HttpError("Your account could not be loaded, so this round was not scored. Try again.", 409);
       });
 
-      // Award FIRST, atomically, so every XP-derived value below uses the authoritative result. The
-      // previous read-add-write could be erased by a concurrent writer: a plain SELECT does not block
-      // under MVCC, so ordering the write did not stop a stale value being written.
-      // Streak keeps its existing behaviour and its own pre-read staleness — carried work.
-      const awarded = await awardXpInTransaction(tx, session.user.id, xpEarned);
+      // THIRD: one server timestamp, captured AFTER the lock. Taking it before would be wrong — the
+      // lock can block behind another transaction, so a request that started at 23:59:58 UTC could
+      // acquire the lock after midnight and then be judged against the previous day's quota.
+      const now = new Date();
+      const { start: dayStart, end: dayEnd } = utcDayBounds(now);
+
+      // FOURTH: count only POSITIVE Debate awards in this UTC day. `amount: { gt: 0 }` matters —
+      // post-quota completions still write a zero-amount row (it keeps the coach's "active" date
+      // truthful), and those must not consume the quota. PRACTICE_TEST rows are a separate quota and
+      // are excluded by sourceType.
+      const positiveAwardsToday = await tx.xPLog.count({
+        where: {
+          userId: session.user.id,
+          sourceType: "DEBATE",
+          amount: { gt: 0 },
+          createdAt: { gte: dayStart, lt: dayEnd }
+        }
+      });
+      xpEarned = rewardAmountForCompletion("DEBATE", positiveAwardsToday);
+      rewardLimitReached = xpEarned === 0;
+
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: session.user.id },
+        select: { wins: true }
+      });
+
+      // Award atomically when eligible. Past the quota `awardXpInTransaction` is NOT called at all:
+      // calling it with 0 would perform two pointless writes and re-derive rank from an unchanged
+      // value. XP and rank are simply left alone.
+      const awarded =
+        xpEarned > 0
+          ? await awardXpInTransaction(tx, session.user.id, xpEarned)
+          : await tx.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { xp: true, rank: true } });
       // A3a: `user.wins` is read but NEVER incremented. It feeds only this projection, which selects
       // the recommended sparring bot — an internal difficulty heuristic, not a displayed rating. The
       // old `wonDebate ? user.wins + 1 : user.wins` speculatively counted a win this route no longer
@@ -467,15 +503,27 @@ export async function POST(request: Request, { params }: { params: { debateId: s
 
       // A3a: `wins` is GONE from this update — a formative ballot may not mint a competition win.
       // Historical values are left exactly as they stand: no reset, no backfill, no migration.
-      // Streak stays; it is an activity counter (the dashboard already labels it "Practice
-      // sessions"), and it rests on the completion fact rather than on any score.
+      //
+      // A4a: `User.streak` is a badly named LIFETIME COUNT of completed practice activities, not a
+      // consecutive-day streak — there is no date field and no reset anywhere in the codebase. It is
+      // deliberately NOT converted here: capping only future increments while grandfathering the
+      // stored value would make one column mean "sessions" below some row and "days" above it. So it
+      // increments on EVERY completed round, including past the XP quota, because the learner really
+      // did complete another practice session. `{ increment: 1 }` replaces a stale read-add-write
+      // that could silently lose a concurrent update.
       const savedUser = await tx.user.update({
         where: { id: session.user.id },
         data: {
-          streak: user.streak + 1
+          streak: { increment: 1 }
         }
       });
 
+      // A4a — Z1: ONE ledger row per completed source, always, even when it earned nothing.
+      // `amount: 0` past the quota is deliberate. XPLog's only reader is `getLastActivityForUsers`,
+      // which takes max(createdAt) to show a coach when a student was last active; omitting the row
+      // would make a student who practised three more rounds today look inactive since yesterday.
+      // Nothing sums XPLog into `User.xp` and nothing filters on amount, so a zero row is harmless
+      // to every existing consumer — and the quota query above excludes it explicitly.
       await tx.xPLog.create({
         data: {
           userId: session.user.id,
@@ -483,9 +531,10 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           // The award is completion-only, so the ledger entry may not say "won". A reason string
           // branching on `wonDebate` would put the untrustworthy winner back into a progression
           // write through the back door.
-          reason: "Completed AI debate",
+          reason: xpEarned > 0 ? "Completed AI debate" : "Completed AI debate (daily XP limit reached)",
           sourceType: "DEBATE",
-          sourceId: debate.id
+          sourceId: debate.id,
+          createdAt: now
         }
       });
 
@@ -514,6 +563,9 @@ export async function POST(request: Request, { params }: { params: { debateId: s
         rank: updatedUser.rank
       },
       xpEarned,
+      // A4a: lets the arena distinguish "0 XP because today's limit is reached" from any other zero.
+      // Without it the UI could only render a bare "+0 XP" — true, but unexplained and deflating.
+      rewardLimitReached,
       judge: resultWithRating
     });
   } catch (error) {

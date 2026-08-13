@@ -2,7 +2,50 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A3b-3: coach and assignment labels align (2026-08-13)
+## Latest handoff — M15 S1A A4a: daily XP bounded, practice unlimited (2026-08-13)
+
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+Six production files, three suites, two docs. Read the A4a section of `docs/CURRENT_STATE.md` first.
+
+### Things that will look like bugs but are deliberate
+
+- **`User.streak` is still called "streak" in the schema and is NOT a streak.** It is a lifetime count
+  of completed practice activities. Do not convert it to a daily/consecutive-day counter without a
+  real date-aware model — grandfathering the stored value while changing the meaning would produce a
+  hybrid number that is neither.
+- **A zero-amount XPLog row is written past the quota, on purpose.** It keeps the coach's "active"
+  date truthful and is the persisted reward fact the PracticeTest results page reads. The quota query
+  filters `amount > 0`, so zero rows never consume quota. Do not "clean up" these rows.
+- **The PracticeTest results page shows nothing when its ledger row is missing.** That is the
+  no-fabrication rule: a missing row proves neither an award nor that the limit was hit, and tests
+  graded before A4a have no row. Do not add a fallback amount.
+- **`awardXpInTransaction` is skipped, not called with 0, past the quota.** Calling it with zero would
+  be two pointless writes and a rank re-derivation from an unchanged value.
+- **The lock goes AFTER the A2 claim, never before.** Order is `Debate/Test row → User row`. No route
+  may take the User lock and then claim a Debate or PracticeTest row — that reverse edge would create
+  a deadlock cycle. All eight pre-existing `lockUserRow` callers take `User → PracticeSession` only.
+
+### Next steps, in order
+
+1. Owner pushes the A4a commit. **Do not push automatically.**
+2. Read-only Production verification (SHA/deployment identity, route health, deployed protocol order,
+   quota predicates, Z1 rows, UI truth, A3/A2/A1/G2 freezes, 29 suites). No DB access, no auth.
+3. **A4b** — tiny and wording-only: remove the false "debates, tests, and lessons" claim from
+   `components/app/xp-progress-card.tsx`. Practice sessions = completed Debates + graded PracticeTests.
+4. **S1B** — `/debates/history` gating, stale Reassess CTA, skills-compat prose, and the 50
+   HEAD-relative test pins.
+
+### Standing constraints (unchanged)
+
+No push, deploy, schema change, migration, `db push`/seed, dependency install, or destructive git
+without explicit approval. Never run `auth:smoke`, `team:smoke`, `assignment:smoke`, or
+`deca:skills:activate`. **Never open `.env`, read `DATABASE_URL`, or query any shared database.**
+M14 Global G2 remains **CLOSED**.
+
+## Previous handoff — M15 S1A A3b-3: coach and assignment labels align (2026-08-13)
 
 ### One local commit awaits the owner push; then read-only Production verification
 

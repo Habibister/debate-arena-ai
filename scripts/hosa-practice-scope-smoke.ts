@@ -345,7 +345,13 @@ async function main() {
     assert.ok(!/\bwins\s*:/.test(updateCall.slice(0, updateCall.indexOf("})"))),
       "46d. the Debate judge route writes no wins field, matching practice-session:smoke 144");
   }
-  assert.ok(/streak: user\.streak \+ 1/.test(judgeSrc), "46d2. and its streak behaviour is preserved");
+  // M15 S1A A4a retargeted this literal. It pinned `streak: user.streak + 1`, a read-add-write that
+  // could silently lose a concurrent update; A4a made it an atomic `{ increment: 1 }`. The semantic
+  // property this control exists for is unchanged — the non-HOSA Debate judging path still performs
+  // its own practice-session progression — and the control is now strictly stronger, because it also
+  // proves the race-prone form is gone rather than merely that some streak write exists.
+  assert.ok(/streak: \{ increment: 1 \}/.test(judgeSrc) && !/streak: user\.streak \+ 1/.test(judgeSrc),
+    "46d2. and its practice-session counter is preserved, now written atomically");
   // NON-VACUOUS against the frozen A3a baseline, which DID write wins from the winner.
   {
     const judgeAtA3Baseline = code(require("node:child_process")

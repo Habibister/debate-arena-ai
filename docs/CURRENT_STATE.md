@@ -2,7 +2,47 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1A A4a — daily XP is now bounded while practice stays unlimited: 3 XP-eligible Debates and 3 XP-eligible PracticeTests per UTC day, serialized on the existing user row lock, with truthful reward copy on both result surfaces. **LOCAL COMMIT, NOT PUSHED.** The complete A3 sequence is shipped and Production-verified at `5883101376`; M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-13 (M15 S1A A4b — the practice-session card no longer claims lessons count toward it. **LOCAL COMMIT, NOT PUSHED.** A1, A2, the complete A3 sequence and A4a are shipped and Production-verified at `5884247160`; M14 Global G2 remains CLOSED.)_
+
+## M15 S1A A4b — Practice-session copy matches real activity (LOCAL, push pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+The last reward-honesty batch. **One production file, copy only.**
+
+**Before:** `{n} practice sessions completed — debates, tests, and lessons.` and
+`Complete a debate, test, or lesson to start your record.`
+**After:** `{n} practice sessions completed — debates and graded tests.` and
+`Complete a debate or a practice test to start your record.`
+
+Both old lines were false. `User.streak` has exactly **two** writers — the Debate judge route and the
+PracticeTest grade route — and `XP_REWARDS.lessonCompleted` is declared once and consumed nowhere.
+Finishing a lesson could never move that number, so naming lessons promised progress that could not
+happen.
+
+**Semantics, unchanged:** `User.streak` keeps its legacy schema name and its meaning — a **lifetime
+count of completed Debate and graded PracticeTest sessions**. Not a streak, not consecutive days. No
+counter logic, reward logic, quota, XP, XPLog, rank or lesson behaviour was touched; the historical
+value is untouched. The word "streak" still exists as the prop identifier but never reaches a learner
+as text.
+
+**Already-truthful surfaces left alone:** dashboard, coach detail, profile and home all say "Practice
+sessions" and were correct before this batch.
+
+### Validation
+
+`db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**29/29 safe suites green while still uncommitted with HEAD at the A4a baseline** · **8/8 mutation
+probes killed**. All six A4a production files **byte-identical**; A3, A2, A1, G2 and the schema
+frozen. **No database access.**
+
+### Still open
+
+**S1B:** `/debates/history` soft-redirect gating, stale "Reassess now" CTA, skills-compat prose, 50
+HEAD-relative test pins. **M16:** semantic judging, authoritative winner, readiness, snapshot/wins
+restoration.
+
+## M15 S1A A4a — Daily XP bounded, practice unlimited (shipped; Production-verified at `5884247160`)
 
 ## M15 S1A A4a — Daily XP bounded, practice unlimited (LOCAL, push pending)
 

@@ -41,9 +41,15 @@ export function XpProgressCard({ xp, rank, streak }: XpProgressCardProps) {
         </div>
         <div className="mt-4 flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
           <Sparkles className="h-4 w-4 text-accent" aria-hidden />
+          {/* M15 S1A A4b — this said "debates, tests, and lessons" and "Complete a debate, test, or
+              lesson". Lessons contribute nothing: they award no XP and never touch this counter,
+              whose only two writers are the Debate judge route and the PracticeTest grade route.
+              Naming lessons here promised a learner that finishing one would move a number it cannot
+              move. The `streak` prop keeps its legacy schema name but holds a LIFETIME count of
+              completed practice sessions, not a streak — so the copy says sessions, never days. */}
           {streak > 0
-            ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — debates, tests, and lessons.`
-            : "Complete a debate, test, or lesson to start your record."}
+            ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — debates and graded tests.`
+            : "Complete a debate or a practice test to start your record."}
         </div>
       </CardContent>
     </Card>

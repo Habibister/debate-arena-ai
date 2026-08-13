@@ -690,6 +690,89 @@ async function main() {
       "A4a-C5. control: neither writer previously serialized on the user row");
   }
 
+  // ---- A4b. the practice-session card describes the real counter ----------------------------------
+  // `User.streak` is a legacy schema name holding a LIFETIME count of completed practice sessions.
+  // Its only two writers are the Debate judge route and the PracticeTest grade route (both asserted
+  // above). Lessons award no XP and never touch it — so learner-facing copy naming lessons promised
+  // a number that finishing a lesson cannot move.
+  const cardSrc = strip(readFileSync("components/app/xp-progress-card.tsx", "utf8"));
+
+  assert.ok(!/lesson/i.test(cardSrc),
+    "A4b-1. the practice-session card no longer claims lessons count");
+  assert.ok(/completed — debates and graded tests\./.test(cardSrc),
+    "A4b-2. the populated state names only the two real session writers");
+  assert.ok(/Complete a debate or a practice test to start your record\./.test(cardSrc),
+    "A4b-3. and the empty state names only those two");
+  // The counter is a session count, never a streak or a run of days.
+  for (const banned of ["consecutive day", "practice day", "day streak", "streak of"]) {
+    assert.ok(!new RegExp(banned, "i").test(cardSrc), `A4b-4. no day-based wording ("${banned}")`);
+  }
+  // `streak` survives as the prop/schema identifier, but must not reach the learner as a WORD.
+  // `${...}` interpolations are removed first: a template literal contains the IDENTIFIER
+  // `${streak}`, which the learner never sees — only its value. Matching the raw literal would flag
+  // honest copy.
+  const cardStrings = (cardSrc.match(/`[^`]*`|"[^"]*"/g) ?? [])
+    .map((s) => s.replace(/\$\{[^}]*\}/g, " "))
+    .join(" ");
+  assert.ok(!/\bstreak\b/i.test(cardStrings),
+    "A4b-5. the word 'streak' never appears in learner-facing copy");
+  // Control: the detector still fires on a real learner-facing use of the word.
+  assert.ok(/\bstreak\b/i.test("`${streak} day streak`".replace(/\$\{[^}]*\}/g, " ")),
+    "A4b-5c. control: visible 'streak' wording would still be caught");
+  assert.ok(/streak > 0/.test(cardSrc),
+    "A4b-5b. control: the identifier itself is still used, so A4b-5 is about copy, not the prop");
+
+  // G. Lessons still have no reward or session writer — the premise the new copy rests on.
+  //
+  // NOT a blanket search for the word "lesson": both reward routes legitimately mention lessons as
+  // STUDY RECOMMENDATIONS ("which lesson to work on next"), which is coaching, not reward. An earlier
+  // draft of this control banned the word outright and failed on that honest usage. What matters is
+  // that no lesson can produce XP, a ledger event, or a practice session.
+  assert.equal((strip(readFileSync("lib/constants.ts", "utf8")).match(/lessonCompleted/g) ?? []).length, 1,
+    "A4b-6. XP_REWARDS.lessonCompleted is declared once and consumed nowhere");
+  {
+    // Every sourceType this codebase can write to the ledger, from the write sites themselves.
+    const written = new Set<string>();
+    for (const p of ["app/api/debates/[debateId]/judge/route.ts", "app/api/tests/[testId]/grade/route.ts"]) {
+      const s = strip(readFileSync(p, "utf8"));
+      const blk = s.slice(s.indexOf("tx.xPLog.create("), s.indexOf("tx.xPLog.create(") + 600);
+      for (const m of blk.matchAll(/sourceType: "(\w+)"/g)) written.add(m[1]);
+    }
+    assert.deepEqual([...written].sort(), ["DEBATE", "PRACTICE_TEST"],
+      "A4b-6b. the only reward sourceTypes ever written are DEBATE and PRACTICE_TEST — never LESSON");
+  }
+  // And no lesson/education module reaches a reward or session writer at all.
+  const rewardWriterRefs = execSync(
+    'grep -rln "xPLog\\.\\|awardXpInTransaction\\|streak: { increment" app lib --include=*.ts --include=*.tsx || true',
+    { encoding: "utf8" }).trim().split("\n").filter(Boolean).sort();
+  assert.deepEqual(rewardWriterRefs, [
+    "app/(app)/tests/[testId]/results/page.tsx",   // reads the ledger, writes nothing
+    "app/api/debates/[debateId]/judge/route.ts",
+    "app/api/tests/[testId]/grade/route.ts",
+    "lib/coach-progress.ts",                        // reads max(createdAt), writes nothing
+    "lib/xp.ts"
+  ], `A4b-6c. no lesson or education module touches a reward/session writer  [${rewardWriterRefs.join(", ")}]`);
+
+  // NON-VACUOUS against the frozen pre-A4b pin: the baseline really did make the false claim, and it
+  // is bound to THIS file's learner-facing strings rather than a global search for the word.
+  {
+    const PRE_M15_A4B = "c426f1d45d4c1a5353135003213bfadaf0307e1b";
+    const cardAtBaseline = strip(
+      execSync(`git show ${PRE_M15_A4B}:components/app/xp-progress-card.tsx`, { encoding: "utf8" }));
+    assert.ok(/completed — debates, tests, and lessons\./.test(cardAtBaseline),
+      "A4b-C1. control: the pre-A4b card DID claim lessons count in its populated state");
+    assert.ok(/Complete a debate, test, or lesson to start your record\./.test(cardAtBaseline),
+      "A4b-C2. control: and in its empty state");
+    // ...and the A4a policy files are untouched by A4b.
+    for (const p of ["lib/xp.ts", "lib/practice-session.ts", "app/api/debates/[debateId]/judge/route.ts",
+                     "app/api/tests/[testId]/grade/route.ts", "components/debate/debate-arena.tsx",
+                     "app/(app)/tests/[testId]/results/page.tsx"]) {
+      const atPin = execSync(`git show ${PRE_M15_A4B}:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
+      const now = execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
+      assert.equal(now, atPin, `A4b-C3. ${p} is byte-identical to the A4a baseline`);
+    }
+  }
+
   // ---- A3b-2. the same terminology follows the learner off the ballot -----------------------------
   // A3b-1 made the ballot truthful. These surfaces re-showed the SAME formative numbers under
   // stronger names — and a frozen legacy `wins` counter that A3a retired. Presentation only: no

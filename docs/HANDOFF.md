@@ -2,7 +2,53 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1A A4a: daily XP bounded, practice unlimited (2026-08-13)
+## Latest handoff — M15 S1A A4b: practice-session copy truth (2026-08-13)
+
+### One local commit awaits the owner push; then read-only Production verification
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+
+One production file (`components/app/xp-progress-card.tsx`), one suite, two docs. Copy only.
+
+### The rule this batch encodes
+
+**"Practice sessions" = completed Debates + graded PracticeTests. Lessons do not contribute.**
+`User.streak` has exactly two writers, and `XP_REWARDS.lessonCompleted` is declared once and consumed
+nowhere. If you ever make lessons award progress, this copy must change back **in the same commit**.
+
+### Things that will look like bugs but are deliberate
+
+- **`User.streak` is still named "streak" and is still not a streak.** Lifetime session count. Do not
+  add day semantics without a real date-aware model — that was rejected in A4 planning because
+  grandfathering the stored value would make one column mean two different things.
+- **The word `streak` still appears in this component** as the prop identifier. The control strips
+  `${...}` interpolations before checking learner-visible text, so the identifier is allowed and
+  visible wording is not.
+
+### A control lesson worth keeping
+
+Two of the A4b controls were wrong on first write and would have blocked honest code: one flagged the
+`${streak}` identifier inside a template literal as learner-facing copy, and one banned the word
+"lesson" from the reward routes — which legitimately recommend lessons as *study suggestions*. The
+shipped versions test the real properties instead: no visible "streak" wording, and no `LESSON`
+sourceType in the ledger. **Prefer asserting the property over banning the token.**
+
+### Next steps, in order
+
+1. Owner pushes the A4b commit. **Do not push automatically.**
+2. Read-only Production verification. Then **A4 is complete** and S1A's reward work is done.
+3. **S1B** — `/debates/history` gating, stale Reassess CTA, skills-compat prose, and the 50
+   HEAD-relative pins.
+4. **M16** — semantic judging, and only then any restoration of authoritative competitive progression.
+
+### Standing constraints (unchanged)
+
+No push, deploy, schema change, migration, `db push`/seed, dependency install, or destructive git
+without explicit approval. Never run `auth:smoke`, `team:smoke`, `assignment:smoke`, or
+`deca:skills:activate`. **Never open `.env`, read `DATABASE_URL`, or query any shared database.**
+M14 Global G2 remains **CLOSED**.
+
+## Previous handoff — M15 S1A A4a: daily XP bounded, practice unlimited (2026-08-13)
 
 ### One local commit awaits the owner push; then read-only Production verification
 

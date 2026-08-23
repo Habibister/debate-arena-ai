@@ -2,13 +2,22 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-13 (M15 S1B indexOf Batch II — the four evidence-before-mastery ordering controls now prove both anchors present before asserting order. **LOCAL COMMIT, acceptance pending.** Batch I and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-23 (M15 S1B indexOf Batch II — the four evidence-before-mastery ordering controls now prove both anchors present before asserting order. **SHIPPED and Production-verified at `6053725391`.** Batch I and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
 
-## M15 S1B — indexOf ordering controls, Batch II: evidence-before-mastery (LOCAL, acceptance pending)
+## M15 S1B — indexOf ordering controls, Batch II: evidence-before-mastery (shipped; Production-verified at `6053725391`)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
-DB OPERATION, NO SCHEMA CHANGE`.** Baseline `0abdff1`. **Zero production changes** — four test suites
-plus these docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Implementation commit `64ad487f8448517f3fbdf3d46fc677249f521da5`; docs-only semantic-fix child and
+deployed HEAD `98ddbed03d72348be08e02a7b11cdc79c971844a`; Production deployment **`6053725391`**,
+status **SUCCESS**, automatic `vercel[bot]` deployment from the Git push — no manual deploy, no
+rollback. Previous baseline `0abdff1`. **Zero production changes** — four test suites plus these docs.
+
+**Deployment topology — one push, one deployment.** `64ad487` is the Batch II implementation commit;
+`98ddbed` is its docs-only semantic-fix child. Both were published in a **single push**, so Vercel
+created **one** Production deployment, for the pushed HEAD `98ddbed`; deployment `6053725391` therefore
+contains the implementation as an **ancestor**. **`64ad487` has no separate deployment record, and that
+is expected rather than an error** — Vercel builds the pushed head, not every intermediate commit. Do
+not read this history as every individual commit receiving its own deployment.
 
 The **evidence-before-mastery** family had 5 controls: 1 already safe, 4 defective (IDX-17 Category B;
 IDX-01, IDX-08, IDX-39 Category C). Each defective control compared an earlier evidence-related
@@ -44,9 +53,40 @@ the decisive evidence.
 - **Batch III — transaction (1):** IDX-30
 - **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
 
+**Neither batch has been started.** Batch III stays deliberately isolated because IDX-30 sits beside
+the A2/A4 transaction / exactly-once controls.
+
 The audited denominator is unchanged: **48 ordering comparisons across 14 safe suites**, of which
 **30 were safe as written** and **18 defective** before any repair. **Not all 48 were defective.**
 Batch II was **test-integrity only** — no runtime behaviour and no security defect was repaired.
+
+**Acceptance evidence (committed artifact `64ad487`):** **20/20 mutation states**, **0 harness
+errors**, target attribution for all four repaired controls, **4/4 affected suites** and **30/30 safe
+suites** green, `db:generate` PASS, `tsc` clean, `build` PASS, and `lint` clean apart from the known
+pre-existing `<img>` warning. The narrow recheck of `98ddbed` then proved that it changed **docs only**,
+that the implementation code stayed **byte-identical**, that the IDX-17 documentation semantics were
+corrected, and that the prior implementation acceptance evidence therefore remained applicable.
+
+**Production verification (read-only):** deployment **`6053725391`**, environment **Production**,
+creator automatic **`vercel[bot]`**, state **success**. local HEAD = `origin/main` = live remote =
+`98ddbed`, repository clean at **0 ahead / 0 behind**. Published scope `0abdff1 → 98ddbed` = **four
+test suites plus two docs**; **production/runtime source changes ZERO**, **schema changes ZERO**. Live
+routes: public routes healthy, protected routes redirect or reject unauthenticated requests correctly,
+the four API routes these controls guard (`/api/debate/drills/submit`, `/api/deca/drills/submit`,
+`/api/hosa/medterm/submit`, `/api/skills/debate-writing`) each returned **401** unauthenticated,
+sampled AI routes returned **401**, and **no 5xx was observed**. The Vercel runtime does **not** execute
+smoke-test assertions — none were run there.
+
+**Live-route observations.** `/debates/history` returns an unauthenticated 200 with sign-in-oriented
+content — the **already-tracked soft-redirect debt**, unchanged. `/settings` returns an unauthenticated
+client-rendered loading shell with **no user-identifying strings** in the sampled body; that is an
+observation, **not a new defect**.
+
+**Honest Production limit.** Batch II is a **test-integrity repair**. Production verification proves the
+accepted commit stack deployed successfully, that live application health remained good, and that no
+runtime regression was observed. It does **not** prove that smoke-test behaviour executed inside Vercel,
+that runtime evidence ordering changed, or that security behaviour was repaired — **no production or
+runtime file changed.**
 
 **Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
 **30/30 safe suites green**. Batch I's nine guards intact; moving-HEAD debt unchanged at **18**

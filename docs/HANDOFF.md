@@ -2,12 +2,30 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B indexOf Batch II: evidence-before-mastery hardened (2026-08-13)
+## Latest handoff — M15 S1B indexOf Batch II: evidence-before-mastery hardened (2026-08-23)
 
-### One local commit awaits acceptance audit; nothing pushed
+### SHIPPED and Production-verified — nothing awaits a push
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
-Baseline `0abdff1`. **Zero production changes** — four test suites plus two docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Implementation commit `64ad487f8448517f3fbdf3d46fc677249f521da5`; docs-only semantic-fix child and
+deployed HEAD `98ddbed03d72348be08e02a7b11cdc79c971844a`; Production deployment **`6053725391`**,
+status **SUCCESS**, automatic `vercel[bot]` deployment — no manual deploy, no rollback. Previous
+baseline `0abdff1`. **Zero production changes** — four test suites plus two docs.
+
+**One push, one deployment.** Both commits went out in a single push, so Vercel created one Production
+deployment for the pushed HEAD `98ddbed`, and `6053725391` contains `64ad487` as an ancestor.
+**`64ad487` has no deployment record of its own — expected, not an error**: Vercel builds the pushed
+head, not every intermediate commit.
+
+**Production verification (read-only):** local HEAD = `origin/main` = live remote = `98ddbed`, clean
+**0 ahead / 0 behind**; published scope `0abdff1 → 98ddbed` = four test suites plus two docs;
+**production/runtime changes ZERO**, **schema changes ZERO**. Public routes healthy; protected routes
+redirect or reject unauthenticated requests; the four API routes these controls guard and the sampled
+AI routes all returned **401**; **no 5xx observed**. **The Vercel runtime does not execute smoke-test
+assertions.** Carried observations: `/debates/history` still returns an unauthenticated 200 with
+sign-in-oriented content — the already-tracked soft-redirect debt; `/settings` returns an
+unauthenticated client-rendered loading shell with no user-identifying strings in the sampled body,
+which is an observation rather than a new defect.
 
 Batch II repaired the **evidence-before-mastery** family: 5 controls, 1 already safe, 4 defective
 (IDX-17 Category B; IDX-01, IDX-08, IDX-39 Category C). Each compared an earlier evidence-related
@@ -24,6 +42,13 @@ level IDX-17 fires as `28b-anchors`; for IDX-08 and IDX-39 an earlier control sh
 throws first, so per-target isolation is the decisive evidence — the same characterised artifact as
 Batch I.
 
+**Acceptance:** the committed-artifact audit of `64ad487` proved **20/20 mutation states**, **0
+harness errors**, target attribution for all four repaired controls, **4/4 affected** and **30/30 safe**
+suites green, `db:generate` PASS, `tsc` clean, `build` PASS, and only the known pre-existing `<img>`
+lint warning. The narrow recheck then proved `98ddbed` changed **docs only**, left the implementation
+**byte-identical**, corrected the IDX-17 documentation semantics, and kept the prior acceptance
+evidence applicable.
+
 **Ordering state: safe 39 → 43, defective 9 → 5, unresolved 0.** evidence-before-mastery is now
 **closed: 5 total, 5 safe, 0 defective**.
 
@@ -34,8 +59,11 @@ Batch I.
 2. **Batch IV — route resolution / gating:** IDX-16, IDX-45, IDX-46, IDX-47.
 
 **auth/rate-limit (9/9) remains safe as written and untouched.** Batch II was **test-integrity only**:
-no runtime behaviour and no security defect was repaired. Moving-HEAD debt unchanged at 18
-(Class B 12, Class C seed 6). LC1 CLOSED. A2 unchanged; A4 CLOSED. Still open elsewhere in S1B:
+no runtime behaviour and no security defect was repaired. Production verification proves the accepted
+stack deployed successfully and that live health stayed good with no observed runtime regression; it
+does **not** prove smoke assertions ran inside Vercel, that runtime evidence ordering changed, or that
+security behaviour was repaired — **no production or runtime file changed**. Moving-HEAD debt
+unchanged at 18 (Class B 12, Class C seed 6). LC1 CLOSED. A2 unchanged; A4 CLOSED. Still open elsewhere in S1B:
 `/debates/history`, the stale Reassess CTA, skills-compat stale XP prose. M16 not started.
 
 ## Previous handoff — M15 S1B indexOf Batch I: completed-retry ordering hardened (2026-08-13)

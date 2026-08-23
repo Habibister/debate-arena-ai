@@ -2,7 +2,74 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-23 (M15 S1B indexOf Batch II — the four evidence-before-mastery ordering controls now prove both anchors present before asserting order. **SHIPPED and Production-verified at `6053725391`.** Batch I and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-23 (M15 S1B indexOf Batch III — IDX-30, the transaction / exactly-once ordering control, now proves both anchors present before asserting order. **LOCAL COMMIT, acceptance pending.** Batch II and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 S1B — indexOf ordering controls, Batch III: transaction / exactly-once (LOCAL, acceptance pending)
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+DB OPERATION, NO SCHEMA CHANGE`.** Baseline `1ed3bbe`. **Zero production changes** — one test suite
+plus these docs.
+
+**This repaired a TEST ASSERTION, not production behaviour.** A2 (exactly-once judged-attempt claim)
+and A4 (reward integrity) were already CLOSED and are byte-identical here. Batch III did not fix
+idempotency, transaction ordering, XP ordering, reward behaviour or any runtime race — it made one
+piece of TEST COVERAGE non-vacuous.
+
+**IDX-30 is control `A2-7b` in `scripts/judge-shape-smoke.ts`**, the only defective member of the
+14-control transaction claim / lock / session family (13 were already safe). It runs inside a loop
+over the four progression effects — `awardXpInTransaction(`, `tx.debate.update(`, `tx.user.update(`,
+`tx.xPLog.create(` — and asserts, over the comment-stripped judge route, that each effect's first
+occurrence comes **after** the progression transaction opens:
+
+| operand | expression | role |
+| --- | --- | --- |
+| left | `judgeRouteSrc.indexOf(effect)` | the guarded progression effect |
+| right | `judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>")` | the transaction boundary carrying the exactly-once claim |
+
+The operator is **`>`**, so the **right** operand was the vulnerable one: with the transaction opener
+absent `indexOf` returns `-1` and `effectAt > -1` holds for **all four** effects, so deleting the very
+boundary the control exists to police left the assertion green. It was **Category C** — the only
+control that went red was the neighbouring **`A2-1`** ("the judge persistence transaction was
+located"), never `A2-7b` itself. Both indices are now captured, both are proven present under
+`A2-7b-anchors`, and only then is the original ordering assertion — label and message preserved
+verbatim — evaluated.
+
+**Mutation evidence (scratch clone, committed artifacts):**
+
+| state | mutation | result |
+| --- | --- | --- |
+| A | none | `judge-shape` **PASS** |
+| B | transaction opener removed (`(tx) =>` → `(tx)  =>`) | `A2-7b-anchors` **fails**; the pre-repair expression was vacuously **true** for all four effects |
+| C | `tx.xPLog.create(` removed (`create (`) | `A2-7b-anchors` **fails** |
+| D | an earlier occurrence of `tx.xPLog.create(` inserted before the boundary | `A2-7b` **fails by its own label at suite level** |
+| E | harmless rename inside the judge route | target passes; the suite reddens only on the unrelated immutable pin `A4b-C3` |
+| E2 | harmless reformat of the repaired assertion | `judge-shape` **PASS** |
+
+**0 harness errors.** For states B and C an earlier neighbour (`A2-1`, `P1c-8b`) throws first, so
+target attribution came from **in-situ isolation** — the target's own expressions, the suite's own
+`strip`, the same receiver — exactly as in Batches I and II. **State E can never turn the suite green
+by construction:** `A4b-C3` byte-freezes the judge route against the A4a baseline, so *any* edit to
+that file reddens the suite. The honest reading of E is that the **target** did not fire on a harmless
+change; E2 supplies the green harmless-change state.
+
+**Family after Batch III: transaction claim / lock / session 14/14 safe, 0 defective.** The other 13
+controls are untouched.
+
+**Ordering-control state: safe 43 → 44 · defective 5 → 4 · unresolved 0.** Remaining, all still open:
+
+- **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
+
+**Batch IV has not been started**, and no shared route-resolution helper exists yet.
+
+The audited denominator is unchanged: **48 ordering comparisons across 14 safe suites**, of which
+**30 were safe as written** and **18 defective** before any repair. **Not all 48 were defective.**
+
+**Validation:** `db:generate` PASS · `tsc` clean · `lint` (1 pre-existing `<img>` warning at
+`components/profile/user-avatar.tsx:48`) · `build` PASS · **30/30 safe suites green**, `judge-shape`
+also run individually against a live provider. Batch I's nine guards and Batch II's four intact;
+auth/rate-limit 9/9 untouched; moving-HEAD debt unchanged at **18** (Class B 12, Class C seed 6,
+learning-content 0) and byte-identical to the baseline; LC1 CLOSED and byte-identical; Batch IV
+untouched. A2 unchanged; A4 remains CLOSED. No database access.
 
 ## M15 S1B — indexOf ordering controls, Batch II: evidence-before-mastery (shipped; Production-verified at `6053725391`)
 

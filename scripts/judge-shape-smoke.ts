@@ -184,7 +184,16 @@ async function main() {
                         "tx.xPLog.create("]) {
     const effectIdx = judgeTxn.indexOf(effect);
     assert.ok(effectIdx > claimIdx, `A2-7. ${effect} happens only AFTER a successful claim`);
-    assert.ok(judgeRouteSrc.indexOf(effect) > judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>"),
+    // M15 S1B Batch III: the ordering comparison alone was vacuous in ONE direction. `a > b` exposes
+    // its RIGHT operand: with the transaction opener absent indexOf returns -1 and `effectAt > -1`
+    // holds for every effect, so deleting the very transaction boundary this control exists to
+    // police turned it green — only the neighbouring A2-1 went red, never this control itself. Both
+    // anchors are now proven present before the ordering is accepted.
+    const effectAt = judgeRouteSrc.indexOf(effect);
+    const txnOpenAt = judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>");
+    assert.ok(effectAt >= 0 && txnOpenAt >= 0,
+      `A2-7b-anchors. both ${effect} and the progression transaction boundary it must stay inside are present`);
+    assert.ok(effectAt > txnOpenAt,
       `A2-7b. and ${effect} exists nowhere outside the progression transaction`);
   }
   // NON-VACUOUS: at the FROZEN pre-A2 pin the same transaction had the progression writes but NO

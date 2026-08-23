@@ -2,7 +2,54 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B indexOf Batch II: evidence-before-mastery hardened (2026-08-23)
+## Latest handoff — M15 S1B indexOf Batch III: transaction / exactly-once ordering hardened (2026-08-23)
+
+### One local commit awaits acceptance audit; nothing pushed
+
+**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
+Baseline `1ed3bbe`. **Zero production changes** — one test suite plus two docs.
+
+**Read this first: Batch III repaired TEST-COVERAGE INTEGRITY, not production behaviour.** A2's
+exactly-once judged-attempt claim and A4's reward integrity were already CLOSED, and every production
+file is byte-identical. Nothing about idempotency, transaction ordering, XP ordering, reward behaviour
+or any runtime race was changed or fixed.
+
+**IDX-30 is `A2-7b` in `scripts/judge-shape-smoke.ts`** — the last defective member of the 14-control
+transaction claim / lock / session family. Inside a loop over the four progression effects
+(`awardXpInTransaction(`, `tx.debate.update(`, `tx.user.update(`, `tx.xPLog.create(`) it asserted, over
+the comment-stripped judge route, `indexOf(effect) > indexOf("prisma.$transaction(async (tx) =>")`:
+every progression effect must first appear only after the transaction boundary that carries the
+exactly-once claim opens. The operator is **`>`**, so the **right** operand was vulnerable — with the
+boundary absent `indexOf` gives `-1` and `effectAt > -1` held for all four effects, so deleting the
+boundary itself left the control green. **Category C:** only the neighbouring `A2-1` went red. It now
+captures both indices, asserts both present under `A2-7b-anchors`, then runs the original ordering
+assertion with its label and message preserved verbatim.
+
+**5 mutation states + a green harmless-change control, 0 harness errors.** B (boundary removed) and C
+(effect removed) fail the new presence assertion — attribution proven by **in-situ isolation**, because
+`A2-1` and `P1c-8b` throw earlier; D (an earlier occurrence of the effect inserted before the boundary)
+fails **`A2-7b` by its own label at suite level**. **State E cannot be green by construction:**
+`A4b-C3` byte-freezes the judge route against the A4a baseline, so any edit to that file reddens the
+suite — the target itself passed, and E2 (a harmless reformat of the repaired assertion) gives the
+green state.
+
+**Ordering state: safe 43 → 44, defective 5 → 4, unresolved 0.** transaction claim / lock / session is
+now **closed: 14 total, 14 safe, 0 defective**; the other 13 controls were not touched.
+
+### Next implementation order — none started
+
+1. **Batch IV — route resolution / gating:** IDX-16, IDX-45, IDX-46, IDX-47. This is the one family
+   where a shared bidirectional helper is justified; it does not exist yet and must not be built
+   before Batch IV is authorised.
+
+**auth/rate-limit (9/9) remains safe as written and untouched.** Batch III was **test-integrity only**:
+no runtime behaviour and no security defect was repaired. Batch I (completed-retry 9/9) and Batch II
+(evidence-before-mastery 5/5) remain closed and untouched. Moving-HEAD debt unchanged at 18
+(Class B 12, Class C seed 6) and byte-identical to the baseline. LC1 CLOSED. A2 unchanged; A4 CLOSED.
+Still open elsewhere in S1B: `/debates/history`, the stale Reassess CTA, skills-compat stale XP prose.
+M16 not started.
+
+## Previous handoff — M15 S1B indexOf Batch II: evidence-before-mastery hardened (2026-08-23)
 
 ### SHIPPED and Production-verified — nothing awaits a push
 

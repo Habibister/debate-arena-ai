@@ -11,11 +11,14 @@ DB OPERATION, NO SCHEMA CHANGE`.** Baseline `0abdff1`. **Zero production changes
 plus these docs.
 
 The **evidence-before-mastery** family had 5 controls: 1 already safe, 4 defective (IDX-17 Category B;
-IDX-01, IDX-08, IDX-39 Category C). Each defective control compared an evidence anchor against a
-mastery anchor, so with the evidence anchor absent `indexOf` returned `-1` and `-1 < n` still held —
-deleting the evidence write the control exists to sequence turned it green.
+IDX-01, IDX-08, IDX-39 Category C). Each defective control compared an earlier evidence-related
+anchor against the later write or progression operation it must precede — for IDX-01, IDX-08 and
+IDX-39 the review/evidence writer before the mastery writer, and for **IDX-17 the evidence-floor
+decision before the review/evidence write call**. With the earlier anchor absent `indexOf` returned
+`-1` and `-1 < n` still held, so deleting the very step the control exists to sequence turned it
+green.
 
-| IDX | Suite | Control | Evidence anchor → mastery anchor |
+| IDX | Suite | Control | Earlier anchor → later anchor |
 | --- | --- | --- | --- |
 | IDX-01 | debate-mastery | `13b` | `recordPracticeOutcomeInTransaction(` → `recordDrillMasteryInTransaction(` |
 | IDX-08 | deca-mastery | `11c` | `recordPracticeOutcomeInTransaction(` → `recordDrillMasteryInTransaction(` |

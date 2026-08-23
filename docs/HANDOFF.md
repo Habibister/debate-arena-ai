@@ -10,8 +10,10 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 Baseline `0abdff1`. **Zero production changes** — four test suites plus two docs.
 
 Batch II repaired the **evidence-before-mastery** family: 5 controls, 1 already safe, 4 defective
-(IDX-17 Category B; IDX-01, IDX-08, IDX-39 Category C). Each compared an evidence anchor against a
-mastery anchor, so an absent evidence anchor gave `-1` and `-1 < n` still held. Each now captures
+(IDX-17 Category B; IDX-01, IDX-08, IDX-39 Category C). Each compared an earlier evidence-related
+anchor against the later write it must precede — the review/evidence writer before the mastery writer
+for IDX-01, IDX-08 and IDX-39, and **the evidence-floor decision before the review/evidence write
+call for IDX-17**. With the earlier anchor absent `indexOf` gave `-1` and `-1 < n` still held. Each now captures
 both indices, asserts both present under a `<label>-anchors` control, then asserts order — inline,
 no helper, original ordering messages preserved. **IDX-38, the already-safe fifth member, was not
 touched.**

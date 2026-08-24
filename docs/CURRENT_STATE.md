@@ -2,7 +2,79 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (Debate Curriculum Wave 1B — the held Weighing lesson received its recorded pedagogical correction and is published as the teaching home for the already-measurable `debate-weighing` skill, closing a third teach → server-graded-drill → durable-evidence loop with zero new architecture. **SHIPPED and Production-verified** — implementation `82e76042b6705661e4c5c2e1afc05c6ca227f372`, Production deployment `6072492323`. M15 Learning Architecture Slices 1–3 remain CLOSED; the indexOf ordering-control sequence and everything before it remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (Debate Curriculum Wave 1A — a new Debate learner's first offered step is now the format-agnostic lesson "How a debate round works" (`/lessons/debate-round-orientation`), placed first in the lesson path and on the dashboard ahead of the AI round, with deliberately NO durable measurement. **SHIPPED and Production-verified** — implementation `a0c4e67f486e2f3bbb5cc75523eeb38d8b9c1f83`, Production deployment `6073011910`. Wave 1B remains CLOSED; M15 Learning Architecture Slices 1–3, the indexOf ordering-control sequence and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## Debate Curriculum Wave 1A — beginner Debate orientation — SHIPPED and Production-verified
+
+Implementation `a0c4e67f486e2f3bbb5cc75523eeb38d8b9c1f83`, Production deployment **`6073011910`**.
+Five production paths, schema **ZERO**, seed **ZERO**, DB **NONE**.
+
+**The beginner-path fix.** Before Wave 1A, a new Debate learner could meet "Start an AI debate
+round" before anything explained what a round is. Wave 1A adds the learner-visible lesson
+**`debate-round-orientation`** (`/lessons/debate-round-orientation`), first in the Debate lesson
+path, and the Debate dashboard now offers: 1. *Learn how a debate round works* · 2. *Start an AI
+debate round* · 3. the existing remaining action. The AI round stays fully available — orientation
+is offered, never mandatory.
+
+**Static guidance, no completion gating.** Orientation-first is static curriculum guidance. No
+learner-specific completion state exists or is inferred — no completion persistence, no storage, no
+XP or `MasteryProgress` inference. The application does not know whether orientation was completed,
+and returning learners open the AI round immediately.
+
+**Identity.** Catalog/publication id `debate-round-orientation`; **skillSlug NONE, practiceDrill
+NONE**; no seeded Skill row, no new drill area, no alias. `/skills/debate-round-orientation`
+resolves through existing canonical lesson precedence to the lesson — a routing consequence that
+does not make orientation a measured skill.
+
+**What it teaches.** A zero-knowledge beginner learns what debate is, what they are trying to
+accomplish, what the two sides are doing, basic argument structure (claim, reason,
+why-it-matters — with Claim/Warrant/Impact named as the deeper home), that opposing arguments must
+be answered, constructive vs responsive speaking as concepts, why organization matters, why
+tracking the opponent's arguments matters, and what to focus on before a first practice round. It
+introduces tracking awareness without claiming to teach formal flowing, and it does not replace the
+Constructive Speeches or Refutation lessons.
+
+**Format-agnostic first release (locked owner decision).** The lesson avoids universal claims about
+speech order, speech names, speech count, team size, timing, prep, Government/Opposition or Pro/Con
+labels, cross-ex/crossfire/POIs, and format-specific new-argument rules — it says plainly that
+formats differ in names, order and timing. **The ultimate Public Forum vs Parliamentary competition
+target remains a future product decision; only the first-release strategy is resolved.**
+
+**No fake measurement — the central invariant.** Orientation is TAUGHT with FORMATIVE checks only
+(guided practice, practice questions, a mastery-style check with hints and retries, authored in the
+locked template, written independently of the live drill bank). It creates ZERO durable evidence:
+no `MasteryProgress`, no `SkillReviewSchedule`, no attempts, no completion persistence, no
+remediation mapping, no Coach evidence action. "Knows what debate is" is deliberately not a
+measured skill.
+
+**The evidence firewall held.** Wave 1A changed no durable-evidence writers, no spaced review, no
+remediation, no `getDueReviews`, no Coach decision logic, no Study Arcade grading, no readiness.
+The Coach remains server-evidence-backed and does not recommend orientation because it exists, is
+first in the curriculum, sits first on the dashboard, or when no review is due — `NO_DUE_ACTION`
+semantics are unchanged. One durable invariant worth keeping: curriculum publication may extend the
+education registry, while Coach-facing behavior stays protected by semantic mapping/evidence
+invariants rather than by treating the registry file as permanently immutable.
+
+**Connected durable loops remain exactly three** — CWI (embedded server-graded practice),
+Refutation and Weighing (exact drills, reverse remediation, Coach). Orientation is not a fourth.
+
+**Reviewed content.** The new lesson went through the existing LC1 content-integrity mechanism
+(review marker **`W1A-DEBATE-ROUND-ORIENTATION`**): the 17 existing reviewed entries are unchanged
+— including Wave 1B's corrected Weighing — plus one new reviewed orientation entry. Provenance is
+the existing CompeteReady-authored, format-agnostic Debate provenance; no NSDA rule attribution was
+fabricated.
+
+**Current Debate learner path.** `debate-round-orientation` → `claim-warrant-impact` →
+`debate-signposting` → `debate-clash` → `debate-refutation` → `debate-constructive-speeches` →
+`debate-weighing` → terminal.
+
+**Debate curriculum sequence.**
+
+- **Wave 1A — beginner Debate orientation: SHIPPED / Production-verified.**
+- **Wave 1B — Weighing teaching-home closure: CLOSED.**
+- **Wave 1C — Evidence Evaluation teaching-home closure: NEXT / NOT STARTED.** `debate-evidence`
+  already has the canonical skill, the 30-question `evidence-evaluation` drill and durable
+  evidence; only the learner teaching home is missing.
 
 ## Debate Curriculum Wave 1B — Weighing teaching-home closure — SHIPPED and Production-verified
 
@@ -52,22 +124,11 @@ drill, reverse-remediation and Coach connected). CWI's loop is complete but does
 reverse-remediation mapping the other two share — the three are not architecturally identical.
 
 **Curriculum status.** The primary remaining issue is still coverage/connectivity, not
-lesson-template quality. Notable gaps: beginner round orientation, an Evidence Evaluation teaching
+lesson-template quality. Notable gaps: an Evidence Evaluation teaching
 home (`debate-evidence` has the canonical skill, the 30-question `evidence-evaluation` drill and
 durable evidence, but no lesson), Signposting/Clash/Constructive Speeches drill-and-evidence
 connectivity, later speeches, flowing, round strategy, crystallization, delivery, and
 questioning/cross-ex.
-
-**Debate curriculum sequence.**
-
-- **Wave 1B — Weighing teaching-home closure: SHIPPED / Production-verified.**
-- **Wave 1A — format-agnostic Debate round orientation: NEXT / NOT STARTED.** The owner decision is
-  locked: the FIRST orientation release is format-agnostic. Because the repository still carries
-  mixed Debate format signals, Wave 1A will avoid universal claims about speech order, timing, team
-  size, cross-ex/crossfire/POI, side labels, or format-specific new-argument rules. The ultimate
-  PF-vs-Parliamentary product target remains a future decision — only the first-release strategy is
-  resolved.
-- **Wave 1C — Evidence Evaluation teaching-home closure: NOT STARTED.**
 
 ## M15 Learning Architecture Slice 3 — SHIPPED and Production-verified
 
@@ -141,9 +202,8 @@ but whose practice/evidence connectivity does not yet exist the way Refutation's
 - **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED / CLOSED.**
 - **Learning Architecture Slice 2 — durable evidence → exact re-demonstration + exact remediation: SHIPPED / CLOSED.**
 - **Learning Architecture Slice 3 — server chooses the next action, AI explains it: SHIPPED / Production-verified.**
-- **Curriculum coverage work is underway** — see the Debate Curriculum Wave 1B section above for the
-  current sequence (Wave 1B shipped; Wave 1A orientation next, not started; Wave 1C evidence lesson
-  not started).
+- **Curriculum coverage work is underway** — see the Debate Curriculum Wave 1A section above for the
+  current sequence (Waves 1A and 1B shipped; Wave 1C evidence lesson next, not started).
 
 (These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice
 numbering used in the older sections further down this file.)

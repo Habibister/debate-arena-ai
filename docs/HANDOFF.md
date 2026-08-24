@@ -2,7 +2,61 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — Debate Curriculum Wave 1B — Weighing teaching-home closure (SHIPPED and Production-verified)
+## Latest handoff — Debate Curriculum Wave 1A — beginner Debate orientation (SHIPPED and Production-verified)
+
+Implementation `a0c4e67f486e2f3bbb5cc75523eeb38d8b9c1f83`, Production deployment **`6073011910`**.
+
+**What shipped:** the format-agnostic beginner lesson `debate-round-orientation`
+(`/lessons/debate-round-orientation`), first in the Debate lesson path, plus one static dashboard
+action — *Learn how a debate round works* — placed ahead of *Start an AI debate round*. The AI
+round stays fully available.
+
+**Invariants to preserve:**
+
+- **No fake measurement.** Orientation has NO skillSlug, NO practiceDrill, NO durable evidence, NO
+  remediation mapping, NO Coach evidence action, NO completion persistence. Its checks are
+  formative only. Never invent "orientation mastery" or a completion state.
+- **Static guidance only.** Orientation-first is static curriculum ordering. The application does
+  not know whether a learner completed it; never add completion gating, storage, or XP/mastery
+  inference to the dashboard ordering.
+- **Evidence firewall.** The Coach remains server-evidence-backed: orientation is never recommended
+  because it exists, is first anywhere, or when no review is due; `NO_DUE_ACTION` unchanged. No
+  durable-evidence writer, spaced-review, remediation, `getDueReviews`, or grading code changed.
+- **Format-agnostic first release (locked).** The lesson makes no universal claims about speech
+  order/names/count, team size, timing, prep, side labels, cross-ex/crossfire/POIs, or
+  new-argument rules — formats are said to differ. **The ultimate PF-vs-Parliamentary target is NOT
+  resolved**; do not resolve it silently in future content.
+- **Boundaries.** Orientation introduces argument anatomy at beginner level only — CWI remains the
+  deeper home and its embedded graded loop is untouched; Constructive Speeches and Refutation
+  lessons are not replaced; tracking awareness is taught without a formal flowing system (flowing
+  remains a curriculum gap).
+- **Registry trust boundary.** Curriculum publication may extend the education registry;
+  Coach-facing behavior stays protected by semantic mapping/evidence invariants, not by registry
+  file immutability.
+
+**Reviewed content:** LC1 marker `W1A-DEBATE-ROUND-ORIENTATION` — 17 existing entries unchanged
+(Wave 1B Weighing included) plus one new reviewed orientation entry, authored independently of the
+live drill bank, under the existing CompeteReady-authored format-agnostic provenance.
+
+**Connected durable loops remain exactly three** (CWI embedded; Refutation and Weighing
+deep-linked with remediation + Coach). Orientation is Taught + Formative only — not a fourth.
+
+**Current Debate learner path:** orientation → CWI → signposting → clash → refutation →
+constructive → weighing → terminal.
+
+### Next curriculum work
+
+1. **Wave 1C — Evidence Evaluation teaching-home closure. NEXT / NOT STARTED.** `debate-evidence`
+   has the canonical skill, the 30-question `evidence-evaluation` drill and durable evidence — only
+   the learner teaching home is missing. Remaining broader gaps stay coverage/connectivity:
+   signposting/clash/constructive connectivity, later speeches, flowing, round strategy,
+   crystallization, delivery, questioning/cross-ex.
+
+Separately and still open, unchanged by this wave: moving-HEAD debt 18, `/debates/history`, the
+stale Reassess CTA, the skills-compat XP prose, the six inherited M14 `Latest handoff` headings, the
+duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — Debate Curriculum Wave 1B — Weighing teaching-home closure (SHIPPED and Production-verified)
 
 Implementation `82e76042b6705661e4c5c2e1afc05c6ca227f372`, Production deployment **`6072492323`**.
 

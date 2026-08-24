@@ -38,6 +38,14 @@ export function drillAreaFromQuery(value: unknown): DrillArea | undefined {
   return isDrillArea(value) ? value : undefined;
 }
 
+/**
+ * The learner-facing name of an area, read from `DRILL_AREAS` so a CTA that names a drill cannot
+ * drift from the drill it links to. `DrillArea` is a closed union, so every input has a label.
+ */
+export function drillAreaLabel(area: DrillArea): string {
+  return DRILL_AREAS.find((a) => a.id === area)!.label;
+}
+
 export type DrillQuestion = {
   id: string;
   area: DrillArea;

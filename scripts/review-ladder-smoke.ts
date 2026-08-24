@@ -518,6 +518,134 @@ async function main() {
   assert.ok(reviewCode.includes("reassessable") && reviewCode.includes("Reassess now"),
     "62. due-card routing and reassessability are unchanged");
 
+  // ---- S2-1..S2-18. M15 Learning Architecture Slice 2: deterministic remediation for a DUE skill ----
+  //
+  // Slice 1 fixed the evidence hierarchy in one direction: a lesson TEACHES, its in-lesson check
+  // records nothing, and the server-graded drill is the first durable evidence. Slice 2 closes the
+  // loop the other way. A skill the ladder says is due is routed back to the EXACT drill that
+  // measures it, and only a learner whose RECORD sits below the practicing floor is also sent back
+  // to the lesson. Being due and being weak are different facts and are never collapsed here.
+  const { practiceRemediationForSkill, INTENDED_SKILL_SLUGS, debateWritingPracticeSupported } =
+    await import("../lib/education/skills-compat");
+  const { EDUCATION_LESSONS, educationLessonsForPracticeSkill, getEducationLesson } =
+    await import("../lib/education/registry");
+  const { DRILL_AREAS: S2_AREAS, isDrillArea } = await import("../lib/debate-drills");
+  const { PRACTICING_MASTERY_MIN } = await import("../lib/spaced-review");
+
+  // S2-1. The one mapped skill resolves to the exact lesson AND the exact drill — not a front door.
+  const rebuttal = practiceRemediationForSkill("debate-rebuttal");
+  assert.deepEqual(rebuttal,
+    { lessonId: "debate-refutation", lessonTitle: "Answer with refutation",
+      drill: { track: "debate", area: "rebuttal" } },
+    "S2-1. a due debate-rebuttal routes to the refutation lesson and the rebuttal drill");
+
+  // S2-2. Everything else fails CLOSED. A skill with no authored mapping gets no substitute lesson.
+  assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((s) => practiceRemediationForSkill(s) !== null),
+    ["debate-rebuttal"], "S2-2. exactly one seeded skill has a remediation today");
+
+  // S2-3. Untrusted-looking input is not an error and not a near match.
+  for (const s of ["", "unknown", "debate-rebuttal-1", "DEBATE-REBUTTAL", "debate-rebuttal "]) {
+    assert.equal(practiceRemediationForSkill(s), null, `S2-3. "${s}" gets no remediation`);
+  }
+
+  // S2-4. Track isolation: a DECA or HOSA due review can never reach Debate teaching or a Debate drill.
+  for (const s of [...INTENDED_SKILL_SLUGS].filter((x) => !x.startsWith("debate-"))) {
+    assert.equal(practiceRemediationForSkill(s), null, `S2-4. ${s} is never routed to Debate content`);
+  }
+  assert.ok([...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("deca-"))
+         && [...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("hosa-")),
+    "S2-4b. control: the isolation scan really covered DECA and HOSA slugs");
+
+  // S2-5. THE control that entitles production to key off the registry entry rather than DRILL_AREAS.
+  // The lookup reads `skillSlug` and `practiceDrill` off the same entry, so lib/education keeps no
+  // RUNTIME dependency on the drill bank. That is only sound while the two sources agree: if an entry
+  // named an area whose canonical skill were a DIFFERENT skill, the card would remediate skill A by
+  // sending the learner to a drill scored as B, and the mastery it wrote would be evidence for B.
+  const drilled = EDUCATION_LESSONS.filter((e) => e.practiceDrill);
+  assert.ok(drilled.length >= 1, "S2-5a. control: the registry really carries at least one mapped lesson");
+  for (const e of drilled) {
+    const area = S2_AREAS.find((a) => a.id === e.practiceDrill!.area);
+    assert.ok(area, `S2-5b. ${e.id} names a real drill area`);
+    assert.equal(area!.skillSlug, e.skillSlug,
+      `S2-5. ${e.id}'s drill area is scored against the same skill the lesson names`);
+  }
+
+  // S2-6. At most one drill-backed lesson per skill — this is why the helper may take the first.
+  for (const e of drilled) {
+    assert.equal(educationLessonsForPracticeSkill(e.skillSlug!).length, 1,
+      `S2-6. ${e.skillSlug} is taught by exactly one drill-backed lesson`);
+  }
+
+  // S2-7. The lesson it recommends is real, learner-visible and available — never a held entry.
+  const target = getEducationLesson(rebuttal!.lessonId);
+  assert.ok(target && target.visibility === "learner" && target.practiceState === "available",
+    "S2-7. the recommended lesson is a real, learner-visible, available lesson");
+
+  // S2-8. Round trip. The area travels through a URL, so it must survive Slice 1's untrusted-input
+  // guard, and it must lead back to the skill that was due in the first place.
+  assert.ok(isDrillArea(rebuttal!.drill.area), "S2-8. the deep-linked area survives the untrusted-input guard");
+  assert.equal(S2_AREAS.find((a) => a.id === rebuttal!.drill.area)!.skillSlug, "debate-rebuttal",
+    "S2-8b. and the drill it opens is scored against the skill that was due");
+
+  // S2-9. Disjointness, asserted rather than assumed. The mapped branch replaces the GENERIC
+  // destination; it must never be silently taking away a working writing-practice one.
+  for (const e of drilled) {
+    assert.equal(debateWritingPracticeSupported(e.skillSlug!), false,
+      `S2-9. ${e.skillSlug} had no writing-practice destination for the mapped branch to displace`);
+  }
+
+  // S2-10..S2-12. ONE canonical practicing floor, owned by the module that decides mastery level.
+  assert.equal(PRACTICING_MASTERY_MIN, 70, "S2-10. the practicing floor is 70");
+  assert.ok(/if \(score >= PRACTICING_MASTERY_MIN\) return "PRACTICING";/.test(stripComments(read("lib/spaced-review.ts"))),
+    "S2-11. and masteryLevelFor decides PRACTICING from that same constant, not a second literal");
+  assert.deepEqual([69, 70, 71].map((n) => n < PRACTICING_MASTERY_MIN), [true, false, false],
+    "S2-12. 69 is below the floor; 70 and 71 are not");
+  assert.ok(/review\.masteryPercent < PRACTICING_MASTERY_MIN/.test(reviewCode),
+    "S2-12b. and the card applies exactly that comparison");
+  assert.ok(!/\b70\b/.test(reviewCode), "S2-12c. the card defines no competing literal threshold");
+
+  // S2-13. No nested anchors. The mapped card is a <div> holding sibling links; an <a> inside an <a>
+  // is invalid HTML and the inner one is not reliably reachable by keyboard.
+  const linkTags = [...reviewCode.matchAll(/<Link\b|<\/Link>/g)].map((m) => m[0]);
+  let linkDepth = 0;
+  for (const t of linkTags) {
+    if (t === "<Link") { linkDepth += 1; assert.ok(linkDepth <= 1, "S2-13. no <Link> is nested inside another <Link>"); }
+    else linkDepth -= 1;
+  }
+  assert.equal(linkDepth, 0, "S2-13b. and every <Link> is closed");
+  assert.ok(linkTags.length >= 8, "S2-13c. control: the scan really found the card's links");
+
+  // S2-14. The pinned fallback is untouched for every UNMAPPED skill: same destination, same label.
+  assert.ok(/reassessable \? .\/skills\/\$\{review\.skillSlug\}\/practice. : fallback\.href/.test(reviewCode),
+    "S2-14. an unmapped due skill keeps its exact existing destination");
+  assert.ok(/reassessable \? "Reassess now" : fallback\.label/.test(reviewCode),
+    "S2-14b. and its exact existing label");
+
+  // S2-15..S2-16. Weakness wording and the lesson link are BOTH gated on the floor. A learner who is
+  // merely due sees the drill and nothing implying a deficiency the record does not show.
+  const mappedBranch = reviewCode.slice(reviewCode.indexOf("if (remediation)"),
+                                        reviewCode.indexOf("transition-colors hover:bg-muted"));
+  assert.ok(mappedBranch.length > 400, "S2-15a. control: the mapped branch was really located");
+  assert.equal((mappedBranch.match(/belowPracticing \?/g) ?? []).length, 2,
+    "S2-15. exactly two things are gated on the floor: the wording and the lesson link");
+  assert.ok(/belowPracticing \? \(\s*<p/.test(mappedBranch), "S2-15b. the wording is the first gated thing");
+  assert.ok(mappedBranch.includes("Recorded mastery is below"), "S2-15c. and it states the record, not a fresh diagnosis");
+  assert.ok(/belowPracticing \? \(\s*<Link\s+href=\{.\/lessons\/\$\{remediation\.lessonId\}/.test(mappedBranch),
+    "S2-16. the lesson link is the second gated thing, built from the mapping");
+
+  // S2-17. The drill link is NOT gated: every due mapped skill gets its exact drill, healthy or not.
+  // That the drill link is ungated is already PROVEN above rather than restated here — S2-15 fixes the
+  // number of gated things at two and S2-15b/S2-16 name both of them, so a gated drill link would make
+  // the count three. A positional check on top of that could only ever fail on link ORDER, which is
+  // not a defect, so it is deliberately absent.
+  const drillHref = /href=\{.\/study-arcade\?track=\$\{remediation\.drill\.track\}&area=\$\{remediation\.drill\.area\}/;
+  assert.ok(drillHref.test(mappedBranch), "S2-17. the drill deep link is offered on every mapped card");
+
+  // S2-18. Nothing about the destination is hardcoded, so an authoring change moves the card with it.
+  for (const banned of ["debate-refutation", "debate-rebuttal", "rebuttal", "Answer with refutation"]) {
+    assert.ok(!reviewCode.includes(banned), `S2-18. the card names no specific lesson, skill or area (${banned})`);
+  }
+
   // ---- 40-45. M13E1E / M13E1D evidence contracts are untouched ---------------------------------------------
   const { DEBATE_DRILL_REQUIRED_UNIQUE, buildDrillEvidence, DRILL_BANK } = await import("../lib/debate-drills");
   const { DECA_DRILL_REQUIRED_UNIQUE } = await import("../lib/deca-drills");

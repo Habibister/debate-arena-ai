@@ -302,9 +302,20 @@ export async function getDueReviews(userId: string): Promise<DueReview[]> {
 // - resolves the skill by slug and no-ops gracefully if the skill isn't seeded yet (never fakes it)
 // Returns whether it actually wrote (skill existed), so callers can report honestly.
 
+/**
+ * The PRACTICING floor, exported (M15 Slice 2) because a remediation surface has to ask "is this
+ * learner below the practicing bar?" against the SAME number the mastery level is decided by. A
+ * second literal 70 elsewhere could drift away from this one silently.
+ *
+ * Deliberately NOT `DRILL_PASS_THRESHOLD` from lib/debate-drills: that is the pass mark for one
+ * drill attempt, a different quantity that happens to share the value 70 today. Either may move
+ * without the other, so neither may be defined in terms of the other.
+ */
+export const PRACTICING_MASTERY_MIN = 70;
+
 function masteryLevelFor(score: number): "MASTERED" | "PRACTICING" | "LEARNING" {
   if (score >= 85) return "MASTERED";
-  if (score >= 70) return "PRACTICING";
+  if (score >= PRACTICING_MASTERY_MIN) return "PRACTICING";
   return "LEARNING";
 }
 

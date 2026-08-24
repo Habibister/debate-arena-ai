@@ -213,6 +213,27 @@ export function educationLessonsForTrack(track: EducationTrack): EducationRegist
   return EDUCATION_LESSONS.filter((entry) => entry.track === track);
 }
 
+/**
+ * M15 Learning Architecture Slice 2 — the reverse of `practiceDrill`: which lessons teach the
+ * skill `skillSlug`, AND carry a server-graded drill that can record evidence for it?
+ *
+ * Keyed off the registry entry itself (`skillSlug` + `practiceDrill`) rather than off
+ * `DRILL_AREAS`, so the registry gains no RUNTIME dependency on the drill bank — the only link
+ * to lib/debate-drills stays the type-only import in ./types. That is only sound while every
+ * mapped entry keeps `skillSlug` aligned with the canonical skill of its `practiceDrill.area`;
+ * review-ladder:smoke validates that agreement across mapped entries, so an entry can never
+ * route a learner to a drill scored against a different skill than the one they are being
+ * remediated on.
+ *
+ * Fails closed: a skill with no mapped lesson returns [], never a substitute lesson. Requiring
+ * `practiceDrill` is deliberate — a lesson with no drill has nowhere to record the result, and
+ * recommending it would end the loop in teaching rather than in evidence.
+ */
+export function educationLessonsForPracticeSkill(skillSlug: string): EducationRegistryEntry[] {
+  if (!skillSlug) return [];
+  return EDUCATION_LESSONS.filter((entry) => entry.skillSlug === skillSlug && entry.practiceDrill);
+}
+
 export function getEducationCourse(id: string): EducationCourse | undefined {
   return EDUCATION_COURSES.find((course) => course.id === id);
 }

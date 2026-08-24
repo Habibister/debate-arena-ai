@@ -19,7 +19,8 @@
 //
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
-import { getEducationLesson, EDUCATION_LESSONS } from "@/lib/education/registry";
+import { getEducationLesson, EDUCATION_LESSONS, educationLessonsForPracticeSkill } from "@/lib/education/registry";
+import { isConceptEducationLessonEntry, type EducationPracticeDrill } from "@/lib/education/types";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
 
 /** The track a legacy record belongs to, including the soft-removed Model UN. */
@@ -289,4 +290,41 @@ export function debateWritingPracticeSupported(slug: string): boolean {
 export function compatTrackForSlug(slug: string): CompatTrack | null {
   const resolution = resolveSkillsSlug(slug);
   return resolution.kind === "compatibility" ? resolution.track : null;
+}
+
+/**
+ * M15 Learning Architecture Slice 2 — what a DUE skill can honestly be sent to.
+ *
+ * `lessonId` is where the concept is TAUGHT; `drill` is the server-graded practice that actually
+ * records evidence for the same skill. Both are needed together: a lesson with no drill ends the
+ * loop in reading, and a drill with no lesson has nothing to re-teach.
+ */
+export type PracticeRemediation = {
+  lessonId: string;
+  lessonTitle: string;
+  drill: EducationPracticeDrill;
+};
+
+/**
+ * The remediation destination for a skill, or `null` when this skill has none.
+ *
+ * Why it lives HERE and not on the review page: the Study Arcade review card reaches the education
+ * registry only through this compatibility layer — education-migration:smoke enforces that consumer
+ * boundary — because routing a learner by slug is exactly what this module owns. It stays a pure
+ * lookup — no session, no writes.
+ *
+ * Fails closed in three ways, because a wrong destination is worse than the existing generic one:
+ * an unmapped skill returns null, a mapped entry that is not learner-visible returns null, and a
+ * legacy entry whose `source` is `unknown` returns null rather than having a title read off it.
+ * Only the FIRST mapped lesson is offered; a skill taught by two drill-backed lessons is an
+ * authoring decision this function must not make silently. Today's authored metadata carries at
+ * most one drill-backed lesson per skill — a fact of the data, enforced by no type or table —
+ * and review-ladder:smoke guards that cardinality.
+ */
+export function practiceRemediationForSkill(slug: string): PracticeRemediation | null {
+  const [entry] = educationLessonsForPracticeSkill(slug);
+  if (!entry || !entry.practiceDrill) return null;
+  if (entry.visibility !== "learner" || entry.practiceState !== "available") return null;
+  if (!isConceptEducationLessonEntry(entry)) return null;
+  return { lessonId: entry.id, lessonTitle: entry.source.lesson.title, drill: entry.practiceDrill };
 }

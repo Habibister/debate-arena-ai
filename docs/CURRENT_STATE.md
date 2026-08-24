@@ -31,8 +31,11 @@ absent `indexOf` returns `-1` and `effectAt > -1` holds for **all four** effects
 boundary the control exists to police left the assertion green. It was **Category C** — the only
 control that went red was the neighbouring **`A2-1`** ("the judge persistence transaction was
 located"), never `A2-7b` itself. Both indices are now captured, both are proven present under
-`A2-7b-anchors`, and only then is the original ordering assertion — label and message preserved
-verbatim — evaluated.
+`A2-7b-anchors`, and only then is the original ordering assertion evaluated. The `A2-7b` label, the
+ordering expression, its operator and its direction are preserved exactly; both messages were narrowed
+during acceptance to state only what the assertions prove — the ordering message no longer claims the
+effect "exists nowhere outside the progression transaction" (a containment property no executable
+control establishes), and the presence message no longer implies containment either.
 
 **Mutation evidence (scratch clone, committed artifacts):**
 

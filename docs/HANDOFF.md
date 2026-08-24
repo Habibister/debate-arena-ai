@@ -23,7 +23,10 @@ exactly-once claim opens. The operator is **`>`**, so the **right** operand was 
 boundary absent `indexOf` gives `-1` and `effectAt > -1` held for all four effects, so deleting the
 boundary itself left the control green. **Category C:** only the neighbouring `A2-1` went red. It now
 captures both indices, asserts both present under `A2-7b-anchors`, then runs the original ordering
-assertion with its label and message preserved verbatim.
+assertion. The `A2-7b` label, expression, operator and direction are preserved exactly; both messages
+were narrowed during acceptance to state only the proven properties — the anchors exist, and the
+effect's FIRST occurrence follows the opener. Neither message claims transaction containment, which no
+executable control establishes.
 
 **5 mutation states + a green harmless-change control, 0 harness errors.** B (boundary removed) and C
 (effect removed) fail the new presence assertion — attribution proven by **in-situ isolation**, because

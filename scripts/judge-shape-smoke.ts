@@ -192,7 +192,7 @@ async function main() {
     const effectAt = judgeRouteSrc.indexOf(effect);
     const txnOpenAt = judgeRouteSrc.indexOf("prisma.$transaction(async (tx) =>");
     assert.ok(effectAt >= 0 && txnOpenAt >= 0,
-      `A2-7b-anchors. both ${effect} and the progression transaction boundary it must stay inside are present`);
+      `A2-7b-anchors. both ${effect} and the progression transaction opener are present`);
     assert.ok(effectAt > txnOpenAt,
       `A2-7b. and ${effect} first appears after the progression transaction opens`);
   }

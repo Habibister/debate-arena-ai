@@ -2,7 +2,72 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (M15 Learning Architecture Slice 3 — the AI Coach now reads authoritative server-side learner evidence, the server deterministically chooses the one evidence-backed next action, and the model may only explain it. **SHIPPED and Production-verified** — implementation `6f69745c0f7135fe1877eb867624126392ea45d1`, Production deployment `6071131714`. Learning Architecture Slices 1–2, the indexOf ordering-control sequence and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (Debate Curriculum Wave 1B — the held Weighing lesson received its recorded pedagogical correction and is published as the teaching home for the already-measurable `debate-weighing` skill, closing a third teach → server-graded-drill → durable-evidence loop with zero new architecture. **SHIPPED and Production-verified** — implementation `82e76042b6705661e4c5c2e1afc05c6ca227f372`, Production deployment `6072492323`. M15 Learning Architecture Slices 1–3 remain CLOSED; the indexOf ordering-control sequence and everything before it remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## Debate Curriculum Wave 1B — Weighing teaching-home closure — SHIPPED and Production-verified
+
+Implementation `82e76042b6705661e4c5c2e1afc05c6ca227f372`, Production deployment **`6072492323`**.
+Three production paths, schema **ZERO**, seed **ZERO**, DB **NONE**. The existing held Weighing lesson
+was corrected and published — no new skill, no new drill area, no new Coach or remediation code.
+
+**The shipped mapping.** Lesson `debate-weighing` (`/lessons/debate-weighing`) → skillSlug
+`debate-weighing` → practiceDrill `{ track: "debate", area: "weighing" }`
+(`/study-arcade?track=debate&area=weighing`). The catalog/publication id is `debate-weighing`; the
+legacy/internal alias `debate-weighing-lesson` (stored in historical judge reports) resolves to the
+published canonical lesson, and `/skills/debate-weighing` now resolves through the existing canonical
+lesson precedence to `/lessons/debate-weighing` — an expected consequence of publication, not new
+routing. The drill stays independently reachable at its own URL.
+
+**The pedagogical correction.** Weighing is taught as comparing competing impacts and explaining why
+one should matter more for the decision. Magnitude, probability, timeframe and reversibility remain
+useful names for common comparison moves — they are NOT required vocabulary a learner must recite to
+weigh validly. The lesson's structure, worked example and guided question were preserved; the
+recall-heavy formative questions were changed to application items. The correction went through the
+existing LC1 content-integrity mechanism (review marker **`W1B-DEBATE-WEIGHING-CORRECTION`**):
+exactly the Weighing reviewed-content entry changed, and the sixteen unrelated catalog entries are
+unchanged.
+
+**Held → published.** The same reviewed catalog content object moved from held to learner-visible;
+no duplicate lesson exists. The other held Debate lessons — rebuttal-speeches, parliamentary roles,
+case/topic definitions, and the duplicate CWI — remain held.
+
+**Architecture reuse — the load-bearing result.** Wave 1B required ZERO new learning architecture.
+Publishing the entry with its `skillSlug` and `practiceDrill` metadata automatically reused the
+shipped Slices 1–3: lesson → exact existing drill → existing durable evidence → exact remediation →
+server-chosen Coach action with AI explanation only. No Weighing special case exists in the
+remediation lookup, the review page, the Coach, or `getDueReviews`. New curriculum coverage plugs
+into the architecture through metadata, not code.
+
+**DUE ≠ WEAK carries forward.** For a due `debate-weighing`: recorded mastery below
+`PRACTICING_MASTERY_MIN` → the Weighing lesson, then the exact drill (69 → lesson + drill); at or
+above the floor → the exact drill only (70 and 71 → drill only). No lesson merely because a review
+is due, and a `MasteryProgress` value is a record of demonstrated performance, not permanent
+mastery. When Weighing is the first due skill under the inherited most-overdue ordering
+(`nextReviewAt ASC`), the Coach chooses accordingly; no ranking changed.
+
+**The three-loop truth, precisely.** Complete teach → server-graded-practice → durable-evidence
+loops now exist for: **Claim/Warrant/Impact** (embedded server-graded practice), **Refutation**
+(exact Rebuttal drill, reverse-remediation and Coach connected), and **Weighing** (exact Weighing
+drill, reverse-remediation and Coach connected). CWI's loop is complete but does not use the
+reverse-remediation mapping the other two share — the three are not architecturally identical.
+
+**Curriculum status.** The primary remaining issue is still coverage/connectivity, not
+lesson-template quality. Notable gaps: beginner round orientation, an Evidence Evaluation teaching
+home (`debate-evidence` has the canonical skill, the 30-question `evidence-evaluation` drill and
+durable evidence, but no lesson), Signposting/Clash/Constructive Speeches drill-and-evidence
+connectivity, later speeches, flowing, round strategy, crystallization, delivery, and
+questioning/cross-ex.
+
+**Debate curriculum sequence.**
+
+- **Wave 1B — Weighing teaching-home closure: SHIPPED / Production-verified.**
+- **Wave 1A — format-agnostic Debate round orientation: NEXT / NOT STARTED.** The owner decision is
+  locked: the FIRST orientation release is format-agnostic. Because the repository still carries
+  mixed Debate format signals, Wave 1A will avoid universal claims about speech order, timing, team
+  size, cross-ex/crossfire/POI, side labels, or format-specific new-argument rules. The ultimate
+  PF-vs-Parliamentary product target remains a future decision — only the first-release strategy is
+  resolved.
+- **Wave 1C — Evidence Evaluation teaching-home closure: NOT STARTED.**
 
 ## M15 Learning Architecture Slice 3 — SHIPPED and Production-verified
 
@@ -76,10 +141,9 @@ but whose practice/evidence connectivity does not yet exist the way Refutation's
 - **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED / CLOSED.**
 - **Learning Architecture Slice 2 — durable evidence → exact re-demonstration + exact remediation: SHIPPED / CLOSED.**
 - **Learning Architecture Slice 3 — server chooses the next action, AI explains it: SHIPPED / Production-verified.**
-- **NEXT PRODUCT DIRECTION — NOT STARTED / FUTURE PLANNING:** systematically close curriculum
-  coverage gaps and expand measurable skill loops (full Debate skill map; Taught / Trainable /
-  Measurable / Simulated coverage; connecting Signposting, Clash and Constructive Speeches to real
-  drills and evidence; additional drill areas; structured ballot evidence; later, honest readiness).
+- **Curriculum coverage work is underway** — see the Debate Curriculum Wave 1B section above for the
+  current sequence (Wave 1B shipped; Wave 1A orientation next, not started; Wave 1C evidence lesson
+  not started).
 
 (These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice
 numbering used in the older sections further down this file.)

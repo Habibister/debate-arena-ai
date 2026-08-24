@@ -2,7 +2,56 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 Learning Architecture Slice 3 — server chooses, AI explains (SHIPPED and Production-verified)
+## Latest handoff — Debate Curriculum Wave 1B — Weighing teaching-home closure (SHIPPED and Production-verified)
+
+Implementation `82e76042b6705661e4c5c2e1afc05c6ca227f372`, Production deployment **`6072492323`**.
+
+**What shipped:** the existing held Weighing lesson was corrected and published as the teaching home
+for the already-measurable `debate-weighing` skill. Exact mapping to preserve: lesson
+`debate-weighing` (`/lessons/debate-weighing`) → skillSlug `debate-weighing` → practiceDrill
+`{ track: "debate", area: "weighing" }` (`/study-arcade?track=debate&area=weighing`). The legacy
+alias `debate-weighing-lesson` and the seeded slug `/skills/debate-weighing` both resolve to the
+published lesson through existing precedence. No new skill, no new drill area, schema/seed ZERO.
+
+**The pedagogy rule to preserve:** weighing = comparing competing impacts and explaining why one
+should matter more. Magnitude/probability/timeframe/reversibility are names for comparison moves,
+never required vocabulary. The formative questions are application items — do not regress them to
+lens-recall. Authored-content changes go through the LC1 mechanism (current review marker
+`W1B-DEBATE-WEIGHING-CORRECTION`); exactly the Weighing entry changed, the other sixteen catalog
+entries are untouched.
+
+**The architecture rule this wave proved:** new curriculum coverage plugs in through registry
+metadata (`skillSlug` + `practiceDrill`), NOT through new code. Wave 1B added zero lines to the
+remediation lookup, review page, Coach, or `getDueReviews`, and behavior follows automatically:
+due + below `PRACTICING_MASTERY_MIN` → Weighing lesson then exact drill (69 → both); healthy due →
+exact drill only (70/71 → drill only); most-overdue-first stays inherited from `nextReviewAt ASC`.
+DUE ≠ WEAK.
+
+**Three loops now exist, not architecturally identical:** CWI (embedded server-graded practice),
+Refutation and Weighing (deep-linked, reverse-remediation + Coach connected). CWI does not use the
+reverse-remediation mapping.
+
+**Untouched and still true:** the other held Debate lessons stay held (rebuttal-speeches,
+parliamentary roles, case/topic definitions, duplicate CWI); Refutation remains the deep-link
+reference implementation; the drill bank, thresholds and evidence writers are unchanged; the
+coverage/connectivity gaps from the curriculum audit remain (orientation, evidence lesson,
+signposting/clash/constructive connectivity, later speeches, flowing, strategy, crystallization,
+delivery, cross-ex).
+
+### Next curriculum work
+
+1. **Wave 1A — format-agnostic Debate round orientation. NEXT / NOT STARTED.** Owner decision
+   locked: the first release is format-agnostic; avoid universal claims about speech order, timing,
+   team size, cross-ex/crossfire/POI, side labels, or new-argument rules. The ultimate
+   PF-vs-Parliamentary target is NOT resolved.
+2. **Wave 1C — Evidence Evaluation teaching-home closure. NOT STARTED.** `debate-evidence` still has
+   canonical skill + 30-question drill + durable evidence and no lesson.
+
+Separately and still open, unchanged by this wave: moving-HEAD debt 18, `/debates/history`, the
+stale Reassess CTA, the skills-compat XP prose, the six inherited M14 `Latest handoff` headings, the
+duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — M15 Learning Architecture Slice 3 — server chooses, AI explains (SHIPPED and Production-verified)
 
 Implementation `6f69745c0f7135fe1877eb867624126392ea45d1`, Production deployment **`6071131714`**.
 

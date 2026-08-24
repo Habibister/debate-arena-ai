@@ -4,10 +4,13 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M15 S1B indexOf Batch IV: route resolution / gating hardened (2026-08-24)
 
-### Implemented locally; nothing pushed
+### Implementation SHIPPED and Production-verified; this docs sync is pending owner push
 
-**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
-Baseline `d5f369d`. **Zero production changes** — two test suites, one shared test-only helper, two docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Shipped SHA `5e21b593d03e4a192ddc62460285baae2bc4f2c4`, Production deployment **`6055470720`**, state
+**SUCCESS**, automatic `vercel[bot]` deployment — no manual deploy, no rollback, nothing superseded it.
+Previous verified Production baseline `d5f369d`. **Zero production changes** — two test suites, one
+shared test-only helper, two docs.
 
 **Test-integrity only.** No production route, schema or runtime behaviour changed.
 
@@ -26,8 +29,9 @@ and nothing else. **It is not a registered smoke suite and adds no IDX to the le
 and **0 harness errors** — mechanical isolation where an earlier neighbour throws first — and the helper
 was proven fail-closed in **both** directions. Both affected suites pass.
 
-**Ledger: safe 44 → 48, defective 4 → 0, unresolved 0. The indexOf ordering-control debt is CLOSED
-LOCALLY, pending acceptance and shipment.**
+**Ledger: safe 44 → 48, defective 4 → 0, unresolved 0. The indexOf ordering-control debt is CLOSED.**
+Route resolution / gating is **4/4 safe**; Batch IV repaired exactly IDX-16, IDX-45, IDX-46 and IDX-47.
+**This closes the indexOf ordering-control debt only — not all of S1B.**
 
 **Read the denominator correctly.** 48 is the **audited logical-control ledger** locked at `0127177`
 across the original 14 registered safe suites, with historical checksums **26 direct / 22 captured** and

@@ -2,13 +2,15 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (M15 S1B indexOf Batch IV — the final four route-resolution / gating controls now prove both anchors present before asserting order, closing the indexOf ordering-control ledger at 48/0/0. **LOCAL COMMIT, acceptance pending.** Batch III and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (M15 S1B indexOf Batch IV — the final four route-resolution / gating controls now prove both anchors present before asserting order, closing the indexOf ordering-control ledger at 48/0/0. **SHIPPED and Production-verified at `6055470720`.** Batch III and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
 
-## M15 S1B — indexOf ordering controls, Batch IV: route resolution / gating (LOCAL, acceptance pending)
+## M15 S1B — indexOf ordering controls, Batch IV: route resolution / gating (shipped; Production-verified at `6055470720`)
 
-**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION,
-NO SCHEMA CHANGE`.** Baseline `d5f369d`. **Zero production changes** — two test suites, one shared
-test-only helper, plus these docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Shipped SHA `5e21b593d03e4a192ddc62460285baae2bc4f2c4`, Production deployment **`6055470720`**,
+environment **Production**, state **SUCCESS**, automatic `vercel[bot]` deployment from the Git push —
+no manual deploy, no rollback, nothing superseded it. Previous verified Production baseline `d5f369d`.
+**Zero production changes** — two test suites, one shared test-only helper, plus these docs.
 
 **Test-integrity only.** No production route, schema or runtime behaviour changed.
 
@@ -40,7 +42,7 @@ proven fail-closed in **both** directions across all five states. `education-mig
 **Family after Batch IV: route resolution / gating 4/4 safe, 0 defective.**
 
 **Ordering-control ledger: safe 44 → 48 · defective 4 → 0 · unresolved 0. The indexOf ordering-control
-debt is CLOSED LOCALLY, pending acceptance and shipment.**
+debt is CLOSED.**
 
 **What 48 means.** It is the **audited logical-control ledger** locked by the original string-aware
 audit at `0127177` — 48 controls across the original 14 registered safe suites, with historical

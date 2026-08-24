@@ -18,6 +18,7 @@ import { EDUCATION_REGISTRY, EDUCATION_LESSONS, educationLessonsForTrack, getEdu
 import { EDUCATION_SLUG_ALIASES } from "../lib/education/slug-map";
 import { EDUCATION_GENERIC_FILLER_SIGNATURES, validateEducationRegistry } from "../lib/education/validate";
 import type { EducationRegistryInput, EducationSlugAlias } from "../lib/education/types";
+import { assertSourceOrder } from "./order-assert";
 
 // ---- M13E2 Phase A: additive practice-session schema control ----------------------------------------
 // prisma/schema.prisma was byte-pinned to a MOVING `HEAD` here until M13E2 Phase A. A HEAD-relative pin
@@ -271,7 +272,17 @@ async function main() {
   const xpMentions = (stripComments(detail).match(/XP/g) ?? []).length;
   assert.equal(xpMentions, 1, `16. XP is mentioned exactly once on the detail page (found ${xpMentions})`);
   const detailCode = stripComments(detail);
-  assert.ok(detailCode.indexOf("practiceSupported ?") < detailCode.indexOf("XP"), "16b. and only inside the supported-practice branch");
+  // M15 S1B Batch IV: `a < b` exposes its LEFT operand. `16.` above proves XP occurs exactly once,
+  // so the right anchor was guarded — but deleting the supported-practice branch marker left
+  // `-1 < n` true and this control green. Both anchors are now proven present first.
+  assertSourceOrder({
+    source: detailCode,
+    left: "practiceSupported ?",
+    right: "XP",
+    direction: "before",
+    label: "16b",
+    message: "16b. and only inside the supported-practice branch"
+  });
   assert.ok(!detailCode.includes("xpReward"), "16c. the unearnable seeded xpReward badge is gone");
 
   // ---- 17-21. practice gating --------------------------------------------------------------------
@@ -285,10 +296,25 @@ async function main() {
     "21b. the practice route gates on the resolved track");
   // Compare the CALL SITES, not the import lines (imports are alphabetical and prove nothing).
   const practiceBody = stripComments(practice).slice(stripComments(practice).indexOf("export default"));
-  assert.ok(practiceBody.indexOf("resolveSkillsSlug(params.slug)") < practiceBody.indexOf("getDebateSkillScenario(params.slug"),
-    "21c. and gates BEFORE building a debate scenario");
-  assert.ok(practiceBody.indexOf("debatePracticeSupported") < practiceBody.indexOf("getDebateSkillScenario(params.slug"),
-    "21c2. the unsupported branch returns before any scenario is built");
+  // M15 S1B Batch IV: `21b.` above asserts the bare identifiers exist in the RAW route source, not
+  // these call-site anchors in the comment-stripped body slice, so the LEFT operand was unguarded
+  // here and `-1 < n` kept both controls green with the gate deleted.
+  assertSourceOrder({
+    source: practiceBody,
+    left: "resolveSkillsSlug(params.slug)",
+    right: "getDebateSkillScenario(params.slug",
+    direction: "before",
+    label: "21c",
+    message: "21c. and gates BEFORE building a debate scenario"
+  });
+  assertSourceOrder({
+    source: practiceBody,
+    left: "debatePracticeSupported",
+    right: "getDebateSkillScenario(params.slug",
+    direction: "before",
+    label: "21c2",
+    message: "21c2. the unsupported branch returns before any scenario is built"
+  });
   assert.ok(practice.includes("notFound()"), "21d. unknown fails closed");
 
   // ---- 22. Study Arcade source is track-safe ------------------------------------------------------

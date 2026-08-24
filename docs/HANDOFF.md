@@ -2,7 +2,52 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B indexOf Batch III: transaction / exactly-once ordering hardened (2026-08-24)
+## Latest handoff — M15 S1B indexOf Batch IV: route resolution / gating hardened (2026-08-24)
+
+### Implemented locally; nothing pushed
+
+**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
+Baseline `d5f369d`. **Zero production changes** — two test suites, one shared test-only helper, two docs.
+
+**Test-integrity only.** No production route, schema or runtime behaviour changed.
+
+Batch IV repaired the last four defective ordering controls — **IDX-16** (`education-migration` `32b`),
+**IDX-45** (`skills-compat` `16b`), **IDX-46** (`21c`) and **IDX-47** (`21c2`). All four are `a < b`, so
+all four exposed their **left** operand: with the left anchor absent `indexOf` gives `-1` and `-1 < n`
+still held, leaving the control green with the very lookup or gate it sequences deleted.
+
+This is the one family where a shared helper was justified. **`scripts/order-assert.ts`** provides
+`assertSourceOrder({ source, left, right, direction: "before" | "after", label, message })` — both
+indices captured, fail-closed `<label>-anchors` presence guard, then the required direction, with each
+control's original ordering message preserved verbatim. It claims presence and first-occurrence order
+and nothing else. **It is not a registered smoke suite and adds no IDX to the ledger.**
+
+**Evidence:** all four fail closed on left-absent, right-absent and wrong-order with target attribution
+and **0 harness errors** — mechanical isolation where an earlier neighbour throws first — and the helper
+was proven fail-closed in **both** directions. Both affected suites pass.
+
+**Ledger: safe 44 → 48, defective 4 → 0, unresolved 0. The indexOf ordering-control debt is CLOSED
+LOCALLY, pending acceptance and shipment.**
+
+**Read the denominator correctly.** 48 is the **audited logical-control ledger** locked at `0127177`
+across the original 14 registered safe suites, with historical checksums **26 direct / 22 captured** and
+**43 `<` / 5 `>`**. Those are historical audit figures, not a count of today's literal `<`/`>` tokens —
+Batch IV routes four controls through one helper, so a raw syntax scan of the current tree is
+deliberately not equivalent. The original 48-row physical table is not persisted in this repository, and
+no fresh reconstruction of it is claimed.
+
+### Next — no further indexOf batch
+
+The indexOf ordering sequence ends here. After Batch IV is accepted, pushed and Production-verified,
+**return to M15 product and learning work**. Still open and separate: moving-HEAD debt **18**
+(Class B 12, Class C seed 6), `/debates/history`, the stale Reassess CTA, skills-compat stale XP prose,
+the known HANDOFF paragraph-boundary blemish. M16 not started.
+
+**auth/rate-limit (9/9) remains safe as written and untouched.** Batches I, II and III remain shipped,
+Production-verified and untouched. LC1 CLOSED. A2 unchanged; A4 CLOSED. `judge-shape:smoke` was
+deliberately not run: it loads `.env`/`.env.local` and calls a live provider when credentials exist.
+
+## Previous handoff — M15 S1B indexOf Batch III: transaction / exactly-once ordering hardened (2026-08-24)
 
 ### SHIPPED and Production-verified — nothing awaits a push
 

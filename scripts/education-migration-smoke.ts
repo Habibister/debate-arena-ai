@@ -13,6 +13,7 @@ import { isConceptEducationLessonEntry } from "../lib/education/types";
 import { getLesson } from "../lib/lessons";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
 import { presentSourceFreshness } from "../lib/source-freshness";
+import { assertSourceOrder } from "./order-assert";
 
 // ---- M13E2 Phase A: additive practice-session schema control ----------------------------------------
 // prisma/schema.prisma was byte-pinned to a MOVING `HEAD` here until M13E2 Phase A. A HEAD-relative pin
@@ -614,8 +615,17 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   // ---- 31-32. the legacy lesson path is untouched ---------------------------------------------------
   assert.ok(getLesson("claim-warrant-impact"), "31a. the CWI lesson still resolves through its legacy lookup");
   assert.ok(slugRoute.includes("<LessonView") && slugRoute.includes("<LessonPractice"), "32. CWI still renders through LessonView + LessonPractice");
-  assert.ok(slugRoute.indexOf("getLesson(params.slug)") < slugRoute.indexOf("conceptEducationLesson(params.slug)"),
-    "32b. the legacy lookups run BEFORE the canonical one");
+  // M15 S1B Batch IV: `a < b` exposes its LEFT operand — with the legacy lookup absent indexOf
+  // returns -1 and `-1 < n` still holds, so deleting the very call this control sequences turned it
+  // green. assertSourceOrder proves both anchors present before accepting the order.
+  assertSourceOrder({
+    source: slugRoute,
+    left: "getLesson(params.slug)",
+    right: "conceptEducationLesson(params.slug)",
+    direction: "before",
+    label: "32b",
+    message: "32b. the legacy lookups run BEFORE the canonical one"
+  });
 
   // ---- 33-35. DECA and HOSA are untouched ----------------------------------------------------------
   const deca = getRoleplayLesson("how-deca-roleplay-works");

@@ -2,7 +2,64 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (M15 S1B indexOf Batch III — IDX-30, the transaction / exactly-once ordering control, now proves both anchors present before asserting order. **SHIPPED and Production-verified at `6054639863`.** Batch II and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (M15 S1B indexOf Batch IV — the final four route-resolution / gating controls now prove both anchors present before asserting order, closing the indexOf ordering-control ledger at 48/0/0. **LOCAL COMMIT, acceptance pending.** Batch III and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 S1B — indexOf ordering controls, Batch IV: route resolution / gating (LOCAL, acceptance pending)
+
+**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION,
+NO SCHEMA CHANGE`.** Baseline `d5f369d`. **Zero production changes** — two test suites, one shared
+test-only helper, plus these docs.
+
+**Test-integrity only.** No production route, schema or runtime behaviour changed.
+
+Batch IV repaired the last four defective ordering controls — **IDX-16, IDX-45, IDX-46, IDX-47** —
+all `a < b`, so all four exposed their **left** operand: with the left anchor absent `indexOf` returns
+`-1` and `-1 < n` still holds, so deleting the very lookup or gate each control exists to sequence left
+it green.
+
+| IDX | Suite | Control | Left anchor → right anchor |
+| --- | --- | --- | --- |
+| IDX-16 | education-migration | `32b` | `getLesson(params.slug)` → `conceptEducationLesson(params.slug)` |
+| IDX-45 | skills-compat | `16b` | `practiceSupported ?` → `XP` |
+| IDX-46 | skills-compat | `21c` | `resolveSkillsSlug(params.slug)` → `getDebateSkillScenario(params.slug` |
+| IDX-47 | skills-compat | `21c2` | `debatePracticeSupported` → `getDebateSkillScenario(params.slug` |
+
+This is the one family where a shared helper was justified. **`scripts/order-assert.ts`** exposes
+`assertSourceOrder({ source, left, right, direction: "before" | "after", label, message })`: it captures
+both indices, fails closed under `<label>-anchors` when **either** anchor is missing, then applies the
+required direction, passing each control's original ordering message through verbatim. It proves
+presence and first-occurrence order only — **never containment, uniqueness or runtime behaviour**. The
+helper is assertion machinery: it is not a registered smoke suite and adds no control to the ledger.
+
+**Mutation evidence:** each of the four fails closed on **left anchor absent**, **right anchor absent**
+and **wrong order**, with target attribution and **0 harness errors**; where an earlier neighbour throws
+first, attribution came from the same mechanical isolation used in Batches I–III. The helper itself was
+proven fail-closed in **both** directions across all five states. `education-migration:smoke` and
+`skills-compat:smoke` both pass.
+
+**Family after Batch IV: route resolution / gating 4/4 safe, 0 defective.**
+
+**Ordering-control ledger: safe 44 → 48 · defective 4 → 0 · unresolved 0. The indexOf ordering-control
+debt is CLOSED LOCALLY, pending acceptance and shipment.**
+
+**What 48 means.** It is the **audited logical-control ledger** locked by the original string-aware
+audit at `0127177` — 48 controls across the original 14 registered safe suites, with historical
+checksums **26 direct / 22 captured** and **43 `<` / 5 `>`**. Those are historical audit figures, not
+counts of the current literal `<`/`>` tokens: Batch IV centralises four controls through one helper, so
+a raw syntax scan of today's tree is deliberately **not** equivalent to the denominator. The original
+scanner-generated 48-row physical table is not persisted in this repository, and no fresh full
+reconstruction of it is claimed here.
+
+**This closes the indexOf ordering-control debt only.** Moving-HEAD debt is unchanged at **18**
+(Class B 12, Class C seed 6, learning-content 0) and remains separate, as do `/debates/history`, the
+stale Reassess CTA and the skills-compat XP prose. **After Batch IV ships there is no next indexOf
+batch** — the project returns to M15 product and learning work.
+
+**Validation:** both affected suites pass; entrypoints were inspected first and neither loads `.env`
+or reaches a provider or database. `judge-shape:smoke` was deliberately **not** run: it loads
+`.env`/`.env.local` and calls a live provider when credentials exist. No build, `db:generate` or
+`tsc` was run for a test-only change. Batch I, II and III guards intact; auth/rate-limit 9/9 untouched;
+LC1 CLOSED and byte-identical; A2 unchanged; A4 remains CLOSED. No database access.
 
 ## M15 S1B — indexOf ordering controls, Batch III: transaction / exactly-once (shipped; Production-verified at `6054639863`)
 

@@ -194,7 +194,7 @@ async function main() {
     assert.ok(effectAt >= 0 && txnOpenAt >= 0,
       `A2-7b-anchors. both ${effect} and the progression transaction boundary it must stay inside are present`);
     assert.ok(effectAt > txnOpenAt,
-      `A2-7b. and ${effect} exists nowhere outside the progression transaction`);
+      `A2-7b. and ${effect} first appears after the progression transaction opens`);
   }
   // NON-VACUOUS: at the FROZEN pre-A2 pin the same transaction had the progression writes but NO
   // claim — the detector demonstrably distinguishes the defective baseline from the fix.

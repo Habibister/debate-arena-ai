@@ -2,7 +2,72 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (M15 Learning Architecture Slice 1 — the refutation lesson now routes the learner to the exact Rebuttal drill that measures it, and the in-lesson check stays formative. **SHIPPED and Production-verified** — implementation `53e8e08f13c34ee1c6db0a51f28dc7155d704d95`, Production deployment `6056077343`. The indexOf ordering-control sequence and everything before it remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (M15 Learning Architecture Slice 2 — a due skill now routes from its durable review record to the exact drill that measures it, and to the exact lesson only when demonstrated mastery is below PRACTICING. **SHIPPED and Production-verified** — implementation `b72073321b33f2b119f6d1b20cbabf754fc14e8b`, Production deployment `6070209983`. Learning Architecture Slice 1, the indexOf ordering-control sequence and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 Learning Architecture Slice 2 — SHIPPED and Production-verified
+
+Implementation `b72073321b33f2b119f6d1b20cbabf754fc14e8b`, Production deployment **`6070209983`**.
+Six paths, schema **ZERO**. The review surface now routes a due skill from its durable record to the
+exact practice that measures it — and to teaching only when the record shows the gap.
+
+**The Slice 2 rule — DUE is not WEAK.**
+
+- **Due** = retention timing: the spaced schedule asks for re-demonstration now.
+- **Low demonstrated performance** = durable `masteryPercent` below the canonical PRACTICING boundary.
+- **Remediation** = low demonstrated performance **and** an exact mapped teaching lesson.
+
+A healthy due skill is scheduled re-demonstration, never weakness. Nothing collapses due into weak.
+
+**Canonical boundary.** `PRACTICING_MASTERY_MIN` (currently **70**) is the PRACTICING mastery floor,
+owned by the mastery/review model in `lib/spaced-review.ts` and used by `masteryLevelFor` itself:
+below 70 is below PRACTICING; 70 and above is PRACTICING or stronger. `DRILL_PASS_THRESHOLD` also
+equals 70 today but is a **different product concept** — one drill attempt's pass mark — and the two
+are deliberately not defined in terms of each other.
+
+**The shipped pilot chain** — deterministic, derived from existing education metadata; nothing
+persisted, no new table, no `recommendedLessonId`:
+
+durable due-review row → skill `debate-rebuttal` → lesson `debate-refutation`
+(`/lessons/debate-refutation`) → practiceDrill `{ track: "debate", area: "rebuttal" }`
+(`/study-arcade?track=debate&area=rebuttal`).
+
+- **Healthy due + mapped** (mastery ≥ PRACTICING): the exact Rebuttal drill only — no remediation
+  lesson, no weakness language.
+- **Low-mastery due + mapped** (mastery < PRACTICING): *Review: Answer with refutation* → the exact
+  Rebuttal drill. The wording states low demonstrated performance — it never diagnoses
+  misunderstanding, decline or repeated failure.
+
+**Evidence authority.** Remediation derives only from server identity → `getDueReviews(userId)` →
+durable `masteryPercent` → the static mapping. XP, lesson views, formative checks, client-supplied
+strings, query parameters, browser storage, AI prose and navigation history cannot trigger it. The
+URL controls destination only; it is never weakness evidence.
+
+**Reverse lookup.** `educationLessonsForPracticeSkill` derives mapped entries from existing registry
+metadata; `practiceRemediationForSkill` is the compatibility-layer lookup the review surface uses. No
+new source of truth, no runtime DB lookup for the mapping; unknown, malformed, unmapped, DECA and
+HOSA slugs fail safely and never receive a Debate lesson. `review-ladder:smoke` guards mapped
+lesson/drill skill agreement and the current one-drill-backed-lesson-per-skill authored-data
+assumption; `education-migration:smoke` guards the consumer/import boundary. Unmapped due skills keep
+their existing routing — no fabricated lessons, generic review routing was not repaired, and the
+stale Reassess CTA remains separate debt.
+
+**What Slice 2 did not change:** schema/migrations **ZERO** · `PracticeAttempt`/`QuestionAttempt` not
+activated · `lastOutcome` not consulted · `getDueReviews` contract unchanged · AI Coach unchanged ·
+Slice 1 unchanged · LC1 and G2 frozen. Deliberate boundaries, not defects.
+
+**Pre-existing test-label debt discovered during Slice 2, untouched:**
+`scripts/education-migration-smoke.ts` carries two historical controls labelled `36d`. Slice 2
+neither introduced nor modified them; production comments deliberately cite suites, never ambiguous
+control ids.
+
+**Learning architecture sequence.**
+
+- **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED / CLOSED.**
+- **Learning Architecture Slice 2 — durable evidence → exact re-demonstration + exact remediation: SHIPPED / Production-verified.**
+- **Learning Architecture Slice 3 — the existing AI Coach consumes server-side learner evidence and produces a specific next action: NEXT, NOT STARTED.**
+
+(These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice
+numbering used in the older sections further down this file.)
 
 ## M15 Learning Architecture Slice 1 — SHIPPED and Production-verified
 
@@ -48,15 +113,6 @@ Debate area values.
 no `PracticeAttempt` or `QuestionAttempt` writer added · no lesson-completion persistence added ·
 existing Debate drill grading, mastery and review semantics unchanged. These are deliberate boundaries,
 not defects.
-
-**Learning architecture sequence.**
-
-- **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED.**
-- **Learning Architecture Slice 2 — durable evidence → weakness → exact remediation: NEXT, not started.**
-- **Learning Architecture Slice 3 — the existing AI Coach reads server-side learner evidence and produces a specific next action: future.**
-
-(These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice numbering
-used in the older sections further down this file.)
 
 ## M15 S1B — indexOf ordering controls, Batch IV: route resolution / gating (shipped; Production-verified at `6055470720`)
 

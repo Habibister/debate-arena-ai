@@ -2,7 +2,66 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 Learning Architecture Slice 1 — lesson → exact drill (SHIPPED and Production-verified)
+## Latest handoff — M15 Learning Architecture Slice 2 — durable evidence → exact remediation (SHIPPED and Production-verified)
+
+Implementation `b72073321b33f2b119f6d1b20cbabf754fc14e8b`, Production deployment **`6070209983`**.
+
+**The rule this slice adds — preserve it in all future learning work: DUE ≠ WEAK.**
+
+- **due** = retention timing — the spaced schedule asks for re-demonstration now
+- **low demonstrated performance** = durable `masteryPercent` below `PRACTICING_MASTERY_MIN`
+- **remediation** = low demonstrated performance **plus** an exact mapped teaching lesson
+
+Never collapse due into weak: a healthy due learner gets re-demonstration, not remediation and not
+weakness language.
+
+**Canonical boundary:** `PRACTICING_MASTERY_MIN` (70) lives in `lib/spaced-review.ts` and is the same
+constant `masteryLevelFor` decides PRACTICING from. `DRILL_PASS_THRESHOLD` also equals 70 today but
+is a different concept — one drill attempt's pass mark. Never merge them, and never introduce a
+competing literal.
+
+**Shipped pilot:** due row for `debate-rebuttal` → existing education metadata → lesson
+`debate-refutation` (`/lessons/debate-refutation`) → drill `{ track: "debate", area: "rebuttal" }`
+(`/study-arcade?track=debate&area=rebuttal`).
+
+- **mastery ≥ PRACTICING:** the exact Rebuttal drill only — no lesson, no weakness wording.
+- **mastery < PRACTICING:** Review Refutation, then the exact Rebuttal drill, worded as low
+  demonstrated performance — never as diagnosed misunderstanding, decline or repeated failure.
+
+**Evidence authority:** server identity → `getDueReviews(userId)` → durable `masteryPercent` →
+static mapping. XP, lesson views, formative checks, client strings, query parameters, browser
+storage, AI prose and navigation history must never trigger remediation. URLs choose destinations;
+they are not evidence.
+
+**Architecture:** `educationLessonsForPracticeSkill` (registry) derives the mapping from existing
+entry metadata; `practiceRemediationForSkill` (skills-compat) is the review surface's lookup — the
+review page reaches the registry only through the compatibility layer. Nothing is persisted; unknown,
+malformed, unmapped, DECA and HOSA slugs fail safely. `review-ladder:smoke` guards lesson/drill skill
+agreement and the one-drill-backed-lesson-per-skill authored-data assumption;
+`education-migration:smoke` guards the consumer boundary. Unmapped due skills keep their existing
+routing — no fabricated lessons; the stale Reassess CTA remains separate debt.
+
+**Untouched by Slice 2:** schema (ZERO), `PracticeAttempt`/`QuestionAttempt`, `lastOutcome`, the
+`getDueReviews` contract, the AI Coach, Slice 1, LC1, G2.
+
+**Pre-existing test-label debt noted during Slice 2, untouched:** `education-migration-smoke.ts`
+carries two historical `36d` control labels; Slice 2 neither introduced nor modified them, and
+production comments cite suites rather than ambiguous control ids.
+
+### Learning architecture sequence
+
+1. **Learning Architecture Slice 1 — lesson → exact drill. SHIPPED / CLOSED.**
+2. **Learning Architecture Slice 2 — durable evidence → exact re-demonstration + exact remediation. SHIPPED / Production-verified.**
+3. **Learning Architecture Slice 3 — the existing AI Coach consumes server-side learner evidence and returns a specific next action. NEXT, NOT STARTED.**
+
+Learning Architecture slice numbers are unrelated to the historical **G2** slice numbering used in
+the older handoff sections below.
+
+Separately and still open, unchanged by this slice: moving-HEAD debt 18 (Class B 12, Class C seed 6),
+`/debates/history`, the stale Reassess CTA, the skills-compat XP prose, the six inherited M14
+`Latest handoff` headings. Not all of S1B is closed.
+
+## Previous handoff — M15 Learning Architecture Slice 1 — lesson → exact drill (SHIPPED and Production-verified)
 
 Implementation `53e8e08f13c34ee1c6db0a51f28dc7155d704d95`, Production deployment **`6056077343`**.
 

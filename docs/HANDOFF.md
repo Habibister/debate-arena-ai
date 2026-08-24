@@ -4,9 +4,9 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M15 S1B indexOf Batch III: transaction / exactly-once ordering hardened (2026-08-23)
 
-### One local commit awaits acceptance audit; nothing pushed
+### Implemented locally; nothing pushed
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
+**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
 Baseline `1ed3bbe`. **Zero production changes** — one test suite plus two docs.
 
 **Read this first: Batch III repaired TEST-COVERAGE INTEGRITY, not production behaviour.** A2's

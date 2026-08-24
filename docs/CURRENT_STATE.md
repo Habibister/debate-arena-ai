@@ -6,7 +6,7 @@ _Last updated: 2026-08-23 (M15 S1B indexOf Batch III — IDX-30, the transaction
 
 ## M15 S1B — indexOf ordering controls, Batch III: transaction / exactly-once (LOCAL, acceptance pending)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
+**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
 DB OPERATION, NO SCHEMA CHANGE`.** Baseline `1ed3bbe`. **Zero production changes** — one test suite
 plus these docs.
 

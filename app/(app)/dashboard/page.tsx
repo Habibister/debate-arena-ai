@@ -6,6 +6,7 @@ import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText,
 import type { LucideIcon } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
+import { CoachNextActionCard } from "@/components/app/coach-next-action-card";
 import { StatCard } from "@/components/app/stat-card";
 import { XpProgressCard } from "@/components/app/xp-progress-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
@@ -320,6 +321,8 @@ export default async function DashboardPage() {
           />
         ))}
       </div>
+
+      <CoachNextActionCard />
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <MasteryChart data={masteryData} />

@@ -2184,34 +2184,49 @@ Return lesson, examples, guidedPractice, independentPractice, and masteryQuiz.`,
   );
 }
 
-export async function recommendLessons(input: {
-  organization: Organization;
-  eventType?: string;
-  weaknesses: string[];
-  availableLessons: Array<{ slug: string; title: string; skill: string }>;
-}) {
-  return jsonCompletion<{
-    recommendations: Array<{
-      lessonSlug: string;
-      reason: string;
-      priority: "high" | "medium" | "low";
-    }>;
-  }>(
-    "You map student weaknesses to the most relevant lessons. Return JSON only.",
-    `Organization: ${input.organization}
-Event type: ${input.eventType ?? "general"}
-Weaknesses: ${JSON.stringify(input.weaknesses)}
-Available lessons: ${JSON.stringify(input.availableLessons)}
+/**
+ * M15 Learning Architecture Slice 3 — the "AI EXPLAINS" half of the Coach, and the ONLY thing the
+ * model may do: reword an already-server-chosen action for the learner. It replaces the retired
+ * `recommendLessons`, which let the CLIENT declare its weaknesses and supply the candidate lessons
+ * the model chose from — the model here receives no such latitude and no such input.
+ *
+ * The caller passes only the minimum presentation fields (no user identity, no ids, no hrefs, no
+ * masteryPercent — the boolean is all the wording needs) plus the deterministic template as the
+ * fallback, so a provider failure degrades the PROSE, never the action. The provider's output is
+ * validated down to a single bounded string; nothing else it returns can reach the response.
+ */
+export async function explainNextAction(
+  input: {
+    actionType: "REVIEW_LESSON_THEN_DRILL" | "REDO_EXACT_DRILL" | "EXISTING_REVIEW_DESTINATION";
+    skillName: string;
+    belowPracticing: boolean;
+    dueSinceDate: string;
+    lessonTitle?: string;
+    drillLabel?: string;
+    destinationLabel?: string;
+  },
+  fallbackExplanation: string
+) {
+  return jsonCompletion<{ explanation: string }>(
+    "You reword an ALREADY-DECIDED next training step for a student, warmly and briefly (2-3 sentences). You must not change the step, add steps, invent weaknesses or strengths, mention numeric scores, diagnose causes, or claim readiness, decline, or repeated failure. Return JSON only.",
+    `The server has already decided the student's next step from their real practice record. Explain it.
+Action type: ${input.actionType}
+Skill: ${input.skillName}
+Review due since: ${input.dueSinceDate}
+Recorded mastery below practicing level: ${input.belowPracticing ? "yes" : "no"}
+Lesson to review first: ${input.lessonTitle ?? "none"}
+Drill to retake: ${input.drillLabel ?? "none"}
+Destination: ${input.destinationLabel ?? "none"}
 
-Return JSON recommendations with lessonSlug, reason, and priority.`,
-    () => ({
-      recommendations: input.availableLessons.slice(0, 3).map((lesson, index) => ({
-        lessonSlug: lesson.slug,
-        reason: `Development fallback recommendation for ${lesson.skill}: addresses one of the listed weak areas.`,
-        priority: index === 0 ? "high" : index === 1 ? "medium" : "low"
-      }))
-    }),
-    "lesson recommendations"
+Rules: the step itself cannot be changed. If mastery is not below the practicing level, this is routine re-demonstration — do not imply weakness. Never say the student is bad at anything.
+
+Return JSON: { "explanation": string }`,
+    () => ({ explanation: fallbackExplanation }),
+    "coach next-action explanation",
+    (value) =>
+      typeof value?.explanation === "string" &&
+      value.explanation.trim().length > 0 &&
+      value.explanation.length <= 600
   );
 }
 

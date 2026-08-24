@@ -143,18 +143,16 @@ export const lessonContentRequestSchema = z.object({
   skillName: z.string().min(2).max(80)
 });
 
-export const recommendationRequestSchema = z.object({
-  organization: organizationSchema,
-  eventType: z.string().min(2).max(120).optional(),
-  weaknesses: z.array(z.string().min(2)).min(1),
-  availableLessons: z.array(
-    z.object({
-      slug: z.string(),
-      title: z.string(),
-      skill: z.string()
-    })
-  )
-});
+/**
+ * M15 Learning Architecture Slice 3 — the Coach request carries NO learning-state claims.
+ *
+ * The previous schema here let the client assert its own weaknesses AND supply the candidate lesson
+ * list the model chose from. Both are gone: the request now means only "derive my current
+ * evidence-backed next action", strict so that any smuggled learning claim (weaknesses, scores,
+ * mastery, a skillSlug) is rejected rather than ignored. The server derives everything from the
+ * authenticated user's own durable record.
+ */
+export const coachNextActionRequestSchema = z.object({}).strict();
 
 export const readinessRequestSchema = z.object({
   organization: organizationSchema,

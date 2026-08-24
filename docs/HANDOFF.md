@@ -2,12 +2,26 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B indexOf Batch III: transaction / exactly-once ordering hardened (2026-08-23)
+## Latest handoff — M15 S1B indexOf Batch III: transaction / exactly-once ordering hardened (2026-08-24)
 
-### Implemented locally; nothing pushed
+### SHIPPED and Production-verified — nothing awaits a push
 
-**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED`.**
-Baseline `1ed3bbe`. **Zero production changes** — one test suite plus two docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Deployed stack HEAD `2c643c862d755fb6f9c4267ca280fc517b83d6de`, Production deployment
+**`6054639863`**, state **SUCCESS**, automatic `vercel[bot]` deployment — no manual deploy, no
+rollback, nothing superseded it. Previous verified Production baseline `1ed3bbe`. **Zero production
+changes** — one test suite plus two docs.
+
+**Shipped as a four-commit stack, one push, one deployment:** implementation `f94a2fb`, ordering-message
+fix `cad1217`, semantic-wording cleanup `3085f9f`, local-stack status fix `2c643c8`. Vercel built the
+pushed head, so `6054639863` contains the other three as ancestors.
+
+**Production verification (read-only):** local HEAD = `origin/main` = live remote = `2c643c8`, clean
+**0/0**; published diff from the prior verified Production SHA is exactly `scripts/judge-shape-smoke.ts`
+plus these two docs; **production/runtime ZERO, schema ZERO, snapshot ZERO, LC1 ZERO**; the deployed
+control shows no logic drift from `f94a2fb`. Public routes healthy, protected pages redirect
+unauthenticated, protected APIs return **401**, **no 5xx observed**. **The Vercel runtime does not
+execute smoke-test assertions.** `/debates/history` remains the already-tracked soft-redirect debt.
 
 **Read this first: Batch III repaired TEST-COVERAGE INTEGRITY, not production behaviour.** A2's
 exactly-once judged-attempt claim and A4's reward integrity were already CLOSED, and every production
@@ -46,7 +60,14 @@ now **closed: 14 total, 14 safe, 0 defective**; the other 13 controls were not t
    before Batch IV is authorised.
 
 **auth/rate-limit (9/9) remains safe as written and untouched.** Batch III was **test-integrity only**:
-no runtime behaviour and no security defect was repaired. Batch I (completed-retry 9/9) and Batch II
+no runtime behaviour and no security defect was repaired — it did not fix production idempotency,
+transaction behaviour, XP/reward behaviour or any runtime race, and A2 and A4 production code stayed
+byte-identical. Production verification proves the accepted stack deployed and that live health stayed
+good; it does not prove smoke assertions ran inside Vercel.
+
+**Process boundary learned in this batch:** `scripts/judge-shape-smoke.ts` loads `.env`/`.env.local` at
+import and calls a real provider when credentials exist. Run it credential-free (a clone with no `.env`)
+for a deterministic check. Batch I (completed-retry 9/9) and Batch II
 (evidence-before-mastery 5/5) remain closed and untouched. Moving-HEAD debt unchanged at 18
 (Class B 12, Class C seed 6) and byte-identical to the baseline. LC1 CLOSED. A2 unchanged; A4 CLOSED.
 Still open elsewhere in S1B: `/debates/history`, the stale Reassess CTA, skills-compat stale XP prose.

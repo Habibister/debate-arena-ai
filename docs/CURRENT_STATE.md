@@ -2,13 +2,20 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-23 (M15 S1B indexOf Batch III — IDX-30, the transaction / exactly-once ordering control, now proves both anchors present before asserting order. **LOCAL COMMIT, acceptance pending.** Batch II and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (M15 S1B indexOf Batch III — IDX-30, the transaction / exactly-once ordering control, now proves both anchors present before asserting order. **SHIPPED and Production-verified at `6054639863`.** Batch II and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
 
-## M15 S1B — indexOf ordering controls, Batch III: transaction / exactly-once (LOCAL, acceptance pending)
+## M15 S1B — indexOf ordering controls, Batch III: transaction / exactly-once (shipped; Production-verified at `6054639863`)
 
-**Status: `IMPLEMENTED LOCALLY — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO
-DB OPERATION, NO SCHEMA CHANGE`.** Baseline `1ed3bbe`. **Zero production changes** — one test suite
-plus these docs.
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
+Deployed stack HEAD `2c643c862d755fb6f9c4267ca280fc517b83d6de`, Production deployment
+**`6054639863`**, environment **Production**, state **SUCCESS**, automatic `vercel[bot]` deployment
+from the Git push — no manual deploy, no rollback, nothing superseded it. Previous verified Production
+baseline `1ed3bbe`. **Zero production changes** — one test suite plus these docs.
+
+The batch shipped as a four-commit stack: implementation `f94a2fb247115ce4373ba75215588d813a58fc23`,
+ordering-message fix `cad1217e7dd6caccb96bd1c294ac830c90acb981`, semantic-wording cleanup
+`3085f9f6df17ff481139ad26b36b4d9af72cf518`, local-stack status fix `2c643c8…` — published in one push,
+so Vercel built the pushed head and `6054639863` contains the other three as ancestors.
 
 **This repaired a TEST ASSERTION, not production behaviour.** A2 (exactly-once judged-attempt claim)
 and A4 (reward integrity) were already CLOSED and are byte-identical here. Batch III did not fix
@@ -66,6 +73,23 @@ controls are untouched.
 
 The audited denominator is unchanged: **48 ordering comparisons across 14 safe suites**, of which
 **30 were safe as written** and **18 defective** before any repair. **Not all 48 were defective.**
+
+**Production verification (read-only):** deployment **`6054639863`** · Production · automatic
+`vercel[bot]` · state **success**. local HEAD = `origin/main` = live remote = `2c643c8`, repository
+clean at **0 ahead / 0 behind**. The full published diff from the prior verified Production SHA is
+**exactly three paths** — `scripts/judge-shape-smoke.ts`, `docs/CURRENT_STATE.md`, `docs/HANDOFF.md`;
+**production/runtime source changes ZERO, schema ZERO, snapshot ZERO, LC1 ZERO**, and `app/`,
+`components/`, `lib/`, `prisma/` and `package.json` are byte-identical. The deployed control carries the
+accepted logic with no drift — only the two message lines differ from `f94a2fb`. Live route sample: `/`
+**200**, `/signin` **200**, `/dashboard` and `/lessons` **307** to `/signin`, the protected APIs
+**401** unauthenticated, **no 5xx observed**. The Vercel runtime does **not** execute smoke-test
+assertions — none were run there. `/debates/history` still returns an unauthenticated 200: the
+already-tracked soft-redirect debt, unchanged.
+
+**Process boundary learned in this batch:** `scripts/judge-shape-smoke.ts` loads `.env`/`.env.local` at
+import and makes a real provider call when credentials exist. Run it credential-free (a clone with no
+`.env`) when a deterministic check is wanted; it was not run during the Production verification or this
+sync.
 
 **Validation:** `db:generate` PASS · `tsc` clean · `lint` (1 pre-existing `<img>` warning at
 `components/profile/user-avatar.tsx:48`) · `build` PASS · **30/30 safe suites green**, `judge-shape`

@@ -20,6 +20,24 @@ export const DRILL_AREAS: Array<{ id: DrillArea; label: string; skillSlug: strin
 
 export const DRILL_SKILL_SLUGS = DRILL_AREAS.map((a) => a.skillSlug);
 
+/**
+ * M15 Learning Architecture Slice 1 — the single source of truth for "is this string a real Debate
+ * drill area?".
+ *
+ * The deep link `/study-arcade?track=debate&area=rebuttal` carries UNTRUSTED URL text, so it is
+ * narrowed here against `DRILL_AREAS` rather than cast. An unknown, empty or cross-track value is
+ * not an error — it simply is not an area, and the caller keeps today's "mixed" default. Nothing
+ * downstream of this guard can receive a value the drill bank does not have.
+ */
+export function isDrillArea(value: unknown): value is DrillArea {
+  return typeof value === "string" && DRILL_AREAS.some((a) => a.id === value);
+}
+
+/** Narrow an untrusted query value to a real area, or `undefined` when it is not one. */
+export function drillAreaFromQuery(value: unknown): DrillArea | undefined {
+  return isDrillArea(value) ? value : undefined;
+}
+
 export type DrillQuestion = {
   id: string;
   area: DrillArea;

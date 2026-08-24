@@ -627,6 +627,107 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     message: "32b. the legacy lookups run BEFORE the canonical one"
   });
 
+  // The drill bank and its area guard are imported HERE, at the point of use, matching how control 4b
+  // already reaches for them: this suite owns lesson wiring, not the bank's contents.
+  const { DRILL_AREAS: SLICE1_AREAS, DRILL_BANK: SLICE1_BANK, isDrillArea, drillAreaFromQuery } =
+    await import("../lib/debate-drills");
+
+  // ---- 36. M15 Learning Architecture Slice 1: lesson -> exact drill --------------------------------
+  // The authored lessons teach well and then stop: their own checks write nothing, by design. Slice 1
+  // hands the learner the ONE drill that actually measures the concept, and only where such a drill
+  // provably exists. These controls bind the mapping, its exactness, and its absence elsewhere.
+  {
+    const conceptEntries = EDUCATION_REGISTRY.lessons.filter((e) => e.sourceKind === "concept-education-lesson");
+    const mapped = conceptEntries.filter((e) => e.practiceDrill);
+    assert.deepEqual(mapped.map((e) => e.id), ["debate-refutation"],
+      `36. exactly one authored lesson names a drill destination — debate-refutation  [${mapped.map((e) => e.id).join(", ")}]`);
+
+    const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
+    assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },
+      "36b. and it points at the Debate rebuttal drill, not a guessed or mixed destination");
+
+    // The destination must be a REAL area of the real bank, carrying the same skill the lesson is about.
+    const area = SLICE1_AREAS.find((a) => a.id === refutation?.practiceDrill?.area);
+    assert.ok(area, "36c. the named area exists in the Debate drill bank");
+    assert.equal(area?.skillSlug, refutation?.skillSlug,
+      "36d. the drill measures the same seeded skill the lesson is associated with");
+    assert.ok(SLICE1_BANK.filter((q) => q.area === area?.id).length >= 10,
+      "36e. and that area has a real question pool behind it, not an empty shell");
+
+    // Absence is the honest default: three authored lessons have no matching area today.
+    for (const id of ["debate-signposting", "debate-clash", "debate-constructive-speeches"]) {
+      const entry = conceptEntries.find((e) => e.id === id);
+      assert.ok(entry, `36f. ${id} is still a published concept lesson`);
+      assert.equal(entry?.practiceDrill, undefined,
+        `36f2. ${id} names NO drill — a lesson without a matching area must not link to one`);
+    }
+    // No cross-track destination may appear anywhere in the registry.
+    for (const entry of EDUCATION_REGISTRY.lessons) {
+      if (!entry.practiceDrill) continue;
+      assert.equal(entry.practiceDrill.track, "debate",
+        `36g. ${entry.id} names a Debate drill — no cross-track practice destination exists`);
+      assert.equal(entry.track, "GENERAL_DEBATE",
+        `36g2. and only a General Debate lesson carries one`);
+    }
+  }
+
+  // ---- 37. the call to action is metadata-driven, and only the mapped lesson gets one --------------
+  {
+    const view = stripComments(read("components/lessons/concept-education-lesson-view.tsx"));
+    assert.ok(!/debate-refutation|debate-signposting|debate-clash/.test(view),
+      "37. the lesson view special-cases NO lesson id — the destination comes from registry metadata");
+    assert.ok(/practiceDrill \? \(/.test(view),
+      "37b. and it renders the practice action only when a destination exists");
+    assert.ok(/\/study-arcade\?track=\$\{practiceDrill\.track\}&area=\$\{practiceDrill\.area\}/.test(view),
+      "37c. the action targets the real study-arcade deep link, built from the mapping");
+    assert.ok(!/disabled/.test(view),
+      "37d. an unmapped lesson gets no disabled placeholder button");
+    // Honest copy: the formative check must not be described as recorded progress.
+    for (const claim of ["You mastered", "Mastery complete", "progress recorded", "evidence recorded", "readiness improved"]) {
+      assert.ok(!view.includes(claim), `37e. the lesson never claims "${claim}"`);
+    }
+    assert.ok(/records nothing/.test(view),
+      "37f. and it says plainly that the lesson check records nothing");
+
+    // The formative practice component stays inert — Slice 1 added no persistence to it.
+    const practice = stripComments(read("components/lessons/concept-education-lesson-practice.tsx"));
+    for (const banned of ["fetch(", "localStorage", "sessionStorage", "document.cookie", "@/lib/prisma",
+                          "recordDrillMastery", "recordPracticeOutcome", "awardXp", "use server"]) {
+      assert.ok(!practice.includes(banned),
+        `37g. the lesson self-check still performs no ${banned} — it remains formative`);
+    }
+  }
+
+  // ---- 38. the deep link is validated, never cast ---------------------------------------------------
+  {
+    assert.ok(isDrillArea("rebuttal"), "38. a real area is recognised");
+    assert.equal(drillAreaFromQuery("rebuttal"), "rebuttal", "38b. and is passed through");
+    for (const junk of ["not-a-real-area", "", "REBUTTAL", "deca-marketing", undefined, null, 7, {}]) {
+      assert.equal(drillAreaFromQuery(junk as unknown), undefined,
+        `38c. an untrusted value (${JSON.stringify(junk)}) yields no area, so the drill keeps its "mixed" default`);
+    }
+    assert.deepEqual(SLICE1_AREAS.filter((a) => !isDrillArea(a.id)), [],
+      "38d. every real area passes its own guard — the guard is the single source of truth");
+
+    const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
+    assert.ok(/drillAreaFromQuery\(searchParams\.area\)/.test(arcade),
+      "38e. the page narrows the query value instead of casting it");
+    assert.ok(!/as DrillArea/.test(arcade),
+      "38f. and never asserts an untrusted string into the area type");
+    assert.ok(/<DebateDrills initialArea=\{debateArea\} \/>/.test(arcade),
+      "38g. the validated area reaches the Debate drill only");
+    // Track isolation: the Debate area is applied to the Debate component alone.
+    const decaBlock = arcade.slice(arcade.indexOf("<ConceptDrills"), arcade.indexOf("<ConceptDrills") + 600);
+    assert.ok(!decaBlock.includes("debateArea"),
+      "38h. a Debate area on a DECA URL cannot reach the DECA drills");
+
+    const drills = stripComments(read("components/training/debate-drills.tsx"));
+    assert.ok(/useState<DrillArea \| "mixed">\(initialArea \?\? "mixed"\)/.test(drills),
+      "38i. initialArea seeds the FIRST render only and still defaults to mixed");
+    assert.ok(/setAreaFilter\(/.test(drills),
+      "38j. and the learner can still switch areas afterwards — the prop is not controlling");
+  }
+
   // ---- 33-35. DECA and HOSA are untouched ----------------------------------------------------------
   const deca = getRoleplayLesson("how-deca-roleplay-works");
   const hosa = getRoleplayLesson("how-hosa-scenario-interaction-works");

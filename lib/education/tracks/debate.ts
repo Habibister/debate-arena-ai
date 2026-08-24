@@ -135,6 +135,11 @@ export const DEBATE_MIGRATED_LESSONS: readonly EducationRegistryEntry[] = [
     // the lesson's own authored questions — not the graded drill bank — so nothing here writes
     // mastery, and the practice component imports no mastery code at all.
     skillSlug: "debate-rebuttal",
+    // The one authored Debate lesson whose concept has a REAL matching drill area today: `rebuttal`
+    // carries skillSlug `debate-rebuttal` and 30 banked items, and its submit path is what actually
+    // writes mastery and schedules review. The other three authored lessons have no such area, so
+    // they carry no destination and show no practice call to action.
+    practiceDrill: { track: "debate", area: "rebuttal" },
     legacySlugs: [],
     nextLessonId: "debate-constructive-speeches",
     provenance: MIGRATED_DEBATE_PROVENANCE

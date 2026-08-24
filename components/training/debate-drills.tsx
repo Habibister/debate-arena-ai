@@ -147,8 +147,14 @@ type AnswerState = { optionId: string; correct: boolean; correctAnswer: string; 
 // and keeps the answer key; each answer is recorded server-side before its feedback comes back, and
 // the first answer to a question is final. On finish, the per-skill EVIDENCE score — each distinct
 // question counted once — is what may be recorded.
-export function DebateDrills() {
-  const [areaFilter, setAreaFilter] = useState<DrillArea | "mixed">("mixed");
+/**
+ * `initialArea` sets ONLY the first render's filter, so a lesson can hand the learner the exact drill
+ * that measures the concept it just taught. It is not a controlled prop: the learner can still switch
+ * areas freely afterwards, and callers that pass nothing keep today's "mixed" behaviour exactly.
+ * The caller is responsible for narrowing untrusted input with `drillAreaFromQuery` first.
+ */
+export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) {
+  const [areaFilter, setAreaFilter] = useState<DrillArea | "mixed">(initialArea ?? "mixed");
   const [count, setCount] = useState(8);
   const [areasMeta, setAreasMeta] = useState<AreaMeta[]>([]);
   const [session, setSession] = useState<SessionStart | null>(null);

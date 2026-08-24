@@ -5,6 +5,7 @@ import { BookOpenCheck, Gamepad2, Layers3, PlayCircle, RotateCcw, Sparkles } fro
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { ConceptDrills } from "@/components/training/concept-drills";
 import { DebateDrills } from "@/components/training/debate-drills";
+import { drillAreaFromQuery } from "@/lib/debate-drills";
 import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { DECA_DRILL_AREAS } from "@/lib/deca-drills";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +19,17 @@ import { getActiveTrack } from "@/lib/track-server";
 // Study Arcade landing — the drill layer's front door per the master plan. This is the shell:
 // existing decks and games are linked (not rebuilt), and the review tiles show REAL activity
 // numbers from MasteryProgress or honest empty states. No fabricated counts, ever.
-export default async function StudyArcadePage({ searchParams }: { searchParams: { track?: string } }) {
+export default async function StudyArcadePage({
+  searchParams
+}: {
+  searchParams: { track?: string; area?: string };
+}) {
   const activeTrack = await getActiveTrack(searchParams.track);
+  // `?area=` is untrusted URL text. It is narrowed against the real Debate drill areas — never cast —
+  // and anything unknown, empty or belonging to another track simply yields `undefined`, which leaves
+  // the drill on its existing "mixed" default. It is applied ONLY to the Debate component, so a
+  // Debate area on a DECA or HOSA URL changes nothing about those tracks.
+  const debateArea = drillAreaFromQuery(searchParams.area);
   const allDecks = deckSummaries();
   const decks = activeTrack ? allDecks.filter((d) => d.organization === activeTrack.organization) : allDecks;
   const cardCount = decks.reduce((total, deck) => total + deck.count, 0);
@@ -127,7 +137,7 @@ export default async function StudyArcadePage({ searchParams }: { searchParams: 
 
       {/* General Debate has no flashcard decks; its drills are the argument/rebuttal/evidence/weighing
           concept reps that feed mastery + spaced review. */}
-      {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills /> : null}
+      {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills initialArea={debateArea} /> : null}
 
       {/* DECA concept drills (performance indicators, business reasoning, customer relations, marketing)
           — concept-level practice that feeds mastery + spaced review, separate from role-play judging. */}

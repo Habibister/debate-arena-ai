@@ -19,6 +19,8 @@
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
 import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
+import type { DrillArea } from "@/lib/debate-drills";
+
 
 /**
  * The tracks the education system may address. Model UN is soft-removed (`RETIRED_TRACKS` in
@@ -138,6 +140,18 @@ export type ConceptEducationLessonSource = {
   };
 };
 
+/**
+ * A lesson's exact drill destination. `track` is the drill surface's own track slug and `area` is the
+ * CANONICAL `DrillArea` from the drill module — imported as a type, so there is one compile-time
+ * definition of a valid area and this layer cannot drift from the bank. Renaming or removing an area
+ * now breaks the build here rather than silently leaving a dead deep link that falls back to "mixed".
+ * `import type` is erased at compile time, so no runtime dependency on the drill bank is created.
+ */
+export type EducationPracticeDrill = {
+  track: "debate";
+  area: DrillArea;
+};
+
 /** Everything an entry carries regardless of which source shape it wraps. */
 type EducationRegistryEntryBase = {
   /** The lesson's canonical id. Deliberately the slug the route already serves. */
@@ -161,6 +175,16 @@ type EducationRegistryEntryBase = {
   provenance: SourceFreshnessMetadata;
   /** Caps this lesson's practice rung. Must not exceed its course's `maxRung`. */
   maximumRung?: EducationRung;
+  /**
+   * M15 Learning Architecture Slice 1 — the EXACT evidence-producing drill that measures what this
+   * lesson teaches, so the learner is handed the right practice instead of a drill front door.
+   *
+   * Present only where a real matching drill area exists and has been checked by hand; absent is the
+   * honest default, and an absent value renders no call to action rather than a guessed destination.
+   * This is a routing pointer, not an evidence claim: the lesson's own checks still write nothing,
+   * and mastery begins at the server-graded drill this points to.
+   */
+  practiceDrill?: EducationPracticeDrill;
 };
 
 /**

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 import { cn } from "@/lib/utils";
-import type { ConceptEducationLessonSource } from "@/lib/education/types";
+import type { ConceptEducationLessonSource, EducationPracticeDrill } from "@/lib/education/types";
 import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
 import {
   ConceptEducationLessonPractice,
@@ -26,16 +26,32 @@ import {
  *
  * Server-rendered apart from the checks, which need ephemeral selection state.
  */
+/** Learner-facing drill names. Keyed by the typed area union so a new area cannot be forgotten. */
+const DRILL_AREA_LABELS: Record<EducationPracticeDrill["area"], string> = {
+  "claim-warrant-impact": "Claim / Warrant / Impact",
+  rebuttal: "Rebuttal",
+  "evidence-evaluation": "Evidence evaluation",
+  weighing: "Weighing"
+};
+
 export function ConceptEducationLessonView({
   source,
   provenance,
   moduleLabel,
-  next
+  next,
+  practiceDrill
 }: {
   source: ConceptEducationLessonSource;
   provenance: SourceFreshnessMetadata;
   moduleLabel: string;
   next: { id: string; title: string } | null;
+  /**
+   * The exact drill that measures this lesson's concept, when the registry names one. Absent for a
+   * lesson with no proven matching drill — and absent renders NOTHING here, never a disabled button
+   * and never a generic practice link, because a call to action that lands on unrelated questions
+   * would be its own small dishonesty.
+   */
+  practiceDrill?: EducationPracticeDrill;
 }) {
   const { lesson } = source;
   const content = lesson.content;
@@ -143,6 +159,25 @@ export function ConceptEducationLessonView({
         </div>
         <ConceptEducationLessonPractice checks={checks} />
       </section>
+
+      {practiceDrill ? (
+        <section aria-labelledby="practice-drill" className="rounded-lg border bg-card p-6">
+          <h2 id="practice-drill" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">
+            Practice this skill
+          </h2>
+          <p className="mt-2 leading-7 text-muted-foreground">
+            The check above is for practice and records nothing. The {DRILL_AREA_LABELS[practiceDrill.area]} drill
+            is scored on the server — that is where your record of this skill starts.
+          </p>
+          <Link
+            href={`/study-arcade?track=${practiceDrill.track}&area=${practiceDrill.area}` as Route}
+            className={cn(buttonVariants({ size: "sm" }), "mt-4 h-auto min-h-11 min-w-11 whitespace-normal px-4 text-center")}
+          >
+            Practice this skill in the {DRILL_AREA_LABELS[practiceDrill.area]} drill
+            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+          </Link>
+        </section>
+      ) : null}
 
       <section aria-labelledby="next" className="rounded-lg border bg-card p-6">
         <h2 id="next" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">

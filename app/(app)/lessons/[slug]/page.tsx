@@ -206,6 +206,7 @@ export default async function LessonPage({ params }: { params: { slug: string } 
           provenance={concept.entry.provenance}
           moduleLabel={concept.moduleLabel}
           next={concept.next}
+          practiceDrill={concept.entry.practiceDrill}
         />
       </div>
     );

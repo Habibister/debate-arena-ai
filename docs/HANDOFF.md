@@ -4,7 +4,7 @@ Everything the next engineer needs to continue safely. Rewrite in place; do not 
 
 ## Latest handoff — M15 S1B indexOf Batch IV: route resolution / gating hardened (2026-08-24)
 
-### Implementation SHIPPED and Production-verified; this docs sync is pending owner push
+### SHIPPED and Production-verified — nothing awaits a push
 
 **Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.**
 Shipped SHA `5e21b593d03e4a192ddc62460285baae2bc4f2c4`, Production deployment **`6055470720`**, state

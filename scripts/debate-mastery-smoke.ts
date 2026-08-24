@@ -200,8 +200,9 @@ async function main() {
       `24. area ${area.id} has exactly ${DEBATE_AREA_DEPTH[area.id]} distinct questions`);
     assert.ok(pool.length >= DEBATE_DRILL_REQUIRED_UNIQUE, `24b. and can therefore reach the floor`);
     assert.ok(SEEDED_SKILL_SLUGS.includes(area.skillSlug), `24c. "${area.skillSlug}" is seeded, so writes land`);
-    // Two of the four are allowlisted canonical redirects to authored Debate lessons (M13E1C), so
-    // they resolve to a lesson rather than a compatibility page. Either way, the invariant that
+    // Three of the four now resolve as canonical redirects to authored Debate lessons — CWI and
+    // rebuttal via the M13E1C allowlist, and weighing because Wave 1B published the corrected
+    // weighing lesson under the same id as its seeded skill. Either way, the invariant that
     // matters is the same: no Debate drill skill may ever resolve into DECA or HOSA territory.
     const resolution = resolveSkillsSlug(area.skillSlug);
     const track = compatTrackForSlug(area.skillSlug);
@@ -209,7 +210,7 @@ async function main() {
     assert.notEqual(track, "DECA", `25b. "${area.skillSlug}" is not DECA`);
     assert.notEqual(track, "HOSA", `25c. "${area.skillSlug}" is not HOSA`);
     if (resolution.kind === "canonical-redirect") {
-      assert.ok(["claim-warrant-impact", "debate-refutation"].includes(resolution.lessonId),
+      assert.ok(["claim-warrant-impact", "debate-refutation", "debate-weighing"].includes(resolution.lessonId),
         `25d. "${area.skillSlug}" redirects only to an authored DEBATE lesson (${resolution.lessonId})`);
     } else {
       assert.equal(track, "DEBATE", `25e. "${area.skillSlug}" resolves as DEBATE`);

@@ -541,7 +541,8 @@ async function main() {
 
   // S2-2. Everything else fails CLOSED. A skill with no authored mapping gets no substitute lesson.
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((s) => practiceRemediationForSkill(s) !== null),
-    ["debate-rebuttal"], "S2-2. exactly one seeded skill has a remediation today");
+    ["debate-rebuttal", "debate-weighing"],
+    "S2-2. exactly the two lesson-connected seeded skills have a remediation today");
 
   // S2-3. Untrusted-looking input is not an error and not a near match.
   for (const s of ["", "unknown", "debate-rebuttal-1", "DEBATE-REBUTTAL", "debate-rebuttal "]) {

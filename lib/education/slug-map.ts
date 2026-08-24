@@ -14,10 +14,11 @@
 //   `compatibility-active` — the target is a seeded record only -> honest compatibility page.
 //   `planned`              — the target resolves nowhere.
 //
-// Three of the four now resolve. `debate-weighing` is the exception by evidence, not by omission:
-// it is a seeded skill, but its authored catalog lesson is HELD (it presents weighing categories as
-// required speech vocabulary, which the curriculum corrects), so there is nothing published to
-// redirect to and the alias must not manufacture one.
+// All four now resolve canonically. `debate-weighing` was the exception until Wave 1B: its authored
+// catalog lesson was HELD (it presented weighing categories as required speech vocabulary), so the
+// alias honestly rendered a compatibility page. The recorded correction was applied and the lesson
+// is published, so the alias now redirects like the other three — the validator itself forbids a
+// compatibility status once the target resolves canonically (ALIAS_COMPAT_SHADOWS_CANONICAL).
 
 import type { EducationSlugAlias } from "@/lib/education/types";
 
@@ -40,8 +41,8 @@ export const EDUCATION_SLUG_ALIASES: readonly EducationSlugAlias[] = [
     legacySlug: "debate-weighing-lesson",
     target: "debate-weighing",
     targetKind: "skill",
-    status: "compatibility-active",
-    note: "Post-round judge recommendation. `debate-weighing` is a seeded skill with no authored lesson published — the catalog one is held — so this resolves to the honest compatibility page for that skill, never to unpublished content."
+    status: "active",
+    note: "Post-round judge recommendation. Wave 1B published the corrected weighing lesson as `debate-weighing`, so this target now resolves canonically and the alias redirects there instead of rendering the old compatibility page."
   },
   {
     legacySlug: "debate-signposting-lesson",

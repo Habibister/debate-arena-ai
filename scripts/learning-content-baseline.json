@@ -808,7 +808,7 @@
       "estimatedMinutes": 8,
       "content": {
         "objective": "Compare impacts instead of only listing them.",
-        "explanation": "Weighing explains why one argument matters more than another. Common weighing tools are magnitude, probability, timeframe, and reversibility.",
+        "explanation": "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves — the skill is making the comparison clear, not saying the lens words.",
         "whyMatters": "Judges often believe both sides have some truth. Weighing tells them which truth should decide the round.",
         "steps": [
           "Identify both impacts.",
@@ -819,7 +819,7 @@
           "prompt": "Aff says preparedness; Neg says class time.",
           "weakAnswer": "Preparedness is more important.",
           "strongAnswer": "Preparedness outweighs class time on timeframe and reversibility. Lost class time is small and adjustable, but students using AI irresponsibly can create immediate academic and career consequences.",
-          "whyItWorks": "The strong answer names weighing lenses and compares both impacts."
+          "whyItWorks": "The strong answer compares both impacts and explains why one should decide the round — the lens names just make that comparison easy to follow."
         },
         "guidedQuestion": {
           "prompt": "Which phrase is weighing?",
@@ -836,29 +836,29 @@
         },
         "practiceQuestions": [
           {
-            "prompt": "Which is a weighing lens?",
+            "prompt": "Aff wins a jobs impact; Neg wins a housing-cost impact. Which response weighs them?",
             "choices": [
-              "Magnitude",
-              "Font size",
-              "Ballot color",
-              "Email address"
+              "Jobs matter more here because lost income reaches more families and cannot be recovered quickly",
+              "Our jobs argument is very strong",
+              "The Neg is simply wrong about housing",
+              "We made more arguments than they did"
             ],
-            "correctAnswer": "Magnitude",
-            "hint": "It asks how large the impact is.",
-            "explanation": "Magnitude is a standard way to compare impacts.",
+            "correctAnswer": "Jobs matter more here because lost income reaches more families and cannot be recovered quickly",
+            "hint": "Weighing compares the two impacts against each other.",
+            "explanation": "Only this answer compares the two impacts and says why one should matter more. That comparison is weighing, whatever words it uses.",
             "skillTag": "Weighing"
           },
           {
-            "prompt": "What does probability compare?",
+            "prompt": "Their impact is huge but very unlikely; yours is smaller but nearly certain. Which comparison resolves that honestly?",
             "choices": [
-              "How likely impacts are",
-              "How loud speakers are",
-              "How many cards exist",
-              "How long the room is"
+              "Prefer the near-certain impact, because a harm that will almost surely happen should beat one that probably never does",
+              "The huge impact automatically wins because it is bigger",
+              "Tell the judge to ignore likelihood",
+              "Neither impact counts"
             ],
-            "correctAnswer": "How likely impacts are",
-            "hint": "Probability is about chance.",
-            "explanation": "Probability tells the judge which impact is more likely to happen.",
+            "correctAnswer": "Prefer the near-certain impact, because a harm that will almost surely happen should beat one that probably never does",
+            "hint": "Compare how likely each impact is, not only its size.",
+            "explanation": "This weighs likelihood against size and tells the judge why likelihood should decide here. A speaker can make this move without ever saying the word probability.",
             "skillTag": "Weighing"
           },
           {
@@ -877,16 +877,16 @@
         ],
         "masteryCheck": [
           {
-            "prompt": "If your impact happens sooner, which lens are you using?",
+            "prompt": "Your harm begins now; theirs arrives years away. Which sentence weighs that difference?",
             "choices": [
-              "Timeframe",
-              "Magnitude",
-              "Vocabulary",
-              "Definition"
+              "Our harm is already starting, so the judge should act on it before their distant harm can even begin",
+              "Our impact is about time",
+              "Their impact is in the future, so it must be false",
+              "Both impacts exist"
             ],
-            "correctAnswer": "Timeframe",
-            "hint": "Sooner means when.",
-            "explanation": "Timeframe compares when impacts happen.",
+            "correctAnswer": "Our harm is already starting, so the judge should act on it before their distant harm can even begin",
+            "hint": "Explain why sooner should matter to the decision.",
+            "explanation": "This uses the time difference to tell the judge why one impact should decide the round — timeframe weighing, whether or not the word is said.",
             "skillTag": "Weighing"
           }
         ]

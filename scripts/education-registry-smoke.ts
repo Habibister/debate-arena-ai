@@ -124,9 +124,10 @@ function main() {
   // ================================================================================================
 
   // ---- 1-2. exactly three lessons, each id present exactly once --------------------------------
-  assert.equal(EDUCATION_LESSONS.length, 7, "1. the registry contains exactly seven lessons");
+  assert.equal(EDUCATION_LESSONS.length, 8, "1. the registry contains exactly eight lessons");
   const expectedIds = ["claim-warrant-impact", "how-deca-roleplay-works", "how-hosa-scenario-interaction-works",
-                       "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"];
+                       "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches",
+                       "debate-weighing"];
   for (const id of expectedIds) {
     assert.equal(EDUCATION_LESSONS.filter((entry) => entry.id === id).length, 1, `2. "${id}" is registered exactly once`);
   }
@@ -152,7 +153,8 @@ function main() {
   assert.ok(hosaEntry.provenance === hosa.provenance, "3i. HOSA provenance is the source object's own");
   // M13E1B — the four migrated entries hold the ORIGINAL catalog objects, not copies.
   for (const [key, id] of [["signposting", "debate-signposting"], ["clash", "debate-clash"],
-                           ["refutation", "debate-refutation"], ["constructiveSpeeches", "debate-constructive-speeches"]] as const) {
+                           ["refutation", "debate-refutation"], ["constructiveSpeeches", "debate-constructive-speeches"],
+                           ["weighing", "debate-weighing"]] as const) {
     const entry = getEducationLesson(id);
     const original = LEARNING_SKILL_CATALOG.find((c) => c.slug === id);
     assert.ok(entry && original, `3j. "${id}" resolves in both the registry and the catalog`);
@@ -198,7 +200,7 @@ function main() {
 
   // ---- 10. track filtering returns only the selected track --------------------------------------
   assert.deepEqual(educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id),
-    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"],
+    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"],
     "10a. Debate filter, in teaching order");
   assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id), ["how-deca-roleplay-works"], "10b. DECA filter");
   assert.deepEqual(educationLessonsForTrack("HOSA").map((e) => e.id), ["how-hosa-scenario-interaction-works"], "10c. HOSA filter");
@@ -327,8 +329,13 @@ function main() {
   assert.equal(byLegacy.get("debate-signposting-lesson")?.target, "debate-signposting", "19b. signposting targets the published lesson");
   assert.equal(byLegacy.get("debate-signposting-lesson")?.targetKind, "lesson", "19c. by lesson id, not a skill slug");
   assert.equal(byLegacy.get("debate-signposting-lesson")?.status, "active", "19d. and is therefore active");
-  assert.equal(byLegacy.get("debate-weighing-lesson")?.status, "compatibility-active",
-    "19e. weighing is compatibility-active — a seeded skill with no published authored lesson");
+  // Wave 1B published the corrected weighing lesson (id `debate-weighing`), so the last
+  // compatibility-active alias flipped to active — the validator's ALIAS_COMPAT_SHADOWS_CANONICAL
+  // rule forbids a compatibility status once the target resolves canonically.
+  assert.equal(byLegacy.get("debate-weighing-lesson")?.status, "active",
+    "19e. weighing is active — its corrected authored lesson is published");
+  assert.ok(registeredSkills.has("debate-weighing"),
+    "19e2. control: the weighing alias's target really is registered now");
   assert.ok(registeredSkills.has("debate-claim-building"), "20c. control: the CWI alias's target really is registered");
   // Non-vacuity: the invariant must reject a planned alias whose target is registered.
   assert.ok(resolves({ target: "debate-claim-building", targetKind: "skill" }), "20d. control: `resolves` really resolves a registered skill");
@@ -521,7 +528,7 @@ function main() {
   assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [], "the real registry is untouched by the controls");
 
   console.log(
-    `Education-registry smoke passed: the canonical registry holds exactly seven lessons — Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, with only debate-claim-warrant-impact-lesson active because only its target is registered, and refutation, weighing and signposting recorded as planned resolving nothing. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
+    `Education-registry smoke passed: the canonical registry holds exactly eight lessons — Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, all four now active — Wave 1B published the corrected weighing lesson, so the last compatibility-active alias redirects canonically. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }
 

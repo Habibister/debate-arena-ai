@@ -9,15 +9,16 @@
 // Four of the nine Debate catalog entries are deliberately absent:
 //
 //   debate-claim-warrant-impact   duplicates the richer shipped `claim-warrant-impact` lesson.
-//   debate-weighing               states magnitude/probability/timeframe as required speech
-//                                 vocabulary; the curriculum teaches them as analytic categories.
 //   debate-rebuttal-speeches      states "no new arguments in rebuttal" as a universal norm; the
 //                                 curriculum requires it be stated as a dated ballot instruction.
 //   debate-parliamentary-roles    parliamentary is not NSDA-governed and has no approved source.
 //   debate-case-topic-definitions its worked example is a parliamentary motion form.
 //
-// Correcting the middle two is content authoring, not migration, so they are held rather than
-// shipped with a claim the curriculum already corrected.
+// debate-weighing was held here for stating magnitude/probability/timeframe as required speech
+// vocabulary. Wave 1B applied that recorded correction — the lenses are now taught as names for
+// comparison moves, with application questions — so it is published below with the exact drill
+// mapping its measurable skill already had. Correcting rebuttal-speeches is still content
+// authoring, so it stays held rather than shipped with a claim the curriculum already corrected.
 //
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
@@ -40,7 +41,7 @@ export const MIGRATED_DEBATE_PROVENANCE: SourceFreshnessMetadata = Object.freeze
 });
 
 /** The catalog slugs this file migrates, in teaching order. */
-const MIGRATED_SLUGS = ["debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"] as const;
+const MIGRATED_SLUGS = ["debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"] as const;
 
 type MigratedSlug = (typeof MIGRATED_SLUGS)[number];
 
@@ -88,9 +89,10 @@ const signposting = selectCatalogLesson("debate-signposting");
 const clash = selectCatalogLesson("debate-clash");
 const refutation = selectCatalogLesson("debate-refutation");
 const constructiveSpeeches = selectCatalogLesson("debate-constructive-speeches");
+const weighing = selectCatalogLesson("debate-weighing");
 
 /** Exported for the migration smoke suite's strict-identity proof against the catalog. */
-export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constructiveSpeeches } as const;
+export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constructiveSpeeches, weighing } as const;
 
 export const DEBATE_MIGRATED_LESSONS: readonly EducationRegistryEntry[] = [
   {
@@ -155,7 +157,28 @@ export const DEBATE_MIGRATED_LESSONS: readonly EducationRegistryEntry[] = [
     source: constructiveSpeeches,
     sourceKind: "concept-education-lesson",
     legacySlugs: [],
-    // The last migrated lesson. Null rather than a pointer at a lesson that does not exist yet.
+    nextLessonId: "debate-weighing",
+    provenance: MIGRATED_DEBATE_PROVENANCE
+  },
+  {
+    id: "debate-weighing",
+    track: "GENERAL_DEBATE",
+    courseId: "debate-performance",
+    moduleId: "debate-round-strategy",
+    variant: "concept",
+    visibility: "learner",
+    practiceState: "available",
+    source: weighing,
+    sourceKind: "concept-education-lesson",
+    // ASSOCIATION ONLY, exactly like debate-refutation: the lesson is ABOUT the seeded
+    // `debate-weighing` skill, its own checks stay formative, and the graded `weighing` drill is
+    // what actually writes mastery and schedules review. Wave 1B published this held lesson after
+    // its recorded content correction, closing the second lesson -> exact-drill -> durable-evidence
+    // loop of the deep-linked kind.
+    skillSlug: "debate-weighing",
+    practiceDrill: { track: "debate", area: "weighing" },
+    legacySlugs: [],
+    // The last lesson in the chain. Null rather than a pointer at a lesson that does not exist yet.
     nextLessonId: null,
     provenance: MIGRATED_DEBATE_PROVENANCE
   }
@@ -164,7 +187,6 @@ export const DEBATE_MIGRATED_LESSONS: readonly EducationRegistryEntry[] = [
 /** Slugs held back from this slice, asserted absent from the learner-visible registry. */
 export const HELD_DEBATE_CATALOG_SLUGS: readonly string[] = [
   "debate-claim-warrant-impact",
-  "debate-weighing",
   "debate-rebuttal-speeches",
   "debate-parliamentary-roles",
   "debate-case-topic-definitions"

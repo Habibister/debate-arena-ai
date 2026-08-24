@@ -185,8 +185,8 @@ async function main() {
     }
   }
   assert.equal(redirects + compat, 44, "4. all 30 lessons + 10 skills + 4 aliases are accounted for");
-  assert.equal(redirects, 6, "4b. exactly six redirect (3 allowlisted + 3 active aliases)");
-  assert.equal(compat, 38, "4c. and the remaining 38 render the honest compatibility state");
+  assert.equal(redirects, 8, "4b. exactly eight redirect (3 allowlisted + 4 active aliases + the debate-weighing skill slug, whose id is now a published lesson)");
+  assert.equal(compat, 36, "4c. and the remaining 36 render the honest compatibility state");
 
   // ---- 5. the allowlist is exactly the audited three -------------------------------------------
   assert.deepEqual(Object.keys(CANONICAL_REDIRECTS).sort(),
@@ -205,12 +205,18 @@ async function main() {
   assert.equal(byLegacy.get("debate-signposting-lesson")?.status, "active", "7c. signposting alias active");
   assert.equal(byLegacy.get("debate-signposting-lesson")?.targetKind, "lesson",
     "7d. and its targetKind is corrected to lesson — debate-signposting is a lesson id, not a skill");
-  assert.equal(byLegacy.get("debate-weighing-lesson")?.status, "compatibility-active", "8. weighing is compatibility-active");
-  assert.equal(resolveSkillsSlug("debate-weighing-lesson").kind, "compatibility",
-    "8b. and resolves to a compatibility page, never to the HELD authored weighing lesson");
+  assert.equal(byLegacy.get("debate-weighing-lesson")?.status, "active",
+    "8. weighing is active — Wave 1B published its corrected authored lesson");
+  {
+    const r = resolveSkillsSlug("debate-weighing-lesson");
+    assert.equal(r.kind === "canonical-redirect" ? r.lessonId : null, "debate-weighing",
+      "8b. and the alias redirects to the published weighing lesson");
+  }
   for (const [slug, lessonId] of [["debate-claim-warrant-impact-lesson", "claim-warrant-impact"],
                                   ["debate-refutation-lesson", "debate-refutation"],
-                                  ["debate-signposting-lesson", "debate-signposting"]] as const) {
+                                  ["debate-signposting-lesson", "debate-signposting"],
+                                  ["debate-weighing-lesson", "debate-weighing"],
+                                  ["debate-weighing", "debate-weighing"]] as const) {
     const r = resolveSkillsSlug(slug);
     assert.equal(r.kind === "canonical-redirect" ? r.lessonId : null, lessonId, `9. "${slug}" -> /lessons/${lessonId}`);
   }
@@ -287,7 +293,9 @@ async function main() {
 
   // ---- 17-21. practice gating --------------------------------------------------------------------
   assert.ok(debateWritingPracticeSupported("debate-evidence-1"), "17. a Debate seeded lesson keeps writing practice");
-  assert.ok(debateWritingPracticeSupported("debate-weighing"), "17b. and a Debate seeded skill does too");
+  // debate-weighing left this set in Wave 1B: its id is now a published lesson, so the slug
+  // redirects canonically instead of rendering a compatibility page with writing practice.
+  assert.ok(debateWritingPracticeSupported("debate-evidence"), "17b. and a Debate seeded skill does too");
   for (const slug of ["deca-marketing", "deca-roleplay-2", "hosa-medical-terminology", "hosa-patient-communication-3",
                       "mun-diplomacy-1", "mun-resolution-writing", "totally-unknown-slug", "claim-warrant-impact"]) {
     assert.ok(!debateWritingPracticeSupported(slug), `18-21. "${slug}" must NOT receive Debate writing practice`);
@@ -346,8 +354,9 @@ async function main() {
   // Every Debate tile points at a registered learner-visible lesson.
   const debateIds = educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id);
   assert.deepEqual(debateIds,
-    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"],
-    "26. the index lists the five real Debate lessons in teaching order");
+    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches",
+     "debate-weighing"],
+    "26. the index lists the six real Debate lessons in teaching order");
 
   // ---- 27-29. M13E1B education is untouched --------------------------------------------------------
   // M15 S1B-1 — four entries are deliberately absent from here onward: lib/lessons.ts,
@@ -651,8 +660,8 @@ async function main() {
     assert.ok(!debateWritingPracticeSupported(skill.slug),
       `27h6. and no DECA skill resolves into Debate writing practice`);
   }
-  assert.equal(EDUCATION_LESSONS.length, 7, "28. still exactly seven canonical lessons");
-  for (const held of ["debate-weighing", "debate-rebuttal-speeches", "debate-parliamentary-roles",
+  assert.equal(EDUCATION_LESSONS.length, 8, "28. exactly eight canonical lessons after Wave 1B");
+  for (const held of ["debate-rebuttal-speeches", "debate-parliamentary-roles",
                       "debate-case-topic-definitions", "debate-claim-warrant-impact"]) {
     assert.ok(!EDUCATION_LESSONS.some((e) => e.id === held), `29. held lesson "${held}" is still not registered`);
   }
@@ -662,20 +671,31 @@ async function main() {
     `30. the real registry validates cleanly; got ${JSON.stringify(validateEducationRegistry(withManifest))}`);
 
   // ---- NON-VACUOUS CONTROLS -----------------------------------------------------------------------
+  // Wave 1B flipped the last compatibility-active alias to active, so the two compatibility-status
+  // controls now use a SYNTHETIC alias — the invariants they demonstrate are unchanged.
   const weighing = EDUCATION_SLUG_ALIASES.find((a) => a.legacySlug === "debate-weighing-lesson");
   assert.ok(weighing, "controls: the weighing alias exists");
+  assert.equal(weighing?.status, "active", "controls: and it is active after Wave 1B");
+  const syntheticCompat = { legacySlug: "control-only-compat-alias", targetKind: "skill", status: "compatibility-active", note: "synthetic control alias" } as const;
   control("compatibility alias targeting an unseeded slug", "ALIAS_COMPAT_UNKNOWN_TARGET",
-    EDUCATION_SLUG_ALIASES.map((a) => (a === weighing ? { ...a, target: "not-a-seeded-slug" } : a)));
+    [...EDUCATION_SLUG_ALIASES, { ...syntheticCompat, target: "not-a-seeded-slug" }]);
   control("compatibility alias whose target is canonical", "ALIAS_COMPAT_SHADOWS_CANONICAL",
-    EDUCATION_SLUG_ALIASES.map((a) => (a === weighing ? { ...a, target: "debate-rebuttal" } : a)));
+    [...EDUCATION_SLUG_ALIASES, { ...syntheticCompat, target: "debate-rebuttal" }]);
   control("active alias targeting an unregistered skill", "ALIAS_UNKNOWN_TARGET",
     EDUCATION_SLUG_ALIASES.map((a) =>
       a.legacySlug === "debate-refutation-lesson" ? { ...a, target: "no-such-skill" } : a));
   assert.equal(controlsRun.length, 3, "3 alias controls ran");
   // A compatibility alias with NO manifest supplied must also be reported, never silently accepted.
-  const noManifest = validateEducationRegistry({ ...EDUCATION_REGISTRY });
+  // Since Wave 1B the REAL alias list has no compatibility-active entry, so this control injects the
+  // synthetic one — the invariant it demonstrates (no manifest -> compat alias reported) is unchanged.
+  const noManifest = validateEducationRegistry({
+    ...EDUCATION_REGISTRY,
+    aliases: [...EDUCATION_SLUG_ALIASES, { ...syntheticCompat, target: "debate-evidence" }]
+  } as never);
   assert.ok(noManifest.some((i) => i.code === "ALIAS_COMPAT_UNKNOWN_TARGET"),
     "control: omitting the manifest reports the compatibility alias rather than passing it");
+  assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY }), [],
+    "control: the REAL registry without a manifest now validates cleanly — no compat alias remains");
 
   // ---- database safety ------------------------------------------------------------------------------
   for (const file of ["lib/education/skills-compat.ts", "components/skills/skill-path.tsx",
@@ -687,7 +707,7 @@ async function main() {
   }
 
   console.log(
-    `Skills-compat smoke passed: all 44 legacy identifiers resolve — 30 seeded lesson slugs, 10 seeded skill slugs and 4 historical judge slugs — with 6 permanent redirects to real authored lessons and 38 honest compatibility pages, and zero 404s. The static manifest is proven equal to prisma/seed.ts by parsing that file, so no database is touched. Only the three hand-audited slugs redirect: debate-claim-building, debate-claim-building-1 and debate-rebuttal; debate-claim-building-2/-3 and all three debate-rebuttal-* are different subjects and render the compatibility state rather than silently becoming another lesson. All four aliases now have real behaviour — CWI, refutation and signposting redirect canonically (signposting's targetKind corrected from skill to lesson), and weighing is compatibility-active because its authored lesson is held. The judge producer emits only resolvable ids, the four broken AI fallbacks are empty rather than renamed onto retired-track content, the seed-content rendering path and every generic substitute are gone, no percentage or mastery claim survives on either surface, XP appears exactly once and only beside the Debate practice that awards it, and no DECA, HOSA, retired Model UN or unknown slug can reach a Debate motion — including from the Study Arcade review card, which now names its own track's destination. The two historical controls are pinned to ${PRE_M13E1C.slice(0, 8)} rather than a moving HEAD, so they prove the fiction existed instead of silently expiring the moment it was removed. lib/spaced-review.ts is no longer blanket-hashed: recordDrillMastery keeps its boolean export and returns true only for 'updated', false for both 'skill-missing' and 'write-failed', proven against a stub client with no database contact, and the three activation-pending DECA drill skills resolve to /training/deca/practice while staying out of the seed mirror until the activation script is run. ${controlsRun.length} alias controls each produced their exact issue code.`
+    `Skills-compat smoke passed: all 44 legacy identifiers resolve — 30 seeded lesson slugs, 10 seeded skill slugs and 4 historical judge slugs — with 8 permanent redirects to real authored lessons and 36 honest compatibility pages, and zero 404s. The static manifest is proven equal to prisma/seed.ts by parsing that file, so no database is touched. Only the three hand-audited slugs redirect: debate-claim-building, debate-claim-building-1 and debate-rebuttal; debate-claim-building-2/-3 and all three debate-rebuttal-* are different subjects and render the compatibility state rather than silently becoming another lesson. All four aliases now have real behaviour — CWI, refutation and signposting redirect canonically (signposting's targetKind corrected from skill to lesson), and weighing redirects canonically because Wave 1B published its corrected authored lesson — the debate-weighing skill slug itself now resolves to that lesson. The judge producer emits only resolvable ids, the four broken AI fallbacks are empty rather than renamed onto retired-track content, the seed-content rendering path and every generic substitute are gone, no percentage or mastery claim survives on either surface, XP appears exactly once and only beside the Debate practice that awards it, and no DECA, HOSA, retired Model UN or unknown slug can reach a Debate motion — including from the Study Arcade review card, which now names its own track's destination. The two historical controls are pinned to ${PRE_M13E1C.slice(0, 8)} rather than a moving HEAD, so they prove the fiction existed instead of silently expiring the moment it was removed. lib/spaced-review.ts is no longer blanket-hashed: recordDrillMastery keeps its boolean export and returns true only for 'updated', false for both 'skill-missing' and 'write-failed', proven against a stub client with no database contact, and the three activation-pending DECA drill skills resolve to /training/deca/practice while staying out of the seed mirror until the activation script is run. ${controlsRun.length} alias controls each produced their exact issue code.`
   );
 }
 

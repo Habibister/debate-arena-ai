@@ -99,7 +99,7 @@ const stripComments = (src: string) =>
 const sha = (p: string) => execSync(`git show HEAD:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
 const shaNow = (p: string) => execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
 
-const MIGRATED = ["debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches"] as const;
+const MIGRATED = ["debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"] as const;
 
 function walkTree(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -129,7 +129,7 @@ async function main() {
   const indexRoute = read("app/(app)/lessons/page.tsx");
 
   // ---- 1-3. exactly four migrated lessons, exact ids, strict source identity ---------------------
-  assert.equal(DEBATE_MIGRATED_LESSONS.length, 4, "1. exactly four Debate catalog lessons are migrated");
+  assert.equal(DEBATE_MIGRATED_LESSONS.length, 5, "1. exactly five Debate catalog lessons are migrated");
   assert.deepEqual(DEBATE_MIGRATED_LESSONS.map((e) => e.id), [...MIGRATED], "2. exact migrated ids, in teaching order");
   for (const id of MIGRATED) {
     const entry = getEducationLesson(id);
@@ -498,13 +498,13 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   }
 
   // ---- 5-8. registry and discovery inventory -----------------------------------------------------
-  assert.equal(EDUCATION_LESSONS.length, 7, "5. seven canonical registry entries");
+  assert.equal(EDUCATION_LESSONS.length, 8, "5. eight canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 7, "6a. all seven are learner-visible");
+  assert.equal(learnerVisible.length, 8, "6a. all eight are learner-visible");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
-  assert.equal(debate.length, 5, "7. exactly five Debate lessons");
+  assert.equal(debate.length, 6, "7. exactly six Debate lessons");
   assert.deepEqual(debate.map((e) => e.id),
-    ["claim-warrant-impact", ...MIGRATED], "7b. CWI first, then the migrated four in teaching order");
+    ["claim-warrant-impact", ...MIGRATED], "7b. CWI first, then the migrated five in teaching order");
   assert.equal(educationLessonsForTrack("DECA").length, 1, "6b. one DECA lesson");
   assert.equal(educationLessonsForTrack("HOSA").length, 1, "6c. one HOSA lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
@@ -517,7 +517,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   const heldTitles = HELD_DEBATE_CATALOG_SLUGS
     .map((slug) => LEARNING_SKILL_CATALOG.find((c) => c.slug === slug)?.lesson.title)
     .filter((t): t is string => typeof t === "string");
-  assert.equal(heldTitles.length, 5, "9b. control: all five held lessons really exist in the catalog");
+  assert.equal(heldTitles.length, 4, "9b. control: all four held lessons really exist in the catalog");
   const registryText = JSON.stringify(EDUCATION_LESSONS);
   for (const title of heldTitles) {
     assert.ok(!registryText.includes(title), `10. held lesson title "${title}" appears nowhere in the registry`);
@@ -583,7 +583,8 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     if (entry.nextLessonId !== null) assert.ok(ids.has(entry.nextLessonId), `21. "${entry.id}" next lesson resolves`);
   }
   assert.equal(getEducationLesson("claim-warrant-impact")?.nextLessonId, "debate-signposting", "21b. CWI now leads into the migrated chain");
-  assert.equal(getEducationLesson("debate-constructive-speeches")?.nextLessonId, null, "21c. the last migrated lesson ends the chain honestly");
+  assert.equal(getEducationLesson("debate-constructive-speeches")?.nextLessonId, "debate-weighing", "21c. constructive speeches now leads into weighing");
+  assert.equal(getEducationLesson("debate-weighing")?.nextLessonId, null, "21c2. the last migrated lesson ends the chain honestly");
   assert.deepEqual(EDUCATION_COURSES.find((c) => c.id === "debate-performance")?.moduleIds,
     ["debate-argument-construction", "debate-round-strategy", "debate-speech-structure"], "22. exact Debate module order");
   const moduleIds = new Set(EDUCATION_MODULES.map((m) => m.id));
@@ -593,6 +594,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
 
   // ---- 24-25. skill mapping honesty ---------------------------------------------------------------
   assert.equal(getEducationLesson("debate-refutation")?.skillSlug, "debate-rebuttal", "24. refutation is associated with debate-rebuttal");
+  assert.equal(getEducationLesson("debate-weighing")?.skillSlug, "debate-weighing", "24b. weighing is associated with debate-weighing");
   for (const id of ["debate-signposting", "debate-clash", "debate-constructive-speeches"]) {
     assert.equal(getEducationLesson(id)?.skillSlug, undefined, `25. "${id}" claims no seeded mastery skill`);
   }
@@ -639,12 +641,21 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   {
     const conceptEntries = EDUCATION_REGISTRY.lessons.filter((e) => e.sourceKind === "concept-education-lesson");
     const mapped = conceptEntries.filter((e) => e.practiceDrill);
-    assert.deepEqual(mapped.map((e) => e.id), ["debate-refutation"],
-      `36. exactly one authored lesson names a drill destination — debate-refutation  [${mapped.map((e) => e.id).join(", ")}]`);
+    assert.deepEqual(mapped.map((e) => e.id), ["debate-refutation", "debate-weighing"],
+      `36. exactly two authored lessons name a drill destination — refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
 
     const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
     assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },
-      "36b. and it points at the Debate rebuttal drill, not a guessed or mixed destination");
+      "36b. refutation points at the Debate rebuttal drill, not a guessed or mixed destination");
+    const weighingEntry = conceptEntries.find((e) => e.id === "debate-weighing");
+    assert.deepEqual(weighingEntry?.practiceDrill, { track: "debate", area: "weighing" },
+      "36b2. and weighing points at the Debate weighing drill");
+    const weighingArea = SLICE1_AREAS.find((a) => a.id === weighingEntry?.practiceDrill?.area);
+    assert.ok(weighingArea, "36c2. the weighing area exists in the Debate drill bank");
+    assert.equal(weighingArea?.skillSlug, weighingEntry?.skillSlug,
+      "36d2. and the weighing drill measures the same seeded skill the lesson is associated with");
+    assert.ok(SLICE1_BANK.filter((q) => q.area === weighingArea?.id).length >= 10,
+      "36e2. with a real question pool behind it, not an empty shell");
 
     // The destination must be a REAL area of the real bank, carrying the same skill the lesson is about.
     const area = SLICE1_AREAS.find((a) => a.id === refutation?.practiceDrill?.area);
@@ -822,7 +833,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   assert.ok(trackFile.includes("throw new Error"), "selector: it fails loudly rather than degrading");
 
   console.log(
-    `Education-migration smoke passed: four already-authored Debate lessons — Guide the judge through your speech, Create direct clash, Answer with refutation, and Build a constructive speech — are now learner-visible, and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, assignment file and Prisma file are byte-identical to HEAD, while the /lessons and /skills INDEX pages — which M14 Phase 1a converted to async track resolution — are pinned instead against the immutable pre-Phase-1a commit, where every changed line must be exactly that conversion. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that ends honestly at null. Only debate-refutation names a seeded skill, as association alone: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All five held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
+    `Education-migration smoke passed: five already-authored Debate lessons — Guide the judge through your speech, Create direct clash, Answer with refutation, Build a constructive speech, and Explain why your impact wins (published by Wave 1B after its recorded weighing correction) — are now learner-visible, and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, assignment file and Prisma file are byte-identical to HEAD, while the /lessons and /skills INDEX pages — which M14 Phase 1a converted to async track resolution — are pinned instead against the immutable pre-Phase-1a commit, where every changed line must be exactly that conversion. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that now runs through weighing and ends honestly at null. Only debate-refutation and debate-weighing name seeded skills, as association alone — each mapped to the exact drill area whose canonical skill it names: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All four still-held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
   );
 }
 

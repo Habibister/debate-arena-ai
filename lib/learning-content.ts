@@ -305,23 +305,23 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       estimatedMinutes: 8,
       content: lesson(
         "Compare impacts instead of only listing them.",
-        "Weighing explains why one argument matters more than another. Common weighing tools are magnitude, probability, timeframe, and reversibility.",
+        "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves — the skill is making the comparison clear, not saying the lens words.",
         "Judges often believe both sides have some truth. Weighing tells them which truth should decide the round.",
         ["Identify both impacts.", "Pick a weighing lens.", "Explain why your impact wins under that lens."],
         {
           prompt: "Aff says preparedness; Neg says class time.",
           weakAnswer: "Preparedness is more important.",
           strongAnswer: "Preparedness outweighs class time on timeframe and reversibility. Lost class time is small and adjustable, but students using AI irresponsibly can create immediate academic and career consequences.",
-          whyItWorks: "The strong answer names weighing lenses and compares both impacts."
+          whyItWorks: "The strong answer compares both impacts and explains why one should decide the round — the lens names just make that comparison easy to follow."
         },
         q("Which phrase is weighing?", ["Our impact is bigger and happens sooner", "We have an impact", "They are wrong", "I have two points"], "Our impact is bigger and happens sooner", "Weighing compares importance.", "This phrase compares magnitude and timeframe.", "Weighing"),
         [
-          q("Which is a weighing lens?", ["Magnitude", "Font size", "Ballot color", "Email address"], "Magnitude", "It asks how large the impact is.", "Magnitude is a standard way to compare impacts.", "Weighing"),
-          q("What does probability compare?", ["How likely impacts are", "How loud speakers are", "How many cards exist", "How long the room is"], "How likely impacts are", "Probability is about chance.", "Probability tells the judge which impact is more likely to happen.", "Weighing"),
+          q("Aff wins a jobs impact; Neg wins a housing-cost impact. Which response weighs them?", ["Jobs matter more here because lost income reaches more families and cannot be recovered quickly", "Our jobs argument is very strong", "The Neg is simply wrong about housing", "We made more arguments than they did"], "Jobs matter more here because lost income reaches more families and cannot be recovered quickly", "Weighing compares the two impacts against each other.", "Only this answer compares the two impacts and says why one should matter more. That comparison is weighing, whatever words it uses.", "Weighing"),
+          q("Their impact is huge but very unlikely; yours is smaller but nearly certain. Which comparison resolves that honestly?", ["Prefer the near-certain impact, because a harm that will almost surely happen should beat one that probably never does", "The huge impact automatically wins because it is bigger", "Tell the judge to ignore likelihood", "Neither impact counts"], "Prefer the near-certain impact, because a harm that will almost surely happen should beat one that probably never does", "Compare how likely each impact is, not only its size.", "This weighs likelihood against size and tells the judge why likelihood should decide here. A speaker can make this move without ever saying the word probability.", "Weighing"),
           q("Why weigh arguments?", ["To help the judge decide between impacts", "To avoid rebuttal", "To skip definitions", "To make speeches confusing"], "To help the judge decide between impacts", "Think about decision-making.", "Weighing turns competing impacts into a clear decision.", "Weighing")
         ],
         [
-          q("If your impact happens sooner, which lens are you using?", ["Timeframe", "Magnitude", "Vocabulary", "Definition"], "Timeframe", "Sooner means when.", "Timeframe compares when impacts happen.", "Weighing")
+          q("Your harm begins now; theirs arrives years away. Which sentence weighs that difference?", ["Our harm is already starting, so the judge should act on it before their distant harm can even begin", "Our impact is about time", "Their impact is in the future, so it must be false", "Both impacts exist"], "Our harm is already starting, so the judge should act on it before their distant harm can even begin", "Explain why sooner should matter to the decision.", "This uses the time difference to tell the judge why one impact should decide the round — timeframe weighing, whether or not the word is said.", "Weighing")
         ]
       )
     }

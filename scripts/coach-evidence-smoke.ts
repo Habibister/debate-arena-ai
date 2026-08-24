@@ -126,6 +126,30 @@ async function main() {
   assert.ok([...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("deca-")) && [...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("hosa-")),
     "S3-4e. control: DECA and HOSA slugs were among them — cross-track safety was actually exercised");
 
+  // ---- S3-W. Wave 1B: the weighing mapping flows through the SAME architecture, unchanged ------
+  // These cases exist because Wave 1B published the corrected weighing lesson with its exact drill
+  // mapping. No Coach logic changed — the assertions below pass only because the helper derives
+  // everything from registry metadata, which is the entire point of the Slice 3 design.
+  seed("debate-weighing", 69);
+  assert.deepEqual(await getEvidenceBackedNextAction("u1"), {
+    type: "REVIEW_LESSON_THEN_DRILL",
+    skill: { slug: "debate-weighing", name: "Debate Weighing", organization: "GENERAL_DEBATE" },
+    dueSinceDate: "2026-08-20",
+    belowPracticing: true,
+    lesson: { id: "debate-weighing", title: "Explain why your impact wins", href: "/lessons/debate-weighing" },
+    drill: { track: "debate", area: "weighing", label: "Weighing", href: "/study-arcade?track=debate&area=weighing" }
+  }, "S3-W1. mastery 69 on debate-weighing yields the weighing lesson and the weighing drill, exact hrefs included");
+  for (const m of [70, 71]) {
+    seed("debate-weighing", m);
+    const a = await getEvidenceBackedNextAction("u1");
+    assert.equal(a.type, "REDO_EXACT_DRILL", `S3-W2. weighing mastery ${m} is re-demonstration, not remediation`);
+    assert.ok(!("lesson" in a), `S3-W2b. and carries NO lesson at mastery ${m}`);
+  }
+  seed("debate-evidence", 95, { slug: "debate-weighing", masteryPercent: 5 });
+  const w3 = await getEvidenceBackedNextAction("u1");
+  assert.equal(w3.type === "NO_DUE_ACTION" ? "" : w3.skill.slug, "debate-evidence",
+    "S3-W3. most-overdue-first still wins — a weaker weighing row later in the order is not preferred");
+
   // ---- S3-5. unknown skill fails safe ----------------------------------------------------------
   seed("totally-unknown-skill", 10);
   const unknown = await getEvidenceBackedNextAction("u1");

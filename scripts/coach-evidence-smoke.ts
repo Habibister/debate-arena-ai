@@ -274,18 +274,28 @@ async function main() {
     "S3-14d. its request schema survives under its original name");
 
   // ---- S3-15/16. schema and the Slice 1/2 surfaces are byte-frozen -----------------------------
+  // lib/education/registry.ts is deliberately absent from Wave 1A onward: curriculum publication
+  // legitimately EXTENDS the registry (Wave 1A inserts the orientation entry), so a byte freeze
+  // would forbid approved curriculum work rather than protect the Coach. What the pin protected FOR
+  // THE COACH is asserted behaviourally instead: the executed mapped cases above (S3-1, S3-W), the
+  // parity sweep (S3-4), review-ladder:smoke's S2-5/S2-6 agreement and cardinality guards, and
+  // education-registry:smoke's strict identity controls.
   for (const p of ["prisma/schema.prisma",
                    "app/(app)/study-arcade/review/page.tsx",
                    "components/lessons/concept-education-lesson-view.tsx",
                    "components/lessons/concept-education-lesson-practice.tsx",
                    "lib/spaced-review.ts",
-                   "lib/education/skills-compat.ts",
-                   "lib/education/registry.ts"]) {
+                   "lib/education/skills-compat.ts"]) {
     assert.equal(now(p), sha(p), `S3-15. ${p} is byte-identical to the immutable pre-Slice-3 baseline`);
   }
+  // The Taught-only orientation must be invisible to the evidence path: no skillSlug, no drill, so
+  // no due row can reference it and no remediation can derive it. Asserted executably:
+  const { practiceRemediationForSkill: s315Lookup } = await import("../lib/education/skills-compat");
+  assert.equal(s315Lookup("debate-round-orientation"), null,
+    "S3-15b. the Taught-only orientation is invisible to the remediation/Coach evidence path");
 
   console.log(
-    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, both Slice 1 lesson components, the review page, spaced-review and the education modules are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}.`
+    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, both Slice 1 lesson components, the review page, spaced-review and the skills-compat routing layer are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}; the education-registry byte pin was deliberately retired because curriculum publication legitimately extends the registry, whose Coach-facing behavior is guarded semantically by the mapped-case, parity, agreement and cardinality controls instead.`
   );
 }
 

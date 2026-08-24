@@ -570,6 +570,19 @@ async function main() {
   // 8. General Debate excludes organization-specific content (no exam generator, no DECA/HOSA decks).
   const gdSteps = nextStepsForTrack(trackBySlug("debate"));
   assert.ok(gdSteps.every((s) => s.key !== "tests" && s.key !== "study"), "General Debate dashboard omits organization-specific exam/deck actions");
+  // Wave 1A: the beginner front door. Orientation is offered FIRST, the AI round stays available,
+  // and no completion gating exists (the ordering is static curriculum guidance).
+  assert.equal(gdSteps[0]?.key, "orientation", "8b. the first Debate dashboard action is the round orientation");
+  assert.equal(gdSteps[0]?.href, "/lessons/debate-round-orientation", "8c. and it links to the orientation lesson");
+  assert.ok(gdSteps.some((s) => s.key === "practice" && s.href === "/debate"), "8d. the AI round action remains, unchanged");
+  assert.ok(gdSteps.findIndex((s) => s.key === "orientation") < gdSteps.findIndex((s) => s.key === "practice"),
+    "8e. and orientation precedes the AI round");
+  assert.ok(!/complete|finished|unlock/i.test(`${gdSteps[0]?.title} ${gdSteps[0]?.description}`),
+    "8f. the orientation card claims no completion state");
+  for (const other of ["deca", "hosa", "model-un"]) {
+    assert.ok(nextStepsForTrack(trackBySlug(other)).every((s) => s.key !== "orientation"),
+      `8g. ${other} gains no Debate orientation action`);
+  }
   // DECA/HOSA keep their real activities.
   const decaSteps = nextStepsForTrack(trackBySlug("deca"));
   assert.ok(decaSteps.some((s) => s.key === "tests") && decaSteps.some((s) => s.key === "study"), "DECA keeps its test + study actions");
@@ -675,8 +688,9 @@ async function main() {
   }
   // The index destinations, proven from the production registry rather than from markup.
   assert.deepEqual(educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id),
-    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"],
-    "Debate exposes exactly the five canonical lessons, in order");
+    ["debate-round-orientation", "claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation",
+     "debate-constructive-speeches", "debate-weighing"],
+    "Debate exposes exactly the seven canonical lessons, orientation first");
   assert.ok(skillPath.includes("`/lessons/${entry.id}`"), "and each Debate tile links to its canonical lesson");
   assert.ok(skillPath.includes("/training/deca/practice"), "DECA exposes its real practice destination");
   assert.ok(skillPath.includes("/training/hosa/events"), "HOSA exposes its real Event Navigator destination");

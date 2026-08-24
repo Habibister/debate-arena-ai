@@ -4,7 +4,7 @@ import { trackById, type TrackInfo, type TrainingTrack } from "@/lib/training-tr
 // never a misleading card (e.g. a DECA/HOSA test generator for Model UN or General Debate). When no
 // track is selected the user is browsing broadly, so the full generic set is shown.
 export type DashboardAction = {
-  key: "practice" | "tests" | "skills" | "study";
+  key: "orientation" | "practice" | "tests" | "skills" | "study";
   title: string;
   description: string;
   href: string;
@@ -27,6 +27,18 @@ export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
 
   const slug = track.slug;
   const actions: DashboardAction[] = [];
+
+  // Wave 1A: a true Debate beginner should meet orientation BEFORE the live round. Static
+  // curriculum guidance only — no completion tracking exists, so nothing is gated and the round
+  // stays fully available below.
+  if (track.id === "GENERAL_DEBATE") {
+    actions.push({
+      key: "orientation",
+      title: "Learn how a debate round works",
+      description: "A short first lesson: what a round is, what each side is doing, and what the judge needs from you.",
+      href: "/lessons/debate-round-orientation"
+    });
+  }
 
   // Practice always exists — routed to the correct experience for the track.
   actions.push(

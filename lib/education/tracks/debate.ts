@@ -43,7 +43,14 @@ export const MIGRATED_DEBATE_PROVENANCE: SourceFreshnessMetadata = Object.freeze
 /** The catalog slugs this file migrates, in teaching order. */
 const MIGRATED_SLUGS = ["debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"] as const;
 
-type MigratedSlug = (typeof MIGRATED_SLUGS)[number];
+/**
+ * Wave 1A: the beginner orientation is NEW authored content, published through the same
+ * catalog-by-reference mechanism as the migrated lessons but kept out of MIGRATED_SLUGS — it was
+ * never a held migration, and the migration suite's historical claims stay scoped to the five.
+ */
+const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation"] as const;
+
+type MigratedSlug = (typeof AUTHORED_CATALOG_SLUGS)[number];
 
 /**
  * Selects one catalog entry by slug and returns THE ORIGINAL OBJECT.
@@ -90,9 +97,31 @@ const clash = selectCatalogLesson("debate-clash");
 const refutation = selectCatalogLesson("debate-refutation");
 const constructiveSpeeches = selectCatalogLesson("debate-constructive-speeches");
 const weighing = selectCatalogLesson("debate-weighing");
+const orientation = selectCatalogLesson("debate-round-orientation");
 
 /** Exported for the migration smoke suite's strict-identity proof against the catalog. */
 export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constructiveSpeeches, weighing } as const;
+
+/**
+ * Wave 1A — the beginner front door. TAUGHT with FORMATIVE checks only, deliberately: orientation
+ * has NO skillSlug and NO practiceDrill, because "knows what debate is" must never become a fake
+ * durable MasteryProgress record. It is registered FIRST in the learner-visible Debate order (the
+ * registry inserts it ahead of Claim/Warrant/Impact) and chains into CWI.
+ */
+export const DEBATE_ORIENTATION_LESSON: EducationRegistryEntry = {
+  id: "debate-round-orientation",
+  track: "GENERAL_DEBATE",
+  courseId: "debate-performance",
+  moduleId: "debate-argument-construction",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: orientation,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "claim-warrant-impact",
+  provenance: MIGRATED_DEBATE_PROVENANCE
+};
 
 export const DEBATE_MIGRATED_LESSONS: readonly EducationRegistryEntry[] = [
   {

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Route } from "next";
-import { BookOpenCheck, ClipboardList, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
+import { BookOpenCheck, ClipboardList, Compass, Flame, Layers3, Medal, MessageSquareText, Target, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MasteryChart } from "@/components/analytics/mastery-chart";
 import { NextStepCard } from "@/components/app/next-step-card";
@@ -36,12 +36,14 @@ import { calculateDebateRating } from "@/lib/xp";
 
 // Icon/tone per track-aware dashboard action (data comes from nextStepsForTrack).
 const ACTION_ICON: Record<DashboardAction["key"], LucideIcon> = {
+  orientation: Compass,
   practice: MessageSquareText,
   tests: ClipboardList,
   skills: BookOpenCheck,
   study: Layers3
 };
 const ACTION_TONE: Record<DashboardAction["key"], "primary" | "secondary" | "accent"> = {
+  orientation: "primary",
   practice: "primary",
   tests: "secondary",
   skills: "accent",

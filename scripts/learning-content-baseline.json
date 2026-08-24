@@ -696,6 +696,105 @@
     }
   },
   {
+    "slug": "debate-round-orientation",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate foundations",
+    "name": "Debate Round Orientation",
+    "description": "Understand what happens in a debate round before your first practice.",
+    "lesson": {
+      "title": "How a debate round works",
+      "slug": "debate-round-orientation-lesson",
+      "summary": "What debate is, what each side is doing, and what the judge needs from you.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Understand what a debate round is and what you are trying to do in one.",
+        "explanation": "A debate round is a structured disagreement: two sides give reasons for different positions, answer each other, and a judge decides which side argued more persuasively. Your job is not just to speak — it is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and why your strongest points should decide the round. An argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive — introducing and building your side's case. Later speaking is mostly responsive — answering what has already been argued and comparing the two sides. Formats differ in speech names, order and timing, but these jobs stay the same.",
+        "whyMatters": "Beginners who enter a round without knowing the goal tend to list facts or repeat themselves. Judges can only vote on what they can follow: once you know the judge is deciding between reasons, every sentence gets a purpose — building a point, answering one, or explaining why yours matters more.",
+        "steps": [
+          "Know your side's position and the strongest reasons for it.",
+          "Track what the other side actually argues, and answer it directly instead of repeating yourself.",
+          "Tell the judge which argument you are on and why your most important points should decide the round."
+        ],
+        "workedExample": {
+          "prompt": "A short exchange on whether the school day should start later.",
+          "weakAnswer": "Side A: Later starts are good. Side B: No, they are not. Side A: Yes, they really are.",
+          "strongAnswer": "Side A: A later start helps because students sleep more and focus better in class. Side B: But buses and family schedules make a later start hard for many households. Side A: Schedules can be adjusted once — lost focus in every class is a cost that repeats every single day.",
+          "whyItWorks": "Each side makes a claim with a reason, the reply answers that claim directly, and the final turn explains why one concern should matter more to the judge. That is a debate round in miniature."
+        },
+        "guidedQuestion": {
+          "prompt": "What is a debater's real job in a round?",
+          "choices": [
+            "Help the judge see why your side's reasons should win",
+            "Talk longer than the opponent",
+            "Avoid mentioning the other side's points",
+            "Use the most impressive vocabulary"
+          ],
+          "correctAnswer": "Help the judge see why your side's reasons should win",
+          "hint": "Think about who decides the round.",
+          "explanation": "The judge decides between reasons. Everything you say should help the judge understand your side's reasoning and prefer it.",
+          "skillTag": "Orientation"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is the goal of a debate round?",
+            "choices": [
+              "Persuade the judge that your side's position is stronger",
+              "Prove the other team is dishonest",
+              "Say as many separate points as possible",
+              "Finish your speeches quickly"
+            ],
+            "correctAnswer": "Persuade the judge that your side's position is stronger",
+            "hint": "The judge is the audience that matters.",
+            "explanation": "Every speech exists to persuade the judge — not to overwhelm, insult, or outlast the other side.",
+            "skillTag": "Orientation"
+          },
+          {
+            "prompt": "Which choice gives the judge an actual reason instead of only stating a position?",
+            "choices": [
+              "School uniforms help because they reduce visible income differences between students",
+              "School uniforms are obviously good",
+              "Everyone already knows uniforms work",
+              "Uniforms are a topic people discuss"
+            ],
+            "correctAnswer": "School uniforms help because they reduce visible income differences between students",
+            "hint": "An argument carries a reason the judge can weigh.",
+            "explanation": "A claim plus a reason gives the judge something to evaluate. The other options assert or observe without giving a reason.",
+            "skillTag": "Orientation"
+          },
+          {
+            "prompt": "The other side just answered one of your arguments. What should you do?",
+            "choices": [
+              "Respond to their answer and explain why your point still stands",
+              "Repeat your original sentence more confidently",
+              "Ignore it and move to a new topic",
+              "Concede the argument immediately"
+            ],
+            "correctAnswer": "Respond to their answer and explain why your point still stands",
+            "hint": "An unanswered response usually wins the point.",
+            "explanation": "Debate is exchange: once your argument is answered, the judge needs your response to the answer — not a louder restatement.",
+            "skillTag": "Orientation"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "Side A says: 'Homework should be limited because students need sleep.' Side B answers: 'Students lose sleep to phones, not homework.' What does the judge most need from Side A next?",
+            "choices": [
+              "Why homework is still a real cause of lost sleep worth acting on, even if phones matter too",
+              "A louder restatement that sleep is important",
+              "A brand-new argument about grades instead",
+              "A comment about Side B's sincerity"
+            ],
+            "correctAnswer": "Why homework is still a real cause of lost sleep worth acting on, even if phones matter too",
+            "hint": "The clash is about the cause — resolve it.",
+            "explanation": "Side B answered the reason, so the judge needs Side A to engage that answer and explain why the original concern survives it. Responding to the response is the heart of debating.",
+            "skillTag": "Orientation"
+          }
+        ]
+      }
+    }
+  },
+  {
     "slug": "debate-signposting",
     "organization": "DEBATE",
     "track": "DEBATE",

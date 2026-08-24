@@ -354,9 +354,9 @@ async function main() {
   // Every Debate tile points at a registered learner-visible lesson.
   const debateIds = educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id);
   assert.deepEqual(debateIds,
-    ["claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches",
-     "debate-weighing"],
-    "26. the index lists the six real Debate lessons in teaching order");
+    ["debate-round-orientation", "claim-warrant-impact", "debate-signposting", "debate-clash", "debate-refutation",
+     "debate-constructive-speeches", "debate-weighing"],
+    "26. the index lists the seven real Debate lessons in teaching order");
 
   // ---- 27-29. M13E1B education is untouched --------------------------------------------------------
   // M15 S1B-1 — four entries are deliberately absent from here onward: lib/lessons.ts,
@@ -660,7 +660,7 @@ async function main() {
     assert.ok(!debateWritingPracticeSupported(skill.slug),
       `27h6. and no DECA skill resolves into Debate writing practice`);
   }
-  assert.equal(EDUCATION_LESSONS.length, 8, "28. exactly eight canonical lessons after Wave 1B");
+  assert.equal(EDUCATION_LESSONS.length, 9, "28. exactly nine canonical lessons after Wave 1A");
   for (const held of ["debate-rebuttal-speeches", "debate-parliamentary-roles",
                       "debate-case-topic-definitions", "debate-claim-warrant-impact"]) {
     assert.ok(!EDUCATION_LESSONS.some((e) => e.id === held), `29. held lesson "${held}" is still not registered`);

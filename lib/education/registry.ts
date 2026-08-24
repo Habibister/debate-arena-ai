@@ -26,7 +26,7 @@
 import { getLesson, type AuthoredLesson } from "@/lib/lessons";
 import { getRoleplayLesson, type RoleplayLesson } from "@/lib/roleplay-lessons";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
-import { DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
+import { DEBATE_ORIENTATION_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
 import type {
   EducationCourse,
   EducationModule,
@@ -140,6 +140,9 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
 // --- lessons ------------------------------------------------------------------------------------
 
 export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
+  // Wave 1A: the beginner orientation comes FIRST in the learner-visible Debate order — a true
+  // beginner should meet "what is a round" before Claim/Warrant/Impact.
+  DEBATE_ORIENTATION_LESSON,
   {
     id: "claim-warrant-impact",
     track: "GENERAL_DEBATE",

@@ -2,7 +2,53 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 S1B indexOf Batch IV: route resolution / gating hardened (2026-08-24)
+## Latest handoff — M15 Learning Architecture Slice 1 — lesson → exact drill (SHIPPED and Production-verified)
+
+Implementation `53e8e08f13c34ee1c6db0a51f28dc7155d704d95`, Production deployment **`6056077343`**.
+
+**Read this before any further learning work — it is the rule the next slices build on:**
+
+- **lesson** = teaching
+- **in-lesson check** = formative feedback only
+- **server-graded drill** = the first durable evidence-producing activity
+- **`MasteryProgress` / `SkillReviewSchedule`** = the learner record, written downstream of that drill
+
+The authored lesson self-check persists nothing: no `MasteryProgress`, no `SkillReviewSchedule`, no XP,
+no progression, no readiness, no `PracticeAttempt`, no `QuestionAttempt`. Do not treat it, or describe
+it, as mastery evidence.
+
+**Shipped flow:** `debate-refutation` → typed `practiceDrill` metadata → track `debate`, area
+`rebuttal` → `/study-arcade?track=debate&area=rebuttal` → the existing server-issued and server-graded
+Debate drill → skill `debate-rebuttal` → the existing mastery and review machinery.
+
+That is the **only** authored mapping, and it is metadata-driven — no lesson-id special case in the
+view, and the call to action renders only where a real mapping exists. `debate-signposting`,
+`debate-clash` and `debate-constructive-speeches` stay unmapped and show no drill action; DECA and HOSA
+gained none.
+
+**Deep link:** the Debate drill component takes an optional initial `DrillArea` that seeds the first
+render only, leaving manual switching intact. `DrillArea` has one canonical compile-time definition and
+the education metadata uses it, so drift fails the build. The `area` query value is validated at
+runtime — missing, invalid, non-string and array values fall back to mixed, and DECA/HOSA never consume
+a Debate area.
+
+**Untouched by Slice 1:** schema (ZERO), LC1, G2, the AI Coach, `PracticeAttempt`/`QuestionAttempt`
+writers, lesson-completion persistence, and the existing drill grading/mastery/review semantics.
+
+### Learning architecture sequence
+
+1. **Learning Architecture Slice 1 — lesson → exact drill. SHIPPED.**
+2. **Learning Architecture Slice 2 — durable evidence → weakness → exact remediation. NEXT, not started.**
+3. **Learning Architecture Slice 3 — the existing AI Coach reads server-side learner evidence and returns a specific next action. Future.**
+
+These are Learning Architecture slice numbers, unrelated to the historical **G2** slice numbering used
+in the older handoff sections below.
+
+Separately and still open, unchanged by this slice: moving-HEAD debt 18 (Class B 12, Class C seed 6),
+`/debates/history`, the stale Reassess CTA, the skills-compat XP prose. The indexOf ordering-control
+sequence remains separately CLOSED; not all of S1B is closed.
+
+## Previous handoff — M15 S1B indexOf Batch IV: route resolution / gating hardened (2026-08-24)
 
 ### SHIPPED and Production-verified — nothing awaits a push
 

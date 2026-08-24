@@ -2,7 +2,61 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (M15 S1B indexOf Batch IV — the final four route-resolution / gating controls now prove both anchors present before asserting order, closing the indexOf ordering-control ledger at 48/0/0. **SHIPPED and Production-verified at `6055470720`.** Batch III and everything before it are shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (M15 Learning Architecture Slice 1 — the refutation lesson now routes the learner to the exact Rebuttal drill that measures it, and the in-lesson check stays formative. **SHIPPED and Production-verified** — implementation `53e8e08f13c34ee1c6db0a51f28dc7155d704d95`, Production deployment `6056077343`. The indexOf ordering-control sequence and everything before it remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 Learning Architecture Slice 1 — SHIPPED and Production-verified
+
+Implementation `53e8e08f13c34ee1c6db0a51f28dc7155d704d95`, Production deployment **`6056077343`**.
+Eight paths, **zero production-runtime behaviour change** outside the new routing: this slice connects
+existing pieces rather than adding a learning system.
+
+**The evidence hierarchy this establishes — the durable architectural rule.**
+
+| Layer | What it is | What it produces |
+| --- | --- | --- |
+| Lesson | teaching | nothing persisted |
+| In-lesson check | formative feedback only | **nothing persisted** |
+| Server-graded drill | demonstration | the **first** durable evidence |
+| `MasteryProgress` / `SkillReviewSchedule` | the learner record | written downstream of the graded drill |
+
+The authored lesson self-check writes **no `MasteryProgress`, no `SkillReviewSchedule`, no XP, no
+progression, no readiness, no `PracticeAttempt`, no `QuestionAttempt`** and makes no durable
+learner-evidence claim. It is not mastery evidence and is not described as any. The server-graded
+drill remains the first activity that produces a durable record.
+
+**The shipped pilot flow.**
+
+`debate-refutation` → typed `practiceDrill` metadata → track `debate`, area `rebuttal` →
+`/study-arcade?track=debate&area=rebuttal` → the existing server-issued, server-graded Debate drill →
+skill `debate-rebuttal` → the existing mastery and spaced-review machinery.
+
+`debate-refutation → rebuttal` is the only authored mapping. It is metadata-driven: no lesson-id
+special case was introduced in the view, and the call to action is conditional on a real explicit
+mapping. **`debate-signposting`, `debate-clash` and `debate-constructive-speeches` remain unmapped**
+and deliberately show no drill action — absence is the honest default, not a disabled button or a link
+to unrelated practice. Neither DECA nor HOSA gained a concept-drill mapping.
+
+**The deep-link contract.** The Debate drill component accepts an optional initial `DrillArea`, which
+seeds the first render only; manual area switching is unaffected. `DrillArea` has **one canonical
+compile-time source of truth**, and the education metadata uses that canonical type, so a renamed or
+removed area breaks the build rather than leaving a dead link. The `area` query value is validated at
+runtime against the real areas: a valid Debate area may preselect it, while missing, invalid,
+non-string and array values fall back to the existing mixed default. DECA and HOSA do not consume
+Debate area values.
+
+**What Slice 1 did not change:** schema **ZERO** · LC1 frozen · G2 frozen · AI Coach unchanged ·
+no `PracticeAttempt` or `QuestionAttempt` writer added · no lesson-completion persistence added ·
+existing Debate drill grading, mastery and review semantics unchanged. These are deliberate boundaries,
+not defects.
+
+**Learning architecture sequence.**
+
+- **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED.**
+- **Learning Architecture Slice 2 — durable evidence → weakness → exact remediation: NEXT, not started.**
+- **Learning Architecture Slice 3 — the existing AI Coach reads server-side learner evidence and produces a specific next action: future.**
+
+(These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice numbering
+used in the older sections further down this file.)
 
 ## M15 S1B — indexOf ordering controls, Batch IV: route resolution / gating (shipped; Production-verified at `6055470720`)
 

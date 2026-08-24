@@ -2,7 +2,87 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (M15 Learning Architecture Slice 2 — a due skill now routes from its durable review record to the exact drill that measures it, and to the exact lesson only when demonstrated mastery is below PRACTICING. **SHIPPED and Production-verified** — implementation `b72073321b33f2b119f6d1b20cbabf754fc14e8b`, Production deployment `6070209983`. Learning Architecture Slice 1, the indexOf ordering-control sequence and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (M15 Learning Architecture Slice 3 — the AI Coach now reads authoritative server-side learner evidence, the server deterministically chooses the one evidence-backed next action, and the model may only explain it. **SHIPPED and Production-verified** — implementation `6f69745c0f7135fe1877eb867624126392ea45d1`, Production deployment `6071131714`. Learning Architecture Slices 1–2, the indexOf ordering-control sequence and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## M15 Learning Architecture Slice 3 — SHIPPED and Production-verified
+
+Implementation `6f69745c0f7135fe1877eb867624126392ea45d1`, Production deployment **`6071131714`**.
+Eight paths, schema **ZERO**. The recommendation path is now genuinely learner-facing and genuinely
+trustworthy: **the server chooses the next action; the AI may only explain it.**
+
+**The Slice 3 rule — who owns what.** The server owns learner identity, the evidence read, due-skill
+selection, the due-vs-weak distinction, the PRACTICING threshold, the action type, lesson and drill
+identity, and every routing URL. The model influences exactly one thing: the learner-facing
+explanation prose. It cannot determine weakness, mastery, readiness, a mapping, a destination, a
+priority, or a sub-concept diagnosis.
+
+**The deterministic flow.** Authenticated learner → `getDueReviews(userId)` → the FIRST due row of
+the existing `nextReviewAt ASC` ordering → `PRACTICING_MASTERY_MIN` → `practiceRemediationForSkill`
+→ one server-approved action → optional AI explanation. Most-overdue-first is inherited from the
+existing review ordering; no weakest-first, remediation-first or AI ranking was introduced.
+
+**The action vocabulary** (DUE ≠ WEAK carries forward unchanged):
+
+- **Low mastery + mapped** → review the exact lesson, then the exact drill.
+- **Healthy due + mapped** → the exact drill only — no lesson, no weakness language.
+- **Due + unmapped** → the existing compatible review destination, same rule as the review card.
+- **No due review** → no personalized evidence-backed action, and **no provider call**.
+
+**The pilot, exactly.** `debate-rebuttal` low-mastery: lesson `debate-refutation`
+(`/lessons/debate-refutation`) then the Rebuttal drill (`/study-arcade?track=debate&area=rebuttal`).
+Healthy due: the Rebuttal drill only, same URL, no Refutation lesson.
+
+**Client-trust boundary.** The dashboard's AI Coach card asks one question with an empty request —
+the strict schema rejects any smuggled learning claim (weaknesses, mastery, scores, lesson
+candidates, a skillSlug, readiness). The old recommendations path that let the client declare its
+`weaknesses` and supply the `availableLessons` the model chose from is retired. The authenticated
+server derives the action from the learner's own durable record.
+
+**Provider boundary.** The model receives only minimal display context — action type, skill display
+name, a below-practicing boolean, the due date, and lesson/drill labels. It never receives userId,
+name, email, DB ids, raw history, ballot text, XP, formative answers, `masteryPercent`, or any href.
+Its output is validated down to one explanation string; clickable destinations are server-built.
+Provider failure degrades only the wording (a deterministic template explains the same
+server-chosen action, honestly tagged) — the action itself never changes or disappears.
+
+**No-due behavior, truthfully.** No due rows → no personalized action, no provider call, and the
+copy says so: "No evidence-backed review is due right now," followed by an explicitly
+non-personalized pointer to `/study-arcade` to choose a server-graded drill that **can** build
+durable skill evidence. Nothing claims `/skills` builds durable evidence or that every activity
+writes the record.
+
+**Deferred, honestly.** `/api/ai/readiness` is unchanged and dormant: it still rests on
+client-supplied inputs and has no evidence-backed definition of competition readiness —
+**competition-readiness scoring is FUTURE / DEFERRED** and requires materially stronger
+multi-evidence support. Ballot-derived `weakSignals` / coach-progress keyword matching also stay
+out: they lack stable structured skill identity.
+
+**What Slice 3 did not change:** schema/migrations/seed **ZERO** · no learner-profile table · no
+persisted recommendation · no persisted AI prose · `PracticeAttempt`/`QuestionAttempt` not activated
+· `getDueReviews` semantics unchanged · Slice 1 and Slice 2 unchanged.
+
+**The trustworthy loop now closed end-to-end:** teach → exact drill → durable evidence → distinguish
+due from weak → exact remediation / exact re-demonstration → server chooses the next action → AI
+explains it. This is the trustworthy foundation — not full readiness, complete curriculum, complete
+diagnosis, or complete personalization.
+
+**The remaining curriculum weakness is coverage, not format.** The lesson format itself is strong.
+Some authored lessons are **Taught but not yet Trainable/Measurable** through an exact drill/evidence
+loop — today that includes **Signposting, Clash and Constructive Speeches**, whose content is good
+but whose practice/evidence connectivity does not yet exist the way Refutation's does.
+
+**Learning architecture status.**
+
+- **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED / CLOSED.**
+- **Learning Architecture Slice 2 — durable evidence → exact re-demonstration + exact remediation: SHIPPED / CLOSED.**
+- **Learning Architecture Slice 3 — server chooses the next action, AI explains it: SHIPPED / Production-verified.**
+- **NEXT PRODUCT DIRECTION — NOT STARTED / FUTURE PLANNING:** systematically close curriculum
+  coverage gaps and expand measurable skill loops (full Debate skill map; Taught / Trainable /
+  Measurable / Simulated coverage; connecting Signposting, Clash and Constructive Speeches to real
+  drills and evidence; additional drill areas; structured ballot evidence; later, honest readiness).
+
+(These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice
+numbering used in the older sections further down this file.)
 
 ## M15 Learning Architecture Slice 2 — SHIPPED and Production-verified
 
@@ -59,15 +139,6 @@ Slice 1 unchanged · LC1 and G2 frozen. Deliberate boundaries, not defects.
 `scripts/education-migration-smoke.ts` carries two historical controls labelled `36d`. Slice 2
 neither introduced nor modified them; production comments deliberately cite suites, never ambiguous
 control ids.
-
-**Learning architecture sequence.**
-
-- **Learning Architecture Slice 1 — lesson → exact drill: SHIPPED / CLOSED.**
-- **Learning Architecture Slice 2 — durable evidence → exact re-demonstration + exact remediation: SHIPPED / Production-verified.**
-- **Learning Architecture Slice 3 — the existing AI Coach consumes server-side learner evidence and produces a specific next action: NEXT, NOT STARTED.**
-
-(These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice
-numbering used in the older sections further down this file.)
 
 ## M15 Learning Architecture Slice 1 — SHIPPED and Production-verified
 

@@ -2,7 +2,68 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — M15 Learning Architecture Slice 2 — durable evidence → exact remediation (SHIPPED and Production-verified)
+## Latest handoff — M15 Learning Architecture Slice 3 — server chooses, AI explains (SHIPPED and Production-verified)
+
+Implementation `6f69745c0f7135fe1877eb867624126392ea45d1`, Production deployment **`6071131714`**.
+
+**The rule this slice adds — preserve it in all future AI work: SERVER CHOOSES, AI EXPLAINS.**
+
+The server owns identity, the evidence read, due-skill selection, due ≠ weak, the PRACTICING
+threshold, the action type, lesson/drill identity, and every URL. The model may influence only the
+explanation prose. It must never determine weakness, mastery, readiness, a mapping, a destination, a
+priority, or a diagnosis.
+
+**Deterministic flow:** authenticated learner → `getDueReviews(userId)` → FIRST row of the existing
+`nextReviewAt ASC` order (most overdue — inherited, not invented) → `PRACTICING_MASTERY_MIN` →
+`practiceRemediationForSkill` → one server-approved action → optional AI explanation.
+
+**Actions (DUE ≠ WEAK carries forward):** low mastery + mapped → exact lesson then exact drill ·
+healthy due + mapped → exact drill only · due + unmapped → the review card's own compat destination ·
+no due rows → no personalized action and **no provider call**.
+
+**Pilot:** `debate-rebuttal` low-mastery → `debate-refutation` (`/lessons/debate-refutation`) then
+`/study-arcade?track=debate&area=rebuttal`; healthy due → the Rebuttal drill only. No Refutation
+lesson for healthy due.
+
+**Client-trust boundary:** the dashboard AI Coach card POSTs an empty request to
+`/api/ai/recommendations`; the strict schema rejects any learning-state claim. The old
+client-supplied `weaknesses` + `availableLessons` recommendation path is retired. This surface is
+distinct from the human `/coach/*` role pages.
+
+**Provider boundary:** the model sees only action type, skill name, a below-practicing boolean, the
+due date and labels — never userId/name/email/ids/history/ballots/XP/formative answers/
+`masteryPercent`/hrefs. Output is validated to one explanation string; provider failure degrades
+wording to a deterministic template, honestly tagged — the action never changes.
+
+**No-due truth:** "No evidence-backed review is due right now," plus an explicitly non-personalized
+pointer to `/study-arcade` to choose a server-graded drill that **can** build durable skill
+evidence. Never claim `/skills` or every activity builds the record — Debate Skills writing practice
+is formative.
+
+**Deferred, deliberately:** `/api/ai/readiness` is unchanged, dormant and client-trusted — do not
+wire it to UI; competition-readiness scoring is FUTURE / DEFERRED until materially stronger
+multi-evidence support exists. Ballot `weakSignals` / coach-progress keyword matching stay out (no stable
+structured skill identity). Schema/migrations/seed ZERO; no learner-profile table; no persisted
+recommendation or AI prose; `PracticeAttempt`/`QuestionAttempt` not activated; Slices 1–2 unchanged.
+
+**The loop now closed:** teach → exact drill → durable evidence → due ≠ weak → exact remediation /
+re-demonstration → server chooses → AI explains. A trustworthy foundation — not full readiness,
+complete curriculum, complete diagnosis, or complete personalization.
+
+### Next product direction — NOT STARTED / FUTURE PLANNING
+
+The lesson format is strong; the remaining curriculum weakness is **coverage and connectivity**:
+some authored lessons are Taught but not yet Trainable/Measurable through an exact drill/evidence
+loop — including **Signposting, Clash and Constructive Speeches** (good content, no Refutation-style
+loop yet). The next product direction is to systematically close curriculum coverage gaps and expand
+measurable skill loops (full Debate skill map; Taught/Trainable/Measurable/Simulated coverage;
+additional drill areas; structured ballot evidence; later, honest readiness). None of it is started.
+
+Separately and still open, unchanged by this slice: moving-HEAD debt 18 (Class B 12, Class C seed 6),
+`/debates/history`, the stale Reassess CTA, the skills-compat XP prose, the six inherited M14
+`Latest handoff` headings, the duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — M15 Learning Architecture Slice 2 — durable evidence → exact remediation (SHIPPED and Production-verified)
 
 Implementation `b72073321b33f2b119f6d1b20cbabf754fc14e8b`, Production deployment **`6070209983`**.
 

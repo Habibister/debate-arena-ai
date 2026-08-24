@@ -10,9 +10,10 @@
  * at the S1B design audit: a changed lesson title, a replaced prose block and a rewritten
  * `workedExample.prompt` each survived ALL 29 safe suites once the mutation was committed.
  *
- * The catalog holds 18 entries. At S1B-LC1 only 4 of the then-17 were published through the education
- * registry (Wave 1B later published the corrected weighing lesson as the 5th, and Wave 1A added the
- * newly authored orientation as the 6th), and only the published entries
+ * The catalog holds 19 entries. At S1B-LC1 only 4 of the then-17 were published through the education
+ * registry (Wave 1B published the corrected weighing lesson as the 5th, Wave 1A added the newly
+ * authored orientation as the 6th, and Wave 1C added the evidence-evaluation teaching home as the
+ * 7th), and only the published entries
  * had any semantic coverage at all (presence checks at education-migration 15b-16c). The other 13 —
  * "held" entries, authored and reviewed but not yet learner-visible — had NONE. Owner decision:
  * ONE contract across all 17. "Held" governs whether a learner can reach a lesson, not whether
@@ -51,7 +52,7 @@ import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "W1A-DEBATE-ROUND-ORIENTATION";
+const LEARNING_CONTENT_BASELINE = "W1C-DEBATE-EVIDENCE-EVALUATION";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 
@@ -259,7 +260,7 @@ async function main(): Promise<void> {
 
   console.log(
     `Learning-content integrity smoke passed (${LEARNING_CONTENT_BASELINE}): all ${current.length} authored ` +
-    `catalog entries — 6 published through the education registry and 12 held — are byte-for-byte identical to the ` +
+    `catalog entries — 7 published through the education registry and 12 held — are byte-for-byte identical to the ` +
     `reviewed canonical snapshot in ${BASELINE_PATH}, across ${questionCount} questions. Identity, track association, ` +
     `every authored string, learner-visible estimatedMinutes and the ORDER of steps, choices, practice and mastery ` +
     `sequences are all frozen; the id sets match exactly in both directions, so a new entry cannot land unprotected ` +

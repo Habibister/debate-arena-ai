@@ -48,7 +48,7 @@ const MIGRATED_SLUGS = ["debate-signposting", "debate-clash", "debate-refutation
  * catalog-by-reference mechanism as the migrated lessons but kept out of MIGRATED_SLUGS — it was
  * never a held migration, and the migration suite's historical claims stay scoped to the five.
  */
-const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation"] as const;
+const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation", "debate-evidence-evaluation"] as const;
 
 type MigratedSlug = (typeof AUTHORED_CATALOG_SLUGS)[number];
 
@@ -98,6 +98,7 @@ const refutation = selectCatalogLesson("debate-refutation");
 const constructiveSpeeches = selectCatalogLesson("debate-constructive-speeches");
 const weighing = selectCatalogLesson("debate-weighing");
 const orientation = selectCatalogLesson("debate-round-orientation");
+const evidenceEvaluation = selectCatalogLesson("debate-evidence-evaluation");
 
 /** Exported for the migration smoke suite's strict-identity proof against the catalog. */
 export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constructiveSpeeches, weighing } as const;
@@ -108,6 +109,31 @@ export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constru
  * durable MasteryProgress record. It is registered FIRST in the learner-visible Debate order (the
  * registry inserts it ahead of Claim/Warrant/Impact) and chains into CWI.
  */
+/**
+ * Wave 1C — the Evidence Evaluation teaching home. The `debate-evidence` skill has carried a
+ * 30-question server-graded drill and durable evidence since the drill system shipped; this entry
+ * closes its missing half exactly the way Refutation and Weighing are closed: skillSlug +
+ * practiceDrill metadata, and the shipped remediation/Coach architecture activates itself.
+ */
+export const DEBATE_EVIDENCE_LESSON: EducationRegistryEntry = {
+  id: "debate-evidence-evaluation",
+  track: "GENERAL_DEBATE",
+  courseId: "debate-performance",
+  moduleId: "debate-argument-construction",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: evidenceEvaluation,
+  sourceKind: "concept-education-lesson",
+  // ASSOCIATION ONLY, exactly like refutation and weighing: the lesson's own checks stay formative;
+  // the graded evidence-evaluation drill is what writes mastery and schedules review.
+  skillSlug: "debate-evidence",
+  practiceDrill: { track: "debate", area: "evidence-evaluation" },
+  legacySlugs: [],
+  nextLessonId: "debate-signposting",
+  provenance: MIGRATED_DEBATE_PROVENANCE
+};
+
 export const DEBATE_ORIENTATION_LESSON: EducationRegistryEntry = {
   id: "debate-round-orientation",
   track: "GENERAL_DEBATE",

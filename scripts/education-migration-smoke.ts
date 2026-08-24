@@ -498,14 +498,14 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   }
 
   // ---- 5-8. registry and discovery inventory -----------------------------------------------------
-  assert.equal(EDUCATION_LESSONS.length, 9, "5. nine canonical registry entries");
+  assert.equal(EDUCATION_LESSONS.length, 10, "5. ten canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 9, "6a. all nine are learner-visible");
+  assert.equal(learnerVisible.length, 10, "6a. all ten are learner-visible");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
-  assert.equal(debate.length, 7, "7. exactly seven Debate lessons");
+  assert.equal(debate.length, 8, "7. exactly eight Debate lessons");
   assert.deepEqual(debate.map((e) => e.id),
-    ["debate-round-orientation", "claim-warrant-impact", ...MIGRATED],
-    "7b. the Wave 1A orientation first, then CWI, then the migrated five in teaching order");
+    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", ...MIGRATED],
+    "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the migrated five");
   assert.equal(educationLessonsForTrack("DECA").length, 1, "6b. one DECA lesson");
   assert.equal(educationLessonsForTrack("HOSA").length, 1, "6c. one HOSA lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
@@ -584,7 +584,8 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     if (entry.nextLessonId !== null) assert.ok(ids.has(entry.nextLessonId), `21. "${entry.id}" next lesson resolves`);
   }
   assert.equal(getEducationLesson("debate-round-orientation")?.nextLessonId, "claim-warrant-impact", "21a2. the Wave 1A orientation leads into CWI");
-  assert.equal(getEducationLesson("claim-warrant-impact")?.nextLessonId, "debate-signposting", "21b. CWI now leads into the migrated chain");
+  assert.equal(getEducationLesson("claim-warrant-impact")?.nextLessonId, "debate-evidence-evaluation", "21b. CWI now leads into the Wave 1C evidence lesson");
+  assert.equal(getEducationLesson("debate-evidence-evaluation")?.nextLessonId, "debate-signposting", "21b2. which chains on into the migrated sequence");
   assert.equal(getEducationLesson("debate-constructive-speeches")?.nextLessonId, "debate-weighing", "21c. constructive speeches now leads into weighing");
   assert.equal(getEducationLesson("debate-weighing")?.nextLessonId, null, "21c2. the last migrated lesson ends the chain honestly");
   assert.deepEqual(EDUCATION_COURSES.find((c) => c.id === "debate-performance")?.moduleIds,
@@ -597,6 +598,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   // ---- 24-25. skill mapping honesty ---------------------------------------------------------------
   assert.equal(getEducationLesson("debate-refutation")?.skillSlug, "debate-rebuttal", "24. refutation is associated with debate-rebuttal");
   assert.equal(getEducationLesson("debate-weighing")?.skillSlug, "debate-weighing", "24b. weighing is associated with debate-weighing");
+  assert.equal(getEducationLesson("debate-evidence-evaluation")?.skillSlug, "debate-evidence", "24c. the evidence lesson is associated with debate-evidence");
   for (const id of ["debate-signposting", "debate-clash", "debate-constructive-speeches", "debate-round-orientation"]) {
     assert.equal(getEducationLesson(id)?.skillSlug, undefined, `25. "${id}" claims no seeded mastery skill`);
   }
@@ -645,8 +647,8 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   {
     const conceptEntries = EDUCATION_REGISTRY.lessons.filter((e) => e.sourceKind === "concept-education-lesson");
     const mapped = conceptEntries.filter((e) => e.practiceDrill);
-    assert.deepEqual(mapped.map((e) => e.id), ["debate-refutation", "debate-weighing"],
-      `36. exactly two authored lessons name a drill destination — refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
+    assert.deepEqual(mapped.map((e) => e.id), ["debate-evidence-evaluation", "debate-refutation", "debate-weighing"],
+      `36. exactly three authored lessons name a drill destination — evidence, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
 
     const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
     assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },
@@ -654,6 +656,13 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     const weighingEntry = conceptEntries.find((e) => e.id === "debate-weighing");
     assert.deepEqual(weighingEntry?.practiceDrill, { track: "debate", area: "weighing" },
       "36b2. and weighing points at the Debate weighing drill");
+    const evidenceEntry = conceptEntries.find((e) => e.id === "debate-evidence-evaluation");
+    assert.deepEqual(evidenceEntry?.practiceDrill, { track: "debate", area: "evidence-evaluation" },
+      "36b3. and the evidence lesson points at the evidence-evaluation drill");
+    const evidenceArea = SLICE1_AREAS.find((a) => a.id === evidenceEntry?.practiceDrill?.area);
+    assert.ok(evidenceArea, "36c3. that area exists in the Debate drill bank");
+    assert.equal(evidenceArea?.skillSlug, evidenceEntry?.skillSlug,
+      "36d3. and it is scored against the same seeded skill the lesson names");
     const weighingArea = SLICE1_AREAS.find((a) => a.id === weighingEntry?.practiceDrill?.area);
     assert.ok(weighingArea, "36c2. the weighing area exists in the Debate drill bank");
     assert.equal(weighingArea?.skillSlug, weighingEntry?.skillSlug,

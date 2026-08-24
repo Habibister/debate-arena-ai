@@ -26,7 +26,7 @@
 import { getLesson, type AuthoredLesson } from "@/lib/lessons";
 import { getRoleplayLesson, type RoleplayLesson } from "@/lib/roleplay-lessons";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
-import { DEBATE_ORIENTATION_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
+import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
 import type {
   EducationCourse,
   EducationModule,
@@ -156,11 +156,15 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
     // Unchanged: this is the seeded skill its drill-backed practice already writes to.
     skillSlug: claimWarrantImpact.skillSlug,
     legacySlugs: [],
-    // M13E1B: the migrated Debate lessons now follow it. Metadata only — the lesson object itself is
-    // untouched and still renders through its own legacy view.
-    nextLessonId: "debate-signposting",
+    // Wave 1C: CWI now leads into the Evidence Evaluation lesson, which chains on into the migrated
+    // sequence. Metadata only — the lesson object itself is untouched and still renders through its
+    // own legacy view.
+    nextLessonId: "debate-evidence-evaluation",
     provenance: claimWarrantImpact.provenance
   },
+  // Wave 1C: the Evidence Evaluation teaching home sits directly after argument anatomy — judge the
+  // evidence before learning to signpost, clash and refute with it.
+  DEBATE_EVIDENCE_LESSON,
   {
     id: "how-deca-roleplay-works",
     track: "DECA",

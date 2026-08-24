@@ -541,8 +541,8 @@ async function main() {
 
   // S2-2. Everything else fails CLOSED. A skill with no authored mapping gets no substitute lesson.
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((s) => practiceRemediationForSkill(s) !== null),
-    ["debate-rebuttal", "debate-weighing"],
-    "S2-2. exactly the two lesson-connected seeded skills have a remediation today");
+    ["debate-evidence", "debate-rebuttal", "debate-weighing"],
+    "S2-2. exactly the three lesson-connected seeded skills have a remediation today");
 
   // S2-3. Untrusted-looking input is not an error and not a near match.
   for (const s of ["", "unknown", "debate-rebuttal-1", "DEBATE-REBUTTAL", "debate-rebuttal "]) {
@@ -588,11 +588,20 @@ async function main() {
   assert.equal(S2_AREAS.find((a) => a.id === rebuttal!.drill.area)!.skillSlug, "debate-rebuttal",
     "S2-8b. and the drill it opens is scored against the skill that was due");
 
-  // S2-9. Disjointness, asserted rather than assumed. The mapped branch replaces the GENERIC
-  // destination; it must never be silently taking away a working writing-practice one.
+  // S2-9. Displacement, deliberate rather than silent. The mapped branch takes precedence over the
+  // review card's generic destination, so mapping a skill that also resolves to Debate writing
+  // practice takes that "Reassess now" destination away from its due-review card. Through Wave 1B
+  // no mapped skill had one and this control could assert plain disjointness. Wave 1C maps
+  // debate-evidence, whose compat resolution still supports writing practice — the first deliberate
+  // displacement, and an honest one: that writing route records no MasteryProgress and never
+  // advances the schedule that made the card due, while the mapped drill is the server-graded
+  // assessment that does. Any OTHER mapped skill acquiring a writing-practice destination must
+  // fail here until its displacement is decided on purpose and added below.
+  const DELIBERATE_WRITING_PRACTICE_DISPLACEMENTS = ["debate-evidence"];
   for (const e of drilled) {
-    assert.equal(debateWritingPracticeSupported(e.skillSlug!), false,
-      `S2-9. ${e.skillSlug} had no writing-practice destination for the mapped branch to displace`);
+    assert.equal(debateWritingPracticeSupported(e.skillSlug!),
+      DELIBERATE_WRITING_PRACTICE_DISPLACEMENTS.includes(e.skillSlug!),
+      `S2-9. ${e.skillSlug}'s writing-practice displacement is deliberate, never silent`);
   }
 
   // S2-10..S2-12. ONE canonical practicing floor, owned by the module that decides mastery level.

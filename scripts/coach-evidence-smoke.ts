@@ -150,6 +150,27 @@ async function main() {
   assert.equal(w3.type === "NO_DUE_ACTION" ? "" : w3.skill.slug, "debate-evidence",
     "S3-W3. most-overdue-first still wins — a weaker weighing row later in the order is not preferred");
 
+  // ---- S3-E. Wave 1C: the evidence mapping flows through the SAME architecture, unchanged ------
+  seed("debate-evidence", 69);
+  assert.deepEqual(await getEvidenceBackedNextAction("u1"), {
+    type: "REVIEW_LESSON_THEN_DRILL",
+    skill: { slug: "debate-evidence", name: "Debate Evidence", organization: "GENERAL_DEBATE" },
+    dueSinceDate: "2026-08-20",
+    belowPracticing: true,
+    lesson: { id: "debate-evidence-evaluation", title: "Judge the evidence", href: "/lessons/debate-evidence-evaluation" },
+    drill: { track: "debate", area: "evidence-evaluation", label: "Evidence evaluation", href: "/study-arcade?track=debate&area=evidence-evaluation" }
+  }, "S3-E1. mastery 69 on debate-evidence yields the evidence lesson and the evidence drill, exact hrefs included");
+  for (const m of [70, 71]) {
+    seed("debate-evidence", m);
+    const a = await getEvidenceBackedNextAction("u1");
+    assert.equal(a.type, "REDO_EXACT_DRILL", `S3-E2. evidence mastery ${m} is re-demonstration, not remediation`);
+    assert.ok(!("lesson" in a), `S3-E2b. and carries NO lesson at mastery ${m}`);
+  }
+  seed("debate-weighing", 95, { slug: "debate-evidence", masteryPercent: 5 });
+  const e3 = await getEvidenceBackedNextAction("u1");
+  assert.equal(e3.type === "NO_DUE_ACTION" ? "" : e3.skill.slug, "debate-weighing",
+    "S3-E3. most-overdue-first still wins — a weaker evidence row later in the order is not preferred");
+
   // ---- S3-5. unknown skill fails safe ----------------------------------------------------------
   seed("totally-unknown-skill", 10);
   const unknown = await getEvidenceBackedNextAction("u1");
@@ -281,13 +302,31 @@ async function main() {
   // parity sweep (S3-4), review-ladder:smoke's S2-5/S2-6 agreement and cardinality guards, and
   // education-registry:smoke's strict identity controls.
   for (const p of ["prisma/schema.prisma",
-                   "app/(app)/study-arcade/review/page.tsx",
                    "components/lessons/concept-education-lesson-view.tsx",
                    "components/lessons/concept-education-lesson-practice.tsx",
                    "lib/spaced-review.ts",
                    "lib/education/skills-compat.ts"]) {
     assert.equal(now(p), sha(p), `S3-15. ${p} is byte-identical to the immutable pre-Slice-3 baseline`);
   }
+  // The review page's pin is COMMENT-STRIPPED rather than raw since Wave 1C: the deliberate
+  // debate-evidence writing-practice displacement made its old disjointness comment false, and a
+  // truthful comment must not cost the pin. Every token outside a comment is still compared against
+  // the same immutable baseline. Sound for this file because nothing comment-like hides inside a
+  // string: it has no multi-line template literal and every block-comment opener is a real JSX
+  // comment — asserted below on BOTH versions rather than assumed.
+  const reviewPath = "app/(app)/study-arcade/review/page.tsx";
+  const executableView = (src: string) => stripComments(src).replace(/^[ \t]*\n/gm, "");
+  for (const [flavor, src] of [["working-tree", read(reviewPath)], ["baseline", gitShow(reviewPath)]] as const) {
+    for (const lit of src.match(/`[^`]*`/g) ?? []) {
+      assert.ok(!lit.includes("\n"), `S3-15c. the ${flavor} review page has no multi-line template literal the stripper could cut into`);
+    }
+    assert.equal((src.match(/\/\*/g) ?? []).length, (src.match(/\{\s*\/\*/g) ?? []).length,
+      `S3-15c2. every block-comment opener in the ${flavor} review page is a real JSX comment, none hides in a string`);
+  }
+  assert.equal(executableView(read(reviewPath)), executableView(gitShow(reviewPath)),
+    "S3-15d. the review page is executable-identical to the immutable pre-Slice-3 baseline: comments aside, not one token differs");
+  assert.ok(executableView(read(reviewPath)).includes("if (remediation)"),
+    "S3-15e. and the stripped view demonstrably keeps executable code — the mapped branch is present in it");
   // The Taught-only orientation must be invisible to the evidence path: no skillSlug, no drill, so
   // no due row can reference it and no remediation can derive it. Asserted executably:
   const { practiceRemediationForSkill: s315Lookup } = await import("../lib/education/skills-compat");
@@ -295,7 +334,7 @@ async function main() {
     "S3-15b. the Taught-only orientation is invisible to the remediation/Coach evidence path");
 
   console.log(
-    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, both Slice 1 lesson components, the review page, spaced-review and the skills-compat routing layer are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}; the education-registry byte pin was deliberately retired because curriculum publication legitimately extends the registry, whose Coach-facing behavior is guarded semantically by the mapped-case, parity, agreement and cardinality controls instead.`
+    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, both Slice 1 lesson components, spaced-review and the skills-compat routing layer are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}, and the review page is executable-identical to that same baseline — its Wave 1C comment correction records the deliberate debate-evidence writing-practice displacement truthfully while changing no executable token; the education-registry byte pin was deliberately retired because curriculum publication legitimately extends the registry, whose Coach-facing behavior is guarded semantically by the mapped-case, parity, agreement and cardinality controls instead.`
   );
 }
 

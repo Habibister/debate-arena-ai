@@ -397,6 +397,105 @@
     }
   },
   {
+    "slug": "debate-evidence-evaluation",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate foundations",
+    "name": "Evidence Evaluation",
+    "description": "Judge whether evidence actually supports the claim being made.",
+    "lesson": {
+      "title": "Judge the evidence",
+      "slug": "debate-evidence-evaluation-lesson",
+      "summary": "Decide how much a piece of evidence really proves, and compare competing evidence.",
+      "estimatedMinutes": 8,
+      "content": {
+        "objective": "Evaluate whether evidence genuinely supports an argument, and explain why one piece of evidence deserves more weight than another.",
+        "explanation": "Evidence only helps an argument when it actually supports the specific claim being made. To judge a piece of evidence, ask four things. FIT: does it address this exact claim, or something merely nearby? SOURCE: who produced it, is their expertise relevant, and are there incentives that call for extra scrutiny? METHOD: how was the conclusion reached — who was studied, was there a real comparison, could something else explain the result? INTERPRETATION: does the conclusion claimed actually follow, or is the speaker stretching the evidence past what it shows? When two pieces of evidence conflict, compare them on these same questions instead of picking the one you like.",
+        "whyMatters": "Rounds are full of confident citations. The debater who can say WHY one piece of evidence deserves more weight — not just that a source exists — gives the judge a reason to prefer their side, and spots the moment an opponent's conclusion goes further than their evidence.",
+        "steps": [
+          "Check fit: restate the exact claim and ask whether the evidence is about that claim.",
+          "Check source and method: relevant expertise, reasons for caution, who was studied, and whether anything else could explain the result.",
+          "Check the conclusion: say plainly what the evidence does prove, and challenge whatever is claimed beyond that."
+        ],
+        "workedExample": {
+          "prompt": "Claim: removing library late fees gets more books returned on time. Two pieces of (hypothetical) evidence: A - a survey where members say they would return books on time without fees; B - return rates tracked at two similar libraries, where only the one that removed fees improved.",
+          "weakAnswer": "Evidence A is more recent, so it is better.",
+          "strongAnswer": "Evidence B deserves more weight. It measures actual returns rather than what people say they would do, and the unchanged library gives a comparison that points at the fee change itself. A is about intentions, which often differ from behaviour — it fits the topic, but B fits the claim.",
+          "whyItWorks": "The strong answer compares the two pieces on fit and method — measured behaviour with a comparison versus stated intentions — instead of using a shortcut like recency."
+        },
+        "guidedQuestion": {
+          "prompt": "Claim: the new crosswalk made the street safer. Evidence: accidents fell in the month after it was installed. What is the biggest weakness?",
+          "choices": [
+            "One month with no comparison cannot show the crosswalk caused the drop",
+            "The evidence is about the wrong street",
+            "Accidents are impossible to count",
+            "The source is anonymous"
+          ],
+          "correctAnswer": "One month with no comparison cannot show the crosswalk caused the drop",
+          "hint": "Think about what else could explain one short window.",
+          "explanation": "A short window with no comparison leaves the drop open to chance and season. The evidence is relevant, but it cannot yet carry the causal claim.",
+          "skillTag": "Evidence"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Claim: the gym renovation improved student fitness. Evidence: a survey shows students like the new gym. What is the problem?",
+            "choices": [
+              "The evidence measures enjoyment, not fitness, so it does not fit the claim",
+              "Surveys are always worthless",
+              "The renovation was too expensive",
+              "Students cannot judge a gym"
+            ],
+            "correctAnswer": "The evidence measures enjoyment, not fitness, so it does not fit the claim",
+            "hint": "Compare what was measured with what is claimed.",
+            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information — about enjoyment, not fitness.",
+            "skillTag": "Evidence"
+          },
+          {
+            "prompt": "Neighbourhoods with more streetlights have less litter. A speaker concludes streetlights prevent litter. What should a careful debater say?",
+            "choices": [
+              "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
+              "The connection proves the conclusion",
+              "Litter statistics are always unreliable",
+              "Streetlights are too expensive to matter"
+            ],
+            "correctAnswer": "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
+            "hint": "Two things appearing together is not yet cause.",
+            "explanation": "The association is real evidence, but well-kept neighbourhoods may get both lights and less litter. Without a comparison that separates the factors, the causal conclusion overreaches.",
+            "skillTag": "Evidence"
+          },
+          {
+            "prompt": "Two reports on a teen curfew disagree. One, from a group campaigning for curfews, highlights a single town that improved. The other, an independent review of many towns with its method disclosed, found mixed results. Which deserves more weight and why?",
+            "choices": [
+              "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+              "The campaign report, because it is more confident",
+              "Neither, because they disagree",
+              "The campaign report, because one clear example beats many mixed ones"
+            ],
+            "correctAnswer": "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+            "hint": "Compare breadth, method and incentives — do not just pick a side.",
+            "explanation": "Disagreement is where evaluation starts. An incentive to persuade plus a single selected example warrants caution; breadth and a disclosed method warrant more confidence. That is comparison, not source-bashing.",
+            "skillTag": "Evidence"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "Claim: a reading app doubled students' reading skill. Evidence: the app company surveyed volunteer users, who reported big improvement. What is the strongest evaluation?",
+            "choices": [
+              "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
+              "The evidence is fine because the company knows its own app best",
+              "Reading skill cannot be measured, so the claim is meaningless",
+              "The study is acceptable because many users responded"
+            ],
+            "correctAnswer": "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
+            "hint": "Stack the problems: who gathered it, who answered, what was measured, what is claimed.",
+            "explanation": "Each issue alone calls for caution; together — seller incentive, volunteers, self-report, and a precise 'doubled' claim — the evidence cannot carry the conclusion. Naming that gap is exactly the skill.",
+            "skillTag": "Evidence"
+          }
+        ]
+      }
+    }
+  },
+  {
     "slug": "debate-parliamentary-roles",
     "organization": "DEBATE",
     "track": "DEBATE",

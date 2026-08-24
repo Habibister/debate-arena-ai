@@ -96,9 +96,13 @@ export default async function ReviewSessionPage() {
                 </>
               );
 
-              // A mapped skill is never one the legacy writing route also serves — the two paths are
-              // disjoint today and review-ladder:smoke holds them that way, so this branch cannot
-              // quietly take a destination away from a skill that already had a working one.
+              // The mapped branch takes precedence over the generic destination below. Through Wave 1B
+              // the two paths were disjoint; Wave 1C deliberately maps debate-evidence AWAY from its
+              // formative writing route: that route writes no MasteryProgress and cannot resolve the
+              // review that made this card due, while the mapped server-graded drill can.
+              // review-ladder:smoke requires every such displacement to be explicitly listed — a mapped
+              // skill can still never lose a working destination silently, and a listing today does not
+              // make future displacements automatically acceptable.
               if (remediation) {
                 return (
                   <div key={review.skillId} className="rounded-lg border bg-background p-4">

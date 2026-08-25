@@ -2,7 +2,81 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — Clash measurable-practice closure (SHIPPED and Production-verified)
+## Latest handoff — P0.1 assessment-integrity + B1 educational-validity closure (SHIPPED and Production-verified)
+
+Feature/release SHA **`20609a69dc30b37a044c221bd28209a43d9a0a2c`** (the B1 commit), Production
+deployment **`6090563687`**, status **SUCCESS** — the deployment object's own sha field ties
+Production to the release SHA exactly. P0.1 is the parent commit
+`0789278cc09bb771b68a49d23a3c2dd709aa0d0d`; the pre-P0.1 baseline is
+`730a350d44e5874d6967491d78c9eeafe1b4a583` (exact two-commit ancestry from baseline to release).
+Any later docs-only truth-sync commit is NOT the feature SHA. Nothing was deleted.
+
+**What shipped:**
+
+- **P0.1 (NOT cosmetic):** repaired systematic answer-form leakage in the measured Debate/DECA
+  banks — blind answer-form heuristics (e.g. longest-choice selection) could manufacture durable
+  mastery evidence, measured 83–100% blind accuracy on affected areas pre-repair — and added an
+  **enforced static assessment-quality guard**. The repaired banks passed the final machine/AI
+  educational review and guard process. Do not claim overall educational perfection.
+- **B1:** after the closed-corpus educational-validity review — an independent **AI** reviewer
+  answered all 179 reviewed questions blind before seeing the keys and matched **178/179** official
+  keys, with the comparison then used to expose curriculum and one-best-answer defects, not as a
+  score-only gate — B1 (a) repaired the adjudicated item-validity defects (`cl-08` direct-clash key;
+  `cl-10` formerly semantically-correct distractor; `cl-30` second defensible non-responsive
+  distractor; `pi-28` key tightened so the concept verb AND the implementation/measurement scaffold
+  must be satisfied together), (b) held valid-but-untaught questions from NEW serving, (c) rebased
+  the serving/mastery tests to the actual served population, (d) preserved honest grading for
+  historical/in-flight held-item attempts, and (e) deleted nothing.
+
+**Invariants to preserve:**
+
+- **The held set is exactly 8:** Debate `rb-02`, `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-30`,
+  `wg-08`; DECA `pi-26`. They are **valid curriculum targets** excluded from NEW durable assessment
+  only because learner-visible teaching does not yet prepare learners for them. Never call them
+  bad, invalid, deleted, or retired. **`wg-08` is UNTAUGHT / HELD; `wg-29` is FAIR TRANSFER /
+  SERVING** — adjudicated separately; never collapse the two.
+- **Served populations:** Debate **143/150** (rebuttal 24/30, weighing 29/30); DECA **119/120**
+  (PI 29/30). Held ids stay physically in their banks; historical attempts are NOT invalidated.
+- **Provenance:** B1 final educational content is AI-assisted, independently AI-reviewed, blind
+  closed-corpus reviewed, adversarially final-byte validated. External human content review was
+  **WAIVED BY THE PROJECT OWNER on 2026-08-25**; human content review was **NOT PERFORMED**. Never
+  write "human-reviewed" / "human-approved" / "externally human-reviewed" for B1-edited bytes — a
+  waiver is not a review. The closed-corpus review is an AI review — never call it human or
+  external review.
+- **Static guard:** checks answer-form signal families (length / cue / duplication + mutation
+  tests); final measured examples `debate:clash` H_LONG 13.3% / UL 13%,
+  `deca:performance-indicators` H_LONG 21.7% / UL 20%. The guard **SUPPLEMENTS** educational
+  review — never a replacement.
+
+**Production verification (read-only, concise):** local HEAD = `origin/main` = the true remote
+main; exact two-commit ancestry from `730a350d`; the deployment object's own sha field ties
+Production to the release SHA; public routes showed no unexpected 5xx; an unauthenticated protected
+route preserved its sign-in redirect; no authenticated submission, no DB mutation.
+
+**Latent serving debt — keep visible until executable protection ships:** the session-builder
+selection loop can fail to terminate if a requested area ever has zero served items. UNREACHABLE in
+Production today (active served areas non-empty: rebuttal 24, weighing 29, PI 29). Required future
+treatment: fail closed **before** entering the selection loop on an empty served pool. Not a B1
+release blocker; deliberately not fixed in this release.
+
+### Next work
+
+**B2 — NEXT, NOT STARTED:** teach the eight held concepts to the learner-visible closed-corpus
+preparedness standard: turn definition/reversal; offense vs defense; link turn vs impact turn;
+double-turn hazard; indict vs turn; defense-only vs offense strategy; weighing framework / early
+standard; DECA instructional-area weighting rule vs individual PI weighting. Required sequence:
+TEACH → verify reachability → closed-corpus assessment → re-review question validity against the
+final lesson bytes → remove a hold only when a beginner can reasonably solve the item from
+CompeteReady instruction → rerun the serving/mastery safeguards. **B2 must NOT simply unhold ids.**
+
+**P0.2 — NOT STARTED.** This release does not make the education system complete or perfect; the
+larger education-perfection program still has material gaps across Debate, DECA, and HOSA.
+
+Separately and still open, unchanged by this release: the latent serving debt above, moving-HEAD
+debt 18, `/debates/history`, the stale Reassess CTA, the skills-compat XP prose, the six inherited
+M14 `Latest handoff` headings, the duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — Clash measurable-practice closure (SHIPPED and Production-verified)
 
 Feature `3e5dace7be9d08d6f73f36fefa99580e6115a0bb`, Production deployment **`6074834885`**.
 Release fact: the owner explicitly authorized and executed the `debate-clash` Production Skill
@@ -13,8 +87,10 @@ no independent DB inspection was performed by verification), so no skill-missing
 (`/lessons/debate-clash`, structure unchanged; narrow correction only — deeper
 actual-disagreement/direct-engagement explanation, two recall items → application) → skillSlug
 `debate-clash` → practiceDrill `{ track: "debate", area: "clash" }`
-(`/study-arcade?track=debate&area=clash`) → 30 new server-graded items (Debate bank now 150,
-old 120 unchanged) → the existing generic session → grading → `MasteryProgress` →
+(`/study-arcade?track=debate&area=clash`) → 30 new server-graded items (Debate bank then 150
+authored, old 120 unchanged at that shipment; since B1 — see the latest handoff — **143/150
+serve**, with 7 valid-but-untaught items held from NEW serving) → the existing generic session →
+grading → `MasteryProgress` →
 `SkillReviewSchedule` path. Schema/migrations/`prisma/seed.ts` ZERO.
 
 **Invariants to preserve:**
@@ -54,8 +130,9 @@ old 120 unchanged) → the existing generic session → grading → `MasteryProg
 
 ### Next curriculum work
 
-**No next Debate curriculum product slice has been chosen — the next step is a separate owner
-decision.** Remaining coverage/connectivity gaps: Signposting measurable connectivity, Constructive
+**Superseded: the chosen next step is now B2 — teaching the eight held concepts (see the latest
+handoff above).** As of the Clash shipment no next Debate curriculum product slice had been
+chosen. Remaining coverage/connectivity gaps: Signposting measurable connectivity, Constructive
 Speeches measurable connectivity, later speeches / collapse / crystallization, flowing/note-taking,
 questioning (format-dependent), delivery, strategy/judge adaptation. Clarified design fact (not the
 Evidence/Clash defect class, no metadata-only fix, not automatically NEXT): a due

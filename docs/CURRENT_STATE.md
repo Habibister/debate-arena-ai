@@ -2,7 +2,84 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (Clash measurable-practice closure — the fifth canonical measured Debate skill: the existing "Create direct clash" lesson (narrowly corrected) is now the teaching home for the new `debate-clash` skill, drilled by a new 30-item server-graded `clash` area through the existing generic evidence architecture. **SHIPPED and Production-verified** — feature `3e5dace7be9d08d6f73f36fefa99580e6115a0bb`, Production deployment `6074834885`; the owner pre-activated the Production Skill row before push, so no skill-missing window occurred. Connected durable loops now number FIVE (CWI embedded; Evidence, Clash, Refutation, Weighing mapped). Waves 1A/1B/1C remain CLOSED; M15 Learning Architecture Slices 1–3 and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-25 (P0.1 assessment-integrity + B1 educational-validity closure — **SHIPPED and Production-verified**: feature SHA `20609a69dc30b37a044c221bd28209a43d9a0a2c`, Production deployment `6090563687` SUCCESS. P0.1 repaired systematic answer-form leakage in the measured Debate/DECA banks and added an enforced static assessment-quality guard; B1 repaired the adjudicated item-validity defects and holds exactly 8 valid-but-untaught items from NEW serving — served populations Debate 143/150, DECA 119/120; nothing deleted, historical attempts not invalidated. B2 (teach the eight held concepts) is NEXT / NOT STARTED; P0.2 NOT STARTED. The Clash closure, Waves 1A/1B/1C, M15 Learning Architecture Slices 1–3 and everything before them remain shipped and Production-verified; A4 and M14 Global G2 remain CLOSED.)_
+
+## P0.1 assessment-integrity + B1 educational-validity closure — SHIPPED and Production-verified
+
+Feature/release SHA **`20609a69dc30b37a044c221bd28209a43d9a0a2c`** (the B1 commit), Production
+deployment **`6090563687`**, status **SUCCESS** — the deployment object's own sha field ties
+Production to the release SHA exactly. The P0.1 assessment-integrity commit is its parent,
+`0789278cc09bb771b68a49d23a3c2dd709aa0d0d`; the pre-P0.1 baseline is
+`730a350d44e5874d6967491d78c9eeafe1b4a583`, with exact two-commit ancestry from the baseline to the
+release SHA. Any later docs-only truth-sync commit is NOT the feature SHA. Nothing was deleted.
+
+**P0.1 — answer-form leakage repaired (NOT cosmetic).** The measured Debate/DECA banks carried
+systematic answer-form leakage: blind answer-form heuristics (e.g. always picking the longest
+choice) could manufacture durable mastery evidence — measured **83–100% blind accuracy** on
+affected areas pre-repair. P0.1 repaired the leaking items and added an **enforced static
+assessment-quality guard**; the repaired banks passed the final machine/AI educational review and
+guard process. This does not claim overall educational perfection.
+
+**The static guard, precisely.** It checks answer-form signal families — length, cue wording,
+duplication — plus mutation tests. Final measured examples: `debate:clash` H_LONG 13.3% / UL 13%;
+`deca:performance-indicators` H_LONG 21.7% / UL 20%. The guard **SUPPLEMENTS** educational review —
+it never replaces it.
+
+**B1 — closed-corpus educational-validity closure.** After the closed-corpus educational-validity
+review, B1: (a) repaired the adjudicated item-validity defects, (b) held valid-but-untaught
+questions from NEW serving, (c) rebased the serving/mastery tests to the actual served population,
+(d) preserved honest grading for historical and in-flight held-item attempts, and (e) deleted
+nothing.
+
+**The closed-corpus review, precisely.** An independent **AI** closed-corpus reviewer answered all
+179 reviewed questions blind, before seeing the keys, and matched **178/179** official keys; the
+comparison was then used to expose curriculum and one-best-answer defects — not as a score-only
+gate. It is an AI review: NOT human review, NOT external review, NOT human approval.
+
+**B1 item repairs.** `cl-08` direct-clash key repaired; `cl-10` formerly semantically-correct
+distractor repaired; `cl-30` second defensible non-responsive distractor repaired; `pi-28` key
+tightened so the concept verb AND the implementation/measurement scaffold must be satisfied
+together.
+
+**The held set — exactly 8.** Debate `rb-02`, `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-30`, `wg-08`;
+DECA `pi-26`. These remain **valid curriculum targets**, excluded from NEW durable assessment only
+because learner-visible teaching does not yet prepare learners for them. They are not bad, not
+invalid, not deleted, not retired. WG distinction to preserve: **`wg-08` is UNTAUGHT / HELD;
+`wg-29` is FAIR TRANSFER / SERVING** — adjudicated separately; never collapse the two.
+
+**Served populations.** Debate **143/150** (rebuttal 24/30, weighing 29/30); DECA **119/120**
+(PI 29/30). Held ids stay physically in their banks; historical attempts are NOT invalidated.
+
+**Provenance — record exactly.** B1 final educational content is AI-assisted, independently
+AI-reviewed, blind closed-corpus reviewed, and adversarially final-byte validated. External human
+content review was **WAIVED BY THE PROJECT OWNER on 2026-08-25**; human content review was **NOT
+PERFORMED**. Never describe B1-edited bytes as human-reviewed, human-approved, or externally
+human-reviewed — a waiver is not a review.
+
+**Production verification (read-only, concise).** local HEAD = `origin/main` = the true remote
+main; exact two-commit ancestry from `730a350d`; the deployment object's own sha field ties
+Production to the release SHA; public routes showed no unexpected 5xx; an unauthenticated protected
+route preserved its sign-in redirect; no authenticated submission and no DB mutation were
+performed.
+
+**Latent serving debt — keep this visible until executable protection ships.** The session-builder
+selection loop can fail to terminate if a requested area ever has zero served items. This is
+UNREACHABLE in Production today (the active served areas are non-empty: rebuttal 24, weighing 29,
+PI 29). Required future treatment: fail closed **before** entering the selection loop on an empty
+served pool. Not a B1 release blocker, and deliberately not fixed in this release.
+
+**B2 — NEXT, NOT STARTED.** Teach the eight held concepts to the learner-visible closed-corpus
+preparedness standard: turn definition/reversal; offense vs defense; link turn vs impact turn;
+double-turn hazard; indict vs turn; defense-only vs offense strategy; weighing framework / early
+standard; DECA instructional-area weighting rule vs individual PI weighting. Required sequence:
+TEACH → verify reachability → closed-corpus assessment → re-review question validity against the
+final lesson bytes → remove a hold only when a beginner can reasonably solve the item from
+CompeteReady instruction → rerun the serving/mastery safeguards. **B2 must NOT simply unhold ids.**
+
+**P0.2 — NOT STARTED.**
+
+**Honest scope.** This release does not make the education system complete or perfect; the larger
+education-perfection program still has material gaps across Debate, DECA, and HOSA.
 
 ## Clash measurable-practice closure — SHIPPED and Production-verified
 
@@ -27,7 +104,9 @@ execution, delivery, time-pressure adaptation, round-wide strategy, or judge ada
 
 **Five canonical measured Debate skills.** `debate-claim-building` (claim-warrant-impact),
 `debate-evidence` (evidence-evaluation), **`debate-clash` (clash)**, `debate-rebuttal` (rebuttal),
-`debate-weighing` (weighing) — 30 items each, **150 total**, the pre-existing 120 unchanged. Bank
+`debate-weighing` (weighing) — 30 items each, **150 authored** (the pre-existing 120 unchanged at
+that shipment; since B1 — see the P0.1/B1 section above — **143/150 serve**, with 7
+valid-but-untaught Debate items held from NEW serving). Bank
 provenance stays truthful: the 30 Clash items are AI-assisted and are submitted through the
 repository's human review-and-approval gate; a personal human content review of the items has not
 been separately established and is not claimed.
@@ -97,7 +176,8 @@ gaps: a due `debate-claim-building` review currently lacks generic reverse-remed
 CWI lesson embeds its authoritative durable drill — this is NOT the Evidence/Clash defect class and
 has no metadata-only fix; any future CWI remediation needs a separate generic
 lesson-with-embedded-durable-practice design decision. **No next Debate curriculum product slice
-has been chosen.** The Debate curriculum is not complete.
+had been chosen at that shipment; since then B2 — teaching the eight held concepts (see the
+P0.1/B1 section above) — is the chosen next step.** The Debate curriculum is not complete.
 
 ## Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure — SHIPPED and Production-verified
 

@@ -2,7 +2,72 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure (SHIPPED and Production-verified)
+## Latest handoff — Clash measurable-practice closure (SHIPPED and Production-verified)
+
+Feature `3e5dace7be9d08d6f73f36fefa99580e6115a0bb`, Production deployment **`6074834885`**.
+Release fact: the owner explicitly authorized and executed the `debate-clash` Production Skill
+activation BEFORE the feature push (owner-reported: 1 created, 0 already present, 0 conflicts;
+no independent DB inspection was performed by verification), so no skill-missing window occurred.
+
+**What shipped:** the fifth canonical measured Debate skill. Lesson `debate-clash`
+(`/lessons/debate-clash`, structure unchanged; narrow correction only — deeper
+actual-disagreement/direct-engagement explanation, two recall items → application) → skillSlug
+`debate-clash` → practiceDrill `{ track: "debate", area: "clash" }`
+(`/study-arcade?track=debate&area=clash`) → 30 new server-graded items (Debate bank now 150,
+old 120 unchanged) → the existing generic session → grading → `MasteryProgress` →
+`SkillReviewSchedule` path. Schema/migrations/`prisma/seed.ts` ZERO.
+
+**Invariants to preserve:**
+
+- **Narrow construct.** The drill measures clash recognition and response selection (locate the
+  disputed point, what needs answering, engagement vs repetition/parallel talk, non-responsive
+  answers, response selection). Never describe it as live-clash, speech-execution, delivery, or
+  strategy mastery. Bank provenance stays truthful: AI-assisted, submitted through the review
+  gate — not claimed as human-reviewed, approved, or separately human-authored.
+- **DUE ≠ WEAK.** Due `debate-clash`: 69 → lesson + exact drill; 70/71 → exact drill only.
+  `PRACTICING_MASTERY_MIN` and `DRILL_PASS_THRESHOLD` stay distinct concepts. `nextReviewAt ASC`
+  stays authoritative — no weakest-first.
+- **Coach authority.** Server selects skill/lesson/drill/href/order from durable evidence; AI
+  explains only; `NO_DUE_ACTION` unchanged. **`centralClashResponse` stays diagnostic-only** —
+  never mastery, review, or Coach-selection authority.
+- **Formative/durable boundary.** In-lesson checks record nothing; the external drill is the first
+  durable Clash evidence. No new writer.
+- **Routing.** `/skills/debate-clash` → canonical lesson resolution → `/lessons/debate-clash`
+  (the debate-weighing collision precedent). `debateWritingPracticeSupported("debate-clash")` is
+  false; the displacement catalog has no Clash entry. No alias, no slug-map special case.
+- **Skill-row provenance.** `debate-clash` lives in `ACTIVATION_PENDING_SKILLS` (operational-script
+  provenance), NOT `SEEDED_SKILLS` (which must mirror `prisma/seed.ts` exactly). The activation
+  script (`scripts/seed-debate-clash-skill.ts`) stays manual-only: dry-run never connects,
+  `--apply` required, create-or-verify, no update/upsert/delete, Skill-only, conflict fail-closed.
+  This shipment's activation is complete — not a standing TODO.
+- **S3-15 transition.** The skills-compat and concept-lesson-view raw byte pins are retired in
+  favor of semantic, mutation-killable guards (canonical precedence, collision shadowing, CWI's
+  authored-source fail-closed boundary, discriminant integrity, manifest/seed and inventory
+  agreement, formative framing, metadata-derived CTA, no durable imports). Schema,
+  lesson-practice, spaced-review and the review page's executable behavior remain protected as
+  before. Do not claim the retired files are byte-pinned.
+- **Five durable loops, precisely.** CWI (embedded durable practice — architecturally distinct, no
+  registry reverse-remediation mapping), Evidence, Clash, Refutation, Weighing. Orientation stays
+  Taught + Formative only. Mapped concept set: evidence-evaluation, clash, refutation, weighing.
+- **LC1.** Marker `DEBATE-CLASH-MEASURABLE-PRACTICE-CORRECTION`; 19 entries before and after;
+  exactly the `debate-clash` entry changed; no twentieth entry.
+
+### Next curriculum work
+
+**No next Debate curriculum product slice has been chosen — the next step is a separate owner
+decision.** Remaining coverage/connectivity gaps: Signposting measurable connectivity, Constructive
+Speeches measurable connectivity, later speeches / collapse / crystallization, flowing/note-taking,
+questioning (format-dependent), delivery, strategy/judge adaptation. Clarified design fact (not the
+Evidence/Clash defect class, no metadata-only fix, not automatically NEXT): a due
+`debate-claim-building` review lacks generic reverse-remediation because the CWI lesson embeds its
+authoritative durable drill — any future fix needs a separate generic
+lesson-with-embedded-durable-practice design decision.
+
+Separately and still open, unchanged by this slice: moving-HEAD debt 18, `/debates/history`, the
+stale Reassess CTA, the skills-compat XP prose, the six inherited M14 `Latest handoff` headings, the
+duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure (SHIPPED and Production-verified)
 
 Implementation `aea7f74f135d233821a0356ac63478987f6f9e5c`, Production deployment **`6073720884`**.
 

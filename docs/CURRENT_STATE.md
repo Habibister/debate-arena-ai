@@ -2,7 +2,102 @@
 
 Factual snapshot. **Rewrite this file after each milestone** — do not append history.
 
-_Last updated: 2026-08-24 (Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure: the already-measured `debate-evidence` skill (30-question `evidence-evaluation` drill, durable evidence) now has its learner teaching home — the authored lesson "Judge the evidence" (`/lessons/debate-evidence-evaluation`), mapped by metadata alone into the existing drill → evidence → remediation → Coach architecture. **SHIPPED and Production-verified** — implementation `aea7f74f135d233821a0356ac63478987f6f9e5c`, Production deployment `6073720884`. Connected durable loops now number FOUR (CWI embedded; Evidence, Refutation and Weighing mapped). Waves 1A and 1B remain CLOSED — all three planned Wave 1 slices have shipped; M15 Learning Architecture Slices 1–3, the indexOf ordering-control sequence and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+_Last updated: 2026-08-24 (Clash measurable-practice closure — the fifth canonical measured Debate skill: the existing "Create direct clash" lesson (narrowly corrected) is now the teaching home for the new `debate-clash` skill, drilled by a new 30-item server-graded `clash` area through the existing generic evidence architecture. **SHIPPED and Production-verified** — feature `3e5dace7be9d08d6f73f36fefa99580e6115a0bb`, Production deployment `6074834885`; the owner pre-activated the Production Skill row before push, so no skill-missing window occurred. Connected durable loops now number FIVE (CWI embedded; Evidence, Clash, Refutation, Weighing mapped). Waves 1A/1B/1C remain CLOSED; M15 Learning Architecture Slices 1–3 and everything before them remain shipped and Production-verified; **A4 is CLOSED**. M14 Global G2 remains CLOSED.)_
+
+## Clash measurable-practice closure — SHIPPED and Production-verified
+
+Feature `3e5dace7be9d08d6f73f36fefa99580e6115a0bb`, Production deployment **`6074834885`**. A
+post-Wave-1 slice, decided by its own prioritization/viability/release audits — not part of Wave 1.
+Schema **ZERO**, migrations **ZERO**, `prisma/seed.ts` **ZERO**.
+
+**The closure.** Debate's Clash lesson was Taught and simulated but not measurable. Now:
+lesson **`debate-clash`** ("Create direct clash", `/lessons/debate-clash`) → skillSlug
+`debate-clash` → practiceDrill `{ track: "debate", area: "clash" }`
+(`/study-arcade?track=debate&area=clash`). The lesson kept its structure, worked example, guided
+question and position; the closure included only a narrow quality correction — a deeper explanation
+of finding the actual disagreement and engaging it directly, and two recall-level formative
+questions replaced with application questions. No second lesson, no format-specific procedure.
+
+**The measured construct — deliberately narrow.** The drill measures **clash recognition and
+response selection**: identifying the actual disputed point, identifying which argument needs
+answering, distinguishing direct engagement from repetition and parallel argumentation, identifying
+non-responsive or irrelevant answers, and choosing the response that directly engages the
+opponent's reasoning. It is NOT durable mastery of live spontaneous clash, complete speech
+execution, delivery, time-pressure adaptation, round-wide strategy, or judge adaptation.
+
+**Five canonical measured Debate skills.** `debate-claim-building` (claim-warrant-impact),
+`debate-evidence` (evidence-evaluation), **`debate-clash` (clash)**, `debate-rebuttal` (rebuttal),
+`debate-weighing` (weighing) — 30 items each, **150 total**, the pre-existing 120 unchanged. Bank
+provenance stays truthful: the 30 Clash items are AI-assisted and are submitted through the
+repository's human review-and-approval gate; a personal human content review of the items has not
+been separately established and is not claimed.
+
+**Connected durable loops are now exactly FIVE.** CWI (embedded server-graded practice —
+architecturally distinct, no registry reverse-remediation mapping), Evidence Evaluation, **Clash**,
+Refutation and Weighing (each: exact drill, reverse remediation + Coach). Orientation is not
+counted. Registry-mapped drill-backed concept teaching homes are exactly:
+`debate-evidence-evaluation`, `debate-clash`, `debate-refutation`, `debate-weighing`.
+
+**DUE ≠ WEAK carries forward.** Due `debate-clash` at 69 → the Clash lesson then the exact drill;
+at 70/71 → the exact drill only. `PRACTICING_MASTERY_MIN` (70) and `DRILL_PASS_THRESHOLD` (70)
+remain distinct concepts despite the equal number. Most-overdue ordering (`nextReviewAt ASC`)
+remains authoritative; a weaker later Clash row never displaces an earlier due row.
+
+**Coach and simulation stay honestly separated.** Clash consumes the existing generic Coach: the
+server selects skill, lesson, drill, href and order from durable evidence; the AI explains only;
+`NO_DUE_ACTION` unchanged. The AI judge's `centralClashResponse` score remains
+diagnostic/simulation-only — it writes no mastery, advances no review, and selects no Coach action.
+
+**Formative/durable boundary.** In-lesson Clash checks remain FORMATIVE ONLY; the external
+server-graded Clash drill is the first durable Clash evidence, through the existing session →
+grading → `MasteryProgress` → `SkillReviewSchedule` path. No new writer.
+
+**Routing and writing practice.** `/skills/debate-clash` resolves canonically to
+`/lessons/debate-clash` — the deliberate lesson-id/Skill-slug collision pattern precedented by
+debate-weighing; no alias, no slug-map special case. `debateWritingPracticeSupported("debate-clash")`
+is false (canonical resolution shadows compat practice), so no writing route exists for Clash and
+the intentional-displacement catalog gained no entry.
+
+**Skill-row release truth.** The `debate-clash` Skill row is NOT created by `prisma/seed.ts`. It is
+declared in `ACTIVATION_PENDING_SKILLS` — the category that records operational-script provenance —
+and was created in Production by the owner, who explicitly authorized and ran the reviewed
+create-or-verify script (`scripts/seed-debate-clash-skill.ts`: dry-run that never connects,
+explicit `--apply`, create-or-verify, no update/upsert/delete, Skill-only, conflict fail-closed,
+manual only) BEFORE the feature push — owner-reported result: 1 created, 0 already present,
+0 conflicts. The production-verification audit did not inspect the database; the activation is the
+owner's release evidence. Pre-activation is why no learner-visible "Not tracked yet" window
+occurred. This activation is complete — it is not a standing TODO.
+
+**S3-15 trust-boundary transition.** Two former raw byte pins were deliberately retired
+(owner-approved) because approved measurement work legitimately extends their catalogs:
+`lib/education/skills-compat.ts` is now guarded semantically (canonical lesson precedence, the
+weighing and clash collision behavior, CWI's authored-source fail-closed boundary, the source
+discriminant, manifest/seed agreement, activation-pending inventory, compat/redirect integrity, no
+silent writing-practice activation) and `components/lessons/concept-education-lesson-view.tsx`
+likewise (formative "records nothing" framing, CTA conditional on `practiceDrill`, metadata-derived
+track/area, no hardcoded Clash CTA, no mastery/review imports, no durable in-lesson claim — its
+only production change was the typed Clash label entry). Still byte/executable-protected:
+`prisma/schema.prisma`, `concept-education-lesson-practice.tsx`, `lib/spaced-review.ts`, and the
+review page's executable behavior.
+
+**Reviewed content.** LC1 marker **`DEBATE-CLASH-MEASURABLE-PRACTICE-CORRECTION`**: 19 entries
+before and after; exactly the `debate-clash` entry changed (the narrow correction); the other 18
+are canonically unchanged. No twentieth entry.
+
+**Current Debate learner path — unchanged.** `debate-round-orientation` → `claim-warrant-impact` →
+`debate-evidence-evaluation` → `debate-signposting` → `debate-clash` → `debate-refutation` →
+`debate-constructive-speeches` → `debate-weighing` → terminal.
+
+**Current curriculum status.** Clash measurable connectivity is closed. The broader remaining
+weakness is still coverage/connectivity, not lesson-template quality: Signposting measurable
+connectivity, Constructive Speeches measurable connectivity, later speeches / collapse /
+crystallization, flowing/note-taking, questioning (cross-ex/crossfire/POI — format-dependent),
+delivery, and round strategy / judge adaptation. One clarified design fact, distinct from those
+gaps: a due `debate-claim-building` review currently lacks generic reverse-remediation because the
+CWI lesson embeds its authoritative durable drill — this is NOT the Evidence/Clash defect class and
+has no metadata-only fix; any future CWI remediation needs a separate generic
+lesson-with-embedded-durable-practice design decision. **No next Debate curriculum product slice
+has been chosen.** The Debate curriculum is not complete.
 
 ## Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure — SHIPPED and Production-verified
 
@@ -76,7 +171,8 @@ closure: the lesson is already reachable through the curriculum path, its exact 
 remediation and the Coach. Whether this compatibility route should eventually resolve directly to
 the lesson remains a separate product decision.
 
-**Connected durable loops are now exactly FOUR.** Complete teach → server-graded-practice →
+**Connected durable loops at Wave 1C shipment: exactly FOUR** (the later Clash closure added the
+fifth — see above). Complete teach → server-graded-practice →
 durable-evidence loops: **Claim/Warrant/Impact** (embedded server-graded practice — architecturally
 distinct, no registry reverse-remediation mapping), **Evidence Evaluation** (exact Evidence drill,
 reverse remediation + Coach), **Refutation** (exact Rebuttal drill, reverse remediation + Coach),
@@ -97,15 +193,14 @@ semantics are unchanged. No new Skill row, no new drill area, no new evidence me
 - **Wave 1B — Weighing teaching-home closure: CLOSED.**
 - **Wave 1C — Evidence Evaluation teaching-home closure: SHIPPED / Production-verified.**
 
-All three planned Wave 1 slices have shipped. No next curriculum wave has been chosen — the next
-product step is a separate decision. The current product story: beginner orientation → foundational
-argument teaching → evidence evaluation → exact measured practice where available → durable
-demonstrated performance → due vs weak → exact remediation / re-demonstration → server-chosen Coach
-action → AI explanation → simulation. This is NOT a complete Debate curriculum, competition
-readiness, or complete personalization/diagnosis — not every skill is trainable or measurable yet.
-The broader remaining weakness is still coverage/connectivity, not lesson-template quality:
-Signposting/Clash/Constructive Speeches drill-and-evidence connectivity, later speeches, flowing,
-round strategy, crystallization, delivery, and questioning/cross-ex.
+All three planned Wave 1 slices shipped, closing Wave 1. The product story as of that closure:
+beginner orientation → foundational argument teaching → evidence evaluation → exact measured
+practice where available → durable demonstrated performance → due vs weak → exact remediation /
+re-demonstration → server-chosen Coach action → AI explanation → simulation — NOT a complete Debate
+curriculum, competition readiness, or complete personalization/diagnosis. The notable gaps at that
+point were Signposting/Clash/Constructive Speeches drill-and-evidence connectivity (Clash closed
+since — see the Clash closure above), later speeches, flowing, round strategy, crystallization,
+delivery, and questioning/cross-ex.
 
 ## Debate Curriculum Wave 1A — beginner Debate orientation — SHIPPED and Production-verified
 
@@ -295,7 +390,8 @@ diagnosis, or complete personalization.
 
 **The remaining curriculum weakness is coverage, not format.** The lesson format itself is strong.
 Some authored lessons are **Taught but not yet Trainable/Measurable** through an exact drill/evidence
-loop — today that includes **Signposting, Clash and Constructive Speeches**, whose content is good
+loop — at that point Signposting, Clash and Constructive Speeches (Clash has since gained its
+exact drill loop — see the Clash closure above), whose content is good
 but whose practice/evidence connectivity does not yet exist the way Refutation's does.
 
 **Learning architecture status.**

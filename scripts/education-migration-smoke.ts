@@ -483,7 +483,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     assert.ok(presentIds.has(id), `4b10b. original Debate question ${id} is still present`);
   }
   assert.ok(DRILL_BANK.length >= 36, "4b10c. and the bank never shrank below its original 36");
-  assert.equal(DRILL_AREAS.length, 4, "4b11. across exactly four areas");
+  assert.equal(DRILL_AREAS.length, 5, "4b11. across exactly five areas");
   assert.equal(presentIds.size, DRILL_BANK.length, "4b12. with no duplicate ids");
   // (iii) M13E1D introduces no second lesson or mastery renderer. The lesson component set is fixed,
   //       and the one component M13E1D touched reaches no lesson or education module.
@@ -599,7 +599,8 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   assert.equal(getEducationLesson("debate-refutation")?.skillSlug, "debate-rebuttal", "24. refutation is associated with debate-rebuttal");
   assert.equal(getEducationLesson("debate-weighing")?.skillSlug, "debate-weighing", "24b. weighing is associated with debate-weighing");
   assert.equal(getEducationLesson("debate-evidence-evaluation")?.skillSlug, "debate-evidence", "24c. the evidence lesson is associated with debate-evidence");
-  for (const id of ["debate-signposting", "debate-clash", "debate-constructive-speeches", "debate-round-orientation"]) {
+  assert.equal(getEducationLesson("debate-clash")?.skillSlug, "debate-clash", "24d. the clash lesson is associated with debate-clash");
+  for (const id of ["debate-signposting", "debate-constructive-speeches", "debate-round-orientation"]) {
     assert.equal(getEducationLesson(id)?.skillSlug, undefined, `25. "${id}" claims no seeded mastery skill`);
   }
   assert.equal((getEducationLesson("debate-round-orientation") as { practiceDrill?: unknown } | undefined)?.practiceDrill, undefined,
@@ -647,8 +648,9 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   {
     const conceptEntries = EDUCATION_REGISTRY.lessons.filter((e) => e.sourceKind === "concept-education-lesson");
     const mapped = conceptEntries.filter((e) => e.practiceDrill);
-    assert.deepEqual(mapped.map((e) => e.id), ["debate-evidence-evaluation", "debate-refutation", "debate-weighing"],
-      `36. exactly three authored lessons name a drill destination — evidence, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
+    assert.deepEqual(mapped.map((e) => e.id),
+      ["debate-evidence-evaluation", "debate-clash", "debate-refutation", "debate-weighing"],
+      `36. exactly four authored lessons name a drill destination — evidence, clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
 
     const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
     assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },
@@ -656,6 +658,13 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     const weighingEntry = conceptEntries.find((e) => e.id === "debate-weighing");
     assert.deepEqual(weighingEntry?.practiceDrill, { track: "debate", area: "weighing" },
       "36b2. and weighing points at the Debate weighing drill");
+    const clashEntry = conceptEntries.find((e) => e.id === "debate-clash");
+    assert.deepEqual(clashEntry?.practiceDrill, { track: "debate", area: "clash" },
+      "36b4. and the clash lesson points at the clash drill");
+    const clashArea = SLICE1_AREAS.find((a) => a.id === clashEntry?.practiceDrill?.area);
+    assert.ok(clashArea, "36c4. that area exists in the Debate drill bank");
+    assert.equal(clashArea?.skillSlug, clashEntry?.skillSlug,
+      "36d4. and it is scored against the same intended skill the lesson names");
     const evidenceEntry = conceptEntries.find((e) => e.id === "debate-evidence-evaluation");
     assert.deepEqual(evidenceEntry?.practiceDrill, { track: "debate", area: "evidence-evaluation" },
       "36b3. and the evidence lesson points at the evidence-evaluation drill");
@@ -678,8 +687,8 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     assert.ok(SLICE1_BANK.filter((q) => q.area === area?.id).length >= 10,
       "36e. and that area has a real question pool behind it, not an empty shell");
 
-    // Absence is the honest default: three authored lessons have no matching area today.
-    for (const id of ["debate-signposting", "debate-clash", "debate-constructive-speeches"]) {
+    // Absence is the honest default: two authored lessons have no matching area today.
+    for (const id of ["debate-signposting", "debate-constructive-speeches"]) {
       const entry = conceptEntries.find((e) => e.id === id);
       assert.ok(entry, `36f. ${id} is still a published concept lesson`);
       assert.equal(entry?.practiceDrill, undefined,

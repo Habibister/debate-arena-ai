@@ -490,7 +490,7 @@ export const argumentFlowRequestSchema = z.object({
 
 // --- General Debate concept drills ---
 
-const drillAreaSchema = z.enum(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing"]);
+const drillAreaSchema = z.enum(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing", "clash"]);
 
 export const debateDrillSessionRequestSchema = z.object({
   count: z.number().int().min(1).max(40),

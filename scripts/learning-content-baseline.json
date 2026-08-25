@@ -212,7 +212,7 @@
       "estimatedMinutes": 7,
       "content": {
         "objective": "Identify what both sides disagree about and answer that point directly.",
-        "explanation": "Clash happens when two arguments meet. Instead of repeating your case, explain why your answer beats the other side's claim.",
+        "explanation": "Clash happens when two arguments meet on the same point. It starts with finding what the two sides actually disagree about \u2014 not what they both accept. A responsive answer targets the opponent's reasoning on that disputed point: repeating your own case is not clash, and answering a claim the opponent never made is not clash either. The strongest clash goes one step further and explains why your direct answer changes the disputed issue in your favour.",
         "whyMatters": "Rounds are won on comparison. Clash shows the judge that you are not just speaking well, you are winning the debate.",
         "steps": [
           "Name the opponent's claim.",
@@ -240,16 +240,16 @@
         },
         "practiceQuestions": [
           {
-            "prompt": "What is the first step in clash?",
+            "prompt": "Side A argues a longer lunch break improves focus in afternoon classes. Side B argues the schedule cannot fit a longer lunch without cutting class time. Where is the real disagreement?",
             "choices": [
-              "Name the opposing claim",
-              "Start a new contention",
-              "Ignore the flow",
-              "Ask for prep time"
+              "Whether the schedule can absorb a longer lunch, since Side B never disputed the focus benefit",
+              "Whether focus matters in afternoon classes",
+              "Whether students enjoy lunch",
+              "Whether school days have schedules"
             ],
-            "correctAnswer": "Name the opposing claim",
-            "hint": "You cannot answer what you have not identified.",
-            "explanation": "Naming the claim helps both you and the judge see the point of disagreement.",
+            "correctAnswer": "Whether the schedule can absorb a longer lunch, since Side B never disputed the focus benefit",
+            "hint": "Find the point Side B actually contests.",
+            "explanation": "Side B accepts the focus claim and attacks the schedule fit, so that is where the clash lives. Engaging anything else answers a point nobody disputed.",
             "skillTag": "Clash"
           },
           {
@@ -266,16 +266,16 @@
             "skillTag": "Clash"
           },
           {
-            "prompt": "Why is clash important?",
+            "prompt": "The opponent argues a school garden takes up field space used for sports. Which reply creates clash?",
             "choices": [
-              "It resolves disagreement",
-              "It hides weak evidence",
-              "It makes speeches shorter only",
-              "It avoids comparison"
+              "Gardens teach responsibility, which is our first contention.",
+              "The garden plan uses the unused corner lot, so no field space is lost.",
+              "Sports are also valuable to students.",
+              "We will now summarise our own case."
             ],
-            "correctAnswer": "It resolves disagreement",
-            "hint": "Debate needs direct comparison.",
-            "explanation": "Clash helps the judge decide between competing claims.",
+            "correctAnswer": "The garden plan uses the unused corner lot, so no field space is lost.",
+            "hint": "Which reply meets the space objection itself?",
+            "explanation": "Only the corner-lot answer engages the opponent's actual objection. Restating your contention or agreeing sports matter leaves the space argument standing.",
             "skillTag": "Clash"
           }
         ],
@@ -410,8 +410,8 @@
       "estimatedMinutes": 8,
       "content": {
         "objective": "Evaluate whether evidence genuinely supports an argument, and explain why one piece of evidence deserves more weight than another.",
-        "explanation": "Evidence only helps an argument when it actually supports the specific claim being made. To judge a piece of evidence, ask four things. FIT: does it address this exact claim, or something merely nearby? SOURCE: who produced it, is their expertise relevant, and are there incentives that call for extra scrutiny? METHOD: how was the conclusion reached — who was studied, was there a real comparison, could something else explain the result? INTERPRETATION: does the conclusion claimed actually follow, or is the speaker stretching the evidence past what it shows? When two pieces of evidence conflict, compare them on these same questions instead of picking the one you like.",
-        "whyMatters": "Rounds are full of confident citations. The debater who can say WHY one piece of evidence deserves more weight — not just that a source exists — gives the judge a reason to prefer their side, and spots the moment an opponent's conclusion goes further than their evidence.",
+        "explanation": "Evidence only helps an argument when it actually supports the specific claim being made. To judge a piece of evidence, ask four things. FIT: does it address this exact claim, or something merely nearby? SOURCE: who produced it, is their expertise relevant, and are there incentives that call for extra scrutiny? METHOD: how was the conclusion reached \u2014 who was studied, was there a real comparison, could something else explain the result? INTERPRETATION: does the conclusion claimed actually follow, or is the speaker stretching the evidence past what it shows? When two pieces of evidence conflict, compare them on these same questions instead of picking the one you like.",
+        "whyMatters": "Rounds are full of confident citations. The debater who can say WHY one piece of evidence deserves more weight \u2014 not just that a source exists \u2014 gives the judge a reason to prefer their side, and spots the moment an opponent's conclusion goes further than their evidence.",
         "steps": [
           "Check fit: restate the exact claim and ask whether the evidence is about that claim.",
           "Check source and method: relevant expertise, reasons for caution, who was studied, and whether anything else could explain the result.",
@@ -420,8 +420,8 @@
         "workedExample": {
           "prompt": "Claim: removing library late fees gets more books returned on time. Two pieces of (hypothetical) evidence: A - a survey where members say they would return books on time without fees; B - return rates tracked at two similar libraries, where only the one that removed fees improved.",
           "weakAnswer": "Evidence A is more recent, so it is better.",
-          "strongAnswer": "Evidence B deserves more weight. It measures actual returns rather than what people say they would do, and the unchanged library gives a comparison that points at the fee change itself. A is about intentions, which often differ from behaviour — it fits the topic, but B fits the claim.",
-          "whyItWorks": "The strong answer compares the two pieces on fit and method — measured behaviour with a comparison versus stated intentions — instead of using a shortcut like recency."
+          "strongAnswer": "Evidence B deserves more weight. It measures actual returns rather than what people say they would do, and the unchanged library gives a comparison that points at the fee change itself. A is about intentions, which often differ from behaviour \u2014 it fits the topic, but B fits the claim.",
+          "whyItWorks": "The strong answer compares the two pieces on fit and method \u2014 measured behaviour with a comparison versus stated intentions \u2014 instead of using a shortcut like recency."
         },
         "guidedQuestion": {
           "prompt": "Claim: the new crosswalk made the street safer. Evidence: accidents fell in the month after it was installed. What is the biggest weakness?",
@@ -447,18 +447,18 @@
             ],
             "correctAnswer": "The evidence measures enjoyment, not fitness, so it does not fit the claim",
             "hint": "Compare what was measured with what is claimed.",
-            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information — about enjoyment, not fitness.",
+            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information \u2014 about enjoyment, not fitness.",
             "skillTag": "Evidence"
           },
           {
             "prompt": "Neighbourhoods with more streetlights have less litter. A speaker concludes streetlights prevent litter. What should a careful debater say?",
             "choices": [
-              "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
+              "Something else, like overall upkeep, could produce both \u2014 this needs a comparison before the causal claim stands",
               "The connection proves the conclusion",
               "Litter statistics are always unreliable",
               "Streetlights are too expensive to matter"
             ],
-            "correctAnswer": "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
+            "correctAnswer": "Something else, like overall upkeep, could produce both \u2014 this needs a comparison before the causal claim stands",
             "hint": "Two things appearing together is not yet cause.",
             "explanation": "The association is real evidence, but well-kept neighbourhoods may get both lights and less litter. Without a comparison that separates the factors, the causal conclusion overreaches.",
             "skillTag": "Evidence"
@@ -466,13 +466,13 @@
           {
             "prompt": "Two reports on a teen curfew disagree. One, from a group campaigning for curfews, highlights a single town that improved. The other, an independent review of many towns with its method disclosed, found mixed results. Which deserves more weight and why?",
             "choices": [
-              "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+              "The independent review \u2014 it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
               "The campaign report, because it is more confident",
               "Neither, because they disagree",
               "The campaign report, because one clear example beats many mixed ones"
             ],
-            "correctAnswer": "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
-            "hint": "Compare breadth, method and incentives — do not just pick a side.",
+            "correctAnswer": "The independent review \u2014 it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+            "hint": "Compare breadth, method and incentives \u2014 do not just pick a side.",
             "explanation": "Disagreement is where evaluation starts. An incentive to persuade plus a single selected example warrants caution; breadth and a disclosed method warrant more confidence. That is comparison, not source-bashing.",
             "skillTag": "Evidence"
           }
@@ -481,14 +481,14 @@
           {
             "prompt": "Claim: a reading app doubled students' reading skill. Evidence: the app company surveyed volunteer users, who reported big improvement. What is the strongest evaluation?",
             "choices": [
-              "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
+              "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' \u2014 the conclusion outruns the evidence",
               "The evidence is fine because the company knows its own app best",
               "Reading skill cannot be measured, so the claim is meaningless",
               "The study is acceptable because many users responded"
             ],
-            "correctAnswer": "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
+            "correctAnswer": "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' \u2014 the conclusion outruns the evidence",
             "hint": "Stack the problems: who gathered it, who answered, what was measured, what is claimed.",
-            "explanation": "Each issue alone calls for caution; together — seller incentive, volunteers, self-report, and a precise 'doubled' claim — the evidence cannot carry the conclusion. Naming that gap is exactly the skill.",
+            "explanation": "Each issue alone calls for caution; together \u2014 seller incentive, volunteers, self-report, and a precise 'doubled' claim \u2014 the evidence cannot carry the conclusion. Naming that gap is exactly the skill.",
             "skillTag": "Evidence"
           }
         ]
@@ -808,8 +808,8 @@
       "estimatedMinutes": 6,
       "content": {
         "objective": "Understand what a debate round is and what you are trying to do in one.",
-        "explanation": "A debate round is a structured disagreement: two sides give reasons for different positions, answer each other, and a judge decides which side argued more persuasively. Your job is not just to speak — it is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and why your strongest points should decide the round. An argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive — introducing and building your side's case. Later speaking is mostly responsive — answering what has already been argued and comparing the two sides. Formats differ in speech names, order and timing, but these jobs stay the same.",
-        "whyMatters": "Beginners who enter a round without knowing the goal tend to list facts or repeat themselves. Judges can only vote on what they can follow: once you know the judge is deciding between reasons, every sentence gets a purpose — building a point, answering one, or explaining why yours matters more.",
+        "explanation": "A debate round is a structured disagreement: two sides give reasons for different positions, answer each other, and a judge decides which side argued more persuasively. Your job is not just to speak \u2014 it is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and why your strongest points should decide the round. An argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive \u2014 introducing and building your side's case. Later speaking is mostly responsive \u2014 answering what has already been argued and comparing the two sides. Formats differ in speech names, order and timing, but these jobs stay the same.",
+        "whyMatters": "Beginners who enter a round without knowing the goal tend to list facts or repeat themselves. Judges can only vote on what they can follow: once you know the judge is deciding between reasons, every sentence gets a purpose \u2014 building a point, answering one, or explaining why yours matters more.",
         "steps": [
           "Know your side's position and the strongest reasons for it.",
           "Track what the other side actually argues, and answer it directly instead of repeating yourself.",
@@ -818,7 +818,7 @@
         "workedExample": {
           "prompt": "A short exchange on whether the school day should start later.",
           "weakAnswer": "Side A: Later starts are good. Side B: No, they are not. Side A: Yes, they really are.",
-          "strongAnswer": "Side A: A later start helps because students sleep more and focus better in class. Side B: But buses and family schedules make a later start hard for many households. Side A: Schedules can be adjusted once — lost focus in every class is a cost that repeats every single day.",
+          "strongAnswer": "Side A: A later start helps because students sleep more and focus better in class. Side B: But buses and family schedules make a later start hard for many households. Side A: Schedules can be adjusted once \u2014 lost focus in every class is a cost that repeats every single day.",
           "whyItWorks": "Each side makes a claim with a reason, the reply answers that claim directly, and the final turn explains why one concern should matter more to the judge. That is a debate round in miniature."
         },
         "guidedQuestion": {
@@ -845,7 +845,7 @@
             ],
             "correctAnswer": "Persuade the judge that your side's position is stronger",
             "hint": "The judge is the audience that matters.",
-            "explanation": "Every speech exists to persuade the judge — not to overwhelm, insult, or outlast the other side.",
+            "explanation": "Every speech exists to persuade the judge \u2014 not to overwhelm, insult, or outlast the other side.",
             "skillTag": "Orientation"
           },
           {
@@ -871,7 +871,7 @@
             ],
             "correctAnswer": "Respond to their answer and explain why your point still stands",
             "hint": "An unanswered response usually wins the point.",
-            "explanation": "Debate is exchange: once your argument is answered, the judge needs your response to the answer — not a louder restatement.",
+            "explanation": "Debate is exchange: once your argument is answered, the judge needs your response to the answer \u2014 not a louder restatement.",
             "skillTag": "Orientation"
           }
         ],
@@ -885,7 +885,7 @@
               "A comment about Side B's sincerity"
             ],
             "correctAnswer": "Why homework is still a real cause of lost sleep worth acting on, even if phones matter too",
-            "hint": "The clash is about the cause — resolve it.",
+            "hint": "The clash is about the cause \u2014 resolve it.",
             "explanation": "Side B answered the reason, so the judge needs Side A to engage that answer and explain why the original concern survives it. Responding to the response is the heart of debating.",
             "skillTag": "Orientation"
           }
@@ -1006,7 +1006,7 @@
       "estimatedMinutes": 8,
       "content": {
         "objective": "Compare impacts instead of only listing them.",
-        "explanation": "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves — the skill is making the comparison clear, not saying the lens words.",
+        "explanation": "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves \u2014 the skill is making the comparison clear, not saying the lens words.",
         "whyMatters": "Judges often believe both sides have some truth. Weighing tells them which truth should decide the round.",
         "steps": [
           "Identify both impacts.",
@@ -1017,7 +1017,7 @@
           "prompt": "Aff says preparedness; Neg says class time.",
           "weakAnswer": "Preparedness is more important.",
           "strongAnswer": "Preparedness outweighs class time on timeframe and reversibility. Lost class time is small and adjustable, but students using AI irresponsibly can create immediate academic and career consequences.",
-          "whyItWorks": "The strong answer compares both impacts and explains why one should decide the round — the lens names just make that comparison easy to follow."
+          "whyItWorks": "The strong answer compares both impacts and explains why one should decide the round \u2014 the lens names just make that comparison easy to follow."
         },
         "guidedQuestion": {
           "prompt": "Which phrase is weighing?",
@@ -1084,7 +1084,7 @@
             ],
             "correctAnswer": "Our harm is already starting, so the judge should act on it before their distant harm can even begin",
             "hint": "Explain why sooner should matter to the decision.",
-            "explanation": "This uses the time difference to tell the judge why one impact should decide the round — timeframe weighing, whether or not the word is said.",
+            "explanation": "This uses the time difference to tell the judge why one impact should decide the round \u2014 timeframe weighing, whether or not the word is said.",
             "skillTag": "Weighing"
           }
         ]

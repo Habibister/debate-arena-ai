@@ -387,7 +387,7 @@ export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) 
               <button type="button" onClick={() => setAreaFilter("mixed")} aria-pressed={areaFilter === "mixed"} className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${areaFilter === "mixed" ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>
                 Mixed (all skills)
               </button>
-              {(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing"] as DrillArea[]).map((a) => (
+              {(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing", "clash"] as DrillArea[]).map((a) => (
                 <button key={a} type="button" onClick={() => setAreaFilter(a)} aria-pressed={areaFilter === a} className={`rounded-md border px-3 py-1.5 text-sm font-semibold capitalize ${areaFilter === a ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>
                   {a.replace(/-/g, " ")}
                 </button>

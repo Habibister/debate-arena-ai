@@ -642,23 +642,33 @@ async function main() {
   assert.ok(/writingSessionSubmitRequestSchema/.test(writingRoute),
     "27i7b. and the request is bound to a server-issued session");
 
-  // ---- 27h. the three activation-pending DECA skills --------------------------------------------------
-  // They resolve as DECA-safe destinations BEFORE the activation script has been run, and they are
-  // kept separately identified from the seeded ten so the seed mirror above stays exact.
+  // ---- 27h. the four activation-pending skills (three DECA, one Debate) -------------------------
+  // They are kept separately identified from the seeded ten so the seed mirror above stays exact.
+  // The DECA three resolve as DECA-safe compat destinations BEFORE their activation script runs;
+  // debate-clash is shadowed by the canonical clash LESSON id (the debate-weighing precedent), so
+  // it resolves to authored instruction, never to compat writing practice.
   assert.deepEqual(ACTIVATION_PENDING_SKILLS.map((s) => s.slug),
-    ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations"],
-    "27h. exactly the three activation-pending skills");
+    ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations", "debate-clash"],
+    "27h. exactly the four activation-pending skills");
   assert.equal(INTENDED_SKILL_INVENTORY.length, SEEDED_SKILLS.length + ACTIVATION_PENDING_SKILLS.length,
-    "27h2. the intended inventory is the seeded ten plus those three, with no overlap");
+    "27h2. the intended inventory is the seeded ten plus those four, with no overlap");
   for (const skill of ACTIVATION_PENDING_SKILLS) {
     assert.ok(!SEEDED_SKILL_SLUGS.includes(skill.slug),
       `27h3. "${skill.slug}" is NOT claimed as seeded — prisma/seed.ts does not create it`);
+    assert.ok(!debateWritingPracticeSupported(skill.slug),
+      `27h6. "${skill.slug}" never resolves into Debate writing practice`);
+  }
+  for (const skill of ACTIVATION_PENDING_SKILLS.filter((s) => s.track === "DECA")) {
     assert.equal(compatTrackForSlug(skill.slug), "DECA", `27h4. "${skill.slug}" resolves as DECA`);
     const r = resolveSkillsSlug(skill.slug);
     assert.equal(r.kind === "compatibility" ? r.destination.href : null, "/training/deca/practice",
       `27h5. "${skill.slug}" is sent to DECA practice`);
-    assert.ok(!debateWritingPracticeSupported(skill.slug),
-      `27h6. and no DECA skill resolves into Debate writing practice`);
+  }
+  {
+    const r = resolveSkillsSlug("debate-clash");
+    assert.equal(r.kind, "canonical-redirect", "27h7. debate-clash is shadowed by its canonical lesson id");
+    assert.equal(r.kind === "canonical-redirect" ? r.lessonId : null, "debate-clash",
+      "27h8. and lands on the authored clash lesson, exactly like debate-weighing");
   }
   assert.equal(EDUCATION_LESSONS.length, 10, "28. exactly ten canonical lessons after Wave 1C");
   for (const held of ["debate-rebuttal-speeches", "debate-parliamentary-roles",

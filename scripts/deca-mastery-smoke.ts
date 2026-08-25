@@ -395,15 +395,18 @@ async function main() {
   assert.notDeepEqual(missingOutcome, foundOutcome, "17d. an absent row and a present row do not report the same thing");
 
   // ---- 18-20. the three-skill inventory and its DECA identity -------------------------------------
-  assert.deepEqual(ACTIVATION_PENDING_SKILLS.map((s) => s.slug),
+  const decaPending = ACTIVATION_PENDING_SKILLS.filter((s) => s.track === "DECA");
+  assert.deepEqual(decaPending.map((s) => s.slug),
     ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations"],
-    "18. exactly the three approved skills");
-  assert.deepEqual(ACTIVATION_PENDING_SKILLS.map((s) => s.name),
+    "18. exactly the three approved DECA skills");
+  assert.deepEqual(decaPending.map((s) => s.name),
     ["Performance Indicators", "Business Reasoning", "Customer Relations"], "18b. with their exact names");
-  assert.ok(ACTIVATION_PENDING_SKILLS.every((s) => s.track === "DECA"), "18c. all DECA");
+  assert.deepEqual(ACTIVATION_PENDING_SKILLS.filter((s) => s.track !== "DECA").map((s) => s.slug),
+    ["debate-clash"],
+    "18c. the only non-DECA activation-pending skill is the Debate clash skill — nothing DECA-shaped hides outside the filter");
   assert.ok(ACTIVATION_PENDING_SKILLS.every((s) => s.lessonSlugs.length === 0), "18d. and none invents lessons");
   assert.equal(SEEDED_SKILL_SLUGS.length, 10, "18e. the seed mirror is still exactly the ten seeded skills");
-  assert.equal(INTENDED_SKILL_INVENTORY.length, 13, "18f. the intended inventory is ten plus three");
+  assert.equal(INTENDED_SKILL_INVENTORY.length, 14, "18f. the intended inventory is ten plus four (three DECA, one Debate)");
   for (const slug of ["deca-roleplay", "deca-marketing"]) {
     assert.ok(!ACTIVATION_PENDING_SKILLS.some((s) => s.slug === slug), `18g. "${slug}" is NOT one of the three`);
   }
@@ -424,7 +427,8 @@ async function main() {
   const scriptSlugs = [...scriptCode.matchAll(/slug:\s*"([^"]+)",/g)].map((m) => m[1]);
   assert.deepEqual(scriptSlugs, ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations"],
     "21. the script contains exactly the three approved rows");
-  assert.deepEqual(scriptSlugs, ACTIVATION_PENDING_SKILLS.map((s) => s.slug), "21b. matching the manifest exactly");
+  assert.deepEqual(scriptSlugs, ACTIVATION_PENDING_SKILLS.filter((s) => s.track === "DECA").map((s) => s.slug),
+    "21b. matching the manifest's DECA subset exactly — the Debate clash skill has its own script");
   for (const model of ["prisma.lesson", "prisma.user", "prisma.masteryProgress", "prisma.xPLog", "prisma.xpLog",
                        "prisma.achievement", "prisma.assignment", "prisma.rubric", "prisma.competitionResult",
                        "prisma.skillReviewSchedule", "prisma.debate", "prisma.test"]) {
@@ -580,10 +584,14 @@ async function main() {
   // ---- 22. Study Arcade is DECA-safe ---------------------------------------------------------------
   const review = read("app/(app)/study-arcade/review/page.tsx");
   assert.ok(review.includes("debateWritingPracticeSupported"), "22. the review card still gates by track");
-  for (const s of ACTIVATION_PENDING_SKILLS) {
+  for (const s of ACTIVATION_PENDING_SKILLS.filter((x) => x.track === "DECA")) {
     assert.equal(compatTrackForSlug(s.slug), "DECA", `22b. a due review for "${s.slug}" is DECA`);
     assert.ok(!debateWritingPracticeSupported(s.slug), `22c. and is never offered a debate motion`);
   }
+  // The one non-DECA pending skill is shadowed by its canonical Debate lesson id — it can never
+  // resolve into DECA territory or into compat writing practice.
+  assert.equal(resolveSkillsSlug("debate-clash").kind, "canonical-redirect", "22d. debate-clash resolves canonically");
+  assert.ok(!debateWritingPracticeSupported("debate-clash"), "22e. and gets no debate writing motion either");
 
   // ---- 23. XP is absent ------------------------------------------------------------------------------
   for (const file of ["lib/deca-drills.ts", "app/api/deca/drills/submit/route.ts",

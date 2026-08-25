@@ -31,7 +31,8 @@ const DRILL_AREA_LABELS: Record<EducationPracticeDrill["area"], string> = {
   "claim-warrant-impact": "Claim / Warrant / Impact",
   rebuttal: "Rebuttal",
   "evidence-evaluation": "Evidence evaluation",
-  weighing: "Weighing"
+  weighing: "Weighing",
+  clash: "Clash"
 };
 
 export function ConceptEducationLessonView({

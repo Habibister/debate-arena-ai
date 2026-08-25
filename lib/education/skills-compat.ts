@@ -96,11 +96,13 @@ export const SEEDED_SKILLS: readonly CompatSkill[] = [
 ] as const;
 
 /**
- * DECA concept-drill skills that exist in the drill bank but NOT yet in the database (M13E1D).
+ * Drill skills that exist in a drill bank but are NOT created by `prisma/seed.ts` (M13E1D).
  *
  * `lib/deca-drills.ts` has always mapped four areas to four skill slugs, but only `deca-marketing`
  * was ever seeded. The other three are created by `scripts/seed-deca-drill-skills.ts`, which is a
- * committed operational script run deliberately — not by `prisma/seed.ts`.
+ * committed operational script run deliberately — not by `prisma/seed.ts`. The Debate clash skill
+ * follows the same lifecycle via `scripts/seed-debate-clash-skill.ts`: declared here, resolved by
+ * the inventory below, and written to the shared database only by an explicit owner-authorized run.
  *
  * They are kept OUT of `SEEDED_SKILLS` on purpose: that constant is proven byte-equal to
  * `prisma/seed.ts` by parsing the seed, and it must stay exactly that. This list is the other half
@@ -114,10 +116,15 @@ export const SEEDED_SKILLS: readonly CompatSkill[] = [
 export const ACTIVATION_PENDING_SKILLS: readonly CompatSkill[] = [
   { slug: "deca-performance-indicators", name: "Performance Indicators", track: "DECA", lessonSlugs: [], lessonTitles: [] },
   { slug: "deca-business-reasoning", name: "Business Reasoning", track: "DECA", lessonSlugs: [], lessonTitles: [] },
-  { slug: "deca-customer-relations", name: "Customer Relations", track: "DECA", lessonSlugs: [], lessonTitles: [] }
+  { slug: "deca-customer-relations", name: "Customer Relations", track: "DECA", lessonSlugs: [], lessonTitles: [] },
+  // Shadowed by the canonical `debate-clash` LESSON id in resolution (the debate-weighing
+  // precedent), so no lessonSlugs are invented here: the registry, not this manifest, owns the
+  // lesson route. Listed so the intended inventory stays the honest catalog of every skill the
+  // platform means to persist.
+  { slug: "debate-clash", name: "Clash", track: "DEBATE", lessonSlugs: [], lessonTitles: [] }
 ] as const;
 
-/** Every skill the platform intends to persist: the ten seeded plus the three activation-pending. */
+/** Every skill the platform intends to persist: the ten seeded plus the four activation-pending. */
 export const INTENDED_SKILL_INVENTORY: readonly CompatSkill[] = [...SEEDED_SKILLS, ...ACTIVATION_PENDING_SKILLS];
 
 /**
@@ -165,7 +172,7 @@ for (const skill of SEEDED_SKILLS) {
 /** Every slug the static manifest knows — the exact set `prisma/seed.ts` creates. */
 export const SEEDED_SKILL_SLUGS: readonly string[] = SEEDED_SKILLS.map((s) => s.slug);
 export const SEEDED_LESSON_SLUGS: readonly string[] = SEEDED_SKILLS.flatMap((s) => [...s.lessonSlugs]);
-/** The seeded ten plus the three activation-pending DECA drill skills. */
+/** The seeded ten plus the four activation-pending drill skills (three DECA, one Debate). */
 export const INTENDED_SKILL_SLUGS: readonly string[] = INTENDED_SKILL_INVENTORY.map((s) => s.slug);
 
 export function seededSkillBySlug(slug: string): CompatSkill | undefined {

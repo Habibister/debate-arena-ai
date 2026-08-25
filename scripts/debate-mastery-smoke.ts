@@ -25,7 +25,7 @@ import {
   type DrillAnswer,
   type DrillArea
 } from "../lib/debate-drills";
-import { SEEDED_SKILL_SLUGS, compatTrackForSlug, resolveSkillsSlug } from "../lib/education/skills-compat";
+import { INTENDED_SKILL_SLUGS, SEEDED_SKILL_SLUGS, compatTrackForSlug, resolveSkillsSlug } from "../lib/education/skills-compat";
 
 // ---- M13E2 Phase A: additive practice-session schema control ----------------------------------------
 // prisma/schema.prisma was byte-pinned to a MOVING `HEAD` here until M13E2 Phase A. A HEAD-relative pin
@@ -133,7 +133,7 @@ const DEBATE_AREA_DEPTH: Record<DrillArea, number> = {
   "rebuttal": 30,   // M14 Global G2 Slice 1
   "evidence-evaluation": 30,   // M14 Global G2 Slice 3
   "weighing": 30   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
-};
+, "clash": 30 };
 const right = (q: { correctAnswer: string }) => q.correctAnswer;
 const wrongFor = (q: { choices: string[]; correctAnswer: string }) => {
   const other = q.choices.find((c) => c !== q.correctAnswer);
@@ -191,7 +191,7 @@ async function main() {
     "32. no real PrismaClient was constructed — the stub is still the module's client");
 
   // ---- bank + floor preconditions ------------------------------------------------------------------
-  assert.equal(DRILL_AREAS.length, 4, "exactly four Debate concept-drill areas");
+  assert.equal(DRILL_AREAS.length, 5, "exactly five Debate concept-drill areas");
   assert.equal(DEBATE_DRILL_REQUIRED_UNIQUE, 5, "the evidence floor is five distinct questions");
   assert.equal(DRILL_PASS_THRESHOLD, 70, "the threshold is unchanged at 70%");
   for (const area of DRILL_AREAS) {
@@ -199,18 +199,24 @@ async function main() {
     assert.equal(pool.length, DEBATE_AREA_DEPTH[area.id],
       `24. area ${area.id} has exactly ${DEBATE_AREA_DEPTH[area.id]} distinct questions`);
     assert.ok(pool.length >= DEBATE_DRILL_REQUIRED_UNIQUE, `24b. and can therefore reach the floor`);
-    assert.ok(SEEDED_SKILL_SLUGS.includes(area.skillSlug), `24c. "${area.skillSlug}" is seeded, so writes land`);
-    // Three of the four now resolve as canonical redirects to authored Debate lessons — CWI and
-    // rebuttal via the M13E1C allowlist, and weighing because Wave 1B published the corrected
-    // weighing lesson under the same id as its seeded skill. Either way, the invariant that
-    // matters is the same: no Debate drill skill may ever resolve into DECA or HOSA territory.
+    assert.ok(INTENDED_SKILL_SLUGS.includes(area.skillSlug),
+      `24c. "${area.skillSlug}" is seeded or activation-pending, so writes land once its row exists`);
+    if (area.id === "clash") {
+      assert.ok(!SEEDED_SKILL_SLUGS.includes(area.skillSlug),
+        "24c2. debate-clash is NOT claimed as seeded — its row comes from the deliberate activation script");
+    }
+    // Four of the five now resolve as canonical redirects to authored Debate lessons — CWI and
+    // rebuttal via the M13E1C allowlist, weighing because Wave 1B published the corrected lesson
+    // under the same id as its seeded skill, and clash because the canonical lesson id shadows the
+    // activation-pending skill slug the same way. Either way, the invariant that matters is the
+    // same: no Debate drill skill may ever resolve into DECA or HOSA territory.
     const resolution = resolveSkillsSlug(area.skillSlug);
     const track = compatTrackForSlug(area.skillSlug);
     assert.ok(track === "DEBATE" || track === null, `25. "${area.skillSlug}" never resolves to DECA or HOSA (got ${track})`);
     assert.notEqual(track, "DECA", `25b. "${area.skillSlug}" is not DECA`);
     assert.notEqual(track, "HOSA", `25c. "${area.skillSlug}" is not HOSA`);
     if (resolution.kind === "canonical-redirect") {
-      assert.ok(["claim-warrant-impact", "debate-refutation", "debate-weighing"].includes(resolution.lessonId),
+      assert.ok(["claim-warrant-impact", "debate-refutation", "debate-weighing", "debate-clash"].includes(resolution.lessonId),
         `25d. "${area.skillSlug}" redirects only to an authored DEBATE lesson (${resolution.lessonId})`);
     } else {
       assert.equal(track, "DEBATE", `25e. "${area.skillSlug}" resolves as DEBATE`);

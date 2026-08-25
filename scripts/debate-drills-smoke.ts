@@ -25,14 +25,15 @@ async function main() {
     "claim-warrant-impact": 30,   // M14 Global G2 Slice 2
     "rebuttal": 30,   // M14 Global G2 Slice 1
     "evidence-evaluation": 30,   // M14 Global G2 Slice 3
-    "weighing": 30   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
+    "weighing": 30,   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
+    "clash": 30   // Clash measurable-practice closure — authored at the G2 depth target from day one
   };
   const EXPECTED_TOTAL = Object.values(AREA_DEPTH).reduce((a, b) => a + b, 0);
   // Slice 4 completes Debate depth. This parity pair does NOT replace the exact per-area assertions
   // below — those stay stronger. It exists so a future area cannot silently regress under 30.
   assert.ok(Object.values(AREA_DEPTH).every((d) => d === 30),
     "G0-2c. every Debate area is at the G2 depth target of 30 — Debate depth is complete");
-  assert.equal(EXPECTED_TOTAL, 120, "G0-2d. control: four Debate areas x 30 = 120");
+  assert.equal(EXPECTED_TOTAL, 150, "G0-2d. control: five Debate areas x 30 = 150");
   assert.equal(DRILL_BANK.length, EXPECTED_TOTAL, `G0-1. the Debate bank holds exactly ${EXPECTED_TOTAL} questions`);
   assert.equal(new Set(DRILL_BANK.map((q) => q.id)).size, EXPECTED_TOTAL, "G0-1b. with unique ids");
   const ids = new Set<string>();
@@ -238,17 +239,21 @@ async function main() {
     { idPrefix: "cw", area: "claim-warrant-impact" },
     { idPrefix: "rb", area: "rebuttal" },
     { idPrefix: "ev", area: "evidence-evaluation" },
-    { idPrefix: "wg", area: "weighing" }
+    { idPrefix: "wg", area: "weighing" },
+    { idPrefix: "cl", area: "clash" }
   ];
+  // Areas introduced WHOLE after the G2 baseline: they have no original 01-09 block, so their
+  // 01-09 ids are genuine reviewed additions, not baseline items.
+  const NEW_AREA_PREFIXES: readonly string[] = ["cl"];
   // (c) The areas CURRENTLY authorised to receive additions. Slice 0 authorises NOTHING. Each later
   //     Global-G2 slice adds exactly ONE area here, in the same commit that adds its 21 items, after
   //     that area's content has passed human review. Never pre-authorise.
   const EXPANDED_AREAS: readonly DrillArea[] =
-    ["rebuttal", "claim-warrant-impact", "evidence-evaluation", "weighing"];   // Slices 1, 2, 3, 4 in order
-  assert.deepEqual([...EXPANDED_AREAS], ["rebuttal", "claim-warrant-impact", "evidence-evaluation", "weighing"],
-    "G0-6. all FOUR Debate areas are authorised — rebuttal (1), claim-warrant-impact (2), evidence-evaluation (3), weighing (4)");
-  assert.equal(EXPANDED_AREAS.length, 4,
-    "G0-6b. every recognised Debate area now has its own reviewed slice — there is no fifth area to authorise");
+    ["rebuttal", "claim-warrant-impact", "evidence-evaluation", "weighing", "clash"];   // G2 Slices 1-4, then the Clash closure
+  assert.deepEqual([...EXPANDED_AREAS], ["rebuttal", "claim-warrant-impact", "evidence-evaluation", "weighing", "clash"],
+    "G0-6. all FIVE Debate areas are authorised — the G2 four plus clash, authorised in the same commit as its reviewed items");
+  assert.equal(EXPANDED_AREAS.length, 5,
+    "G0-6b. every recognised Debate area has its own reviewed addition event — there is no sixth area to authorise");
 
   /** THE single predicate deciding whether an added item literal is permitted. Real additions and
    *  every control below run through THIS function; a control with its own regex would prove nothing
@@ -258,7 +263,7 @@ async function main() {
   const judgeAddition = (id: string, itemLine: string, authorised: readonly DrillArea[] = EXPANDED_AREAS): Verdict => {
     const entry = PREFIX_AREA.find((a) => new RegExp(`^${a.idPrefix}-\\d{2}$`).test(id));
     if (!entry) return { ok: false, stage: "prefix", reason: `no known Debate prefix maps ${id}` };
-    if (!(Number(id.slice(3)) > 9)) {
+    if (!(Number(id.slice(3)) > 9) && !NEW_AREA_PREFIXES.includes(entry.idPrefix)) {
       return { ok: false, stage: "range", reason: `${id} is inside the original 01-09 range, not an addition` };
     }
     if (!new RegExp(`area: "${entry.area}"`).test(itemLine)) {
@@ -284,15 +289,20 @@ async function main() {
     { idPrefix: "ev", area: "evidence-evaluation" },   // Slice 3
     { idPrefix: "wg", area: "weighing" }               // Slice 4
   ];
-  const EXPECTED_ADDED = SLICE_ADDITIONS.flatMap(({ idPrefix }) =>
-    Array.from({ length: 21 }, (_, i) => `${idPrefix}-${i + 10}`));
-  assert.equal(EXPECTED_ADDED.length, 84, "G0-7b0. control: four reviewed slices means exactly 84 expected ids");
+  const CLASH_ADDITIONS = Array.from({ length: 30 }, (_, i) => `cl-${String(i + 1).padStart(2, "0")}`);
+  const EXPECTED_ADDED = [
+    ...SLICE_ADDITIONS.flatMap(({ idPrefix }) => Array.from({ length: 21 }, (_, i) => `${idPrefix}-${i + 10}`)),
+    ...CLASH_ADDITIONS
+  ];
+  assert.equal(EXPECTED_ADDED.length, 114,
+    "G0-7b0. control: four reviewed G2 slices (84) plus the whole reviewed clash area (30) means exactly 114 expected ids");
   assert.deepEqual([...addedIds].sort(), [...EXPECTED_ADDED].sort(),
-    "G0-7b. the additions are exactly rb-10..rb-30, cw-10..cw-30, ev-10..ev-30 and wg-10..wg-30 — no other id was added");
-  assert.equal(addedIds.length, 84, "G0-7b2. exactly 84 additions exist relative to the immutable baseline");
+    "G0-7b. the additions are exactly rb/cw/ev/wg 10..30 plus cl-01..cl-30 — no other id was added");
+  assert.equal(addedIds.length, 114, "G0-7b2. exactly 114 additions exist relative to the immutable baseline");
+  const ADDITION_EVENTS = [...SLICE_ADDITIONS, { idPrefix: "cl", area: "clash" as DrillArea }];
   for (const id of addedIds) {
-    const slice = SLICE_ADDITIONS.find((a) => id.startsWith(`${a.idPrefix}-`));
-    assert.ok(slice, `G0-7b3. every addition belongs to a reviewed slice — got ${id}`);
+    const slice = ADDITION_EVENTS.find((a) => id.startsWith(`${a.idPrefix}-`));
+    assert.ok(slice, `G0-7b3. every addition belongs to a reviewed addition event — got ${id}`);
     assert.ok(new RegExp(`area: "${slice!.area}"`).test(currentById.get(id) ?? ""),
       `G0-7b3b. addition ${id} declares the ${slice!.area} area its slice claims`);
   }
@@ -301,16 +311,16 @@ async function main() {
   // protected — that no addition exists outside the four exact 10..30 ranges — is asserted directly,
   // over a set proven non-empty on the very next line.
   for (const id of addedIds) {
-    assert.ok(/^(rb|cw|ev|wg)-(1[0-9]|2[0-9]|30)$/.test(id),
-      `G0-7b4. every addition sits inside one of the four reviewed 10..30 ranges — got ${id}`);
+    assert.ok(/^(rb|cw|ev|wg)-(1[0-9]|2[0-9]|30)$/.test(id) || /^cl-(0[1-9]|1[0-9]|2[0-9]|30)$/.test(id),
+      `G0-7b4. every addition sits inside a reviewed range — the G2 four at 10..30 or clash at 01..30 — got ${id}`);
   }
-  assert.equal(addedIds.length, 84, "G0-7b4b. control: that loop ran over 84 real additions, not zero");
+  assert.equal(addedIds.length, 114, "G0-7b4b. control: that loop ran over 114 real additions, not zero");
   for (const outside of ["rb-31", "wg-31", "wg-09", "xx-10"]) {
     assert.ok(!EXPECTED_ADDED.includes(outside),
       `G0-7b4c. control: ${outside} is outside the expected set, so G0-7b would reject it`);
   }
   control("every real addition is judged permitted by the same predicate the controls use",
-    addedIds.length === 84 && addedIds.every((id) => judgeAddition(id, currentById.get(id) ?? "").ok));
+    addedIds.length === 114 && addedIds.every((id) => judgeAddition(id, currentById.get(id) ?? "").ok));
 
   // ---- THE Slice 4 integrity control ------------------------------------------------------------
   // Now that every area is authorised, judgeAddition ALONE no longer bounds any Debate area: a
@@ -321,11 +331,12 @@ async function main() {
   assert.ok(beyond.ok, `G0-7b5. control: with weighing authorised the predicate alone ACCEPTS wg-31 — ${beyond.reason}`);
   assert.ok(!EXPECTED_ADDED.includes("wg-31"), "G0-7b5b. and only the exact 84-id set stops it");
   assert.ok(!addedIds.includes("wg-31"), "G0-7b5c. so no such item exists in the bank today");
-  control("after all four areas are authorised, G0-7b's exact 84-id set is the FINAL bound on Debate bank growth",
+  control("G0-7b's exact 114-id set is the CURRENT bound on Debate bank growth — a new id needs a new reviewed event",
     beyond.ok && !EXPECTED_ADDED.includes("wg-31"));
 
-  // (e) The original nine of every area, called out because later slices append beside them.
-  for (const { idPrefix } of PREFIX_AREA) {
+  // (e) The original nine of every area that HAS one — clash was introduced whole after the G2
+  // baseline, so it has no original block to freeze here (its 30 are all judged additions above).
+  for (const { idPrefix } of PREFIX_AREA.filter((a) => !NEW_AREA_PREFIXES.includes(a.idPrefix))) {
     for (let n = 1; n <= 9; n += 1) {
       const id = `${idPrefix}-0${n}`;
       assert.equal(currentById.get(id), parentItems.find((line) => idOf(line) === id), `G0-8. ${id} is unchanged`);
@@ -383,9 +394,9 @@ async function main() {
     assert.ok(v.ok, `G0-C2b. control: ${idPrefix}-10 is accepted under default authorisation — ${v.reason}`);
     control(`${area} is authorised: ${idPrefix}-10 passes with no override`, v.ok);
   }
-  assert.equal(PREFIX_AREA.filter((a) => EXPANDED_AREAS.includes(a.area)).length, 4,
-    "G0-C2b2. control: all four Debate areas are authorised, so that loop is not vacuous");
-  assert.equal(PREFIX_AREA.length, 4, "G0-C2a. control: exactly four immutable Debate prefix->area mappings");
+  assert.equal(PREFIX_AREA.filter((a) => EXPANDED_AREAS.includes(a.area)).length, 5,
+    "G0-C2b2. control: all five Debate areas are authorised, so that loop is not vacuous");
+  assert.equal(PREFIX_AREA.length, 5, "G0-C2a. control: exactly five Debate prefix->area mappings — the G2 four plus clash");
 
   // Unknown / near-miss prefixes are rejected.
   for (const unknown of ["xx-10", "zz-10", "rbb-10", "r-10", "drill-10"]) {
@@ -422,7 +433,7 @@ async function main() {
     "G0-C6b. control: ZERO recognised Debate areas remain unauthorised — the old loop is empty BY DESIGN, and is replaced below");
   for (const { idPrefix, area } of PREFIX_AREA) {
     const withheld = EXPANDED_AREAS.filter((a) => a !== area);   // TEST-ONLY, never assigned back
-    assert.equal(withheld.length, 3, `G0-C6c0. control: the withheld set for ${area} really removed exactly one area`);
+    assert.equal(withheld.length, 4, `G0-C6c0. control: the withheld set for ${area} really removed exactly one area`);
     const v = judgeAddition(`${idPrefix}-31`, `{ id: "${idPrefix}-31", area: "${area}", question: "x" }`, withheld);
     assert.ok(!v.ok && v.stage === "unauthorised",
       `G0-C6c. control: a structurally valid ${area} addition is rejected at the AUTHORISATION stage when that area is withheld — ${v.reason}`);
@@ -434,13 +445,13 @@ async function main() {
     assert.ok(underProduction.ok,
       `G0-C6c2. control: the identical ${area} literal passes under real authorisation — ${underProduction.reason}`);
   }
-  assert.equal(EXPANDED_AREAS.length, 4,
-    "G0-C6d. control: the withheld-area probe ran against a real four-area set, so it is not vacuous");
+  assert.equal(EXPANDED_AREAS.length, 5,
+    "G0-C6d. control: the withheld-area probe ran against a real five-area set, so it is not vacuous");
 
   assert.equal(itemLines('export const DRILL_BANK = [\n{ id: "x-01", area: "rebuttal" },\nexport type X').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — all 36 original items are byte-identical and keep their order, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 84 reviewed-slice items rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 — Debate depth is COMPLETE at 4 x 30. Slice 4 finally appended after wg-09, so the terminal-comma boundary is EXERCISED for real: wg-09 gained exactly one comma, the raw lines differ, and they normalise to identical content. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 84-id set is the FINAL bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — all 36 original items are byte-identical and keep their order, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11, plus the whole clash area cl-01..cl-30 from the Clash measurable-practice closure (AI-assisted, submitted for the same owner review gate) — Debate depth is 5 x 30. Slice 4 finally appended after wg-09, so the terminal-comma boundary is EXERCISED for real: wg-09 gained exactly one comma, the raw lines differ, and they normalise to identical content. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

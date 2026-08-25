@@ -171,6 +171,27 @@ async function main() {
   assert.equal(e3.type === "NO_DUE_ACTION" ? "" : e3.skill.slug, "debate-weighing",
     "S3-E3. most-overdue-first still wins — a weaker evidence row later in the order is not preferred");
 
+  // ---- S3-C. Clash closure: the clash mapping flows through the SAME architecture, unchanged ---
+  seed("debate-clash", 69);
+  assert.deepEqual(await getEvidenceBackedNextAction("u1"), {
+    type: "REVIEW_LESSON_THEN_DRILL",
+    skill: { slug: "debate-clash", name: "Debate Clash", organization: "GENERAL_DEBATE" },
+    dueSinceDate: "2026-08-20",
+    belowPracticing: true,
+    lesson: { id: "debate-clash", title: "Create direct clash", href: "/lessons/debate-clash" },
+    drill: { track: "debate", area: "clash", label: "Clash", href: "/study-arcade?track=debate&area=clash" }
+  }, "S3-C1. mastery 69 on debate-clash yields the clash lesson and the clash drill, exact hrefs included");
+  for (const m of [70, 71]) {
+    seed("debate-clash", m);
+    const a = await getEvidenceBackedNextAction("u1");
+    assert.equal(a.type, "REDO_EXACT_DRILL", `S3-C2. clash mastery ${m} is re-demonstration, not remediation`);
+    assert.ok(!("lesson" in a), `S3-C2b. and carries NO lesson at mastery ${m}`);
+  }
+  seed("debate-weighing", 95, { slug: "debate-clash", masteryPercent: 5 });
+  const c3 = await getEvidenceBackedNextAction("u1");
+  assert.equal(c3.type === "NO_DUE_ACTION" ? "" : c3.skill.slug, "debate-weighing",
+    "S3-C3. most-overdue-first still wins — a weaker clash row later in the order is not preferred");
+
   // ---- S3-5. unknown skill fails safe ----------------------------------------------------------
   seed("totally-unknown-skill", 10);
   const unknown = await getEvidenceBackedNextAction("u1");
@@ -302,11 +323,42 @@ async function main() {
   // parity sweep (S3-4), review-ladder:smoke's S2-5/S2-6 agreement and cardinality guards, and
   // education-registry:smoke's strict identity controls.
   for (const p of ["prisma/schema.prisma",
-                   "components/lessons/concept-education-lesson-view.tsx",
                    "components/lessons/concept-education-lesson-practice.tsx",
-                   "lib/spaced-review.ts",
-                   "lib/education/skills-compat.ts"]) {
+                   "lib/spaced-review.ts"]) {
     assert.equal(now(p), sha(p), `S3-15. ${p} is byte-identical to the immutable pre-Slice-3 baseline`);
+  }
+  // ---- S3-15f. skills-compat: raw byte pin deliberately RETIRED (Clash measurable-practice) ----
+  // The file legitimately carries mutable catalog data — the skill inventory that approved
+  // measurement work extends — so byte identity would forbid approved work, exactly the reasoning
+  // that retired the registry pin in Wave 1A. What the pin protected FOR THE COACH is asserted
+  // behaviorally instead (manifest/seed agreement stays owned by skills-compat:smoke 27h/162):
+  const { resolveSkillsSlug: s315Resolve } = await import("../lib/education/skills-compat");
+  for (const slug of ["debate-weighing", "debate-clash"]) {
+    const r = s315Resolve(slug);
+    assert.equal(r.kind, "canonical-redirect",
+      `S3-15f. ${slug} resolves to its canonical lesson — the inventory can never hijack an authored route`);
+    assert.equal(debateWritingPracticeSupported(slug), false,
+      `S3-15f2. and ${slug} never silently activates Debate writing practice`);
+  }
+  assert.equal(practiceRemediationForSkill("debate-claim-building"), null,
+    "S3-15f3. the authored-lesson CWI association still cannot mint a lesson-then-drill remediation");
+  assert.ok(stripComments(read("lib/education/skills-compat.ts")).includes("isConceptEducationLessonEntry(entry)"),
+    "S3-15f4. and the concept-entry discriminant guard is still the code enforcing that boundary");
+  // ---- S3-15g. concept lesson view: raw byte pin deliberately RETIRED (typed label catalog) ----
+  // DRILL_AREA_LABELS is keyed by the area union, so tsc forces one catalog line per new area; the
+  // Slice 1 trust boundary is asserted content-sightedly instead:
+  const lessonView = read("components/lessons/concept-education-lesson-view.tsx");
+  assert.ok(lessonView.includes("The check above is for practice and records nothing"),
+    "S3-15g. the formative framing stays truthful — in-lesson checks record nothing");
+  assert.ok(/\{practiceDrill \? \(/.test(lessonView),
+    "S3-15g2. the practice CTA renders only when practiceDrill metadata exists");
+  assert.ok(lessonView.includes("/study-arcade?track=${practiceDrill.track}&area=${practiceDrill.area}"),
+    "S3-15g3. the CTA href is derived from the metadata — no hardcoded destination");
+  assert.ok(!/clash/i.test(stripComments(lessonView).replace('clash: "Clash"', "")),
+    "S3-15g4. no Clash special case exists in the view beyond the typed label line");
+  for (const banned of ["MasteryProgress", "spaced-review", "recordDrillMastery", "recordPracticeOutcome"]) {
+    assert.ok(!lessonView.includes(banned),
+      `S3-15g5. the lesson view reaches no durable evidence machinery (${banned})`);
   }
   // The review page's pin is COMMENT-STRIPPED rather than raw since Wave 1C: the deliberate
   // debate-evidence writing-practice displacement made its old disjointness comment false, and a
@@ -334,7 +386,7 @@ async function main() {
     "S3-15b. the Taught-only orientation is invisible to the remediation/Coach evidence path");
 
   console.log(
-    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, both Slice 1 lesson components, spaced-review and the skills-compat routing layer are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}, and the review page is executable-identical to that same baseline — its Wave 1C comment correction records the deliberate debate-evidence writing-practice displacement truthfully while changing no executable token; the education-registry byte pin was deliberately retired because curriculum publication legitimately extends the registry, whose Coach-facing behavior is guarded semantically by the mapped-case, parity, agreement and cardinality controls instead.`
+    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, the concept lesson practice component and spaced-review are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}, and the review page is executable-identical to that same baseline — its Wave 1C comment correction records the deliberate debate-evidence writing-practice displacement truthfully while changing no executable token. The education-registry, skills-compat and concept-lesson-view byte pins were deliberately retired because approved curriculum and measurement work legitimately extends their catalogs; the trust boundaries they protected are asserted semantically instead — resolver precedence and canonical-id shadowing, the concept-entry discriminant that keeps CWI's authored association from minting remediation, the formative records-nothing framing, and the metadata-derived CTA.`
   );
 }
 

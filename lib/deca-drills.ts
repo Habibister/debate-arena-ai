@@ -386,6 +386,12 @@ export const DECA_DRILL_HELD_IDS: ReadonlyArray<string> = [
 export function buildDecaDrillSession(count: number, areas?: DecaDrillArea[]): DecaDrillQuestion[] {
   const served = DECA_DRILL_BANK.filter((q) => !DECA_DRILL_HELD_IDS.includes(q.id));
   const pool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;
+  // An empty pool can never satisfy count >= 1 and the padding loop below would spin forever,
+  // synchronously, inside the serving route. An unrecognised area string or a hold that empties an
+  // area must fail loudly here — never hang the server or persist a zero-item active session.
+  if (pool.length === 0) {
+    throw new Error(`Drill pool is empty for areas [${areas?.join(", ") ?? ""}] — cannot build a session`);
+  }
   const shuffled = shuffle(pool);
   if (count <= shuffled.length) return shuffled.slice(0, count);
   const result = [...shuffled];

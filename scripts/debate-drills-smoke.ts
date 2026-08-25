@@ -235,6 +235,14 @@ async function main() {
   const sessionRouteSrc = readFileSync("app/api/debate/drills/session/route.ts", "utf8");
   assert.ok(sessionRouteSrc.includes("buildDrillSession(") && !sessionRouteSrc.includes("DRILL_BANK"),
     "B1-9. the only serving route goes through buildDrillSession and never reads the bank directly — learners cannot reach held ids");
+  // EMPTY-POOL GUARD. The builder pads by re-appending the shuffled pool, so an EMPTY pool would
+  // spin the padding loop forever — synchronously, inside the serving route. No hold empties an
+  // area today (B1-5/B1-10: 24 and 29 still serve), but the held-id mechanism makes one
+  // conceivable, and the route passes client area strings through unvalidated, so an unknown area
+  // already filters the pool to empty. The builder must refuse loudly instead of hanging; serving
+  // semantics for every non-empty pool are unchanged.
+  assert.throws(() => buildDrillSession(5, ["no-such-area" as DrillArea]), /empty/,
+    "B1-15. an empty pool throws instead of never terminating");
 
   // The raw grader still counts every answer; the evidence set does not.
   const repeated = [cwi[0], cwi[0], cwi[0]].map((q) => ({ id: q.id, selected: q.correctAnswer }));

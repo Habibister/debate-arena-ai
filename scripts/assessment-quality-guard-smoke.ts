@@ -2,7 +2,7 @@
 //
 // Non-vacuity is the whole point: each adversarial mutation from the accepted proof (Q1..Q10) is
 // applied to an in-memory COPY of a real healthy bank, and the guard must catch exactly what the
-// contract says it catches — and must NOT claim to catch what only human review can (Q8/Q10).
+// contract says it catches — and must NOT claim to catch what only content review can (Q8/Q10).
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -56,7 +56,7 @@ async function run() {
   assert.ok(fails(q3, "H_SHORT"), "Q3. crude distractor padding hard-fails H_SHORT (the reversed cue it creates)");
   // The TUNED form of Q3 (semantically empty padding at matched length) is invisible to any static
   // metric by design — asserted honestly rather than claimed:
-  // human blind-answer review owns semantic emptiness.
+  // the content-review gate owns semantic emptiness.
 
   // ---- Q4: every key shortest -> HARD FAIL -------------------------------------------------------
   const q4 = clone(mk).map((q) => {
@@ -135,7 +135,7 @@ async function run() {
   });
   const q8Fails = evaluateBank(computeBankReport("mut", q8), CONFIG).filter((v) => v.level === "FAIL");
   assert.equal(q8Fails.length, 0,
-    "Q8/Q10. length-matched semantic jokes produce ZERO static hard-fails — proving the guard does not claim semantic authority; human review owns this");
+    "Q8/Q10. length-matched semantic jokes produce ZERO static hard-fails — proving the guard does not claim semantic authority; the content-review gate owns this");
 
   // ---- Live-bank binding: every enforced bank passes at HEAD ------------------------------------
   for (const { bank, items, config } of banksUnderGuard()) {
@@ -167,7 +167,7 @@ async function run() {
       "the inverted cue) and eliminate-extremes convergence on interior keys (Q12) each hard-fail the exact owning metric; " +
       "position concentration and exact periods are surfaced as diagnostics while serving shuffles (Q5/Q6) and harden when it does not; " +
       "and length-matched semantic jokes (Q8/Q10) produce zero static failures — asserted deliberately, because the guard proves " +
-      "a negative about FORM only and the human blind-answer content review remains a separate mandatory gate. " +
+      "a negative about FORM only and the content-review gate (human review or a recorded owner waiver) remains separate and mandatory. " +
       "Every enforced live bank passes at HEAD, both controls remain unexploitable, no waivers are active, and the only " +
       "package.json reference is the manual assessment:quality alias with no lifecycle hook."
   );

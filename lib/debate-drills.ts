@@ -1,5 +1,18 @@
 // General Debate concept-drill bank.
 //
+// OWNER CONTENT-REVIEW WAIVER (2026-08-25). The project owner explicitly waived external human
+// content review for the final assessment bytes of B1 candidate
+// be3c0728774b243e5b1a1f714a1bfc0908268d3c (this file's item bytes are byte-identical to that
+// candidate), accepting the completed AI review process as the content release gate: independent
+// blind closed-corpus review with locked-answer key comparison, adversarial one-best-answer
+// review, answer-form leakage analysis, educational-validity adjudication, final-byte review of
+// the repaired items, static quality-guard validation, serving/held-item validation, and final
+// machine acceptance. Truthful provenance for the AI-repaired items below is therefore:
+// AI-assisted / independently AI-reviewed; external human content review WAIVED by project owner
+// 2026-08-25. This is a recorded waiver, NOT human review — never describe these items as
+// HUMAN-REVIEWED, HUMAN-REVIEWED AND APPROVED, or externally human-reviewed. Any later
+// educational-content change voids this waiver for the changed bytes and requires fresh review.
+//
 // PROVENANCE: All questions are ORIGINAL, hand-authored items that teach transferable debate
 // reasoning (argument construction, refutation, evidence quality, impact weighing). They are NOT
 // reproduced from any published practice set, tournament packet, or protected source. Same rule as
@@ -90,7 +103,9 @@ export const DRILL_BANK: DrillQuestion[] = [
   // was the longest choice often enough for a stem-blind learner to beat the 70% threshold, so the
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: cw-01, cw-04, cw-05, cw-07, cw-08, cw-09, cw-10, cw-11, cw-12, cw-13, cw-14, cw-15, cw-16, cw-17, cw-18, cw-19, cw-20, cw-22, cw-23, cw-24, cw-26, cw-27, cw-30.
   // AI-ASSISTED authoring (M14 Global G2 Slice 2, cw-10..cw-30), HUMAN-REVIEWED AND APPROVED
   // 2026-08-11: the repository owner personally read all 21 items in the final packet and approved
@@ -150,7 +165,9 @@ export const DRILL_BANK: DrillQuestion[] = [
   // was the longest choice often enough for a stem-blind learner to beat the 70% threshold, so the
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: rb-01, rb-02, rb-03, rb-04, rb-05, rb-07, rb-08, rb-09, rb-10, rb-11, rb-12, rb-13, rb-14, rb-15, rb-16, rb-18, rb-20, rb-21, rb-22, rb-23, rb-24, rb-26, rb-27, rb-28, rb-30.
   // AI-ASSISTED authoring (M14 Global G2 Slice 1, rb-10..rb-30), HUMAN-REVIEWED AND APPROVED
   // 2026-08-11: the repository owner read all 21 items and approved their answer defensibility,
@@ -217,7 +234,9 @@ export const DRILL_BANK: DrillQuestion[] = [
   // was the longest choice often enough for a stem-blind learner to beat the 70% threshold, so the
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: ev-01, ev-02, ev-03, ev-04, ev-06, ev-07, ev-08, ev-09, ev-10, ev-11, ev-13, ev-14, ev-17, ev-18, ev-19, ev-23, ev-24, ev-25, ev-26, ev-27, ev-28, ev-29, ev-30.
   // AI-ASSISTED authoring (M14 Global G2 Slice 3, ev-10..ev-30), HUMAN-REVIEWED AND APPROVED
   // 2026-08-11: the repository owner personally read all 21 items in the FINAL checklist and
@@ -300,7 +319,9 @@ export const DRILL_BANK: DrillQuestion[] = [
   // was the longest choice often enough for a stem-blind learner to beat the 70% threshold, so the
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: wg-01..wg-09, wg-11, wg-12, wg-13, wg-14, wg-15, wg-16, wg-17, wg-18, wg-20, wg-23, wg-24, wg-25, wg-26, wg-27, wg-28, wg-29.
   // AI-ASSISTED authoring (M14 Global G2 Slice 4, wg-10..wg-30), HUMAN-REVIEWED AND APPROVED
   // 2026-08-11: the repository owner personally read all 21 items in the FINAL checklist and
@@ -352,9 +373,19 @@ export const DRILL_BANK: DrillQuestion[] = [
   // was the longest choice often enough for a stem-blind learner to beat the 70% threshold, so the
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: cl-01..cl-27 except cl-28 kept, plus cl-29, cl-30 (29 of 30).
-  // The pending clash review gate therefore runs on these FINAL repaired bytes.
+  // B1 CLOSED-CORPUS REPAIR (2026-08-25, adjudicated): cl-08 was REKEYED — its old key raised a
+  // proposal-level tension without disputing the stated point, the structure cl-09/cl-27 score as
+  // non-clash; the new key disputes the funding claim itself and the old key remains as the named
+  // trap distractor. cl-10 and cl-30 each had a distractor that paired the correct verdict with a
+  // true concession (a second correct answer); both replaced with substantively false options.
+  // All three are AI-repaired and independently AI-reviewed — external human content review
+  // waived by the project owner 2026-08-25 (see the waiver record at the top of this file).
+  // The clash content-review gate, satisfied by the recorded 2026-08-25 owner waiver, therefore
+  // covers these FINAL repaired bytes.
   // They measure CLASH RECOGNITION AND RESPONSE
   // SELECTION only: locate the contested point, tell engagement from parallel/repeated talk, pick
   // the response that meets the opponent's reasoning, choose what needs answering, and diagnose
@@ -369,9 +400,9 @@ export const DRILL_BANK: DrillQuestion[] = [
   { id: "cl-05", area: "clash", question: "Both sides in a hallway-repainting debate agree the wall needs repainting. Side A wants a student-designed design; Side B wants a plain colour that costs less. Which point would create clash if argued?", choices: ["Whether the design's value justifies its extra cost", "Whether the wall needs repainting at all", "Whether a repainted hallway improves how the school looks", "Whether the student design would cost more than a plain colour"], correctAnswer: "Whether the design's value justifies its extra cost", explanation: "Clash lives in what the sides dispute, not in what they share. Both accept the repaint; only the value-versus-cost comparison is contested, so only arguing that point moves the debate." },
   { id: "cl-06", area: "clash", question: "Side A: 'Free bus Wi-Fi helps students finish homework on long rides.' Side B: 'The district should not pay for something most riders would use for games.' What must Side A answer to create clash?", choices: ["The claim that riders would mostly use the Wi-Fi for games, not homework", "The claim that free Wi-Fi costs the district money to provide", "The claim that students could do homework on a long bus ride", "The claim that Wi-Fi money would come out of other school needs rather than new funds"], correctAnswer: "The claim that riders would mostly use the Wi-Fi for games, not homework", explanation: "Side B does not deny the homework benefit could exist — it predicts the service would actually be used for games. Clash requires engaging that usage prediction directly." },
   { id: "cl-07", area: "clash", question: "Side A: 'A dog park reduces off-leash dogs on hiking trails.' Side B: 'A dog park would be noisy for nearby houses.' Side A replies: 'Off-leash dogs on trails scare hikers.' What happened?", choices: ["Side A repeated its own case instead of answering the noise objection", "Side A answered the noise objection by showing the trail harm is worse", "Side A conceded the noise point instead of contesting it", "Side B changed the subject by raising noise"], correctAnswer: "Side A repeated its own case instead of answering the noise objection", explanation: "The reply restates the original benefit in stronger words. The noise objection was never touched, so it still stands — repetition is not engagement." },
-  { id: "cl-08", area: "clash", question: "Which exchange contains real clash?", choices: ["'Vending machines fund school clubs.' — 'Machine snacks undercut the healthy-lunch policy this school already enforces.'", "'Vending machines fund school clubs.' — 'Clubs give students a reason to stay after school and meet people outside their own year group.'", "'Vending machines fund school clubs.' — 'A contractor would restock the machines twice a week, so the work never falls on staff.'", "'Vending machines fund school clubs.' — 'Fundraising has always been part of how a school pays for extras.'"], correctAnswer: "'Vending machines fund school clubs.' — 'Machine snacks undercut the healthy-lunch policy this school already enforces.'", explanation: "Only the first reply engages the proposal itself, by setting it against a policy the proposing side already accepts. The others run parallel, add a detail nobody disputes, or restate a platitude." },
+  { id: "cl-08", area: "clash", question: "Which exchange contains real clash?", choices: ["'Vending machines fund school clubs.' — 'Most of the snack money goes to the vending company, so the clubs see almost none of it.'", "'Vending machines fund school clubs.' — 'Machine snacks undercut the healthy-lunch policy this school already enforces.'", "'Vending machines fund school clubs.' — 'Clubs give students a reason to stay after school and meet people outside their own year group.'", "'Vending machines fund school clubs.' — 'A contractor would restock the machines twice a week, so the work never falls on staff.'"], correctAnswer: "'Vending machines fund school clubs.' — 'Most of the snack money goes to the vending company, so the clubs see almost none of it.'", explanation: "Real clash disputes the stated point itself, and only the snack-money reply does that — it denies that the machines meaningfully fund clubs. The healthy-lunch reply raises a genuine tension with the proposal, but it never disputes the funding claim, so that claim is left standing exactly as delivered: proposal-level tension is not point-level clash. The staying-after-school reply extends the benefit rather than contesting it, and the restocking detail answers a logistics point nobody disputed." },
   { id: "cl-09", area: "clash", question: "Side A argues a skate ramp will give teenagers a supervised place to gather. Side B answers: 'Skateboarding causes injuries.' Why is this weak clash?", choices: ["It answers a different question while the supervised-gathering benefit stands untouched", "It answers a benefit with a harm, which never counts as clash", "It is too general to be decisive, since almost any activity carries some injury risk", "It overlooks that supervision at the ramp is what would reduce those injuries"], correctAnswer: "It answers a different question while the supervised-gathering benefit stands untouched", explanation: "The benefit claimed was supervision and gathering, not skating itself. An injury point may matter, but it leaves Side A's actual argument unanswered on the main question." },
-  { id: "cl-10", area: "clash", question: "Side B says: 'We repeat: paper textbooks never run out of battery.' Side A had just argued that digital books receive yearly content updates. Is Side B clashing?", choices: ["No — repeating an earlier point does not answer the update argument", "Yes — a point restated after a new argument counts as an answer to it", "Yes — the battery point already answers anything digital books claim", "No — although the battery claim is true on its own terms"], correctAnswer: "No — repeating an earlier point does not answer the update argument", explanation: "The battery point was made before the update argument existed and says nothing about it. Saying it again louder leaves the update advantage standing." },
+  { id: "cl-10", area: "clash", question: "Side B says: 'We repeat: paper textbooks never run out of battery.' Side A had just argued that digital books receive yearly content updates. Is Side B clashing?", choices: ["No — repeating an earlier point does not answer the update argument", "Yes — a point restated after a new argument counts as an answer to it", "Yes — the battery point already answers anything digital books claim", "No — the repeated point would only count as an answer if Side B had paired it with fresh evidence"], correctAnswer: "No — repeating an earlier point does not answer the update argument", explanation: "The battery point was made before the update argument existed and says nothing about it — saying it again louder leaves the update advantage standing. Clash was available: Side B could dispute how much yearly updates actually matter, which would meet the argument directly on its own point. Restating an earlier point is not that, no matter how firmly it is repeated. Nor is fresh evidence the missing ingredient: clash turns on engagement, not support — an unsupported reply can clash, and a better-evidenced battery point would still say nothing about updates." },
   { id: "cl-11", area: "clash", question: "Two speakers each list three new benefits of their own plans and answer nothing from the other side. What is missing from this debate?", choices: ["Any clash — no listed benefit meets an opposing argument", "A constructive case on each side — no speaker has offered one yet", "Enough shared evidence for the judge to check both sides' claims", "A shorter list from each side — six benefits overload a judge"], correctAnswer: "Any clash — no listed benefit meets an opposing argument", explanation: "Two growing piles of parallel points give a judge no comparison to decide on. Clash begins only when one side engages something the other side actually said — it is engagement that is missing, not evidence or brevity. And constructive cases are the one thing this round already has: three benefits from each speaker are on the table, so a missing constructive case is the opposite of what the stem describes." },
   { id: "cl-12", area: "clash", question: "Side A: 'A weekend farmers market brings foot traffic to the shops on Main Street.' Side B: 'Online shopping is more convenient than any market.' Why have the sides not clashed yet?", choices: ["Side B answered general shopping habits, not the foot-traffic claim about local shops", "Side B gave no evidence for convenience, and an unsupported reply cannot clash", "Side B conceded the foot-traffic benefit and raised a separate harm instead", "Side B raised convenience, a point Side A had already granted"], correctAnswer: "Side B answered general shopping habits, not the foot-traffic claim about local shops", explanation: "Side A claimed a spillover benefit for neighbouring shops. Side B's convenience point compares ways to buy produce — a related topic, but not the claim on the table. Clash is about engagement, not about whether the reply comes with evidence." },
   { id: "cl-13", area: "clash", question: "Opponent: 'A class pet teaches responsibility only to the few students who feed it.' Which response engages this argument directly?", choices: ["A rotating care schedule gives every student a feeding week, so the benefit is not limited to a few", "The students who take on feeding learn to plan around another creature's needs, a habit that carries into their own work", "Responsibility is written into the school's own mission statement, so a class pet delivers what we already promise to teach", "Other schools in the district have kept class pets for years without complaint"], correctAnswer: "A rotating care schedule gives every student a feeding week, so the benefit is not limited to a few", explanation: "The objection is about who receives the benefit. The rotation answer meets exactly that, while the other replies defend the pet on grounds nobody attacked." },
@@ -391,7 +422,7 @@ export const DRILL_BANK: DrillQuestion[] = [
   { id: "cl-27", area: "clash", question: "In this exchange — 'The trophy-case renovation doubles the hallway budget.' / 'School pride inspires everyone.' — which argument is left standing?", choices: ["The budget-doubling argument, untouched by the pride reply", "The pride argument, which answers the cost by showing what the money buys", "Both were engaged, since each reply spoke to the same renovation", "Neither — a cost claim and a value claim cancel out"], correctAnswer: "The budget-doubling argument, untouched by the pride reply", explanation: "Inspiration may be real, but it does not answer a cost claim. The doubling argument was never engaged, so it remains for the judge exactly as delivered." },
   { id: "cl-28", area: "clash", question: "A speaker answers 'the plan fails in winter because the solar panels ice over' with 'solar power is the fastest-growing energy source.' Is this responsive?", choices: ["No — growth statistics do not engage the icing failure claim", "Yes — any statistic about solar is responsive", "Yes — both statements mention solar power", "No — although the reply sounds confident and on-topic"], correctAnswer: "No — growth statistics do not engage the icing failure claim", explanation: "The objection is a specific winter failure mode. Industry growth says nothing about ice. Responsiveness is about meeting the claim made, not sharing its topic." },
   { id: "cl-29", area: "clash", question: "Your notes show the opponent never answered your cost-shift argument, but answered your two smaller points at length. What is the honest reading?", choices: ["The cost-shift argument stands — thorough answers elsewhere do not cover the drop", "The cost-shift argument is weakened rather than standing, since they answered everything around it", "Their detailed answers cover the cost-shift point by implication", "The judge can only count arguments both sides addressed"], correctAnswer: "The cost-shift argument stands — thorough answers elsewhere do not cover the drop", explanation: "Engagement is per-argument, not per-minute. Detailed answers to minor points cannot substitute for the missing answer to the argument that matters." },
-  { id: "cl-30", area: "clash", question: "Opponent: 'A quiet-study car on the late bus would sit empty because friends want to sit together.' Reply: 'Studying raises grades.' Diagnose the reply.", choices: ["Non-responsive — it defends studying's value, not the claim that the car would go unused", "Responsive — a stronger reason to study answers the prediction that the seats would stay empty", "Responsive — both claims are about what students do on the late bus", "Non-responsive — although the grade point is true"], correctAnswer: "Non-responsive — it defends studying's value, not the claim that the car would go unused", explanation: "The objection predicts empty seats, not useless studying. Defending the value of study concedes the usage question entirely — the actual claim is never engaged." }
+  { id: "cl-30", area: "clash", question: "Opponent: 'A quiet-study car on the late bus would sit empty because friends want to sit together.' Reply: 'Studying raises grades.' Diagnose the reply.", choices: ["Non-responsive — it defends studying's value, not the claim that the car would go unused", "Responsive — a stronger reason to study answers the prediction that the seats would stay empty", "Responsive — both claims are about what students do on the late bus", "Non-responsive — but only because the reply is too brief; a fuller defence of studying would have answered the empty-car prediction"], correctAnswer: "Non-responsive — it defends studying's value, not the claim that the car would go unused", explanation: "The objection predicts empty seats, not useless studying. Defending the value of study never engages that prediction — and no longer version of the same defence would either, because the flaw is answering the wrong point, not answering it too briefly. Sharing a topic with the objection does not make a reply responsive." },
 ];
 
 export type DrillMode = "focused" | "mixed";
@@ -405,9 +436,32 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+// B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25). These seven items are VALID,
+// competition-valuable questions whose tested concepts are not yet taught by any reachable
+// lesson: the six rebuttal items test response-move taxonomy (turns, offense vs defense,
+// link/impact turns, double turns, indicts) while the only rebuttal instruction is the THEY SAY /
+// BUT / BECAUSE / THEREFORE template, and wg-08 tests the weighing framework/standard concept the
+// weighing lesson never introduces (it teaches lenses bound to the act of comparison, never an
+// early-stated standard) — wg-08's hold was ordered by the B1 final acceptance gate, which
+// overturned an earlier fair-transfer ruling under the strict learner-preparedness standard.
+// Under the rule that learners are not durably assessed on material CompeteReady never taught,
+// they are withheld from serving until the curriculum-closure slice (B2) publishes the teaching;
+// the ids stay in the bank unchanged and each B2 lesson commit releases its ids from this list.
+// Do NOT delete these items; they are curriculum targets, not defects.
+export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
+  "rb-02", // requires: definition of a turn
+  "rb-13", // requires: offense vs defense taxonomy
+  "rb-14", // requires: link turn vs impact turn
+  "rb-15", // requires: the double-turn hazard
+  "rb-16", // requires: indict vs turn distinction
+  "rb-30", // requires: defense-only vs offense strategy
+  "wg-08", // requires: weighing framework/standard concept and why an early standard shapes later comparison
+];
+
 // Draw a session of `count` original questions. If `areas` is given, restrict to them (focused drill).
 export function buildDrillSession(count: number, areas?: DrillArea[]): DrillQuestion[] {
-  const pool = areas && areas.length > 0 ? DRILL_BANK.filter((q) => areas.includes(q.area)) : DRILL_BANK;
+  const served = DRILL_BANK.filter((q) => !DEBATE_DRILL_HELD_IDS.includes(q.id));
+  const pool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;
   const shuffled = shuffle(pool);
   if (count <= shuffled.length) return shuffled.slice(0, count);
   const result = [...shuffled];

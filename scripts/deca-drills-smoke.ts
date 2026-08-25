@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import {
   DECA_DRILL_AREAS,
   DECA_DRILL_BANK,
+  DECA_DRILL_HELD_IDS,
   DECA_DRILL_REQUIRED_UNIQUE,
   buildDecaDrillEvidence,
   buildDecaDrillSession,
@@ -66,9 +67,12 @@ async function main() {
     "G0-D1b. over 20 DISTINCT items — performance-indicators no longer pads at a normal session size");
   const OVERDRAW = 40; // > 30 enters the repeat branch; < 60 makes the while loop append exactly once
   const piOverdrawn = buildDecaDrillSession(OVERDRAW, ["performance-indicators"]);
-  assert.equal(piOverdrawn.length, OVERDRAW, "G0-D2. a 40-question request on the 30-item PI pool still serves 40");
-  assert.equal(new Set(piOverdrawn.map((q) => q.id)).size, 30,
-    "G0-D2b. over exactly 30 distinct PI items — the padding branch survives above that pool");
+  assert.equal(piOverdrawn.length, OVERDRAW, "G0-D2. a 40-question request on the PI pool still serves 40");
+  // B1 EVOLUTION (2026-08-25): the PI SERVED pool is 29, not 30 — pi-26's keyed weighting rule is
+  // untaught, so it is held until the curriculum-closure slice (see DECA_DRILL_HELD_IDS). The bank
+  // still holds 30; the hold is proven two-sided in the B1 section below.
+  assert.equal(new Set(piOverdrawn.map((q) => q.id)).size, 29,
+    "G0-D2b. over exactly 29 distinct PI items — the served pool excludes held pi-26");
 
   // Slice 6: the same depth proof for business-reasoning, the second DECA area to reach 30.
   const brFocused20 = buildDecaDrillSession(20, ["business-reasoning"]);
@@ -108,14 +112,19 @@ async function main() {
   // results above depend on.
   // Iterates AREA_DEPTH rather than EXPANDED_AREAS because the authorisation table is declared far
   // below this block; the two are asserted identical at G0-C2b2.
+  // B1 EVOLUTION (2026-08-25): the boundary runs against each area's SERVED pool, which for
+  // performance-indicators is 29 (pi-26 held until its weighting rule is taught) and 30 elsewhere.
+  // The bank depth stays 30 everywhere (G0-D5); the served/bank distinction is proven in the B1
+  // section below.
   for (const area of Object.keys(AREA_DEPTH) as DecaDrillArea[]) {
-    const atPool = buildDecaDrillSession(30, [area]);
-    assert.equal(atPool.length, 30, `G0-D3. control: ${area} serves exactly 30 when 30 are requested`);
-    assert.equal(new Set(atPool.map((q) => q.id)).size, 30,
-      `G0-D3b. control: over 30 DISTINCT items — at pool size nothing repeats, so the padding branch is OFF`);
+    const servedDepth = area === "performance-indicators" ? 29 : 30;
+    const atPool = buildDecaDrillSession(servedDepth, [area]);
+    assert.equal(atPool.length, servedDepth, `G0-D3. control: ${area} serves exactly ${servedDepth} when ${servedDepth} are requested`);
+    assert.equal(new Set(atPool.map((q) => q.id)).size, servedDepth,
+      `G0-D3b. control: over ${servedDepth} DISTINCT items — at served-pool size nothing repeats, so the padding branch is OFF`);
     const above = buildDecaDrillSession(OVERDRAW, [area]);
-    assert.equal(new Set(above.map((q) => q.id)).size, 30,
-      `G0-D4. control: and ${area} still caps at 30 distinct when ${OVERDRAW} are requested — padding is ON only above the pool`);
+    assert.equal(new Set(above.map((q) => q.id)).size, servedDepth,
+      `G0-D4. control: and ${area} still caps at ${servedDepth} distinct when ${OVERDRAW} are requested — padding is ON only above the served pool`);
   }
   assert.ok(OVERDRAW > 30,
     "G0-D4b. control: the overdraw request really does exceed every pool, so the padding comparison is not vacuous");
@@ -213,7 +222,8 @@ async function main() {
   // deliberately repaired. The freeze is now TWO-SIDED: every listed id MUST differ from the
   // immutable parent (a silent revert is a failure), every unlisted original stays byte-identical,
   // and scripts/assessment-quality-guard.ts enforces the answer-form property the repair restored.
-  // Repaired items are PENDING human review of their final bytes (see the in-bank provenance notes).
+  // Repaired items are independently AI-reviewed with external human content review waived by the
+  // project owner 2026-08-25 (see the in-bank waiver record; a waiver is not human review).
   const P01_REPAIRED_ORIGINALS = new Set(["pi-01","pi-02","pi-03","pi-04","pi-05","pi-06","pi-07","pi-08","pi-09","br-01","br-02","br-03","br-04","br-05","br-06","br-07","br-09"]);
   for (const parentLine of parentItems) {
     const id = idOf(parentLine);
@@ -431,7 +441,37 @@ async function main() {
   assert.equal(itemLines('export const DECA_DRILL_BANK = [\n{ id: "x-01", area: "business-reasoning" },\nexport function y').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} questions across ${DECA_DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once. CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent; a silent revert fails), the other originals — including every cr and mk item — are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. ALL ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} DECA areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 84 reviewed-slice items pi-10..pi-30 (Slice 5), br-10..br-30 (Slice 6) and cr-10..cr-30 (Slice 7) — all three AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-12 as originally shipped, with Slice 7 additionally externally human-reviewed and Production-verified — plus mk-10..mk-30 (Slice 8 / DECA Slice 4, authored against the approved MK1..MK6 curriculum so every key combines at least two facts printed in its own stem: AI-AUTHORED, HUMAN CONTENT REVIEW OUTSTANDING). The P0.1 repair then edited 37 of the pi/br additions (20 pi, 17 br; every cr and mk addition is byte-identical), so that dated approval covers only the originally-shipped bytes of items it reviewed — every P0.1-edited item is AI-repaired and PENDING human review of its final bytes, and no AI review counts as human review. DECA depth is COMPLETE at 4 x 30. Slice 8 finally appended after mk-09, so the terminal-comma boundary is EXERCISED for real: mk-09 gained exactly one comma, the raw lines differ, and they normalise to identical content — mk-30 is now the final element and no comma-less item remains. mk-10 moved from out-of-set control to legitimate addition at this slice, so the boundary probe moved to mk-31. No recognised DECA area remains unauthorised and no prefix remains forbidden, so BOTH stages are now probed with TEST-ONLY withheld sets rather than vacuous loops, and the exact 84-id set is the FINAL bound on DECA bank growth. The shallow-area control is RE-BASED onto pool-size-versus-overdraw behaviour because no DECA area remains at 9. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  // ---- B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25) ----------------------------------
+  // pi-26 is a VALID item whose keyed area-level weighting rule is untaught by any reachable
+  // surface; it is withheld from serving until the curriculum-closure slice teaches the rule.
+  // Two-sided proof: the held id never serves, every non-held id still serves, the bank is intact.
+  assert.deepEqual([...DECA_DRILL_HELD_IDS], ["pi-26"],
+    "B1-D1. the held set is exactly the one adjudicated PI id");
+  assert.ok(DECA_DRILL_BANK.some((q) => q.id === "pi-26"),
+    "B1-D2. pi-26 remains IN the bank — held means unserved, never deleted");
+  const b1Full = buildDecaDrillSession(300);
+  assert.equal(new Set(b1Full.map((q) => q.id)).size, DECA_DRILL_BANK.length - DECA_DRILL_HELD_IDS.length,
+    "B1-D3. a full-bank overdraw serves exactly the 119 non-held items");
+  assert.ok(b1Full.every((q) => !DECA_DRILL_HELD_IDS.includes(q.id)),
+    "B1-D4. no held id is ever served, even at full-bank overdraw");
+  const b1Pi = buildDecaDrillSession(60, ["performance-indicators"]);
+  const b1PiIds = new Set(b1Pi.map((q) => q.id));
+  assert.equal(b1PiIds.size, 29, "B1-D5. the served PI pool is exactly 29 of 30");
+  for (const q of DECA_DRILL_BANK) {
+    if (q.area === "performance-indicators" && !DECA_DRILL_HELD_IDS.includes(q.id)) {
+      assert.ok(b1PiIds.has(q.id), `B1-D6. non-held PI item ${q.id} still serves — the hold does not over-filter`);
+    }
+  }
+  assert.ok(29 >= DECA_DRILL_REQUIRED_UNIQUE,
+    "B1-D7. the served PI pool stays far above the unique-evidence floor, so mastery remains reachable");
+  const heldPi = DECA_DRILL_BANK.find((q) => q.id === "pi-26")!;
+  assert.equal(gradeDecaDrillAnswers([{ id: "pi-26", selected: heldPi.correctAnswer }]).items[0].correct, true,
+    "B1-D8. an in-flight answer to the held id still grades honestly — holding never falsifies accounting");
+  const decaRouteSrc = readFileSync("app/api/deca/drills/session/route.ts", "utf8");
+  assert.ok(decaRouteSrc.includes("buildDecaDrillSession(") && !decaRouteSrc.includes("DECA_DRILL_BANK"),
+    "B1-D9. the only serving route goes through buildDecaDrillSession and never reads the bank directly — learners cannot reach the held id");
+
+  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} questions across ${DECA_DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once. CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent; a silent revert fails), the other originals — including every cr and mk item — are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. ALL ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} DECA areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 84 reviewed-slice items pi-10..pi-30 (Slice 5), br-10..br-30 (Slice 6) and cr-10..cr-30 (Slice 7) — all three AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-12 as originally shipped, with Slice 7 additionally externally human-reviewed and Production-verified — plus mk-10..mk-30 (Slice 8 / DECA Slice 4, authored against the approved MK1..MK6 curriculum so every key combines at least two facts printed in its own stem: AI-AUTHORED, HUMAN CONTENT REVIEW OUTSTANDING). The P0.1 repair then edited 37 of the pi/br additions (20 pi, 17 br; every cr and mk addition is byte-identical), so that dated approval covers only the originally-shipped bytes of items it reviewed — every P0.1-edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 — no AI review counts as human review and the waiver is not human review. B1 (2026-08-25) then rewrote pi-28 (including its key) to reconcile the concept-verb doctrine with the completeness scaffold, and withheld pi-26 from serving because its keyed weighting rule is not yet taught by any reachable surface — the bank keeps all 120 items, 29 of 30 PI items serve, and the id releases when the curriculum-closure slice teaches the rule. DECA depth is COMPLETE at 4 x 30. Slice 8 finally appended after mk-09, so the terminal-comma boundary is EXERCISED for real: mk-09 gained exactly one comma, the raw lines differ, and they normalise to identical content — mk-30 is now the final element and no comma-less item remains. mk-10 moved from out-of-set control to legitimate addition at this slice, so the boundary probe moved to mk-31. No recognised DECA area remains unauthorised and no prefix remains forbidden, so BOTH stages are now probed with TEST-ONLY withheld sets rather than vacuous loops, and the exact 84-id set is the FINAL bound on DECA bank growth. The shallow-area control is RE-BASED onto pool-size-versus-overdraw behaviour because no DECA area remains at 9. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

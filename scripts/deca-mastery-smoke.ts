@@ -884,8 +884,10 @@ async function main() {
   control("a 20-question focused performance-indicators session now serves 20 DISTINCT items — no padding",
     piFocused20.length === 20 && new Set(piFocused20.map((q) => q.id)).size === 20);
   const piOverdrawn = buildDecaDrillSession(OVERDRAW, ["performance-indicators"]);
-  control("and performance-indicators still pads above its pool: 40 served over exactly 30 distinct",
-    piOverdrawn.length === OVERDRAW && new Set(piOverdrawn.map((q) => q.id)).size === 30);
+  // B1 EVOLUTION (2026-08-25): the PI SERVED pool is 29 — pi-26 is held until its weighting rule is
+  // taught (DECA_DRILL_HELD_IDS); the bank keeps 30 and the hold is proven in the drills smoke.
+  control("and performance-indicators still pads above its pool: 40 served over exactly 29 distinct (served pool excludes held pi-26)",
+    piOverdrawn.length === OVERDRAW && new Set(piOverdrawn.map((q) => q.id)).size === 29);
   // Slice 6: the same depth proof for business-reasoning, the second DECA area to reach 30.
   const brFocused20 = buildDecaDrillSession(20, ["business-reasoning"]);
   control("a 20-question focused business-reasoning session now serves 20 DISTINCT items — no padding",
@@ -910,10 +912,13 @@ async function main() {
   // RE-BASED at Slice 8. The old control was a still-9-item area that DID pad, parked on MK. Slice 8
   // expands MK, so no shallow DECA area remains and it is re-based rather than deleted: what it proves
   // now is that padding activates ONLY above the pool, which is what the 40 -> 30 results depend on.
+  // B1 EVOLUTION (2026-08-25): the boundary runs against each area's SERVED pool — 29 for
+  // performance-indicators (pi-26 held until its weighting rule is taught), 30 elsewhere.
   for (const area of Object.keys(DECA_AREA_DEPTH)) {
-    const atPool = buildDecaDrillSession(30, [area as never]);
-    control(`control: ${area} serves 30 over 30 DISTINCT at pool size — the padding branch is OFF there`,
-      atPool.length === 30 && new Set(atPool.map((q) => q.id)).size === 30);
+    const servedDepth = area === "performance-indicators" ? 29 : 30;
+    const atPool = buildDecaDrillSession(servedDepth, [area as never]);
+    control(`control: ${area} serves ${servedDepth} over ${servedDepth} DISTINCT at served-pool size — the padding branch is OFF there`,
+      atPool.length === servedDepth && new Set(atPool.map((q) => q.id)).size === servedDepth);
   }
   control("control: the overdraw request really exceeds every pool, so the padding comparison is not vacuous",
     OVERDRAW > 30);

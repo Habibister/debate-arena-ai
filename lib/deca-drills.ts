@@ -1,5 +1,18 @@
 // DECA concept-drill bank.
 //
+// OWNER CONTENT-REVIEW WAIVER (2026-08-25). The project owner explicitly waived external human
+// content review for the final assessment bytes of B1 candidate
+// be3c0728774b243e5b1a1f714a1bfc0908268d3c (this file's item bytes are byte-identical to that
+// candidate), accepting the completed AI review process as the content release gate: independent
+// blind closed-corpus review with locked-answer key comparison, adversarial one-best-answer
+// review, answer-form leakage analysis, educational-validity adjudication, final-byte review of
+// the repaired items, static quality-guard validation, serving/held-item validation, and final
+// machine acceptance. Truthful provenance for the AI-repaired items below is therefore:
+// AI-assisted / independently AI-reviewed; external human content review WAIVED by project owner
+// 2026-08-25. This is a recorded waiver, NOT human review — never describe these items as
+// HUMAN-REVIEWED, HUMAN-REVIEWED AND APPROVED, or externally human-reviewed. Any later
+// educational-content change voids this waiver for the changed bytes and requires fresh review.
+//
 // PROVENANCE: All questions are ORIGINAL, hand-authored items that teach transferable DECA business
 // concepts (identifying/addressing performance indicators, business reasoning about cost/feasibility/
 // measurement, customer relations, marketing fundamentals). They are NOT reproduced from any DECA
@@ -81,8 +94,9 @@ export const DECA_DRILL_BANK: DecaDrillQuestion[] = [
   // materially better, and the owner explicitly authorized retaining this stem (SCOPE authorization
   // only, 2026-08-25). The current pi-07 measures indicator-subject matching and carries no
   // signposting claim, so the old B-2 tension is removed by replacement — B-2 itself remains
-  // unruled-on. The item is AI-repaired and PENDING human review of its final bytes; scope
-  // authorization is not content approval.]
+  // unruled-on. The item is AI-repaired and independently AI-reviewed — external human content
+  // review waived by the project owner 2026-08-25 (see the waiver record at the top of this file);
+  // scope authorization is not content approval.]
   // PROVENANCE: every indicator string below is an ORIGINAL PI-style prompt. None reproduces an
   // official DECA competency statement, exam item, sample role-play, or evaluation form. No official
   // PI code, cluster or list-year is named, and no per-PI exam weighting is claimed — pi-26 keys on
@@ -91,15 +105,27 @@ export const DECA_DRILL_BANK: DecaDrillQuestion[] = [
   // was the longest choice often enough for a stem-blind learner to beat the 70% threshold, so the
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: pi-01..pi-28, pi-30 (29 of 30; pi-29 untouched).
+  // B1 CLOSED-CORPUS REPAIR (2026-08-25, adjudicated MULTIPLE DEFENSIBLE — the only blind-review
+  // key mismatch): pi-28 was REWRITTEN INCLUDING ITS KEY. The old key (the originally-approved pure
+  // action scaffold, R1-frozen through P0.1) never explained the nature of training, conflicting
+  // with the verb doctrine keyed by pi-03/pi-13; the owner authorized repairing the adjudicated
+  // defect. The new key states the concept inside the worked recommendation (the roleplay lesson's
+  // own reachable model) and the old key remains as the pure-action distractor. The item's
+  // explanation now teaches the verb-plus-completeness reconciliation explicitly. AI-repaired and
+  // independently AI-reviewed — external human content review waived by the project owner
+  // 2026-08-25 (see the waiver record at the top of this file).
   // STEM TRUTH: five pi stems were reconstructed, not just option sets. pi-05's stem rewrite was
   // chartered during the repair (it duplicated cr-02's construct). The stems of pi-02, pi-03, pi-07
   // and pi-09 were reconstructed scenario-shaped by the R4 repair beyond the shorthand "option-set
   // rewrite" label; machine acceptance flagged that boundary, a read-only merits proof found every
   // old-stem/repaired-options hybrid defective and the reconstructions materially better, and the
   // owner explicitly authorized retaining exactly those four stems on 2026-08-25 — SCOPE
-  // authorization only, not content approval; all five items remain PENDING human review.
+  // authorization only, not content approval; all five items are AI-reviewed with external human
+  // content review owner-waived 2026-08-25 (see the waiver record at the top of this file).
   // AI-ASSISTED authoring (M14 Global G2 Slice 5 / DECA Slice 1, pi-10..pi-30), HUMAN-REVIEWED AND
   // APPROVED 2026-08-12: the repository owner personally read all 21 items in the FINAL checklist and
   // approved their answer defensibility, distractor quality, wording, curriculum fit, verb
@@ -141,7 +167,7 @@ export const DECA_DRILL_BANK: DecaDrillQuestion[] = [
   { id: "pi-25", area: "performance-indicators", question: "Three indicators are listed. The competitor gives an outstanding response to the first and never returns to the other two. This is weaker than a solid response to all three because:", choices: ["Each listed indicator is being scored, and two of them went undemonstrated", "Responses that run long are penalized, so depth on one indicator costs points elsewhere", "The first indicator always carries the least weight, so depth there earns little", "Judges stop listening after the first indicator"], correctAnswer: "Each listed indicator is being scored, and two of them went undemonstrated", explanation: "Depth is worth having, but not at the price of leaving scored competencies untouched. Covering all three meaningfully demonstrates more of what was actually listed." },
   { id: "pi-26", area: "performance-indicators", question: "A student plans to spend most of their study time on one indicator, believing it carries a higher published exam weight than the others. The problem with that plan is:", choices: ["Published weighting is given for instructional areas, not for individual indicators", "Exam weighting is spread evenly across the indicators, leaving no edge to gain", "Time spent on a single indicator is wasted, because the listed indicators change from year to year", "The published weighting is reset during the competition itself"], correctAnswer: "Published weighting is given for instructional areas, not for individual indicators", explanation: "There is no per-indicator weight to optimize against — the published figures describe instructional areas. Studying the area those indicators are drawn from is the version of this plan that actually works." },
   { id: "pi-27", area: "performance-indicators", question: "The listed indicator is \"Explain the nature of pricing strategy.\" A poised competitor accurately defines penetration, skimming and cost-plus pricing in full sentences, and never says what this store should do. The response:", choices: ["Is fluent knowledge, but falls short because it never reaches the decision that demonstrates the indicator here", "Is complete, because all three strategies were explained correctly", "Is weak because the definitions were inaccurate", "Is weak because it used technical vocabulary"], correctAnswer: "Is fluent knowledge, but falls short because it never reaches the decision that demonstrates the indicator here", explanation: "Polish is not demonstration. Nothing said here is wrong, and it beats silence — but the indicator lives inside a scenario, and this response never arrives at a choice for that store." },
-  { id: "pi-28", area: "performance-indicators", question: "The listed indicator is \"Explain the nature of employee training.\" Which response demonstrates it most completely?", choices: ["Run a two-hour Saturday session because new hires are erroring on returns, cover the three most-missed steps, cost it at one trainer's overtime, and re-check return errors in a month", "Explain why training matters, describe a two-hour Saturday session, and note that new hires are erroring on returns", "Explain why training matters to service quality and recommend that the store invest more in employee development overall", "Describe several common training formats — shadowing, classroom sessions, written manuals — and note that each suits a different kind of business"], correctAnswer: "Run a two-hour Saturday session because new hires are erroring on returns, cover the three most-missed steps, cost it at one trainer's overtime, and re-check return errors in a month", explanation: "Only the first runs the whole way: a concrete decision, the reason for it, how it is carried out, whether it is affordable, and how success gets checked. The second is genuinely developed but never costs it or checks it; the last two never reach a decision at all." },
+  { id: "pi-28", area: "performance-indicators", question: "The listed indicator is \"Explain the nature of employee training.\" Which response demonstrates it most completely?", choices: ["Explain that training closes skill gaps — new-hire return errors — run a Saturday session on the most-missed steps, cost it at one trainer's overtime, and re-check errors in a month", "Run a two-hour Saturday session because new hires are erroring on returns, cover the three most-missed steps, cost it at one trainer's overtime, and re-check return errors in a month", "Explain why training matters, describe a two-hour Saturday session, and note that new hires are erroring on returns", "Describe several common training formats — shadowing, classroom sessions, written manuals — and note that each suits a different kind of business"], correctAnswer: "Explain that training closes skill gaps — new-hire return errors — run a Saturday session on the most-missed steps, cost it at one trainer's overtime, and re-check errors in a month", explanation: "'Explain the nature of' is a concept verb, so a response that only runs the session leaves the concept unstated — the same miss as answering 'describe the nature of pricing' with a price cut. But stating the concept is not the whole job either: the lesson's model weaves it into a worked recommendation, the way 'keeping a loyalty member is far cheaper than winning a new one' sits inside the hotel recovery plan. The correct response states what training is for and then carries the plan through cost and re-check; the pure-action option never states it, the explain-and-describe option stops before cost and measurement, and the formats list explains in the abstract without ever reaching this store's decision." },
   { id: "pi-29", area: "performance-indicators", question: "The listed indicator is \"Explain the nature of customer-flow management in a retail store.\" A competitor decides to open a second checkout lane at peak hours, explains that queue length is driving walkouts, and sets out the staffing change that makes it happen. Against a complete demonstration of that indicator, what is missing is:", choices: ["Any check on whether the change actually reduced walkouts", "The reason the change was chosen", "The decision itself", "A closing statement that the indicator has been addressed"], correctAnswer: "Any check on whether the change actually reduced walkouts", explanation: "Decision, reasoning and implementation are all present, so this response is genuinely developed against the indicator. It stops one step short, at the point where you would name what you would watch to know it worked." },
   { id: "pi-30", area: "performance-indicators", question: "The listed indicator is \"Explain the nature of customer retention.\" You decide to send a targeted offer email to gym members who have not visited in sixty days. Which result best tells the judge whether that action succeeded FOR THIS INDICATOR?", choices: ["The share of those members who return and are still attending three months later", "The percentage of recipients who opened the email, since an unopened offer cannot bring anyone back", "How many offer codes were redeemed in the first week, since each redemption is a direct response to the offer", "The gym's total revenue for the year, which retained members drive"], correctAnswer: "The share of those members who return and are still attending three months later", explanation: "The same email could be judged on reach, on immediate response, or on whether people came back and stayed — the listed indicator is what decides which. This one is about retention, so the evidence has to be members returning and remaining. Open rate measures reach, redemptions measure the short-term promotional response, and annual revenue moves for a dozen unrelated reasons. Each of those is a respectable business metric; they simply answer a different question from the one this indicator asks." },
 
@@ -195,7 +221,9 @@ export const DECA_DRILL_BANK: DecaDrillQuestion[] = [
   // classified defective items in this area were repaired (distractors strengthened, keys condensed
   // only where scaffolded, joke option sets re-authored; br-29's stem was also reconstructed — a
   // stem edit chartered during the repair after the first draft corrupted it). The approval above remains accurate ONLY
-  // for unedited items; every edited item is AI-repaired and PENDING human review of its final bytes.
+  // for unedited items; every edited item is AI-repaired and independently AI-reviewed — external
+  // human content review waived by the project owner 2026-08-25 (see the waiver record at the top
+  // of this file; a waiver is not human review).
   // Edited: br-01..br-07, br-09..br-16, br-18, br-21..br-24, br-26..br-30 (25 of 30).
   // AI-ASSISTED authoring (M14 Global G2 Slice 6 / DECA Slice 2, br-10..br-30), HUMAN-REVIEWED AND
   // APPROVED 2026-08-12: the repository owner personally read all 21 items in the FINAL checklist and
@@ -366,8 +394,18 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+// B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25). pi-26 is a VALID item whose keyed fact
+// (published weighting attaches to instructional areas, not individual indicators) is not taught
+// by any reachable surface — the Event Navigator affirmatively refuses weighting content. Withheld
+// from serving until the curriculum-closure slice (B2) teaches the rule; the item stays in the
+// bank unchanged. Do NOT delete it; it is a curriculum target, not a defect.
+export const DECA_DRILL_HELD_IDS: ReadonlyArray<string> = [
+  "pi-26", // requires: the area-level exam-weighting rule taught learner-visibly
+];
+
 export function buildDecaDrillSession(count: number, areas?: DecaDrillArea[]): DecaDrillQuestion[] {
-  const pool = areas && areas.length > 0 ? DECA_DRILL_BANK.filter((q) => areas.includes(q.area)) : DECA_DRILL_BANK;
+  const served = DECA_DRILL_BANK.filter((q) => !DECA_DRILL_HELD_IDS.includes(q.id));
+  const pool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;
   const shuffled = shuffle(pool);
   if (count <= shuffled.length) return shuffled.slice(0, count);
   const result = [...shuffled];

@@ -16,8 +16,9 @@
  * deterministic, DB-free, provider-free, learner-data-free metrics. It deliberately does NOT
  * encode "the correct answer must never be longest" (that would just reverse the exploit — see
  * H_SHORT). And it CANNOT judge semantic quality: a bank with perfect length parity and joke
- * distractors passes every metric here. The human blind-answer content review remains a separate,
- * mandatory gate; this guard only proves a negative about surface form.
+ * distractors passes every metric here. A separate content-review gate remains mandatory — human
+ * review, or an explicitly recorded owner waiver of it (recorded 2026-08-25 for these banks); this
+ * guard only proves a negative about surface form.
  *
  * THRESHOLDS are derived from the measured separation, not invented: the measured healthy control
  * banks span H_LONG lift 0.04–0.22 while leaky banks measured 0.78–1.00 — the warn line (0.40) and
@@ -243,7 +244,7 @@ export function main(): number {
   }
   if (hardFails > 0) {
     console.error(`\n${hardFails} hard failure(s) in enforced banks. This guard proves a negative about FORM only —`);
-    console.error("passing it never substitutes for the human blind-answer content review.");
+    console.error("passing it never substitutes for the content-review gate (human review or a recorded owner waiver).");
     return 1;
   }
   console.log("\nAll enforced banks pass the answer-form guard. (Semantic quality remains human-owned.)");

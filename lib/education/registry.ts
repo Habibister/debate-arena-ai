@@ -26,7 +26,7 @@
 import { getLesson, type AuthoredLesson } from "@/lib/lessons";
 import { getRoleplayLesson, type RoleplayLesson } from "@/lib/roleplay-lessons";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
-import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
+import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_ANSWER_TYPES_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
 import type {
   EducationCourse,
   EducationModule,
@@ -165,6 +165,9 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // Wave 1C: the Evidence Evaluation teaching home sits directly after argument anatomy — judge the
   // evidence before learning to signpost, clash and refute with it.
   DEBATE_EVIDENCE_LESSON,
+  // B2.1: the answer-types taxonomy lesson — chained after refutation (HOW to state an answer)
+  // and before constructive speeches; teaching only, the related drill items remain held.
+  DEBATE_ANSWER_TYPES_LESSON,
   {
     id: "how-deca-roleplay-works",
     track: "DECA",

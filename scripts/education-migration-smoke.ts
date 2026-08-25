@@ -498,14 +498,15 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   }
 
   // ---- 5-8. registry and discovery inventory -----------------------------------------------------
-  assert.equal(EDUCATION_LESSONS.length, 10, "5. ten canonical registry entries");
+  // B2.1 (2026-08-25) raised this 10 -> 11: the newly authored debate-answer-types lesson.
+  assert.equal(EDUCATION_LESSONS.length, 11, "5. eleven canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 10, "6a. all ten are learner-visible");
+  assert.equal(learnerVisible.length, 11, "6a. all eleven are learner-visible (B2.1 added answer-types)");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
-  assert.equal(debate.length, 8, "7. exactly eight Debate lessons");
+  assert.equal(debate.length, 9, "7. exactly nine Debate lessons (B2.1 added answer-types)");
   assert.deepEqual(debate.map((e) => e.id),
-    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", ...MIGRATED],
-    "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the migrated five");
+    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types", ...MIGRATED],
+    "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the B2.1 answer-types lesson, then the migrated five");
   assert.equal(educationLessonsForTrack("DECA").length, 1, "6b. one DECA lesson");
   assert.equal(educationLessonsForTrack("HOSA").length, 1, "6c. one HOSA lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
@@ -648,9 +649,11 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   {
     const conceptEntries = EDUCATION_REGISTRY.lessons.filter((e) => e.sourceKind === "concept-education-lesson");
     const mapped = conceptEntries.filter((e) => e.practiceDrill);
+    // B2.1 EVOLUTION: answer-types is the fifth drill destination — a practice CTA to the rebuttal
+    // drill WITHOUT a skillSlug claim (refutation keeps the module's single claimed teaching home).
     assert.deepEqual(mapped.map((e) => e.id),
-      ["debate-evidence-evaluation", "debate-clash", "debate-refutation", "debate-weighing"],
-      `36. exactly four authored lessons name a drill destination — evidence, clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
+      ["debate-evidence-evaluation", "debate-answer-types", "debate-clash", "debate-refutation", "debate-weighing"],
+      `36. exactly five authored lessons name a drill destination — evidence, answer-types (CTA-only), clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
 
     const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
     assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },

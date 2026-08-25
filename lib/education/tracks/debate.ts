@@ -48,7 +48,7 @@ const MIGRATED_SLUGS = ["debate-signposting", "debate-clash", "debate-refutation
  * catalog-by-reference mechanism as the migrated lessons but kept out of MIGRATED_SLUGS — it was
  * never a held migration, and the migration suite's historical claims stay scoped to the five.
  */
-const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation", "debate-evidence-evaluation"] as const;
+const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation", "debate-evidence-evaluation", "debate-answer-types"] as const;
 
 type MigratedSlug = (typeof AUTHORED_CATALOG_SLUGS)[number];
 
@@ -99,6 +99,7 @@ const constructiveSpeeches = selectCatalogLesson("debate-constructive-speeches")
 const weighing = selectCatalogLesson("debate-weighing");
 const orientation = selectCatalogLesson("debate-round-orientation");
 const evidenceEvaluation = selectCatalogLesson("debate-evidence-evaluation");
+const answerTypes = selectCatalogLesson("debate-answer-types");
 
 /** Exported for the migration smoke suite's strict-identity proof against the catalog. */
 export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constructiveSpeeches, weighing } as const;
@@ -131,6 +132,32 @@ export const DEBATE_EVIDENCE_LESSON: EducationRegistryEntry = {
   practiceDrill: { track: "debate", area: "evidence-evaluation" },
   legacySlugs: [],
   nextLessonId: "debate-signposting",
+  provenance: MIGRATED_DEBATE_PROVENANCE
+};
+
+/** B2.1 (2026-08-25): newly AUTHORED answer-types lesson — teaches WHAT KIND of answer a response
+ *  is (defense, indict, turn, offense) as the taxonomy foundation the held rebuttal drill items
+ *  test. Registered via the same catalog-by-reference mechanism as the Wave 1A additions and kept
+ *  OUT of MIGRATED_SLUGS: it was authored in B2.1, not migrated, and historical migration claims
+ *  stay scoped to the five. Teaching only — the four related drill items (rb-02, rb-13, rb-16,
+ *  rb-30) remain HELD until each independently passes the closed-corpus reactivation gate. */
+export const DEBATE_ANSWER_TYPES_LESSON: EducationRegistryEntry = {
+  id: "debate-answer-types",
+  track: "GENERAL_DEBATE",
+  courseId: "debate-performance",
+  moduleId: "debate-round-strategy",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: answerTypes,
+  sourceKind: "concept-education-lesson",
+  // Practice CTA ONLY — deliberately NO skillSlug: refutation remains the module's single claimed
+  // teaching home for `debate-rebuttal` (the reverse-remediation mapping for due reviews must not
+  // split), and the registry validator enforces one skill claim per module. The lesson's own checks
+  // stay formative; the graded rebuttal drill is what writes mastery and schedules review.
+  practiceDrill: { track: "debate", area: "rebuttal" },
+  legacySlugs: [],
+  nextLessonId: "debate-constructive-speeches",
   provenance: MIGRATED_DEBATE_PROVENANCE
 };
 
@@ -203,7 +230,9 @@ export const DEBATE_MIGRATED_LESSONS: readonly EducationRegistryEntry[] = [
     // they carry no destination and show no practice call to action.
     practiceDrill: { track: "debate", area: "rebuttal" },
     legacySlugs: [],
-    nextLessonId: "debate-constructive-speeches",
+    // B2.1: the answer-types lesson now follows refutation in the chain — first HOW to state an
+    // answer (this lesson), then WHAT KIND of answer it is (answer types), then speeches.
+    nextLessonId: "debate-answer-types",
     provenance: MIGRATED_DEBATE_PROVENANCE
   },
   {

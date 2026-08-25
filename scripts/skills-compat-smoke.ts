@@ -354,9 +354,9 @@ async function main() {
   // Every Debate tile points at a registered learner-visible lesson.
   const debateIds = educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id);
   assert.deepEqual(debateIds,
-    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-signposting",
-     "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"],
-    "26. the index lists the eight real Debate lessons in teaching order");
+    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types",
+     "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"],
+    "26. the index lists the nine real Debate lessons in teaching order (B2.1 added answer-types)");
 
   // ---- 27-29. M13E1B education is untouched --------------------------------------------------------
   // M15 S1B-1 — four entries are deliberately absent from here onward: lib/lessons.ts,
@@ -670,7 +670,8 @@ async function main() {
     assert.equal(r.kind === "canonical-redirect" ? r.lessonId : null, "debate-clash",
       "27h8. and lands on the authored clash lesson, exactly like debate-weighing");
   }
-  assert.equal(EDUCATION_LESSONS.length, 10, "28. exactly ten canonical lessons after Wave 1C");
+  // B2.1 (2026-08-25) raised this 10 -> 11: the newly authored debate-answer-types lesson.
+  assert.equal(EDUCATION_LESSONS.length, 11, "28. exactly eleven canonical lessons after B2.1");
   for (const held of ["debate-rebuttal-speeches", "debate-parliamentary-roles",
                       "debate-case-topic-definitions", "debate-claim-warrant-impact"]) {
     assert.ok(!EDUCATION_LESSONS.some((e) => e.id === held), `29. held lesson "${held}" is still not registered`);

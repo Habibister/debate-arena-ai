@@ -75,6 +75,10 @@ standard; DECA instructional-area weighting rule vs individual PI weighting. Req
 TEACH → verify reachability → closed-corpus assessment → re-review question validity against the
 final lesson bytes → remove a hold only when a beginner can reasonably solve the item from
 CompeteReady instruction → rerun the serving/mastery safeguards. **B2 must NOT simply unhold ids.**
+B2.1 (in progress, local): authored catalog entry `debate-answer-types` added to
+`lib/learning-content.ts` (LC1 baseline 19 → 20 blocks, marker `B21-DEBATE-ANSWER-TYPES-TEACHING`
+— this line is the affected-slug record the integrity smoke's contract requires). Teaching only:
+all eight holds remain in force and no reactivation has occurred.
 
 **P0.2 — NOT STARTED.**
 

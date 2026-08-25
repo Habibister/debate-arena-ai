@@ -564,16 +564,31 @@ async function main() {
   // sending the learner to a drill scored as B, and the mastery it wrote would be evidence for B.
   const drilled = EDUCATION_LESSONS.filter((e) => e.practiceDrill);
   assert.ok(drilled.length >= 1, "S2-5a. control: the registry really carries at least one mapped lesson");
+  // B2.1 EVOLUTION: an entry may carry a practice CTA WITHOUT claiming the skill (skillSlug absent)
+  // — the answer-types lesson points learners at the rebuttal drill while refutation remains the
+  // module's single claimed teaching home. The invariant's purpose is unchanged: a claimed mapping
+  // must agree with the drill's canonical skill, and a CTA-only entry's drill skill must still have
+  // exactly one claimed teaching home elsewhere (so remediation never routes through the CTA-only
+  // lesson — educationLessonsForPracticeSkill filters on skillSlug, proven at S2-5d).
   for (const e of drilled) {
     const area = S2_AREAS.find((a) => a.id === e.practiceDrill!.area);
     assert.ok(area, `S2-5b. ${e.id} names a real drill area`);
-    assert.equal(area!.skillSlug, e.skillSlug,
-      `S2-5. ${e.id}'s drill area is scored against the same skill the lesson names`);
+    if (e.skillSlug !== undefined) {
+      assert.equal(area!.skillSlug, e.skillSlug,
+        `S2-5. ${e.id}'s drill area is scored against the same skill the lesson names`);
+    } else {
+      const homes = educationLessonsForPracticeSkill(area!.skillSlug);
+      assert.equal(homes.length, 1,
+        `S2-5c. CTA-only lesson ${e.id}: its drill's skill ${area!.skillSlug} keeps exactly one claimed teaching home`);
+      assert.notEqual(homes[0].id, e.id,
+        `S2-5d. and that home is another lesson — the CTA-only entry can never be the remediation target`);
+    }
   }
 
   // S2-6. At most one drill-backed lesson per skill — this is why the helper may take the first.
   for (const e of drilled) {
-    assert.equal(educationLessonsForPracticeSkill(e.skillSlug!).length, 1,
+    if (e.skillSlug === undefined) continue; // CTA-only entries claim nothing (covered by S2-5c/d)
+    assert.equal(educationLessonsForPracticeSkill(e.skillSlug).length, 1,
       `S2-6. ${e.skillSlug} is taught by exactly one drill-backed lesson`);
   }
 

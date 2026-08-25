@@ -1,5 +1,132 @@
 [
   {
+    "slug": "debate-answer-types",
+    "organization": "DEBATE",
+    "track": "DEBATE",
+    "category": "Debate responses",
+    "name": "Answer Types",
+    "description": "Classify answers as defense, indict, turn, or offense, and choose the kind a round needs.",
+    "lesson": {
+      "title": "Know what your answer does",
+      "slug": "debate-answer-types-lesson",
+      "summary": "Tell defense, indicts, turns, and offense apart by what each accomplishes, and pick what the round needs.",
+      "estimatedMinutes": 7,
+      "content": {
+        "objective": "Classify answers by what they do — defense, indict, turn, or offense — and choose the kind of answer the round actually needs.",
+        "explanation": "Suppose the other side argues that a new downtown park will hurt nearby shops. You could answer in several ways, and each answer DOES a different job. If you show the harm is smaller or shakier than claimed, that is a defensive answer: when it succeeds, their argument gets smaller or less credible, but nothing new counts for you. One special kind of defense is the INDICT: you attack the argument's support — the source, the reasoning, the assumptions behind it — so the judge trusts it less. An indict weakens; it never reverses. An OFFENSIVE answer does a different job: it creates a reason the judge should prefer YOUR side. A simple way to keep them straight: defense explains why they lose an argument; offense creates a reason you win. The most surprising offensive move is the TURN, a reversal: followed honestly, the argument they made becomes a reason for your side — the harm they warned about points the other way, or the measure they chose favours you. These are functional categories, not magic labels: what matters is what the answer accomplishes if it succeeds, not what you call it. The refutation structure — they say, but, because, therefore — still tells you HOW to state any answer; this lesson is about WHAT KIND of answer you are making inside that structure. Turns also come in named varieties you will meet in a later lesson; for now, the skill is spotting the reversal.",
+        "whyMatters": "Judges vote for reasons, not for damage. Defense is not bad — a clean defensive answer is often exactly what a moment needs — and depending on what each side must prove and what remains standing, defense can sometimes be enough. The strategic risk comes when some of their offense survives and you have built no offense of your own: you may have made their case smaller all round without giving the judge a competing reason to prefer your side.",
+        "steps": [
+          "Restate what they claimed, in one sentence.",
+          "Name the part your response attacks: the claim itself, its support, or where it leads.",
+          "Ask: if this response fully succeeds, what is now true in the round?",
+          "Decide the direction: did their argument only get weaker or smaller, or does something now count for your side?",
+          "Classify: weaker only is defense (an indict if you attacked its support); counting for you is offense (a turn if their own argument was reversed to help you)."
+        ],
+        "workedExample": {
+          "prompt": "Topic: the city should turn a downtown parking lot into a public park. Opponent: shoppers will lose parking, so nearby businesses will lose customers. Response A: their claim rests on a survey of what business owners fear, not on any sales data. Response B: in similar projects, the park brought shops more foot traffic than the parking spots ever did — their business concern favours the park. Classify each response.",
+          "weakAnswer": "Both responses beat the business argument, so both count as offense for our side.",
+          "strongAnswer": "Response A is an indict: if it succeeds, the judge trusts their support less and the argument weakens — but they only lose ground; nothing counts for us yet. Response B is a turn: if it succeeds, the business concern they raised now argues FOR the park, so the judge gains a reason to prefer our side. In the refutation structure both begin the same way — they say shoppers are lost, but... — the difference is what each answer accomplishes.",
+          "whyItWorks": "The strong answer classifies by outcome — what is true if the response succeeds — instead of by how forceful the response sounds. Weakening the support is an indict; making their own concern point your way is a turn."
+        },
+        "guidedQuestion": {
+          "prompt": "The opponent argues your school recycling plan is too expensive. You answer: the plan is fully paid for by an existing county grant, so no school money is spent. Your answer completely succeeds. What kind of answer was it?",
+          "choices": [
+            "Defense — the cost objection is gone, but the judge still has no new reason to support recycling",
+            "Offense — any answer that fully succeeds becomes offense",
+            "A turn — the cost argument now helps your side",
+            "An indict — you attacked the source of their cost figures"
+          ],
+          "correctAnswer": "Defense — the cost objection is gone, but the judge still has no new reason to support recycling",
+          "hint": "Ask what is true after the answer succeeds — did anything start counting FOR you?",
+          "explanation": "This is the classic trap: a strong, completely successful answer can still be pure defense. Success is not what makes offense — direction is. The cost argument is removed, which is real progress, but removal only means they lose that argument; nothing here gives the judge a reason to vote for recycling. And no source was attacked, so it is not an indict.",
+          "skillTag": "Answer Types"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Topic: ban single-use plastic bags. Opponent: reusable cotton bags are worse for the environment, because making one takes far more resources than making one plastic bag. You answer: one reusable bag replaces hundreds of plastic ones over its life, so on the environmental measure they chose, the ban comes out ahead. What did your answer do?",
+            "choices": [
+              "Played defense — it only shows their resource number is smaller than claimed",
+              "Indicted their evidence — it attacks where their resource figures came from",
+              "Turned the argument — the environmental concern they raised now counts in favour of the ban",
+              "Changed the subject to a different advantage of the ban"
+            ],
+            "correctAnswer": "Turned the argument — the environmental concern they raised now counts in favour of the ban",
+            "hint": "Follow their own measure to its honest conclusion — whose side does it land on?",
+            "explanation": "This is a reversal. You accepted their measure — total environmental cost — and showed that, counted over whole lifetimes, it favours the ban. Their concern became your reason, and that reversal is exactly what makes a turn. Merely shrinking their number would have been defense, and nothing here questions their sources, so it is not an indict.",
+            "skillTag": "Answer Types"
+          },
+          {
+            "prompt": "Opponent: the new stadium will boost the local economy, according to a report. You answer: that report was commissioned by the stadium's own developer and counts spending that would have happened in town anyway. If your answer succeeds, what has it accomplished?",
+            "choices": [
+              "A turn — attacking their evidence flips the economy argument to your side",
+              "An indict — the judge trusts the report less, so the economy argument carries less weight, but it does not count for your side",
+              "Offense — it gives the judge a new reason of your own to oppose the stadium",
+              "It proves stadiums harm local economies everywhere"
+            ],
+            "correctAnswer": "An indict — the judge trusts the report less, so the economy argument carries less weight, but it does not count for your side",
+            "hint": "Weakening their support and reversing their argument are different jobs.",
+            "explanation": "Indict and turn are not the same move. An indict attacks the argument's support — here the report's incentives and its counting method — so the argument weakens. A turn would require the economy issue to end up favouring your side, and nothing here does that. Even a devastating indict is still defense: their loss, not your gain.",
+            "skillTag": "Answer Types"
+          },
+          {
+            "prompt": "They claim school uniforms reduce bullying, citing a small survey. You read a much larger, better-designed study finding uniforms have no effect on bullying. A teammate whispers: great, that turns their argument. Is the teammate right?",
+            "choices": [
+              "Yes — whenever your evidence is better than theirs, the argument is turned",
+              "Yes — a larger study always converts an argument into offense",
+              "No — because surveys can never be answered with studies",
+              "No — stronger counter-evidence is still defense here, because a finding of no effect cancels their advantage without making bullying a reason for your side"
+            ],
+            "correctAnswer": "No — stronger counter-evidence is still defense here, because a finding of no effect cancels their advantage without making bullying a reason for your side",
+            "hint": "A turn needs a reversal. Did the bullying issue end up pointing at your side?",
+            "explanation": "Better evidence makes an answer stronger, not offensive. A finding of no effect neutralises their advantage — excellent defense — but the bullying issue now counts for nobody. If your study had instead found uniforms increase bullying, the issue would point your way and you would have a turn. What the answer accomplishes, not the quality of the evidence, decides the label.",
+            "skillTag": "Answer Types"
+          },
+          {
+            "prompt": "Your rebuttal answered all three of their arguments with clean defensive answers and one sharp indict, and you spent no time on your own case. Their strongest argument survives in weakened form. What is the strategic gap?",
+            "choices": [
+              "Defensive answers were the wrong choice — every answer should have been a turn",
+              "You made their case smaller but never gave the judge anything that counts for your side, so their surviving argument can still decide the round",
+              "Indicts should never be used while any opposing argument survives",
+              "There is no gap — weakening all three arguments guarantees the win"
+            ],
+            "correctAnswer": "You made their case smaller but never gave the judge anything that counts for your side, so their surviving argument can still decide the round",
+            "hint": "After all that defense, what reason does the judge have to vote FOR you?",
+            "explanation": "None of the defensive answers was a mistake — defense is often exactly the right tool, and here it did real work. The gap is what you relied on it to accomplish: defense can only shrink what they have, never build what you need. With part of their offense standing and yours unextended, the judge's only surviving reason belongs to them. The round needed at least one source of offense — your extended case, a turn, or both.",
+            "skillTag": "Answer Types"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "The opponent argues that keeping the library open later will exhaust its staff. Which response is a TURN?",
+            "choices": [
+              "The plan funds two new part-time hires, so nobody's shift gets longer",
+              "Their exhaustion claim comes from a staffing report about a far larger city system",
+              "Evening shifts are the shifts our staff most often request, so on their own staff-wellbeing concern, the later hours are an improvement",
+              "Later hours also let working parents visit, which is a separate benefit"
+            ],
+            "correctAnswer": "Evening shifts are the shifts our staff most often request, so on their own staff-wellbeing concern, the later hours are an improvement",
+            "hint": "Three of these help you. Only one makes THEIR concern argue for your side.",
+            "explanation": "Walk the labels. The part-time hires answer removes the harm — defense. The larger-city report answer attacks their support — an indict, which is still defense. Working parents is offense, but it is a new independent reason, not a reversal. Only the shift-request answer takes the very concern they raised — staff wellbeing — and shows it favours later hours: their argument now helps you, which is what a turn is.",
+            "skillTag": "Answer Types"
+          },
+          {
+            "prompt": "Final speech, four minutes left. Their case is mostly answered, but one of their advantages survives your defense, and your own case has not been mentioned since your first speech. What does this round need most?",
+            "choices": [
+              "More defensive answers piled onto the surviving advantage, since defense got you this far",
+              "A restatement that their other arguments were all answered",
+              "New indicts against evidence the judge has already discounted",
+              "Something the judge can vote for: extend your own offense or a turn, and weigh it against their surviving advantage"
+            ],
+            "correctAnswer": "Something the judge can vote for: extend your own offense or a turn, and weigh it against their surviving advantage",
+            "hint": "Decide what the judge is missing, then pick the answer type that supplies it.",
+            "explanation": "The classification model also works in reverse: instead of labelling an answer, ask what the round is missing. The judge currently holds one live reason — theirs. More defense might shave it further but cannot hand the judge a reason to choose you; that job belongs to offense. Extending your case or a turn, then weighing it against what survives, supplies the missing piece. Defense got you here and was the right call earlier — it is simply the wrong tool for this last job.",
+            "skillTag": "Answer Types"
+          }
+        ]
+      }
+    }
+  },
+  {
     "slug": "debate-case-topic-definitions",
     "organization": "DEBATE",
     "track": "DEBATE",
@@ -212,7 +339,7 @@
       "estimatedMinutes": 7,
       "content": {
         "objective": "Identify what both sides disagree about and answer that point directly.",
-        "explanation": "Clash happens when two arguments meet on the same point. It starts with finding what the two sides actually disagree about \u2014 not what they both accept. A responsive answer targets the opponent's reasoning on that disputed point: repeating your own case is not clash, and answering a claim the opponent never made is not clash either. The strongest clash goes one step further and explains why your direct answer changes the disputed issue in your favour.",
+        "explanation": "Clash happens when two arguments meet on the same point. It starts with finding what the two sides actually disagree about — not what they both accept. A responsive answer targets the opponent's reasoning on that disputed point: repeating your own case is not clash, and answering a claim the opponent never made is not clash either. The strongest clash goes one step further and explains why your direct answer changes the disputed issue in your favour.",
         "whyMatters": "Rounds are won on comparison. Clash shows the judge that you are not just speaking well, you are winning the debate.",
         "steps": [
           "Name the opponent's claim.",
@@ -410,8 +537,8 @@
       "estimatedMinutes": 8,
       "content": {
         "objective": "Evaluate whether evidence genuinely supports an argument, and explain why one piece of evidence deserves more weight than another.",
-        "explanation": "Evidence only helps an argument when it actually supports the specific claim being made. To judge a piece of evidence, ask four things. FIT: does it address this exact claim, or something merely nearby? SOURCE: who produced it, is their expertise relevant, and are there incentives that call for extra scrutiny? METHOD: how was the conclusion reached \u2014 who was studied, was there a real comparison, could something else explain the result? INTERPRETATION: does the conclusion claimed actually follow, or is the speaker stretching the evidence past what it shows? When two pieces of evidence conflict, compare them on these same questions instead of picking the one you like.",
-        "whyMatters": "Rounds are full of confident citations. The debater who can say WHY one piece of evidence deserves more weight \u2014 not just that a source exists \u2014 gives the judge a reason to prefer their side, and spots the moment an opponent's conclusion goes further than their evidence.",
+        "explanation": "Evidence only helps an argument when it actually supports the specific claim being made. To judge a piece of evidence, ask four things. FIT: does it address this exact claim, or something merely nearby? SOURCE: who produced it, is their expertise relevant, and are there incentives that call for extra scrutiny? METHOD: how was the conclusion reached — who was studied, was there a real comparison, could something else explain the result? INTERPRETATION: does the conclusion claimed actually follow, or is the speaker stretching the evidence past what it shows? When two pieces of evidence conflict, compare them on these same questions instead of picking the one you like.",
+        "whyMatters": "Rounds are full of confident citations. The debater who can say WHY one piece of evidence deserves more weight — not just that a source exists — gives the judge a reason to prefer their side, and spots the moment an opponent's conclusion goes further than their evidence.",
         "steps": [
           "Check fit: restate the exact claim and ask whether the evidence is about that claim.",
           "Check source and method: relevant expertise, reasons for caution, who was studied, and whether anything else could explain the result.",
@@ -420,8 +547,8 @@
         "workedExample": {
           "prompt": "Claim: removing library late fees gets more books returned on time. Two pieces of (hypothetical) evidence: A - a survey where members say they would return books on time without fees; B - return rates tracked at two similar libraries, where only the one that removed fees improved.",
           "weakAnswer": "Evidence A is more recent, so it is better.",
-          "strongAnswer": "Evidence B deserves more weight. It measures actual returns rather than what people say they would do, and the unchanged library gives a comparison that points at the fee change itself. A is about intentions, which often differ from behaviour \u2014 it fits the topic, but B fits the claim.",
-          "whyItWorks": "The strong answer compares the two pieces on fit and method \u2014 measured behaviour with a comparison versus stated intentions \u2014 instead of using a shortcut like recency."
+          "strongAnswer": "Evidence B deserves more weight. It measures actual returns rather than what people say they would do, and the unchanged library gives a comparison that points at the fee change itself. A is about intentions, which often differ from behaviour — it fits the topic, but B fits the claim.",
+          "whyItWorks": "The strong answer compares the two pieces on fit and method — measured behaviour with a comparison versus stated intentions — instead of using a shortcut like recency."
         },
         "guidedQuestion": {
           "prompt": "Claim: the new crosswalk made the street safer. Evidence: accidents fell in the month after it was installed. What is the biggest weakness?",
@@ -447,18 +574,18 @@
             ],
             "correctAnswer": "The evidence measures enjoyment, not fitness, so it does not fit the claim",
             "hint": "Compare what was measured with what is claimed.",
-            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information \u2014 about enjoyment, not fitness.",
+            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information — about enjoyment, not fitness.",
             "skillTag": "Evidence"
           },
           {
             "prompt": "Neighbourhoods with more streetlights have less litter. A speaker concludes streetlights prevent litter. What should a careful debater say?",
             "choices": [
-              "Something else, like overall upkeep, could produce both \u2014 this needs a comparison before the causal claim stands",
+              "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
               "The connection proves the conclusion",
               "Litter statistics are always unreliable",
               "Streetlights are too expensive to matter"
             ],
-            "correctAnswer": "Something else, like overall upkeep, could produce both \u2014 this needs a comparison before the causal claim stands",
+            "correctAnswer": "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
             "hint": "Two things appearing together is not yet cause.",
             "explanation": "The association is real evidence, but well-kept neighbourhoods may get both lights and less litter. Without a comparison that separates the factors, the causal conclusion overreaches.",
             "skillTag": "Evidence"
@@ -466,13 +593,13 @@
           {
             "prompt": "Two reports on a teen curfew disagree. One, from a group campaigning for curfews, highlights a single town that improved. The other, an independent review of many towns with its method disclosed, found mixed results. Which deserves more weight and why?",
             "choices": [
-              "The independent review \u2014 it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+              "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
               "The campaign report, because it is more confident",
               "Neither, because they disagree",
               "The campaign report, because one clear example beats many mixed ones"
             ],
-            "correctAnswer": "The independent review \u2014 it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
-            "hint": "Compare breadth, method and incentives \u2014 do not just pick a side.",
+            "correctAnswer": "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+            "hint": "Compare breadth, method and incentives — do not just pick a side.",
             "explanation": "Disagreement is where evaluation starts. An incentive to persuade plus a single selected example warrants caution; breadth and a disclosed method warrant more confidence. That is comparison, not source-bashing.",
             "skillTag": "Evidence"
           }
@@ -481,14 +608,14 @@
           {
             "prompt": "Claim: a reading app doubled students' reading skill. Evidence: the app company surveyed volunteer users, who reported big improvement. What is the strongest evaluation?",
             "choices": [
-              "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' \u2014 the conclusion outruns the evidence",
+              "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
               "The evidence is fine because the company knows its own app best",
               "Reading skill cannot be measured, so the claim is meaningless",
               "The study is acceptable because many users responded"
             ],
-            "correctAnswer": "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' \u2014 the conclusion outruns the evidence",
+            "correctAnswer": "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
             "hint": "Stack the problems: who gathered it, who answered, what was measured, what is claimed.",
-            "explanation": "Each issue alone calls for caution; together \u2014 seller incentive, volunteers, self-report, and a precise 'doubled' claim \u2014 the evidence cannot carry the conclusion. Naming that gap is exactly the skill.",
+            "explanation": "Each issue alone calls for caution; together — seller incentive, volunteers, self-report, and a precise 'doubled' claim — the evidence cannot carry the conclusion. Naming that gap is exactly the skill.",
             "skillTag": "Evidence"
           }
         ]
@@ -808,8 +935,8 @@
       "estimatedMinutes": 6,
       "content": {
         "objective": "Understand what a debate round is and what you are trying to do in one.",
-        "explanation": "A debate round is a structured disagreement: two sides give reasons for different positions, answer each other, and a judge decides which side argued more persuasively. Your job is not just to speak \u2014 it is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and why your strongest points should decide the round. An argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive \u2014 introducing and building your side's case. Later speaking is mostly responsive \u2014 answering what has already been argued and comparing the two sides. Formats differ in speech names, order and timing, but these jobs stay the same.",
-        "whyMatters": "Beginners who enter a round without knowing the goal tend to list facts or repeat themselves. Judges can only vote on what they can follow: once you know the judge is deciding between reasons, every sentence gets a purpose \u2014 building a point, answering one, or explaining why yours matters more.",
+        "explanation": "A debate round is a structured disagreement: two sides give reasons for different positions, answer each other, and a judge decides which side argued more persuasively. Your job is not just to speak — it is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and why your strongest points should decide the round. An argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive — introducing and building your side's case. Later speaking is mostly responsive — answering what has already been argued and comparing the two sides. Formats differ in speech names, order and timing, but these jobs stay the same.",
+        "whyMatters": "Beginners who enter a round without knowing the goal tend to list facts or repeat themselves. Judges can only vote on what they can follow: once you know the judge is deciding between reasons, every sentence gets a purpose — building a point, answering one, or explaining why yours matters more.",
         "steps": [
           "Know your side's position and the strongest reasons for it.",
           "Track what the other side actually argues, and answer it directly instead of repeating yourself.",
@@ -818,7 +945,7 @@
         "workedExample": {
           "prompt": "A short exchange on whether the school day should start later.",
           "weakAnswer": "Side A: Later starts are good. Side B: No, they are not. Side A: Yes, they really are.",
-          "strongAnswer": "Side A: A later start helps because students sleep more and focus better in class. Side B: But buses and family schedules make a later start hard for many households. Side A: Schedules can be adjusted once \u2014 lost focus in every class is a cost that repeats every single day.",
+          "strongAnswer": "Side A: A later start helps because students sleep more and focus better in class. Side B: But buses and family schedules make a later start hard for many households. Side A: Schedules can be adjusted once — lost focus in every class is a cost that repeats every single day.",
           "whyItWorks": "Each side makes a claim with a reason, the reply answers that claim directly, and the final turn explains why one concern should matter more to the judge. That is a debate round in miniature."
         },
         "guidedQuestion": {
@@ -845,7 +972,7 @@
             ],
             "correctAnswer": "Persuade the judge that your side's position is stronger",
             "hint": "The judge is the audience that matters.",
-            "explanation": "Every speech exists to persuade the judge \u2014 not to overwhelm, insult, or outlast the other side.",
+            "explanation": "Every speech exists to persuade the judge — not to overwhelm, insult, or outlast the other side.",
             "skillTag": "Orientation"
           },
           {
@@ -871,7 +998,7 @@
             ],
             "correctAnswer": "Respond to their answer and explain why your point still stands",
             "hint": "An unanswered response usually wins the point.",
-            "explanation": "Debate is exchange: once your argument is answered, the judge needs your response to the answer \u2014 not a louder restatement.",
+            "explanation": "Debate is exchange: once your argument is answered, the judge needs your response to the answer — not a louder restatement.",
             "skillTag": "Orientation"
           }
         ],
@@ -885,7 +1012,7 @@
               "A comment about Side B's sincerity"
             ],
             "correctAnswer": "Why homework is still a real cause of lost sleep worth acting on, even if phones matter too",
-            "hint": "The clash is about the cause \u2014 resolve it.",
+            "hint": "The clash is about the cause — resolve it.",
             "explanation": "Side B answered the reason, so the judge needs Side A to engage that answer and explain why the original concern survives it. Responding to the response is the heart of debating.",
             "skillTag": "Orientation"
           }
@@ -1006,7 +1133,7 @@
       "estimatedMinutes": 8,
       "content": {
         "objective": "Compare impacts instead of only listing them.",
-        "explanation": "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves \u2014 the skill is making the comparison clear, not saying the lens words.",
+        "explanation": "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves — the skill is making the comparison clear, not saying the lens words.",
         "whyMatters": "Judges often believe both sides have some truth. Weighing tells them which truth should decide the round.",
         "steps": [
           "Identify both impacts.",
@@ -1017,7 +1144,7 @@
           "prompt": "Aff says preparedness; Neg says class time.",
           "weakAnswer": "Preparedness is more important.",
           "strongAnswer": "Preparedness outweighs class time on timeframe and reversibility. Lost class time is small and adjustable, but students using AI irresponsibly can create immediate academic and career consequences.",
-          "whyItWorks": "The strong answer compares both impacts and explains why one should decide the round \u2014 the lens names just make that comparison easy to follow."
+          "whyItWorks": "The strong answer compares both impacts and explains why one should decide the round — the lens names just make that comparison easy to follow."
         },
         "guidedQuestion": {
           "prompt": "Which phrase is weighing?",
@@ -1084,7 +1211,7 @@
             ],
             "correctAnswer": "Our harm is already starting, so the judge should act on it before their distant harm can even begin",
             "hint": "Explain why sooner should matter to the decision.",
-            "explanation": "This uses the time difference to tell the judge why one impact should decide the round \u2014 timeframe weighing, whether or not the word is said.",
+            "explanation": "This uses the time difference to tell the judge why one impact should decide the round — timeframe weighing, whether or not the word is said.",
             "skillTag": "Weighing"
           }
         ]

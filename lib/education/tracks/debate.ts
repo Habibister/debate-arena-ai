@@ -139,8 +139,9 @@ export const DEBATE_EVIDENCE_LESSON: EducationRegistryEntry = {
  *  is (defense, indict, turn, offense) as the taxonomy foundation the held rebuttal drill items
  *  test. Registered via the same catalog-by-reference mechanism as the Wave 1A additions and kept
  *  OUT of MIGRATED_SLUGS: it was authored in B2.1, not migrated, and historical migration claims
- *  stay scoped to the five. Teaching only — the four related drill items (rb-02, rb-13, rb-16,
- *  rb-30) remain HELD until each independently passes the closed-corpus reactivation gate. */
+ *  stay scoped to the five. Teaching shipped first — the four related drill items (rb-02, rb-13,
+ *  rb-16, rb-30) stayed HELD until each independently passed the closed-corpus reactivation gate;
+ *  all four passed and were released in the strictly-later reactivation commit (2026-08-25). */
 export const DEBATE_ANSWER_TYPES_LESSON: EducationRegistryEntry = {
   id: "debate-answer-types",
   track: "GENERAL_DEBATE",

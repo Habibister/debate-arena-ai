@@ -399,6 +399,12 @@ function shuffle<T>(items: T[]): T[] {
 // by any reachable surface — the Event Navigator affirmatively refuses weighting content. Withheld
 // from serving until the curriculum-closure slice (B2) teaches the rule; the item stays in the
 // bank unchanged. Do NOT delete it; it is a curriculum target, not a defect.
+//
+// PI-26 SOURCE GATE (owner ruling, 2026-08-25): the weighting claim is INTERNALLY GROUNDED only.
+// The B2.4 lesson must NOT teach this rule, and pi-26 must NOT be reactivated, until a primary
+// official DECA source locator supporting the instructional-area vs individual-PI weighting claim
+// has been pinned and verified. The internal research synthesis is NOT sufficient on its own to
+// satisfy this gate.
 export const DECA_DRILL_HELD_IDS: ReadonlyArray<string> = [
   "pi-26", // requires: the area-level exam-weighting rule taught learner-visibly
 ];

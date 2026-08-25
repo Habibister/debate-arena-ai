@@ -166,7 +166,9 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // evidence before learning to signpost, clash and refute with it.
   DEBATE_EVIDENCE_LESSON,
   // B2.1: the answer-types taxonomy lesson — chained after refutation (HOW to state an answer)
-  // and before constructive speeches; teaching only, the related drill items remain held.
+  // and before constructive speeches. Learner-visible teaching; its drill items rb-02, rb-13,
+  // rb-16 and rb-30 were released from the serving hold only after B2.1 preparedness acceptance,
+  // while the turn-mechanics targets rb-14 and rb-15 remain held for B2.2.
   DEBATE_ANSWER_TYPES_LESSON,
   {
     id: "how-deca-roleplay-works",

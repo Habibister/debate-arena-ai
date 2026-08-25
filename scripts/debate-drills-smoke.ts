@@ -119,11 +119,11 @@ async function main() {
   const OVERDRAW = 40; // > pool enters the repeat branch; < 2x pool makes the while loop append exactly once
   const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
   assert.equal(overdrawn.length, OVERDRAW, "a 40-question request on the rebuttal pool still serves 40");
-  // B1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 24, not 30 — six taxonomy items are
-  // held until the curriculum teaches turns/offense-defense (see DEBATE_DRILL_HELD_IDS). The bank
-  // still holds 30; the serving hold is proven two-sided in the B1 section below.
-  assert.equal(new Set(overdrawn.map((q) => q.id)).size, 24,
-    "over exactly 24 distinct items — the served rebuttal pool excludes the six held ids");
+  // B2.1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 28 — rb-02/rb-13/rb-16/rb-30 were
+  // released after the answer-types teaching shipped and each passed its reactivation gate;
+  // rb-14 and rb-15 stay held until B2.2 teaches turn mechanics. Bank still holds 30.
+  assert.equal(new Set(overdrawn.map((q) => q.id)).size, 28,
+    "over exactly 28 distinct items — the served rebuttal pool excludes only the two still-held ids");
 
   // Slice 2: the same depth proof for claim-warrant-impact. There was no legacy CWI padding fixture
   // to re-base, so these are additions rather than replacements.
@@ -186,30 +186,32 @@ async function main() {
     "so persistence receives 67 with passed:false, never a MASTERED-qualified result");
 
   // ---- B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25) ----------------------------------
-  // Six VALID rebuttal taxonomy items are withheld from serving until a reachable lesson teaches
-  // the taxonomy they test (turns, offense vs defense, link/impact turns, indicts). The hold lives
-  // at the single pool-construction point in buildDrillSession; these checks prove it two-sided —
-  // held ids never serve, non-held ids all still serve — and prove the bank itself is untouched.
-  assert.deepEqual([...DEBATE_DRILL_HELD_IDS], ["rb-02", "rb-13", "rb-14", "rb-15", "rb-16", "rb-30", "wg-08"],
-    "B1-1. the held set is exactly the six adjudicated rebuttal ids plus wg-08 (held by the final acceptance gate)");
+  // VALID items whose tested concepts are untaught are withheld from serving until a reachable
+  // lesson teaches them. The hold lives at the single pool-construction point in buildDrillSession;
+  // these checks prove it two-sided — held ids never serve, non-held ids all still serve — and
+  // prove the bank itself is untouched.
+  // B2.1 RELEASE (2026-08-25): rb-02, rb-13, rb-16, rb-30 released after each passed the full
+  // reactivation gate on the taught answer-types lesson (see the release record in the bank).
+  assert.deepEqual([...DEBATE_DRILL_HELD_IDS], ["rb-14", "rb-15", "wg-08"],
+    "B1-1. the held set is exactly rb-14, rb-15 (await B2.2 turn-mechanics teaching) and wg-08 (awaits B2.3)");
   for (const id of DEBATE_DRILL_HELD_IDS) {
     assert.ok(DRILL_BANK.some((q) => q.id === id),
       `B1-2. held item ${id} remains IN the bank — held means unserved, never deleted`);
   }
   const b1Full = buildDrillSession(300);
   assert.equal(new Set(b1Full.map((q) => q.id)).size, DRILL_BANK.length - DEBATE_DRILL_HELD_IDS.length,
-    "B1-3. a full-bank overdraw serves exactly the 143 non-held items");
+    "B1-3. a full-bank overdraw serves exactly the 147 non-held items");
   assert.ok(b1Full.every((q) => !DEBATE_DRILL_HELD_IDS.includes(q.id)),
     "B1-4. no held id is ever served, even at full-bank overdraw");
   const b1Rb = buildDrillSession(60, ["rebuttal"]);
   const b1RbIds = new Set(b1Rb.map((q) => q.id));
-  assert.equal(b1RbIds.size, 24, "B1-5. the served rebuttal pool is exactly 24 of 30");
+  assert.equal(b1RbIds.size, 28, "B1-5. the served rebuttal pool is exactly 28 of 30 (four B2.1-taught items released)");
   for (const q of DRILL_BANK) {
     if (q.area === "rebuttal" && !DEBATE_DRILL_HELD_IDS.includes(q.id)) {
       assert.ok(b1RbIds.has(q.id), `B1-6. non-held rebuttal item ${q.id} still serves — the hold does not over-filter`);
     }
   }
-  assert.ok(24 >= DEBATE_DRILL_REQUIRED_UNIQUE,
+  assert.ok(28 >= DEBATE_DRILL_REQUIRED_UNIQUE,
     "B1-7. the served rebuttal pool stays far above the unique-evidence floor, so mastery remains reachable");
   // Weighing hold (final acceptance gate): wg-08 excluded, wg-29 EXPLICITLY still serving — the
   // positive control matters as much as the exclusion, because wg-29's fair-transfer status was
@@ -226,9 +228,11 @@ async function main() {
   }
   assert.ok(29 >= DEBATE_DRILL_REQUIRED_UNIQUE,
     "B1-14. the served weighing pool stays far above the unique-evidence floor");
-  const heldItem = DRILL_BANK.find((q) => q.id === "rb-02")!;
-  assert.equal(gradeDrillAnswers([{ id: "rb-02", selected: heldItem.correctAnswer }]).items[0].correct, true,
+  const heldItem = DRILL_BANK.find((q) => q.id === "rb-14")!;
+  assert.equal(gradeDrillAnswers([{ id: "rb-14", selected: heldItem.correctAnswer }]).items[0].correct, true,
     "B1-8. an in-flight answer to a held id still grades honestly — holding never falsifies accounting");
+  assert.ok(b1RbIds.has("rb-02") && b1RbIds.has("rb-13") && b1RbIds.has("rb-16") && b1RbIds.has("rb-30"),
+    "B1-8c. the four B2.1-released items positively serve again — release is real, not just list-shrink");
   const heldWg = DRILL_BANK.find((q) => q.id === "wg-08")!;
   assert.equal(gradeDrillAnswers([{ id: "wg-08", selected: heldWg.correctAnswer }]).items[0].correct, true,
     "B1-8b. an in-flight answer to held wg-08 also grades honestly");
@@ -536,7 +540,7 @@ async function main() {
   assert.equal(itemLines('export const DRILL_BANK = [\n{ id: "x-01", area: "rebuttal" },\nexport type X').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is 5 x 30. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 (a waiver is not human review), and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. B1 (2026-08-25) then repaired three adjudicated clash defects (cl-08 rekeyed to direct clash; cl-10 and cl-30 lost their second-correct-answer distractors) and withheld seven valid but untaught items from serving — the rebuttal taxonomy six (rb-02, rb-13, rb-14, rb-15, rb-16, rb-30) and weighing-framework item wg-08, whose hold the final acceptance gate ordered after overturning an earlier fair-transfer ruling, while wg-29's fair-transfer status was independently upheld and it still serves — the bank keeps all 150 items, 24 of 30 rebuttal and 29 of 30 weighing items serve, and the ids release as the curriculum-closure slice publishes the teaching. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is 5 x 30. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 (a waiver is not human review), and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. B1 (2026-08-25) then repaired three adjudicated clash defects (cl-08 rekeyed to direct clash; cl-10 and cl-30 lost their second-correct-answer distractors) and withheld seven valid but untaught items from serving — the rebuttal taxonomy six (rb-02, rb-13, rb-14, rb-15, rb-16, rb-30) and weighing-framework item wg-08, whose hold the final acceptance gate ordered after overturning an earlier fair-transfer ruling, while wg-29's fair-transfer status was independently upheld and it still serves. B2.1 (2026-08-25) then published the answer-types teaching and released rb-02, rb-13, rb-16 and rb-30 after each passed its closed-corpus reactivation gate on the final lesson bytes (AI-authored, independently AI-reviewed, owner content-review waiver 2026-08-25 — a waiver is not human review); the bank keeps all 150 items, 28 of 30 rebuttal and 29 of 30 weighing items serve, and the remaining held ids (rb-14, rb-15, wg-08) release as their teaching slices ship. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

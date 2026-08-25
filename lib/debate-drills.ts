@@ -436,26 +436,24 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-// B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25). These seven items are VALID,
-// competition-valuable questions whose tested concepts are not yet taught by any reachable
-// lesson: the six rebuttal items test response-move taxonomy (turns, offense vs defense,
-// link/impact turns, double turns, indicts) while the only rebuttal instruction is the THEY SAY /
-// BUT / BECAUSE / THEREFORE template, and wg-08 tests the weighing framework/standard concept the
-// weighing lesson never introduces (it teaches lenses bound to the act of comparison, never an
-// early-stated standard) — wg-08's hold was ordered by the B1 final acceptance gate, which
-// overturned an earlier fair-transfer ruling under the strict learner-preparedness standard.
-// Under the rule that learners are not durably assessed on material CompeteReady never taught,
-// they are withheld from serving until the curriculum-closure slice (B2) publishes the teaching;
-// the ids stay in the bank unchanged and each B2 lesson commit releases its ids from this list.
-// Do NOT delete these items; they are curriculum targets, not defects.
+// B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25). Valid, competition-valuable questions
+// whose tested concepts were not yet taught by any reachable lesson are withheld from serving
+// until teaching ships; the ids stay in the bank unchanged and each release strictly follows its
+// teaching commit. Do NOT delete held items; they are curriculum targets, not defects.
+//
+// B2.1 RELEASE (2026-08-25): rb-02, rb-13, rb-16 and rb-30 were REMOVED from this list after each
+// independently passed the full reactivation gate on the debate-answer-types lesson's FINAL bytes:
+// teaching authored and learner-reachable (chained after refutation), independent educational
+// review, the owner's blind closed-corpus pass (answers recoverable from CompeteReady instruction
+// alone, one best answer, no outside knowledge, no teaching-to-the-key), per-item preparedness
+// PASS, and the owner's explicit B2.1 content-review waiver (2026-08-25, scoped to the accepted
+// teaching candidate's educational bytes; a waiver is not human review). Item bytes unchanged.
+//
+// STILL HELD:
 export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
-  "rb-02", // requires: definition of a turn
-  "rb-13", // requires: offense vs defense taxonomy
-  "rb-14", // requires: link turn vs impact turn
-  "rb-15", // requires: the double-turn hazard
-  "rb-16", // requires: indict vs turn distinction
-  "rb-30", // requires: defense-only vs offense strategy
-  "wg-08", // requires: weighing framework/standard concept and why an early standard shapes later comparison
+  "rb-14", // requires: link turn vs impact turn (B2.2 teaching)
+  "rb-15", // requires: the double-turn hazard (B2.2 teaching)
+  "wg-08", // requires: weighing framework/standard concept and why an early standard shapes later comparison (B2.3)
 ];
 
 // Draw a session of `count` original questions. If `areas` is given, restrict to them (focused drill).

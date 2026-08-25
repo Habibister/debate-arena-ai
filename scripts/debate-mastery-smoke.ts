@@ -883,10 +883,12 @@ async function main() {
     focused20.length === 20 && new Set(focused20.map((q) => q.id)).size === 20);
   const OVERDRAW = 40; // > pool enters the repeat branch; < 2x pool makes the while loop append exactly once
   const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
-  // B1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 24 — six untaught taxonomy items are
-  // held (DEBATE_DRILL_HELD_IDS); the bank keeps 30 and the hold is proven in the drills smoke.
-  control("and the padding branch still exists above the pool: 40 served over exactly 24 distinct (served pool excludes 6 held ids)",
-    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 24);
+  // B2.1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 28 — rb-02/rb-13/rb-16/rb-30 were
+  // released after the answer-types teaching shipped and each passed its reactivation gate; rb-14
+  // and rb-15 stay held (DEBATE_DRILL_HELD_IDS) until B2.2; the bank keeps 30 and the hold is
+  // proven two-sided in the drills smoke.
+  control("and the padding branch still exists above the pool: 40 served over exactly 28 distinct (served pool excludes 2 held ids)",
+    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 28);
   // Slice 2: the same G2 depth proof for claim-warrant-impact, kept in the mastery smoke because the
   // audit's Verification line names these suites. Builder-level and read-only — no mastery record is
   // created or altered, and no evidenceScore fixture is fabricated for CWI.

@@ -2,7 +2,72 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — Debate Curriculum Wave 1A — beginner Debate orientation (SHIPPED and Production-verified)
+## Latest handoff — Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure (SHIPPED and Production-verified)
+
+Implementation `aea7f74f135d233821a0356ac63478987f6f9e5c`, Production deployment **`6073720884`**.
+
+**What shipped:** the authored lesson `debate-evidence-evaluation` ("Judge the evidence",
+`/lessons/debate-evidence-evaluation`) — the teaching home for the already-measured
+`debate-evidence` skill. Exact mapping to preserve: skillSlug `debate-evidence` → practiceDrill
+`{ track: "debate", area: "evidence-evaluation" }`
+(`/study-arcade?track=debate&area=evidence-evaluation`). Inserted directly after CWI in the lesson
+path: orientation → CWI → evidence-evaluation → signposting → clash → refutation → constructive →
+weighing → terminal. Schema/seed ZERO; no new Skill row, drill area, alias, or evidence mechanism.
+
+**Invariants to preserve:**
+
+- **Metadata, not code.** Wave 1C added zero learning-architecture code — the registry metadata
+  alone activated the drill CTA, reverse remediation and the Coach. Never add an Evidence-specific
+  branch to the remediation lookup, review logic, Coach, `getDueReviews`, spaced review, or
+  grading. The in-lesson checks stay formative; the drill is the durable demonstration.
+- **DUE ≠ WEAK.** Due `debate-evidence` at 69 → Evidence lesson + exact drill; at 70/71 → exact
+  drill only. Due is re-demonstration timing; only low demonstrated performance earns the lesson.
+  `PRACTICING_MASTERY_MIN` (70) and the drill pass threshold (also 70) remain distinct concepts.
+- **Most-overdue ordering.** `nextReviewAt ASC` stays authoritative; a weaker later due row never
+  displaces the earlier due row. No weakest-first reranking.
+- **Coach authority.** The server chooses from durable evidence; the AI explains only — it never
+  picks a skill, lesson, drill, URL or ranking. `NO_DUE_ACTION` unchanged.
+- **Intentional formative-writing displacement.** `/skills/debate-evidence/practice` still exists
+  and remains formative: it persists `PracticeSession` only — no `MasteryProgress`, no
+  `SkillReviewSchedule` advancement — so it cannot resolve the durable due review, and due-review
+  remediation and the Coach correctly prefer the exact drill-backed path instead. This makes
+  `debate-evidence` the currently intentional overlap between a formative writing destination and a
+  measured remediation path; the review-ladder guard requires any such displacement to be explicit,
+  never silent. Do not describe the writing route as broken or removed, and do not let another
+  mapped skill displace a writing destination silently.
+- **Executable trust boundary.** Review-page executable behavior did not change in Wave 1C (only
+  its explanatory comment); the review page remains executable-equivalent to its protected
+  historical baseline, and the other protected learning/evidence surfaces remain frozen.
+- **Pedagogy.** Evidence evaluation is comparative and reason-based — fit, source, method,
+  interpretation, and comparing conflicting evidence. Never regress to shallow rules
+  (newer/bigger always wins, experts always right, funded research automatically false, correlation
+  useless, one study proves causation). Content stays broadly format-agnostic; the ultimate
+  PF-vs-Parliamentary target is NOT resolved. Authored-content changes go through LC1 (current
+  review marker `W1C-DEBATE-EVIDENCE-EVALUATION`; the 18 existing reviewed entries unchanged plus
+  one new Evidence entry, 19 total).
+- **Four durable loops, precisely.** CWI (embedded server-graded practice — architecturally
+  distinct, no registry reverse-remediation mapping), Evidence Evaluation, Refutation and Weighing
+  (each: exact drill, reverse remediation + Coach). Orientation remains Taught + Formative only.
+
+**`/skills/debate-evidence`** still resolves through the existing compatibility path to
+`/lessons?track=debate`, where the lesson is visible. No new routing architecture was required for
+Wave 1C because the lesson is already reachable through the curriculum path, CTA, remediation and
+Coach; direct lesson resolution for `/skills/debate-evidence` remains an open, separate product
+decision.
+
+### Next curriculum work
+
+**All three planned Wave 1 slices have shipped** (1A CLOSED, 1B CLOSED, 1C SHIPPED /
+Production-verified). **No next curriculum wave has been chosen — the next product step is a
+separate decision.** Remaining broader gaps stay coverage/connectivity: Signposting/Clash/
+Constructive Speeches drill-and-evidence connectivity, later speeches, flowing, round strategy,
+crystallization, delivery, questioning/cross-ex.
+
+Separately and still open, unchanged by this wave: moving-HEAD debt 18, `/debates/history`, the
+stale Reassess CTA, the skills-compat XP prose, the six inherited M14 `Latest handoff` headings, the
+duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — Debate Curriculum Wave 1A — beginner Debate orientation (SHIPPED and Production-verified)
 
 Implementation `a0c4e67f486e2f3bbb5cc75523eeb38d8b9c1f83`, Production deployment **`6073011910`**.
 

@@ -2,7 +2,87 @@
 
 Everything the next engineer needs to continue safely. Rewrite in place; do not append history.
 
-## Latest handoff — P0.1 assessment-integrity + B1 educational-validity closure (SHIPPED and Production-verified)
+## Latest handoff — B2.1 answer-types teaching + four-item reactivation (SHIPPED and Production-verified)
+
+Teaching SHA **`35690107c430fe3eb45eba12c50488a8026edded`** (`feat(education): teach debate answer
+types`); release/feature SHA **`3199900e82ccc825da4e40823e4d17dab9713bde`** (`feat(education):
+reactivate taught rebuttal drills`); Production deployment **`6093148342`** (created
+2026-08-25T22:18:28Z), status **SUCCESS** — the deployment object's own sha field ties Production
+to the release SHA exactly. Teach-before-test ancestry: `8ea30c8d3e22be3e99e666914a011860cc76b5c2`
+(docs baseline) → teaching → reactivation, the release strictly later in history. Any later
+docs-only truth-sync commit is NOT the feature SHA. Nothing was deleted.
+
+**What shipped:**
+
+- **Teaching:** authored catalog lesson `debate-answer-types` ("Know what your answer does") — the
+  defense / indict / turn / offense taxonomy, classify-by-outcome method, and the conditional
+  defense-vs-offense strategy doctrine; 7 formative questions (keys A/C/B/D/B/C/D). The registry
+  entry is CTA-only (no skillSlug — refutation keeps the sole `debate-rebuttal` remediation
+  claim); chain refutation → answer-types → constructive-speeches. LC1 baseline 20 blocks, marker
+  `B21-DEBATE-ANSWER-TYPES-TEACHING`.
+- **Reactivation (strictly later commit):** `rb-02`, `rb-13`, `rb-16`, `rb-30` released from
+  `DEBATE_DRILL_HELD_IDS` after each independently passed the closed-corpus reactivation gate on
+  the FINAL lesson bytes (owner blind pass; per-item preparedness PASS). Serving/mastery smokes
+  re-based two-sided with a positive-serving proof (B1-8c). All 270 assessment item literals are
+  byte-identical to the B1 state (parsed field-level proof at acceptance).
+
+**Invariants to preserve:**
+
+- **The held set is exactly 4:** Debate `rb-14` (UNTAUGHT — B2.2 target), `rb-15` (UNTAUGHT —
+  B2.2 target) and `wg-08` (PARTIALLY TAUGHT — weighing lenses are taught; the
+  early-stated-standard mechanism the item requires remains untaught, so it stays held for B2.3);
+  DECA `pi-26` (UNTAUGHT — B2.4 target; plus the primary-official-locator gate remains
+  unsatisfied). Valid curriculum targets; never call them bad, invalid, deleted, or retired. None
+  of them is yet prepared for assessment on its held target competency; partial teaching does NOT
+  make `wg-08` assessment-ready. `wg-29` remains FAIR TRANSFER / SERVING — never collapse it with
+  `wg-08`.
+- **Served populations:** Debate **147/150** (rebuttal 28/30, weighing 29/30); DECA **119/120**
+  (PI 29/30). Held ids stay physically in their banks; historical attempts are NOT invalidated;
+  in-flight held-item answers still grade honestly.
+- **B2.1 provenance:** the educational bytes are AI-authored and independently AI-reviewed
+  (including the owner's blind closed-corpus protocol). External human content review was
+  **WAIVED BY THE PROJECT OWNER on 2026-08-25**, scoped to the accepted teaching bytes at
+  `35690107c430fe3eb45eba12c50488a8026edded`; human content review was **NOT PERFORMED**; a
+  waiver is NOT human review. Never write "human-reviewed" / "human-approved" / "externally
+  reviewed" for these bytes. Any future change to those educational bytes voids the waiver for
+  the changed bytes and requires a new provenance/review decision.
+- **PI-26 source gate (owner ruling, mirrored beside the hold in `lib/deca-drills.ts`):** the
+  instructional-area-vs-individual-PI weighting doctrine is INTERNALLY GROUNDED only; B2.4 must
+  NOT teach it and `pi-26` must NOT be reactivated until a primary official DECA source locator
+  supporting the claim is pinned and verified; the internal research synthesis alone is not
+  sufficient. Gate currently UNSATISFIED.
+
+**Production verification (read-only, concise):** local HEAD = `origin/main` = the true remote
+main = the release SHA; the deployment object's own sha field matches exactly; public routes
+healthy (`/`, `/signin`, `/signup`; zero unexpected 5xx); unauthenticated `/dashboard` preserved
+its sign-in redirect; no login, no drill submission, no DB access, no provider calls. Production
+serving truth rests on exact source identity plus the independently accepted local serving proofs
+— no authenticated learner session was performed.
+
+**Latent serving debt — keep visible until executable protection ships:** the session-builder
+selection loop can fail to terminate if a requested area ever has zero served items. UNREACHABLE
+in Production today (active served areas non-empty: rebuttal 28, weighing 29, PI 29). Required
+future treatment: fail closed **before** entering the selection loop on an empty served pool.
+
+### Next work
+
+**B2.2 — NEXT, NOT STARTED:** Debate turn-mechanics teaching for `rb-14` and `rb-15` — link /
+no-link mechanics, link turn, impact turn, and the double-turn hazard — to the same
+learner-visible closed-corpus preparedness standard, with the same per-item gate before any
+reactivation. **B2 must NOT simply unhold ids.** Then **B2.3** (target `wg-08`) and **B2.4**
+(target `pi-26`; official-locator gate unsatisfied). **P0.2 — NOT STARTED.**
+
+This release does not make the education system complete or perfect; the larger
+education-perfection program still has material gaps across Debate, DECA, and HOSA.
+
+Separately and still open, unchanged by this release: the latent serving debt above; the inherited
+stale "seven lessons"-era source comments (`lib/education/registry.ts` top-of-file,
+`scripts/skills-compat-smoke.ts` ~line 370, `scripts/debate-mastery-smoke.ts` ~line 495) — OPEN,
+NON-BLOCKING, deferred to the stale-comment truth sweep; moving-HEAD debt 18; `/debates/history`;
+the stale Reassess CTA; the skills-compat XP prose; the six inherited M14 `Latest handoff`
+headings; the duplicate historical `36d` labels. Not all of S1B is closed.
+
+## Previous handoff — P0.1 assessment-integrity + B1 educational-validity closure (SHIPPED and Production-verified)
 
 Feature/release SHA **`20609a69dc30b37a044c221bd28209a43d9a0a2c`** (the B1 commit), Production
 deployment **`6090563687`**, status **SUCCESS** — the deployment object's own sha field ties
@@ -30,13 +110,17 @@ Any later docs-only truth-sync commit is NOT the feature SHA. Nothing was delete
 
 **Invariants to preserve:**
 
-- **The held set is exactly 8:** Debate `rb-02`, `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-30`,
+- **The held set at that shipment — exactly 8:** Debate `rb-02`, `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-30`,
   `wg-08`; DECA `pi-26`. They are **valid curriculum targets** excluded from NEW durable assessment
   only because learner-visible teaching does not yet prepare learners for them. Never call them
-  bad, invalid, deleted, or retired. **`wg-08` is UNTAUGHT / HELD; `wg-29` is FAIR TRANSFER /
-  SERVING** — adjudicated separately; never collapse the two.
-- **Served populations:** Debate **143/150** (rebuttal 24/30, weighing 29/30); DECA **119/120**
-  (PI 29/30). Held ids stay physically in their banks; historical attempts are NOT invalidated.
+  bad, invalid, deleted, or retired. **`wg-08` is HELD — partially taught (weighing lenses
+  taught; its required early-stated-standard mechanism untaught); `wg-29` is FAIR TRANSFER /
+  SERVING** — adjudicated separately; never collapse the two. (B1 record: B2.1 has since
+  released `rb-02`, `rb-13`, `rb-16`, `rb-30`; the current held set is exactly 4 — see the latest
+  handoff.)
+- **Served populations at that shipment:** Debate **143/150** (rebuttal 24/30, weighing 29/30);
+  DECA **119/120** (PI 29/30); since B2.1: Debate **147/150** (rebuttal 28/30) — see the latest
+  handoff. Held ids stay physically in their banks; historical attempts are NOT invalidated.
 - **Provenance:** B1 final educational content is AI-assisted, independently AI-reviewed, blind
   closed-corpus reviewed, adversarially final-byte validated. External human content review was
   **WAIVED BY THE PROJECT OWNER on 2026-08-25**; human content review was **NOT PERFORMED**. Never
@@ -54,14 +138,15 @@ Production to the release SHA; public routes showed no unexpected 5xx; an unauth
 route preserved its sign-in redirect; no authenticated submission, no DB mutation.
 
 **Latent serving debt — keep visible until executable protection ships:** the session-builder
-selection loop can fail to terminate if a requested area ever has zero served items. UNREACHABLE in
-Production today (active served areas non-empty: rebuttal 24, weighing 29, PI 29). Required future
-treatment: fail closed **before** entering the selection loop on an empty served pool. Not a B1
-release blocker; deliberately not fixed in this release.
+selection loop can fail to terminate if a requested area ever has zero served items. UNREACHABLE
+in Production (served areas at that shipment: rebuttal 24, weighing 29, PI 29; since B2.1:
+rebuttal 28). Required future treatment: fail closed **before** entering the selection loop on an
+empty served pool. Not a B1 release blocker; deliberately not fixed in that release.
 
 ### Next work
 
-**B2 — NEXT, NOT STARTED:** teach the eight held concepts to the learner-visible closed-corpus
+**B2 — as then planned (superseded: B2.1 has since shipped and released four of the eight — see
+the latest handoff):** teach the eight held concepts to the learner-visible closed-corpus
 preparedness standard: turn definition/reversal; offense vs defense; link turn vs impact turn;
 double-turn hazard; indict vs turn; defense-only vs offense strategy; weighing framework / early
 standard; DECA instructional-area weighting rule vs individual PI weighting. Required sequence:
@@ -88,8 +173,8 @@ no independent DB inspection was performed by verification), so no skill-missing
 actual-disagreement/direct-engagement explanation, two recall items → application) → skillSlug
 `debate-clash` → practiceDrill `{ track: "debate", area: "clash" }`
 (`/study-arcade?track=debate&area=clash`) → 30 new server-graded items (Debate bank then 150
-authored, old 120 unchanged at that shipment; since B1 — see the latest handoff — **143/150
-serve**, with 7 valid-but-untaught items held from NEW serving) → the existing generic session →
+authored, old 120 unchanged at that shipment; since B2.1 — see the latest handoff — **147/150
+serve**, with 3 valid-but-untaught items held from NEW serving) → the existing generic session →
 grading → `MasteryProgress` →
 `SkillReviewSchedule` path. Schema/migrations/`prisma/seed.ts` ZERO.
 

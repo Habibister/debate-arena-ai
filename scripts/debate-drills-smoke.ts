@@ -224,8 +224,24 @@ async function main() {
 
   // (a) Every original item survives byte-identical, in its original relative order.
   const currentById = new Map(currentItems.map((line) => [idOf(line), line]));
+  // P0.1 ASSESSMENT-INTEGRITY REPAIR: the adversarial proof showed the original items' answer-form
+  // leakage let a stem-blind learner beat the 70% threshold, so the classified originals below were
+  // deliberately repaired. The freeze is now TWO-SIDED: every listed id MUST differ from the
+  // immutable parent (a silent revert is a failure), every unlisted original stays byte-identical,
+  // and scripts/assessment-quality-guard.ts enforces the answer-form property the repair restored.
+  // Repaired items are PENDING human review of their final bytes (see the in-bank provenance notes).
+  const P01_REPAIRED_ORIGINALS = new Set(["cw-01","cw-04","cw-05","cw-07","cw-08","cw-09","rb-01","rb-02","rb-03","rb-04","rb-05","rb-07","rb-08","rb-09","ev-01","ev-02","ev-03","ev-04","ev-06","ev-07","ev-08","ev-09","wg-01","wg-02","wg-03","wg-04","wg-05","wg-06","wg-07","wg-08","wg-09"]);
   for (const parentLine of parentItems) {
     const id = idOf(parentLine);
+    if (P01_REPAIRED_ORIGINALS.has(id)) {
+      assert.ok(currentById.has(id), `G0-4r. repaired original ${id} still exists`);
+      assert.notEqual(currentById.get(id), parentLine,
+        `G0-4r2. repaired original ${id} DIFFERS from the immutable parent — a silent revert of the P0.1 repair must fail`);
+      const areaOf = (line: string) => (line.match(/area: "([a-z-]+)"/) ?? [])[1];
+      assert.equal(areaOf(currentById.get(id) as string), areaOf(parentLine),
+        `G0-4r3. and ${id} still declares its original area`);
+      continue;
+    }
     assert.equal(currentById.get(id), parentLine,
       `G0-4. original item ${id} is byte-identical to ${PRE_G2_EXPANSION.slice(0, 8)} (id, area, question, choices, answer, explanation)`);
   }
@@ -339,6 +355,11 @@ async function main() {
   for (const { idPrefix } of PREFIX_AREA.filter((a) => !NEW_AREA_PREFIXES.includes(a.idPrefix))) {
     for (let n = 1; n <= 9; n += 1) {
       const id = `${idPrefix}-0${n}`;
+      if (P01_REPAIRED_ORIGINALS.has(id)) {
+        assert.notEqual(currentById.get(id), parentItems.find((line) => idOf(line) === id),
+          `G0-8r. ${id} was deliberately repaired by P0.1 and must differ from the parent`);
+        continue;
+      }
       assert.equal(currentById.get(id), parentItems.find((line) => idOf(line) === id), `G0-8. ${id} is unchanged`);
     }
   }
@@ -373,12 +394,16 @@ async function main() {
     "G0-C1d2. and carries exactly one now that Slice 4 appends wg-10..wg-30 after it");
   assert.notEqual(currentWg09, parentWg09,
     "G0-C1d3. control: the RAW lines really differ, so the normalisation is doing work here and is not vacuous");
-  assert.equal(currentWg09.replace(/,$/, ""), parentWg09,
-    "G0-C1d4. and they normalise to the SAME content — the only change to wg-09 is punctuation");
+  // P0.1: wg-09 is one of the deliberately repaired originals, so its CONTENT now differs from the
+  // parent as well — the punctuation-boundary story above stays historically true (the parent line
+  // ended the array; the current one cannot), but content identity is now owned by the two-sided
+  // repaired-originals freeze in G0-4r, not by this control.
+  assert.ok(P01_REPAIRED_ORIGINALS.has("wg-09"),
+    "G0-C1d4. wg-09's content divergence is the recorded P0.1 repair, not an unexplained drift");
   assert.ok(!currentWg09.slice(0, -1).endsWith(","),
-    "G0-C1d5. exactly ONE comma was added, not two — the normalisation strips one and only one");
-  control("the real wg-09 append boundary is punctuation-only and its normalisation is non-vacuous",
-    parentWg09 !== currentWg09 && currentWg09.replace(/,$/, "") === parentWg09 && !parentWg09.endsWith(","));
+    "G0-C1d5. wg-09 still carries exactly ONE terminal comma — the append boundary itself is intact");
+  control("the wg-09 append boundary remains comma-terminated and its content change is the recorded P0.1 repair",
+    parentWg09 !== currentWg09 && currentWg09.endsWith(",") && P01_REPAIRED_ORIGINALS.has("wg-09"));
 
   // Structural recognition of all four mappings — helper-level ONLY. Passing an explicit `authorised`
   // list proves the prefix->area map works; it does NOT make any area authorised for real additions.
@@ -451,7 +476,7 @@ async function main() {
   assert.equal(itemLines('export const DRILL_BANK = [\n{ id: "x-01", area: "rebuttal" },\nexport type X').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — all 36 original items are byte-identical and keep their order, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11, plus the whole clash area cl-01..cl-30 from the Clash measurable-practice closure (AI-assisted, submitted for the same owner review gate) — Debate depth is 5 x 30. Slice 4 finally appended after wg-09, so the terminal-comma boundary is EXERCISED for real: wg-09 gained exactly one comma, the raw lines differ, and they normalise to identical content. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is 5 x 30. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is PENDING human review of its final bytes, and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -208,8 +208,24 @@ async function main() {
   assert.ok(currentItems.length >= parentItems.length, "G0-3b. the bank never shrank");
 
   const currentById = new Map(currentItems.map((line) => [idOf(line), line]));
+  // P0.1 ASSESSMENT-INTEGRITY REPAIR: the adversarial proof showed the original items' answer-form
+  // leakage let a stem-blind learner beat the 70% threshold, so the classified originals below were
+  // deliberately repaired. The freeze is now TWO-SIDED: every listed id MUST differ from the
+  // immutable parent (a silent revert is a failure), every unlisted original stays byte-identical,
+  // and scripts/assessment-quality-guard.ts enforces the answer-form property the repair restored.
+  // Repaired items are PENDING human review of their final bytes (see the in-bank provenance notes).
+  const P01_REPAIRED_ORIGINALS = new Set(["pi-01","pi-02","pi-03","pi-04","pi-05","pi-06","pi-07","pi-08","pi-09","br-01","br-02","br-03","br-04","br-05","br-06","br-07","br-09"]);
   for (const parentLine of parentItems) {
     const id = idOf(parentLine);
+    if (P01_REPAIRED_ORIGINALS.has(id)) {
+      assert.ok(currentById.has(id), `G0-4r. repaired original ${id} still exists`);
+      assert.notEqual(currentById.get(id), parentLine,
+        `G0-4r2. repaired original ${id} DIFFERS from the immutable parent — a silent revert of the P0.1 repair must fail`);
+      const areaOf = (line: string) => (line.match(/area: "([a-z-]+)"/) ?? [])[1];
+      assert.equal(areaOf(currentById.get(id) as string), areaOf(parentLine),
+        `G0-4r3. and ${id} still declares its original area`);
+      continue;
+    }
     assert.equal(currentById.get(id), parentLine,
       `G0-4. original item ${id} is byte-identical to ${PRE_G2_EXPANSION.slice(0, 8)} (id, area, question, choices, answer, explanation)`);
   }
@@ -308,6 +324,11 @@ async function main() {
   for (const { idPrefix } of PREFIX_AREA) {
     for (let n = 1; n <= 9; n += 1) {
       const id = `${idPrefix}-0${n}`;
+      if (P01_REPAIRED_ORIGINALS.has(id)) {
+        assert.notEqual(currentById.get(id), parentItems.find((line) => idOf(line) === id),
+          `G0-8r. ${id} was deliberately repaired by P0.1 and must differ from the parent`);
+        continue;
+      }
       assert.equal(currentById.get(id), parentItems.find((line) => idOf(line) === id), `G0-8. ${id} is unchanged`);
     }
   }
@@ -410,7 +431,7 @@ async function main() {
   assert.equal(itemLines('export const DECA_DRILL_BANK = [\n{ id: "x-01", area: "business-reasoning" },\nexport function y').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} questions across ${DECA_DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once. CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — all 36 original items are byte-identical and keep their order, and additions are permitted only for an explicitly authorised area. ALL ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} DECA areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 84 reviewed-slice items pi-10..pi-30 (Slice 5), br-10..br-30 (Slice 6) and cr-10..cr-30 (Slice 7) — all three AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-12, with Slice 7 additionally externally human-reviewed and Production-verified — plus mk-10..mk-30 (Slice 8 / DECA Slice 4, authored against the approved MK1..MK6 curriculum so every key combines at least two facts printed in its own stem: AI-AUTHORED, HUMAN CONTENT REVIEW OUTSTANDING). DECA depth is COMPLETE at 4 x 30. Slice 8 finally appended after mk-09, so the terminal-comma boundary is EXERCISED for real: mk-09 gained exactly one comma, the raw lines differ, and they normalise to identical content — mk-30 is now the final element and no comma-less item remains. mk-10 moved from out-of-set control to legitimate addition at this slice, so the boundary probe moved to mk-31. No recognised DECA area remains unauthorised and no prefix remains forbidden, so BOTH stages are now probed with TEST-ONLY withheld sets rather than vacuous loops, and the exact 84-id set is the FINAL bound on DECA bank growth. The shallow-area control is RE-BASED onto pool-size-versus-overdraw behaviour because no DECA area remains at 9. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Deca-drills smoke passed: ${DECA_DRILL_BANK.length} questions across ${DECA_DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DECA_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once. CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent; a silent revert fails), the other originals — including every cr and mk item — are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. ALL ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} DECA areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 84 reviewed-slice items pi-10..pi-30 (Slice 5), br-10..br-30 (Slice 6) and cr-10..cr-30 (Slice 7) — all three AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-12 as originally shipped, with Slice 7 additionally externally human-reviewed and Production-verified — plus mk-10..mk-30 (Slice 8 / DECA Slice 4, authored against the approved MK1..MK6 curriculum so every key combines at least two facts printed in its own stem: AI-AUTHORED, HUMAN CONTENT REVIEW OUTSTANDING). The P0.1 repair then edited 37 of the pi/br additions (20 pi, 17 br; every cr and mk addition is byte-identical), so that dated approval covers only the originally-shipped bytes of items it reviewed — every P0.1-edited item is AI-repaired and PENDING human review of its final bytes, and no AI review counts as human review. DECA depth is COMPLETE at 4 x 30. Slice 8 finally appended after mk-09, so the terminal-comma boundary is EXERCISED for real: mk-09 gained exactly one comma, the raw lines differ, and they normalise to identical content — mk-30 is now the final element and no comma-less item remains. mk-10 moved from out-of-set control to legitimate addition at this slice, so the boundary probe moved to mk-31. No recognised DECA area remains unauthorised and no prefix remains forbidden, so BOTH stages are now probed with TEST-ONLY withheld sets rather than vacuous loops, and the exact 84-id set is the FINAL bound on DECA bank growth. The shallow-area control is RE-BASED onto pool-size-versus-overdraw behaviour because no DECA area remains at 9. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -199,7 +199,14 @@ async function main() {
   // M15 S1B-LC1 raised this from 32 to 33: `learning-content-integrity:smoke` was added, which owns
   // the authored-text contract for lib/learning-content.ts. Keep this an EXACT count — it is what
   // stops a new suite from existing as a dead script nobody runs. Never loosen it to a lower bound.
-  assert.equal(smokes.length, 33, `43b. the registered smoke inventory is 33 (found ${smokes.length})`);
+  // P0.1 raised it 33 -> 36. Git history: the pin was last set to 33 by c9b0a1d (2026-08-13), when
+  // the registered inventory was exactly 33 and this suite was green (practice-session:smoke had
+  // been properly booked earlier — 59dd52b added it AND bumped this pin 31 -> 32 in the same
+  // commit). On 2026-08-24 two suites landed WITHOUT booking here — 34 = `coach-evidence:smoke`
+  // (6f69745) and 35 = `clash-activation:smoke` (3e5dace) — leaving this suite silently red from
+  // 2026-08-24 until P0.1 widened the smoke battery and caught it. 36 = `assessment-quality:smoke`
+  // (P0.1B answer-form guard, the addition made by this change).
+  assert.equal(smokes.length, 36, `43b. the registered smoke inventory is 36 (found ${smokes.length})`);
 
   // ---- NON-VACUOUS CONTROLS -------------------------------------------------------------------------
   // Each check above is re-run against a fixture carrying the OLD behaviour and must trip. Production

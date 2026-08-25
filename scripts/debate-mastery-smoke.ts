@@ -881,10 +881,12 @@ async function main() {
   const focused20 = buildDrillSession(20, ["rebuttal"]);
   control("the UI's own 20-question focused rebuttal session now serves 20 DISTINCT items — no padding",
     focused20.length === 20 && new Set(focused20.map((q) => q.id)).size === 20);
-  const OVERDRAW = 40; // > 30 enters the repeat branch; < 60 makes the while loop append exactly once
+  const OVERDRAW = 40; // > pool enters the repeat branch; < 2x pool makes the while loop append exactly once
   const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
-  control("and the padding branch still exists above the pool: 40 served over exactly 30 distinct",
-    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 30);
+  // B1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 24 — six untaught taxonomy items are
+  // held (DEBATE_DRILL_HELD_IDS); the bank keeps 30 and the hold is proven in the drills smoke.
+  control("and the padding branch still exists above the pool: 40 served over exactly 24 distinct (served pool excludes 6 held ids)",
+    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 24);
   // Slice 2: the same G2 depth proof for claim-warrant-impact, kept in the mastery smoke because the
   // audit's Verification line names these suites. Builder-level and read-only — no mastery record is
   // created or altered, and no evidenceScore fixture is fabricated for CWI.
@@ -909,8 +911,10 @@ async function main() {
   control("a 20-question focused weighing session now serves 20 DISTINCT items — no padding",
     wgFocused20.length === 20 && new Set(wgFocused20.map((q) => q.id)).size === 20);
   const wgOverdrawn = buildDrillSession(OVERDRAW, ["weighing"]);
-  control("and weighing still pads above its pool: 40 served over exactly 30 distinct",
-    wgOverdrawn.length === OVERDRAW && new Set(wgOverdrawn.map((q) => q.id)).size === 30);
+  // B1 EVOLUTION (wg-08 hold, final acceptance gate): the weighing SERVED pool is 29 — wg-08 is
+  // held until B2 teaches the framework/standard concept; the bank keeps 30.
+  control("and weighing still pads above its pool: 40 served over exactly 29 distinct (served pool excludes held wg-08)",
+    wgOverdrawn.length === OVERDRAW && new Set(wgOverdrawn.map((q) => q.id)).size === 29);
 
   // ---- Repeat-branch non-vacuity, RE-BASED at Slice 4 -------------------------------------------
   // This control used to name a still-9-item area and prove 20/9 and 40/9. NO Debate area holds 9
@@ -919,16 +923,19 @@ async function main() {
   // ENTIRE shuffled pool before appending any repeat, so the distinct count is deterministic rather
   // than probabilistic. This is now the ONLY proof the repeat branch survives. Do NOT delete it, and
   // do NOT describe weighing as shallow or still-9-item — it is 30 deep.
+  // B1 EVOLUTION: bank depth stays 30 (DEBATE_AREA_DEPTH is the bank), but the SERVED weighing
+  // pool is 29 because wg-08 is held; the repeat-branch arithmetic runs against the served pool.
   const WG_DEPTH = DEBATE_AREA_DEPTH.weighing;
-  control("the re-base runs against a real 30-item pool and a request that genuinely exceeds it",
-    WG_DEPTH === 30 && OVERDRAW > WG_DEPTH);
-  control("40 served over exactly 30 distinct means exactly 10 repeated positions — duplicates necessarily exist",
-    OVERDRAW - new Set(wgOverdrawn.map((q) => q.id)).size === 10);
-  // Boundary partner: at EXACTLY pool size there is no padding, so the overdraw proof distinguishes
-  // "the repeat branch ran" from "the builder always repeats".
-  const wgExact = buildDrillSession(WG_DEPTH, ["weighing"]);
-  control("and a request of exactly 30 serves 30 over 30 distinct — the padding branch activates ONLY above the pool",
-    wgExact.length === WG_DEPTH && new Set(wgExact.map((q) => q.id)).size === WG_DEPTH);
+  const WG_SERVED = 29;
+  control("the re-base runs against a real 30-item bank area and a request that genuinely exceeds the 29-item served pool",
+    WG_DEPTH === 30 && OVERDRAW > WG_SERVED);
+  control("40 served over exactly 29 distinct means exactly 11 repeated positions — duplicates necessarily exist",
+    OVERDRAW - new Set(wgOverdrawn.map((q) => q.id)).size === 11);
+  // Boundary partner: at EXACTLY served-pool size there is no padding, so the overdraw proof
+  // distinguishes "the repeat branch ran" from "the builder always repeats".
+  const wgExact = buildDrillSession(WG_SERVED, ["weighing"]);
+  control("and a request of exactly 29 serves 29 over 29 distinct — the padding branch activates ONLY above the served pool",
+    wgExact.length === WG_SERVED && new Set(wgExact.map((q) => q.id)).size === WG_SERVED);
 
   console.log(
     `Debate-mastery smoke passed: General Debate drill progress is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to the question's own bank area — and needs ${DEBATE_DRILL_REQUIRED_UNIQUE} distinct questions before anything is written. All three live fake-mastery paths are closed: one correct question scored 100%/MASTERED and now records nothing; the duplicate bypass scored 76% and now scores 20%; and the honest six-of-nine learner whom the drill's OWN padding pushed to 85%/MASTERED now scores exactly 67 and does not pass (that fixture is pinned to the legacy nine rb-01..rb-09, so it survives the bank growing). Four distinct all-correct questions still record nothing. Repeats, conflicting resubmits and unknown ids cannot raise evidence, and below the floor the persistence helper is not called at all, so no mastery, no review and no due-review knock-down can follow. The boolean recordDrillMastery contract is unchanged and lib/spaced-review.ts is untouched; a false result renders as "Progress not saved", never as an unseeded skill, and nothing claims a review was scheduled. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`

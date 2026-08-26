@@ -4,12 +4,16 @@
  */
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import {
   DRILL_AREAS,
   DRILL_BANK,
   DEBATE_DRILL_HELD_IDS,
+  DEBATE_DRILL_EXCLUSIVE_GROUPS,
   DEBATE_DRILL_REQUIRED_UNIQUE,
+  collapseExclusiveGroups,
+  buildDrillSessionFrom,
+  siblingExclusionsFor,
   buildDrillEvidence,
   buildDrillSession,
   debateDrillPersistenceRequest,
@@ -206,6 +210,180 @@ async function main() {
         `CF-2. item ${snap.id} educational fields are byte-identical to the accepted baseline`);
     }
   }
+
+  // ---- PC. MEASUREMENT-DEPENDENT PAIR CONTROL (owner ruling, 2026-08-25) -------------------------
+  // rb-14 and rb-15 disclose each other's answer logic, through the post-answer explanation AND
+  // through rendered choice text alone. Two executable layers protect the measurement: same-session
+  // mutual exclusion (pool-level, inside the builder) and retained-exposure sibling exclusion
+  // (derived at the issuing route from already-persisted PracticeSessionItem rows).
+  //
+  // NON-VACUITY IS THE WHOLE PROBLEM HERE. Both pair members are HELD today, so every assertion made
+  // against the REAL pool is vacuously true and a deleted control would look identical to a passing
+  // one. Every behavioural check below therefore drives the exported collapse with a SYNTHETIC pool.
+  {
+    assert.ok(existsSync("scripts/debate-pair-adjudications.json"),
+      "PC-0. the independent pair-adjudication record exists — deleting it must fail by name, not by a bare ENOENT");
+    const adjudications = JSON.parse(readFileSync("scripts/debate-pair-adjudications.json", "utf8")) as Array<{
+      pair: string[]; finding: string; requiredControls: string[]; decision: string;
+    }>;
+    // TRUTH DIRECTION: the checked-in adjudication is EXPECTED, the runtime constant is ACTUAL.
+    // The runtime policy must never be the source this expectation is derived from.
+    assert.ok(adjudications.length >= 1, "PC-1. the pair-adjudication record exists and is non-empty");
+    const rb = adjudications.find((a) => a.pair.includes("rb-14"));
+    assert.ok(rb, "PC-1b. the rb-14/rb-15 measurement-dependence adjudication is recorded");
+    assert.deepEqual([...rb!.pair].sort(), ["rb-14", "rb-15"], "PC-1c. with exactly that pair membership");
+    assert.equal(rb!.decision, "ACCEPTED", "PC-1d. and the control decision is ACCEPTED");
+    assert.deepEqual([...rb!.requiredControls].sort(),
+      ["retained-exposure-sibling-exclusion", "same-session-mutual-exclusion"],
+      "PC-1e. requiring BOTH executable controls, not just the same-session half");
+
+    for (const adj of adjudications) {
+      for (const id of adj.pair) {
+        assert.ok(DRILL_BANK.some((q) => q.id === id), `PC-2. adjudicated id ${id} exists in the bank`);
+      }
+      // The runtime policy must satisfy every recorded adjudication.
+      const group = DEBATE_DRILL_EXCLUSIVE_GROUPS.find((g) => adj.pair.every((id) => g.includes(id)));
+      assert.ok(group, `PC-2b. runtime policy contains an exclusive group covering [${adj.pair.join(", ")}]`);
+      assert.deepEqual([...group!].sort(), [...adj.pair].sort(),
+        `PC-2c. and that group is exactly the adjudicated pair — no member quietly dropped`);
+      // RELEASE COUPLING. Unconditional today because BOTH are held; it becomes the load-bearing
+      // gate the moment either id leaves DEBATE_DRILL_HELD_IDS.
+      const servable = adj.pair.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id));
+      if (servable.length > 0) {
+        assert.deepEqual([...group!].sort(), [...adj.pair].sort(),
+          `PC-3. ${servable.join(", ")} is freshly servable, so the full pair MUST remain under the executable control`);
+      }
+    }
+    assert.deepEqual(DEBATE_DRILL_EXCLUSIVE_GROUPS.map((g) => [...g].sort()), [["rb-14", "rb-15"]],
+      "PC-3b. the runtime policy holds exactly the adjudicated groups and nothing invented");
+
+    // --- same-session mutual exclusion, proven on a synthetic pool (never vacuous) ---
+    const synth = () => DRILL_BANK.filter((q) => ["rb-14", "rb-15", "rb-01", "rb-03"].includes(q.id));
+    assert.equal(synth().length, 4, "PC-4. control: the synthetic pool really contains both pair members");
+    const keepers = new Set<string>();
+    for (let i = 0; i < 200; i += 1) {
+      const collapsed = collapseExclusiveGroups(synth());
+      const pairMembers = collapsed.filter((q) => q.id === "rb-14" || q.id === "rb-15");
+      assert.equal(pairMembers.length, 1,
+        "PC-4b. exactly ONE pair member survives the collapse — not two (contamination) and not zero (silent retirement)");
+      assert.equal(collapsed.length, 3, "PC-4c. and only the surplus sibling is removed — no collateral loss");
+      assert.ok(collapsed.some((q) => q.id === "rb-01") && collapsed.some((q) => q.id === "rb-03"),
+        "PC-4d. non-pair items are untouched");
+      keepers.add(pairMembers[0].id);
+    }
+    // NON-DEGENERACY. A "control" that always keeps rb-14 would silently retire rb-15 forever.
+    // 200 uniform draws: P(all one side) = 2 * (1/2)^200, far below any flake threshold worth naming.
+    assert.deepEqual([...keepers].sort(), ["rb-14", "rb-15"],
+      "PC-5. across 200 builds BOTH members are sometimes the survivor — the control excludes, it does not retire");
+    // A pool holding only one member is left alone.
+    const single = DRILL_BANK.filter((q) => ["rb-14", "rb-01"].includes(q.id));
+    assert.equal(collapseExclusiveGroups(single).length, 2, "PC-5b. a pool with one pair member is not collapsed");
+
+    // --- INTEGRATION: the collapse must be WIRED INTO the builder, not merely exist ---
+    // A mutation audit proved four mis-wirings survived the whole safe battery while both ids are
+    // held, because the live pool can never contain both. These checks drive the injectable seam
+    // with a TEST-ONLY hold list that releases the pair, so the pool really does contain both and
+    // every mis-wiring fails: result-level enforcement, area-conditional enforcement (either
+    // direction), and count-pressure reinsertion.
+    const TEST_HOLDS = DEBATE_DRILL_HELD_IDS.filter((id) => id !== "rb-14" && id !== "rb-15");
+    assert.ok(!TEST_HOLDS.includes("rb-14") && !TEST_HOLDS.includes("rb-15") && TEST_HOLDS.includes("wg-08"),
+      "PC-11. control: the test-only hold list really releases the pair (and holds nothing else new)");
+    const bothIn = (session: typeof DRILL_BANK) =>
+      session.some((q) => q.id === "rb-14") && session.some((q) => q.id === "rb-15");
+    const INTEGRATION_CASES: Array<{ label: string; count: number; areas?: DrillArea[] }> = [
+      { label: "focused rebuttal, fast path", count: 20, areas: ["rebuttal"] },
+      { label: "focused rebuttal, overdraw", count: 40, areas: ["rebuttal"] },
+      { label: "focused rebuttal, exactly pool-sized", count: 29, areas: ["rebuttal"] },
+      { label: "mixed session, fast path", count: 140 },
+      { label: "mixed session, overdraw", count: 200 },
+      { label: "small mixed session", count: 5 }
+    ];
+    for (const c of INTEGRATION_CASES) {
+      for (let i = 0; i < 60; i += 1) {
+        const session = buildDrillSessionFrom(DRILL_BANK, TEST_HOLDS, c.count, c.areas);
+        assert.ok(!bothIn(session),
+          `PC-12. ${c.label}: rb-14 and rb-15 are NEVER both served once released — the collapse is wired into the pool, not bolted onto the result`);
+        assert.equal(session.length, c.count,
+          `PC-12b. ${c.label}: the session is still exactly ${c.count} long — the control must not silently shorten a session to satisfy exclusion`);
+      }
+    }
+    // Requested-count pressure must NOT reinstate the sibling: ask for more than the collapsed pool.
+    for (let i = 0; i < 60; i += 1) {
+      const pressed = buildDrillSessionFrom(DRILL_BANK, TEST_HOLDS, 40, ["rebuttal"]);
+      assert.equal(new Set(pressed.map((q) => q.id)).size, 29,
+        "PC-13. count pressure draws repeats from the collapsed pool (29 distinct), never by re-admitting the excluded sibling");
+      assert.ok(!bothIn(pressed), "PC-13b. and the pair is still never both present under that pressure");
+    }
+    // Both members must remain individually servable once released — exclusion, not retirement.
+    const releasedKeepers = new Set<string>();
+    for (let i = 0; i < 200; i += 1) {
+      for (const q of buildDrillSessionFrom(DRILL_BANK, TEST_HOLDS, 29, ["rebuttal"])) {
+        if (q.id === "rb-14" || q.id === "rb-15") releasedKeepers.add(q.id);
+      }
+    }
+    assert.deepEqual([...releasedKeepers].sort(), ["rb-14", "rb-15"],
+      "PC-14. across 200 released-pair builds each member serves sometimes — both stay independently measurable");
+    // Retained-exposure exclusions must compose with the pair control through the real builder.
+    for (let i = 0; i < 60; i += 1) {
+      const afterRb14 = buildDrillSessionFrom(DRILL_BANK, TEST_HOLDS, 29, ["rebuttal"], siblingExclusionsFor(["rb-14"]));
+      assert.ok(!afterRb14.some((q) => q.id === "rb-15"),
+        "PC-15. a learner with retained rb-14 exposure is never freshly served rb-15");
+      const afterBoth = buildDrillSessionFrom(DRILL_BANK, TEST_HOLDS, 28, ["rebuttal"], siblingExclusionsFor(["rb-14", "rb-15"]));
+      assert.ok(!afterBoth.some((q) => q.id === "rb-14" || q.id === "rb-15"),
+        "PC-15b. a learner with retained exposure to BOTH is freshly served NEITHER while that history remains");
+    }
+
+    // --- retained-exposure sibling exclusion: the full mapping table ---
+    assert.deepEqual(siblingExclusionsFor([]).sort(), [],
+      "PC-6. no retained exposure -> no cross-session exclusion");
+    assert.deepEqual(siblingExclusionsFor(["rb-14"]).sort(), ["rb-15"],
+      "PC-6b. retained exposure to rb-14 excludes rb-15 from fresh serving");
+    assert.deepEqual(siblingExclusionsFor(["rb-15"]).sort(), ["rb-14"],
+      "PC-6c. retained exposure to rb-15 excludes rb-14 from fresh serving");
+    assert.deepEqual(siblingExclusionsFor(["rb-14", "rb-15"]).sort(), ["rb-14", "rb-15"],
+      "PC-6d. retained exposure to BOTH excludes BOTH — no uncontaminated measurement remains");
+    assert.deepEqual(siblingExclusionsFor(["rb-01", "cl-05"]).sort(), [],
+      "PC-6e. unrelated exposure excludes nothing");
+
+    // --- the exclusion actually reaches the builder ---
+    const excludedBuild = buildDrillSession(20, ["rebuttal"], ["rb-01"]);
+    assert.ok(!excludedBuild.some((q) => q.id === "rb-01"),
+      "PC-7. an excludedIds entry is honoured by the builder and never served");
+    assert.equal(new Set(excludedBuild.map((q) => q.id)).size, 20,
+      "PC-7b. and the session is still filled from the remaining eligible pool");
+
+    // --- EXPOSURE MEANS ISSUED, NOT ANSWERED (load-bearing: choice text alone contaminates) ---
+    const routeSrc = readFileSync("app/api/debate/drills/session/route.ts", "utf8");
+    assert.ok(/practiceSessionItem\.findMany/.test(routeSrc),
+      "PC-8. the issuing route reads retained exposure history");
+    assert.ok(/siblingExclusionsFor\(/.test(routeSrc) && /buildDrillSession\([^)]*excludedIds/.test(routeSrc),
+      "PC-8b. derives sibling exclusions from it and passes them to the builder");
+    const exposureQuery = routeSrc.slice(routeSrc.indexOf("practiceSessionItem.findMany"), routeSrc.indexOf("siblingExclusionsFor("));
+    for (const answeredOnly of ["answeredAt", "selectedOptionId", "isCorrect"]) {
+      assert.ok(!exposureQuery.includes(answeredOnly),
+        `PC-8c. the exposure query does NOT filter on ${answeredOnly} — seeing a sibling's choices is exposure, answering is not required`);
+    }
+    assert.ok(!/check\/route|submit\/route/.test(exposureQuery),
+      "PC-8d. grading paths are not coupled to the exposure lookup");
+
+    // --- FAIL CLOSED: exclusions that empty the pool must throw, never enter the padding loop ---
+    assert.throws(() => buildDrillSession(5, ["no-such-area" as DrillArea]), /empty/i,
+      "PC-9. an unrecognised area fails closed instead of spinning the synchronous padding loop");
+    const allRebuttal = DRILL_BANK.filter((q) => q.area === "rebuttal").map((q) => q.id);
+    assert.throws(() => buildDrillSession(5, ["rebuttal"], allRebuttal), /empty/i,
+      "PC-9b. exclusions that remove every candidate fail closed too — no infinite loop, no zero-item session");
+
+    // --- historical grading is untouched by any serving policy ---
+    for (const id of ["rb-14", "rb-15"]) {
+      const item = DRILL_BANK.find((q) => q.id === id)!;
+      const wrong = item.choices.find((c) => c !== item.correctAnswer)!;
+      assert.equal(gradeDrillAnswers([{ id, selected: item.correctAnswer }]).items[0].correct, true,
+        `PC-10. a historical correct answer to ${id} still grades correct — exclusion controls selection, never truth`);
+      assert.equal(gradeDrillAnswers([{ id, selected: wrong }]).items[0].correct, false,
+        `PC-10b. and a historical wrong answer to ${id} still grades incorrect — grading is not rubber-stamped`);
+    }
+  }
+
   // ---- B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25) ----------------------------------
   // VALID items whose tested concepts are untaught are withheld from serving until a reachable
   // lesson teaches them. The hold lives at the single pool-construction point in buildDrillSession;

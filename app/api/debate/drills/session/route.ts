@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
-import { buildDrillSession, DRILL_AREAS, type DrillArea } from "@/lib/debate-drills";
+import { buildDrillSession, siblingExclusionsFor, DRILL_AREAS, type DrillArea } from "@/lib/debate-drills";
 import {
   buildServedChoices,
   cleanupExpiredSessions,
@@ -50,7 +50,18 @@ export async function POST(request: Request) {
         return serializeStart(active, active.items, snapshot.kind === "DRILL" ? snapshot.order : [], true);
       }
 
-      const served = buildDrillSession(input.count, input.areas as DrillArea[] | undefined);
+      // RETAINED-EXPOSURE SIBLING EXCLUSION (owner ruling, 2026-08-25). Read-only lookup of the bank
+      // ids this learner has already been ISSUED, over retained PracticeSessionItem rows. Deliberately
+      // NOT filtered on answeredAt/selectedOptionId: contamination happens on EXPOSURE — a learner who
+      // merely saw a measurement-dependent sibling's choices has already received its answer logic.
+      // No schema change: userId+kind and sessionId are existing indexed columns.
+      const exposedRows = await tx.practiceSessionItem.findMany({
+        where: { session: { userId: user.id, kind: "DEBATE_DRILL" } },
+        select: { bankQuestionId: true }
+      });
+      const excludedIds = siblingExclusionsFor(exposedRows.map((row) => row.bankQuestionId));
+
+      const served = buildDrillSession(input.count, input.areas as DrillArea[] | undefined, excludedIds);
       // Distinct questions become rows, in first-seen order; the repeats live only in the order.
       const distinct = [...new Map(served.map((q) => [q.id, q])).values()];
       const { expiresAt, purgeAfter } = expiryFor(now);

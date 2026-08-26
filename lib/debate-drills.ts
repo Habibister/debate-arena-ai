@@ -457,14 +457,131 @@ export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
 ];
 
 // Draw a session of `count` original questions. If `areas` is given, restrict to them (focused drill).
-export function buildDrillSession(count: number, areas?: DrillArea[]): DrillQuestion[] {
-  const served = DRILL_BANK.filter((q) => !DEBATE_DRILL_HELD_IDS.includes(q.id));
-  const pool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;
+// MEASUREMENT-DEPENDENT PAIRS (owner ruling, 2026-08-25). Two bank items are measurement-dependent
+// when exposure to one materially discloses the answer logic the other exists to measure. rb-14 and
+// rb-15 are such a pair: rb-14's keyed contrast states, in the same scenario terms, the two component
+// claims whose composition is rb-15's key, and rb-15's clause-ordered choices positionally label the
+// exact binding rb-14 tests. Disclosure runs through BOTH the post-answer explanation AND the rendered
+// choice text alone, so neither delayed feedback nor a fixed serve order fixes it — only not putting
+// them in front of the same learner close together.
+//
+// The adjudication that this pair REQUIRES a control lives outside this file, in
+// scripts/debate-pair-adjudications.json, deliberately: a runtime constant must never be the sole
+// record of its own necessity. The smoke suite compares that checked-in record (EXPECTED) against
+// this constant (ACTUAL), so deleting the group here fails rather than silently disabling the control.
+export const DEBATE_DRILL_EXCLUSIVE_GROUPS: ReadonlyArray<ReadonlyArray<string>> = [
+  ["rb-14", "rb-15"],
+];
+
+/**
+ * Same-session mutual exclusion. Given a candidate POOL, keep at most one member of each exclusive
+ * group. Applied to the pool (never to the finished result) because the overdraw branch seeds the
+ * result with the ENTIRE shuffled pool — a result-level filter would either be bypassed or would
+ * silently shorten the session.
+ *
+ * `groups` and `choose` are injectable so the smoke suite can drive this with a synthetic pool: both
+ * pair members are HELD today, so every real-pool assertion would otherwise be vacuously true and a
+ * deleted control would be indistinguishable from a passing one.
+ *
+ * The keeper is chosen at random, never fixed: pinning one member would quietly retire the other.
+ */
+export function collapseExclusiveGroups(
+  pool: DrillQuestion[],
+  groups: ReadonlyArray<ReadonlyArray<string>> = DEBATE_DRILL_EXCLUSIVE_GROUPS,
+  choose: (members: DrillQuestion[]) => DrillQuestion = (members) => members[Math.floor(Math.random() * members.length)]
+): DrillQuestion[] {
+  let result = pool;
+  for (const group of groups) {
+    const members = result.filter((q) => group.includes(q.id));
+    if (members.length <= 1) continue;
+    const keeper = choose(members);
+    result = result.filter((q) => !group.includes(q.id) || q.id === keeper.id);
+  }
+  return result;
+}
+
+/**
+ * RETAINED-EXPOSURE SIBLING EXCLUSION. Given the bank ids this learner has already been ISSUED
+ * (retained history — issuance, not answering: reading a sibling's choices is enough to contaminate),
+ * return the ids that must not be freshly served.
+ *
+ * One member seen -> its siblings are excluded. BOTH members seen -> the whole group is excluded,
+ * because there is no uncontaminated measurement left to take while that history remains.
+ *
+ * TRUTHFULLY BOUNDED, and this is not "once-ever": practice-session rows are purged after
+ * COMPLETED_RETENTION_DAYS, so the protection lasts exactly as long as the history does. The purpose
+ * is to stop the PLATFORM from handing a learner the decisive logic immediately before measuring the
+ * sibling — not to erase long-term memory or blacklist an item forever.
+ *
+ * NOTE for release: rb-15 entered the bank on 2026-08-11 and the pair was only held on 2026-08-25, so
+ * real retained exposure from pre-policy Production sessions may already exist. After any future
+ * release some learners will therefore legitimately receive NEITHER sibling until their history ages
+ * out. That is the control working as designed — it is not a serving bug.
+ */
+export function siblingExclusionsFor(
+  exposedIds: ReadonlyArray<string>,
+  groups: ReadonlyArray<ReadonlyArray<string>> = DEBATE_DRILL_EXCLUSIVE_GROUPS
+): string[] {
+  const exposed = new Set(exposedIds);
+  const excluded = new Set<string>();
+  for (const group of groups) {
+    const seen = group.filter((id) => exposed.has(id));
+    if (seen.length === 0) continue;
+    if (seen.length >= 2) {
+      for (const id of group) excluded.add(id);
+      continue;
+    }
+    for (const id of group) if (id !== seen[0]) excluded.add(id);
+  }
+  return [...excluded];
+}
+
+/**
+ * The real construction logic, with the bank, the hold list and the exclusive groups all INJECTABLE.
+ *
+ * This exists because of a measured test-design failure: while rb-14 and rb-15 are both held, the
+ * live pool can never contain both, so every assertion made against the real pool is vacuous and a
+ * mis-wired control is indistinguishable from a correct one. A mutation audit proved four distinct
+ * mis-wirings survived the entire safe battery — enforcement moved after the overdraw seed, applied
+ * only when `areas` is defined, applied only when it is undefined, and undone by count pressure.
+ * Driving THIS function with a test-only hold list that releases the pair makes all four fail.
+ *
+ * Production callers must use buildDrillSession below; this is the seam the smoke suite drives.
+ */
+export function buildDrillSessionFrom(
+  bank: DrillQuestion[],
+  heldIds: ReadonlyArray<string>,
+  count: number,
+  areas?: DrillArea[],
+  excludedIds?: ReadonlyArray<string>,
+  groups: ReadonlyArray<ReadonlyArray<string>> = DEBATE_DRILL_EXCLUSIVE_GROUPS
+): DrillQuestion[] {
+  const served = bank.filter((q) => !heldIds.includes(q.id));
+  const areaPool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;
+  // Retained-exposure exclusions arrive already derived from the issuing route; the builder stays a
+  // pure function of (bank, holds, areas, excludedIds) and never touches the database itself.
+  const eligible = excludedIds && excludedIds.length > 0 ? areaPool.filter((q) => !excludedIds.includes(q.id)) : areaPool;
+  // POOL-LEVEL, unconditionally — never result-level, never conditional on `areas`, and never undone
+  // by requested-count pressure. The overdraw branch below seeds the result with the ENTIRE shuffled
+  // pool, so a result-level filter would silently shorten sessions instead of protecting them.
+  const pool = collapseExclusiveGroups(eligible, groups);
+  // An empty pool can never satisfy count >= 1 and the padding loop below would spin forever,
+  // synchronously, inside the serving route. An unrecognised area string, a hold that empties an
+  // area, or exclusions that remove every candidate must fail loudly here — never hang the server or
+  // persist a zero-item active session. (Guard ported from claude/confident-goodall-83f4a0, whose
+  // wider diff is NOT taken: that branch predates the amended B1 and carries unrelated item edits.)
+  if (pool.length === 0) {
+    throw new Error(`Drill pool is empty for areas [${areas?.join(", ") ?? ""}] — cannot build a session`);
+  }
   const shuffled = shuffle(pool);
   if (count <= shuffled.length) return shuffled.slice(0, count);
   const result = [...shuffled];
   while (result.length < count) result.push(...shuffle(pool));
   return result.slice(0, count);
+}
+
+export function buildDrillSession(count: number, areas?: DrillArea[], excludedIds?: ReadonlyArray<string>): DrillQuestion[] {
+  return buildDrillSessionFrom(DRILL_BANK, DEBATE_DRILL_HELD_IDS, count, areas, excludedIds);
 }
 
 export type DrillAnswer = { id: string; selected: string };

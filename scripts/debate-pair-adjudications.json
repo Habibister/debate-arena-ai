@@ -1,0 +1,13 @@
+[
+  {
+    "pair": ["rb-14", "rb-15"],
+    "finding": "measurement-dependent",
+    "reason": "Each item materially discloses the answer logic the other exists to measure. rb-14's keyed contrast states, in the same scenario terms, the two component claims whose composition is rb-15's key; rb-15's clause-ordered choices positionally label the exact label-to-claim binding rb-14 tests. Disclosure runs through the immediate post-answer explanation AND through the rendered choice text alone, so the choice-text channel is independently sufficient.",
+    "requiredControls": ["same-session-mutual-exclusion", "retained-exposure-sibling-exclusion"],
+    "rejectedControls": ["delayed-feedback", "fixed-serve-order", "arbitrary-spacing-N", "one-canonical-item"],
+    "decision": "ACCEPTED",
+    "decidedOn": "2026-08-25",
+    "decidedBy": "project owner",
+    "note": "This record is the EXPECTED requirement and is deliberately independent of the runtime policy constant. Deleting DEBATE_DRILL_EXCLUSIVE_GROUPS must not delete the fact that this pair requires a control: the smoke suite reads this file and fails when the runtime policy does not satisfy it. Truth direction is checked-in adjudication -> required control, runtime policy -> actual control, compare. Never regenerate this file from the runtime constant."
+  }
+]

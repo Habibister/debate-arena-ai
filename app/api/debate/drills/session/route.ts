@@ -9,8 +9,7 @@ import {
   findActiveSession,
   lockUserRow,
   parsePracticeSessionSnapshot,
-  serializeStart
-} from "@/lib/practice-session";
+  serializeStart, retainedExposureWhere } from "@/lib/practice-session";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { practiceSessionStartRequestSchema } from "@/lib/validators";
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
       // merely saw a measurement-dependent sibling's choices has already received its answer logic.
       // No schema change: userId+kind and sessionId are existing indexed columns.
       const exposedRows = await tx.practiceSessionItem.findMany({
-        where: { session: { userId: user.id, kind: "DEBATE_DRILL" } },
+        where: retainedExposureWhere(user.id, "DEBATE_DRILL"),
         select: { bankQuestionId: true }
       });
       const excludedIds = siblingExclusionsFor(exposedRows.map((row) => row.bankQuestionId));

@@ -449,12 +449,42 @@ function shuffle<T>(items: T[]): T[] {
 // PASS, and the owner's explicit B2.1 content-review waiver (2026-08-25, scoped to the accepted
 // teaching candidate's educational bytes; a waiver is not human review). Item bytes unchanged.
 //
+// B2.2 RELEASE (2026-08-26): rb-14 and rb-15 were REMOVED from this list after each INDEPENDENTLY
+// passed its own reactivation gate on the debate-turn-mechanics teaching: the lesson teaches the
+// link-turn / impact-turn distinction and the double-turn composition before either is assessed, a
+// fresh website-only reviewer with no keys and no outside debate knowledge solved both from the
+// learner-visible site alone, both are one-best, and their bytes are unchanged. They were judged
+// separately, not as a package. rb-14 leakage LOW; rb-15 leakage MODERATE / ACCEPTABLE — legitimate
+// concept overlap, since teaching why a double turn self-defeats necessarily teaches the composition
+// the item measures. Neither is human-reviewed; external human content review was owner-waived.
+//
+// THE PAIR REMAINS MEASUREMENT-DEPENDENT AFTER RELEASE. In the current tree rb-14 and rb-15 are
+// both RELEASED and individually eligible — neither is held. That is not the same as simultaneously
+// servable: DEBATE_DRILL_EXCLUSIVE_GROUPS admits at most one of them into any single built session,
+// and retained-exposure sibling exclusion can remove one or both from a particular learner's fresh
+// pool. They are never co-served. Do not read "released" as "unconstrained" — see the
+// eligibility-vs-capacity note below. (Local release stack; not a statement about what is deployed.)
+//
 // STILL HELD:
 export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
-  "rb-14", // requires: link turn vs impact turn (B2.2 teaching)
-  "rb-15", // requires: the double-turn hazard (B2.2 teaching)
   "wg-08", // requires: weighing framework/standard concept and why an early standard shapes later comparison (B2.3)
 ];
+
+// ELIGIBILITY IS NOT SESSION CAPACITY — read this before "fixing" any 29 back to a 30.
+//
+// Two different true numbers describe the rebuttal area after the B2.2 release, and collapsing them
+// into one is the mistake this note exists to prevent:
+//
+//   GLOBAL INDIVIDUAL ELIGIBILITY — 30 of 30 rebuttal items may serve. Nothing is withheld; every
+//   item, including both rb-14 and rb-15, is a live evidence-eligible unit.
+//
+//   MAXIMUM DISTINCT IN ONE VALID SESSION — 29. rb-14 and rb-15 may never co-serve, so exactly one
+//   of them appears in any single fresh session. The same arithmetic gives 148, not 149, as the
+//   maximum distinct Debate ids in one clean-history full-bank session (150 - wg-08 - one sibling).
+//
+// A learner's own fresh-session pool can be smaller still: retained-exposure exclusion removes a
+// sibling the learner has already been ISSUED, and removes both once both have been seen. That is
+// the measurement-validity rule working, never under-serving and never a builder bug.
 
 // Draw a session of `count` original questions. If `areas` is given, restrict to them (focused drill).
 // MEASUREMENT-DEPENDENT PAIRS (owner ruling, 2026-08-25). Two bank items are measurement-dependent
@@ -479,9 +509,11 @@ export const DEBATE_DRILL_EXCLUSIVE_GROUPS: ReadonlyArray<ReadonlyArray<string>>
  * result with the ENTIRE shuffled pool — a result-level filter would either be bypassed or would
  * silently shorten the session.
  *
- * `groups` and `choose` are injectable so the smoke suite can drive this with a synthetic pool: both
- * pair members are HELD today, so every real-pool assertion would otherwise be vacuously true and a
- * deleted control would be indistinguishable from a passing one.
+ * `groups` and `choose` are injectable so the smoke suite can drive this with a synthetic pool. That
+ * injection was ESSENTIAL while both pair members were still held (the live pool could not contain
+ * both, so every real-pool assertion was vacuous and a deleted control looked identical to a passing
+ * one), and it is retained now that both are released: it still lets a test construct any pool shape
+ * on demand rather than depending on what the current hold list happens to allow.
  *
  * The keeper is chosen at random, never fixed: pinning one member would quietly retire the other.
  */
@@ -539,9 +571,9 @@ export function siblingExclusionsFor(
 /**
  * The real construction logic, with the bank, the hold list and the exclusive groups all INJECTABLE.
  *
- * This exists because of a measured test-design failure: while rb-14 and rb-15 are both held, the
- * live pool can never contain both, so every assertion made against the real pool is vacuous and a
- * mis-wired control is indistinguishable from a correct one. A mutation audit proved four distinct
+ * This exists because of a measured test-design failure found while rb-14 and rb-15 were still held:
+ * the live pool could not then contain both, so every assertion made against the real pool was
+ * vacuous and a mis-wired control was indistinguishable from a correct one. A mutation audit proved four distinct
  * mis-wirings survived the entire safe battery — enforcement moved after the overdraw seed, applied
  * only when `areas` is defined, applied only when it is undefined, and undone by count pressure.
  * Driving THIS function with a test-only hold list that releases the pair makes all four fail.

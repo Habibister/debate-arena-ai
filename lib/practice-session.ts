@@ -189,6 +189,20 @@ export async function cleanupExpiredSessions(
   return count;
 }
 
+/**
+ * The ONLY where-clause used to read a learner's retained EXPOSURE history for measurement-validity
+ * exclusions. Exported so its SHAPE can be asserted structurally: an earlier text-based check was
+ * bypassable by hoisting a forbidden filter out of the grepped window, which silently degraded the
+ * rule to answered-only. The assertion now follows the code wherever it is written.
+ *
+ * Exposure means ISSUED. There is deliberately NO predicate on answeredAt, selectedOptionId or
+ * isCorrect: a learner who merely saw a measurement-dependent sibling's choices has already received
+ * its answer logic, whether or not they answered.
+ */
+export function retainedExposureWhere(userId: string, kind: PracticeSessionKind) {
+  return { session: { userId, kind } };
+}
+
 export function expiryFor(now: Date): { expiresAt: Date; purgeAfter: Date } {
   const expiresAt = new Date(now.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000);
   return { expiresAt, purgeAfter: new Date(expiresAt.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000) };

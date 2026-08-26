@@ -20,6 +20,7 @@ import {
   gradeDrillAnswers,
   type DrillArea
 } from "../lib/debate-drills";
+import { retainedExposureWhere } from "../lib/practice-session";
 
 async function main() {
   // Bank integrity.
@@ -123,11 +124,15 @@ async function main() {
   const OVERDRAW = 40; // > pool enters the repeat branch; < 2x pool makes the while loop append exactly once
   const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
   assert.equal(overdrawn.length, OVERDRAW, "a 40-question request on the rebuttal pool still serves 40");
-  // B2.1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 28 — rb-02/rb-13/rb-16/rb-30 were
-  // released after the answer-types teaching shipped and each passed its reactivation gate;
-  // rb-14 and rb-15 stay held until B2.2 teaches turn mechanics. Bank still holds 30.
-  assert.equal(new Set(overdrawn.map((q) => q.id)).size, 28,
-    "over exactly 28 distinct items — the served rebuttal pool excludes only the two still-held ids");
+  // B2.2 RE-BASE (2026-08-26): 28 -> 29, and the reason is NOT that an item became unavailable.
+  // Two different true numbers now describe rebuttal, and this assertion pins the SESSION-CAPACITY
+  // one. GLOBAL ELIGIBILITY is 30 of 30 (proven at B1-5b below): every rebuttal item may serve.
+  // MAXIMUM DISTINCT IN ONE SESSION is 29, because rb-14 and rb-15 are measurement-dependent and
+  // may never co-serve. If you are here because 29 "looks like" a missing item: it is not. Raising
+  // this to 30 would require co-serving the pair and would silently destroy the contamination
+  // control. See the eligibility-vs-capacity note in lib/debate-drills.ts.
+  assert.equal(new Set(overdrawn.map((q) => q.id)).size, 29,
+    "over exactly 29 distinct items — one of the measurement-dependent pair is excluded from any single session, by design");
 
   // Slice 2: the same depth proof for claim-warrant-impact. There was no legacy CWI padding fixture
   // to re-base, so these are additions rather than replacements.
@@ -217,9 +222,16 @@ async function main() {
   // mutual exclusion (pool-level, inside the builder) and retained-exposure sibling exclusion
   // (derived at the issuing route from already-persisted PracticeSessionItem rows).
   //
-  // NON-VACUITY IS THE WHOLE PROBLEM HERE. Both pair members are HELD today, so every assertion made
-  // against the REAL pool is vacuously true and a deleted control would look identical to a passing
-  // one. Every behavioural check below therefore drives the exported collapse with a SYNTHETIC pool.
+  // NON-VACUITY IS THE WHOLE PROBLEM HERE, and the seam below is why it stays solved. While both
+  // siblings were still held, the live pool could not contain both, so any assertion made against
+  // the then-current production pool was vacuously true and a deleted control looked identical to a
+  // passing one. That is what motivated driving these checks through an injectable pool/hold seam.
+  // rb-14 and rb-15 are RELEASED now — both individually eligible in this tree — but the seam is
+  // deliberately kept: a pair-policy test must control the bank and hold configuration it exercises
+  // rather than inherit whatever production happens to be configured as, or the same vacuity
+  // returns silently the next time a hold or group changes. The pair stays measurement-dependent
+  // either way: same-session mutual exclusion admits at most one, and retained-exposure sibling
+  // exclusion can withhold one or both from an individual learner.
   {
     assert.ok(existsSync("scripts/debate-pair-adjudications.json"),
       "PC-0. the independent pair-adjudication record exists — deleting it must fail by name, not by a bare ENOENT");
@@ -246,8 +258,10 @@ async function main() {
       assert.ok(group, `PC-2b. runtime policy contains an exclusive group covering [${adj.pair.join(", ")}]`);
       assert.deepEqual([...group!].sort(), [...adj.pair].sort(),
         `PC-2c. and that group is exactly the adjudicated pair — no member quietly dropped`);
-      // RELEASE COUPLING. Unconditional today because BOTH are held; it becomes the load-bearing
-      // gate the moment either id leaves DEBATE_DRILL_HELD_IDS.
+      // RELEASE COUPLING — LIVE, not waiting. Both adjudicated ids have left DEBATE_DRILL_HELD_IDS,
+      // so `servable` is non-empty and this branch now fires for real on every run: with the pair
+      // released, deleting or thinning the runtime group fails here by name. Written to stay correct
+      // in either direction — it also holds if a future decision re-holds a member.
       const servable = adj.pair.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id));
       if (servable.length > 0) {
         assert.deepEqual([...group!].sort(), [...adj.pair].sort(),
@@ -358,13 +372,34 @@ async function main() {
       "PC-8. the issuing route reads retained exposure history");
     assert.ok(/siblingExclusionsFor\(/.test(routeSrc) && /buildDrillSession\([^)]*excludedIds/.test(routeSrc),
       "PC-8b. derives sibling exclusions from it and passes them to the builder");
-    const exposureQuery = routeSrc.slice(routeSrc.indexOf("practiceSessionItem.findMany"), routeSrc.indexOf("siblingExclusionsFor("));
-    for (const answeredOnly of ["answeredAt", "selectedOptionId", "isCorrect"]) {
-      assert.ok(!exposureQuery.includes(answeredOnly),
-        `PC-8c. the exposure query does NOT filter on ${answeredOnly} — seeing a sibling's choices is exposure, answering is not required`);
+    // PC-8c REPAIR (2026-08-26). The previous form grepped the route source BETWEEN two literals for
+    // forbidden filter keys. An adversarial audit proved that bypassable: hoisting the identical
+    // `answeredAt: { not: null }` filter one line above the findMany call moves the banned word out
+    // of the window, passes the whole suite, and silently degrades the rule to answered-only. The
+    // check is now STRUCTURAL — it asserts the shape of the exported where-builder, so it follows
+    // the code wherever the clause is written — plus an exact-form source check that forbids
+    // spreading anything alongside it.
+    const exposureWhere = retainedExposureWhere("user-1", "DEBATE_DRILL");
+    assert.deepEqual(exposureWhere, { session: { userId: "user-1", kind: "DEBATE_DRILL" } },
+      "PC-8c. the retained-exposure where-clause is EXACTLY owner + track — exposure means ISSUED, and no answered/graded predicate narrows it");
+    const forbidden = ["answeredAt", "selectedOptionId", "isCorrect", "answered", "completedAt", "status"];
+    const scan = (value: unknown, path: string): void => {
+      if (!value || typeof value !== "object") return;
+      for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+        assert.ok(!forbidden.includes(key),
+          `PC-8c2. the retained-exposure where-clause carries no "${key}" predicate at ${path}.${key} — answering is not required for exposure`);
+        scan(child, `${path}.${key}`);
+      }
+    };
+    scan(exposureWhere, "where");
+    assert.ok(/where:\s*retainedExposureWhere\(user\.id,\s*"DEBATE_DRILL"\)/.test(routeSrc),
+      "PC-8c3. and the route passes that builder's result DIRECTLY as the where-clause — no spread, no extra keys merged alongside it");
+    const checkSrc = readFileSync("app/api/debate/drills/check/route.ts", "utf8");
+    const submitSrc = readFileSync("app/api/debate/drills/submit/route.ts", "utf8");
+    for (const [name, src] of [["check", checkSrc], ["submit", submitSrc]] as const) {
+      assert.ok(!src.includes("retainedExposureWhere") && !src.includes("siblingExclusionsFor") && !src.includes("DEBATE_DRILL_EXCLUSIVE_GROUPS"),
+        `PC-8d. the ${name} route is not coupled to the exposure lookup or the pair policy — this is a FRESH-SERVING rule and must never touch grading`);
     }
-    assert.ok(!/check\/route|submit\/route/.test(exposureQuery),
-      "PC-8d. grading paths are not coupled to the exposure lookup");
 
     // --- FAIL CLOSED: exclusions that empty the pool must throw, never enter the padding loop ---
     assert.throws(() => buildDrillSession(5, ["no-such-area" as DrillArea]), /empty/i,
@@ -390,28 +425,57 @@ async function main() {
   // these checks prove it two-sided — held ids never serve, non-held ids all still serve — and
   // prove the bank itself is untouched.
   // B2.1 RELEASE (2026-08-25): rb-02, rb-13, rb-16, rb-30 released after each passed the full
-  // reactivation gate on the taught answer-types lesson (see the release record in the bank).
-  assert.deepEqual([...DEBATE_DRILL_HELD_IDS], ["rb-14", "rb-15", "wg-08"],
-    "B1-1. the held set is exactly rb-14, rb-15 (await B2.2 turn-mechanics teaching) and wg-08 (awaits B2.3)");
+  // reactivation gate on the taught answer-types lesson.
+  // B2.2 RELEASE (2026-08-26): rb-14 and rb-15 released after each INDEPENDENTLY passed its own
+  // gate on the taught turn-mechanics lesson. They remain measurement-dependent — released is not
+  // unconstrained: the executable pair control below keeps them from ever co-serving.
+  assert.deepEqual([...DEBATE_DRILL_HELD_IDS], ["wg-08"],
+    "B1-1. the held set is exactly wg-08 (awaits B2.3 weighing-standard teaching)");
   for (const id of DEBATE_DRILL_HELD_IDS) {
     assert.ok(DRILL_BANK.some((q) => q.id === id),
       `B1-2. held item ${id} remains IN the bank — held means unserved, never deleted`);
   }
+  // B2.2 RE-BASE (2026-08-26) — B1-3 keeps its arithmetic but stops conflating two facts.
+  // GLOBAL ELIGIBILITY is still bank minus held. SESSION CAPACITY is that minus one member of each
+  // measurement-dependent pair whose members are all eligible, because such a pair may never
+  // co-serve. Both numbers are asserted, and each is derived rather than hardcoded, so a future
+  // hold or a future pair changes them honestly instead of failing arbitrarily.
+  const globalEligible = DRILL_BANK.length - DEBATE_DRILL_HELD_IDS.length;
+  const pairSurplus = DEBATE_DRILL_EXCLUSIVE_GROUPS.reduce((n, group) => {
+    const eligibleMembers = group.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id));
+    return n + Math.max(0, eligibleMembers.length - 1);
+  }, 0);
+  assert.equal(globalEligible, 149, "B1-3a. global individual eligibility is 149 of 150 — only wg-08 is held");
+  assert.equal(pairSurplus, 1, "B1-3b. exactly one item is displaced per session by the measurement-dependent pair");
   const b1Full = buildDrillSession(300);
-  assert.equal(new Set(b1Full.map((q) => q.id)).size, DRILL_BANK.length - DEBATE_DRILL_HELD_IDS.length,
-    "B1-3. a full-bank overdraw serves exactly the 147 non-held items");
+  assert.equal(new Set(b1Full.map((q) => q.id)).size, globalEligible - pairSurplus,
+    "B1-3. a full-bank overdraw serves 148 distinct — 149 eligible minus the one pair member excluded from any single session (NOT a missing item)");
   assert.ok(b1Full.every((q) => !DEBATE_DRILL_HELD_IDS.includes(q.id)),
     "B1-4. no held id is ever served, even at full-bank overdraw");
   const b1Rb = buildDrillSession(60, ["rebuttal"]);
   const b1RbIds = new Set(b1Rb.map((q) => q.id));
-  assert.equal(b1RbIds.size, 28, "B1-5. the served rebuttal pool is exactly 28 of 30 (four B2.1-taught items released)");
-  for (const q of DRILL_BANK) {
-    if (q.area === "rebuttal" && !DEBATE_DRILL_HELD_IDS.includes(q.id)) {
-      assert.ok(b1RbIds.has(q.id), `B1-6. non-held rebuttal item ${q.id} still serves — the hold does not over-filter`);
-    }
+  const rebuttalEligible = DRILL_BANK.filter((q) => q.area === "rebuttal" && !DEBATE_DRILL_HELD_IDS.includes(q.id));
+  assert.equal(rebuttalEligible.length, 30,
+    "B1-5b. GLOBAL ELIGIBILITY: all 30 rebuttal items are individually servable — nothing is withheld after B2.2");
+  assert.equal(b1RbIds.size, 29,
+    "B1-5. SESSION CAPACITY: exactly 29 distinct in one session — the pair contributes one member, not two");
+  // B2.2 RE-BASE — B1-6 was "the hold does not over-filter". After the release that phrasing is
+  // no longer globally true BY DESIGN: one pair member is intentionally absent from every session.
+  // The invariant is reframed, NOT deleted or weakened — it now proves that no UNAUTHORIZED
+  // filtering happens. Exactly three authorised sources may remove an item from a session: the hold
+  // list, same-session measurement exclusion, and retained-exposure sibling exclusion (absent here,
+  // since this build passes no exclusions). Anything else disappearing is a real defect.
+  const pairIds = new Set(DEBATE_DRILL_EXCLUSIVE_GROUPS.flat());
+  for (const q of rebuttalEligible) {
+    if (pairIds.has(q.id)) continue; // authorised: at most one pair member serves per session
+    assert.ok(b1RbIds.has(q.id),
+      `B1-6. non-pair rebuttal item ${q.id} still serves — no UNAUTHORISED filtering (only holds, pair exclusion and retained exposure may remove an item)`);
   }
-  assert.ok(28 >= DEBATE_DRILL_REQUIRED_UNIQUE,
-    "B1-7. the served rebuttal pool stays far above the unique-evidence floor, so mastery remains reachable");
+  const servedPairMembers = [...pairIds].filter((id) => b1RbIds.has(id));
+  assert.equal(servedPairMembers.length, 1,
+    "B1-6b. and exactly one pair member is present — neither both (contamination) nor zero (silent retirement)");
+  assert.ok(29 >= DEBATE_DRILL_REQUIRED_UNIQUE,
+    "B1-7. the per-session rebuttal pool stays far above the unique-evidence floor, so mastery remains reachable");
   // Weighing hold (final acceptance gate): wg-08 excluded, wg-29 EXPLICITLY still serving — the
   // positive control matters as much as the exclusion, because wg-29's fair-transfer status was
   // independently upheld while wg-08's was overturned.
@@ -427,11 +491,22 @@ async function main() {
   }
   assert.ok(29 >= DEBATE_DRILL_REQUIRED_UNIQUE,
     "B1-14. the served weighing pool stays far above the unique-evidence floor");
-  const heldItem = DRILL_BANK.find((q) => q.id === "rb-14")!;
-  assert.equal(gradeDrillAnswers([{ id: "rb-14", selected: heldItem.correctAnswer }]).items[0].correct, true,
+  const heldItem = DRILL_BANK.find((q) => q.id === "wg-08")!;
+  assert.equal(gradeDrillAnswers([{ id: "wg-08", selected: heldItem.correctAnswer }]).items[0].correct, true,
     "B1-8. an in-flight answer to a held id still grades honestly — holding never falsifies accounting");
   assert.ok(b1RbIds.has("rb-02") && b1RbIds.has("rb-13") && b1RbIds.has("rb-16") && b1RbIds.has("rb-30"),
     "B1-8c. the four B2.1-released items positively serve again — release is real, not just list-shrink");
+  // B2.2 POSITIVE SERVABILITY, in the real production state (no test-only hold list needed now).
+  // Each pair member must actually reach learners across repeated builds; a control that always
+  // dropped the same sibling would be permanent retirement wearing an exclusion's clothes.
+  const b2Servers = new Set<string>();
+  for (let i = 0; i < 200; i += 1) {
+    for (const q of buildDrillSession(29, ["rebuttal"])) {
+      if (q.id === "rb-14" || q.id === "rb-15") b2Servers.add(q.id);
+    }
+  }
+  assert.deepEqual([...b2Servers].sort(), ["rb-14", "rb-15"],
+    "B1-8d. rb-14 AND rb-15 each individually serve across 200 real builds — both released items genuinely reach learners");
   const heldWg = DRILL_BANK.find((q) => q.id === "wg-08")!;
   assert.equal(gradeDrillAnswers([{ id: "wg-08", selected: heldWg.correctAnswer }]).items[0].correct, true,
     "B1-8b. an in-flight answer to held wg-08 also grades honestly");
@@ -739,7 +814,7 @@ async function main() {
   assert.equal(itemLines('export const DRILL_BANK = [\n{ id: "x-01", area: "rebuttal" },\nexport type X').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is 5 x 30. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 (a waiver is not human review), and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. B1 (2026-08-25) then repaired three adjudicated clash defects (cl-08 rekeyed to direct clash; cl-10 and cl-30 lost their second-correct-answer distractors) and withheld seven valid but untaught items from serving — the rebuttal taxonomy six (rb-02, rb-13, rb-14, rb-15, rb-16, rb-30) and weighing-framework item wg-08, whose hold the final acceptance gate ordered after overturning an earlier fair-transfer ruling, while wg-29's fair-transfer status was independently upheld and it still serves. B2.1 (2026-08-25) then published the answer-types teaching and released rb-02, rb-13, rb-16 and rb-30 after each passed its closed-corpus reactivation gate on the final lesson bytes (AI-authored, independently AI-reviewed, owner content-review waiver 2026-08-25 — a waiver is not human review); the bank keeps all 150 items, 28 of 30 rebuttal and 29 of 30 weighing items serve, and the remaining held ids (rb-14, rb-15, wg-08) release as their teaching slices ship. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is 5 x 30. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 (a waiver is not human review), and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. B1 (2026-08-25) then repaired three adjudicated clash defects (cl-08 rekeyed to direct clash; cl-10 and cl-30 lost their second-correct-answer distractors) and withheld seven valid but untaught items from serving — the rebuttal taxonomy six (rb-02, rb-13, rb-14, rb-15, rb-16, rb-30) and weighing-framework item wg-08, whose hold the final acceptance gate ordered after overturning an earlier fair-transfer ruling, while wg-29's fair-transfer status was independently upheld and it still serves. B2.1 (2026-08-25) then published the answer-types teaching and released rb-02, rb-13, rb-16 and rb-30 after each passed its closed-corpus reactivation gate on the final lesson bytes (AI-authored, independently AI-reviewed, owner content-review waiver 2026-08-25 — a waiver is not human review); B2.2 (2026-08-26) then published the turn-mechanics teaching and released rb-14 and rb-15, each adjudicated INDEPENDENTLY on the taught lesson (AI-authored, independently AI-reviewed, owner content-review waiver — a waiver is not human review). The bank keeps all 150 items. TWO DIFFERENT NUMBERS now describe serving and they must not be collapsed: GLOBAL INDIVIDUAL ELIGIBILITY is Debate 149 of 150 (rebuttal 30 of 30, weighing 29 of 30) with wg-08 the only remaining Debate hold and pi-26 the only DECA hold (DECA 119 of 120, PI 29 of 30) — every one of those items may be served; CLEAN-HISTORY DISTINCT SESSION CAPACITY is Debate 148 and rebuttal 29, because rb-14 and rb-15 are measurement-dependent and may never co-serve, so exactly one of them appears in any single valid session. A learner's own fresh-session pool can be smaller still where retained-exposure sibling exclusion applies. Neither number is a defect in the other: raising session capacity by co-serving the pair would be a measurement-validity regression. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

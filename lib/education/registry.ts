@@ -167,13 +167,17 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   DEBATE_EVIDENCE_LESSON,
   // B2.1: the answer-types taxonomy lesson — chained after refutation (HOW to state an answer)
   // and before constructive speeches. Learner-visible teaching; its drill items rb-02, rb-13,
-  // rb-16 and rb-30 were released from the serving hold only after B2.1 preparedness acceptance,
-  // while the turn-mechanics targets rb-14 and rb-15 remain held for B2.2.
+  // rb-16 and rb-30 were released from the serving hold only after B2.1 preparedness acceptance.
+  // The turn-mechanics targets rb-14 and rb-15 were likewise released, by B2.2, under executable
+  // measurement controls — see the turn-mechanics entry below.
   DEBATE_ANSWER_TYPES_LESSON,
   // B2.2: the turn-mechanics lesson — chained directly after answer-types (which defers the named
   // turn varieties to it) and before constructive speeches. Learner-visible teaching; its drill
-  // items rb-14 and rb-15 remain held until each passes its closed-corpus reactivation gate, with
-  // a further pair-contamination serving gate before both may ever serve simultaneously.
+  // items rb-14 and rb-15 were each INDEPENDENTLY released after passing their closed-corpus
+  // reactivation gates. Both are individually eligible to serve — but they are measurement-dependent
+  // and are NEVER co-served: same-session mutual exclusion keeps at most one in any built session,
+  // and retained-exposure sibling exclusion withholds a sibling (or both) from a learner who was
+  // already issued the other. Eligible is not the same as simultaneously servable.
   DEBATE_TURN_MECHANICS_LESSON,
   {
     id: "how-deca-roleplay-works",

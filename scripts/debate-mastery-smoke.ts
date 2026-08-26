@@ -883,12 +883,15 @@ async function main() {
     focused20.length === 20 && new Set(focused20.map((q) => q.id)).size === 20);
   const OVERDRAW = 40; // > pool enters the repeat branch; < 2x pool makes the while loop append exactly once
   const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
-  // B2.1 EVOLUTION (2026-08-25): the rebuttal SERVED pool is 28 — rb-02/rb-13/rb-16/rb-30 were
-  // released after the answer-types teaching shipped and each passed its reactivation gate; rb-14
-  // and rb-15 stay held (DEBATE_DRILL_HELD_IDS) until B2.2; the bank keeps 30 and the hold is
-  // proven two-sided in the drills smoke.
-  control("and the padding branch still exists above the pool: 40 served over exactly 28 distinct (served pool excludes 2 held ids)",
-    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 28);
+  // B2.2 RE-BASE (2026-08-26): 28 -> 29. This control measures ONE CONSTRUCTED SESSION, so it pins
+  // session capacity, not eligibility. All 30 rebuttal items are individually servable after the
+  // B2.2 release — nothing is held in this area — but rb-14 and rb-15 are measurement-dependent and
+  // never co-serve, so any single session tops out at 29 distinct. Do not "correct" this to 30: that
+  // would require co-serving the pair and would break the contamination control. (This file
+  // deliberately imports neither the hold list nor the exclusive groups, so the number is stated
+  // literally here; the derived two-number proof lives in scripts/debate-drills-smoke.ts B1-3/B1-5.)
+  control("and the padding branch still exists above the pool: 40 served over exactly 29 distinct (one measurement-dependent sibling is excluded per session)",
+    overdrawn.length === OVERDRAW && new Set(overdrawn.map((q) => q.id)).size === 29);
   // Slice 2: the same G2 depth proof for claim-warrant-impact, kept in the mastery smoke because the
   // audit's Verification line names these suites. Builder-level and read-only — no mastery record is
   // created or altered, and no evidenceScore fixture is fabricated for CWI.

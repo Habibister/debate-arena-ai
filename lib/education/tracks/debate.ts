@@ -167,13 +167,15 @@ export const DEBATE_ANSWER_TYPES_LESSON: EducationRegistryEntry = {
 
 /** B2.2 (2026-08-25): newly AUTHORED turn-mechanics lesson — teaches the ACTION -> LINK -> IMPACT
  *  chain anatomy and the component-level moves (no-link, link turn, impact defense, impact turn)
- *  plus the same-chain double-turn hazard the held rebuttal drill items rb-14 and rb-15 test.
+ *  plus the same-chain double-turn hazard the rebuttal drill items rb-14 and rb-15 test.
  *  Registered via the same catalog-by-reference mechanism and kept OUT of MIGRATED_SLUGS (authored
- *  in B2.2, not migrated). Teaching only — rb-14 and rb-15 remain HELD until each independently
- *  passes the closed-corpus reactivation gate, and even then the pair must NOT become
- *  simultaneously servable until a separate serving-validity decision proves an anti-contamination
- *  policy (the two items' keys disclose each other's logic; see the pair-dependence gate recorded
- *  in docs/CURRENT_STATE.md). Releasing one item carries no implication about the other. */
+ *  in B2.2, not migrated). Teaching shipped first: rb-14 and rb-15 stayed HELD until each
+ *  INDEPENDENTLY passed its closed-corpus reactivation gate, and both then passed and were
+ *  reactivated in the strictly-later release commit of this stack (local; not yet deployed).
+ *  Release did NOT lift the measurement constraint — the two items' keys disclose each other's
+ *  logic, so they are never both valid in one session: same-session mutual exclusion admits at most
+ *  one, and retained-exposure sibling exclusion can temporarily withhold one or both from an
+ *  individual learner who was already issued the other. Individually eligible, never co-served. */
 export const DEBATE_TURN_MECHANICS_LESSON: EducationRegistryEntry = {
   id: "debate-turn-mechanics",
   track: "GENERAL_DEBATE",

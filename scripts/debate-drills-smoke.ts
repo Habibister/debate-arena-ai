@@ -185,6 +185,27 @@ async function main() {
   assert.deepEqual(debateDrillPersistenceRequest(buildDrillEvidence(padded)[0]), { scorePercent: 67, passed: false },
     "so persistence receives 67 with passed:false, never a MASTERED-qualified result");
 
+
+  // ---- CONTENT FREEZE (B2.2 mutation audit, 2026-08-25) ------------------------------------------
+  // The mutation audit proved a one-word stem edit to a P0.1-repaired item survived all 32 safe
+  // suites: repaired originals were only pinned as DIFFERENT from the immutable parent, and the
+  // additions only by id/area/order/count — the CONTENT of the accepted P0.1/B1 bank had no freeze.
+  // This snapshot is the same model as scripts/learning-content-baseline.json: a checked-in
+  // canonical copy of the accepted educational fields, never HEAD-relative. Editing an item is
+  // allowed ONLY as a deliberate two-file diff (source + baseline) that review can read.
+  {
+    const baseline = JSON.parse(readFileSync("scripts/debate-drill-bank-baseline.json", "utf8")) as Array<{
+      id: string; area: string; question: string; choices: string[]; correctAnswer: string; explanation: string;
+    }>;
+    assert.equal(baseline.length, DRILL_BANK.length, "CF-1. the bank baseline covers every item");
+    for (const [i, snap] of baseline.entries()) {
+      const live = DRILL_BANK[i];
+      assert.deepEqual(
+        { id: live.id, area: live.area, question: live.question, choices: live.choices, correctAnswer: live.correctAnswer, explanation: live.explanation },
+        snap,
+        `CF-2. item ${snap.id} educational fields are byte-identical to the accepted baseline`);
+    }
+  }
   // ---- B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25) ----------------------------------
   // VALID items whose tested concepts are untaught are withheld from serving until a reachable
   // lesson teaches them. The hold lives at the single pool-construction point in buildDrillSession;

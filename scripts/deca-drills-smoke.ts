@@ -441,6 +441,27 @@ async function main() {
   assert.equal(itemLines('export const DECA_DRILL_BANK = [\n{ id: "x-01", area: "business-reasoning" },\nexport function y').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
+
+  // ---- CONTENT FREEZE (B2.2 mutation audit, 2026-08-25) ------------------------------------------
+  // The mutation audit proved a one-word stem edit to a P0.1-repaired item survived all 32 safe
+  // suites: repaired originals were only pinned as DIFFERENT from the immutable parent, and the
+  // additions only by id/area/order/count — the CONTENT of the accepted P0.1/B1 bank had no freeze.
+  // This snapshot is the same model as scripts/learning-content-baseline.json: a checked-in
+  // canonical copy of the accepted educational fields, never HEAD-relative. Editing an item is
+  // allowed ONLY as a deliberate two-file diff (source + baseline) that review can read.
+  {
+    const baseline = JSON.parse(readFileSync("scripts/deca-drill-bank-baseline.json", "utf8")) as Array<{
+      id: string; area: string; question: string; choices: string[]; correctAnswer: string; explanation: string;
+    }>;
+    assert.equal(baseline.length, DECA_DRILL_BANK.length, "CF-1. the bank baseline covers every item");
+    for (const [i, snap] of baseline.entries()) {
+      const live = DECA_DRILL_BANK[i];
+      assert.deepEqual(
+        { id: live.id, area: live.area, question: live.question, choices: live.choices, correctAnswer: live.correctAnswer, explanation: live.explanation },
+        snap,
+        `CF-2. item ${snap.id} educational fields are byte-identical to the accepted baseline`);
+    }
+  }
   // ---- B1 SERVING HOLD (closed-corpus adjudication, 2026-08-25) ----------------------------------
   // pi-26 is a VALID item whose keyed area-level weighting rule is untaught by any reachable
   // surface; it is withheld from serving until the curriculum-closure slice teaches the rule.

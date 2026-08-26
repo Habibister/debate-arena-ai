@@ -124,12 +124,13 @@ function main() {
   // ================================================================================================
 
   // ---- 1-2. exact lesson inventory, each id present exactly once --------------------------------
-  // B2.1 (2026-08-25) raised this 10 -> 11: the newly authored debate-answer-types lesson.
-  assert.equal(EDUCATION_LESSONS.length, 11, "1. the registry contains exactly eleven lessons");
+  // B2.1 raised this 10 -> 11; B2.2 (2026-08-25) raised it 11 -> 12: the newly authored
+  // debate-turn-mechanics lesson.
+  assert.equal(EDUCATION_LESSONS.length, 12, "1. the registry contains exactly twelve lessons");
   const expectedIds = ["claim-warrant-impact", "how-deca-roleplay-works", "how-hosa-scenario-interaction-works",
                        "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches",
                        "debate-weighing", "debate-round-orientation", "debate-evidence-evaluation",
-                       "debate-answer-types"];
+                       "debate-answer-types", "debate-turn-mechanics"];
   for (const id of expectedIds) {
     assert.equal(EDUCATION_LESSONS.filter((entry) => entry.id === id).length, 1, `2. "${id}" is registered exactly once`);
   }
@@ -215,8 +216,9 @@ function main() {
   // ---- 10. track filtering returns only the selected track --------------------------------------
   assert.deepEqual(educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id),
     ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types",
-     "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"],
-    "10a. Debate filter, in teaching order (B2.1 added debate-answer-types)");
+     "debate-turn-mechanics", "debate-signposting", "debate-clash", "debate-refutation",
+     "debate-constructive-speeches", "debate-weighing"],
+    "10a. Debate filter, in teaching order (B2.1 added answer-types; B2.2 added turn-mechanics)");
   assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id), ["how-deca-roleplay-works"], "10b. DECA filter");
   assert.deepEqual(educationLessonsForTrack("HOSA").map((e) => e.id), ["how-hosa-scenario-interaction-works"], "10c. HOSA filter");
 
@@ -543,7 +545,7 @@ function main() {
   assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [], "the real registry is untouched by the controls");
 
   console.log(
-    `Education-registry smoke passed: the canonical registry holds exactly eleven lessons — the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, all four now active — Wave 1B published the corrected weighing lesson, so the last compatibility-active alias redirects canonically. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
+    `Education-registry smoke passed: the canonical registry holds exactly twelve lessons — the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, all four now active — Wave 1B published the corrected weighing lesson, so the last compatibility-active alias redirects canonically. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }
 

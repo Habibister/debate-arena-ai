@@ -26,7 +26,7 @@
 import { getLesson, type AuthoredLesson } from "@/lib/lessons";
 import { getRoleplayLesson, type RoleplayLesson } from "@/lib/roleplay-lessons";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
-import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_ANSWER_TYPES_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
+import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_ANSWER_TYPES_LESSON, DEBATE_TURN_MECHANICS_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
 import type {
   EducationCourse,
   EducationModule,
@@ -170,6 +170,11 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // rb-16 and rb-30 were released from the serving hold only after B2.1 preparedness acceptance,
   // while the turn-mechanics targets rb-14 and rb-15 remain held for B2.2.
   DEBATE_ANSWER_TYPES_LESSON,
+  // B2.2: the turn-mechanics lesson — chained directly after answer-types (which defers the named
+  // turn varieties to it) and before constructive speeches. Learner-visible teaching; its drill
+  // items rb-14 and rb-15 remain held until each passes its closed-corpus reactivation gate, with
+  // a further pair-contamination serving gate before both may ever serve simultaneously.
+  DEBATE_TURN_MECHANICS_LESSON,
   {
     id: "how-deca-roleplay-works",
     track: "DECA",

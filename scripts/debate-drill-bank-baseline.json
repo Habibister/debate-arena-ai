@@ -1,0 +1,1952 @@
+[
+  {
+    "id": "cw-01",
+    "area": "claim-warrant-impact",
+    "question": "Which is a COMPLETE argument (claim + warrant + impact)?",
+    "choices": [
+      "Every city with more than one congested corridor should add separated bike lanes in its next budget cycle.",
+      "Cities should add bike lanes because separated lanes cut cyclist collisions, so more people ride and traffic deaths fall.",
+      "Separated lanes cut cyclist collisions because they keep riders physically outside the path of turning and merging cars.",
+      "Bike lanes are popular across much of Europe, where cycling has been ordinary daily transport for decades."
+    ],
+    "correctAnswer": "Cities should add bike lanes because separated lanes cut cyclist collisions, so more people ride and traffic deaths fall.",
+    "explanation": "A complete argument states the claim (add bike lanes), the warrant (separation cuts collisions), and the impact (fewer deaths). The others give a claim with no reasoning, a claim and warrant that stop before any consequence, and an observation."
+  },
+  {
+    "id": "cw-02",
+    "area": "claim-warrant-impact",
+    "question": "The 'warrant' of an argument is the part that:",
+    "choices": [
+      "States your position",
+      "Explains WHY the claim is true",
+      "Describes the real-world consequence",
+      "Cites a source"
+    ],
+    "correctAnswer": "Explains WHY the claim is true",
+    "explanation": "The warrant is the reasoning link — why the claim follows. The claim is the position; the impact is the consequence; a citation is evidence, not a warrant."
+  },
+  {
+    "id": "cw-03",
+    "area": "claim-warrant-impact",
+    "question": "An argument has a claim and evidence but the judge asks 'so what?'. What is missing?",
+    "choices": [
+      "The impact",
+      "The claim",
+      "A rebuttal",
+      "A source"
+    ],
+    "correctAnswer": "The impact",
+    "explanation": "'So what?' is a request for the impact — why the argument matters to the round. The claim and evidence are present; the consequence is not."
+  },
+  {
+    "id": "cw-04",
+    "area": "claim-warrant-impact",
+    "question": "Which turns a weak claim ('social media is bad') into a debatable one?",
+    "choices": [
+      "Social media is extremely bad, and far worse than most adults will admit.",
+      "Everyone who has watched a teenager scroll already knows social media is bad, so the point hardly needs arguing.",
+      "Social media harms teens because algorithmic feeds increase comparison, raising anxiety.",
+      "Social media platforms have existed since the early 2000s and now reach most teenagers in the country."
+    ],
+    "correctAnswer": "Social media harms teens because algorithmic feeds increase comparison, raising anxiety.",
+    "explanation": "A debatable claim is specific and carries a warrant (mechanism) and impact. Intensifiers, appeals to popularity, and background facts don't make a claim arguable."
+  },
+  {
+    "id": "cw-05",
+    "area": "claim-warrant-impact",
+    "question": "In 'claim, warrant, impact', the impact should ideally be:",
+    "choices": [
+      "The largest harm the speaker can name, however remote the path from warrant to harm",
+      "Tied to something the judge cares about (harm, magnitude, people affected)",
+      "A restatement of the claim in more urgent language",
+      "The strongest piece of evidence, restated as the argument's closing line"
+    ],
+    "correctAnswer": "Tied to something the judge cares about (harm, magnitude, people affected)",
+    "explanation": "Impacts persuade when they connect to what the judge values — scale, severity, who is affected. Restating the claim adds urgency without consequence, a huge harm at the end of a remote chain breaks the link, and evidence supports the argument rather than serving as its impact."
+  },
+  {
+    "id": "cw-06",
+    "area": "claim-warrant-impact",
+    "question": "Which sentence is ONLY a claim, with no warrant?",
+    "choices": [
+      "Nuclear power is safe because modern reactors passively shut down without operator action.",
+      "Nuclear power is the best energy source.",
+      "Nuclear power is safe: its death rate per unit of energy is among the lowest measured.",
+      "Nuclear power is safe because containment designs limit radiation release."
+    ],
+    "correctAnswer": "Nuclear power is the best energy source.",
+    "explanation": "A bare claim asserts a position with no 'because'. The others each supply a reason (warrant)."
+  },
+  {
+    "id": "cw-07",
+    "area": "claim-warrant-impact",
+    "question": "A strong warrant most importantly:",
+    "choices": [
+      "Supplies a source that backs the claim up",
+      "Gives a logical reason the claim follows",
+      "Repeats the claim in firmer words",
+      "States the consequence that makes the claim matter"
+    ],
+    "correctAnswer": "Gives a logical reason the claim follows",
+    "explanation": "A warrant is the logical link — why the claim follows. Evidence supports the claim, the impact says why it matters, and repeating the claim adds no reasoning at all."
+  },
+  {
+    "id": "cw-08",
+    "area": "claim-warrant-impact",
+    "question": "Which best completes the impact? 'We should ban single-use plastics because they persist for centuries, so...'",
+    "choices": [
+      "...fragments from one discarded bag are still detectable in river sediment centuries afterwards.",
+      "...marine ecosystems accumulate lasting damage that harms food supplies.",
+      "...shoppers switch to the reusable bags many already own.",
+      "...plastic production has risen in every decade since the material was first mass-manufactured."
+    ],
+    "correctAnswer": "...marine ecosystems accumulate lasting damage that harms food supplies.",
+    "explanation": "The impact should state the meaningful consequence of the warrant (persistence → lasting ecosystem harm → human food supply). The others elaborate the fact, or name a consequence no one has reason to weigh."
+  },
+  {
+    "id": "cw-09",
+    "area": "claim-warrant-impact",
+    "question": "Why do judges reward explicit warrants?",
+    "choices": [
+      "They prove a claim beyond dispute, so the judge need not weigh it",
+      "They let the judge see the logic instead of assuming it",
+      "They save rebuttal time, since a warranted claim needs no later defense",
+      "They tell the judge how much the impact is worth"
+    ],
+    "correctAnswer": "They let the judge see the logic instead of assuming it",
+    "explanation": "An explicit warrant shows the reasoning so the judge doesn't have to fill it in (and may fill it in against you). It's about transparency of logic — a warranted claim still needs defending when attacked."
+  },
+  {
+    "id": "cw-10",
+    "area": "claim-warrant-impact",
+    "question": "A contention runs: \"Free transit raises ridership, higher ridership cuts car trips, and fewer car trips lower injuries.\" Only the first link is explained. What still needs work?",
+    "choices": [
+      "Why higher ridership removes car trips",
+      "A source for the injury figure, since that number ends the chain",
+      "A bigger impact than fewer injuries",
+      "Support for the claim that free transit raises ridership"
+    ],
+    "correctAnswer": "Why higher ridership removes car trips",
+    "explanation": "Every arrow in a chain needs its own support. The first link is explained; the ridership-to-car-trips step is only asserted, so the chain stalls there even though the conclusion sounds plausible."
+  },
+  {
+    "id": "cw-11",
+    "area": "claim-warrant-impact",
+    "question": "In \"later starts raise sleep, more sleep raises test scores, and higher scores widen college access\", the step \"more sleep raises test scores\" is:",
+    "choices": [
+      "An internal link — a middle step the argument must cross to reach its impact",
+      "The terminal impact — the final consequence that gives the argument its significance",
+      "The claim being defended — the proposition the rest of the chain exists to establish",
+      "Evidence supporting the conclusion, since it reports a measurable result"
+    ],
+    "correctAnswer": "An internal link — a middle step the argument must cross to reach its impact",
+    "explanation": "Internal links are the intermediate steps; the terminal impact is the final reason the argument matters, here college access. Naming them separately keeps each arrow checkable."
+  },
+  {
+    "id": "cw-12",
+    "area": "claim-warrant-impact",
+    "question": "An argument says: \"Banning single-use plastics will cut microplastics in the food chain.\" No middle step is given. What is missing?",
+    "choices": [
+      "How the ban changes what actually enters the water",
+      "A stronger final consequence, such as long-term harm to human health",
+      "A second reason the ban is worth adopting",
+      "A closing line naming who is harmed when microplastics reach the food chain"
+    ],
+    "correctAnswer": "How the ban changes what actually enters the water",
+    "explanation": "The chain jumps from a policy straight to a downstream outcome. The mechanism between them — less plastic produced, so less reaching waterways — has to be stated before the conclusion follows."
+  },
+  {
+    "id": "cw-13",
+    "area": "claim-warrant-impact",
+    "question": "A contention gives three separate reasons that each lead to \"hospital wait times fall\". Is that a complete structure?",
+    "choices": [
+      "Yes — several reasons may converge on one impact",
+      "No — every reason needs its own separate impact",
+      "No — a contention may only ever carry one reason",
+      "Yes, but only if all three reasons are equally strong"
+    ],
+    "correctAnswer": "Yes — several reasons may converge on one impact",
+    "explanation": "A contention needs a complete path to an impact, not a separate impact per reason. Independent reasons converging on one impact is a normal and often sturdy structure."
+  },
+  {
+    "id": "cw-14",
+    "area": "claim-warrant-impact",
+    "question": "A speaker notes: \"The city added bike lanes in March, and cycling rose over the summer.\" To build this into an argument rather than a sequence, they must add:",
+    "choices": [
+      "A mechanism explaining how the lanes produced the increase",
+      "The exact opening date, so the order of events is beyond doubt",
+      "A second city with the same pattern of dates",
+      "A firmer assertion that it was the lanes that produced the rise"
+    ],
+    "correctAnswer": "A mechanism explaining how the lanes produced the increase",
+    "explanation": "Order in time is not causation. The construction step is supplying the mechanism — separated lanes felt safer, so more people chose to ride — which is what turns a sequence into a causal argument."
+  },
+  {
+    "id": "cw-15",
+    "area": "claim-warrant-impact",
+    "question": "Argument: \"The bill raises the minimum wage, so small businesses will close.\" For that conclusion to follow, the speaker is assuming:",
+    "choices": [
+      "That affected businesses cannot absorb or offset the higher cost",
+      "That the legislature will actually pass the bill in its current form",
+      "That small businesses employ a large share of the local workforce",
+      "That closing a small business is a bad outcome"
+    ],
+    "correctAnswer": "That affected businesses cannot absorb or offset the higher cost",
+    "explanation": "The conclusion needs a bridging premise the speaker never states. Naming that premise shows precisely what the argument still has to establish."
+  },
+  {
+    "id": "cw-16",
+    "area": "claim-warrant-impact",
+    "question": "A learner writes: \"Remote work is better. It helps employees. Companies should adopt it.\" What does this argument most need?",
+    "choices": [
+      "Reasoning explaining how remote work produces the benefit",
+      "A fourth sentence stating the position more decisively",
+      "A more dramatic consequence, so the final sentence lands harder",
+      "Evidence showing that remote employees report higher satisfaction"
+    ],
+    "correctAnswer": "Reasoning explaining how remote work produces the benefit",
+    "explanation": "Three sentences, three claims, no warrant. Adding more assertions does not help — the argument needs the because-content that makes one statement follow from another."
+  },
+  {
+    "id": "cw-17",
+    "area": "claim-warrant-impact",
+    "question": "Which of these is an ARGUMENT rather than an assertion?",
+    "choices": [
+      "Congestion pricing cuts traffic because a per-trip charge shifts marginal drivers onto transit, easing peak jams",
+      "Congestion pricing is deeply unfair to ordinary commuters and to low-income shift workers",
+      "Several major cities are debating congestion pricing this year, and two of them will vote on it before the summer",
+      "Congestion pricing was first proposed by economists decades ago, long before any city had the cameras to enforce it"
+    ],
+    "correctAnswer": "Congestion pricing cuts traffic because a per-trip charge shifts marginal drivers onto transit, easing peak jams",
+    "explanation": "An argument states a position AND the reasoning that produces it — here, how a price changes driver behaviour. The others assert a position, report a debate, or supply background without explaining anything."
+  },
+  {
+    "id": "cw-18",
+    "area": "claim-warrant-impact",
+    "question": "\"The policy will increase innovation because competition increases innovation.\" This reasoning:",
+    "choices": [
+      "Restates a general rule without showing how the policy creates competition",
+      "Is a complete mechanism, since naming competition identifies the cause",
+      "Fails only because the general rule is left uncited",
+      "Is strong because a well-established general principle carries the reasoning"
+    ],
+    "correctAnswer": "Restates a general rule without showing how the policy creates competition",
+    "explanation": "Invoking a general relationship is not the same as showing it applies here. The argument still owes two steps: how this policy produces competition, and how that competition produces innovation."
+  },
+  {
+    "id": "cw-19",
+    "area": "claim-warrant-impact",
+    "question": "Claim: \"Later school starts improve learning.\" Warrant offered: \"because later starts improve student learning.\" This warrant is weak because it:",
+    "choices": [
+      "Restates the claim instead of explaining why it holds",
+      "Gives the impact where the warrant should be",
+      "Leaves out the evidence, so the link is never established",
+      "Offers a single reason where a claim this broad needs several"
+    ],
+    "correctAnswer": "Restates the claim instead of explaining why it holds",
+    "explanation": "A warrant must add reasoning the claim does not already contain — that later starts raise sleep, and rested students retain more. Repeating the claim in new words supplies nothing."
+  },
+  {
+    "id": "cw-20",
+    "area": "claim-warrant-impact",
+    "question": "A speaker reads a study showing rested students score higher, then claims later start times help learning. In that argument, the warrant is:",
+    "choices": [
+      "The reasoning linking the study's finding to the claim",
+      "The study itself, since the finding is what does the work",
+      "The author and year that identify the study",
+      "The conclusion the speaker wants the judge to accept"
+    ],
+    "correctAnswer": "The reasoning linking the study's finding to the claim",
+    "explanation": "Evidence is not the warrant. The warrant is the bridge: later starts raise sleep, the study shows rested students perform better, so the policy should help learning. Without it the judge has to build the link alone."
+  },
+  {
+    "id": "cw-21",
+    "area": "claim-warrant-impact",
+    "question": "A contention cites four studies and then states its conclusion, with no sentence explaining how those findings lead there. The argument:",
+    "choices": [
+      "Has evidence but still needs reasoning connecting it to the conclusion",
+      "Is warrantless, because heavy citation always replaces reasoning",
+      "Is complete, because four studies is strong support",
+      "Should be dismissed for citing too many sources"
+    ],
+    "correctAnswer": "Has evidence but still needs reasoning connecting it to the conclusion",
+    "explanation": "Evidence and reasoning do different jobs. Citations can be excellent while the argument is still incomplete — but a heavily cited argument is NOT automatically warrantless; what matters is whether the connecting explanation is there."
+  },
+  {
+    "id": "cw-22",
+    "area": "claim-warrant-impact",
+    "question": "Evidence: \"Students sleeping 8+ hours show improved attention.\" Claim: \"Later start times could improve classroom learning.\" Which sentence best bridges them?",
+    "choices": [
+      "Later starts let more students reach 8+ hours, and better attention supports learning",
+      "Students who sleep eight or more hours pay noticeably better attention in class than their peers",
+      "Learning matters more than scheduling convenience, so the district should act",
+      "Many districts have already moved their start times later, and few have moved back"
+    ],
+    "correctAnswer": "Later starts let more students reach 8+ hours, and better attention supports learning",
+    "explanation": "The bridge explains how the finding reaches the claim: schedule to sleep to attention to learning. Restating the finding or ranking values does not connect the two."
+  },
+  {
+    "id": "cw-23",
+    "area": "claim-warrant-impact",
+    "question": "In \"free transit raises ridership, which cuts car trips, which lowers traffic injuries\", the phrase \"ridership increases\" functions as:",
+    "choices": [
+      "An intermediate consequence on the way to this argument's impact",
+      "The impact, since higher ridership is the outcome the policy exists to produce",
+      "The claim being defended, which the rest of the chain is built to support",
+      "A warrant for the injury figure at the end of the chain"
+    ],
+    "correctAnswer": "An intermediate consequence on the way to this argument's impact",
+    "explanation": "Role depends on position in the chain, not on the words themselves. Here ridership is a middle step; in an argument about transport access, rising ridership could itself be the impact."
+  },
+  {
+    "id": "cw-24",
+    "area": "claim-warrant-impact",
+    "question": "An argument ends: \"so rural clinics stay open.\" To show why that consequence matters, the speaker should explain:",
+    "choices": [
+      "Who depends on those clinics and what happens to them without one",
+      "Whether this impact outweighs the opponent's impact",
+      "How the policy keeps those clinics open in the first place",
+      "That closing a clinic would be a serious loss, stated more forcefully"
+    ],
+    "correctAnswer": "Who depends on those clinics and what happens to them without one",
+    "explanation": "Significance means showing the stakes of your own consequence — who is affected and how seriously. Comparing it against the other side's impact is a separate job later in the round."
+  },
+  {
+    "id": "cw-25",
+    "area": "claim-warrant-impact",
+    "question": "An argument says school uniforms reduce clothing-based teasing, then concludes they will raise national graduation rates. The problem is:",
+    "choices": [
+      "No path is given from less teasing to graduating",
+      "Uniforms are unpopular with students",
+      "The claim has not been cited",
+      "Graduation rates are difficult to measure"
+    ],
+    "correctAnswer": "No path is given from less teasing to graduating",
+    "explanation": "The claim and warrant may both be reasonable, but the impact is bolted on. Every step from the mechanism to the final consequence has to be shown, or the impact does not belong to this argument."
+  },
+  {
+    "id": "cw-26",
+    "area": "claim-warrant-impact",
+    "question": "An argument runs: \"Free breakfast raises attendance, and higher attendance means more instructional hours.\" It stops there. To finish it the speaker must add:",
+    "choices": [
+      "Why those extra instructional hours matter for these students",
+      "Another reason attendance might rise, such as free transport",
+      "A firmer restatement of the claim, so the judge remembers it",
+      "The cost of running the programme across every participating school"
+    ],
+    "correctAnswer": "Why those extra instructional hours matter for these students",
+    "explanation": "The chain reaches a real consequence but not yet a reason to care. The final move is saying what those hours produce — learning gains for the students furthest behind."
+  },
+  {
+    "id": "cw-27",
+    "area": "claim-warrant-impact",
+    "question": "A contention: (1) the tax raises revenue; (2) revenue funds clinics; (3) clinics cut untreated illness; (4) so the tax improves public health. The conclusion depends most directly on:",
+    "choices": [
+      "Whether the funded clinics actually reduce untreated illness",
+      "Whether the tax proves popular enough with voters to survive",
+      "Whether the revenue arrives every year or only once",
+      "Whether the tax was designed with public health as its stated goal"
+    ],
+    "correctAnswer": "Whether the funded clinics actually reduce untreated illness",
+    "explanation": "The load-bearing node is the step the conclusion rests on. Revenue and funding matter, but if clinics do not reduce untreated illness the public-health conclusion never arrives."
+  },
+  {
+    "id": "cw-28",
+    "area": "claim-warrant-impact",
+    "question": "Two reasons — \"the programme lowers costs\" and \"the programme shortens waits\" — each lead on their own to \"more people get care.\" This structure is:",
+    "choices": [
+      "Two independent supports converging on one conclusion",
+      "One causal chain in which each step feeds the next",
+      "A single warrant stated twice over",
+      "An impact with no warrant at all"
+    ],
+    "correctAnswer": "Two independent supports converging on one conclusion",
+    "explanation": "In a chain each step depends on the one before it, so losing a step stops the rest. Here the two reasons stand separately, so the conclusion survives even if one of them does not."
+  },
+  {
+    "id": "cw-29",
+    "area": "claim-warrant-impact",
+    "question": "The reasoning supports \"some students in early-start districts gain from a later bell\", but the speaker states the claim as \"all students always benefit\". The problem is:",
+    "choices": [
+      "The claim is broader than the reasoning can support",
+      "The claim should be stated even more strongly",
+      "The reasoning belongs after the impact",
+      "The word \"students\" is too vague"
+    ],
+    "correctAnswer": "The claim is broader than the reasoning can support",
+    "explanation": "A claim must not outrun its warrant. Stating the narrower proposition the reasoning actually establishes leaves the argument defensible instead of overstated."
+  },
+  {
+    "id": "cw-30",
+    "area": "claim-warrant-impact",
+    "question": "A team writes the tagline \"Justice for workers.\" As a contention this is a problem because it:",
+    "choices": [
+      "Names a value but no specific proposition a warrant could support",
+      "Uses a value, and a contention may never rest on a value",
+      "Leads with an impact, when the claim must always come first",
+      "Promises more than any plan could deliver, which overstates the impact"
+    ],
+    "correctAnswer": "Names a value but no specific proposition a warrant could support",
+    "explanation": "A slogan signals a value without saying what should be true or done. A contention needs a specific proposition — which policy, for whom, producing what — so reasoning and an impact can attach to it. Overstatement is not the issue: there is no stated impact to overstate."
+  },
+  {
+    "id": "rb-01",
+    "area": "rebuttal",
+    "question": "Opponent: 'Raising the minimum wage cuts jobs.' Which is the most DIRECT rebuttal?",
+    "choices": [
+      "Polling shows large majorities back a higher wage, so the judge should prefer the popular position.",
+      "I will extend our own poverty contention instead, because that is the strongest material our side has.",
+      "Studies of recent increases found no measurable employment drop, so the job-loss link is unproven.",
+      "Their whole case is wrong, as anyone who heard their first speech will already have noticed."
+    ],
+    "correctAnswer": "Studies of recent increases found no measurable employment drop, so the job-loss link is unproven.",
+    "explanation": "A direct rebuttal engages the specific claim (job loss) with a reason it fails. Changing the subject, asserting popularity, or a blanket dismissal do not answer the argument."
+  },
+  {
+    "id": "rb-02",
+    "area": "rebuttal",
+    "question": "A 'turn' in debate is when you:",
+    "choices": [
+      "Point out that their evidence does not support the claim they read it for",
+      "Show the opponent's own argument actually supports YOUR side",
+      "Show their argument is too weak to produce the impact they claimed",
+      "Restate their argument in your own words before answering it"
+    ],
+    "correctAnswer": "Show the opponent's own argument actually supports YOUR side",
+    "explanation": "A turn flips an argument so its logic favors you (e.g., 'that harm is actually worse under their plan'). It's more powerful than merely blocking the argument."
+  },
+  {
+    "id": "rb-03",
+    "area": "rebuttal",
+    "question": "Which rebuttal structure is clearest for the judge?",
+    "choices": [
+      "They say X. I disagree, and I said so in my first speech, so the judge should discount it.",
+      "They say X. But X is wrong because [reason], which means [impact for the round].",
+      "X is bad because their whole case is bad, and the judge should reject all of it together.",
+      "Let me set X aside and explain my own argument, which is clearer anyway."
+    ],
+    "correctAnswer": "They say X. But X is wrong because [reason], which means [impact for the round].",
+    "explanation": "Name the argument, give the reason it fails, and state what that does to the round. 'I disagree' has no reason; the others don't engage."
+  },
+  {
+    "id": "rb-04",
+    "area": "rebuttal",
+    "question": "If you have limited time and the opponent made five points, you should first answer:",
+    "choices": [
+      "The point they spent longest on, since that shows what they value",
+      "The point most important to their winning the round",
+      "Every point briefly, so nothing is left unanswered on the flow",
+      "The easiest point to answer, so you build momentum early"
+    ],
+    "correctAnswer": "The point most important to their winning the round",
+    "explanation": "Prioritize the load-bearing argument — the one that decides the round if it stands. Spreading thin, picking the easiest point, or following the time they spent wastes the clash."
+  },
+  {
+    "id": "rb-05",
+    "area": "rebuttal",
+    "question": "Opponent drops (never answers) your main argument. In rebuttal you should:",
+    "choices": [
+      "Note the concession and move on, since a drop speaks for itself",
+      "Extend it and explain why the dropped argument now decides the round",
+      "Read new evidence on it now that it is uncontested, to make it even stronger",
+      "Spend the time on their strongest argument, since a conceded point is already won"
+    ],
+    "correctAnswer": "Extend it and explain why the dropped argument now decides the round",
+    "explanation": "A conceded argument is strongest, but only once you extend it — restate the reasoning and explain why it now decides the round. Naming the drop without that leaves the judge a concession with no stated consequence, treating it as already won hands the advantage back, and fresh support answers an objection nobody made."
+  },
+  {
+    "id": "rb-06",
+    "area": "rebuttal",
+    "question": "Which is NOT genuine refutation?",
+    "choices": [
+      "Pointing out the opponent's evidence doesn't actually mention their claim",
+      "Showing the opponent's warrant has a false assumption",
+      "Restating your own contention louder",
+      "Demonstrating the impact is exaggerated"
+    ],
+    "correctAnswer": "Restating your own contention louder",
+    "explanation": "Refutation engages the opponent's argument (evidence mismatch, false assumption, exaggerated impact). Re-asserting your case is not answering theirs."
+  },
+  {
+    "id": "rb-07",
+    "area": "rebuttal",
+    "question": "The best response to weak evidence is usually to:",
+    "choices": [
+      "Question whether the opponent has actually read the study",
+      "Explain specifically why the evidence doesn't prove the claim",
+      "Read stronger evidence of your own, so the judge sees better support on your side",
+      "Assert that the evidence is weak and let the judge decide how weak"
+    ],
+    "correctAnswer": "Explain specifically why the evidence doesn't prove the claim",
+    "explanation": "Show the gap: why this evidence fails to prove this claim — dated, unrepresentative, or not saying what they say it says. Asking whether the opponent read it attacks the person and not the card, a bare assertion of weakness gives the judge no reason to agree, and reading your own evidence starts a card war while their link to the claim stands untouched."
+  },
+  {
+    "id": "rb-08",
+    "area": "rebuttal",
+    "question": "'Even if' rebuttal (e.g., 'even if their plan works, it still...') is useful because it:",
+    "choices": [
+      "Signals that you accept their argument, which makes your other answers credible",
+      "Gives you a fallback that wins even if you lose the first point",
+      "Replaces the need to contest their first point, since the fallback covers it",
+      "Shows the judge you can argue both sides of the question at once"
+    ],
+    "correctAnswer": "Gives you a fallback that wins even if you lose the first point",
+    "explanation": "'Even if' builds layered defense: you contest the claim AND show you still win if it stands. It's strategic depth, not concession."
+  },
+  {
+    "id": "rb-09",
+    "area": "rebuttal",
+    "question": "Signposting in rebuttal means:",
+    "choices": [
+      "Telling the judge which argument you are answering before you answer it",
+      "Answering their points in the order of your own case, so your speech stays organised",
+      "Naming the argument only after you have given your answer to it",
+      "Labelling each answer by which speaker said it rather than by which argument it hits"
+    ],
+    "correctAnswer": "Telling the judge which argument you are answering before you answer it",
+    "explanation": "Signposting ('On their first contention...') tells the judge where you are on the flow, so your answers land against the right arguments."
+  },
+  {
+    "id": "rb-10",
+    "area": "rebuttal",
+    "question": "An opponent argues: \"Later start times will raise grades, because teens get more sleep.\" A warrant-level rebuttal targets:",
+    "choices": [
+      "The claim that extra sleep is what actually produces the better grades",
+      "The claim that the school day would then end later in the afternoon",
+      "Whether the grade gain is large enough to matter to anyone",
+      "Whether grades actually rose in the districts that already moved their start times"
+    ],
+    "correctAnswer": "The claim that extra sleep is what actually produces the better grades",
+    "explanation": "The warrant is the reasoning connecting sleep to grades. Attacking it denies the argument its engine. The others contest the claim itself, its size, or a side effect — real answers, but not warrant-level ones."
+  },
+  {
+    "id": "rb-11",
+    "area": "rebuttal",
+    "question": "Answering \"even if teens do sleep more, the grade gain is far too small to matter\" is:",
+    "choices": [
+      "An impact-level answer, because it contests how much the result matters",
+      "A warrant-level answer, because it grants the sleep gain and attacks the reasoning",
+      "A turn, because it makes their own argument work for your side instead",
+      "A concession of the argument, because 'even if' grants everything they claimed"
+    ],
+    "correctAnswer": "An impact-level answer, because it contests how much the result matters",
+    "explanation": "Warrant-level answers attack whether the reasoning works; impact-level answers grant it and attack how much it matters. Knowing which you are making keeps the clash clean."
+  },
+  {
+    "id": "rb-12",
+    "area": "rebuttal",
+    "question": "In four-step refutation (THEY SAY / BUT / BECAUSE / THEREFORE), the THEREFORE step exists to:",
+    "choices": [
+      "State what the round looks like once their argument fails",
+      "Give the reason their argument fails, since that is what the judge needs",
+      "Repeat the opponent's claim more precisely before your answer lands",
+      "Add a fresh argument of your own now that theirs is answered"
+    ],
+    "correctAnswer": "State what the round looks like once their argument fails",
+    "explanation": "BECAUSE supplies the reason; THEREFORE cashes it out for the judge. Without it the judge hears an objection but not what it changes."
+  },
+  {
+    "id": "rb-13",
+    "area": "rebuttal",
+    "question": "A defensive answer differs from an offensive one in that an offensive answer:",
+    "choices": [
+      "Gives the judge a reason to vote for you, not only a reason to doubt them",
+      "Attacks the opponent's reasoning rather than the consequence they attached to it",
+      "Requires you to grant their argument first, then show that it helps you",
+      "Removes the argument from the flow entirely, rather than merely reducing its weight"
+    ],
+    "correctAnswer": "Gives the judge a reason to vote for you, not only a reason to doubt them",
+    "explanation": "Defense creates doubt about their argument. Offense generates something that counts for you. Removing the argument entirely is still only defense, the level you attack is a separate question, and offense does not require granting their claim first."
+  },
+  {
+    "id": "rb-14",
+    "area": "rebuttal",
+    "question": "An opponent argues their plan will raise emissions, and that rising emissions are harmful. A link turn and an impact turn differ in that a link turn says:",
+    "choices": [
+      "Their plan actually lowers emissions, while an impact turn says rising emissions would be good",
+      "Their plan does not raise emissions at all, while an impact turn says the rise would be small",
+      "Their reasoning about emissions is unproven, while an impact turn says the harm is unproven",
+      "The harm from rising emissions is overstated, while an impact turn says their plan lowers them instead"
+    ],
+    "correctAnswer": "Their plan actually lowers emissions, while an impact turn says rising emissions would be good",
+    "explanation": "Three different answers. A NO-LINK says the plan simply does not raise emissions. A LINK TURN reverses the direction: the plan lowers them. An IMPACT TURN grants the rise and argues it would be good. Only the last two generate offense."
+  },
+  {
+    "id": "rb-15",
+    "area": "rebuttal",
+    "question": "Against \"their plan raises emissions, and rising emissions are harmful\", running a link turn AND an impact turn together would claim:",
+    "choices": [
+      "Their plan lowers emissions, and rising emissions would be good — so their plan prevents something good",
+      "Their plan does not change emissions, and rising emissions would be good — so nothing they warn about follows",
+      "Their plan raises emissions, and rising emissions would be good — so the harm they describe is a benefit",
+      "Their plan lowers emissions, and rising emissions are harmful — so their plan prevents a real harm"
+    ],
+    "correctAnswer": "Their plan lowers emissions, and rising emissions would be good — so their plan prevents something good",
+    "explanation": "This is the double turn. The link turn says the plan lowers emissions; the impact turn says the rise would be good. Together they argue the plan prevents something good, handing the opponent offense. A NO-LINK answer does not create this, so it is the link turn, not the no-link, that combines badly with an impact turn."
+  },
+  {
+    "id": "rb-16",
+    "area": "rebuttal",
+    "question": "Indicting an opponent's evidence differs from turning their argument because an indict:",
+    "choices": [
+      "Weakens the argument, while a turn makes it work for your side",
+      "Ends the argument outright, while a turn only reduces the weight it carries",
+      "Answers their argument, while a turn replaces it with one of your own",
+      "Works only on evidence, while a turn works only on impacts"
+    ],
+    "correctAnswer": "Weakens the argument, while a turn makes it work for your side",
+    "explanation": "An indict lowers confidence in what the opponent has offered — their evidence, reasoning or support — so the argument carries less weight. A turn goes further and shows their own reasoning produces a consequence favouring your side. Not every criticism of evidence is a turn."
+  },
+  {
+    "id": "rb-17",
+    "area": "rebuttal",
+    "question": "Two possible responses are equally well supported and take about the same speech time. One only reduces the strength of their argument; the other answers it AND creates a reason to prefer your side. The second has the extra advantage of:",
+    "choices": [
+      "Giving the judge something to vote FOR, on top of answering them",
+      "Being safer, because creating doubt is always enough to win",
+      "Taking noticeably less speech time than the first",
+      "Removing any need to answer their argument at all"
+    ],
+    "correctAnswer": "Giving the judge something to vote FOR, on top of answering them",
+    "explanation": "With support and time held equal, the response that also generates offense does more work. Offense is not automatically better everywhere: a weak turn, or one that risks becoming a double turn, can make a clean defensive answer the stronger choice."
+  },
+  {
+    "id": "rb-18",
+    "area": "rebuttal",
+    "question": "An opponent claims a policy cut crime because crime fell after it passed. The strongest rebuttal is to:",
+    "choices": [
+      "Show another factor that better explains the drop over the same period",
+      "State that correlation is never causation, so their inference collapses on its own",
+      "Insist the drop would have happened anyway, without saying what else changed",
+      "Show that the fall in crime was smaller than the opponent claimed"
+    ],
+    "correctAnswer": "Show another factor that better explains the drop over the same period",
+    "explanation": "Naming the worry without doing the work is weak. A competing explanation weakens the inference that the policy caused the drop and forces them to distinguish their cause from the alternative. It does not by itself prove the policy had no effect."
+  },
+  {
+    "id": "rb-19",
+    "area": "rebuttal",
+    "question": "An opponent's argument only works if consumers behave rationally, but they never say so. The best response is to:",
+    "choices": [
+      "Name the hidden assumption and explain why it may not hold",
+      "Accept the argument, since they never claimed it",
+      "Argue that all assumptions are unreliable",
+      "Ask the judge to strike the argument from the flow"
+    ],
+    "correctAnswer": "Name the hidden assumption and explain why it may not hold",
+    "explanation": "Unstated assumptions are load-bearing. Surfacing one forces the opponent to defend a premise they were getting for free."
+  },
+  {
+    "id": "rb-20",
+    "area": "rebuttal",
+    "question": "A counterexample is especially powerful against a claim that something ALWAYS happens because it:",
+    "choices": [
+      "Provides a genuine case the universal claim says should not exist",
+      "Shows the claim is false in most cases, not only the one you raised",
+      "Shows their example was chosen unfairly, which discredits the whole claim",
+      "Forces them to prove the claim holds in every remaining case"
+    ],
+    "correctAnswer": "Provides a genuine case the universal claim says should not exist",
+    "explanation": "A single genuine case can defeat an absolute claim, because \"always\" rules that case out. It does far less against a claim that something USUALLY happens: a tendency survives one exception, so there you need a pattern rather than one case."
+  },
+  {
+    "id": "rb-21",
+    "area": "rebuttal",
+    "question": "The opponent says their approach \"always works.\" Documenting two clear failures rebuts them mainly by:",
+    "choices": [
+      "Narrowing an absolute claim into a limited one they must now defend",
+      "Proving the approach fails in most situations, not only the two documented",
+      "Settling the question for good, since an approach that failed cannot be defended",
+      "Showing that the opponent overstated the claim deliberately"
+    ],
+    "correctAnswer": "Narrowing an absolute claim into a limited one they must now defend",
+    "explanation": "Two failures do not prove the reverse claim. They do destroy \"always,\" which forces the opponent to specify conditions and defend a much smaller argument."
+  },
+  {
+    "id": "rb-22",
+    "area": "rebuttal",
+    "question": "Your argument has just been attacked. Rebuilding (frontlining) it means you should:",
+    "choices": [
+      "Answer the specific attack, then re-extend the argument with its impact",
+      "Answer the attack and stop there, since the argument is already on the flow",
+      "Re-extend the argument with its impact without engaging what the attack said",
+      "Grant the attack and rebuild a different argument they left alone"
+    ],
+    "correctAnswer": "Answer the specific attack, then re-extend the argument with its impact",
+    "explanation": "Rebuilding is two moves, not one: neutralise the attack, then restate why the argument still matters. Doing only one leaves either the attack standing or the impact unstated, and abandoning the argument wastes the work."
+  },
+  {
+    "id": "rb-23",
+    "area": "rebuttal",
+    "question": "Your warrant was attacked as unproven. The strongest rebuild:",
+    "choices": [
+      "Explains the reasoning again with support the attack did not address",
+      "Restates the warrant in the same terms, since the attack offered no proof",
+      "Concedes the warrant is unproven and rests the contention on its impact instead",
+      "Adds a new contention that reaches the same conclusion another way"
+    ],
+    "correctAnswer": "Explains the reasoning again with support the attack did not address",
+    "explanation": "A rebuild has to add something the attack did not already answer. Restating the same warrant leaves the objection standing, and a new contention concedes the original."
+  },
+  {
+    "id": "rb-24",
+    "area": "rebuttal",
+    "question": "The opponent says your impact is too small to matter. Rebuilding it means showing:",
+    "choices": [
+      "How large or how likely your impact actually is, against their claim",
+      "That their impact is just as small, so the judge should set both aside",
+      "That significance is always a matter of opinion, so no rebuild is possible here",
+      "That you explained the impact fully when you first presented it"
+    ],
+    "correctAnswer": "How large or how likely your impact actually is, against their claim",
+    "explanation": "They attacked significance, so the rebuild must restore significance with magnitude or probability. Answering a different question leaves theirs unanswered."
+  },
+  {
+    "id": "rb-25",
+    "area": "rebuttal",
+    "question": "Their case runs: the policy raises wages, higher wages raise prices, and higher prices hurt low-income families. You have strong reason that higher wages do NOT raise prices. Answering that one step is efficient because:",
+    "choices": [
+      "Breaking a necessary step stops the chain reaching its impact unless they repair it",
+      "It proves the first step of their argument was false as well",
+      "Every sentence of an argument must be disproved for any of it to fall",
+      "It guarantees the opposite outcome — that prices will fall instead"
+    ],
+    "correctAnswer": "Breaking a necessary step stops the chain reaching its impact unless they repair it",
+    "explanation": "An argument needing several steps is only as strong as its weakest necessary link. Answering the load-bearing step means the impact no longer follows as presented, without refuting every premise. Say why it fails — they can still try to rebuild that link."
+  },
+  {
+    "id": "rb-26",
+    "area": "rebuttal",
+    "question": "Answering an argument the opponent never actually made is a problem mainly because:",
+    "choices": [
+      "Their real argument is still on the flow, unanswered",
+      "It wastes the speech time you needed for their remaining arguments",
+      "It lets them accuse you of misrepresenting them, which costs credibility",
+      "It only matters if the judge spots the substitution"
+    ],
+    "correctAnswer": "Their real argument is still on the flow, unanswered",
+    "explanation": "A strawman feels like clash but changes nothing: the judge still has the original argument with no response next to it."
+  },
+  {
+    "id": "rb-27",
+    "area": "rebuttal",
+    "question": "Conceding a narrow point can strengthen your position when:",
+    "choices": [
+      "The point does not decide the round and conceding frees time for the point that does",
+      "The opponent has more support on it than you do, so contesting it draws attention there",
+      "You are running short of time and can give up whichever point is easiest",
+      "Never — a concession anywhere in the round signals your case cannot hold"
+    ],
+    "correctAnswer": "The point does not decide the round and conceding frees time for the point that does",
+    "explanation": "A limited, deliberate concession buys time and credibility. The test is whether the conceded point can still cost you the round."
+  },
+  {
+    "id": "rb-28",
+    "area": "rebuttal",
+    "question": "In the response frame IDENTIFY → ANSWER → EXPLAIN → COMPARE, the COMPARE step asks you to:",
+    "choices": [
+      "Show why your answer should matter more to the judge than what they said",
+      "Restate which argument you are answering, so the judge can place the comparison",
+      "Give the reason their argument fails, since that reason is what the judge compares",
+      "Set your answer beside their argument so the judge sees both of them"
+    ],
+    "correctAnswer": "Show why your answer should matter more to the judge than what they said",
+    "explanation": "IDENTIFY targets the argument, ANSWER and EXPLAIN do the work, and COMPARE tells the judge how to resolve the clash. Without it, two competing claims are left side by side."
+  },
+  {
+    "id": "rb-29",
+    "area": "rebuttal",
+    "question": "The opponent argues we must either adopt their plan or accept the status quo. The best response points out that:",
+    "choices": [
+      "Other options exist that they have not addressed",
+      "The status quo is working perfectly well",
+      "Their plan would be expensive to implement",
+      "They are being unfair to the other team"
+    ],
+    "correctAnswer": "Other options exist that they have not addressed",
+    "explanation": "The argument depends on there being only two choices. Showing a third dissolves the forced choice without needing to defend the status quo."
+  },
+  {
+    "id": "rb-30",
+    "area": "rebuttal",
+    "question": "The opponent still has some offense standing after your responses. A strategy made up entirely of defensive answers then risks:",
+    "choices": [
+      "Leaving you dependent on shrinking their case without building a reason to prefer yours",
+      "Conceding their impacts by default, since defence never denies that a harm is real",
+      "Making it impossible to win the round unless the opponent drops one of their own arguments",
+      "Leaving your own contentions unextended for the remainder of the round"
+    ],
+    "correctAnswer": "Leaving you dependent on shrinking their case without building a reason to prefer yours",
+    "explanation": "Defense is valuable, and a defense-only strategy can be enough depending on burdens, presumption and what is left in the round. The risk is narrower: while they still have offense standing, reducing it is not the same as giving the judge a reason to prefer you."
+  },
+  {
+    "id": "ev-01",
+    "area": "evidence-evaluation",
+    "question": "Which evidence most strongly supports 'this policy reduces crime'?",
+    "choices": [
+      "A columnist who has covered policing for twenty years writes that the policy feels tough on crime and is clearly working.",
+      "A controlled study found cities adopting the policy saw crime fall more than similar cities that didn't.",
+      "A politician who sponsored the policy promises it will cut crime, and points out that arrests fell the year it began.",
+      "Polls show most residents believe the policy made them safer."
+    ],
+    "correctAnswer": "A controlled study found cities adopting the policy saw crime fall more than similar cities that didn't.",
+    "explanation": "A comparison against similar control cities isolates the policy's effect. Opinion, promises, and popularity don't establish that the policy caused the change."
+  },
+  {
+    "id": "ev-02",
+    "area": "evidence-evaluation",
+    "question": "A study from 1998 is used to prove a claim about current smartphone use. The main weakness is:",
+    "choices": [
+      "A 1998 study is simply too old to use",
+      "It may be outdated, since phone use has changed beyond recognition after 1998",
+      "It is sound, because the study was accurate about phone use in 1998",
+      "Its age is probably fine, since phone habits change more slowly than the devices do"
+    ],
+    "correctAnswer": "It may be outdated, since phone use has changed beyond recognition after 1998",
+    "explanation": "Recency matters most when the subject changes quickly. Age isn't always disqualifying, but for smartphone behavior a 1998 study likely predates the phenomenon — the habits themselves have transformed, not just the hardware."
+  },
+  {
+    "id": "ev-03",
+    "area": "evidence-evaluation",
+    "question": "'9 out of 10 dentists recommend it' is weak if:",
+    "choices": [
+      "We don't know how many dentists were asked or how they were chosen",
+      "Fewer than a thousand dentists were surveyed — only very large samples count",
+      "One dentist in ten disagreed, which shows the profession is divided on it",
+      "The survey is a few years old, as dental opinion shifts quickly"
+    ],
+    "correctAnswer": "We don't know how many dentists were asked or how they were chosen",
+    "explanation": "A statistic's strength depends on sample size and selection. Ten cherry-picked dentists is not the same as a representative survey."
+  },
+  {
+    "id": "ev-04",
+    "area": "evidence-evaluation",
+    "question": "Correlation is presented as proof of causation. The best objection is:",
+    "choices": [
+      "The correlation is not strong enough yet to count as proof",
+      "Something else could cause both, or the order could be reversed",
+      "With a slightly larger sample, the correlation might well have counted as proof of cause",
+      "Correlation tells you nothing, so the finding should be discarded"
+    ],
+    "correctAnswer": "Something else could cause both, or the order could be reversed",
+    "explanation": "Correlation ≠ causation because of confounders or reverse causation. A stronger correlation or a larger sample would not close that gap, and discarding the finding entirely overcorrects."
+  },
+  {
+    "id": "ev-05",
+    "area": "evidence-evaluation",
+    "question": "Which source has the clearest conflict of interest for 'sugar is harmless'?",
+    "choices": [
+      "A university nutrition department",
+      "A study funded by a soft-drink trade group",
+      "A government health agency",
+      "A meta-analysis of independent studies"
+    ],
+    "correctAnswer": "A study funded by a soft-drink trade group",
+    "explanation": "Funding by a party that profits from the conclusion is a direct conflict of interest. It doesn't automatically make the study wrong, but it's the clearest bias risk here."
+  },
+  {
+    "id": "ev-06",
+    "area": "evidence-evaluation",
+    "question": "An opponent cites a real statistic but it doesn't actually mention their claim. You should argue:",
+    "choices": [
+      "The statistic must be fabricated — real figures would not be attached to the wrong claim",
+      "The evidence doesn't support the claim it's attached to",
+      "The sample behind the figure was likely too small to show anything",
+      "The statistic is out of date, so a newer figure would settle it"
+    ],
+    "correctAnswer": "The evidence doesn't support the claim it's attached to",
+    "explanation": "The strongest, honest attack is the link: the evidence is real but doesn't prove THIS claim. Calling it fabricated, or blaming its age or sample size, misdiagnoses what is a relevance problem."
+  },
+  {
+    "id": "ev-07",
+    "area": "evidence-evaluation",
+    "question": "Between a single dramatic anecdote and a large representative dataset, the dataset is usually stronger because:",
+    "choices": [
+      "Larger datasets are usually right, so the anecdote is probably mistaken",
+      "It reflects the general pattern, not one memorable case",
+      "Numbers are objective, while personal stories are usually exaggerated",
+      "A single case cannot be evidence of anything at all"
+    ],
+    "correctAnswer": "It reflects the general pattern, not one memorable case",
+    "explanation": "A vivid anecdote can mislead (it may be an outlier), while representative data shows what's typical. The anecdote may be perfectly true — the contest is about representativeness, not about which side is mistaken."
+  },
+  {
+    "id": "ev-08",
+    "area": "evidence-evaluation",
+    "question": "The most important question to ask about a statistic is often:",
+    "choices": [
+      "How large is the number?",
+      "Compared to what?",
+      "Does it come from a well-known organization?",
+      "Is the figure an exact count rather than an estimate?"
+    ],
+    "correctAnswer": "Compared to what?",
+    "explanation": "Numbers gain meaning from comparison and baseline ('30% higher' — than what?). Size alone, a familiar name on the report, or the apparent exactness of the count don't establish significance."
+  },
+  {
+    "id": "ev-09",
+    "area": "evidence-evaluation",
+    "question": "Cherry-picking evidence means:",
+    "choices": [
+      "Using only the data that fits your side and ignoring the rest",
+      "Choosing the newest study available on the question",
+      "Relying on a vivid personal story when no data is available",
+      "Using a statistic that turns out to be measuring something else"
+    ],
+    "correctAnswer": "Using only the data that fits your side and ignoring the rest",
+    "explanation": "Cherry-picking selectively presents favorable data while hiding contrary evidence, distorting the true picture."
+  },
+  {
+    "id": "ev-10",
+    "area": "evidence-evaluation",
+    "question": "A study measures how many people SIGN UP for a job programme. The speaker cites it for \"the programme gets people back into work.\" The evidence:",
+    "choices": [
+      "Measures enrolment, not employment",
+      "Is irrelevant to the topic entirely",
+      "Proves the claim, since enrolment leads to jobs",
+      "Fails only because it is a few years old"
+    ],
+    "correctAnswer": "Measures enrolment, not employment",
+    "explanation": "Enrolment and employment sound close enough to pass unnoticed, which is what makes this gap easy to miss. The study supports a claim about uptake, not about outcomes."
+  },
+  {
+    "id": "ev-11",
+    "area": "evidence-evaluation",
+    "question": "A trial of a reading programme in Finnish primary schools is cited to claim it will work in a US high school. The main question is:",
+    "choices": [
+      "Whether the studied population and setting are close enough to the one being claimed about",
+      "Whether research from another country can be used at all, given that school systems differ by nation",
+      "Whether the Finnish trial was recent enough, since teaching methods change quickly",
+      "Whether the trial included enough schools to count as large-scale evidence"
+    ],
+    "correctAnswer": "Whether the studied population and setting are close enough to the one being claimed about",
+    "explanation": "Evidence from another population is a starting point, not a dead end. The work is asking how similar the age group, system and setting are, and what would change across that gap."
+  },
+  {
+    "id": "ev-12",
+    "area": "evidence-evaluation",
+    "question": "For the claim \"this drug reduces heart attacks\", a trial that measures cholesterol levels is:",
+    "choices": [
+      "Indirect support — useful, but weaker than a trial measuring heart attacks",
+      "Direct support, since cholesterol is what causes heart attacks",
+      "Worthless, because indirect evidence proves nothing",
+      "Stronger, because cholesterol is easier to measure"
+    ],
+    "correctAnswer": "Indirect support — useful, but weaker than a trial measuring heart attacks",
+    "explanation": "Indirect evidence sits one step away from the claim: it supports a marker rather than the outcome. That is real support, just weaker than measuring the outcome itself."
+  },
+  {
+    "id": "ev-13",
+    "area": "evidence-evaluation",
+    "question": "A study concludes: \"In two districts, students at later-starting schools scored slightly higher.\" It is cited for \"later starts raise achievement nationwide.\" The problem is:",
+    "choices": [
+      "The study's own conclusion is narrower than the claim it is being used for",
+      "Two districts is probably too small a sample for the finding to mean much",
+      "The difference was only slight, so the study found no real effect at all",
+      "Test scores measure the wrong thing, so achievement claims cannot rest on them"
+    ],
+    "correctAnswer": "The study's own conclusion is narrower than the claim it is being used for",
+    "explanation": "The evidence is fine for what it found. Setting the study's stated scope — two districts, a slight difference — beside the sweeping claim shows the gap is in the generalisation, not the research."
+  },
+  {
+    "id": "ev-14",
+    "area": "evidence-evaluation",
+    "question": "A Nobel laureate in physics is quoted on the effects of raising the minimum wage. Their statement is:",
+    "choices": [
+      "Outside their field, so the prize does not make them an authority here",
+      "Authoritative — a Nobel prize is awarded for exceptional analytical rigour",
+      "Probably mistaken, since physicists rarely follow economic research closely",
+      "Strong, as long as no economist has publicly contradicted them"
+    ],
+    "correctAnswer": "Outside their field, so the prize does not make them an authority here",
+    "explanation": "Expertise is domain-specific. A distinguished physicist may still turn out to be right, but the prize supplies no economic authority — an economist or the underlying data would."
+  },
+  {
+    "id": "ev-15",
+    "area": "evidence-evaluation",
+    "question": "A hospital CEO states which surgical technique produces better outcomes. For that specific claim, the CEO:",
+    "choices": [
+      "Holds a senior role, which is not the same as clinical expertise in the technique",
+      "Is automatically the best source, being the most senior person present",
+      "Cannot speak to anything at all about the hospital",
+      "Is reliable only if the quotation is recent"
+    ],
+    "correctAnswer": "Holds a senior role, which is not the same as clinical expertise in the technique",
+    "explanation": "Position brings access and responsibility, not necessarily technical judgement. Outcome comparisons come from clinicians and trial data — though the CEO could reliably report the hospital's own figures."
+  },
+  {
+    "id": "ev-16",
+    "area": "evidence-evaluation",
+    "question": "To establish that one specific factory shut down last month, a worker who was there is:",
+    "choices": [
+      "A reasonable source for that narrow factual claim",
+      "Unusable, because they are not a researcher",
+      "Enough to establish that factory closures are rising nationally",
+      "Weaker than any published statistic on any subject"
+    ],
+    "correctAnswer": "A reasonable source for that narrow factual claim",
+    "explanation": "Firsthand access suits narrow, checkable facts. It does not scale: the same worker cannot establish a national trend, which needs broader data."
+  },
+  {
+    "id": "ev-17",
+    "area": "evidence-evaluation",
+    "question": "A study funded by an industry group reports a result that favours that industry. The right response is to:",
+    "choices": [
+      "Examine the methods and look for independent corroboration",
+      "Discard it outright; funded research cannot be honest",
+      "Accept it, since peer review would have caught any distortion",
+      "Discount it somewhat, in rough proportion to the industry funding behind it"
+    ],
+    "correctAnswer": "Examine the methods and look for independent corroboration",
+    "explanation": "A conflict of interest raises how much scrutiny a study deserves; it does not settle whether the finding is true. Methods and corroboration answer that — not a mechanical discount scaled to the funding."
+  },
+  {
+    "id": "ev-18",
+    "area": "evidence-evaluation",
+    "question": "A study openly discloses its funding source and publishes its full method. That disclosure:",
+    "choices": [
+      "Improves transparency but does not by itself make the finding true or false",
+      "Shows the researchers had nothing to hide, so the result can be taken at face value",
+      "Signals the funder shaped the design, or it would not be named",
+      "Largely offsets the conflict of interest, since readers can now allow for it"
+    ],
+    "correctAnswer": "Improves transparency but does not by itself make the finding true or false",
+    "explanation": "Disclosure lets you assess the risk instead of guessing at it. It is a reason to trust the process more, not a verdict on the result — and naming the conflict does not neutralise it."
+  },
+  {
+    "id": "ev-19",
+    "area": "evidence-evaluation",
+    "question": "An advocacy organisation states the exact date a law took effect. That particular claim is:",
+    "choices": [
+      "Checkable against the public record, so the group's stance matters less here",
+      "Suspect even if the record agrees, because the group's motive settles the question by itself",
+      "No more reliable than their view of what the law does",
+      "Reliable on every claim they make — nobody knows the law better"
+    ],
+    "correctAnswer": "Checkable against the public record, so the group's stance matters less here",
+    "explanation": "Separate incentives from verifiability. An interested source can be perfectly reliable on a fact anyone can confirm, while its interpretation of that fact still deserves scrutiny. Motive settles nothing by itself: when the public record fixes the date, calling the claim suspect regardless of that record replaces checking with blanket distrust — and familiarity with the law makes no source reliable on every claim."
+  },
+  {
+    "id": "ev-20",
+    "area": "evidence-evaluation",
+    "question": "A 1994 paper is cited for the boiling point of water at sea level. Its age is:",
+    "choices": [
+      "Not a weakness, because the underlying fact has not changed",
+      "A serious weakness, since older sources are less reliable",
+      "Irrelevant, because the age of a source never matters",
+      "A weakness only if the journal has since closed"
+    ],
+    "correctAnswer": "Not a weakness, because the underlying fact has not changed",
+    "explanation": "Recency matters in proportion to how fast the subject changes. A physical constant is stable, so a 1994 source is as good as a 2024 one."
+  },
+  {
+    "id": "ev-21",
+    "area": "evidence-evaluation",
+    "question": "Two 2005 sources are cited: one on teenage social-media habits, one on the structure of the human heart. Age is a bigger problem for:",
+    "choices": [
+      "The social-media source, because that behaviour changes quickly",
+      "The anatomy source, because medicine advances fastest",
+      "Both equally, since both are from 2005",
+      "Neither, because 2005 counts as recent"
+    ],
+    "correctAnswer": "The social-media source, because that behaviour changes quickly",
+    "explanation": "Age is judged against the subject's rate of change. Teenage platform use in 2005 predates most of today's apps, while basic cardiac anatomy has not moved."
+  },
+  {
+    "id": "ev-22",
+    "area": "evidence-evaluation",
+    "question": "A survey of 50,000 people, all recruited at one university, is used to describe the national adult population. The main weakness is:",
+    "choices": [
+      "The sample is large but drawn from one unrepresentative group",
+      "The sample is far too small to mean anything",
+      "Surveys can never describe a population",
+      "Fifty thousand responses is so large the result must be right"
+    ],
+    "correctAnswer": "The sample is large but drawn from one unrepresentative group",
+    "explanation": "Size and representativeness are separate questions. A very large sample from one campus still describes people at that campus, not the country."
+  },
+  {
+    "id": "ev-23",
+    "area": "evidence-evaluation",
+    "question": "An online poll on a news site finds 80% oppose a policy. The core limitation is:",
+    "choices": [
+      "People who chose to respond may differ systematically from the wider public",
+      "Online polls can rarely verify who is answering, so the count itself is suspect",
+      "The figure is meaningless, because no online result can describe opinion",
+      "Too few people took part for a figure like eighty percent to hold"
+    ],
+    "correctAnswer": "People who chose to respond may differ systematically from the wider public",
+    "explanation": "Self-selected respondents opt in because they care, so the poll describes that group. It can still be informative about the site's readers — just not about the public."
+  },
+  {
+    "id": "ev-24",
+    "area": "evidence-evaluation",
+    "question": "A school introduces tutoring and scores rise 5%. Without a comparison group you cannot tell:",
+    "choices": [
+      "Whether scores would have risen anyway, since no untutored baseline exists",
+      "Whether the tutoring reached every student in the year group",
+      "How many tutoring sessions each student actually attended",
+      "Whether the school's earlier scores were recorded accurately"
+    ],
+    "correctAnswer": "Whether scores would have risen anyway, since no untutored baseline exists",
+    "explanation": "A single before-and-after leaves other explanations open — an easier test, a stronger cohort, a general upward trend. A comparable untutored group is what isolates the effect; attendance and record-keeping are answered by the school's own logs, not by a comparison group."
+  },
+  {
+    "id": "ev-25",
+    "area": "evidence-evaluation",
+    "question": "A study compares students in an after-school programme with students who are not enrolled. The enrolled group also has, on average, more parental support at home. This design:",
+    "choices": [
+      "Cannot separate the programme's effect from the difference in parental support",
+      "Suggests parental support, rather than the programme, is probably what raises the outcome",
+      "Is sound, since both groups were measured on the same outcome",
+      "Fails only because the study did not follow the students for long enough"
+    ],
+    "correctAnswer": "Cannot separate the programme's effect from the difference in parental support",
+    "explanation": "The two groups differ in more than one way, so any gap in outcomes has at least two candidate explanations. That extra differing factor is a confounder, and this design cannot rule it out — nor can it crown either explanation the likely one."
+  },
+  {
+    "id": "ev-26",
+    "area": "evidence-evaluation",
+    "question": "A study measures exercise by asking participants how much they exercised last month. The limitation is:",
+    "choices": [
+      "Recall and self-presentation can shift the reported numbers",
+      "Self-report is unusable, because people misremember",
+      "The numbers are likely close enough; most people know their own routines",
+      "The study should have asked about the past year, since one month is unrepresentative"
+    ],
+    "correctAnswer": "Recall and self-presentation can shift the reported numbers",
+    "explanation": "Self-report is practical and widely used, but people misremember and tend to report favourably. That is a reason to treat the numbers as approximate, not to discard the study — and not to wave the bias away."
+  },
+  {
+    "id": "ev-27",
+    "area": "evidence-evaluation",
+    "question": "Two reports state the same finding. One describes who was studied, how those people were selected, what was measured and what comparison was made; the other gives only the result. The first is easier to evaluate because:",
+    "choices": [
+      "Its method is open to inspection, so a reader can judge how the result was produced and where it is limited",
+      "A described method guarantees the finding is correct, given that the reader can check each step",
+      "The second report's finding is probably wrong; methods tend to stay hidden when results are weak",
+      "The two are equally easy to evaluate, as both state the same finding"
+    ],
+    "correctAnswer": "Its method is open to inspection, so a reader can judge how the result was produced and where it is limited",
+    "explanation": "A visible method does not make a finding true, and an unexplained one does not make it false. What changes is evaluability: when the method is described you can weigh the result's strengths and limits yourself, whereas an unexplained result asks you to take confidence on trust."
+  },
+  {
+    "id": "ev-28",
+    "area": "evidence-evaluation",
+    "question": "A speaker shows crime falling since 2019. The full series shows it rising steadily from 2010 and dipping only after 2019. The problem is:",
+    "choices": [
+      "The chosen start date creates a trend the full record does not show, since 2019 sits at the series' peak",
+      "Recent crime figures may be unreliable — counts are often revised for years afterwards",
+      "There is no problem: every figure shown is accurate",
+      "The earlier years should be dropped, being less relevant to conditions today"
+    ],
+    "correctAnswer": "The chosen start date creates a trend the full record does not show, since 2019 sits at the series' peak",
+    "explanation": "Nothing shown is false; the window is doing the work. Starting at the 2010–2019 peak manufactures a decline, so ask what the full record looks like — data-revision worries are a different objection and not the one this chart raises."
+  },
+  {
+    "id": "ev-29",
+    "area": "evidence-evaluation",
+    "question": "Three news articles report the same figure, and each cites the same original survey. Together they provide:",
+    "choices": [
+      "One source of evidence reported three times, not three independent confirmations",
+      "Three independent confirmations, with three separate newsrooms standing behind the figure",
+      "Somewhat stronger support than the survey alone, since each outlet chose to vouch for it",
+      "No usable evidence — second-hand reporting is worthless"
+    ],
+    "correctAnswer": "One source of evidence reported three times, not three independent confirmations",
+    "explanation": "Corroboration means independent sources reaching the same result. Repetition traces back to one origin, so any weakness in that survey is inherited by all three reports — republication adds no evidential weight."
+  },
+  {
+    "id": "ev-30",
+    "area": "evidence-evaluation",
+    "question": "A headline reads \"New drug ends chronic pain.\" The paper reports moderate relief in some patients over twelve weeks. Evaluating this evidence means:",
+    "choices": [
+      "Using the study's actual finding rather than the headline's stronger wording",
+      "Rejecting the study; a paper that allows an inflated headline cannot be trusted",
+      "Accepting the headline, trusting editors to summarise what the paper found",
+      "Setting the paper aside for now, until a second study reports something similar"
+    ],
+    "correctAnswer": "Using the study's actual finding rather than the headline's stronger wording",
+    "explanation": "Headlines compress and sharpen. The defensible claim is the one the paper supports — moderate relief, some patients, twelve weeks — and that finding is usable now, at its actual strength, without waiting for replication."
+  },
+  {
+    "id": "wg-01",
+    "area": "weighing",
+    "question": "Both sides win an impact. 'Magnitude' weighing asks:",
+    "choices": [
+      "Which impact arrives first, since a harm that lands sooner can foreclose the other",
+      "Which impact affects more people or is more severe",
+      "Which impact is the more likely to happen",
+      "Which impact cannot be undone once it lands"
+    ],
+    "correctAnswer": "Which impact affects more people or is more severe",
+    "explanation": "Magnitude = size/severity/scope of the impact. Timeframe is about sooner; probability is about likelihood."
+  },
+  {
+    "id": "wg-02",
+    "area": "weighing",
+    "question": "'Timeframe' weighing argues your impact should win because it:",
+    "choices": [
+      "Affects more people, which is what makes one impact heavier than the other",
+      "Happens sooner or sets off other harms first",
+      "Is more certain to arrive, so the timing of the harm stops mattering",
+      "Cannot be undone once it arrives"
+    ],
+    "correctAnswer": "Happens sooner or sets off other harms first",
+    "explanation": "Timeframe prioritizes impacts that occur first, especially if they trigger or foreclose others. Size is magnitude; certainty is probability."
+  },
+  {
+    "id": "wg-03",
+    "area": "weighing",
+    "question": "'Probability' weighing tells the judge to prefer your impact because it:",
+    "choices": [
+      "Is bigger if it happens",
+      "Is more likely to actually happen",
+      "Could happen at all, which is what likelihood really asks",
+      "Arrives before theirs, so it is the harm that counts first"
+    ],
+    "correctAnswer": "Is more likely to actually happen",
+    "explanation": "Probability weighs how likely each impact is. A smaller, near-certain harm can outweigh a huge but speculative one."
+  },
+  {
+    "id": "wg-04",
+    "area": "weighing",
+    "question": "Why is explicit weighing important even when you're winning arguments?",
+    "choices": [
+      "It reminds the judge how many arguments you are ahead on, which is what decides a close round",
+      "It tells the judge HOW to decide when both sides have impacts",
+      "It replaces the need to keep defending your impacts once you are ahead",
+      "It shows your impact was described in more detail"
+    ],
+    "correctAnswer": "It tells the judge HOW to decide when both sides have impacts",
+    "explanation": "Without weighing, the judge chooses which impacts matter — maybe against you. Weighing gives them your framework for the decision."
+  },
+  {
+    "id": "wg-05",
+    "area": "weighing",
+    "question": "Which is a weighing argument, not just an impact?",
+    "choices": [
+      "Climate change displaces millions of people from coastal regions, and the loss is permanent.",
+      "Our economic harm outweighs their climate impact because it is far more probable in the next year.",
+      "The economy could suffer badly enough that thousands of jobs go within the year.",
+      "Millions could be displaced, and no later policy could bring their homes back."
+    ],
+    "correctAnswer": "Our economic harm outweighs their climate impact because it is far more probable in the next year.",
+    "explanation": "Weighing compares two impacts on a named metric (probability + timeframe). The others state a single impact without comparison."
+  },
+  {
+    "id": "wg-06",
+    "area": "weighing",
+    "question": "An impact that is huge but very unlikely is best answered by weighing on:",
+    "choices": [
+      "Magnitude",
+      "Probability",
+      "Reversibility",
+      "Scope"
+    ],
+    "correctAnswer": "Probability",
+    "explanation": "If an impact is large but improbable, argue probability: prefer the more likely harm. Meeting magnitude with magnitude concedes their frame, and reversibility and scope are real standards that never target what is weakest here — the likelihood."
+  },
+  {
+    "id": "wg-07",
+    "area": "weighing",
+    "question": "'Reversibility' weighing argues an impact matters more because:",
+    "choices": [
+      "It can be undone easily once it has happened",
+      "Once it happens it cannot be undone",
+      "It would affect more people than the other side's impact",
+      "It arrives sooner than the opposing impact, leaving less time to adapt"
+    ],
+    "correctAnswer": "Once it happens it cannot be undone",
+    "explanation": "Irreversible harms (extinction, lost lives, ecosystem collapse) weigh heavily because there's no recovery — a common and powerful weighing standard. Easy reversal is the opposite of the standard, and headcount and speed of arrival belong to magnitude and timeframe."
+  },
+  {
+    "id": "wg-08",
+    "area": "weighing",
+    "question": "The purpose of a weighing framework stated early in the round is to:",
+    "choices": [
+      "Replace the need to compare the two impacts later in the speech",
+      "Set the standard the judge uses before impacts are compared",
+      "Lock you into that one dimension for the rest of the round",
+      "Show early that your impact is the larger of the two"
+    ],
+    "correctAnswer": "Set the standard the judge uses before impacts are compared",
+    "explanation": "Establishing the framework early (e.g., 'prefer probability') shapes how every later impact is judged, before the clash on impacts happens."
+  },
+  {
+    "id": "wg-09",
+    "area": "weighing",
+    "question": "Two impacts are equal in size and likelihood. The best remaining weighing move is:",
+    "choices": [
+      "Argue magnitude again, in more detail than the other side did",
+      "Introduce timeframe or reversibility to break the tie",
+      "Tell the judge the two impacts are tied, so no comparison is possible",
+      "Point out that you named a weighing standard first"
+    ],
+    "correctAnswer": "Introduce timeframe or reversibility to break the tie",
+    "explanation": "When magnitude and probability tie, a different axis (timeframe, reversibility) breaks the tie. Re-arguing a dimension the impacts are already tied on, or having named a standard first, gives the judge no reason to prefer either impact."
+  },
+  {
+    "id": "wg-10",
+    "area": "weighing",
+    "question": "By the final speech your opponents' only impact has been conceded away, and yours still stands. Weighing here:",
+    "choices": [
+      "Is not the missing task — with only one surviving impact there is nothing to compare it against",
+      "Is still required, because a final speech must always contain explicit weighing",
+      "Is impossible, so the judge has no way to decide the round",
+      "Would be stronger if you named a weighing category out loud"
+    ],
+    "correctAnswer": "Is not the missing task — with only one surviving impact there is nothing to compare it against",
+    "explanation": "Weighing compares two surviving impacts. When only one is left the work is showing the judge that it stands, not ranking it against something no longer in the round. That is a fact about this round, not a claim that weighing is generally optional."
+  },
+  {
+    "id": "wg-11",
+    "area": "weighing",
+    "question": "Both teams end the round with a real impact standing, and neither team ever says why theirs should matter more. For the judge, this is:",
+    "choices": [
+      "Exactly the situation weighing exists to resolve — otherwise the judge supplies the comparison",
+      "A tie the judge has to break alone, and there is nothing either team could have done about it",
+      "Resolved by whichever impact was described in more detail, since detail is the judge's only guide here",
+      "A sign that neither team made a complete argument, because an impact without a comparison is unfinished"
+    ],
+    "correctAnswer": "Exactly the situation weighing exists to resolve — otherwise the judge supplies the comparison",
+    "explanation": "Two unweighed impacts pass in the night. When both survive and neither side compares them, the judge picks the comparison — and it may not be the one you wanted. Detail is not comparison, and both arguments here are complete."
+  },
+  {
+    "id": "wg-12",
+    "area": "weighing",
+    "question": "Your first contention was fully answered and you have stopped defending it. In the last speech you argue that its impact outweighs everything else. The problem is:",
+    "choices": [
+      "You are weighing an impact that no longer survives",
+      "You should have attacked their response to it instead",
+      "You left it too late in the round to make the comparison",
+      "You named the wrong weighing category for this impact"
+    ],
+    "correctAnswer": "You are weighing an impact that no longer survives",
+    "explanation": "Weighing compares offense that is still standing. An impact you have stopped defending cannot outweigh anything, because it is no longer in the round to compare. Whether to have contested their response is a separate, earlier decision."
+  },
+  {
+    "id": "wg-13",
+    "area": "weighing",
+    "question": "One harm gives 200,000 people a mild illness that clears in a week. The other leaves 4,000 people permanently disabled. On magnitude, the stronger comparison here is:",
+    "choices": [
+      "The 4,000, because magnitude counts severity per person, not only how many are affected",
+      "The 200,000, because it is the head-count that magnitude ultimately tracks",
+      "Neither, because magnitude counts only heads, not how badly each person is harmed",
+      "The 4,000, because a permanent harm always outweighs a temporary one"
+    ],
+    "correctAnswer": "The 4,000, because magnitude counts severity per person, not only how many are affected",
+    "explanation": "Magnitude covers size, severity and number affected together. Here the smaller group carries a permanent harm, so a comparison resting on the headline number alone would miss what makes this impact heavy. Change the severities and the comparison can run the other way."
+  },
+  {
+    "id": "wg-14",
+    "area": "weighing",
+    "question": "One side's impact is measured in dollars of lost output; the other's is measured in lives lost. The most useful magnitude comparison:",
+    "choices": [
+      "Explains what each figure means in human terms so the two can be set side by side at all",
+      "Picks whichever number is larger, since a bigger figure means a bigger impact whatever it counts",
+      "Discards the dollar figure, because a harm measured in money is not a real impact",
+      "Converts everything into dollars, because two impacts can only be ranked in one unit"
+    ],
+    "correctAnswer": "Explains what each figure means in human terms so the two can be set side by side at all",
+    "explanation": "Raw numbers in different units do not compare themselves — $2 billion is not 'bigger than' 900 lives in any meaningful sense. The work is putting both into terms the judge can actually weigh against each other."
+  },
+  {
+    "id": "wg-15",
+    "area": "weighing",
+    "question": "A speaker says: \"Our impact is enormous — millions of people lose access to clean water.\" By itself this is:",
+    "choices": [
+      "An impact claim, not yet weighing, because nothing is compared to the other side",
+      "Weighing, because stating how many people are affected is what a magnitude comparison does",
+      "Weighing, because the word 'enormous' compares this harm to an ordinary one",
+      "Not weighing, because the sentence never names a weighing dimension"
+    ],
+    "correctAnswer": "An impact claim, not yet weighing, because nothing is compared to the other side",
+    "explanation": "Describing your own impact, however large, only puts it on the table. Weighing begins at the comparison — a reason this impact should matter more than the one still standing across the flow."
+  },
+  {
+    "id": "wg-16",
+    "area": "weighing",
+    "question": "Their impact is a regional war their own evidence calls unlikely this decade. Yours is a rise in hospital costs already underway. The strongest comparison here is:",
+    "choices": [
+      "Probability — on these facts a harm already occurring outweighs one the evidence calls unlikely",
+      "Magnitude — a regional war would reach far more people than hospital costs ever could, so its size must control",
+      "Timeframe — their war unfolds across the whole decade ahead, so its harms keep arriving after yours",
+      "Probability — because probability always outweighs magnitude"
+    ],
+    "correctAnswer": "Probability — on these facts a harm already occurring outweighs one the evidence calls unlikely",
+    "explanation": "The certain harm is the stronger side of this comparison, and the reason matters: it is what the evidence says here, not a rule that probability beats size. Raise the likelihood of the war and the comparison changes with it."
+  },
+  {
+    "id": "wg-17",
+    "area": "weighing",
+    "question": "Their impact occurs only if three things all happen: the bill passes, the agency enforces it, and the market responds. Against a single-step harm on your side, this bears on:",
+    "choices": [
+      "Probability — each additional required step is another way their impact may not arrive",
+      "Magnitude — a harm that needs the bill, the agency and the market behind it lands on a far bigger scale",
+      "Reversibility — a harm assembled from three separate steps can be undone by reversing any one of them",
+      "Nothing — the three steps describe how their harm works, not how the two impacts compare"
+    ],
+    "correctAnswer": "Probability — each additional required step is another way their impact may not arrive",
+    "explanation": "A chain is only as likely as all its links together, so the number of required steps is a comparison of how likely each surviving impact is. Arguing that one specific link is broken would be a rebuttal; this is the weighing use of the same fact."
+  },
+  {
+    "id": "wg-18",
+    "area": "weighing",
+    "question": "One team says its harm \"could happen\"; the other shows its harm \"is already happening in two states\". On probability the comparison favours:",
+    "choices": [
+      "The second, because it is grounded in how likely the harm is, not merely that it is possible",
+      "The first, because 'could happen' takes in every scenario, and that covers more",
+      "Neither, because both harms are still in the future and neither is settled",
+      "The second, but only because two states is a number and numbers weigh more"
+    ],
+    "correctAnswer": "The second, because it is grounded in how likely the harm is, not merely that it is possible",
+    "explanation": "Possibility and likelihood are different comparisons. Almost anything could happen; a probability comparison asks how likely each impact actually is under these facts. The count of states is evidence of that, not the reason by itself."
+  },
+  {
+    "id": "wg-19",
+    "area": "weighing",
+    "question": "Your harm is a modest cost increase next month. Theirs is a severe housing shortage in six years. Arguing \"ours comes first, so ours wins\" is:",
+    "choices": [
+      "Incomplete — timeframe alone does not settle it when the later harm is far more severe",
+      "Correct, because an impact that arrives sooner always outweighs a later one",
+      "Wrong, because later harms always outweigh sooner ones",
+      "Correct, because six years is too distant to count"
+    ],
+    "correctAnswer": "Incomplete — timeframe alone does not settle it when the later harm is far more severe",
+    "explanation": "Timeframe is a real comparison, but it is one axis among several. When the delayed harm is much larger, the judge still needs a reason arriving first should control — or the comparison should be made on a dimension that actually separates them."
+  },
+  {
+    "id": "wg-20",
+    "area": "weighing",
+    "question": "Your harm shuts the programme down within a year. Their benefit begins in year three, and only if the programme is still running. The timeframe comparison is:",
+    "choices": [
+      "Yours arrives early enough that their impact never gets the chance to occur",
+      "Theirs is larger, so its size should still control even though it starts in year three",
+      "Both impacts still occur, so timeframe cannot separate them",
+      "Yours is smaller, so the comparison has to be made on another dimension"
+    ],
+    "correctAnswer": "Yours arrives early enough that their impact never gets the chance to occur",
+    "explanation": "This is timeframe doing real work: an impact that lands first can foreclose another from ever arriving. The claim is about ordering and what that ordering prevents — not about the size of either impact."
+  },
+  {
+    "id": "wg-21",
+    "area": "weighing",
+    "question": "Their harm is a sharp recession that the evidence says recovers in about four years. Yours is the permanent loss of a species' last habitat. On reversibility:",
+    "choices": [
+      "Yours is stronger here, because a recovery path exists on their side and not on yours",
+      "Theirs is stronger, because a recession affects more people",
+      "Yours is stronger, because irreversible harms always outweigh reversible ones",
+      "Reversibility cannot compare an economic harm with an environmental one"
+    ],
+    "correctAnswer": "Yours is stronger here, because a recovery path exists on their side and not on yours",
+    "explanation": "Reversibility asks whether a harm can be undone. On these facts one side recovers and the other does not, and that difference is what carries the comparison — not a standing rule that permanence wins every time."
+  },
+  {
+    "id": "wg-22",
+    "area": "weighing",
+    "question": "A team calls a bridge closure \"irreversible\", but the scenario says the bridge reopens after an 18-month repair. Their reversibility argument:",
+    "choices": [
+      "Does not match the facts, so it cannot carry the comparison",
+      "Still holds, because eighteen months is a long time",
+      "Should be answered by naming a different weighing category",
+      "Is fine, because 'irreversible' is only a figure of speech"
+    ],
+    "correctAnswer": "Does not match the facts, so it cannot carry the comparison",
+    "explanation": "A weighing claim has to fit the scenario it describes. A harm the facts say is repaired is not permanent, and calling it so makes the comparison inaccurate rather than stronger. Eighteen months of delay is a timeframe point, not a reversibility one."
+  },
+  {
+    "id": "wg-23",
+    "area": "weighing",
+    "question": "Two harms affect a similar number of people, both are near-certain, and both are permanent — but one begins next month and the other in fifteen years. The comparison that actually separates them is:",
+    "choices": [
+      "Timeframe, because it is the only dimension on which these two impacts differ",
+      "Magnitude, because both harms reach a similar number of people and size is where a comparison starts",
+      "Probability, because both are near-certain and certainty carries the most weight",
+      "Reversibility, because both harms are permanent and permanence weighs most"
+    ],
+    "correctAnswer": "Timeframe, because it is the only dimension on which these two impacts differ",
+    "explanation": "Choosing the dimension is the work. Three of them are tied here, so naming any of those decides nothing; the one on which the impacts come apart is the one that can resolve the clash."
+  },
+  {
+    "id": "wg-24",
+    "area": "weighing",
+    "question": "Their harm would reach 25,000 people, and their own evidence puts it at well under one percent likely. Yours would reach 20,000 people and is near-certain. The defensible comparison is:",
+    "choices": [
+      "Yours — their edge on how many people is small, and the gap in likelihood here is far larger",
+      "Theirs, because 25,000 is more than 20,000 and magnitude counts people affected",
+      "Yours, because probability is always the stronger weighing dimension",
+      "Neither — a harm reaching 25,000 and one that is near-certain are measured on different scales"
+    ],
+    "correctAnswer": "Yours — their edge on how many people is small, and the gap in likelihood here is far larger",
+    "explanation": "Their side does hold a real magnitude advantage: 25,000 against 20,000. But that edge is narrow, and it sits against a likelihood gap of a completely different size — near-certain against well under one percent. On these facts the likelihood gap is the bigger difference, which is what makes your comparison the stronger one. Narrow that probability gap or widen the magnitude gap and the answer can change."
+  },
+  {
+    "id": "wg-25",
+    "area": "weighing",
+    "question": "A team argues \"prefer magnitude\", but both impacts affect a similar number of people with similar severity. Their weighing:",
+    "choices": [
+      "Names a dimension that does not separate the two impacts, so it decides nothing",
+      "Wins, because they were first to name a standard and no one offered another",
+      "Fails, because magnitude is the weakest of the four dimensions to argue",
+      "Succeeds, because the judge has only the one standard to work from"
+    ],
+    "correctAnswer": "Names a dimension that does not separate the two impacts, so it decides nothing",
+    "explanation": "A standard only helps if the impacts actually differ on it. Here it returns a tie, so the next move is finding a dimension on which the two genuinely come apart — being first to name one does not resolve a clash."
+  },
+  {
+    "id": "wg-26",
+    "area": "weighing",
+    "question": "Which sentence actually weighs, rather than restating one side's impact?",
+    "choices": [
+      "Even granting their job losses are real, our water contamination is permanent while their harm reverses within two years.",
+      "Our water contamination is permanent, it spreads across three counties, and no cleanup has ever restored an aquifer like it.",
+      "Their job-loss argument rests on a 2011 study of a different industry, and no one has updated the figure since.",
+      "The judge should think carefully about what permanent contamination across three counties would really mean."
+    ],
+    "correctAnswer": "Even granting their job losses are real, our water contamination is permanent while their harm reverses within two years.",
+    "explanation": "Only the first sets both impacts side by side and gives a reason one should control. The second describes a single impact, the third questions their evidence rather than comparing consequences, and the fourth asks for attention without supplying any comparison."
+  },
+  {
+    "id": "wg-27",
+    "area": "weighing",
+    "question": "A speaker says: \"Even if their trade benefit happens exactly as described, it arrives after the shortage we prevent.\" This is:",
+    "choices": [
+      "One useful comparative move — granting their impact and then comparing it to yours",
+      "The required form, since a comparison only lands once you grant their impact",
+      "A concession that gives up the argument by accepting their impact",
+      "Usable only in the final speech, once both impacts are on the table"
+    ],
+    "correctAnswer": "One useful comparative move — granting their impact and then comparing it to yours",
+    "explanation": "Granting the point and comparing anyway is a clean way to weigh, because the comparison holds even on their best case. It is one option among several, not a phrase a speaker is required to use."
+  },
+  {
+    "id": "wg-28",
+    "area": "weighing",
+    "question": "A student says: \"Their harm takes a decade and might not happen; ours is already hitting families this year.\" They never say magnitude, probability or timeframe. This is:",
+    "choices": [
+      "Weighing — it compares both impacts and gives a reason one should control",
+      "Not weighing, because the student never names magnitude, probability or timeframe",
+      "Not weighing, because the student never uses the word 'outweighs' about the comparison",
+      "Weighing only if the judge already knows the four categories well enough to supply them"
+    ],
+    "correctAnswer": "Weighing — it compares both impacts and gives a reason one should control",
+    "explanation": "The four categories are ways of analysing a comparison, not words a speaker has to say. What makes this weighing is that both impacts are set against each other with a reason attached."
+  },
+  {
+    "id": "wg-29",
+    "area": "weighing",
+    "question": "Your opponents establish early that the judge should prefer the more probable impact, and no one contests it. When you later compare impacts, you should:",
+    "choices": [
+      "Engage that standard — either meet it or explain why a different one fits this clash better",
+      "Ignore it, because a standard binds only the side that chose to state it",
+      "Compare the impacts on whichever dimension favours you and leave theirs alone",
+      "Concede the round, because a standard that nobody contested has already decided it"
+    ],
+    "correctAnswer": "Engage that standard — either meet it or explain why a different one fits this clash better",
+    "explanation": "An uncontested standard is the one the judge is holding when your comparison arrives. Comparing as though it were never stated leaves the judge to apply it to your impact anyway, usually less favourably than you would have."
+  },
+  {
+    "id": "wg-30",
+    "area": "weighing",
+    "question": "You weigh on timeframe; they weigh on magnitude. Neither side engages the other's dimension. The most useful next step is:",
+    "choices": [
+      "Explain why your dimension is the better one for resolving this particular clash",
+      "Repeat your timeframe argument with more emphasis",
+      "Switch to magnitude, because they raised it first",
+      "Argue that timeframe is the strongest weighing dimension in every round"
+    ],
+    "correctAnswer": "Explain why your dimension is the better one for resolving this particular clash",
+    "explanation": "Two standards passing each other leaves the judge to choose between them unaided. The work is a reason your dimension fits these impacts better — a claim about this round, not a ranking of the categories in general."
+  },
+  {
+    "id": "cl-01",
+    "area": "clash",
+    "question": "Side A: 'A protected bike-lane network will cut car traffic because commuters switch when cycling feels safe.' Side B: 'Most commuters here live too far away to cycle, so few will switch.' What do the sides actually disagree about?",
+    "choices": [
+      "Whether enough commuters would really switch to cycling",
+      "Whether cycling feels safer inside a protected lane",
+      "Whether people who already cycle would ride more often than they do now",
+      "Whether the traffic gain is worth the road space a lane network takes"
+    ],
+    "correctAnswer": "Whether enough commuters would really switch to cycling",
+    "explanation": "Side B concedes that lanes make cycling feel safer and attacks the switching step: distance. The disputed point is whether commuters would actually change how they travel, and a response must aim at exactly that."
+  },
+  {
+    "id": "cl-02",
+    "area": "clash",
+    "question": "Side A: 'A homework cap gives students time to sleep.' Side B: 'Teachers can already choose how much homework to set.' Where must Side A create clash?",
+    "choices": [
+      "On whether teacher discretion limits total homework",
+      "On whether teenagers benefit from more sleep than they now get",
+      "On whether some homework is worth assigning at all",
+      "On whether a district-wide cap is fairer than letting each teacher decide"
+    ],
+    "correctAnswer": "On whether teacher discretion limits total homework",
+    "explanation": "Side B's reply implies a cap is unnecessary because discretion already solves the problem. Engaging that claim — six classes assigning independently can still overload a student — is the clash; re-arguing sleep answers nothing in dispute."
+  },
+  {
+    "id": "cl-03",
+    "area": "clash",
+    "question": "In a debate on banning single-use plastic bags, Side A says stores will pass the cost of alternatives to shoppers. Side B says reusable bags quickly pay for themselves. What is the contested point?",
+    "choices": [
+      "Whether shoppers end up financially worse off overall",
+      "Whether banning the bags would help the environment",
+      "Whether reusable bags cost more to make than plastic ones",
+      "Whether stores would pass at least some of the new cost on to shoppers"
+    ],
+    "correctAnswer": "Whether shoppers end up financially worse off overall",
+    "explanation": "Both replies are about the shopper's wallet: one claims a new burden, the other claims the burden disappears with reuse. That financial bottom line is the disagreement the round must resolve."
+  },
+  {
+    "id": "cl-04",
+    "area": "clash",
+    "question": "Side A: 'Phone lockers stop classroom distraction because phones are physically away.' Side B: 'Students who want to be distracted will find another way.' What exactly does Side B dispute?",
+    "choices": [
+      "That removing phones meaningfully reduces distraction overall",
+      "That phones are a real source of classroom distraction",
+      "That students can be made to hand their phones in each morning",
+      "That a school may restrict what students carry during lessons"
+    ],
+    "correctAnswer": "That removing phones meaningfully reduces distraction overall",
+    "explanation": "Side B concedes the mechanism (phones are away) and attacks the outcome: distraction just moves elsewhere. A response has to defend the overall effect, not re-describe the lockers."
+  },
+  {
+    "id": "cl-05",
+    "area": "clash",
+    "question": "Both sides in a hallway-repainting debate agree the wall needs repainting. Side A wants a student-designed design; Side B wants a plain colour that costs less. Which point would create clash if argued?",
+    "choices": [
+      "Whether the design's value justifies its extra cost",
+      "Whether the wall needs repainting at all",
+      "Whether a repainted hallway improves how the school looks",
+      "Whether the student design would cost more than a plain colour"
+    ],
+    "correctAnswer": "Whether the design's value justifies its extra cost",
+    "explanation": "Clash lives in what the sides dispute, not in what they share. Both accept the repaint; only the value-versus-cost comparison is contested, so only arguing that point moves the debate."
+  },
+  {
+    "id": "cl-06",
+    "area": "clash",
+    "question": "Side A: 'Free bus Wi-Fi helps students finish homework on long rides.' Side B: 'The district should not pay for something most riders would use for games.' What must Side A answer to create clash?",
+    "choices": [
+      "The claim that riders would mostly use the Wi-Fi for games, not homework",
+      "The claim that free Wi-Fi costs the district money to provide",
+      "The claim that students could do homework on a long bus ride",
+      "The claim that Wi-Fi money would come out of other school needs rather than new funds"
+    ],
+    "correctAnswer": "The claim that riders would mostly use the Wi-Fi for games, not homework",
+    "explanation": "Side B does not deny the homework benefit could exist — it predicts the service would actually be used for games. Clash requires engaging that usage prediction directly."
+  },
+  {
+    "id": "cl-07",
+    "area": "clash",
+    "question": "Side A: 'A dog park reduces off-leash dogs on hiking trails.' Side B: 'A dog park would be noisy for nearby houses.' Side A replies: 'Off-leash dogs on trails scare hikers.' What happened?",
+    "choices": [
+      "Side A repeated its own case instead of answering the noise objection",
+      "Side A answered the noise objection by showing the trail harm is worse",
+      "Side A conceded the noise point instead of contesting it",
+      "Side B changed the subject by raising noise"
+    ],
+    "correctAnswer": "Side A repeated its own case instead of answering the noise objection",
+    "explanation": "The reply restates the original benefit in stronger words. The noise objection was never touched, so it still stands — repetition is not engagement."
+  },
+  {
+    "id": "cl-08",
+    "area": "clash",
+    "question": "Which exchange contains real clash?",
+    "choices": [
+      "'Vending machines fund school clubs.' — 'Most of the snack money goes to the vending company, so the clubs see almost none of it.'",
+      "'Vending machines fund school clubs.' — 'Machine snacks undercut the healthy-lunch policy this school already enforces.'",
+      "'Vending machines fund school clubs.' — 'Clubs give students a reason to stay after school and meet people outside their own year group.'",
+      "'Vending machines fund school clubs.' — 'A contractor would restock the machines twice a week, so the work never falls on staff.'"
+    ],
+    "correctAnswer": "'Vending machines fund school clubs.' — 'Most of the snack money goes to the vending company, so the clubs see almost none of it.'",
+    "explanation": "Real clash disputes the stated point itself, and only the snack-money reply does that — it denies that the machines meaningfully fund clubs. The healthy-lunch reply raises a genuine tension with the proposal, but it never disputes the funding claim, so that claim is left standing exactly as delivered: proposal-level tension is not point-level clash. The staying-after-school reply extends the benefit rather than contesting it, and the restocking detail answers a logistics point nobody disputed."
+  },
+  {
+    "id": "cl-09",
+    "area": "clash",
+    "question": "Side A argues a skate ramp will give teenagers a supervised place to gather. Side B answers: 'Skateboarding causes injuries.' Why is this weak clash?",
+    "choices": [
+      "It answers a different question while the supervised-gathering benefit stands untouched",
+      "It answers a benefit with a harm, which never counts as clash",
+      "It is too general to be decisive, since almost any activity carries some injury risk",
+      "It overlooks that supervision at the ramp is what would reduce those injuries"
+    ],
+    "correctAnswer": "It answers a different question while the supervised-gathering benefit stands untouched",
+    "explanation": "The benefit claimed was supervision and gathering, not skating itself. An injury point may matter, but it leaves Side A's actual argument unanswered on the main question."
+  },
+  {
+    "id": "cl-10",
+    "area": "clash",
+    "question": "Side B says: 'We repeat: paper textbooks never run out of battery.' Side A had just argued that digital books receive yearly content updates. Is Side B clashing?",
+    "choices": [
+      "No — repeating an earlier point does not answer the update argument",
+      "Yes — a point restated after a new argument counts as an answer to it",
+      "Yes — the battery point already answers anything digital books claim",
+      "No — the repeated point would only count as an answer if Side B had paired it with fresh evidence"
+    ],
+    "correctAnswer": "No — repeating an earlier point does not answer the update argument",
+    "explanation": "The battery point was made before the update argument existed and says nothing about it — saying it again louder leaves the update advantage standing. Clash was available: Side B could dispute how much yearly updates actually matter, which would meet the argument directly on its own point. Restating an earlier point is not that, no matter how firmly it is repeated. Nor is fresh evidence the missing ingredient: clash turns on engagement, not support — an unsupported reply can clash, and a better-evidenced battery point would still say nothing about updates."
+  },
+  {
+    "id": "cl-11",
+    "area": "clash",
+    "question": "Two speakers each list three new benefits of their own plans and answer nothing from the other side. What is missing from this debate?",
+    "choices": [
+      "Any clash — no listed benefit meets an opposing argument",
+      "A constructive case on each side — no speaker has offered one yet",
+      "Enough shared evidence for the judge to check both sides' claims",
+      "A shorter list from each side — six benefits overload a judge"
+    ],
+    "correctAnswer": "Any clash — no listed benefit meets an opposing argument",
+    "explanation": "Two growing piles of parallel points give a judge no comparison to decide on. Clash begins only when one side engages something the other side actually said — it is engagement that is missing, not evidence or brevity. And constructive cases are the one thing this round already has: three benefits from each speaker are on the table, so a missing constructive case is the opposite of what the stem describes."
+  },
+  {
+    "id": "cl-12",
+    "area": "clash",
+    "question": "Side A: 'A weekend farmers market brings foot traffic to the shops on Main Street.' Side B: 'Online shopping is more convenient than any market.' Why have the sides not clashed yet?",
+    "choices": [
+      "Side B answered general shopping habits, not the foot-traffic claim about local shops",
+      "Side B gave no evidence for convenience, and an unsupported reply cannot clash",
+      "Side B conceded the foot-traffic benefit and raised a separate harm instead",
+      "Side B raised convenience, a point Side A had already granted"
+    ],
+    "correctAnswer": "Side B answered general shopping habits, not the foot-traffic claim about local shops",
+    "explanation": "Side A claimed a spillover benefit for neighbouring shops. Side B's convenience point compares ways to buy produce — a related topic, but not the claim on the table. Clash is about engagement, not about whether the reply comes with evidence."
+  },
+  {
+    "id": "cl-13",
+    "area": "clash",
+    "question": "Opponent: 'A class pet teaches responsibility only to the few students who feed it.' Which response engages this argument directly?",
+    "choices": [
+      "A rotating care schedule gives every student a feeding week, so the benefit is not limited to a few",
+      "The students who take on feeding learn to plan around another creature's needs, a habit that carries into their own work",
+      "Responsibility is written into the school's own mission statement, so a class pet delivers what we already promise to teach",
+      "Other schools in the district have kept class pets for years without complaint"
+    ],
+    "correctAnswer": "A rotating care schedule gives every student a feeding week, so the benefit is not limited to a few",
+    "explanation": "The objection is about who receives the benefit. The rotation answer meets exactly that, while the other replies defend the pet on grounds nobody attacked."
+  },
+  {
+    "id": "cl-14",
+    "area": "clash",
+    "question": "Opponent: 'Museum field trips cost more than they teach — a video tour shows the same exhibits.' Which answer meets the video-substitute argument?",
+    "choices": [
+      "Handling real artifacts and questioning museum staff cannot happen in a video, which is exactly what the trip pays for",
+      "The district's transport budget already covers the coach, so the trip costs the class far less than the objection assumes",
+      "Curators choose and label every exhibit, so what the class sees is accurate and arranged in an order that makes sense",
+      "The trip has been part of this history unit for as long as the school has taught it"
+    ],
+    "correctAnswer": "Handling real artifacts and questioning museum staff cannot happen in a video, which is exactly what the trip pays for",
+    "explanation": "The objection claims the video substitutes fully. The artifact-and-staff reply attacks that substitution claim head-on; the coach budget, the curation and the tradition all dodge it."
+  },
+  {
+    "id": "cl-15",
+    "area": "clash",
+    "question": "Opponent: 'Extending community pool hours needs lifeguards we cannot hire.' Which answer meets the argument?",
+    "choices": [
+      "Certified seniors from the swim team already cover weekend shifts, so staffing for the added hours exists",
+      "Swimming is one of the few sports people keep doing into old age, and this pool is where most of the town learned it",
+      "The added hours would fall in the evening, when working families are finally free to come together",
+      "Every neighbouring town keeps its pool open later, so ours already looks behind"
+    ],
+    "correctAnswer": "Certified seniors from the swim team already cover weekend shifts, so staffing for the added hours exists",
+    "explanation": "The objection is a staffing gap. Naming an existing certified staffing source engages it; the value of swimming, the demand for evening hours and what other towns do were never in dispute."
+  },
+  {
+    "id": "cl-16",
+    "area": "clash",
+    "question": "Opponent: 'Recycling bins in every classroom will just be used as extra trash cans.' Which reply engages the actual objection?",
+    "choices": [
+      "A one-week sorting lesson at rollout keeps bins used correctly, which answers the misuse prediction directly",
+      "Every tonne of paper the district recycles cuts what the school pays the landfill, and that saving grows each year",
+      "The custodial team already stops at every classroom for the trash, so emptying a second bin on the same round adds no labour",
+      "Recycling is the cheapest environmental step this school could take"
+    ],
+    "correctAnswer": "A one-week sorting lesson at rollout keeps bins used correctly, which answers the misuse prediction directly",
+    "explanation": "The objection predicts misuse. Only the rollout-training reply addresses that prediction; the environmental value of recycling was never the disputed point."
+  },
+  {
+    "id": "cl-17",
+    "area": "clash",
+    "question": "Opponent: 'Robotics club funding should go to the art program because more students take art.' Which response clashes?",
+    "choices": [
+      "Head-count is the wrong measure — the robotics team has no other funding source while art has three, so the marginal dollar does more there",
+      "Robotics students spend hours after school building their competition entries, and dedication on that scale is exactly what a school budget exists to reward",
+      "Art matters too, and nobody on our side wants the art program cut — the two subjects have supported each other here for years",
+      "The robotics team placed second at the regional meet last spring"
+    ],
+    "correctAnswer": "Head-count is the wrong measure — the robotics team has no other funding source while art has three, so the marginal dollar does more there",
+    "explanation": "The opponent's warrant is the head-count comparison. The responsive answer attacks that measure itself; the other options praise robotics, concede art's value, or cite a result, without touching how the comparison is made."
+  },
+  {
+    "id": "cl-18",
+    "area": "clash",
+    "question": "Opponent: 'Playground resurfacing can wait a year because injuries are rare.' Which reply engages it?",
+    "choices": [
+      "Injuries are rare only because the cracked section is roped off — waiting keeps a third of the playground closed",
+      "Poured rubber lasts about fifteen years and needs almost no upkeep once it is down, so the money buys a long stretch of use",
+      "The playground is where the younger students get most of their exercise during the day, and that shows in how they settle afterwards",
+      "The parent council approved the resurfacing plan last spring"
+    ],
+    "correctAnswer": "Injuries are rare only because the cracked section is roped off — waiting keeps a third of the playground closed",
+    "explanation": "The reply turns the opponent's own evidence: the low injury rate exists because of the closure the plan would end. That directly undercuts the wait-a-year conclusion."
+  },
+  {
+    "id": "cl-19",
+    "area": "clash",
+    "question": "You defend a school podcast studio. The opponent argued: the storage room is needed for chairs; microphones break easily; and podcasts are a passing fad that cannot justify the cost. Which argument most needs an answer?",
+    "choices": [
+      "The passing-fad argument — if it stands, it defeats the studio's entire value",
+      "The chairs argument — furniture has to be stored somewhere",
+      "The microphone argument — replacing fragile equipment could drain the club's budget for years",
+      "All three — an argument left standing always costs you the round"
+    ],
+    "correctAnswer": "The passing-fad argument — if it stands, it defeats the studio's entire value",
+    "explanation": "The fad claim attacks the whole case for the studio; the other two are logistics you could concede and still win. Clash effort follows what the round actually turns on."
+  },
+  {
+    "id": "cl-20",
+    "area": "clash",
+    "question": "Your side has shown a cafeteria sugary-drink ban cut afternoon nurse visits. The opponent's remaining arguments: students will bring drinks from home, and the ban is unpopular. Which needs engagement first?",
+    "choices": [
+      "The bring-from-home claim — it says the ban will not change behaviour, which cuts your health benefit",
+      "The unpopularity claim — a policy students dislike is harder to defend to a judge",
+      "Both in equal measure, since any argument you leave standing is one the judge still has in front of them",
+      "Neither — the nurse-visit result already speaks for itself"
+    ],
+    "correctAnswer": "The bring-from-home claim — it says the ban will not change behaviour, which cuts your health benefit",
+    "explanation": "Your case rests on the behaviour change behind the nurse-visit drop. The substitution claim attacks that mechanism directly; unpopularity does not touch it."
+  },
+  {
+    "id": "cl-21",
+    "area": "clash",
+    "question": "The opponent's whole case rests on a factual claim: 'the town budget already funds a teen center.' You know that funding ended last year. What should you do?",
+    "choices": [
+      "Answer it directly — correcting the expired-funding claim removes the base of their case",
+      "Add a benefit they cannot match, since a stronger case of your own outweighs a correction",
+      "Concede the funding claim and argue the existing centre is too small for the town",
+      "Restate your strongest argument so the comparison favours you"
+    ],
+    "correctAnswer": "Answer it directly — correcting the expired-funding claim removes the base of their case",
+    "explanation": "When one claim carries the opposing case, engaging it is the highest-value move in the round. A correction that removes their foundation outweighs any new parallel point."
+  },
+  {
+    "id": "cl-22",
+    "area": "clash",
+    "question": "Opponent arguments against your bike-share plan: helmets shared between riders are unhygienic, and nobody will maintain the bikes, leaving broken fleets that end the whole program. You have time to answer one. Which?",
+    "choices": [
+      "Maintenance — an unanswered fleet-collapse argument undermines every benefit you claimed",
+      "Helmets — a shared-helmet rule is the easier of the two to fix, so the answer is quicker",
+      "Neither — answering either one spends time you could put into a benefit they have not touched",
+      "Either — both objections leave a gap in your case if you skip them"
+    ],
+    "correctAnswer": "Maintenance — an unanswered fleet-collapse argument undermines every benefit you claimed",
+    "explanation": "The maintenance argument, if dropped, takes the entire program down with it; hygiene is a fixable detail. Time goes to the argument the decision actually depends on."
+  },
+  {
+    "id": "cl-23",
+    "area": "clash",
+    "question": "The opponent made two attacks: argument A directly turns your main benefit against you; argument B attacks an example you never actually used. Which needs clash?",
+    "choices": [
+      "A — it targets what your case really relies on",
+      "B — a strawman left standing still looks like a concession",
+      "Both — the judge counts whatever is left unanswered",
+      "Neither — both attacks miss your real case"
+    ],
+    "correctAnswer": "A — it targets what your case really relies on",
+    "explanation": "Argument B answers a case you never made and can be flagged as such in a sentence. Argument A endangers your actual position, so that is where engagement belongs."
+  },
+  {
+    "id": "cl-24",
+    "area": "clash",
+    "question": "The opponent listed four objections, but their summary relied only on the claim that the mentoring program shows no measurable results. What does effective clash require now?",
+    "choices": [
+      "Engage the no-results claim they collapsed to — it is the argument the judge will decide on",
+      "Answer all four objections, since leaving any of them alone concedes it",
+      "Point out that they abandoned three of their four objections and make that the story",
+      "Open a new line about the program's cost, where their case is weakest"
+    ],
+    "correctAnswer": "Engage the no-results claim they collapsed to — it is the argument the judge will decide on",
+    "explanation": "When the opposing side narrows to one argument, the round turns on it. Spreading time evenly across abandoned points leaves the decisive claim under-answered."
+  },
+  {
+    "id": "cl-25",
+    "area": "clash",
+    "question": "Side A argued a compost program cuts cafeteria waste-hauling fees. Side B answered only that compost smells. Side A's fee argument was never addressed again. What happened to it?",
+    "choices": [
+      "It was dropped — it stands unanswered for the judge",
+      "It was answered indirectly, since smell is a cost of the same program",
+      "It was beaten — an attack on the program counts as an answer to each of its benefits",
+      "It stopped mattering once smell was raised"
+    ],
+    "correctAnswer": "It was dropped — it stands unanswered for the judge",
+    "explanation": "The smell point attacks a different feature of the program, so it neither answers nor defeats the fee argument. The fee argument received no answer, and an unanswered argument stands — that is what a drop means."
+  },
+  {
+    "id": "cl-26",
+    "area": "clash",
+    "question": "Opponent: 'Your after-school shuttle duplicates the existing city bus route.' You reply: 'Students love the shuttle.' What is wrong with the reply?",
+    "choices": [
+      "It never engages the duplication claim — popularity does not answer overlap",
+      "It leans on student opinion, which a judge will discount as biased evidence",
+      "It overstates the evidence — the word 'love' claims more than any survey could show",
+      "Nothing — popularity shows riders prefer the shuttle to the city bus"
+    ],
+    "correctAnswer": "It never engages the duplication claim — popularity does not answer overlap",
+    "explanation": "The objection is about redundancy, and the reply never engages it — popularity is compatible with duplication, so the claim stands untouched. The flaw is non-engagement, not the bias of student opinion or the strength of the word 'love'."
+  },
+  {
+    "id": "cl-27",
+    "area": "clash",
+    "question": "In this exchange — 'The trophy-case renovation doubles the hallway budget.' / 'School pride inspires everyone.' — which argument is left standing?",
+    "choices": [
+      "The budget-doubling argument, untouched by the pride reply",
+      "The pride argument, which answers the cost by showing what the money buys",
+      "Both were engaged, since each reply spoke to the same renovation",
+      "Neither — a cost claim and a value claim cancel out"
+    ],
+    "correctAnswer": "The budget-doubling argument, untouched by the pride reply",
+    "explanation": "Inspiration may be real, but it does not answer a cost claim. The doubling argument was never engaged, so it remains for the judge exactly as delivered."
+  },
+  {
+    "id": "cl-28",
+    "area": "clash",
+    "question": "A speaker answers 'the plan fails in winter because the solar panels ice over' with 'solar power is the fastest-growing energy source.' Is this responsive?",
+    "choices": [
+      "No — growth statistics do not engage the icing failure claim",
+      "Yes — any statistic about solar is responsive",
+      "Yes — both statements mention solar power",
+      "No — although the reply sounds confident and on-topic"
+    ],
+    "correctAnswer": "No — growth statistics do not engage the icing failure claim",
+    "explanation": "The objection is a specific winter failure mode. Industry growth says nothing about ice. Responsiveness is about meeting the claim made, not sharing its topic."
+  },
+  {
+    "id": "cl-29",
+    "area": "clash",
+    "question": "Your notes show the opponent never answered your cost-shift argument, but answered your two smaller points at length. What is the honest reading?",
+    "choices": [
+      "The cost-shift argument stands — thorough answers elsewhere do not cover the drop",
+      "The cost-shift argument is weakened rather than standing, since they answered everything around it",
+      "Their detailed answers cover the cost-shift point by implication",
+      "The judge can only count arguments both sides addressed"
+    ],
+    "correctAnswer": "The cost-shift argument stands — thorough answers elsewhere do not cover the drop",
+    "explanation": "Engagement is per-argument, not per-minute. Detailed answers to minor points cannot substitute for the missing answer to the argument that matters."
+  },
+  {
+    "id": "cl-30",
+    "area": "clash",
+    "question": "Opponent: 'A quiet-study car on the late bus would sit empty because friends want to sit together.' Reply: 'Studying raises grades.' Diagnose the reply.",
+    "choices": [
+      "Non-responsive — it defends studying's value, not the claim that the car would go unused",
+      "Responsive — a stronger reason to study answers the prediction that the seats would stay empty",
+      "Responsive — both claims are about what students do on the late bus",
+      "Non-responsive — but only because the reply is too brief; a fuller defence of studying would have answered the empty-car prediction"
+    ],
+    "correctAnswer": "Non-responsive — it defends studying's value, not the claim that the car would go unused",
+    "explanation": "The objection predicts empty seats, not useless studying. Defending the value of study never engages that prediction — and no longer version of the same defence would either, because the flaw is answering the wrong point, not answering it too briefly. Sharing a topic with the objection does not make a reply responsive."
+  }
+]

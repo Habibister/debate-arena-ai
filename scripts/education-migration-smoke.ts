@@ -498,15 +498,16 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   }
 
   // ---- 5-8. registry and discovery inventory -----------------------------------------------------
-  // B2.1 (2026-08-25) raised this 10 -> 11: the newly authored debate-answer-types lesson.
-  assert.equal(EDUCATION_LESSONS.length, 11, "5. eleven canonical registry entries");
+  // B2.1 raised this 10 -> 11; B2.2 (2026-08-25) raised it 11 -> 12: the newly authored
+  // debate-turn-mechanics lesson.
+  assert.equal(EDUCATION_LESSONS.length, 12, "5. twelve canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 11, "6a. all eleven are learner-visible (B2.1 added answer-types)");
+  assert.equal(learnerVisible.length, 12, "6a. all twelve are learner-visible (B2.2 added turn-mechanics)");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
-  assert.equal(debate.length, 9, "7. exactly nine Debate lessons (B2.1 added answer-types)");
+  assert.equal(debate.length, 10, "7. exactly ten Debate lessons (B2.2 added turn-mechanics)");
   assert.deepEqual(debate.map((e) => e.id),
-    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types", ...MIGRATED],
-    "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the B2.1 answer-types lesson, then the migrated five");
+    ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types", "debate-turn-mechanics", ...MIGRATED],
+    "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the B2.1 answer-types lesson, then the B2.2 turn-mechanics lesson, then the migrated five");
   assert.equal(educationLessonsForTrack("DECA").length, 1, "6b. one DECA lesson");
   assert.equal(educationLessonsForTrack("HOSA").length, 1, "6c. one HOSA lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
@@ -524,8 +525,18 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   for (const title of heldTitles) {
     assert.ok(!registryText.includes(title), `10. held lesson title "${title}" appears nowhere in the registry`);
   }
-  // Parliamentary content specifically must not reach the registry.
-  assert.ok(!/parliamentary/i.test(registryText), "12. no parliamentary content in the canonical registry");
+  // Parliamentary content specifically must not reach the registry. B2.2 EVOLUTION (2026-08-25):
+  // the accepted turn-mechanics lesson carries ONE owner-adjudicated format-honesty sentence noting
+  // that many parliamentary judges call all of this refutation — that is honesty about terminology,
+  // not parliamentary-format curriculum. The tripwire's purpose (the held parliamentary-roles /
+  // case-topic-definitions lessons and any parliamentary PROCEDURE teaching stay out) is preserved
+  // by allowing the word ONLY inside that exact accepted sentence; any other occurrence still fails.
+  const ALLOWED_PARLIAMENTARY_SENTENCE = "in many parliamentary rounds the judge will just call all of this refutation";
+  const scrubbed = registryText.split(ALLOWED_PARLIAMENTARY_SENTENCE).join("");
+  assert.ok(registryText.includes(ALLOWED_PARLIAMENTARY_SENTENCE),
+    "12a. control: the accepted B2.2 format-honesty sentence really is the occurrence being allowed");
+  assert.ok(!/parliamentary/i.test(scrubbed),
+    "12. no parliamentary content in the canonical registry beyond the accepted B2.2 honesty sentence");
 
   // ---- 14. provenance ----------------------------------------------------------------------------
   assert.equal(MIGRATED_DEBATE_PROVENANCE.authority, "tier-2", "14a. tier-2 authority");
@@ -587,6 +598,12 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   assert.equal(getEducationLesson("debate-round-orientation")?.nextLessonId, "claim-warrant-impact", "21a2. the Wave 1A orientation leads into CWI");
   assert.equal(getEducationLesson("claim-warrant-impact")?.nextLessonId, "debate-evidence-evaluation", "21b. CWI now leads into the Wave 1C evidence lesson");
   assert.equal(getEducationLesson("debate-evidence-evaluation")?.nextLessonId, "debate-signposting", "21b2. which chains on into the migrated sequence");
+  // B2.2 EVOLUTION (2026-08-25, mutation-audit fix): the B2.1/B2.2 links were previously covered
+  // only by resolvability (21.), so silently reverting a pointer survived every suite. Pin the
+  // exact refutation -> answer-types -> turn-mechanics -> constructive-speeches sequence.
+  assert.equal(getEducationLesson("debate-refutation")?.nextLessonId, "debate-answer-types", "21d. refutation leads into the B2.1 answer-types lesson");
+  assert.equal(getEducationLesson("debate-answer-types")?.nextLessonId, "debate-turn-mechanics", "21d2. answer-types leads into the B2.2 turn-mechanics lesson — its \"a later lesson\" deferral stays redeemed");
+  assert.equal(getEducationLesson("debate-turn-mechanics")?.nextLessonId, "debate-constructive-speeches", "21d3. turn-mechanics rejoins the migrated sequence at constructive speeches");
   assert.equal(getEducationLesson("debate-constructive-speeches")?.nextLessonId, "debate-weighing", "21c. constructive speeches now leads into weighing");
   assert.equal(getEducationLesson("debate-weighing")?.nextLessonId, null, "21c2. the last migrated lesson ends the chain honestly");
   assert.deepEqual(EDUCATION_COURSES.find((c) => c.id === "debate-performance")?.moduleIds,
@@ -649,11 +666,11 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   {
     const conceptEntries = EDUCATION_REGISTRY.lessons.filter((e) => e.sourceKind === "concept-education-lesson");
     const mapped = conceptEntries.filter((e) => e.practiceDrill);
-    // B2.1 EVOLUTION: answer-types is the fifth drill destination — a practice CTA to the rebuttal
+    // B2.1/B2.2 EVOLUTION: answer-types and turn-mechanics are practice CTAs to the rebuttal
     // drill WITHOUT a skillSlug claim (refutation keeps the module's single claimed teaching home).
     assert.deepEqual(mapped.map((e) => e.id),
-      ["debate-evidence-evaluation", "debate-answer-types", "debate-clash", "debate-refutation", "debate-weighing"],
-      `36. exactly five authored lessons name a drill destination — evidence, answer-types (CTA-only), clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
+      ["debate-evidence-evaluation", "debate-answer-types", "debate-turn-mechanics", "debate-clash", "debate-refutation", "debate-weighing"],
+      `36. exactly six authored lessons name a drill destination — evidence, answer-types (CTA-only), turn-mechanics (CTA-only), clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
 
     const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
     assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },

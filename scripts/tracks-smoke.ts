@@ -689,8 +689,9 @@ async function main() {
   // The index destinations, proven from the production registry rather than from markup.
   assert.deepEqual(educationLessonsForTrack("GENERAL_DEBATE").map((e) => e.id),
     ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types",
-     "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches", "debate-weighing"],
-    "Debate exposes exactly the nine canonical lessons, orientation first (B2.1 added answer-types)");
+     "debate-turn-mechanics", "debate-signposting", "debate-clash", "debate-refutation",
+     "debate-constructive-speeches", "debate-weighing"],
+    "Debate exposes exactly the ten canonical lessons, orientation first (B2.2 added turn-mechanics)");
   assert.ok(skillPath.includes("`/lessons/${entry.id}`"), "and each Debate tile links to its canonical lesson");
   assert.ok(skillPath.includes("/training/deca/practice"), "DECA exposes its real practice destination");
   assert.ok(skillPath.includes("/training/hosa/events"), "HOSA exposes its real Event Navigator destination");

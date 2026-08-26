@@ -122,10 +122,21 @@ pre-existing "seven lessons"-era prose comments at `lib/education/registry.ts` (
 and remain stale; the assertions beneath them are correct (eleven lessons) and were deliberately
 not fixed in the B2.1 commits.
 
-**B2.2 — NEXT, NOT STARTED.** Debate turn-mechanics teaching for `rb-14` and `rb-15`: link /
-no-link mechanics, link turn, impact turn, and the double-turn hazard — to the same
-learner-visible closed-corpus preparedness standard, with the same per-item gate before any
-reactivation. **B2.3 — NOT STARTED** (target `wg-08`: weighing framework / early standard).
+**B2.2 — teaching IMPLEMENTED (local, unpushed); reactivation NOT started.** Debate
+turn-mechanics teaching for `rb-14` and `rb-15`: the ACTION → LINK → IMPACT chain anatomy, no-link
+vs link turn, impact defense vs impact turn, conditional no-link + impact-turn branches, and the
+same-chain double-turn hazard — accepted through the owner's three-stage blind protocol (Stage 1
+revised twice for doctrine purity; Stage 2 keys 11/11 match). B2.2 (in progress, local): authored
+catalog entry `debate-turn-mechanics` added to `lib/learning-content.ts` (LC1 baseline 20 → 21
+blocks, marker `B22-DEBATE-TURN-MECHANICS-TEACHING` — this line is the affected-slug record the
+integrity smoke's contract requires); chain refutation → answer-types → turn-mechanics →
+constructive-speeches; CTA-only registry entry, no skillSlug. Teaching only: `rb-14` and `rb-15`
+remain HELD until each independently passes its closed-corpus reactivation gate, and the
+**pair-contamination serving gate is OPEN and mandatory** — the two items' keys disclose each
+other's logic, so a separate serving-validity decision must prove an anti-contamination policy
+before both may ever be simultaneously servable; releasing one implies nothing about the other.
+B2.2 educational bytes are AI-authored / independently AI-reviewed; external human content review
+PENDING owner decision (the B2.1 waiver does not carry forward). **B2.3 — NOT STARTED** (target `wg-08`: weighing framework / early standard).
 **B2.4 — NOT STARTED** (target `pi-26`; official-locator gate unsatisfied).
 
 **P0.2 — NOT STARTED.**

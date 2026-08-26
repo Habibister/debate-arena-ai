@@ -48,7 +48,7 @@ const MIGRATED_SLUGS = ["debate-signposting", "debate-clash", "debate-refutation
  * catalog-by-reference mechanism as the migrated lessons but kept out of MIGRATED_SLUGS — it was
  * never a held migration, and the migration suite's historical claims stay scoped to the five.
  */
-const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation", "debate-evidence-evaluation", "debate-answer-types"] as const;
+const AUTHORED_CATALOG_SLUGS = [...MIGRATED_SLUGS, "debate-round-orientation", "debate-evidence-evaluation", "debate-answer-types", "debate-turn-mechanics"] as const;
 
 type MigratedSlug = (typeof AUTHORED_CATALOG_SLUGS)[number];
 
@@ -100,6 +100,7 @@ const weighing = selectCatalogLesson("debate-weighing");
 const orientation = selectCatalogLesson("debate-round-orientation");
 const evidenceEvaluation = selectCatalogLesson("debate-evidence-evaluation");
 const answerTypes = selectCatalogLesson("debate-answer-types");
+const turnMechanics = selectCatalogLesson("debate-turn-mechanics");
 
 /** Exported for the migration smoke suite's strict-identity proof against the catalog. */
 export const MIGRATED_DEBATE_SOURCES = { signposting, clash, refutation, constructiveSpeeches, weighing } as const;
@@ -156,6 +157,36 @@ export const DEBATE_ANSWER_TYPES_LESSON: EducationRegistryEntry = {
   // teaching home for `debate-rebuttal` (the reverse-remediation mapping for due reviews must not
   // split), and the registry validator enforces one skill claim per module. The lesson's own checks
   // stay formative; the graded rebuttal drill is what writes mastery and schedules review.
+  practiceDrill: { track: "debate", area: "rebuttal" },
+  legacySlugs: [],
+  // B2.2 (2026-08-25): the chain now runs answer-types -> turn-mechanics -> constructive-speeches,
+  // redeeming this lesson's "a later lesson" deferral immediately after the lesson that made it.
+  nextLessonId: "debate-turn-mechanics",
+  provenance: MIGRATED_DEBATE_PROVENANCE
+};
+
+/** B2.2 (2026-08-25): newly AUTHORED turn-mechanics lesson — teaches the ACTION -> LINK -> IMPACT
+ *  chain anatomy and the component-level moves (no-link, link turn, impact defense, impact turn)
+ *  plus the same-chain double-turn hazard the held rebuttal drill items rb-14 and rb-15 test.
+ *  Registered via the same catalog-by-reference mechanism and kept OUT of MIGRATED_SLUGS (authored
+ *  in B2.2, not migrated). Teaching only — rb-14 and rb-15 remain HELD until each independently
+ *  passes the closed-corpus reactivation gate, and even then the pair must NOT become
+ *  simultaneously servable until a separate serving-validity decision proves an anti-contamination
+ *  policy (the two items' keys disclose each other's logic; see the pair-dependence gate recorded
+ *  in docs/CURRENT_STATE.md). Releasing one item carries no implication about the other. */
+export const DEBATE_TURN_MECHANICS_LESSON: EducationRegistryEntry = {
+  id: "debate-turn-mechanics",
+  track: "GENERAL_DEBATE",
+  courseId: "debate-performance",
+  moduleId: "debate-round-strategy",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: turnMechanics,
+  sourceKind: "concept-education-lesson",
+  // Practice CTA ONLY — deliberately NO skillSlug, same architecture and reasoning as the
+  // answer-types entry above: refutation keeps the module's single claimed teaching home for
+  // `debate-rebuttal`, and this lesson's checks stay formative.
   practiceDrill: { track: "debate", area: "rebuttal" },
   legacySlugs: [],
   nextLessonId: "debate-constructive-speeches",

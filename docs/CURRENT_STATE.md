@@ -1,90 +1,256 @@
-# CURRENT_STATE
+# CURRENT STATE — AUTHORITATIVE
 
-Factual snapshot. **Rewrite this file after each milestone** — do not append history.
+_Last updated: 2026-08-29._
 
-_Last updated: 2026-08-26 (B2.2 turn-mechanics teaching + measurement control + two-item reactivation — **SHIPPED and Production-verified**: teaching SHA `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control SHA `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release SHA `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, Production deployment `6098166145` SUCCESS (created 2026-08-26T06:08:38Z; deployment source sha = the release SHA exactly). The three-commit history itself proves the order: TEACH, then PROTECT THE MEASUREMENT, then RELEASE. `rb-14` and `rb-15` are RELEASED and individually eligible; the CURRENT held set is exactly 2 — `wg-08` (B2.3) and `pi-26` (B2.4). Two different numbers now describe Debate serving and must never be collapsed: GLOBAL INDIVIDUAL ELIGIBILITY 149/150 (rebuttal 30/30, weighing 29/30; DECA 119/120, PI 29/30) versus CLEAN-HISTORY DISTINCT SESSION CAPACITY 148 (rebuttal 29), because the measurement-dependent pair never co-serves. B2.3 (wg-08) is NEXT / NOT STARTED; B2.4 and P0.2 NOT STARTED. Before it: B2.1 answer-types teaching + four-item reactivation — SHIPPED and Production-verified: teaching SHA `35690107c430fe3eb45eba12c50488a8026edded`, release SHA `3199900e82ccc825da4e40823e4d17dab9713bde`, Production deployment `6093148342` SUCCESS; B2.1 released `rb-02`, `rb-13`, `rb-16`, `rb-30` after each passed its closed-corpus reactivation gate (held set then 4, served populations then Debate 147/150, rebuttal 28/30). Before it: P0.1 assessment-integrity + B1 educational-validity closure — SHIPPED and Production-verified: feature SHA `20609a69dc30b37a044c221bd28209a43d9a0a2c`, Production deployment `6090563687` SUCCESS. P0.1 repaired systematic answer-form leakage in the measured Debate/DECA banks and added an enforced static assessment-quality guard; B1 repaired the adjudicated item-validity defects and held exactly 8 valid-but-untaught items from NEW serving at that shipment (served populations then Debate 143/150, DECA 119/120); nothing deleted, historical attempts not invalidated. The Clash closure, Waves 1A/1B/1C, M15 Learning Architecture Slices 1–3 and everything before them remain shipped and Production-verified; A4 and M14 Global G2 remain CLOSED.)_
+**This region is the only part of this file that describes current reality.** Everything below the
+`HISTORICAL ARCHIVE` boundary is preserved historical evidence and is explicitly non-normative and
+non-executable. Rewrite this region after each milestone; append history below the boundary.
 
-## P0.1 assessment-integrity + B1 educational-validity closure — SHIPPED and Production-verified
+## Repository and Production
 
-Feature/release SHA **`20609a69dc30b37a044c221bd28209a43d9a0a2c`** (the B1 commit), Production
-deployment **`6090563687`**, status **SUCCESS** — the deployment object's own sha field ties
-Production to the release SHA exactly. The P0.1 assessment-integrity commit is its parent,
-`0789278cc09bb771b68a49d23a3c2dd709aa0d0d`; the pre-P0.1 baseline is
-`730a350d44e5874d6967491d78c9eeafe1b4a583`, with exact two-commit ancestry from the baseline to the
-release SHA. Any later docs-only truth-sync commit is NOT the feature SHA. Nothing was deleted.
+- **Branch** `main`. `origin/main`, the remote `refs/heads/main` and Production all sit at
+  **`32f92a4bcc68ab3f027a5fe6e617f2d837273791`** — the B2.2 docs truth-sync commit.
+- **This canonical-docs structural-quarantine commit is its child and is LOCAL / NOT PUSHED.**
+- **B2.2 feature source** `65c4e6f442d00296fe0a8f8e7902cfd627c02080` → Production deployment
+  **`6098166145`** (SUCCESS). **B2.2 docs source** `32f92a4bcc68ab3f027a5fe6e617f2d837273791` →
+  deployment **`6160459725`** (SUCCESS).
+- SHAs move. Re-derive with `git rev-parse HEAD`, `git rev-parse origin/main` and
+  `git ls-remote origin main` before acting on any SHA. **No SHA below the archive boundary describes
+  what Production runs.**
 
-**P0.1 — answer-form leakage repaired (NOT cosmetic).** The measured Debate/DECA banks carried
-systematic answer-form leakage: blind answer-form heuristics (e.g. always picking the longest
-choice) could manufacture durable mastery evidence — measured **83–100% blind accuracy** on
-affected areas pre-repair. P0.1 repaired the leaking items and added an **enforced static
-assessment-quality guard**; the repaired banks passed the final machine/AI educational review and
-guard process. This does not claim overall educational perfection.
+## Education state
 
-**The static guard, precisely.** It checks answer-form signal families — length, cue wording,
-duplication — plus mutation tests. Final measured examples: `debate:clash` H_LONG 13.3% / UL 13%;
-`deca:performance-indicators` H_LONG 21.7% / UL 20%. The guard **SUPPLEMENTS** educational review —
-it never replaces it.
+- **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
+  `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
+  that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
+- **B2.3 — NOT STARTED and BLOCKED** (see *Current mandatory gates*). Target `wg-08`, which is
+  PARTIALLY TAUGHT: the weighing lenses are taught, but the competency the item requires — the
+  **early-stated weighing-standard mechanism** — is not.
+- **B2.4 — NOT STARTED.** Target `pi-26`. Its gate is UNSATISFIED: a primary official DECA source
+  locator for the instructional-area-vs-individual-PI weighting rule must be pinned and verified
+  before B2.4 teaches the rule or reactivates the item. Internal synthesis is not sufficient.
+- **P0.2 — NOT STARTED.**
+- **M14 Global G2 — CLOSED** 2026-08-12 by explicit owner decision, at **420/420 within the M14 G2
+  target scope**, current G2 deficit **0**. **Read the denominator carefully:** the G2 scope is the
+  fourteen areas the M14 audit named — Debate's four original areas (claim-warrant-impact, rebuttal,
+  evidence-evaluation, weighing), DECA's four, and HOSA's six — at 30 items each, so
+  120 + 120 + 180 = **420**. **It is not the size of the live corpus.** The live corpus is **450**:
+  the 420 above plus the 30 `clash` items, which arrived with the Clash measurable-practice closure
+  and were never a G2 slice. Debate **150** = the G2 four × 30 plus clash 30. **A4 — CLOSED.** Waves
+  1A/1B/1C, the Clash measurable-practice closure, M15 Learning Architecture Slices 1–3, P0.1/B1,
+  B2.1 and B2.2 are all SHIPPED and Production-verified.
 
-**B1 — closed-corpus educational-validity closure.** After the closed-corpus educational-validity
-review, B1: (a) repaired the adjudicated item-validity defects, (b) held valid-but-untaught
-questions from NEW serving, (c) rebased the serving/mastery tests to the actual served population,
-(d) preserved honest grading for historical and in-flight held-item attempts, and (e) deleted
-nothing.
+## Current lesson / curriculum truth
 
-**The closed-corpus review, precisely.** An independent **AI** closed-corpus reviewer answered all
-179 reviewed questions blind, before seeing the keys, and matched **178/179** official keys; the
-comparison was then used to expose curriculum and one-best-answer defects — not as a score-only
-gate. It is an AI review: NOT human review, NOT external review, NOT human approval.
+- **Debate learner path**, derived from `nextLessonId`: `debate-round-orientation` →
+  `claim-warrant-impact` → `debate-evidence-evaluation` → `debate-signposting` → `debate-clash` →
+  `debate-refutation` → `debate-answer-types` → `debate-turn-mechanics` →
+  `debate-constructive-speeches` → `debate-weighing` → terminal.
+- **Catalog sets — three different sets, never conflate them.** `LEARNING_SKILL_CATALOG`
+  (`lib/learning-content.ts`) holds **21 authored** entries: **9 published** through the education
+  registry and **12 held**. Separately, `EDUCATION_LESSONS` (`lib/education/registry.ts`) holds
+  **12 registry lessons** = those 9 published entries **plus** `claim-warrant-impact`,
+  `how-deca-roleplay-works` and `how-hosa-scenario-interaction-works`, which are not catalog entries.
+  **The 12 held authored entries and the 12 registry lessons are NOT the same set** — they merely
+  share a cardinality.
+- **Connected durable loops — exactly FIVE:** Claim-Warrant-Impact (embedded server-graded practice,
+  architecturally distinct), Evidence Evaluation, Clash, Refutation, Weighing.
+- **Registry mapping.** Four entries carry BOTH `skillSlug` and `practiceDrill`
+  (`debate-evidence-evaluation`, `debate-clash`, `debate-refutation`, `debate-weighing`); two carry
+  `practiceDrill` as a CTA only (`debate-answer-types`, `debate-turn-mechanics`);
+  `claim-warrant-impact` carries `skillSlug` with embedded practice.
+- **Connectivity, stated precisely:**
+  - `debate-clash` — **CONNECTIVITY CLOSED**.
+  - `debate-signposting` — **UNRESOLVED CONNECTIVITY GAP**.
+  - `debate-constructive-speeches` — **UNRESOLVED CONNECTIVITY GAP**.
+  - `debate-round-orientation` — carries neither `skillSlug` nor `practiceDrill` **BY DESIGN**, so it
+    can never mint mastery. It is **INTENTIONALLY UNMAPPED and NOT a connectivity gap.**
+  Never write "only Signposting and Constructive have neither" — orientation has neither too.
+- DECA and HOSA have no concept-drill mapping.
+- Thresholds: `PRACTICING_MASTERY_MIN` **70** and `DRILL_PASS_THRESHOLD` **70** — equal numbers,
+  distinct product concepts. DUE ≠ WEAK.
 
-**B1 item repairs.** `cl-08` direct-clash key repaired; `cl-10` formerly semantically-correct
-distractor repaired; `cl-30` second defensible non-responsive distractor repaired; `pi-28` key
-tightened so the concept verb AND the implementation/measurement scaffold must be satisfied
-together.
+## Current assessment / serving truth
 
-**The held set at B1 shipment — exactly 8.** Debate `rb-02`, `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-30`, `wg-08`;
-DECA `pi-26`. These remain **valid curriculum targets**, excluded from NEW durable assessment only
-because learner-visible teaching does not yet prepare learners for them. They are not bad, not
-invalid, not deleted, not retired. WG distinction to preserve: **`wg-08` is HELD — partially
-taught (weighing lenses taught; its required early-stated-standard mechanism untaught); `wg-29` is
-FAIR TRANSFER / SERVING** — adjudicated separately; never collapse the two. (B1
-record: B2.1 has since released `rb-02`, `rb-13`, `rb-16`, `rb-30` and B2.2 released `rb-14` and
-`rb-15`, each after teaching — the CURRENT held set is exactly 2, `wg-08` and `pi-26`; see the
-B2.2 section below.)
+- **Banks.** Debate **150** (five areas × 30); DECA **120** (four areas × 30); HOSA **180** (six
+  areas × 30). **Live corpus 450 items total.** All five Debate drill areas and all four DECA drill
+  areas are **authorised**. The 270 measured Debate + DECA items are the frozen assessment set; the
+  420 in the G2 line above is the M14 G2 target scope, a different denominator.
+- **Held set — exactly 2:** Debate `wg-08` (B2.3 target) and DECA `pi-26` (B2.4 target). `rb-14` and
+  `rb-15` are **RELEASED** and individually eligible. `wg-29` is FAIR TRANSFER / SERVING — never
+  collapse it with `wg-08`.
+- **Two serving numbers, never collapsed.** GLOBAL INDIVIDUAL ELIGIBILITY — Debate **149/150**
+  (rebuttal **30/30**, weighing **29/30**), DECA **119/120** (PI **29/30**). CLEAN-HISTORY DISTINCT
+  SESSION CAPACITY — Debate **148**, rebuttal **29**, because the measurement-dependent
+  `rb-14`/`rb-15` pair never co-serves. If a test expects 29 and you are about to "fix" it to 30:
+  don't. Raising session capacity by co-serving the pair destroys the contamination control.
+- **The pair measurement control is ACTIVE in Production and must stay executable.** Four parts:
+  (1) same-session mutual exclusion applied POOL-LEVEL inside `buildDrillSessionFrom` before the
+  shuffle, keeper chosen at random; (2) retained-exposure sibling exclusion derived at the single
+  issuing route `app/api/debate/drills/session/route.ts` via `siblingExclusionsFor`; (3) the
+  independent adjudication anchor `scripts/debate-pair-adjudications.json`, read as EXPECTED against
+  the runtime constant as ACTUAL; (4) release coupling that fails by name if an id is servable while
+  the control is missing.
+- **Exposure means ISSUED / RENDERED, never answered.** `retainedExposureWhere` carries no
+  answered/graded predicate. Do not reintroduce an answered-only condition. The protection is bounded
+  by retained history — it is **NOT** "once-ever".
+- **Assessment bytes are frozen.** All 270 items are byte-identical to the accepted B1 state,
+  protected by `scripts/debate-drill-bank-baseline.json` and `scripts/deca-drill-bank-baseline.json`.
 
-**Served populations at B1 shipment.** Debate **143/150** (rebuttal 24/30, weighing 29/30); DECA
-**119/120** (PI 29/30); since B2.2, Debate global individual eligibility is **149/150** (rebuttal
-30/30) — see the B2.2 section for the eligibility-vs-session-capacity distinction.
-Held ids stay physically in their banks; historical attempts are NOT invalidated.
+## Current open gaps
 
-**Provenance — record exactly.** B1 final educational content is AI-assisted, independently
-AI-reviewed, blind closed-corpus reviewed, and adversarially final-byte validated. External human
-content review was **WAIVED BY THE PROJECT OWNER on 2026-08-25**; human content review was **NOT
-PERFORMED**. Never describe B1-edited bytes as human-reviewed, human-approved, or externally
-human-reviewed — a waiver is not a review.
+- **DECA empty-pool twin — OPEN.** The Debate zero-eligible guard shipped in `a66d46cb`;
+  `buildDecaDrillSession` still has no such guard. Do not record the empty-pool issue as closed —
+  only the Debate half is.
+- **Signposting and Constructive Speeches** drill-and-evidence connectivity (the only two unresolved
+  Debate connectivity gaps).
+- Later speeches, flowing, round strategy, crystallization, delivery, questioning/cross-ex.
+- The R17 test-diagnostics debt (owner-ruled NON-BLOCKING); the inherited "seven lessons"-era source
+  comments; moving-HEAD debt 18; `/debates/history`; the stale Reassess CTA; the skills-compat XP
+  prose; the duplicate historical `36d` labels. Not all of S1B is closed.
+- `initialScenario` is still accepted and never read by the writing client.
+- Authenticated Production behaviour of the practice-session flow has never been exercised, in any
+  environment.
 
-**Production verification (read-only, concise).** local HEAD = `origin/main` = the true remote
-main; exact two-commit ancestry from `730a350d`; the deployment object's own sha field ties
-Production to the release SHA; public routes showed no unexpected 5xx; an unauthenticated protected
-route preserved its sign-in redirect; no authenticated submission and no DB mutation were
-performed.
+## Current mandatory gates
 
-**Latent serving debt as recorded at B1 — half of it has since SHIPPED.** The session-builder
-selection loop can fail to terminate if a requested area ever has zero served items; at that
-shipment the treatment was still future work and was deliberately not fixed in the B1 release.
-**Debate: FIXED.** The fail-closed guard shipped in B2.2's measurement-control commit
-`a66d46cb33e509e7d4985944e56f98af9b0fdbe8` and is Production-deployed — a zero-eligible Debate pool
-now throws before the selection loop is entered. **DECA: STILL OPEN** — `buildDecaDrillSession`
-has no such guard; see the DECA empty-pool twin below, which remains separate safety debt. Current
-Debate serving figures are in the B2.2 section: rebuttal global individual eligibility 30/30 with a
-clean-history distinct session capacity of 29; weighing 29/30; PI 29/30.
+**B2.3 is BLOCKED until ALL THREE GATES A + B + C close:**
 
-**B2 — curriculum closure of the held concepts (IN PROGRESS).** Required per-item sequence,
-unchanged: TEACH → verify reachability → closed-corpus assessment → re-review question validity
+- **GATE A** — this canonical-docs structural-quarantine commit accepted, pushed by the owner,
+  exact-source verified in Production, health PASS.
+- **GATE B** — the stale deployment-status comment on `DEBATE_TURN_MECHANICS_LESSON` in
+  `lib/education/tracks/debate.ts`, which still says the B2.2 release commit is "(local; not yet
+  deployed)" when it is deployed at `6098166145`, repaired in its own separate source-truth commit,
+  accepted, pushed and verified.
+- **GATE C** — **CANONICAL ROUTING TRUTH: REQUIRES AUDIT.** `CLAUDE.md` routes to
+  `docs/CONTEXT_INDEX.md`, which routes on to `docs/NEXT_TASK.md`, described there as "the one active
+  milestone". Those files are OUTSIDE this two-file quarantine, so the repository's own mandated
+  routing can deliver a current-mode authority this architecture does not cover. **Required audit, not
+  a confirmed defect** — nothing here claims those files are stale. A separate read-only audit must
+  establish the truth, and any repair must be accepted, pushed and verified.
+
+Only after A, B **and** C close may `wg-08` teaching begin.
+
+## Validation / suite truth
+
+- **Audit safety follows the COMPLETE EXECUTION PATH, not the entry file.** Loading
+  `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
+  reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
+  suite whose own source never mentions `.env` still reads it if its closure does.
+- **Four counts, never collapsed.** **REGISTERED = 36** (`*:smoke` scripts in `package.json`).
+  **PROJECT RELEASE-SAFE BATTERY = 32** — registered minus `auth`, `team`, `assignment`
+  (shared-Production database writers) and `judge-shape` (env reader + live provider); the release
+  gate, and **NOT credential-free — 15 of its members read `<repo>/.env`.**
+  **NO-ENV AUDIT SMOKE SET = 17** — the only suites proven to make zero env-file read attempts; the
+  membership is listed in the CURRENT HANDOFF region of `docs/HANDOFF.md`. **ENV READERS = 19** —
+  five directly (`auth`, `team`, `assignment`, `judge-shape`, `avatar`), fourteen transitively.
+- **Only the 17-suite no-env set, plus `npx tsc --noEmit`, may be run during an education/docs
+  integrity audit.** `npm run build`, `lint`, `validate`, `dev` and `start` all read `.env` and
+  `.env.local` through `@next/env`. **The repository's normal production-build path under the current
+  toolchain is therefore NOT no-env audit-safe** — fail-closed execution observed attempted `.env` and
+  `.env.local` reads. That is a statement about the toolchain as it stands today, not a claim that no
+  isolated future build arrangement could avoid env files; any such path would need fresh proof.
+  Production build is RELEASE validation.
+- **Only 36 and 32 are derivable from `package.json`.** The 17 and the 19 are properties of each
+  suite's transitive closure and were established by static analysis plus a fail-closed runtime guard;
+  re-derive them that way, never by name or by subtraction. A passing run proves nothing — Prisma
+  swallows a blocked read, so all 14 transitively tainted suites pass while reading `.env`.
+- The commands live in the CURRENT HANDOFF region of `docs/HANDOFF.md`. **Do not run any command
+  copied from the historical archive.**
+
+## Security truth
+
+- **2026-08-12 database-credential exposure — HISTORICAL INCIDENT.** An automated review process read
+  the connection string from the environment file and ran read-only queries against the shared
+  production database, unauthorized. No writes were reported.
+- **Credential rotation completion: UNVERIFIED FROM REPOSITORY EVIDENCE.** This file claims neither
+  that rotation happened nor that it did not. Establishing it needs provider-side evidence the owner
+  holds.
+- **Standing safety, unconditional:** never open `.env` or `.env.local`; never read or print
+  `DATABASE_URL`; never use Production database credentials; never record a secret in a document,
+  commit or transcript. **No education work, B2.3 included, depends on proving rotation.**
+- **Three different env-access facts. State them separately; never collapse them into one "zero".**
+  1. **Repository env-file access during RELEASE validation: YES.** The normal production build and
+     the 32-suite project release-safe battery include processes proven to load `.env` and
+     `.env.local`. Loading a file is reading it. Those runs must never be called credential-free or
+     no-env.
+  2. **Env-file read attempts during STRICT NO-ENV AUDIT validation: ZERO.** *Measured in the
+     COMBINED ENV + NETWORK GUARDED RUN — name the run by its guard type, never by chronology:*
+     `npx tsc --noEmit` **completed / zero env attempts / zero outbound network attempts**, and the
+     17-suite no-env set **17/17 completed / zero env attempts / zero outbound network attempts /
+     zero successful external provider calls / zero prohibited writes**, every suite having printed
+     its own success banner, under a guard that fails closed on BOTH env-file reads and outbound
+     provider traffic. An EARLIER ENV-ONLY GUARDED RUN exists in the investigation that produced
+     this model; it measured env attempts only and never measured network — do not cite it for the
+     network figures. This is EXECUTION EVIDENCE from that run, not a timeless
+     repository invariant — set membership is repository-derived, the clean result is not. Both
+     halves must always be stated together: a zero-attempt count is meaningless unless the guarded
+     command genuinely completed, and a PASS is never by itself evidence of zero env reads. **The 17
+     is a no-env set, not a no-provider-capability set** — `side-coach`, `debate-side-coach` and
+     `deca-rubric` all reach provider-capable code via `lib/side-coach.ts:9` — so provider safety
+     rests on fail-closed execution control and observed zero outbound calls, never on capability
+     absence.
+  3. **Intentional inspection of env-file contents by an auditor: NONE.** *The subject of this
+     sentence is the auditor, never a process.* No auditor intentionally opened or inspected an env
+     file, printed, copied, parsed or recorded its contents, or exposed them; and no secret value
+     appears in these documents, in any commit, or in any report. Processes did load env files during
+     release validation — see fact 1, which this does not retract.
+
+## Current next action
+
+1. Owner pushes this docs commit; verify the Production deployment read-only at its exact source SHA.
+2. Repair the stale deployment-status comment in `lib/education/tracks/debate.ts` in its own commit;
+   accept, push, verify.
+3. Audit the `CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` routing chain read-only;
+   repair, accept, push and verify if the audit finds a competing current authority.
+4. Only then begin **B2.3 / `wg-08`**.
+
+## Not claimed
+
+This file does not claim Debate, DECA, HOSA, the education system or CompeteReady is complete or
+correct. The education-perfection program has material gaps across all three tracks. The archive
+below has **not** been individually fact-checked and is not asserted to be true today.
+
+# HISTORICAL ARCHIVE — NON-AUTHORITATIVE
+
+<!-- CANONICAL_HISTORICAL_ARCHIVE_START -->
+
+**Everything below this marker is historical snapshot material.**
+
+Present-tense verbs, commands, SHAs, deployment statements, "next" actions, "still open" statements,
+"ready to push" statements, test commands and imperatives below this boundary describe the historical
+snapshot in which they were written. **They MUST NOT be interpreted as current project state or
+current instructions.**
+
+**DO NOT EXECUTE COMMANDS FROM THIS ARCHIVE.** Historical commands are preserved only as evidence of
+what was run or planned at the time. Any command needed today must appear in the CURRENT HANDOFF
+region of `docs/HANDOFF.md` and be validated against the current repository first. This specifically
+neutralises stale safe-suite filters, provider-running commands, deploy, push and migration commands.
+
+**DO NOT USE ARCHIVED STATUS CLAIMS TO DETERMINE CURRENT STATE.** Archived OPEN / CLOSED / NEXT /
+NOT STARTED / LOCAL / PUSHED / NOT PUSHED / PRODUCTION / READY TO PUSH / DEFICIT / CURRENT / TODAY /
+NOW / STILL refer only to their own snapshot. Read current equivalents from the authoritative region
+above.
+
+If archive prose conflicts with the authoritative region, **the authoritative region wins.** Any
+historical claim promoted back into current guidance must first be re-derived from repository truth.
+
+The archive preserves historical records in roughly reverse-chronological order; it contains known
+ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## B2 — curriculum closure of the held concepts (IN PROGRESS)
+
+*This section states the B2 programme rule. The two shipped B2 slices follow as their own top-level
+sections, `## B2.1` then `## B2.2`, in shipping order — they are peers of this heading, not
+subsections of it. Every section below them is newest-first.*
+
+**Required per-item sequence, unchanged:** TEACH → verify reachability → closed-corpus assessment → re-review question validity
 against the final lesson bytes → remove a hold only when a beginner can reasonably solve the item
 from CompeteReady instruction → rerun the serving/mastery safeguards. **B2 must NOT simply unhold
 ids.**
 
-**B2.1 — answer-types teaching + four-item reactivation — SHIPPED and Production-verified.**
+## B2.1 — answer-types teaching + four-item reactivation — SHIPPED and Production-verified
+
 Teaching SHA `35690107c430fe3eb45eba12c50488a8026edded` (`feat(education): teach debate answer
 types`); release SHA `3199900e82ccc825da4e40823e4d17dab9713bde` (`feat(education): reactivate
 taught rebuttal drills`); teach-before-test ancestry `8ea30c8d…` → `35690107…` → `3199900e…`,
@@ -96,8 +262,9 @@ source identity plus the independently accepted local serving proofs).
 The lesson: authored catalog entry `debate-answer-types` in `lib/learning-content.ts` (LC1
 baseline 19 → 20 blocks, marker `B21-DEBATE-ANSWER-TYPES-TEACHING` — this line is the
 affected-slug record the integrity smoke's contract requires); registry entry CTA-only (no
-skillSlug — refutation keeps the sole `debate-rebuttal` remediation claim); chain refutation →
-answer-types → constructive-speeches. Educational status: ACCEPTED / SHIPPED /
+skillSlug — refutation keeps the sole `debate-rebuttal` remediation claim); chain at that shipment
+refutation → answer-types → constructive-speeches, with `turn-mechanics` inserted between them by
+B2.2. Educational status: ACCEPTED / SHIPPED /
 PRODUCTION-VERIFIED.
 **Released after teaching + per-item preparedness acceptance:** `rb-02`, `rb-13`, `rb-16`,
 `rb-30`. **Held at B2.1 shipment — exactly 4:** `rb-14`, `rb-15` (both since RELEASED by B2.2),
@@ -130,8 +297,9 @@ B2.1 commits. The count those assertions carry is now **twelve** — B2.2's teac
 `debate-turn-mechanics` was registered, and `EDUCATION_LESSONS.length === 12` at HEAD (asserted by
 education-registry 1., education-migration 5. and skills-compat 28.). It was eleven at B2.1.
 
-**B2.2 — turn-mechanics teaching + measurement control + reactivation — SHIPPED and
-Production-verified.** Three commits, in an order the history itself proves: teaching
+## B2.2 — turn-mechanics teaching + measurement control + two-item reactivation — SHIPPED and Production-verified
+
+Three commits, in an order the history itself proves: teaching
 `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b` (`feat(education): teach debate turn mechanics`), then
 the measurement control `a66d46cb33e509e7d4985944e56f98af9b0fdbe8` (`fix(assessment): prevent
 sibling contamination`), then the release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`
@@ -207,7 +375,8 @@ mark each one CURRENT+TRUE or HISTORICAL+EXPLICITLY SCOPED. A claim is NOT clear
 mirror is reconciled. The failure this prevents is concrete and cost B2.2 three cycles: repairing
 the CURRENT_STATE copy of a claim while leaving its HANDOFF twin stale, or the reverse.
 
-**B2.3 — NEXT / NOT STARTED.** Target `wg-08`, which is PARTIALLY TAUGHT and HELD: the weighing
+**B2.3 — NEXT / NOT STARTED / BLOCKED behind the canonical-docs rot sweep.** Target `wg-08`,
+which is PARTIALLY TAUGHT and HELD: the weighing
 lenses are taught, but the early-stated weighing-standard mechanism the item requires is not, and
 the existing lens teaching does not by itself prepare it. **B2.4 — NOT STARTED** (target `pi-26`;
 the primary official DECA locator for the instructional-area weighting rule remains UNSATISFIED, and
@@ -222,6 +391,81 @@ lacks that guard. Do NOT record the empty-pool issue as closed — only the Deba
 
 **Honest scope.** This release does not make the education system complete or perfect; the larger
 education-perfection program still has material gaps across Debate, DECA, and HOSA.
+
+## P0.1 assessment-integrity + B1 educational-validity closure — SHIPPED and Production-verified
+
+Feature/release SHA **`20609a69dc30b37a044c221bd28209a43d9a0a2c`** (the B1 commit), Production
+deployment **`6090563687`**, status **SUCCESS** — the deployment object's own sha field ties
+Production to the release SHA exactly. The P0.1 assessment-integrity commit is its parent,
+`0789278cc09bb771b68a49d23a3c2dd709aa0d0d`; the pre-P0.1 baseline is
+`730a350d44e5874d6967491d78c9eeafe1b4a583`, with exact two-commit ancestry from the baseline to the
+release SHA. Any later docs-only truth-sync commit is NOT the feature SHA. Nothing was deleted.
+
+**P0.1 — answer-form leakage repaired (NOT cosmetic).** The measured Debate/DECA banks carried
+systematic answer-form leakage: blind answer-form heuristics (e.g. always picking the longest
+choice) could manufacture durable mastery evidence — measured **83–100% blind accuracy** on
+affected areas pre-repair. P0.1 repaired the leaking items and added an **enforced static
+assessment-quality guard**; the repaired banks passed the final machine/AI educational review and
+guard process. This does not claim overall educational perfection.
+
+**The static guard, precisely.** It checks answer-form signal families — length, cue wording,
+duplication — plus mutation tests. Final measured examples: `debate:clash` H_LONG 13.3% / UL 13%;
+`deca:performance-indicators` H_LONG 21.7% / UL 20%. The guard **SUPPLEMENTS** educational review —
+it never replaces it.
+
+**B1 — closed-corpus educational-validity closure.** After the closed-corpus educational-validity
+review, B1: (a) repaired the adjudicated item-validity defects, (b) held valid-but-untaught
+questions from NEW serving, (c) rebased the serving/mastery tests to the actual served population,
+(d) preserved honest grading for historical and in-flight held-item attempts, and (e) deleted
+nothing.
+
+**The closed-corpus review, precisely.** An independent **AI** closed-corpus reviewer answered all
+179 reviewed questions blind, before seeing the keys, and matched **178/179** official keys; the
+comparison was then used to expose curriculum and one-best-answer defects — not as a score-only
+gate. It is an AI review: NOT human review, NOT external review, NOT human approval.
+
+**B1 item repairs.** `cl-08` direct-clash key repaired; `cl-10` formerly semantically-correct
+distractor repaired; `cl-30` second defensible non-responsive distractor repaired; `pi-28` key
+tightened so the concept verb AND the implementation/measurement scaffold must be satisfied
+together.
+
+**The held set at B1 shipment — exactly 8.** Debate `rb-02`, `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-30`, `wg-08`;
+DECA `pi-26`. These remain **valid curriculum targets**, excluded from NEW durable assessment only
+because learner-visible teaching does not yet prepare learners for them. They are not bad, not
+invalid, not deleted, not retired. WG distinction to preserve: **`wg-08` is HELD — partially
+taught (weighing lenses taught; its required early-stated-standard mechanism untaught); `wg-29` is
+FAIR TRANSFER / SERVING** — adjudicated separately; never collapse the two. (B1
+record: B2.1 has since released `rb-02`, `rb-13`, `rb-16`, `rb-30` and B2.2 released `rb-14` and
+`rb-15`, each after teaching — the CURRENT held set is exactly 2, `wg-08` and `pi-26`; see the
+B2.2 section below.)
+
+**Served populations at B1 shipment.** Debate **143/150** (rebuttal 24/30, weighing 29/30); DECA
+**119/120** (PI 29/30); since B2.2, Debate global individual eligibility is **149/150** (rebuttal
+30/30) — see the B2.2 section for the eligibility-vs-session-capacity distinction.
+Held ids stay physically in their banks; historical attempts are NOT invalidated.
+
+**Provenance — record exactly.** B1 final educational content is AI-assisted, independently
+AI-reviewed, blind closed-corpus reviewed, and adversarially final-byte validated. External human
+content review was **WAIVED BY THE PROJECT OWNER on 2026-08-25**; human content review was **NOT
+PERFORMED**. Never describe B1-edited bytes as human-reviewed, human-approved, or externally
+human-reviewed — a waiver is not a review.
+
+**Production verification (read-only, concise).** local HEAD = `origin/main` = the true remote
+main; exact two-commit ancestry from `730a350d`; the deployment object's own sha field ties
+Production to the release SHA; public routes showed no unexpected 5xx; an unauthenticated protected
+route preserved its sign-in redirect; no authenticated submission and no DB mutation were
+performed.
+
+**Latent serving debt as recorded at B1 — half of it has since SHIPPED.** The session-builder
+selection loop can fail to terminate if a requested area ever has zero served items; at that
+shipment the treatment was still future work and was deliberately not fixed in the B1 release.
+**Debate: FIXED.** The fail-closed guard shipped in B2.2's measurement-control commit
+`a66d46cb33e509e7d4985944e56f98af9b0fdbe8` and is Production-deployed — a zero-eligible Debate pool
+now throws before the selection loop is entered. **DECA: STILL OPEN** — `buildDecaDrillSession`
+has no such guard; see the DECA empty-pool twin below, which remains separate safety debt. Current
+Debate serving figures are in the B2.2 section: rebuttal global individual eligibility 30/30 with a
+clean-history distinct session capacity of 29; weighing 29/30; PI 29/30.
+
 
 ## Clash measurable-practice closure — SHIPPED and Production-verified
 
@@ -306,9 +550,11 @@ review page's executable behavior.
 before and after; exactly the `debate-clash` entry changed (the narrow correction); the other 18
 are canonically unchanged. No twentieth entry.
 
-**Current Debate learner path — unchanged.** `debate-round-orientation` → `claim-warrant-impact` →
-`debate-evidence-evaluation` → `debate-signposting` → `debate-clash` → `debate-refutation` →
-`debate-constructive-speeches` → `debate-weighing` → terminal.
+**Debate learner path at that closure — unchanged by it.** `debate-round-orientation` →
+`claim-warrant-impact` → `debate-evidence-evaluation` → `debate-signposting` → `debate-clash` →
+`debate-refutation` → `debate-constructive-speeches` → `debate-weighing` → terminal. **B2.1 and B2.2
+have since inserted `debate-answer-types` and `debate-turn-mechanics` between refutation and
+constructive speeches — see the CANONICAL LIVE STATE block for the current chain.**
 
 **Current curriculum status.** Clash measurable connectivity is closed. The broader remaining
 weakness is still coverage/connectivity, not lesson-template quality: Signposting measurable
@@ -321,7 +567,8 @@ has no metadata-only fix; any future CWI remediation needs a separate generic
 lesson-with-embedded-durable-practice design decision. **No next Debate curriculum product slice
 had been chosen at that shipment; since then the B2 curriculum-closure program began — B2.1
 (answer types) and B2.2 (turn mechanics) have both SHIPPED, and B2.3 (`wg-08`, the early-stated
-weighing standard) is next (see the B2.2 section above).** The Debate curriculum is not complete.
+weighing standard) is next — blocked behind the canonical-docs rot sweep (see the B2.2 section
+above and the mandatory gate in `docs/HANDOFF.md`).** The Debate curriculum is not complete.
 
 ## Debate Curriculum Wave 1C — Evidence Evaluation teaching-home closure — SHIPPED and Production-verified
 
@@ -358,10 +605,11 @@ automatically false", "correlation is useless", or "one study proves broad causa
 rule, speech order, timing, citation-challenge procedure or card-formatting rule was introduced.
 The ultimate PF-vs-Parliamentary product target remains unresolved.
 
-**Current Debate learner path.** `debate-round-orientation` → `claim-warrant-impact` →
+**Debate learner path at that wave.** `debate-round-orientation` → `claim-warrant-impact` →
 `debate-evidence-evaluation` → `debate-signposting` → `debate-clash` → `debate-refutation` →
 `debate-constructive-speeches` → `debate-weighing` → terminal. Evidence sits directly after CWI;
-orientation remains first; weighing remains terminal.
+orientation remains first; weighing remains terminal. **Answer-types and turn-mechanics were added
+later, by B2.1 and B2.2 — see the CANONICAL LIVE STATE block for the current chain.**
 
 **DUE ≠ WEAK carries forward.** For a due `debate-evidence` under the current PRACTICING floor
 (70): 69 → the Evidence lesson, then the exact drill; 70 and 71 → the exact drill only. Due means
@@ -487,9 +735,11 @@ Coach); Wave 1C later added the fourth (Evidence Evaluation — see above). Orie
 the existing CompeteReady-authored, format-agnostic Debate provenance; no NSDA rule attribution was
 fabricated.
 
-**Current Debate learner path.** `debate-round-orientation` → `claim-warrant-impact` →
+**Debate learner path at that wave.** `debate-round-orientation` → `claim-warrant-impact` →
 `debate-signposting` → `debate-clash` → `debate-refutation` → `debate-constructive-speeches` →
-`debate-weighing` → terminal.
+`debate-weighing` → terminal. **Evidence evaluation (Wave 1C), answer-types (B2.1) and
+turn-mechanics (B2.2) were chained in later — see the CANONICAL LIVE STATE block for the current
+chain.**
 
 **Debate curriculum sequence.**
 
@@ -547,8 +797,9 @@ reverse-remediation mapping the other two share — the three are not architectu
 
 **Curriculum status then.** The primary remaining issue was coverage/connectivity, not
 lesson-template quality. Notable gaps at that point: an Evidence Evaluation teaching home (closed by
-Wave 1C), Signposting/Clash/Constructive Speeches drill-and-evidence connectivity, later speeches,
-flowing, round strategy, crystallization, delivery, and questioning/cross-ex.
+Wave 1C), Signposting/Clash/Constructive Speeches drill-and-evidence connectivity (Clash closed
+since — see the Clash closure above), later speeches, flowing, round strategy, crystallization,
+delivery, and questioning/cross-ex.
 
 ## M15 Learning Architecture Slice 3 — SHIPPED and Production-verified
 
@@ -626,7 +877,7 @@ but whose practice/evidence connectivity does not yet exist the way Refutation's
 - **Curriculum coverage work: all three planned Wave 1 slices have shipped** — see the Debate
   Curriculum Wave 1C section above. No next curriculum wave had been chosen *at that point*; the B2
   curriculum-closure program was chosen afterwards, B2.1 and B2.2 have since shipped, and B2.3
-  (`wg-08`) is the current next slice.
+  (`wg-08`) is the current next slice — blocked behind the canonical-docs rot sweep.
 
 (These are Learning Architecture slice numbers. They are unrelated to the historical **G2** slice
 numbering used in the older sections further down this file.)
@@ -713,11 +964,22 @@ drill remains the first activity that produces a durable record.
 `/study-arcade?track=debate&area=rebuttal` → the existing server-issued, server-graded Debate drill →
 skill `debate-rebuttal` → the existing mastery and spaced-review machinery.
 
-`debate-refutation → rebuttal` is the only authored mapping. It is metadata-driven: no lesson-id
-special case was introduced in the view, and the call to action is conditional on a real explicit
-mapping. **`debate-signposting`, `debate-clash` and `debate-constructive-speeches` remain unmapped**
-and deliberately show no drill action — absence is the honest default, not a disabled button or a link
-to unrelated practice. Neither DECA nor HOSA gained a concept-drill mapping.
+**At Slice 1, `debate-refutation → rebuttal` was the only authored mapping.** It is metadata-driven:
+no lesson-id special case was introduced in the view, and the call to action is conditional on a real
+explicit mapping. **At that slice `debate-signposting`, `debate-clash` and
+`debate-constructive-speeches` were unmapped** and deliberately showed no drill action — absence is the honest default, not a disabled button or a link
+to unrelated practice. Neither DECA nor HOSA gained a concept-drill mapping at that slice.
+**Superseded — current mapping truth, derived from `EDUCATION_LESSONS`:** four entries carry BOTH
+`skillSlug` and `practiceDrill` (`debate-evidence-evaluation`, `debate-clash`, `debate-refutation`,
+`debate-weighing`); two carry `practiceDrill` as a CTA only, with no skillSlug
+(`debate-answer-types`, `debate-turn-mechanics`); `claim-warrant-impact` carries `skillSlug` with
+embedded practice and no registry `practiceDrill`.
+
+**`debate-round-orientation` also carries neither, and that is DELIBERATE** — orientation has no
+skillSlug, no practiceDrill and no durable evidence precisely so it can never mint mastery, so it is
+not a connectivity gap. **The remaining unresolved Debate connectivity gaps are exactly
+`debate-signposting` and `debate-constructive-speeches`**; `debate-clash` connectivity is CLOSED.
+DECA and HOSA still have no concept-drill mapping.
 
 **The deep-link contract.** The Debate drill component accepts an optional initial `DrillArea`, which
 seeds the first render only; manual area switching is unaffected. `DrillArea` has **one canonical
@@ -852,11 +1114,12 @@ change; E2 supplies the green harmless-change state.
 **Family after Batch III: transaction claim / lock / session 14/14 safe, 0 defective.** The other 13
 controls are untouched.
 
-**Ordering-control state: safe 43 → 44 · defective 5 → 4 · unresolved 0.** Remaining, all still open:
+**Ordering-control state: safe 43 → 44 · defective 5 → 4 · unresolved 0.** Remaining at that batch:
 
 - **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
 
-**Batch IV has not been started**, and no shared route-resolution helper exists yet.
+**Batch IV had not been started at that point**, and no shared route-resolution helper existed yet.
+*(Superseded: Batch IV SHIPPED and is Production-verified — see its section above.)*
 
 The audited denominator is unchanged: **48 ordering comparisons across 14 safe suites**, of which
 **30 were safe as written** and **18 defective** before any repair. **Not all 48 were defective.**
@@ -929,13 +1192,13 @@ the decisive evidence.
 
 **Family after Batch II: evidence-before-mastery 5/5 safe, 0 defective.**
 
-**Ordering-control state: safe 39 → 43 · defective 9 → 5 · unresolved 0.** Remaining, all still open:
+**Ordering-control state: safe 39 → 43 · defective 9 → 5 · unresolved 0.** Remaining at that batch:
 
 - **Batch III — transaction (1):** IDX-30
 - **Batch IV — route resolution / gating order (4):** IDX-16, IDX-45, IDX-46, IDX-47
 
-**Neither batch has been started.** Batch III stays deliberately isolated because IDX-30 sits beside
-the A2/A4 transaction / exactly-once controls.
+**Neither batch had been started at that point.** Batch III stayed deliberately isolated because
+IDX-30 sits beside the A2/A4 transaction / exactly-once controls. *(Historical: superseded — Batches II, III and IV all SHIPPED and are Production-verified; see their sections above.)*
 
 The audited denominator is unchanged: **48 ordering comparisons across 14 safe suites**, of which
 **30 were safe as written** and **18 defective** before any repair. **Not all 48 were defective.**
@@ -1035,7 +1298,7 @@ reversed. Harmless source-form changes pass. **0 harness errors.**
 
 ### Ordering-control state
 
-**Safe 30 → 39 · defective 18 → 9 · unresolved 0.** Remaining defective, all still open:
+**Safe 30 → 39 · defective 18 → 9 · unresolved 0.** Remaining defective at that batch:
 
 - **Batch II — evidence-before-mastery (4):** IDX-01, IDX-08, IDX-17, IDX-39
 - **Batch III — transaction (1):** IDX-30
@@ -1045,7 +1308,8 @@ reversed. Harmless source-form changes pass. **0 harness errors.**
 its operands today, and Batch I did not touch it. **Batch I was test-integrity only: it repaired no
 runtime behaviour and no security defect.**
 
-**Recommended next implementation order:** (1) **Batch II — evidence-before-mastery**: IDX-01, IDX-08,
+**Recommended next implementation order AS RECORDED AT THAT BATCH — all three have since SHIPPED
+and are Production-verified (see the Batch II/III/IV sections above):** (1) **Batch II — evidence-before-mastery**: IDX-01, IDX-08,
 IDX-17, IDX-39 (same inline mechanism, four controls); (2) **Batch III — transaction**: IDX-30, kept
 isolated because it sits on the transaction/exactly-once evidence boundary even though the change is
 test-only; (3) **Batch IV — route resolution / gating**: IDX-16, IDX-45, IDX-46, IDX-47.
@@ -1066,15 +1330,17 @@ nothing superseded it. Previous baseline `e5aeefd`. **Zero production changes.**
 snapshot fidelity re-derived from the deployed module, 24/24 mutation probes matched with 0 harness
 errors and 0 survivors, 30/30 safe suites green.
 
-`lib/learning-content.ts` holds **17** authored entries. Only **4** are published through the
-education registry; the other **13** are held. The published four had presence checks
+At that batch, `lib/learning-content.ts` held **17** authored entries: **4** published through the
+education registry, the other **13** held. The published four had presence checks
 (`education-migration` 15b–16c); the held thirteen had **nothing** once the moving-HEAD pins
-self-healed. Owner decision: **one contract for all 17** — "held" governs whether a learner can reach
-a lesson, not whether reviewed authored content may silently mutate.
+self-healed. Owner decision: **one contract for every entry** — "held" governs whether a learner can
+reach a lesson, not whether reviewed authored content may silently mutate.
+
+**Superseded — current derived truth:** `LEARNING_SKILL_CATALOG` holds **21** authored entries; **9** of them are published through the education registry and **12** are held. `EDUCATION_LESSONS` totals **12** — those 9 catalog-sourced entries plus `claim-warrant-impact`, `how-deca-roleplay-works` and `how-hosa-scenario-interaction-works`, which are not catalog entries. The integrity contract covers all 21.
 
 **Mechanism.** `scripts/learning-content-integrity-smoke.ts` canonicalises the module's **runtime
 values** and compares them to a checked-in reviewed snapshot,
-`scripts/learning-content-baseline.json` (**1694 lines**, an **array sorted by stable slug** — not an
+`scripts/learning-content-baseline.json` (**1694 lines at that batch**, an **array sorted by stable slug** — not an
 object keyed by slug, because JSON permits duplicate keys and `JSON.parse` silently keeps the last,
 which would make "no duplicate baseline ids" unprovable). Canonicalising runtime values is what makes
 the control immune to comments, formatting, imports, helper renames and declaration order while still
@@ -1086,7 +1352,8 @@ hash transition.
 every authored string, learner-visible `lesson.estimatedMinutes`, and the **order** of `steps`,
 `choices`, `practiceQuestions` and `masteryCheck` — all four are rendered to learners in array order.
 **Excluded, each with a live guard:** `retryPrompt`/`retryChoices`/`retryCorrectAnswer` are excluded
-only because all **85** questions are provably derived from `prompt`/`choices`/`correctAnswer`, and an
+only because all questions — **85** at that batch, 111 now — are provably derived from
+`prompt`/`choices`/`correctAnswer`, and an
 executable invariant fails the moment one diverges; seed-level `order` is excluded only because
 nothing reads it, re-proved each run against `lib/education/tracks/debate.ts`.
 
@@ -1119,11 +1386,12 @@ helper rename and catalog declaration-order refactors.
 former learning-content pins (`education-migration` `4.`, `skills-compat` `27.`) are **RETIRED**, and
 were retired only after the replacement control passed the mutation gate.
 
-**Safe suite set 29 → 30**; registered `*:smoke` inventory 32 → 33.
-`scripts/learning-content-integrity-smoke.ts` is registered and part of the safe 30 — not a dead
-script. `hosa-practice-scope` control `43b` was updated to the exact new count, kept as equality.
+**Safe suite set 29 → 30 at that batch**; registered `*:smoke` inventory 32 → 33. Both have grown
+since — 36 registered, safe battery 32.
+`scripts/learning-content-integrity-smoke.ts` is registered and was part of the safe 30 at that
+batch — not a dead script. It is still registered; the safe battery is now 32 of 36 registered. `hosa-practice-scope` control `43b` was updated to the exact new count, kept as equality.
 
-**Still separate, not repaired:** **24** controls across **7** suites use a pattern equivalent to
+**Still separate, not repaired at that batch:** **24** controls across **7** suites used a pattern equivalent to
 `indexOf(a) < indexOf(b)` without first establishing that `a` exists, so they **can** pass vacuously
 when the first anchor is absent (`indexOf` returns `-1`, and `-1 < anything` holds). **One** instance
 has been empirically demonstrated so far; the remaining 23 match the pattern structurally and have
@@ -1132,53 +1400,6 @@ has been empirically demonstrated so far; the remaining 23 match the pattern str
 **Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
 **30/30 safe suites green while still uncommitted with HEAD at `e5aeefd`**, and again after
 deployment. No database access.
-
-## M15 S1A A4b — Practice-session copy matches real activity (shipped; Production-verified at `5884961320`)
-
-**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.** Commit `d82e714`,
-Production deployment **`5884961320`**, status **SUCCESS**, automatic `vercel[bot]` deployment.
-
-The last reward-honesty batch. **One production file, copy only.**
-
-**Before:** `{n} practice sessions completed — debates, tests, and lessons.` and
-`Complete a debate, test, or lesson to start your record.`
-**After:** `{n} practice sessions completed — debates and graded tests.` and
-`Complete a debate or a practice test to start your record.`
-
-Both old lines were false. `User.streak` has exactly **two** writers — the Debate judge route and the
-PracticeTest grade route — and `XP_REWARDS.lessonCompleted` is declared once and consumed nowhere.
-Finishing a lesson could never move that number, so naming lessons promised progress that could not
-happen.
-
-**Semantics, unchanged:** `User.streak` keeps its legacy schema name and its meaning — a **lifetime
-count of completed Debate and graded PracticeTest sessions**. Not a streak, not consecutive days. No
-counter logic, reward logic, quota, XP, XPLog, rank or lesson behaviour was touched; the historical
-value is untouched. The word "streak" still exists as the prop identifier but never reaches a learner
-as text.
-
-**Already-truthful surfaces left alone:** dashboard, coach detail, profile and home all say "Practice
-sessions" and were correct before this batch.
-
-### Validation
-
-`db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
-**29/29 safe suites green while still uncommitted with HEAD at the A4a baseline** · **8/8 mutation
-probes killed**. All six A4a production files **byte-identical**; A3, A2, A1, G2 and the schema
-frozen. **No database access.**
-
-### Still open
-
-**S1B, open:** 18 HEAD-relative test pins (Class B 12 · Class C seed 6; learning-content **0** —
-retired by S1B-LC1) · **5 defective ordering controls** remaining of 48 audited across 14 suites
-(Batch III 1 · Batch IV 4; Batch I's 9 completed-retry and Batch II's 4 evidence-before-mastery
-controls are repaired, and 30 were safe as written) · `/debates/history` soft-redirect gating · stale
-"Reassess now" CTA · skills-compat prose. **M16:** semantic judging, authoritative winner,
-readiness, snapshot/wins restoration.
-
-**Recommended order for the next batches:** (1) the 24 `indexOf` ordering controls; (2) the 12
-Class B pins; (3) Class C seed strategy. The learning-content design audit and its control are DONE
-(S1B-LC1). **The safe gate is now 30/30, permanently — a report of 29/29 no longer means full
-coverage.**
 
 ## M15 S1B-1 — Redundant HEAD-relative pins retired (shipped; Production-verified at `5892804337`)
 
@@ -1237,19 +1458,66 @@ passes vacuously — deleting the very thing it guards makes it green. Found whi
 `4b9.` retirement: renaming `parseStoredResult` throughout the Debate drill submit route left
 `education-migration`'s `4b6f` passing (the property was still caught, by `practice-session` and
 `review-ladder`). The count is **identical at the S1B-1 baseline `d82e714`**, so this is pre-existing
-and **not introduced by S1B-1**. Not repaired. Keep it separate from the `learning-content.ts`
-content-control design — different defect, different fix.
+and **not introduced by S1B-1**. Not repaired at that batch; it was kept separate from the
+`learning-content.ts` content-control design — different defect, different fix. *(Historical: the 24 vacuous ordering controls were repaired by Batches I-IV; ordering-control state at Batch IV was safe 44 / defective 4 / unresolved 0.)*
 
 **Validation:** `db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning in
 `components/profile/user-avatar.tsx`, untouched) · `build` · **29/29 safe suites green while still
 uncommitted with HEAD at `d82e714`**. **Zero production changes** — test files and docs only. A4, A3,
 A2, A1, G2 and the schema byte-identical. **No database access.**
 
+## M15 S1A A4b — Practice-session copy matches real activity (shipped; Production-verified at `5884961320`)
+
+**Status: `SHIPPED — PRODUCTION-VERIFIED — NO DB OPERATION, NO SCHEMA CHANGE`.** Commit `d82e714`,
+Production deployment **`5884961320`**, status **SUCCESS**, automatic `vercel[bot]` deployment.
+
+The last reward-honesty batch. **One production file, copy only.**
+
+**Before:** `{n} practice sessions completed — debates, tests, and lessons.` and
+`Complete a debate, test, or lesson to start your record.`
+**After:** `{n} practice sessions completed — debates and graded tests.` and
+`Complete a debate or a practice test to start your record.`
+
+Both old lines were false. `User.streak` has exactly **two** writers — the Debate judge route and the
+PracticeTest grade route — and `XP_REWARDS.lessonCompleted` is declared once and consumed nowhere.
+Finishing a lesson could never move that number, so naming lessons promised progress that could not
+happen.
+
+**Semantics, unchanged:** `User.streak` keeps its legacy schema name and its meaning — a **lifetime
+count of completed Debate and graded PracticeTest sessions**. Not a streak, not consecutive days. No
+counter logic, reward logic, quota, XP, XPLog, rank or lesson behaviour was touched; the historical
+value is untouched. The word "streak" still exists as the prop identifier but never reaches a learner
+as text.
+
+**Already-truthful surfaces left alone:** dashboard, coach detail, profile and home all say "Practice
+sessions" and were correct before this batch.
+
+### Validation
+
+`db:generate` · `tsc` · `lint` (1 pre-existing `<img>` warning) · `build` ·
+**29/29 safe suites green while still uncommitted with HEAD at the A4a baseline** · **8/8 mutation
+probes killed**. All six A4a production files **byte-identical**; A3, A2, A1, G2 and the schema
+frozen. **No database access.**
+
+### Still open AS OF THAT BATCH
+
+**S1B, open:** 18 HEAD-relative test pins (Class B 12 · Class C seed 6; learning-content **0** —
+retired by S1B-LC1) · **5 defective ordering controls** remaining of 48 audited across 14 suites
+(Batch III 1 · Batch IV 4; Batch I's 9 completed-retry and Batch II's 4 evidence-before-mastery
+controls are repaired, and 30 were safe as written) · `/debates/history` soft-redirect gating · stale
+"Reassess now" CTA · skills-compat prose. **M16:** semantic judging, authoritative winner,
+readiness, snapshot/wins restoration.
+
+**Recommended order for the next batches:** (1) the 24 `indexOf` ordering controls; (2) the 12
+Class B pins; (3) Class C seed strategy. The learning-content design audit and its control are DONE
+(S1B-LC1). **The safe gate became 30/30 at that batch — a report of 29/29 no longer meant full
+coverage.** **Superseded — current gate: 36 registered `*:smoke` scripts, safe battery 32** (36 minus the three database-writing suites `auth`/`team`/`assignment` and the live-provider suite `judge-shape`). Derive both numbers from `package.json`; never accept a hard-coded figure, and never accept a 30/30 report as full coverage.
+
 ## M15 S1A A4a — Daily XP bounded, practice unlimited (shipped; Production-verified at `5884247160`)
 
-## M15 S1A A4a — Daily XP bounded, practice unlimited (LOCAL, push pending)
+### M15 S1A A4a — Daily XP bounded, practice unlimited — record written BEFORE the push (SUPERSEDED)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 The A4 audit measured the exploit: Debate creation had **no rate limit at all**, so 300 judged rounds
 per hour was reachable — **7,500 XP/hr, MASTER rank in about an hour** of scripted requests — and
@@ -1319,7 +1587,7 @@ requests rests on PostgreSQL `SELECT … FOR UPDATE` semantics and is proven **s
 is taken, in the right order, and no read-add-write survives. It was **not** empirically
 concurrency-tested, exactly as with A2.
 
-### Still open
+### Still open AS OF THAT BATCH
 
 **A4b:** the false "debates, tests, and lessons" copy in `components/app/xp-progress-card.tsx`.
 **S1B:** `/debates/history` gating, stale Reassess CTA, skills-compat prose, 50 HEAD-relative pins
@@ -1328,9 +1596,9 @@ concurrency-tested, exactly as with A2.
 
 ## M15 S1A A3b-3 — Coach and assignment labels align (shipped; Production-verified at `5883101376`)
 
-## M15 S1A A3b-3 — Coach and assignment labels align (LOCAL, push pending)
+### M15 S1A A3b-3 — Coach and assignment labels align — record written BEFORE the push (SUPERSEDED)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 The last batch of the A3 honesty pass. Presentation only; no historical data changed.
 
@@ -1399,7 +1667,7 @@ A3b-2's three surfaces, A3b-1's ballot files, the A3a authority route, `lib/coac
 valid before commit, not self-healed. **10/10 presentation mutants and 11/11 qualification mutants
 killed, 0 survivors.** **No database access.**
 
-### Still open
+### Still open AS OF THAT BATCH
 
 **A4:** uncapped Debate creation, completion-XP farming, PracticeTest XP policy, streak semantics,
 reward design. **S1B:** `/debates/history` soft-redirect gating style, stale "Reassess now" CTA,
@@ -1407,9 +1675,9 @@ skills-compat summary prose, the HEAD-relative pin debt above. **M16:** semantic
 
 ## M15 S1A A3b-2 — Learner stats speak the ballot's language (shipped; Production-verified at `5882568067`)
 
-## M15 S1A A3b-2 — Learner stats speak the ballot's language (LOCAL, push pending)
+### M15 S1A A3b-2 — Learner stats speak the ballot's language — record written BEFORE the push (SUPERSEDED)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 A3b-1 made the ballot truthful. A3b-2 carries the same terminology to the three surfaces that re-showed
 the same formative numbers under stronger names. **Presentation only** — no stored value is read
@@ -1470,7 +1738,7 @@ profile — A3b-2 hides it, it does not delete or reset data. **No historical da
 `db:generate` · `tsc --noEmit` · `lint` (1 pre-existing `<img>` warning) · `build` ·
 **29/29 safe suites green** · **11/11 mutation probes killed, 0 survivors**. **No database access.**
 
-### Still open
+### Still open AS OF THAT BATCH
 
 **A3b-3:** coach roster wins, coach average-score label, assignment picker score label.
 **A4:** uncapped Debate creation, completion-XP farming, PracticeTest XP policy, streak semantics,
@@ -1478,9 +1746,9 @@ reward design. **M16:** semantic judging and any restoration of authoritative pr
 
 ## M15 S1A A3b-1 — The Debate ballot is a PRACTICE ballot (shipped; Production-verified at `5882198754`)
 
-## M15 S1A A3b-1 — The Debate ballot is a PRACTICE ballot (LOCAL, push pending)
+### M15 S1A A3b-1 — The Debate ballot is a PRACTICE ballot — record written BEFORE the push (SUPERSEDED)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 A3a removed false progression **authority**. A3b-1 removes false **presentation** authority from the
 primary Debate ballot. Wording and hierarchy only — no scoring, winner, XP or persistence logic
@@ -1536,7 +1804,7 @@ byte-identical to `9b396753`. All A3b-2 and A3b-3 target files are untouched.
 `db:generate` (client generation only) · `tsc --noEmit` · `lint` (1 pre-existing `<img>` warning) ·
 `build` · **29/29 safe suites green**. **No database was accessed**; no secrets were read.
 
-### Still open
+### Still open AS OF THAT BATCH
 
 **A3b-2:** dashboard legacy wins + practice-score labels, profile legacy wins + recent-debate score
 label, replay score wording. **A3b-3:** coach roster wins, coach average-score label, assignment
@@ -1546,9 +1814,9 @@ competitive progression.
 
 ## M15 S1A A3a — Formative ballot authority REMOVED (shipped; Production-verified at `5881331565`)
 
-## M15 S1A A3a — Formative ballot authority REMOVED (LOCAL, push pending)
+### M15 S1A A3a — Formative ballot authority REMOVED — record written BEFORE the push (SUPERSEDED)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NOT PRODUCTION-VERIFIED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 Third batch of **M15 Slice 1A (Evidence Integrity)**. The governing rule it installs:
 
@@ -1638,19 +1906,19 @@ used repository source only, with no database access and no subordinate processe
 database credential should be rotated** through the provider, with the Production secret and the
 local secret replaced through normal secret management. No credential value is recorded here.
 
-### Still open
+### Still open AS OF THAT BATCH
 
-**A3b (learner-facing honesty, not started):** "Judge decision" → practice-ballot framing; the 6xl
+**A3b (learner-facing honesty, not started at that batch; A3b-1/-2/-3 have since SHIPPED):** "Judge decision" → practice-ballot framing; the 6xl
 score presentation; category-score framing; "Rating movement"; the misleading
 `"Live AI judge unavailable — showing the local rubric judge"` notice (it implies the normal ballot
 was AI-scored, which it never is); the remaining historical **Wins** surfaces — the owner has decided
 **all six** should be made consistent, not a subset; optionally the assignment-picker score label.
-**A4 (not started):** uncapped low-effort Debate creation (no rate limit on `POST /api/debates`, no
+**A4 (not started at that batch; A4 has since CLOSED):** uncapped low-effort Debate creation (no rate limit on `POST /api/debates`, no
 per-day completion-XP cap), PracticeTest XP policy, streak semantics, reward design.
 
 ## M15 S1A A2 — Judged attempts are EXACTLY-ONCE (shipped; Production-verified at `5879894892`)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 Second batch of **M15 Slice 1A (Evidence Integrity)**: one learner attempt can now produce
 authoritative progression **at most once**, even under racing requests. Both duplicate-progression
@@ -1687,9 +1955,16 @@ submit can regress a COMPLETED assignment to IN_PROGRESS (status only, no XP) ·
 speech-completeness gate, duplicates AI spend, no progression) · ③ `XPLog` lacks a
 `(sourceType, sourceId, userId)` uniqueness backstop (schema change, deferred).
 
-## M15 S1A A1 — Debate writing practice is FORMATIVE (LOCAL, push pending)
+## M15 S1A A1 — Debate writing practice is FORMATIVE (since pushed; on `main`)
 
-**Status: `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
+The commit is `b476ce68bbbeac606f9af8ef1f375e9824d4508b`
+(`fix(m15): make debate writing practice formative`, 2026-08-12), an ancestor of the current `main`.
+No deployment ID was recorded for it here, so none is claimed; the section below is the record as
+written before that push.
+
+### The record written BEFORE the push (superseded)
+
+**Status when written (superseded — since pushed): `IMPLEMENTED LOCALLY — ONE COMMIT — NOT PUSHED, NOT DEPLOYED, NO DB OPERATION, NO SCHEMA CHANGE`.**
 
 First implementation batch of **M15 Slice 1A (Evidence Integrity)**. The Debate writing-practice
 grader is a keyword/structure checklist (`lib/debate-skill-practice.ts`): a keyword-stuffed
@@ -1848,7 +2123,8 @@ which triggered adversarial work that found real defects. **A separate Google Ge
 no content changes necessary — that is supplementary AI QA and does NOT count as human review**, which
 the external human reviewer alone satisfies. **AI self-review does NOT count as human review, and
 neither does review by another AI system.** **The review gate no longer blocks the push; pushing
-remains a manual action requiring explicit approval, and nothing has been pushed or deployed.**
+remains a manual action requiring explicit approval, and nothing had been pushed or deployed **at
+that point**. The CR/MK curriculum has since been pushed and deployed.**
 
 **The CR/MK curriculum is deployed and human-reviewed** at `8cb181e` (deployment `5864802348`,
 `Production`, `success`), so the approved **CR1–CR6** lessons were the source of truth for this slice.
@@ -1885,7 +2161,8 @@ Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`c
   guards a real index dependency, not symmetry — no BR equivalent was added because nothing indexes BR.
 - **A second hardcoded `42`** at `deca-drills-smoke.ts` (the predicate control) was found by the build
   and now derives from `EXPECTED_ADDED.length`, so it cannot drift again.
-- **Slice 7 was REFINED after the human-review packet — questions are still NOT approved.** The packet
+- **Slice 7 was REFINED after the human-review packet — the questions were NOT yet approved at that
+  point.** They were approved afterwards and Slice 7 shipped. The packet
   found four should-fix issues and all four are resolved: **(F7-1)** the key was the longest choice in
   **18 of 21**, and because choice order is shuffled at serve time but *length is not*, "always pick the
   longest" would have scored ≈86% without reading. Ten distractors were given their own reasoning —
@@ -1935,26 +2212,27 @@ Slice 7 expands **one** DECA area: **customer-relations 9 → 30** (`cr-10`…`c
   learner-facing consumer and it shuffles choices via `buildServedChoices` with opaque UUID option ids.
   Recorded as a known convention, not a defect.
 - **NO legacy punctuation changed.** CR is a MIDDLE block, so `cr-09` already carried its comma.
-  **`mk-09` remains the final array element and remains comma-less** — the DECA terminal-comma
-  boundary is still unexercised and reserved for Slice 8.
-- **Third DECA area authorized:** `EXPANDED_AREAS` is `["performance-indicators", "business-reasoning",
-  "customer-relations"]`. **Marketing-fundamentals stays unauthorised** — `G0-C6b` asserts that count is
-  **1**, `G0-C6b2` asserts it is MK specifically, and `mk-10` is still rejected at stage `unauthorised`.
+  **At that slice `mk-09` remained the final array element and comma-less** — the DECA terminal-comma
+  boundary was still unexercised at that slice and reserved for Slice 8. *(Superseded: Slice 8 appended past `mk-09` and every DECA area now holds 30.)*
+- **Third DECA area authorized at that slice:** `EXPANDED_AREAS` was `["performance-indicators",
+  "business-reasoning", "customer-relations"]`. **Marketing-fundamentals was then unauthorised** —
+  `G0-C6b` asserted that count was **1**, `G0-C6b2` asserted it was MK specifically, and `mk-10` was
+  then rejected at stage `unauthorised`. *(Historical: superseded — all five Debate areas and all four DECA areas are now authorised; both suites assert zero unauthorised areas.)*
 - **`G0-7b` is now a 63-id guarantee** — `pi-10`…`pi-30`, `br-10`…`br-30`, `cr-10`…`cr-30`, 21 each,
   with `G0-7b2d` asserting **zero** MK additions. The forbidden-prefix loop narrowed to `["mk"]` and
   stays non-vacuous via an explicit exact-prefix assertion.
-- **MK remains the shallow control in BOTH suites** and did **not** move — parking it on MK at Slice 6
-  was correct, so it has moved exactly ONCE. **MK is now the only shallow DECA area**, so Slice 8 must
-  re-base it onto a >30 overdraw (the HOSA `11g` / Debate Slice 4 precedent). Both exact-count
-  assertions changed TWO → **ONE**.
+- **MK stayed the shallow control in BOTH suites at that slice** and did **not** move — parking it on
+  MK at Slice 6 was correct, so it moved exactly ONCE. **MK was then the only shallow DECA area**, so
+  Slice 8 had to re-base it onto a >30 overdraw (the HOSA `11g` / Debate Slice 4 precedent). Both
+  exact-count assertions changed TWO → **ONE**. *(Historical: superseded — every DECA area holds 30 and every HOSA area holds 30; no shallow area remains.)*
 - **Content + tests + docs only.** No schema, migration, seed, registry, route, validator, client,
   session-protocol, XP or mastery-runtime change. `deca:skills:activate` was NOT run and no database
   operation was performed. The curriculum file was NOT modified.
 
-**DECA is locally 30 / 30 / 30 / 9 = 99. Corpus 399. Remaining G2 deficit 21, entirely
-marketing-fundamentals.** **Global M14 G2 remains OPEN.** *PI depth complete ≠ DECA depth complete ·
+**At that slice: DECA locally 30 / 30 / 30 / 9 = 99. Corpus 399. Remaining G2 deficit then 21,
+entirely marketing-fundamentals.** **Global M14 G2 was still OPEN at that slice** (it CLOSED 2026-08-12). *PI depth complete ≠ DECA depth complete ·
 PI + BR ≠ DECA depth complete · **PI + BR + CR ≠ DECA depth complete** · Debate depth complete ≠ Global
-M14 G2 complete.* Do not record CR, DECA or Global G2 as complete.
+M14 G2 complete.* At that slice, CR, DECA and Global G2 were not to be recorded as complete. *(Superseded: G2 CLOSED 2026-08-12 at 420/420, deficit 0. That directive bound the agents of its own era; it does not authorise a future agent to contradict the canonical live state.)*
 
 ## M14 DECA Curriculum Completion — Customer Relations + Marketing Fundamentals curriculum is human-reviewed and approved
 
@@ -2043,11 +2321,11 @@ be understood · the offering and its price · getting it to the customer · tel
 **Exactly 3 files changed:** `docs/curriculum/02-deca-course.md`, `docs/CURRENT_STATE.md`,
 `docs/HANDOFF.md`.
 
-**DECA remains 30 / 30 / 9 / 9 = 78. Corpus remains 378. Deficit remains 42 (CR 21 + MK 21).**
+**At that slice: DECA 30 / 30 / 9 / 9 = 78. Corpus 378. Deficit then 42 (CR 21 + MK 21).** *(Historical: superseded — every DECA area holds 30 and every HOSA area holds 30; no shallow area remains.)*
 **Curriculum approval awards no G2 question-depth credit.** The curriculum-first prerequisite is
-COMPLETE, source verification is COMPLETE, and **Global M14 G2 is OPEN and ready to resume with Slice 7
-Customer Relations depth implementation.** CR depth, MK depth, DECA and Global G2 all remain
-incomplete — do not record any of them as complete or closed.
+COMPLETE, source verification is COMPLETE, and **Global M14 G2 was OPEN at that point and ready to resume with Slice 7
+Customer Relations depth implementation.** At that slice CR depth, MK depth, DECA and Global G2 were
+all incomplete and were not to be recorded as complete or closed. *(Historical: superseded — G2 CLOSED 2026-08-12 at 420/420, deficit 0.)*
 
 ## M14 Global G2 Slice 6 / DECA Slice 2 — DECA business-reasoning is 30 deep, human-reviewed, deployed
 
@@ -2085,17 +2363,18 @@ before the peak. **`br-19`, `br-27` and `br-29` were explicitly reviewed and app
 - **Content + tests + docs only.** No schema, migration, seed, skill-activation script, route,
   validator, client, session-protocol, XP or mastery change. `deca:skills:activate` was NOT run.
 - **NO legacy punctuation changed.** BR is a MIDDLE block, so `br-09` already carried its comma.
-  **`mk-09` remains the final array element and remains comma-less** — the DECA terminal-comma
-  boundary is still unexercised.
+  **At that slice `mk-09` remained the final array element and comma-less** — the DECA terminal-comma
+  boundary was still unexercised at that slice. *(Superseded: Slice 8 appended past `mk-09` and every DECA area now holds 30.)*
 - **Scope came from Module 2 lessons 9–12** — attaching the "because" (revenue, cost, retention,
   loyalty, brand, risk), implementation and feasibility (who does what by when with what resources),
   cost/risk/tradeoffs, and measuring success (the one or two metrics the business would watch).
 - **⟨D7⟩ and ⟨B-8⟩ enforced bank-wide.** The five-part scaffold is CompeteReady's teaching method,
   never presented as official DECA terminology, and **no item claims implementation or measurement
   improves scores.** B-8 is an authoring guardrail, deliberately not the learner skill of any item.
-- **Second DECA area authorized:** `EXPANDED_AREAS` is `["performance-indicators", "business-reasoning"]`.
-  **Two recognised areas remain unauthorised** — `G0-C6b` asserts that count is **2**, and `cr-10`/
-  `mk-10` are each still rejected at stage `unauthorised` under default authorization.
+- **Second DECA area authorized at that slice:** `EXPANDED_AREAS` was `["performance-indicators",
+  "business-reasoning"]`. **Two recognised areas were then unauthorised** — `G0-C6b` asserted that
+  count was **2**, and `cr-10`/`mk-10` were each then rejected at stage `unauthorised` under default
+  authorization. *(Historical: superseded — all five Debate areas and all four DECA areas are now authorised; both suites assert zero unauthorised areas.)*
 - **`G0-7b` is now a 42-id guarantee** — `pi-10`…`pi-30` plus `br-10`…`br-30`, 21 each. The
   forbidden-prefix loop narrowed to `["cr","mk"]` and remains genuinely non-vacuous.
 - **⚠ The shallow control moved business-reasoning → marketing-fundamentals in BOTH suites.** MK was
@@ -2104,13 +2383,15 @@ before the peak. **`br-19`, `br-27` and `br-29` were explicitly reviewed and app
 - **No BR fixture needed re-basing, because none exists** — nothing indexes BR, and no BR
   legacy-order assertion was added since no invariant depends on it. `CR.slice(0, 2)` is untouched.
 
-**Global M14 G2 remains OPEN.** Deficit **63 → 42**: **customer-relations 21 + marketing-fundamentals
+**Global M14 G2 was OPEN at that slice.** Deficit then **63 → 42**: **customer-relations 21 + marketing-fundamentals
 21**, and nothing else. Corpus 357 → **378** locally; final target **420**. Every remaining G2
 question is a DECA question. **`PI depth complete` is NOT `DECA depth complete`**, **`PI + BR depth
 complete` is NOT `DECA depth complete`**, and **`Debate depth complete` is NOT `Global M14 G2
-complete`** — do not mark any of them closed.
+complete`** — at that slice none of them was to be marked closed. *(Historical: superseded — G2 CLOSED 2026-08-12 at 420/420, deficit 0.)* Those distinctions still
+hold as reasoning; the closure decision has since been recorded.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
 ## M14 Global G2 Slice 5 / DECA Slice 1 — DECA performance-indicators is 30 deep, human-reviewed, deployed
 
@@ -2155,30 +2436,34 @@ a genuinely contested judgment call in the curriculum and is **deliberately unte
 - **Content + tests + docs only.** No schema, migration, seed, skill-activation script, route,
   validator, client, session-protocol, XP or mastery change. `deca:skills:activate` was NOT run.
 - **NO legacy punctuation changed.** PI is the FIRST block, so `pi-09` already carried its comma; the
-  items insert before `// --- Business reasoning ---`. **`mk-09` remains the final array element and
-  remains comma-less — the DECA terminal-comma boundary is still unexercised.**
+  items insert before `// --- Business reasoning ---`. **At that slice `mk-09` remained the final array element and
+  remained comma-less at that slice — the DECA terminal-comma boundary was still unexercised.** *(Superseded: Slice 8 appended past `mk-09` and every DECA area now holds 30.)*
 - **Scope came from Module 1 lessons 2 and 3 plus the non-negotiable PI rule** — PIs are behaviours to
   demonstrate, never to recite; the PI method (plain meaning → scenario requirement → in-character
   action → judge-facing explanation → measurement); the 5-extract decode; and the demonstration chain
   (decision → reasoning → implementation → feasibility → measurement).
-- **First DECA area authorized:** `EXPANDED_AREAS` is `["performance-indicators"]`. **Three recognised
-  areas remain unauthorised** — `G0-C6b` asserts that count is **3**, and `br-10`/`cr-10`/`mk-10` are
-  each still rejected at stage `unauthorised` under default authorization.
+- **First DECA area authorized at that slice:** `EXPANDED_AREAS` was `["performance-indicators"]`.
+  **Three recognised areas were then unauthorised** — `G0-C6b` asserted that count was **3**, and
+  `br-10`/`cr-10`/`mk-10` were each then rejected at stage `unauthorised` under default
+  authorization. *(Historical: superseded — all five Debate areas and all four DECA areas are now authorised; both suites assert zero unauthorised areas.)*
 - **`G0-7b` is now a 21-id guarantee** — exactly `pi-10`…`pi-30`, each declaring `performance-indicators`,
   driven by a new one-row `SLICE_ADDITIONS`. The `["br","cr","mk"]` forbidden loop is genuinely non-vacuous.
 - **DEPTH TESTS WERE ADDED, NOT MOVED** — neither DECA suite had a depth block or shallow control
   before this slice. Both now prove PI **20 served / 20 distinct** and **40 / 30**, with
-  **business-reasoning** as the still-shallow control at **20 / 9** and **40 / 9**.
+  **business-reasoning** as the then-shallow control at **20 / 9** and **40 / 9**. *(Historical:
+  superseded — every DECA area holds 30; no shallow control remains.)*
 - **No PI fixture needed re-basing** — all index `PI.slice(0, n≤5)`, `PI[0]` or `PI[5]`, which still
   resolve to legacy items. That is now **asserted** (`G0-D6`, `26m`) rather than assumed. The PI
   bypass fixture stays at **raw 76 / evidence 20**.
 
-**Global M14 G2 remains OPEN.** Deficit **84 → 63**: DECA business-reasoning, customer-relations and
+**Global M14 G2 was OPEN at that slice.** Deficit then **84 → 63**: DECA business-reasoning, customer-relations and
 marketing-fundamentals (3 × 21). Corpus 336 → **357** locally; final target **420**. Every remaining
 G2 question is a DECA question. **`PI depth complete` is NOT `DECA depth complete`**, and
-**`Debate depth complete` is NOT `Global M14 G2 complete`** — do not mark either closed.
+**`Debate depth complete` is NOT `Global M14 G2 complete`** — at that slice neither was to be marked
+closed. *(Historical: superseded — G2 CLOSED 2026-08-12 at 420/420, deficit 0.)* The distinction still holds as reasoning.
 
-**Local commits only — not pushed, not deployed. No database operation.**
+**Local commits only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
 ## M14 Global G2 Slice 4 — Debate weighing is 30 deep, human-reviewed, deployed
 
@@ -2216,8 +2501,9 @@ is near-certain — so a real but modest magnitude edge sits against a far large
 no expected-value or `probability × magnitude` formula and no universal ranking of the dimensions.
 
 **`Debate depth complete` is NOT `Global M14 G2 complete`.** All four Debate areas now hold 30 and all
-four are human-reviewed, which completes Debate depth locally. **Global M14 G2 remains OPEN** because
-all four DECA areas are still at 9 — every remaining G2 question is a DECA question.
+four are human-reviewed, which completes Debate depth locally. **Global M14 G2 was still OPEN at that slice** because
+all four DECA areas were still at 9 at that slice — every remaining G2 question was then a DECA
+question. All four reached 30 by Slice 8.
 
 - **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
   session-protocol, XP or mastery change.
@@ -2232,8 +2518,9 @@ all four DECA areas are still at 9 — every remaining G2 question is a DECA que
   by `wg-27` ("even if" is one useful move, never required wording). Scope stays inside magnitude
   exactly as legacy `wg-01` defines it; no "turns the case", gateway framework or impact-calculus
   jargon was introduced.
-- **All four areas are now authorized:** `EXPANDED_AREAS` is `["rebuttal", "claim-warrant-impact",
-  "evidence-evaluation", "weighing"]`. **No recognised Debate area remains unauthorised** — `G0-C6b`
+- **All four Debate areas authorized at that slice:** `EXPANDED_AREAS` was `["rebuttal", "claim-warrant-impact",
+  "evidence-evaluation", "weighing"]`. **No recognised Debate area was left unauthorised at that
+  slice** — `G0-C6b`
   asserts that count is **0**, and the authorisation stage is now probed with a **test-only withheld**
   set through the same `judgeAddition`, never by mutating production.
 - **`G0-7b` is now an 84-id guarantee** — `rb`/`cw`/`ev`/`wg`-10…30, each declaring its slice's area.
@@ -2251,11 +2538,12 @@ all four DECA areas are still at 9 — every remaining G2 question is a DECA que
 - **The observable G2 effect:** a focused 20-question weighing session now serves **20 distinct**
   items with no padding, and the padding branch is still proven at **40 served / exactly 30 distinct**.
 
-**Global M14 G2 remains OPEN.** Deficit **105 → 84**: all four DECA areas (4 × 21). Corpus 315 →
-**336** locally; final target **420**. **Every remaining G2 question is a DECA question** — DECA stays
-36 (4 × 9) and HOSA stays 180 (6 × 30), both untouched by this slice.
+**Global M14 G2 was OPEN at that slice.** Deficit then **105 → 84**: all four DECA areas (4 × 21). Corpus 315 →
+**336** locally; final target **420**. **Every remaining G2 question was then a DECA question** —
+DECA stood at 36 (4 × 9) and HOSA at 180 (6 × 30), both untouched by that slice.
 
-**Local commits only — not pushed, not deployed. No database operation.**
+**Local commits only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
 ## M14 Global G2 Slice 3 — Debate evidence-evaluation is 30 deep, human-reviewed, deployed
 
@@ -2295,15 +2583,15 @@ lessons 11, 12 and 14.**
 - **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
   session-protocol, XP or mastery change.
 - **Inserted inside the evidence block**, after `ev-09` and before `// --- Weighing ---`. `ev-09`
-  already carried its comma, so **no legacy punctuation changed**; `wg-09` is still the final array
-  element and the terminal-comma append boundary is again **not** exercised.
+  already carried its comma, so **no legacy punctuation changed**; at that slice `wg-09` was still the final array
+  element and at that slice the terminal-comma append boundary was again **not** exercised. *(Historical: superseded — the Debate append boundary was exercised at G2 Slice 4; the bank now ends at `cl-30`.)*
 - **Scope came from Module 2 lessons 11, 12 and 14 only** — finding and judging a source, evidence
   quality and source credibility (explicitly **TIER-2 heuristics**, never stated as rules), and
   correlation vs causation. **Lesson 13, the official citation-rules layer, was deliberately excluded
   from AI-authored content** — official rules must be sourced, not guessed.
-- **Three areas are now authorized:** `EXPANDED_AREAS` is `["rebuttal", "claim-warrant-impact",
-  "evidence-evaluation"]`. **`wg-10` is still rejected as `unauthorised`**, with the companion counts
-  moved to 3 authorized / **1** unauthorized so neither loop can go vacuous.
+- **Three areas authorized at that slice:** `EXPANDED_AREAS` was `["rebuttal", "claim-warrant-impact",
+  "evidence-evaluation"]`. **`wg-10` was then rejected as `unauthorised`**, with the companion counts
+  moved to 3 authorized / **1** unauthorized so neither loop could go vacuous. *(Historical: superseded — all five Debate areas and all four DECA areas are now authorised; both suites assert zero unauthorised areas.)*
 - **`G0-7b` is now a 63-id guarantee** — additions must be exactly `rb-10`…`rb-30`, `cw-10`…`cw-30`
   and `ev-10`…`ev-30`, each declaring its slice's area, each passing the shared predicate, with zero
   `wg-*` additions. `SLICE_ADDITIONS` grew by exactly one row.
@@ -2316,14 +2604,15 @@ lessons 11, 12 and 14.**
 - **The observable G2 effect:** a focused 20-question evidence session now serves **20 distinct** items
   with no padding, and the padding branch is still proven at **40 served / exactly 30 distinct**.
 
-**Global M14 G2 remains OPEN.** Deficit **126 → 105**: Debate weighing (1 × 21) plus all four DECA
+**Global M14 G2 was OPEN at that slice.** Deficit then **126 → 105**: Debate weighing (1 × 21) plus all four DECA
 areas (4 × 21). Corpus 294 → **315** locally; final target **420**. Three of four Debate areas are now
 30 deep and human-reviewed, so **weighing is the only remaining shallow Debate area**. DECA stays
 36 (4 × 9) and HOSA stays 180 (6 × 30), both untouched by this slice.
 
-**Local commits only — not pushed, not deployed. No database operation.**
+**Local commits only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Global G2 Slice 2 — Debate claim-warrant-impact is 30 deep, human-reviewed, local only
+## M14 Global G2 Slice 2 — Debate claim-warrant-impact is 30 deep, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 **Slice 1 is deployed and human-reviewed** (`e23e982`, deployment `5861050099`, `Production`,
 `success`), so rebuttal was already approved and live before this slice began.
@@ -2355,13 +2644,13 @@ gate is lifted.**
 - **Content + tests + docs only.** No schema, migration, seed, route, validator, client,
   session-protocol, XP or mastery change. Debate still writes `MasteryProgress` legitimately.
 - **Inserted inside the CWI block**, after `cw-09` and before `// --- Rebuttal ---`. `cw-09` already
-  carried its comma, so **no legacy punctuation changed**; `wg-09` is still the final array element and
-  the terminal-comma append boundary is again **not** exercised.
+  carried its comma, so **no legacy punctuation changed**; at that slice `wg-09` was still the final array element and
+  at that slice the terminal-comma append boundary was again **not** exercised. *(Historical: superseded — the Debate append boundary was exercised at G2 Slice 4; the bank now ends at `cl-30`.)*
 - **Scope came from the curriculum, not from the existing nine** — Module 2 lessons 8, 9, 10, 15, 16:
   causal chains where every arrow needs support, missing logical links, argument mapping and
   load-bearing nodes, and contentions where several reasons converge on one shared impact.
-- **Two areas are now authorized:** `EXPANDED_AREAS` went `["rebuttal"]` → `["rebuttal",
-  "claim-warrant-impact"]`. `ev-10` and `wg-10` are still rejected as `unauthorised`, and the
+- **Two areas authorized at that slice:** `EXPANDED_AREAS` went `["rebuttal"]` → `["rebuttal",
+  "claim-warrant-impact"]`. `ev-10` and `wg-10` were then rejected as `unauthorised`, and the
   companion count assertion moved 3 → **2** so that loop cannot go vacuous.
 - **`G0-7b` evolved into a 42-id guarantee** — additions must be exactly `rb-10`…`rb-30` **and**
   `cw-10`…`cw-30`, each declaring the area its slice claims, each passing the shared predicate, with
@@ -2374,12 +2663,13 @@ gate is lifted.**
   no padding, and the padding branch is still proven at **40 served / exactly 30 distinct** — in both
   the drills and mastery suites, each paired with a live counter-example from a still-9-item area.
 
-**Global M14 G2 remains OPEN.** Deficit **147 → 126**: Debate evidence-evaluation and weighing
+**Global M14 G2 was OPEN at that slice.** Deficit then **147 → 126**: Debate evidence-evaluation and weighing
 (2 × 21) plus all four DECA areas (4 × 21). Corpus 273 → **294** locally; final target **420**.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Global G2 Slice 1 — Debate rebuttal is 30 deep, human-reviewed, local only
+## M14 Global G2 Slice 1 — Debate rebuttal is 30 deep, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 **Slice 0 is deployed** (`f1b5064`, deployment `5860557516`, `Production`, `success`), so both drill
 banks were already under immutable additive protection before any question was authored.
@@ -2409,10 +2699,10 @@ provenance stays labelled in the source permanently. **The Slice 1 push gate is 
   validator, client, session-protocol, XP or mastery change. Debate still writes `MasteryProgress`
   legitimately — HOSA's review-only semantics were not imported.
 - **Inserted inside the rebuttal block**, after `rb-09` and before `// --- Evidence evaluation ---`,
-  so area grouping holds. `rb-09` already had its comma; **`wg-09` remains the final array element and
-  is untouched, so the terminal-comma append boundary is not exercised by this slice.**
-- **Only rebuttal is authorized.** `EXPANDED_AREAS` went `[]` → `["rebuttal"]`. `cw-10`, `ev-10` and
-  `wg-10` are still rejected as `unauthorised` under default authorization — the control that proves
+  so area grouping holds. `rb-09` already had its comma; **At that slice `wg-09` remained the final array element and
+  is untouched, so the terminal-comma append boundary was not exercised by that slice.** *(Historical: superseded — the Debate append boundary was exercised at G2 Slice 4; the bank now ends at `cl-30`.)*
+- **Only rebuttal was authorized at that slice.** `EXPANDED_AREAS` went `[]` → `["rebuttal"]`.
+  `cw-10`, `ev-10` and `wg-10` were then rejected as `unauthorised` under default authorization *(Historical: superseded — all five Debate areas and all four DECA areas are now authorised; both suites assert zero unauthorised areas.)* — the control that proves
   Slice 1 did not pre-authorize the remaining three Debate slices.
 - **`G0-7b` was replaced, not deleted.** It asserted "zero additions exist"; it now asserts the
   additions are **exactly `rb-10`…`rb-30`**, that there are exactly 21, that each declares the
@@ -2426,11 +2716,12 @@ provenance stays labelled in the source permanently. **The Slice 1 push gate is 
   items with no padding. The padding branch is proven separately at **40 served / exactly 30
   distinct**, so growing the bank did not delete that coverage.
 
-**Global M14 G2 remains OPEN.** Remaining deficit **168 → 147** after this local slice: Debate
+**Global M14 G2 was OPEN at that slice.** Remaining deficit then **168 → 147**: Debate
 claim-warrant-impact, evidence-evaluation and weighing (3 × 21) plus all four DECA areas (4 × 21).
 Corpus 252 → **273** locally, final target **420**.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
 ## M14 Global G2 Slice 0 — the Debate and DECA drill banks are protected, no content added
 
@@ -2439,7 +2730,7 @@ Corpus 252 → **273** locally, final target **420**.
 expansion slices are provably additive before any of the 168 questions is authored.
 
 **HOSA is done and human-reviewed:** all six Medical Terminology areas are 30 deep,
-`MEDTERM_BANK` = 180, every slice approved. **Global M14 G2 is still OPEN.**
+`MEDTERM_BANK` = 180, every slice approved. **Global M14 G2 was still OPEN at that phase.**
 
 | Bank | Total | Per-area | State |
 |---|---|---|---|
@@ -2447,7 +2738,7 @@ expansion slices are provably additive before any of the 168 questions is author
 | `lib/debate-drills.ts` | 36 | claim-warrant-impact 9 · rebuttal 9 · evidence-evaluation 9 · weighing 9 | **G2 outstanding** |
 | `lib/deca-drills.ts` | 36 | performance-indicators 9 · business-reasoning 9 · customer-relations 9 · marketing-fundamentals 9 | **G2 outstanding** |
 
-**Remaining deficit: 168 questions** — 8 areas × 21. Debate 36→120, DECA 36→120, final corpus
+**Remaining deficit at that phase: 168 questions** — 8 areas × 21. Debate 36→120, DECA 36→120, final corpus
 180 + 120 + 120 = **420**.
 
 What Slice 0 established:
@@ -2463,43 +2754,48 @@ What Slice 0 established:
   immutable-based protection exists.
 - **Slice-by-slice authorization.** An immutable prefix→area registry (4 mappings per bank) is
   separate from the set of areas currently *authorized* to receive additions. **Slice 0 authorizes
-  zero areas in both banks**, so a structurally valid future item like `rb-10` is rejected today.
+  zero areas in both banks**, so at that phase a structurally valid future item like `rb-10` was
+  rejected. G2 Slices 1-8 later authorised and expanded every area.
   Each later slice adds exactly one area, in the commit that adds its 21 items, after human review.
 - **Exact per-area depth assertions** replaced the weak `length >= 32` and per-area `>= 6` floors, and
   were added to both mastery smokes — which is what audit G2's Verification line explicitly asks for.
-- **Append-boundary prepared.** `wg-09` and `mk-09` end their arrays without trailing commas, so the
-  first addition necessarily adds one. The comparison normalizes **one terminal comma only**, and
+- **Append-boundary prepared.** At that phase `wg-09` and `mk-09` ended their arrays without trailing
+  commas, so the first addition necessarily added one. *(Historical: superseded — `wg-09` is no longer the final Debate array element; weighing was expanded in G2 Slice 4 and the bank now ends at `cl-30`.)* The comparison normalizes **one terminal comma only**, and
   control `G0-C1c` proves that same normalization still leaves a one-word content edit different.
-- **Padding fixtures deliberately unchanged** — 20 requested → 9 distinct is still Production truth.
+- **Padding fixtures deliberately unchanged** — 20 requested → 9 distinct was Production truth at
+  that phase. It is not now: every Debate and DECA area holds 30, so a 20-question focused session
+  no longer pads.
   **Slice 1 re-bases them; it must not delete them.**
 
 **No content review applies to Slice 0** — it adds no questions. Human content review is required
 before each of the eight content slices is pushed.
 
-**Next content slice: Debate rebuttal 9 → 30.**
+**Next content slice AS RECORDED THEN: Debate rebuttal 9 → 30.** It shipped as G2 Slice 1;
+rebuttal has held 30 since.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Phase 2f — HOSA Medical Terminology reaches six-area parity, human-reviewed, local only
+## M14 Phase 2f — HOSA Medical Terminology reaches six-area parity, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 Audit **G2**, sixth and last **HOSA** slice. **Pathophysiology 9 → 30** (`pp-10`…`pp-30`, +21); bank
 total **159 → 180**. **All six HOSA Medical Terminology areas now hold 30.**
 
 ### ⚠ This is HOSA bank parity — it is NOT G2 closure
 
-**G2 as originally audited remains OPEN.** The finding names three bank files
+**G2 as originally audited was still OPEN at that phase.** The finding names three bank files
 (`docs/M14_LEARNING_QUALITY_AUDIT.md:573`) and ~14 areas. Phases 2a–2f covered only the six HOSA
-areas. Verified from source, still outstanding:
+areas. Verified from source, outstanding at that phase (all of it closed by G2 Slices 1-8):
 
 | Bank | Total | Per-area |
 |---|---|---|
 | `lib/debate-drills.ts` | 36 | claim-warrant-impact 9 · rebuttal 9 · evidence-evaluation 9 · weighing 9 |
 | `lib/deca-drills.ts` | 36 | performance-indicators 9 · business-reasoning 9 · customer-relations 9 · marketing-fundamentals 9 |
 
-**Eight Debate and DECA areas are still at 9 and still pad a 20-question request to 20 slots over 9
-distinct items** — exactly the P0 defect G2 was raised against. There are also **no per-area depth
-assertions at all** for those two banks, so a green suite does not mean they are covered. Do not
-record G2 as complete, closed, or "all areas at depth".
+**At that phase, eight Debate and DECA areas were still at 9 and still padded a 20-question request
+to 20 slots over 9 distinct items** — exactly the P0 defect G2 was raised against — and there were
+**no per-area depth assertions at all** for those two banks, so a green suite did not mean they were
+covered. All of that was resolved by G2 Slices 1-8; **G2 CLOSED 2026-08-12** at 420/420.
 
 ### What Phase 2f changed
 
@@ -2546,14 +2842,15 @@ checking its own output and formed no part of it.** Per `CLAUDE.md` the AI-autho
 labelled in the source permanently. **The push gate is lifted.**
 
 **All six HOSA Medical Terminology areas are now 30 deep AND human-reviewed.** That is the HOSA
-portion of G2 finished — see the block above for why **global G2 is still open**.
+portion of G2 finished — see the block above for why **global G2 was still open at that phase**.
 
 **Weighting after 2f:** all six HOSA areas **16.67%** each (30 ÷ 180). True parity within the HOSA
 bank. Correctness unaffected — breadth counts distinct areas, not proportions.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Phase 2e — the HOSA physiology bank is 30 deep, human-reviewed, local only
+## M14 Phase 2e — the HOSA physiology bank is 30 deep, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 Audit **G2**, fifth slice. **Physiology 9 → 30** (`ph-10`…`ph-30`, +21); bank total **138 → 159**.
 Word roots, prefixes, suffixes and anatomy stay at 30; **pathophysiology stays at 9** and is the last
@@ -2600,11 +2897,13 @@ pathophysiology ~5.7%. Correctness unaffected — breadth counts distinct areas,
 
 **G2 roadmap (corrected): 2f pathophysiology is the final HOSA slice — it is NOT the final G2
 slice. Full six-area HOSA parity occurs after Phase 2f, but G2 as audited also covers four Debate
-and four DECA areas that remain at 9 each.**
+and four DECA areas that remained at 9 each at that phase.** *(Superseded: G2 Slices 1–8 took all
+eight to 30; G2 CLOSED 2026-08-12 at 420/420.)*
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Phase 2d — the HOSA anatomy bank is 30 deep, human-reviewed, local only
+## M14 Phase 2d — the HOSA anatomy bank is 30 deep, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 Audit **G2**, fourth slice. **Anatomy 9 → 30** (`an-10`…`an-30`, +21); bank total **117 → 138**.
 Word roots, prefixes and suffixes stay at 30; physiology and pathophysiology stay at 9.
@@ -2644,9 +2943,10 @@ breadth counts distinct areas, not proportions.
 **G2 roadmap: THREE slices remain after 2c — 2d anatomy (this one), 2e physiology, 2f
 pathophysiology. Full six-area parity occurs after Phase 2f.**
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Phase 2c — the HOSA suffix bank is 30 deep, human-reviewed, local only
+## M14 Phase 2c — the HOSA suffix bank is 30 deep, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 Audit **G2**, third slice. **Suffixes 9 → 30** (`sf-10`…`sf-30`, +21); bank total **96 → 117**.
 Word roots and prefixes stay at 30; anatomy, physiology and pathophysiology stay at 9.
@@ -2689,9 +2989,10 @@ rather than spread further by default.
 ~7.7% each. Better than after 2b (two areas at 31.3%); the skew shrinks with each slice and reaches
 parity after 2f (anatomy, physiology and pathophysiology all remained). Correctness unaffected — breadth counts distinct areas, not proportions.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Phase 2b — the HOSA prefix bank is 30 deep, human-reviewed, local only
+## M14 Phase 2b — the HOSA prefix bank is 30 deep, human-reviewed — local only AT THAT PHASE (since pushed and deployed)
 
 Audit finding **G2** continues, one area per slice. Phase 2b takes the **second** area to depth:
 
@@ -2732,9 +3033,10 @@ affect correctness — evidence breadth counts distinct areas, not proportions �
 as the remaining four reach 30. Per-area balancing would be a runtime change and stays out of a
 content-only slice.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 Phase 2a — the HOSA word-root bank is 30 deep, in local code only
+## M14 Phase 2a — the HOSA word-root bank is 30 deep — local code only AT THAT PHASE (since pushed and deployed)
 
 Audit finding **G2** (P0): every drill area held 9 questions, so a 20-question request served 20
 slots over 9 distinct items and mastery measured recall of those nine. G2 prescribes **≥30 per
@@ -2778,9 +3080,10 @@ Per `CLAUDE.md` the authoring method stays labelled in the source regardless of 
 `arthr`, `cost`) with combining forms (`cerebr/o`, `enter/o`, `col/o`). Standardising on combining
 forms across all 30 items is desirable but was explicitly excluded from Phase 2a.
 
-**Local commit only — not pushed, not deployed. No database operation.**
+**Local commit only when written — not pushed, not deployed at that point. No database
+operation.** (Since pushed and deployed.)
 
-## M14 status — Phases A and 1a–1d are DEPLOYED; Phase 1e G19 is local
+## M14 status AT THAT PHASE — Phases A and 1a–1d DEPLOYED; Phase 1e G19 then local (since pushed)
 
 The five-commit M14 stack (`a054706` audit, `66e7dd6` 1a, `8a7a74f` 1b, `a29e506` 1c, `a37959c` 1d)
 was pushed as a normal fast-forward and **deployed to Production** — GitHub deployment `5785864553`,
@@ -2790,7 +3093,8 @@ longer offers Public Speaking). **Authenticated Production behavior remains unte
 action, no judging, no XP/rank/wins/streak/completion, and no database operation was performed in
 any verification pass.
 
-**M14 Phase 1e (G19) is complete locally and unpushed.** The Study Arcade's two fake-progress
+**M14 Phase 1e (G19) was complete locally and unpushed when this was written; it has since been
+pushed and deployed.** The Study Arcade's two fake-progress
 claims are gone:
 
 - The header no longer says decks, games and drills all "feed your real mastery record" — the
@@ -2938,11 +3242,13 @@ and never saw their own track by default (audit finding G24).
 env change, **no database operation**. `docs/M14_LEARNING_QUALITY_AUDIT.md` (`a054706`, also
 deployed) is the audit this implements the first subphase of.
 
-## M13E2 — server-bound practice sessions: PUSHED AND DEPLOYED
+## M13E2 — server-bound practice sessions: PUSHED AND DEPLOYED (2026-08-06 record)
 
 **M13E2 is complete, pushed and deployed.** The eight-commit Phase C stack was pushed as a normal
-fast-forward on 2026-08-06 and **Production now runs
-`bb397350029975520e0b96c1c741e7f873f59086`**. Phase B (`npm run db:push` against the shared
+fast-forward on 2026-08-06 and **Production ran `bb397350029975520e0b96c1c741e7f873f59086` at that
+point.** That is a 2026-08-06 record, not a statement about what Production runs now: the live source
+is `32f92a4bcc68ab3f027a5fe6e617f2d837273791` — see the CANONICAL LIVE STATE block at the top of this
+file. Phase B (`npm run db:push` against the shared
 Production database) is complete, so the practice-session enums, tables, foreign keys, indexes and
 unique constraints are **active in the database**.
 
@@ -3008,9 +3314,12 @@ their missing-table degradation and assertion 28c.
   limiting, redesign is deferred, and three suites assert the absence. Do not "fix" it.
 - **The drill check routes are deliberately not rate-limited.** The light tier is 20/min and a
   twenty-question drill needs 22 calls.
-- **`wins` and `streak` in the judge route are untouched.** They still read-modify-write from a
-  pre-read; that staleness is carried work, and `practice-session:smoke` controls 144–144c pin the
-  existing behaviour so it cannot drift while it waits.
+- **`wins` and `streak` in the judge route were untouched *by that batch*.** They then
+  read-modify-wrote from a pre-read, and `practice-session:smoke` controls 144–144c pinned that
+  behaviour. **Superseded — current source truth:** `wins` was REMOVED from the judge route's user
+  update by A3a (a formative ballot may not mint a competition win; historical values left as they
+  stand), and A4a replaced the stale read-add-write on `streak` with an atomic
+  `{ increment: 1 }`. See `app/api/debates/[debateId]/judge/route.ts`.
 - **`app/(app)/skills/[slug]/practice/page.tsx` still passes `initialScenario`** to the writing
   client. The prop is accepted for compatibility and is **never read** — it is not destructured in
   the component — and the scenario a learner is graded against is the one the server issues. Its
@@ -3028,13 +3337,22 @@ their missing-table degradation and assertion 28c.
 
 Remaining step: authenticated verification of the practice flow when a safe session is available.
 
-## Repository state
+## Archived: M13E2 / M14-era snapshot (2026-08-06/07)
+
+**Everything from here to the end of this file is a snapshot taken around the M14 Phase 1e commit.**
+It is preserved as chronology, not as a readout. Its SHAs, deployment IDs, milestone table, "next
+steps" and suite counts describe that moment and many of them are now false as statements about
+today. **For current truth read the CANONICAL LIVE STATE block at the top of this file.** Do not
+copy any SHA, deployment ID or next-step out of this region without re-deriving it.
+
+## Repository state AT THAT SNAPSHOT — superseded, NOT current
 
 - **Branch:** `main`
-- **origin/main and remote `refs/heads/main`:** `bb397350029975520e0b96c1c741e7f873f59086` — the
-  M13E2 Phase C closeout commit, **pushed 2026-08-06 and deployed to Production**.
-- **Local `HEAD`:** the M14 Phase 1e (G19) commit, **one ahead of `origin/main`**, which sits at
-  the deployed `a37959c` with the full A+1a–1d stack.
+- **origin/main and remote `refs/heads/main` then:** `bb397350029975520e0b96c1c741e7f873f59086` —
+  the M13E2 Phase C closeout commit, pushed 2026-08-06 and deployed to Production **at that time**.
+  It is not the live SHA now; `origin/main` is `32f92a4bcc68ab3f027a5fe6e617f2d837273791`.
+- **Local `HEAD` then:** the M14 Phase 1e (G19) commit, one ahead of `origin/main`, which sat at
+  the deployed `a37959c` with the full A+1a–1d stack. That commit was pushed long ago.
 - **Working tree:** clean apart from each pass's own commit.
 - Phase 1a changed 17 paths: `lib/track-server.ts` (precedence), 12 page call sites (await the async
   resolver), `components/auth/sign-up-form.tsx` (Public Speaking removed from signup), two suites
@@ -3060,7 +3378,7 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | `e44fb6f` | chore(hosa): remove dormant role-pair config |
 | `d7efcb5` | docs: close M11 remediation and handoff |
 
-## Milestone status
+## Milestone status AT THAT SNAPSHOT — superseded, NOT current
 
 | Milestone | Status |
 |---|---|
@@ -3077,30 +3395,30 @@ Remaining step: authenticated verification of the practice flow when a safe sess
 | M13E2 Phase C3a — Debate, DECA and HOSA clients | Complete, pushed and deployed (`80dbf75`, `be97024`). |
 | M13E2 Phase C3b — lesson practice and Debate Writing clients | Complete, pushed and deployed (`9103693`, `f392ede`). |
 | M13E2 — overall | **Complete, pushed, deployed and publicly verified** at `bb39735`. Authenticated practice behavior untested. |
-| M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed. |
+| M14 Phase A — learning quality audit | **Complete locally** (`a054706`, `docs/M14_LEARNING_QUALITY_AUDIT.md`). Unpushed **at that snapshot**; since pushed. |
 | M14 Phase 1a — track-correct first run | Complete, pushed and deployed (`66e7dd6`). |
 | M14 Phase 1b — withdrawn HOSA judging closed | Complete, pushed and deployed (`8a7a74f`). |
 | M14 Phase 1c — DECA judging fails closed | Complete, pushed and deployed (`a29e506`). |
 | M14 Phase 1d — fabricated Debate speaker cards removed | Complete, pushed and deployed (`a37959c`). |
-| M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed. |
+| M14 Phase 1e — G19 Study Arcade honesty | **Complete locally** (this commit). Recording claims scoped to drills; decks/games labeled unrecorded. Unpushed **at that snapshot**; since pushed. |
 | M14 Phase 2a — HOSA word-root bank depth | Complete, pushed and deployed. Word roots 9→30. AI-authored, human-reviewed and approved 2026-08-06. |
 | M14 Phase 2b — HOSA prefix bank depth | Complete, pushed and deployed. Prefixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2c — HOSA suffix bank depth | Complete, pushed and deployed. Suffixes 9→30. AI-authored, human-reviewed and approved 2026-08-07. |
 | M14 Phase 2d — HOSA anatomy bank depth | **Complete locally.** Anatomy 9→30, bank 117→138. AI-authored, **human-reviewed and approved 2026-08-07**. Pushed and deployed. |
 | M14 Phase 2e — HOSA physiology bank depth | **Complete.** Physiology 9→30, bank 138→159. AI-authored, human-reviewed and approved 2026-08-07. Pushed and deployed. |
-| M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push. |
+| M14 Phase 2f — HOSA pathophysiology bank depth | **Complete locally.** Pathophysiology 9→30, bank 159→180, six HOSA areas at 30. AI-authored, **human-reviewed and approved 2026-08-07**. Ready to push **at that snapshot** — since pushed and deployed. |
 | M14 Global G2 Slice 1 — Debate rebuttal depth | **Complete.** Rebuttal 9→30, bank 36→57. AI-authored, human-reviewed and approved 2026-08-11. Pushed and deployed (`e23e982`). |
 | M14 Global G2 Slice 2 — Debate CWI depth | **Complete.** Claim-warrant-impact 9→30, bank 57→78. AI-authored, human-reviewed and approved 2026-08-11. Pushed and deployed (`45f3397`, live at `46ab46b`). |
 | M14 Global G2 Slice 3 — Debate evidence depth | **Complete.** Evidence-evaluation 9→30, bank 78→99, three of four Debate areas at 30. AI-authored, **human-reviewed and approved 2026-08-11**; `ev-27` replaced before approval (`ef55134` + `89497a3`) to stay inside the curriculum. Pushed and deployed (`61b19de`). |
-| M14 Global G2 Slice 4 — Debate weighing depth | **Complete locally.** Weighing 9→30, bank 99→120, **all four Debate areas at 30 — Debate depth COMPLETE and human-reviewed.** First slice to exercise the `wg-09` terminal-comma append boundary; all four areas now authorized. AI-authored, **human-reviewed and approved 2026-08-11**; `wg-24` refined before approval (`9c20282` + `a250e40`) to remove a magnitude/probability ambiguity. Push gate lifted; ready to push. |
-| M14 Global G2 Slice 5 / DECA Slice 1 — DECA PI depth | **Complete locally.** Performance-indicators 9→30, DECA bank 36→57. First DECA area authorized; depth tests and a shallow control ADDED to both DECA suites (neither had any). No legacy punctuation changed — `mk-09` boundary still unexercised. AI-authored, **human-reviewed and approved 2026-08-12**; `pi-19` and `pi-30` refined before approval (`b72cba2` + `1340cdb`) to make the listed indicator load-bearing, `pi-28` approved without rewrite as a reviewed PI/BR boundary case. Push gate lifted; ready to push. |
-| M14 Global G2 Slice 6 / DECA Slice 2 — DECA BR depth | **Complete locally.** Business-reasoning 9→30, DECA bank 57→78. Second DECA area authorized; shallow control MOVED business-reasoning → marketing-fundamentals in both suites (chosen over CR because Slice 7 expands CR, so it moves once not twice). No legacy punctuation changed — `mk-09` boundary still unexercised. AI-authored, **human-reviewed and approved 2026-08-12**; `br-16` refined before approval (`40a473b` + `7fd6798`) to put the go-live timing in the stem, and `br-19`/`br-27`/`br-29` approved without rewrite as reviewed notes. Push gate lifted; ready to push. |
-| **G2 (audit finding) — overall** | **STILL OPEN.** Debate depth is complete at 4 × 30 and deployed; DECA performance-indicators is 30 and human-reviewed; Slice 6 takes business-reasoning to 30 locally. **Global G2 remains open because DECA customer-relations and marketing-fundamentals remain at 9, below the ≥30 target.** Deficit **42** (2 × 21 DECA) — every remaining G2 question is a DECA question. `PI depth complete` is NOT `DECA depth complete`, `PI + BR depth complete` is NOT `DECA depth complete`, and `Debate depth complete` is NOT `Global M14 G2 complete`. **The next G2 depth work remains outstanding.** |
+| M14 Global G2 Slice 4 — Debate weighing depth | **Complete locally.** Weighing 9→30, bank 99→120, **all four Debate areas at 30 — Debate depth COMPLETE and human-reviewed.** First slice to exercise the `wg-09` terminal-comma append boundary; all four areas now authorized. AI-authored, **human-reviewed and approved 2026-08-11**; `wg-24` refined before approval (`9c20282` + `a250e40`) to remove a magnitude/probability ambiguity. Push gate lifted; ready to push **at that snapshot** — since pushed and deployed. |
+| M14 Global G2 Slice 5 / DECA Slice 1 — DECA PI depth | **Complete locally.** Performance-indicators 9→30, DECA bank 36→57. First DECA area authorized; depth tests and a shallow control ADDED to both DECA suites (neither had any). No legacy punctuation changed — `mk-09` boundary still unexercised **at that snapshot** (Slice 8 later exercised it). AI-authored, **human-reviewed and approved 2026-08-12**; `pi-19` and `pi-30` refined before approval (`b72cba2` + `1340cdb`) to make the listed indicator load-bearing, `pi-28` approved without rewrite as a reviewed PI/BR boundary case. Push gate lifted; ready to push **at that snapshot** — since pushed and deployed. |
+| M14 Global G2 Slice 6 / DECA Slice 2 — DECA BR depth | **Complete locally.** Business-reasoning 9→30, DECA bank 57→78. Second DECA area authorized; shallow control MOVED business-reasoning → marketing-fundamentals in both suites (chosen over CR because Slice 7 expands CR, so it moves once not twice). No legacy punctuation changed — `mk-09` boundary still unexercised **at that snapshot** (Slice 8 later exercised it). AI-authored, **human-reviewed and approved 2026-08-12**; `br-16` refined before approval (`40a473b` + `7fd6798`) to put the go-live timing in the stem, and `br-19`/`br-27`/`br-29` approved without rewrite as reviewed notes. Push gate lifted; ready to push **at that snapshot** — since pushed and deployed. |
+| **G2 (audit finding) — overall** | **CLOSED 2026-08-12** by explicit project-owner decision — final depth **420/420**, bank-count deficit **0**. See the M14 GLOBAL G2 closure section above. *Historical record of this row, true when written and superseded by the closure:* Debate depth was complete at 4 × 30 and deployed, DECA performance-indicators was 30 and human-reviewed, Slice 6 took business-reasoning to 30 locally, and G2 was then open with a deficit of **42** (2 × 21 DECA) because customer-relations and marketing-fundamentals were still at 9. The distinctions that row drew still hold as reasoning: `PI depth complete` is NOT `DECA depth complete`, and `Debate depth complete` is NOT `Global M14 G2 complete`. |
 | Legacy `pi-07` / curriculum B-2 | **OPEN DEBT — not resolved.** `pi-07` keys explicit PI signposting as recommended; Module 1 lesson 3 ⟨B-2⟩ teaches that speaking a PI title aloud vs weaving it in is a genuinely contested judgment call. Slice 5 leaves `pi-07` immutable, does not reinforce it, and authors no contradictory content. Separate curriculum debt for later resolution. |
 | M14 Phase 1e — G20 DECA skill activation | **Authorized, executed, verified (2026-08-06).** 0 created / 3 already present / 0 conflicts — the rows pre-existed with exact approved fields; all four DECA areas resolve and record. |
 | M4 — HOSA replacement scenario | **Still blocked.** Needs an approved scenario and the applicable clinical/legal or advisor review. Until then the lesson's interactive practice stays unavailable. |
 
-## Shipped behavior (as implemented locally)
+## Shipped behavior AT THAT SNAPSHOT (as implemented locally then)
 
 **Debate.** Claim/Warrant/Impact is presented as one officially supported beginner model, not the only
 one. Practice routes to `/debate` with an AI opponent and judge. No universal 0–30 speaker-point scale
@@ -3162,7 +3480,8 @@ colour alone.
 - `npx tsc --noEmit` — passes.
 - `npm run lint` — **0 errors** (one pre-existing warning: `<img>` in `components/profile/user-avatar.tsx`).
 - `npm run build` — compiles successfully. The build was never run alongside a dev server.
-- **32 registered `*:smoke` suites. 29 safe/read-only suites were run and all 29 pass.**
+- **32 registered `*:smoke` suites at that snapshot; 29 safe/read-only suites were run and all 29
+  passed.** There are **36** registered now and the safe battery is **32** — see `docs/HANDOFF.md`.
 - **`auth:smoke`, `team:smoke` and `assignment:smoke` write to the shared Production database. They
   were NOT run in this pass and are NOT claimed to pass.**
 - `judge-shape:smoke` makes a live provider call and exits 0 with a console warning when no provider
@@ -3170,7 +3489,7 @@ colour alone.
 - Focused harnesses from earlier milestones (M8A, M8B, M9 SSR; M10 navigation/accessibility; M11R2
   through M11R12) live in the session scratchpad, not in the repository.
 
-## Browser and mobile validation
+## Browser and mobile validation AT THAT SNAPSHOT (2026-08-06)
 
 Verified by serving each surface's emitted SSR markup with the app's own compiled CSS over a local HTTP
 server, because the browser-preview helper cannot launch from `~/Documents`. Checked at 375×812,
@@ -3183,7 +3502,7 @@ real navigation was exercised. No screen-reader certification and no full keyboa
 **The converted practice flow has not been exercised against a live authenticated session** in any
 environment — its guarantees are established by code and by deterministic suites, not by a learner run.
 
-## Known gates and unresolved items
+## Known gates and unresolved items AT THAT SNAPSHOT
 
 1. **Authenticated verification of the session protocol is outstanding** — no learner run, in any
    environment, has exercised issue → check → submit end to end.
@@ -3205,11 +3524,15 @@ environment — its guarantees are established by code and by deterministic suit
 9. **XP-farming policy for writing** is deferred, not silently changed: one issued session awards XP at
     most once, but requesting a new session and completing it still awards the current amount.
 
-## Remote and deployment status
+## Remote and deployment status AT THAT SNAPSHOT — superseded, NOT current
 
-`origin/main` and the remote `refs/heads/main` are both
-`bb397350029975520e0b96c1c741e7f873f59086` — the M13E2 Phase C closeout — and **that is what
-Production runs.** The two M14 commits (the Phase A audit and Phase 1a) are local only.
+**At that snapshot,** `origin/main` and the remote `refs/heads/main` were both
+`bb397350029975520e0b96c1c741e7f873f59086` — the M13E2 Phase C closeout — and that was what
+Production ran then. The two M14 commits (the Phase A audit and Phase 1a) were local only.
+**None of that is current:** `origin/main` is now
+`32f92a4bcc68ab3f027a5fe6e617f2d837273791`, Production carries the B2.2 feature source
+`65c4e6f442d00296fe0a8f8e7902cfd627c02080` (deployment `6098166145`) and the B2.2 docs source
+(deployment `6160459725`).
 
 The commit-linked deployment record for that SHA, verified from unauthenticated GitHub metadata:
 
@@ -3259,7 +3582,15 @@ immediately before any push.
 **M13E2 introduced no new environment variable and no new secret.** No Redis and no signing secret are
 used or required by the session design — PostgreSQL is the only store.
 
-## Next operational steps
+## Next operational steps AT THAT SNAPSHOT — COMPLETED or SUPERSEDED, NOT current
+
+**Steps 1–4 are done** (the Phase 1e G19 commit was pushed and verified; the M14 roadmap ran to
+completion through Phase 2f and G2 Slices 0–8, and **G2 CLOSED 2026-08-12**). Step 5 (authenticated
+verification of the practice flow) and step 6 (`initialScenario` removal) remain genuinely
+outstanding. **The current next action is the canonical-docs rot sweep, then B2.3 (`wg-08`)** — see
+the CANONICAL LIVE STATE block at the top of this file.
+
+*The list as written then:*
 
 1. Review the Phase 1e G19 commit, push it, and verify its automatic deployment read-only.
 2. Push them through GitHub Desktop as a normal fast-forward. Re-verify `origin/main` immediately
@@ -3274,9 +3605,10 @@ used or required by the session design — PostgreSQL is the only store.
 
 ## What is explicitly NOT true
 
-- **Phases A and 1a–1d ARE live** (deployment `5785864553` at `a37959c`); the G19 copy fix is
-  **not** — it is a local commit only. **Authenticated Production behavior of any M14 change remains
-  untested.** The G20 activation ran with explicit authorization on
+- **At that snapshot: Phases A and 1a–1d were live** (deployment `5785864553` at `a37959c`) and the
+  G19 copy fix was **not** — it was a local commit only. It has since been pushed and deployed.
+  **Authenticated Production behavior of the M14 changes was untested then and, as of this sweep,
+  still has not been exercised with a live authenticated session.** The G20 activation ran with explicit authorization on
   2026-08-06 and found all three rows already present — **all four DECA drill areas now verifiably
   record mastery.**
 - **No authenticated production behaviour was verified** — not for the session protocol, and not for

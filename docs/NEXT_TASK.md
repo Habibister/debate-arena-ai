@@ -1,60 +1,43 @@
 # NEXT_TASK
 
-Exactly one active milestone. When done, rewrite this file with the next one.
+**This file is a subordinate task pointer, not an authority.** It does not decide what is blocked,
+what is complete, or what may be run. `docs/CURRENT_STATE.md` and `docs/HANDOFF.md` decide those, and
+they win over this file whenever they disagree with it.
 
-## Milestone: Rubric Engine stage 2 — source DECA's current per-category point split
+## How to use this file
 
-**Status: BLOCKED on sourcing.** The weighted-scoring engine is already built, smoke-tested, and live for
-HOSA MT. It stays dormant for DECA until a real, current per-category point split is sourced. Do **not**
-fabricate point values to "finish" it — a blocked milestone that stays honest is the correct state.
+1. Read `docs/CURRENT_STATE.md` and `docs/HANDOFF.md` first.
+2. If either lists an unmet blocker, a mandatory gate, or a STOP condition, **obey it before anything
+   written here.** Nothing in this file can authorize work that either of those files blocks.
+3. Only when the canonical blockers are clear does the milestone below become actionable.
+4. If a later revision of either canonical file names a different next milestone, **that file wins**
+   and this pointer is stale by definition.
 
-### Objective
+## Next education milestone, once canonical blockers are clear: B2.3 / `wg-08`
 
-Find an authoritative **current (2025-26 or later)** DECA Individual Series role-play per-category point
-split (per-performance-indicator points + 21st Century Skills + any overall component = 100). If found and
-verifiable, seed it into the registry (sourced) so `judgeDecaRoleplay` computes a genuine weighted overall.
+Teach the competency `wg-08` requires — the **early-stated weighing-standard mechanism**: what a
+weighing standard is, and why stating one early shapes every later comparison. The weighing *lenses*
+are already taught; this mechanism is not. `wg-08` is HELD and stays HELD until its own reactivation
+gate passes.
 
-### Why it matters
+Same standard as B2.1 and B2.2: teach first, verify reachability from the learner-visible site,
+verify closed-corpus preparedness, then run the per-item gate. **Never simply unhold an id.**
 
-The engine (`computeWeightedOverall`, `getWeightedScoringRubric`, `judgeDecaRoleplay` weighted branch)
-exists but only activates on fully-sourced multi-category point data. DECA is the closest candidate;
-sourcing it turns registry-driven numeric scoring from "built" into "live for a real event."
+## Backlog, not active
 
-### Allowed files / subsystem
+- **B2.4 / `pi-26`** — blocked on sourcing: a primary official DECA source locator for the
+  instructional-area-vs-individual-PI weighting rule must be pinned and verified first. Internal
+  synthesis is not sufficient.
+- **Rubric Engine stage 2** — blocked on sourcing an authoritative current DECA Individual Series
+  per-category point split. The weighted-scoring engine exists and is live for HOSA MT; it stays
+  dormant for DECA until real point data is sourced. Do **not** fabricate point values to "finish"
+  it — a blocked item that stays honest is the correct state.
+- **P0.2**, the DECA empty-pool twin, and the Signposting / Constructive Speeches connectivity gaps.
 
-Registry seed data (`scripts/seed-competition-specs.ts`) and, if needed, the DECA judge wiring in
-`lib/ai.ts` / `lib/competition-specs.ts`. New source references in the spec's `officialReferences`.
+## Validation and safety
 
-### Do NOT touch
+This file prescribes no test commands. Which suites are safe to run, and which are prohibited, is
+stated in `docs/CURRENT_STATE.md` and `docs/HANDOFF.md` — read them there rather than copying a
+command list into this file, which is how a stale command outlives the task that needed it.
 
-Other tracks' specs, non-DECA judges, UI beyond what surfaces the DECA breakdown, auth/rate-limit code,
-the DB schema.
-
-### Acceptance criteria
-
-- The per-category point split comes from an authoritative source whose **actual date** (not URL) is
-  confirmed current. Cite it in `officialReferences` and mark provenance sourced.
-- OR, if no valid current source is found: leave DECA placeholder, document the search + why it's still
-  blocked here, and stop. That is a valid, complete outcome.
-- If sourced: `getWeightedScoringRubric("DECA","ROLEPLAY")` returns the categories; a live DECA judge call
-  returns `scoringMode: "registry-weighted"`; changing a category score changes the overall by the
-  mathematically correct amount.
-
-### Required tests
-
-`npm run build`, `npm run rubric-scoring:smoke`, `npm run judge-shape:smoke`, `npm run security:smoke`.
-If seeded, verify live weighted math after an approved re-seed.
-
-### Risks
-
-Shipping stale/guessed point values as "official" (the primary failure mode — the 2014 form trap). Always
-verify source recency.
-
-### Stop conditions
-
-Stop and report if: no authoritative current source is found; the source conflicts with the seeded round
-structure; or seeding would require a DB write.
-
-### Approval-required actions
-
-`specs:seed` / any DB write, push, deploy. Show the diff and the source, and wait.
+Push, deploy, dependency installs, DB migrations and seeds remain owner-approved actions.

@@ -8,22 +8,31 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Repository and Production
 
-- **Branch** `main`. `origin/main`, the remote `refs/heads/main` and Production all sit at
-  **`32f92a4bcc68ab3f027a5fe6e617f2d837273791`** — the B2.2 docs truth-sync commit.
-- **This canonical-docs structural-quarantine commit is its child and is LOCAL / NOT PUSHED.**
-- **B2.2 feature source** `65c4e6f442d00296fe0a8f8e7902cfd627c02080` → Production deployment
-  **`6098166145`** (SUCCESS). **B2.2 docs source** `32f92a4bcc68ab3f027a5fe6e617f2d837273791` →
-  deployment **`6160459725`** (SUCCESS).
-- SHAs move. Re-derive with `git rev-parse HEAD`, `git rev-parse origin/main` and
-  `git ls-remote origin main` before acting on any SHA. **No SHA below the archive boundary describes
-  what Production runs.**
+- **Branch** `main`. **No SHA written in this file is current truth.** Re-derive with
+  `git rev-parse HEAD`, `git rev-parse origin/main` and `git ls-remote origin main` before acting on
+  any SHA. **No SHA below the archive boundary describes what Production runs.**
+- **Gate A is CLOSED.** The canonical-docs structural-quarantine commit is pushed and exact-source
+  verified in Production.
+- **Gate B is CLOSED.** The stale deployment-status comment in `lib/education/tracks/debate.ts` is
+  repaired, pushed and exact-source verified in Production.
+- **Deployment history — snapshot-scoped, each line pairing a commit with the deployment built from
+  it. None of these asserts which commit is the head today.** B2.2 feature source
+  `65c4e6f442d00296fe0a8f8e7902cfd627c02080` → deployment **`6098166145`** (SUCCESS). B2.2 docs
+  source `32f92a4bcc68ab3f027a5fe6e617f2d837273791` → deployment **`6160459725`** (SUCCESS).
+  Gate A docs source `5aa56fb21476c55f3769610d371ff1321df24936` → deployment **`6163533826`**
+  (SUCCESS). Gate B source `692b68a581758569278a7bba6e3d007ede03bf4d` → deployment
+  **`6163706185`** (SUCCESS).
+- **Repair baseline for the canonical-routing/temporal-truth commit:**
+  `692b68a581758569278a7bba6e3d007ede03bf4d`. That is a historical base reference, not a claim about
+  the present head.
 
 ## Education state
 
 - **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
   `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
   that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
-- **B2.3 — NOT STARTED and BLOCKED** (see *Current mandatory gates*). Target `wg-08`, which is
+- **B2.3 — NOT STARTED**, and blocked until the condition in *Current mandatory gates* is
+  satisfied. Target `wg-08`, which is
   PARTIALLY TAUGHT: the weighing lenses are taught, but the competency the item requires — the
   **early-stated weighing-standard mechanism** — is not.
 - **B2.4 — NOT STARTED.** Target `pi-26`. Its gate is UNSATISFIED: a primary official DECA source
@@ -114,22 +123,35 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current mandatory gates
 
-**B2.3 is BLOCKED until ALL THREE GATES A + B + C close:**
+**GATE A — CLOSED.** The canonical-docs structural-quarantine commit was accepted, pushed by the
+owner and exact-source verified in Production, health PASS. Do not re-push or re-audit it.
 
-- **GATE A** — this canonical-docs structural-quarantine commit accepted, pushed by the owner,
-  exact-source verified in Production, health PASS.
-- **GATE B** — the stale deployment-status comment on `DEBATE_TURN_MECHANICS_LESSON` in
-  `lib/education/tracks/debate.ts`, which still says the B2.2 release commit is "(local; not yet
-  deployed)" when it is deployed at `6098166145`, repaired in its own separate source-truth commit,
-  accepted, pushed and verified.
-- **GATE C** — **CANONICAL ROUTING TRUTH: REQUIRES AUDIT.** `CLAUDE.md` routes to
-  `docs/CONTEXT_INDEX.md`, which routes on to `docs/NEXT_TASK.md`, described there as "the one active
-  milestone". Those files are OUTSIDE this two-file quarantine, so the repository's own mandated
-  routing can deliver a current-mode authority this architecture does not cover. **Required audit, not
-  a confirmed defect** — nothing here claims those files are stale. A separate read-only audit must
-  establish the truth, and any repair must be accepted, pushed and verified.
+**GATE B — CLOSED.** The stale deployment-status comment on `DEBATE_TURN_MECHANICS_LESSON` in
+`lib/education/tracks/debate.ts` was repaired in its own source-truth commit, accepted, pushed and
+verified. The file no longer carries any deployment-status claim. Do not re-repair it.
 
-Only after A, B **and** C close may `wg-08` teaching begin.
+**GATE C — canonical routing / temporal truth.** A read-only audit of the
+`CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` chain found four real defects, which this
+repair addresses: `docs/NEXT_TASK.md` asserted a stale active milestone; no precedence rule existed
+between the canonical documents and the task pointer; `docs/HANDOFF.md` was demoted to optional
+reading while it carries the STOP conditions and the audit-safe suite membership; and closing Gates A
+and B left present-tense falsehoods about them in both canonical documents. The audit also found a
+second routing surface with the same defect. This repair edits four files there:
+`.claude/commands/context-refresh.md`, `.claude/commands/implement-one-task.md` and
+`.claude/agents/lead-engineer.md` gain the read order and the precedence rule;
+`.claude/commands/milestone-handoff.md` gains an archive invariant, because its whole-file-rewrite
+instruction could have destroyed the frozen archive. **The other seven files under
+`.claude/commands/` and `.claude/agents/` are unchanged by this repair.** `docs/CONTEXT_INDEX.md` carries the
+canonical statement of that hierarchy, and it governs every surface below level 2 whether or not it
+was edited here. **It is not the only place the rule appears:** `docs/NEXT_TASK.md` and the three
+`.claude` surfaces named above each state it in their own terms, and
+`.claude/commands/milestone-handoff.md` cross-references it. A change to the hierarchy has to be
+carried to all of them, not to `docs/CONTEXT_INDEX.md` alone.
+
+**The remaining condition, stated durably so it does not go stale:** the canonical-routing /
+temporal-truth repair must be accepted, pushed by the owner, and exact-source verified in Production
+before B2.3 begins. **Once that condition is satisfied, no further Gate-C documentation update is
+required and `wg-08` teaching may begin.** Until then B2.3 remains BLOCKED.
 
 ## Validation / suite truth
 
@@ -198,12 +220,14 @@ Only after A, B **and** C close may `wg-08` teaching begin.
 
 ## Current next action
 
-1. Owner pushes this docs commit; verify the Production deployment read-only at its exact source SHA.
-2. Repair the stale deployment-status comment in `lib/education/tracks/debate.ts` in its own commit;
-   accept, push, verify.
-3. Audit the `CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` routing chain read-only;
-   repair, accept, push and verify if the audit finds a competing current authority.
-4. Only then begin **B2.3 / `wg-08`**.
+1. Accept the canonical-routing / temporal-truth repair, have the owner push it, and verify the
+   Production deployment read-only at its exact source SHA. See *Current mandatory gates*.
+2. Once that condition passes, begin **B2.3 / `wg-08`** — teach, verify reachability, closed-corpus
+   preparedness, per-item gate. Never simply unhold an id. B2.3 has **not** started and `wg-08`
+   remains HELD.
+
+If a later authoritative revision of this file supersedes B2.3 as the next education milestone, this
+file wins over any task pointer that still names B2.3.
 
 ## Not claimed
 

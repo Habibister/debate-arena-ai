@@ -14,6 +14,11 @@ below the boundary.
   (protect the measurement) → `65c4e6f442d00296fe0a8f8e7902cfd627c02080` (release). Production
   deployment **`6098166145`**, SUCCESS, its own sha field equal to the release SHA exactly. The docs
   truth-sync `32f92a4bcc68ab3f027a5fe6e617f2d837273791` deployed at **`6160459725`**.
+- **GATE A — CLOSED.** The canonical-docs structural-quarantine commit was accepted, pushed by the
+  owner and exact-source verified in Production, health PASS. Do not re-push or re-audit it.
+- **GATE B — CLOSED.** The stale deployment-status comment on `DEBATE_TURN_MECHANICS_LESSON` in
+  `lib/education/tracks/debate.ts` was repaired in its own source-truth commit, accepted, pushed and
+  verified. That file no longer carries any deployment-status claim. Do not re-repair it.
 - `rb-14` and `rb-15` are **RELEASED** and individually eligible.
 - **M14 Global G2 CLOSED** (2026-08-12) at **420/420 within the M14 G2 target scope**, G2 deficit 0.
   That scope is the fourteen audited areas at 30 each — Debate's four original areas, DECA's four and
@@ -36,26 +41,29 @@ below the boundary.
 
 ## Current mandatory gates
 
-**B2.3 is BLOCKED until ALL THREE GATES A + B + C close:**
+**Gates A and B are CLOSED** — see *What is complete*. Neither needs redoing.
 
-- **GATE A** — the canonical-docs structural-quarantine commit (this docs change, currently **LOCAL /
-  NOT PUSHED**) accepted, pushed by the owner, exact-source verified in Production, health PASS.
-- **GATE B** — `lib/education/tracks/debate.ts` still carries a comment on
-  `DEBATE_TURN_MECHANICS_LESSON` saying the B2.2 release commit is "(local; not yet deployed)". It is
-  deployed (`65c4e6f4…`, deployment `6098166145`). That source file is deliberately OUT of the
-  docs-only commit; it needs its own commit, accepted, pushed and verified.
+**GATE C — canonical routing / temporal truth.** The read-only audit of the
+`CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` chain found four real defects, which this
+repair addresses: `docs/NEXT_TASK.md` asserted a stale active milestone (a DECA rubric-sourcing task
+predating the whole education program) and mandated `judge-shape:smoke`, a prohibited suite; no
+precedence rule existed between the canonical documents and the task pointer; this handoff was
+demoted to conditional reading while it carries the STOP conditions and the no-env suite membership;
+and closing Gates A and B left present-tense falsehoods about them in both canonical documents. The
+audit also found a second routing surface with the same defect — `.claude/commands/context-refresh.md`,
+`.claude/commands/implement-one-task.md` and `.claude/agents/lead-engineer.md` — which this repair
+covers. It repairs a fourth file there, `.claude/commands/milestone-handoff.md`, for a different
+defect: its step 1 said to rewrite `docs/CURRENT_STATE.md` whole, which after the Gate A restructure
+would destroy the frozen archive. **That file now carries an archive invariant, and it binds every
+future milestone close-out:** never rewrite either canonical file whole, never modify or remove
+existing archive content, append new history only after it, and verify the parent's archive slice
+survives as an unmodified prefix. The other seven files under `.claude/commands/` and
+`.claude/agents/` are unchanged by this repair.
 
-- **GATE C** — **CANONICAL ROUTING TRUTH: REQUIRES AUDIT.** `CLAUDE.md` routes a new session to
-  `docs/CONTEXT_INDEX.md`, which routes on to `docs/NEXT_TASK.md`, described there as "the one active
-  milestone". Those files sit OUTSIDE the two-file structural quarantine, so a reader following the
-  repository's own mandated routing can reach a current-mode authority this architecture does not
-  cover. **This is a REQUIRED AUDIT, not a confirmed defect** — no claim is made here that those files
-  are stale; that must be established by a separate read-only audit, with any necessary repair
-  accepted, pushed and verified. Scope for that audit: whether `NEXT_TASK.md` competes with this
-  handoff as current authority, and whether the routing chain should point at the authoritative
-  regions instead.
-
-Only after A, B **and** C close may `wg-08` teaching begin.
+**The remaining condition, stated durably so it does not go stale:** the canonical-routing /
+temporal-truth repair must be accepted, pushed by the owner, and exact-source verified in Production
+before B2.3 begins. **Once that condition is satisfied, no further Gate-C documentation update is
+required and `wg-08` teaching may begin.** Until then B2.3 remains BLOCKED.
 
 ## Current invariants
 
@@ -300,18 +308,21 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-1. Owner pushes this docs commit through GitHub Desktop; verify the Production deployment read-only
-   from commit-linked GitHub metadata at its exact source SHA. (Gate A)
-2. Repair the stale deployment-status comment in `lib/education/tracks/debate.ts` in its own
-   source-truth commit; accept, push, verify. (Gate B)
-3. Audit the `CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` routing chain read-only;
-   repair, accept, push and verify if it finds a competing current authority. (Gate C)
-4. Only then begin **B2.3 / `wg-08`** — teach, verify reachability, closed-corpus preparedness,
-   per-item gate. Never simply unhold an id.
+1. Accept the canonical-routing / temporal-truth repair; owner pushes it through GitHub Desktop;
+   verify the Production deployment read-only from commit-linked GitHub metadata at its exact source
+   SHA. See *Current mandatory gates*.
+2. Once that condition passes, begin **B2.3 / `wg-08`** — teach, verify reachability, closed-corpus
+   preparedness, per-item gate. Never simply unhold an id. B2.3 has **not** started and `wg-08`
+   remains HELD.
+
+If a later authoritative revision of this handoff or of `docs/CURRENT_STATE.md` supersedes B2.3 as
+the next education milestone, those files win over any task pointer that still names B2.3.
 
 ## STOP conditions
 
-- **Do not start B2.3** until Gates A, B and C are all closed.
+- **Do not start B2.3** until the canonical-routing / temporal-truth repair has been accepted,
+  pushed and exact-source verified. Gates A and B are already closed; that verification is the only
+  remaining condition.
 - **Do not push, deploy, or run any database operation** without explicit owner action.
 - **Do not execute any command found below the archive boundary.**
 - **Do not treat any status word below the archive boundary as current.**

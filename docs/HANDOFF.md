@@ -41,9 +41,9 @@ below the boundary.
 
 ## Current mandatory gates
 
-**Gates A and B are CLOSED** — see *What is complete*. Neither needs redoing.
+**Gates A, B and C are all CLOSED.** None of them needs redoing.
 
-**GATE C — canonical routing / temporal truth.** The read-only audit of the
+**GATE C — CLOSED.** Canonical routing / temporal truth. The read-only audit of the
 `CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` chain found four real defects, which this
 repair addresses: `docs/NEXT_TASK.md` asserted a stale active milestone (a DECA rubric-sourcing task
 predating the whole education program) and mandated `judge-shape:smoke`, a prohibited suite; no
@@ -60,15 +60,19 @@ existing archive content, append new history only after it, and verify the paren
 survives as an unmodified prefix. The other seven files under `.claude/commands/` and
 `.claude/agents/` are unchanged by this repair.
 
-**The remaining condition, stated durably so it does not go stale:** the canonical-routing /
-temporal-truth repair must be accepted, pushed by the owner, and exact-source verified in Production
-before B2.3 begins. **Once that condition is satisfied, no further Gate-C documentation update is
-required and `wg-08` teaching may begin.** Until then B2.3 remains BLOCKED.
+**That condition is now satisfied.** The canonical-routing / temporal-truth repair was accepted,
+pushed by the owner and exact-source verified in Production, so Gate C is closed and all three
+pre-B2.3 integrity gates are closed. B2.3 teaching has been implemented on that basis.
+
+**The remaining condition for RELEASE, stated durably so it does not go stale:** the B2.3 teaching
+must pass content acceptance before `wg-08` is reactivated. Reactivation is a separate commit and is
+not authorized by the teaching commit. Until that acceptance passes, `wg-08` stays HELD.
 
 ## Current invariants
 
-- **The held set is exactly 2:** Debate `wg-08` (PARTIALLY TAUGHT — the weighing lenses are taught,
-  but the early-stated weighing-standard mechanism the item requires is not; B2.3 target); DECA
+- **The held set is exactly 2:** Debate `wg-08` (TAUGHT — the B2.3 teaching now covers the
+  early-stated weighing-standard mechanism the item requires, as well as the weighing lenses; still
+  HELD pending content acceptance and a later separate reactivation commit); DECA
   `pi-26` (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR TRANSFER / SERVING — never collapse
   it with `wg-08`.
 - **ELIGIBILITY IS NOT SESSION CAPACITY.** Global individual eligibility: Debate **149/150** (rebuttal
@@ -308,21 +312,22 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-1. Accept the canonical-routing / temporal-truth repair; owner pushes it through GitHub Desktop;
-   verify the Production deployment read-only from commit-linked GitHub metadata at its exact source
-   SHA. See *Current mandatory gates*.
-2. Once that condition passes, begin **B2.3 / `wg-08`** — teach, verify reachability, closed-corpus
-   preparedness, per-item gate. Never simply unhold an id. B2.3 has **not** started and `wg-08`
-   remains HELD.
+1. Complete the final B2.3 teaching content acceptance — blind website-only fairness, adversarial
+   content review, and the mechanical item invariants. See *Current mandatory gates*.
+2. If that acceptance passes, implement `wg-08` reactivation in a SEPARATE later commit, deriving the
+   new eligibility and clean-history session capacity from source rather than assuming them.
+   **Never simply unhold an id.**
+3. Run release acceptance on that reactivation commit before the owner pushes the stack.
 
 If a later authoritative revision of this handoff or of `docs/CURRENT_STATE.md` supersedes B2.3 as
 the next education milestone, those files win over any task pointer that still names B2.3.
 
 ## STOP conditions
 
-- **Do not start B2.3** until the canonical-routing / temporal-truth repair has been accepted,
-  pushed and exact-source verified. Gates A and B are already closed; that verification is the only
-  remaining condition.
+- **Do not reactivate `wg-08`** until the B2.3 teaching passes content acceptance, and then only in
+  its own separate commit. Gates A, B and C are all closed; teaching acceptance is the only remaining
+  condition before reactivation.
+- **Do not push the B2.3 teaching commit** — owner-only push remains in force.
 - **Do not push, deploy, or run any database operation** without explicit owner action.
 - **Do not execute any command found below the archive boundary.**
 - **Do not treat any status word below the archive boundary as current.**

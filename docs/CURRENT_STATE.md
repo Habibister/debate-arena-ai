@@ -15,13 +15,16 @@ non-executable. Rewrite this region after each milestone; append history below t
   verified in Production.
 - **Gate B is CLOSED.** The stale deployment-status comment in `lib/education/tracks/debate.ts` is
   repaired, pushed and exact-source verified in Production.
+- **Gate C is CLOSED.** The canonical-routing / temporal-truth repair is pushed and exact-source
+  verified in Production. All pre-B2.3 integrity gates are closed.
 - **Deployment history — snapshot-scoped, each line pairing a commit with the deployment built from
   it. None of these asserts which commit is the head today.** B2.2 feature source
   `65c4e6f442d00296fe0a8f8e7902cfd627c02080` → deployment **`6098166145`** (SUCCESS). B2.2 docs
   source `32f92a4bcc68ab3f027a5fe6e617f2d837273791` → deployment **`6160459725`** (SUCCESS).
   Gate A docs source `5aa56fb21476c55f3769610d371ff1321df24936` → deployment **`6163533826`**
   (SUCCESS). Gate B source `692b68a581758569278a7bba6e3d007ede03bf4d` → deployment
-  **`6163706185`** (SUCCESS).
+  **`6163706185`** (SUCCESS). Gate C source `7cb01f86591a89e8b5655c256261fdb9b48d7e2c` → deployment
+  **`6164466592`** (SUCCESS).
 - **Repair baseline for the canonical-routing/temporal-truth commit:**
   `692b68a581758569278a7bba6e3d007ede03bf4d`. That is a historical base reference, not a claim about
   the present head.
@@ -31,10 +34,14 @@ non-executable. Rewrite this region after each milestone; append history below t
 - **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
   `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
   that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
-- **B2.3 — NOT STARTED**, and blocked until the condition in *Current mandatory gates* is
-  satisfied. Target `wg-08`, which is
-  PARTIALLY TAUGHT: the weighing lenses are taught, but the competency the item requires — the
-  **early-stated weighing-standard mechanism** — is not.
+- **B2.3 — TEACHING IMPLEMENTED, CONTENT ACCEPTANCE NOT YET COMPLETE, `wg-08` still HELD.** Target
+  `wg-08`. The `debate-weighing` catalog lesson now teaches the weighing standard, also called a
+  weighing framework: what it is, that it must be stated so either side's impact can be tested against
+  it, that it is argued for and contestable, and why putting it up early leaves speeches in which it
+  can be answered. Reviewed-content baseline updated for the single affected slug
+  **`debate-weighing`**; `LEARNING_CONTENT_BASELINE` pinned to
+  `B23-DEBATE-WEIGHING-STANDARD-TEACHING`. **Reactivation of `wg-08` is a separate later commit and is
+  not authorized by this one**, and it may not begin until the teaching passes content acceptance.
 - **B2.4 — NOT STARTED.** Target `pi-26`. Its gate is UNSATISFIED: a primary official DECA source
   locator for the instructional-area-vs-individual-PI weighting rule must be pinned and verified
   before B2.4 teaches the rule or reactivates the item. Internal synthesis is not sufficient.
@@ -130,7 +137,7 @@ owner and exact-source verified in Production, health PASS. Do not re-push or re
 `lib/education/tracks/debate.ts` was repaired in its own source-truth commit, accepted, pushed and
 verified. The file no longer carries any deployment-status claim. Do not re-repair it.
 
-**GATE C — canonical routing / temporal truth.** A read-only audit of the
+**GATE C — CLOSED.** Canonical routing / temporal truth. A read-only audit of the
 `CLAUDE.md` → `docs/CONTEXT_INDEX.md` → `docs/NEXT_TASK.md` chain found four real defects, which this
 repair addresses: `docs/NEXT_TASK.md` asserted a stale active milestone; no precedence rule existed
 between the canonical documents and the task pointer; `docs/HANDOFF.md` was demoted to optional
@@ -148,10 +155,13 @@ was edited here. **It is not the only place the rule appears:** `docs/NEXT_TASK.
 `.claude/commands/milestone-handoff.md` cross-references it. A change to the hierarchy has to be
 carried to all of them, not to `docs/CONTEXT_INDEX.md` alone.
 
-**The remaining condition, stated durably so it does not go stale:** the canonical-routing /
-temporal-truth repair must be accepted, pushed by the owner, and exact-source verified in Production
-before B2.3 begins. **Once that condition is satisfied, no further Gate-C documentation update is
-required and `wg-08` teaching may begin.** Until then B2.3 remains BLOCKED.
+**That condition is now satisfied.** The canonical-routing / temporal-truth repair was accepted,
+pushed by the owner and exact-source verified in Production, so Gate C is closed and all three
+pre-B2.3 integrity gates are closed. B2.3 teaching has begun on that basis.
+
+**The remaining condition for RELEASE, stated durably so it does not go stale:** the B2.3 teaching
+must pass content acceptance before `wg-08` is reactivated. Reactivation is a separate commit and is
+not authorized by the teaching commit. Until that acceptance passes, `wg-08` stays HELD.
 
 ## Validation / suite truth
 
@@ -220,11 +230,10 @@ required and `wg-08` teaching may begin.** Until then B2.3 remains BLOCKED.
 
 ## Current next action
 
-1. Accept the canonical-routing / temporal-truth repair, have the owner push it, and verify the
-   Production deployment read-only at its exact source SHA. See *Current mandatory gates*.
-2. Once that condition passes, begin **B2.3 / `wg-08`** — teach, verify reachability, closed-corpus
-   preparedness, per-item gate. Never simply unhold an id. B2.3 has **not** started and `wg-08`
-   remains HELD.
+1. Accept the B2.3 weighing teaching — blind website-only fairness, adversarial content review, and
+   the mechanical item invariants. See *Current mandatory gates*.
+2. Only after that acceptance passes, implement `wg-08` reactivation in its own separate commit, with
+   its own per-item gate. **Never simply unhold an id.** `wg-08` remains HELD until then.
 
 If a later authoritative revision of this file supersedes B2.3 as the next education milestone, this
 file wins over any task pointer that still names B2.3.

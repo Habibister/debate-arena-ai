@@ -1,6 +1,6 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-08-29._
+_Last updated: 2026-08-30._
 
 **This region is the only part of this file that describes current reality.** Everything below the
 `HISTORICAL ARCHIVE` boundary is preserved historical evidence and is explicitly non-normative and
@@ -24,7 +24,10 @@ non-executable. Rewrite this region after each milestone; append history below t
   Gate A docs source `5aa56fb21476c55f3769610d371ff1321df24936` → deployment **`6163533826`**
   (SUCCESS). Gate B source `692b68a581758569278a7bba6e3d007ede03bf4d` → deployment
   **`6163706185`** (SUCCESS). Gate C source `7cb01f86591a89e8b5655c256261fdb9b48d7e2c` → deployment
-  **`6164466592`** (SUCCESS).
+  **`6164466592`** (SUCCESS). B2.3 release source
+  `7d2aa83c7420cf654676964ab57ba5b46970b597` → deployment **`6170342196`** (SUCCESS). **The B2.3
+  teaching commit `44afae3d9629aafa6ed298df9c8a03dfe731976a` carried no deployment of its own** —
+  the build was created from the reactivation tip, which carries the teaching commit beneath it.
 - **Repair baseline for the canonical-routing/temporal-truth commit:**
   `692b68a581758569278a7bba6e3d007ede03bf4d`. That is a historical base reference, not a claim about
   the present head.
@@ -34,16 +37,17 @@ non-executable. Rewrite this region after each milestone; append history below t
 - **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
   `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
   that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
-- **B2.3 — TEACHING ACCEPTED, `wg-08` REACTIVATED IN THE TREE, RELEASE ACCEPTANCE PENDING.** Target
-  `wg-08`. The `debate-weighing` catalog lesson teaches the weighing standard, also called a
-  weighing framework: what it is, that it must be stated so either side's impact can be tested against
-  it, that it is argued for and contestable, and why putting it up early leaves speeches in which it
-  can be answered. Reviewed-content baseline updated for the single affected slug
-  **`debate-weighing`**; `LEARNING_CONTENT_BASELINE` pinned to
-  `B23-DEBATE-WEIGHING-STANDARD-TEACHING`. The teaching passed content acceptance, and a separate
-  later commit removed `wg-08` from `DEBATE_DRILL_HELD_IDS`, which is now empty. **B2.3 is not closed:**
-  the reactivation still needs release acceptance, an owner push and exact-source Production
-  verification — see *Current mandatory gates*.
+- **B2.3 — CLOSED.** Target `wg-08`. The `debate-weighing` catalog lesson teaches the weighing
+  standard, also called a weighing framework: what it is, that it must be stated so either side's
+  impact can be tested against it, that it is argued for and contestable, and why putting it up early
+  leaves speeches in which it can be answered. Reviewed-content baseline updated for the single
+  affected slug **`debate-weighing`**; `LEARNING_CONTENT_BASELINE` pinned to
+  `B23-DEBATE-WEIGHING-STANDARD-TEACHING`. Two commits, and the ORDER is the point: teaching
+  `44afae3d9629aafa6ed298df9c8a03dfe731976a` (teach the mechanism) →
+  `7d2aa83c7420cf654676964ab57ba5b46970b597` (release the item by removing `wg-08` from
+  `DEBATE_DRILL_HELD_IDS`, which is now empty). Both passed acceptance, the stack was owner-pushed,
+  and the release source was exact-source Production-verified at deployment **`6170342196`**, health
+  PASS. **`wg-08` is RELEASED IN PRODUCTION.**
 - **B2.4 — NOT STARTED.** Target `pi-26`. Its gate is UNSATISFIED: a primary official DECA source
   locator for the instructional-area-vs-individual-PI weighting rule must be pinned and verified
   before B2.4 teaches the rule or reactivates the item. Internal synthesis is not sufficient.
@@ -94,8 +98,8 @@ non-executable. Rewrite this region after each milestone; append history below t
   areas × 30). **Live corpus 450 items total.** All five Debate drill areas and all four DECA drill
   areas are **authorised**. The 270 measured Debate + DECA items are the frozen assessment set; the
   420 in the G2 line above is the M14 G2 target scope, a different denominator.
-- **Held set — exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 reactivated
-  `wg-08` after teaching the weighing-standard mechanism it measures. DECA `pi-26` remains HELD
+- **Held set — exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 released
+  `wg-08` in Production after teaching the weighing-standard mechanism it measures. DECA `pi-26` remains HELD
   (B2.4 target). `rb-14` and `rb-15` are **RELEASED** and individually eligible. `wg-29` is FAIR
   TRANSFER / SERVING — never collapse it with `wg-08`.
 - **Two serving numbers, never collapsed.** GLOBAL INDIVIDUAL ELIGIBILITY — Debate **150/150**
@@ -164,12 +168,33 @@ carried to all of them, not to `docs/CONTEXT_INDEX.md` alone.
 pushed by the owner and exact-source verified in Production, so Gate C is closed and all three
 pre-B2.3 integrity gates are closed. B2.3 teaching has begun on that basis.
 
-**Teaching acceptance passed, and `wg-08` is reactivated in the repository tree** by its own separate
-commit on top of the accepted teaching commit. **The remaining condition, stated durably so it does
-not go stale:** `wg-08` counts as Production-released only once the commit carrying this reactivation
-has passed release acceptance, been pushed by the owner, and had its exact source SHA verified in
-Production. That rule stays true before the push, after the push while verification is outstanding,
-and after verification satisfies it — so no later docs commit is needed to flip a deployment word.
+**B2.3 — CLOSED, and there is no remaining B2.3 gate.** The rule that governed the release is
+unchanged and still stated durably: `wg-08` counts as Production-released only once the commit
+carrying the reactivation has passed release acceptance, been pushed by the owner, and had its exact
+source SHA verified in Production. **All three are satisfied**, at source
+`7d2aa83c7420cf654676964ab57ba5b46970b597` and deployment **`6170342196`**, whose own source-SHA
+field equals that commit exactly. Stated as a verified event rather than as a current-deployment
+claim, so a later deployment cannot stale it.
+
+**What that verification did and did not establish.** Exact-source Production deployment: VERIFIED —
+the deployment record's own `sha` field, and its `ref` field, are both the full 40-character release
+SHA, so no branch-name inference is load-bearing. Public Production health: PASS — credential-free
+probes only, zero unexpected 5xx. Alias-to-deployment binding: **NOT INDEPENDENTLY VERIFIED** — the
+deployment-specific host is behind deployment protection and returns the same response for a real and
+a fabricated build id, and the release commit touches no file under `app/`, `components/`, `public/`
+or `styles/`, so content correlation could not discriminate either. No repository rule requires alias
+binding, and this disclosure is **not** a reason to reopen B2.3. Do not describe alias binding as
+verified.
+
+**Standing rule learned here — record milestone status as a verified event, never as a pending
+state.** Closing B2.3 required this extra docs commit because the previous revision made only the
+*deployment word* durable and left the *milestone status* self-staling. A milestone heading that
+named the release as still pending, a flat sentence denying closure, and a numbered next-action list
+of steps still to take all went false the moment the push and the verification landed. A status
+sentence that describes what is still outstanding is a dated claim and will rot. Write what was
+accepted, pushed and verified, at which SHA and which deployment. **Do not restate the superseded
+wording verbatim in a current region** — a quoted stale claim is indistinguishable from a live one to
+any sweep, which is why this paragraph describes the defect instead of reproducing it.
 
 ## Validation / suite truth
 
@@ -238,14 +263,19 @@ and after verification satisfies it — so no later docs commit is needed to fli
 
 ## Current next action
 
-1. Read-only accept the `wg-08` reactivation candidate — source delta, serving proof, derived counts
-   and capacity, canonical truth, and the strict-safe activation evidence.
-2. If accepted, the owner pushes the accepted teaching + reactivation stack.
-3. Verify the exact Production source SHA and credential-free health.
-4. Only then does B2.3 close.
+**No B2.3 action remains.** The next Debate education work is the two unresolved Debate connectivity
+gaps named under *Current open gaps*: **`debate-signposting`** and **`debate-constructive-speeches`**,
+which carry neither `skillSlug` nor `practiceDrill` and therefore cannot mint mastery. Treat them as
+the next education-perfection target, and read *Current open gaps* rather than this line as the
+authoritative backlog — `debate-round-orientation` is unmapped **BY DESIGN** and is not part of this
+work.
 
-If a later authoritative revision of this file supersedes B2.3 as the next education milestone, this
-file wins over any task pointer that still names B2.3.
+**B2.4 / `pi-26` remains gate-blocked and is not next**: a primary official DECA source locator for
+the instructional-area-vs-individual-PI weighting rule must be pinned and verified before B2.4
+teaches the rule or reactivates the item. Internal synthesis is not sufficient.
+
+If a later authoritative revision of this file names a different next education milestone, this file
+wins over any task pointer that disagrees with it.
 
 ## Not claimed
 

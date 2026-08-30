@@ -13,21 +13,20 @@ they win over this file whenever they disagree with it.
 4. If a later revision of either canonical file names a different next milestone, **that file wins**
    and this pointer is stale by definition.
 
-## Current education milestone: B2.3 / `wg-08` — awaiting release acceptance
+## Current education milestone: Debate connectivity — `debate-signposting` and `debate-constructive-speeches`
 
-The B2.3 teaching is **accepted**: the reachable `debate-weighing` lesson now teaches the
-early-stated weighing-standard mechanism `wg-08` measures, and `wg-08` is **reactivated in the
-repository tree** by a separate commit on top of it. Neither step is a deployment claim.
+**B2.3 / `wg-08` is CLOSED.** Its accepted stack was owner-pushed and exact-source Production-verified
+at `7d2aa83c7420cf654676964ab57ba5b46970b597`, deployment `6170342196`. No B2.3 acceptance, push or
+verification work remains, and this file must not route anyone back into it.
 
-What remains, per the canonical documents:
+The next Debate education target, per the canonical open-gaps lists, is the **two unresolved Debate
+connectivity gaps**: `debate-signposting` and `debate-constructive-speeches` carry neither
+`skillSlug` nor `practiceDrill`, so neither can mint mastery. `debate-round-orientation` carries
+neither **BY DESIGN** and is not a connectivity gap — never write that Signposting and Constructive
+are the only two lessons with neither.
 
-1. Read-only acceptance of the reactivation candidate.
-2. If accepted, the owner pushes the accepted two-commit stack.
-3. Verification of the exact deployed reactivation SHA and credential-free health.
-4. Only then does B2.3 close.
-
-Production release of `wg-08` is established by that verification, not by this file and not by the
-state of the local tree.
+Scope, ordering and blockers for that work come from `docs/CURRENT_STATE.md` and `docs/HANDOFF.md`,
+not from this pointer. Read their open-gaps sections before starting.
 
 ## Backlog, not active
 
@@ -38,7 +37,8 @@ state of the local tree.
   per-category point split. The weighted-scoring engine exists and is live for HOSA MT; it stays
   dormant for DECA until real point data is sourced. Do **not** fabricate point values to "finish"
   it — a blocked item that stays honest is the correct state.
-- **P0.2**, the DECA empty-pool twin, and the Signposting / Constructive Speeches connectivity gaps.
+- **P0.2** and the DECA empty-pool twin. The Signposting / Constructive Speeches connectivity gaps
+  are **no longer backlog** — they are the active milestone named above.
 
 ## Validation and safety
 

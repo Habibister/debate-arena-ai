@@ -1,6 +1,6 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-08-29._
+_Last updated: 2026-08-30._
 
 **This region is the only operational part of this file.** Everything below the
 `PREVIOUS HANDOFF ARCHIVE` boundary is preserved historical handoff material: non-normative,
@@ -14,6 +14,12 @@ below the boundary.
   (protect the measurement) → `65c4e6f442d00296fe0a8f8e7902cfd627c02080` (release). Production
   deployment **`6098166145`**, SUCCESS, its own sha field equal to the release SHA exactly. The docs
   truth-sync `32f92a4bcc68ab3f027a5fe6e617f2d837273791` deployed at **`6160459725`**.
+- **B2.3 — CLOSED and Production-verified.** Two commits, and the ORDER is the point:
+  `44afae3d9629aafa6ed298df9c8a03dfe731976a` (teach the weighing standard) →
+  `7d2aa83c7420cf654676964ab57ba5b46970b597` (release `wg-08`; the Debate held set is now empty).
+  Production deployment **`6170342196`**, SUCCESS, its own sha field equal to the release SHA exactly.
+  The teaching commit carried no deployment of its own — the build came from the reactivation tip
+  above it. `wg-08` is **RELEASED IN PRODUCTION**. Do not re-push, re-audit or re-test it.
 - **GATE A — CLOSED.** The canonical-docs structural-quarantine commit was accepted, pushed by the
   owner and exact-source verified in Production, health PASS. Do not re-push or re-audit it.
 - **GATE B — CLOSED.** The stale deployment-status comment on `DEBATE_TURN_MECHANICS_LESSON` in
@@ -64,18 +70,25 @@ survives as an unmodified prefix. The other seven files under `.claude/commands/
 pushed by the owner and exact-source verified in Production, so Gate C is closed and all three
 pre-B2.3 integrity gates are closed. B2.3 teaching has been implemented on that basis.
 
-**Teaching acceptance passed, and `wg-08` is reactivated in the repository tree** by its own separate
-commit on top of the accepted teaching commit. **The remaining condition, stated durably so it does
-not go stale:** `wg-08` counts as Production-released only once the commit carrying this reactivation
+**B2.3 — CLOSED, and there is no remaining B2.3 gate.** The governing rule is unchanged and still
+stated durably: `wg-08` counts as Production-released only once the commit carrying the reactivation
 has passed release acceptance, been pushed by the owner, and had its exact source SHA verified in
-Production. That rule stays true before the push, after the push while verification is outstanding,
-and after verification satisfies it — so no later docs commit is needed to flip a deployment word.
+Production. **All three are satisfied**, at source `7d2aa83c7420cf654676964ab57ba5b46970b597` and
+deployment **`6170342196`**, whose own source-SHA field equals that commit exactly. Recorded as a
+verified event, not as a current-deployment claim, so a later deployment cannot stale it.
+
+**Exact-source Production deployment: VERIFIED. Public Production health: PASS (credential-free
+probes, zero unexpected 5xx). Alias-to-deployment binding: NOT INDEPENDENTLY VERIFIED** — the
+deployment-specific host is behind deployment protection and answers identically for a real and a
+fabricated build id, and the release commit touches no file under `app/`, `components/`, `public/` or
+`styles/`, so content correlation could not discriminate. No repository rule requires alias binding;
+this disclosure is not a reason to reopen B2.3, and alias binding must never be described as verified.
 
 ## Current invariants
 
 - **The held set is exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 taught the
-  early-stated weighing-standard mechanism `wg-08` measures and then reactivated the item in its own
-  separate commit. DECA `pi-26` remains HELD (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR
+  early-stated weighing-standard mechanism `wg-08` measures, then released the item in its own
+  separate commit, now Production-verified. DECA `pi-26` remains HELD (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR
   TRANSFER / SERVING — never collapse it with `wg-08`.
 - **ELIGIBILITY IS NOT SESSION CAPACITY.** Global individual eligibility: Debate **150/150** (rebuttal
   **30/30**, weighing 30/30), DECA **119/120** (PI 29/30). Clean-history distinct session capacity:
@@ -316,22 +329,24 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-1. Read-only accept the `wg-08` reactivation candidate — source delta, serving proof, derived counts
-   and capacity, canonical truth, and the strict-safe activation evidence
-   (`npm run wg08-activation:smoke`).
-2. If accepted, the owner pushes the accepted teaching + reactivation stack.
-3. Verify the exact Production source SHA and credential-free health.
-4. Only then does B2.3 close.
+**No B2.3 action remains.** The next Debate education work is the two unresolved Debate connectivity
+gaps listed under *What remains open*: **`debate-signposting`** and **`debate-constructive-speeches`**,
+which carry neither `skillSlug` nor `practiceDrill` and so cannot mint mastery.
+`debate-round-orientation` carries neither **BY DESIGN** and is not part of that work.
 
-If a later authoritative revision of this handoff or of `docs/CURRENT_STATE.md` supersedes B2.3 as
-the next education milestone, those files win over any task pointer that still names B2.3.
+**B2.4 / `pi-26` is not next** — it stays gate-blocked until a primary official DECA source locator
+for the instructional-area-vs-individual-PI weighting rule is pinned and verified. Internal synthesis
+is not sufficient.
+
+If a later authoritative revision of this handoff or of `docs/CURRENT_STATE.md` names a different
+next education milestone, those files win over any task pointer that disagrees.
 
 ## STOP conditions
 
-- **Do not push the B2.3 stack** until the `wg-08` reactivation candidate passes release acceptance —
-  owner-only push remains in force.
-- **Do not count `wg-08` as Production-released** before the pushed commit's exact source SHA is
-  verified in Production. It is reactivated in the tree; that is not a deployment claim.
+- **Push, deploy and every database operation remain owner-only.** B2.3 is closed and its stack is
+  pushed and verified; that closure authorizes no future push.
+- **Do not reopen B2.3 over the alias-binding disclosure.** Exact-source Production deployment is
+  VERIFIED; alias-to-deployment binding is NOT, and no repository rule requires it.
 - **Do not run `debate-drills:smoke` or `debate-mastery:smoke` during an audit.** Both are
   transitively env-tainted. Their held-set and pool expectations were updated by the reactivation
   commit and were NOT executed; `npm run wg08-activation:smoke` is the strict-safe proof.

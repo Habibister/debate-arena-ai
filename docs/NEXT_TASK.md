@@ -13,15 +13,21 @@ they win over this file whenever they disagree with it.
 4. If a later revision of either canonical file names a different next milestone, **that file wins**
    and this pointer is stale by definition.
 
-## Next education milestone, once canonical blockers are clear: B2.3 / `wg-08`
+## Current education milestone: B2.3 / `wg-08` — awaiting release acceptance
 
-Teach the competency `wg-08` requires — the **early-stated weighing-standard mechanism**: what a
-weighing standard is, and why stating one early shapes every later comparison. The weighing *lenses*
-are already taught; this mechanism is not. `wg-08` is HELD and stays HELD until its own reactivation
-gate passes.
+The B2.3 teaching is **accepted**: the reachable `debate-weighing` lesson now teaches the
+early-stated weighing-standard mechanism `wg-08` measures, and `wg-08` is **reactivated in the
+repository tree** by a separate commit on top of it. Neither step is a deployment claim.
 
-Same standard as B2.1 and B2.2: teach first, verify reachability from the learner-visible site,
-verify closed-corpus preparedness, then run the per-item gate. **Never simply unhold an id.**
+What remains, per the canonical documents:
+
+1. Read-only acceptance of the reactivation candidate.
+2. If accepted, the owner pushes the accepted two-commit stack.
+3. Verification of the exact deployed reactivation SHA and credential-free health.
+4. Only then does B2.3 close.
+
+Production release of `wg-08` is established by that verification, not by this file and not by the
+state of the local tree.
 
 ## Backlog, not active
 

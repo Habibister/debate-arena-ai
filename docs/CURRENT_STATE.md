@@ -34,14 +34,16 @@ non-executable. Rewrite this region after each milestone; append history below t
 - **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
   `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
   that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
-- **B2.3 — TEACHING IMPLEMENTED, CONTENT ACCEPTANCE NOT YET COMPLETE, `wg-08` still HELD.** Target
-  `wg-08`. The `debate-weighing` catalog lesson now teaches the weighing standard, also called a
+- **B2.3 — TEACHING ACCEPTED, `wg-08` REACTIVATED IN THE TREE, RELEASE ACCEPTANCE PENDING.** Target
+  `wg-08`. The `debate-weighing` catalog lesson teaches the weighing standard, also called a
   weighing framework: what it is, that it must be stated so either side's impact can be tested against
   it, that it is argued for and contestable, and why putting it up early leaves speeches in which it
   can be answered. Reviewed-content baseline updated for the single affected slug
   **`debate-weighing`**; `LEARNING_CONTENT_BASELINE` pinned to
-  `B23-DEBATE-WEIGHING-STANDARD-TEACHING`. **Reactivation of `wg-08` is a separate later commit and is
-  not authorized by this one**, and it may not begin until the teaching passes content acceptance.
+  `B23-DEBATE-WEIGHING-STANDARD-TEACHING`. The teaching passed content acceptance, and a separate
+  later commit removed `wg-08` from `DEBATE_DRILL_HELD_IDS`, which is now empty. **B2.3 is not closed:**
+  the reactivation still needs release acceptance, an owner push and exact-source Production
+  verification — see *Current mandatory gates*.
 - **B2.4 — NOT STARTED.** Target `pi-26`. Its gate is UNSATISFIED: a primary official DECA source
   locator for the instructional-area-vs-individual-PI weighting rule must be pinned and verified
   before B2.4 teaches the rule or reactivates the item. Internal synthesis is not sufficient.
@@ -92,13 +94,16 @@ non-executable. Rewrite this region after each milestone; append history below t
   areas × 30). **Live corpus 450 items total.** All five Debate drill areas and all four DECA drill
   areas are **authorised**. The 270 measured Debate + DECA items are the frozen assessment set; the
   420 in the G2 line above is the M14 G2 target scope, a different denominator.
-- **Held set — exactly 2:** Debate `wg-08` (B2.3 target) and DECA `pi-26` (B2.4 target). `rb-14` and
-  `rb-15` are **RELEASED** and individually eligible. `wg-29` is FAIR TRANSFER / SERVING — never
-  collapse it with `wg-08`.
-- **Two serving numbers, never collapsed.** GLOBAL INDIVIDUAL ELIGIBILITY — Debate **149/150**
-  (rebuttal **30/30**, weighing **29/30**), DECA **119/120** (PI **29/30**). CLEAN-HISTORY DISTINCT
-  SESSION CAPACITY — Debate **148**, rebuttal **29**, because the measurement-dependent
-  `rb-14`/`rb-15` pair never co-serves. If a test expects 29 and you are about to "fix" it to 30:
+- **Held set — exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 reactivated
+  `wg-08` after teaching the weighing-standard mechanism it measures. DECA `pi-26` remains HELD
+  (B2.4 target). `rb-14` and `rb-15` are **RELEASED** and individually eligible. `wg-29` is FAIR
+  TRANSFER / SERVING — never collapse it with `wg-08`.
+- **Two serving numbers, never collapsed.** GLOBAL INDIVIDUAL ELIGIBILITY — Debate **150/150**
+  (rebuttal **30/30**, weighing **30/30**), DECA **119/120** (PI **29/30**). CLEAN-HISTORY DISTINCT
+  SESSION CAPACITY — Debate **149**, rebuttal **29**, because the measurement-dependent
+  `rb-14`/`rb-15` pair never co-serves. **Releasing `wg-08` moved Debate capacity from 148 to 149,
+  never to 150** — the pair control still displaces exactly one item from every session, and rebuttal
+  capacity is unchanged. If a test expects 29 for rebuttal and you are about to "fix" it to 30:
   don't. Raising session capacity by co-serving the pair destroys the contamination control.
 - **The pair measurement control is ACTIVE in Production and must stay executable.** Four parts:
   (1) same-session mutual exclusion applied POOL-LEVEL inside `buildDrillSessionFrom` before the
@@ -159,9 +164,12 @@ carried to all of them, not to `docs/CONTEXT_INDEX.md` alone.
 pushed by the owner and exact-source verified in Production, so Gate C is closed and all three
 pre-B2.3 integrity gates are closed. B2.3 teaching has begun on that basis.
 
-**The remaining condition for RELEASE, stated durably so it does not go stale:** the B2.3 teaching
-must pass content acceptance before `wg-08` is reactivated. Reactivation is a separate commit and is
-not authorized by the teaching commit. Until that acceptance passes, `wg-08` stays HELD.
+**Teaching acceptance passed, and `wg-08` is reactivated in the repository tree** by its own separate
+commit on top of the accepted teaching commit. **The remaining condition, stated durably so it does
+not go stale:** `wg-08` counts as Production-released only once the commit carrying this reactivation
+has passed release acceptance, been pushed by the owner, and had its exact source SHA verified in
+Production. That rule stays true before the push, after the push while verification is outstanding,
+and after verification satisfies it — so no later docs commit is needed to flip a deployment word.
 
 ## Validation / suite truth
 
@@ -230,10 +238,11 @@ not authorized by the teaching commit. Until that acceptance passes, `wg-08` sta
 
 ## Current next action
 
-1. Accept the B2.3 weighing teaching — blind website-only fairness, adversarial content review, and
-   the mechanical item invariants. See *Current mandatory gates*.
-2. Only after that acceptance passes, implement `wg-08` reactivation in its own separate commit, with
-   its own per-item gate. **Never simply unhold an id.** `wg-08` remains HELD until then.
+1. Read-only accept the `wg-08` reactivation candidate — source delta, serving proof, derived counts
+   and capacity, canonical truth, and the strict-safe activation evidence.
+2. If accepted, the owner pushes the accepted teaching + reactivation stack.
+3. Verify the exact Production source SHA and credential-free health.
+4. Only then does B2.3 close.
 
 If a later authoritative revision of this file supersedes B2.3 as the next education milestone, this
 file wins over any task pointer that still names B2.3.

@@ -64,20 +64,24 @@ survives as an unmodified prefix. The other seven files under `.claude/commands/
 pushed by the owner and exact-source verified in Production, so Gate C is closed and all three
 pre-B2.3 integrity gates are closed. B2.3 teaching has been implemented on that basis.
 
-**The remaining condition for RELEASE, stated durably so it does not go stale:** the B2.3 teaching
-must pass content acceptance before `wg-08` is reactivated. Reactivation is a separate commit and is
-not authorized by the teaching commit. Until that acceptance passes, `wg-08` stays HELD.
+**Teaching acceptance passed, and `wg-08` is reactivated in the repository tree** by its own separate
+commit on top of the accepted teaching commit. **The remaining condition, stated durably so it does
+not go stale:** `wg-08` counts as Production-released only once the commit carrying this reactivation
+has passed release acceptance, been pushed by the owner, and had its exact source SHA verified in
+Production. That rule stays true before the push, after the push while verification is outstanding,
+and after verification satisfies it — so no later docs commit is needed to flip a deployment word.
 
 ## Current invariants
 
-- **The held set is exactly 2:** Debate `wg-08` (TAUGHT — the B2.3 teaching now covers the
-  early-stated weighing-standard mechanism the item requires, as well as the weighing lenses; still
-  HELD pending content acceptance and a later separate reactivation commit); DECA
-  `pi-26` (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR TRANSFER / SERVING — never collapse
-  it with `wg-08`.
-- **ELIGIBILITY IS NOT SESSION CAPACITY.** Global individual eligibility: Debate **149/150** (rebuttal
-  **30/30**, weighing 29/30), DECA **119/120** (PI 29/30). Clean-history distinct session capacity:
-  Debate **148**, rebuttal **29**. If a test expects 29 and you are about to "fix" it to 30: don't.
+- **The held set is exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 taught the
+  early-stated weighing-standard mechanism `wg-08` measures and then reactivated the item in its own
+  separate commit. DECA `pi-26` remains HELD (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR
+  TRANSFER / SERVING — never collapse it with `wg-08`.
+- **ELIGIBILITY IS NOT SESSION CAPACITY.** Global individual eligibility: Debate **150/150** (rebuttal
+  **30/30**, weighing 30/30), DECA **119/120** (PI 29/30). Clean-history distinct session capacity:
+  Debate **149**, rebuttal **29**. **Releasing `wg-08` moved Debate capacity from 148 to 149, never to
+  150** — the `rb-14`/`rb-15` pair still displaces one item from every session. If a test expects 29
+  for rebuttal and you are about to "fix" it to 30: don't.
 - **The pair measurement control is ACTIVE in Production and must stay executable.** Four parts:
   (1) same-session mutual exclusion applied POOL-LEVEL inside `buildDrillSessionFrom` before the
   shuffle — never result-level, never conditional on `areas`, never undone by requested-count
@@ -312,22 +316,25 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-1. Complete the final B2.3 teaching content acceptance — blind website-only fairness, adversarial
-   content review, and the mechanical item invariants. See *Current mandatory gates*.
-2. If that acceptance passes, implement `wg-08` reactivation in a SEPARATE later commit, deriving the
-   new eligibility and clean-history session capacity from source rather than assuming them.
-   **Never simply unhold an id.**
-3. Run release acceptance on that reactivation commit before the owner pushes the stack.
+1. Read-only accept the `wg-08` reactivation candidate — source delta, serving proof, derived counts
+   and capacity, canonical truth, and the strict-safe activation evidence
+   (`npm run wg08-activation:smoke`).
+2. If accepted, the owner pushes the accepted teaching + reactivation stack.
+3. Verify the exact Production source SHA and credential-free health.
+4. Only then does B2.3 close.
 
 If a later authoritative revision of this handoff or of `docs/CURRENT_STATE.md` supersedes B2.3 as
 the next education milestone, those files win over any task pointer that still names B2.3.
 
 ## STOP conditions
 
-- **Do not reactivate `wg-08`** until the B2.3 teaching passes content acceptance, and then only in
-  its own separate commit. Gates A, B and C are all closed; teaching acceptance is the only remaining
-  condition before reactivation.
-- **Do not push the B2.3 teaching commit** — owner-only push remains in force.
+- **Do not push the B2.3 stack** until the `wg-08` reactivation candidate passes release acceptance —
+  owner-only push remains in force.
+- **Do not count `wg-08` as Production-released** before the pushed commit's exact source SHA is
+  verified in Production. It is reactivated in the tree; that is not a deployment claim.
+- **Do not run `debate-drills:smoke` or `debate-mastery:smoke` during an audit.** Both are
+  transitively env-tainted. Their held-set and pool expectations were updated by the reactivation
+  commit and were NOT executed; `npm run wg08-activation:smoke` is the strict-safe proof.
 - **Do not push, deploy, or run any database operation** without explicit owner action.
 - **Do not execute any command found below the archive boundary.**
 - **Do not treat any status word below the archive boundary as current.**

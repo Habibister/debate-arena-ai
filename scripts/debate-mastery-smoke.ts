@@ -916,10 +916,10 @@ async function main() {
   control("a 20-question focused weighing session now serves 20 DISTINCT items — no padding",
     wgFocused20.length === 20 && new Set(wgFocused20.map((q) => q.id)).size === 20);
   const wgOverdrawn = buildDrillSession(OVERDRAW, ["weighing"]);
-  // B1 EVOLUTION (wg-08 hold, final acceptance gate): the weighing SERVED pool is 29 — wg-08 is
-  // held until B2 teaches the framework/standard concept; the bank keeps 30.
-  control("and weighing still pads above its pool: 40 served over exactly 29 distinct (served pool excludes held wg-08)",
-    wgOverdrawn.length === OVERDRAW && new Set(wgOverdrawn.map((q) => q.id)).size === 29);
+  // B2.3 RELEASE: wg-08 was released after the debate-weighing lesson taught the weighing-standard
+  // mechanism it measures, so the weighing SERVED pool is the full 30 and equals the bank depth.
+  control("and weighing still pads above its pool: 40 served over exactly 30 distinct (nothing in weighing is held)",
+    wgOverdrawn.length === OVERDRAW && new Set(wgOverdrawn.map((q) => q.id)).size === 30);
 
   // ---- Repeat-branch non-vacuity, RE-BASED at Slice 4 -------------------------------------------
   // This control used to name a still-9-item area and prove 20/9 and 40/9. NO Debate area holds 9
@@ -928,18 +928,23 @@ async function main() {
   // ENTIRE shuffled pool before appending any repeat, so the distinct count is deterministic rather
   // than probabilistic. This is now the ONLY proof the repeat branch survives. Do NOT delete it, and
   // do NOT describe weighing as shallow or still-9-item — it is 30 deep.
-  // B1 EVOLUTION: bank depth stays 30 (DEBATE_AREA_DEPTH is the bank), but the SERVED weighing
-  // pool is 29 because wg-08 is held; the repeat-branch arithmetic runs against the served pool.
+  // B2.3 RELEASE: the served weighing pool is the full 30 now that wg-08 is released, so served
+  // depth and bank depth coincide again; the repeat-branch arithmetic runs against the served pool.
   const WG_DEPTH = DEBATE_AREA_DEPTH.weighing;
-  const WG_SERVED = 29;
-  control("the re-base runs against a real 30-item bank area and a request that genuinely exceeds the 29-item served pool",
+  const WG_SERVED = 30;
+  control("the re-base runs against a real 30-item bank area and a request that genuinely exceeds the 30-item served pool",
     WG_DEPTH === 30 && OVERDRAW > WG_SERVED);
-  control("40 served over exactly 29 distinct means exactly 11 repeated positions — duplicates necessarily exist",
-    OVERDRAW - new Set(wgOverdrawn.map((q) => q.id)).size === 11);
+  // Derived, never a magic number: the repeat count is whatever the OVERDRAW request exceeds the
+  // served pool by. WG_SERVED comes from the bank depth and the (now empty) hold set, and the left
+  // side is measured from the ACTUAL generated result, so the two sides are independent. Pinning a
+  // literal here is what went stale when wg-08 was held, and again when it was released.
+  const measuredRepeatedPositions = OVERDRAW - new Set(wgOverdrawn.map((q) => q.id)).size;
+  control(`40 served over exactly ${WG_SERVED} distinct means exactly ${OVERDRAW - WG_SERVED} repeated positions — duplicates necessarily exist`,
+    measuredRepeatedPositions === OVERDRAW - WG_SERVED);
   // Boundary partner: at EXACTLY served-pool size there is no padding, so the overdraw proof
   // distinguishes "the repeat branch ran" from "the builder always repeats".
   const wgExact = buildDrillSession(WG_SERVED, ["weighing"]);
-  control("and a request of exactly 29 serves 29 over 29 distinct — the padding branch activates ONLY above the served pool",
+  control(`and a request of exactly ${WG_SERVED} serves ${WG_SERVED} over ${WG_SERVED} distinct — the padding branch activates ONLY above the served pool`,
     wgExact.length === WG_SERVED && new Set(wgExact.map((q) => q.id)).size === WG_SERVED);
 
   console.log(

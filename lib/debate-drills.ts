@@ -465,10 +465,19 @@ function shuffle<T>(items: T[]): T[] {
 // pool. They are never co-served. Do not read "released" as "unconstrained" — see the
 // eligibility-vs-capacity note below. (Local release stack; not a statement about what is deployed.)
 //
-// STILL HELD:
-export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
-  "wg-08", // requires: weighing framework/standard concept and why an early standard shapes later comparison (B2.3)
-];
+// B2.3 RELEASE: wg-08 was REMOVED from this list after the debate-weighing lesson was extended to
+// teach the competency it measures — the weighing standard (also called a weighing framework): what
+// it is, that it must be stated so either side's impact can be tested against it, that it is argued
+// for and contestable, and why putting it up early leaves speeches in which it can be answered. The
+// teaching landed in its own commit and passed content acceptance, including a blind website-only
+// fairness review that solved the item from learner-visible teaching alone with no outside debate
+// knowledge. The item's own bytes are unchanged. Neither the teaching nor the item is human-reviewed;
+// external human content review was owner-waived, and a waiver is not a review.
+//
+// NOTHING IS HELD IN THE DEBATE BANK. An empty list is the correct current state, not an oversight:
+// every one of the 150 Debate items is individually eligible. Session capacity is still lower — see
+// the eligibility-vs-capacity note below.
+export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [];
 
 // ELIGIBILITY IS NOT SESSION CAPACITY — read this before "fixing" any 29 back to a 30.
 //
@@ -479,8 +488,10 @@ export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
 //   item, including both rb-14 and rb-15, is a live evidence-eligible unit.
 //
 //   MAXIMUM DISTINCT IN ONE VALID SESSION — 29. rb-14 and rb-15 may never co-serve, so exactly one
-//   of them appears in any single fresh session. The same arithmetic gives 148, not 149, as the
-//   maximum distinct Debate ids in one clean-history full-bank session (150 - wg-08 - one sibling).
+//   of them appears in any single fresh session. The same arithmetic gives 149, not 150, as the
+//   maximum distinct Debate ids in one clean-history full-bank session (150 - one sibling). The gap
+//   is the pair control alone now that nothing is held; releasing wg-08 moved this from 148 to 149,
+//   never to 150.
 //
 // A learner's own fresh-session pool can be smaller still: retained-exposure exclusion removes a
 // sibling the learner has already been ISSUED, and removes both once both have been seen. That is

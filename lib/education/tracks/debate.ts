@@ -171,7 +171,7 @@ export const DEBATE_ANSWER_TYPES_LESSON: EducationRegistryEntry = {
  *  Registered via the same catalog-by-reference mechanism and kept OUT of MIGRATED_SLUGS (authored
  *  in B2.2, not migrated). Teaching shipped first: rb-14 and rb-15 stayed HELD until each
  *  INDEPENDENTLY passed its closed-corpus reactivation gate, and both then passed and were
- *  reactivated in the strictly-later release commit of this stack (local; not yet deployed).
+ *  reactivated in the strictly-later release commit of this stack.
  *  Release did NOT lift the measurement constraint — the two items' keys disclose each other's
  *  logic, so they are never both valid in one session: same-session mutual exclusion admits at most
  *  one, and retained-exposure sibling exclusion can temporarily withhold one or both from an

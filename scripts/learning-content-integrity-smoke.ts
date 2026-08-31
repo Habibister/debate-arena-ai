@@ -52,7 +52,7 @@ import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "B23-DEBATE-WEIGHING-STANDARD-TEACHING";
+const LEARNING_CONTENT_BASELINE = "DEBATE-SIGNPOSTING-CONSTRUCTIVE-TEACHING-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 

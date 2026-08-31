@@ -435,89 +435,169 @@
       "title": "Build a constructive speech",
       "slug": "debate-constructive-speeches-lesson",
       "summary": "Learn what belongs in the first major speech.",
-      "estimatedMinutes": 7,
+      "estimatedMinutes": 11,
       "content": {
-        "objective": "Write a constructive speech with definitions, contentions, and impacts.",
-        "explanation": "A constructive speech builds the foundation of the round. It should define the topic, present major contentions, and explain impacts.",
-        "whyMatters": "Later speeches depend on this foundation. If the constructive is vague, rebuttals become harder and the judge has less to evaluate.",
+        "objective": "Compose a whole constructive speech: set the terms, order the contentions, and build your own side's case rather than answering theirs.",
+        "explanation": "A constructive is a speech, not a pile of arguments, and composing one is a different skill from writing a single good argument. Its job is to put your side's case on the table in a form the rest of the round can be run against. Three things follow from that. First, order is a choice with consequences: a contention that other contentions depend on has to come before them, so if your second contention only matters once the judge accepts a definition or a mechanism established in the first, that dependency sets the sequence. Second, a constructive establishes rather than responds. The move that makes a rebuttal good — taking their claim and answering it — is out of place here, because in the first constructive there is often nothing yet to answer, and a speech that spends its time pre-empting arguments nobody has made gives the judge your opponent's case instead of yours. Third, the internal parts do their work in a place. A claim with a warrant and an impact is one argument; a constructive is several of those arranged so the judge can hold them at once, which is why each one needs a label and a boundary — where it starts, where it ends, and how it connects to the case as a whole. Evidence follows the same rule: citing a source is not using it. A study named and left there tells the judge you have support without telling them what it supports; saying what it found and why that makes your warrant more believable is what turns it into a reason. Finish by saying what your case establishes, not by claiming you have already beaten a case you have not heard — the comparison belongs in later speeches, and asserting it early does not make it true.",
+        "whyMatters": "The constructive sets what the rest of the round can be about. Arguments you never establish are hard to revive later, and a case the judge could not follow the first time does not become clearer when it is referenced again at speed in a rebuttal. It also matters for fairness: the other side can only engage with a case they can identify. A constructive that arrives as an undifferentiated block gives them nothing specific to answer, which sounds like an advantage and is not — the judge sees arguments that were never really tested, and any of them can be attacked later without your having pinned it down.",
         "steps": [
-          "Define key terms.",
-          "Present two or three contentions.",
-          "Explain the warrant and impact for each contention."
+          "Set out what your case will contain and in what order before you argue any of it.",
+          "Order the contentions so that anything the later ones depend on comes first.",
+          "Give each contention a boundary — label it, develop it, and close it before starting the next.",
+          "Use evidence by saying what it found and why that supports the warrant, not by naming it.",
+          "Close on what your case establishes, without claiming a comparison the round has not had yet."
         ],
         "workedExample": {
-          "prompt": "Opening government speech on AI literacy.",
-          "weakAnswer": "AI literacy is good and students need it.",
-          "strongAnswer": "We define AI literacy as practical training in responsible tool use. Contention one: it improves academic integrity because students learn limits and citation habits. Contention two: it improves career readiness because students practice safe workplace use.",
-          "whyItWorks": "The strong answer defines terms and creates organized contentions."
+          "prompt": "A first constructive on a school AI-literacy requirement. Both versions contain the same two contentions and the same supporting material.",
+          "weakAnswer": "The other side is going to say this costs class time, but schools already waste time elsewhere, and they will probably argue teachers are not trained, though districts run professional development every year anyway. Integrity matters, and there is a study on citation habits. Careers matter too.",
+          "strongAnswer": "Two contentions: first that the requirement improves academic integrity, second that it improves career readiness. On integrity: students who are taught what these tools can and cannot do cite them instead of concealing them, and a district that ran the training saw fewer unattributed submissions the following year — which is what you would expect if concealment is driven by not knowing what counts as allowed. On career readiness: the same habits transfer, because entry-level work increasingly involves checking machine-generated output, and a student who has practised verifying a source is doing the thing the job asks for.",
+          "whyItWorks": "The weak version is not missing content — it is a rebuttal delivered in a constructive slot. It spends the speech answering arguments the other side has not made yet, so the judge hears the opposition's case first and your two contentions arrive as fragments: integrity gets a study with no finding attached, careers gets a sentence with no warrant. The strong version establishes the same two contentions instead of defending them prematurely, gives each a boundary, and uses the study by saying what it found and why that supports the warrant. Neither version compares itself to a case that has not been heard yet — that work belongs in later speeches."
         },
         "guidedQuestion": {
-          "prompt": "What belongs in a constructive speech?",
+          "prompt": "What makes the first constructive different from a rebuttal speech?",
           "choices": [
-            "Definitions and contentions",
-            "Only new rebuttal",
-            "Only jokes",
-            "The final ballot"
+            "It is the speech in which evidence is first allowed to be introduced into the round",
+            "It is delivered more slowly so the judge has time to take notes",
+            "It is the only speech where a speaker may define terms at all",
+            "It establishes your own case rather than answering arguments already made"
           ],
-          "correctAnswer": "Definitions and contentions",
-          "hint": "Constructives build the case.",
-          "explanation": "A constructive speech sets terms and introduces major arguments.",
+          "correctAnswer": "It establishes your own case rather than answering arguments already made",
+          "hint": "Ask what work the speech is doing, not what is permitted in it.",
+          "explanation": "The constructive's job is to put your case on the table; responding is what later speeches are for. The other options describe format or permissions rather than the speech's function, and none of them is what separates constructing from responding.",
           "skillTag": "Constructive"
         },
         "practiceQuestions": [
           {
-            "prompt": "What is a contention?",
+            "prompt": "Your second contention only makes sense if the judge has accepted the mechanism you explain in your first. What follows for the order of the speech?",
             "choices": [
-              "A major line of argument",
-              "A speaker rank",
-              "A timer",
-              "A room rule"
+              "Order does not matter as long as both contentions are eventually explained",
+              "Put the second contention first, so the strongest material is heard earliest",
+              "Keep the dependent contention after the one it relies on",
+              "Merge them into a single contention so the dependency never comes up"
             ],
-            "correctAnswer": "A major line of argument",
-            "hint": "Contentions are case pillars.",
-            "explanation": "A contention is a main argument supporting the case.",
-            "skillTag": "Contention"
+            "correctAnswer": "Keep the dependent contention after the one it relies on",
+            "hint": "One contention needs something the other supplies.",
+            "explanation": "If a contention depends on a mechanism established elsewhere, it has to come after that mechanism or it arrives unsupported. Reordering for impact breaks the dependency, and merging two distinct arguments hides one of them rather than solving the sequencing.",
+            "skillTag": "Speech organization"
           },
           {
-            "prompt": "Why define terms?",
+            "prompt": "A speaker's constructive spends most of its time answering arguments the other side has not made yet. What is the main cost?",
             "choices": [
-              "To clarify the debate",
-              "To avoid all clash",
-              "To hide your case",
-              "To replace evidence"
+              "The speech will run over time, because pre-empting an argument always takes longer",
+              "The judge is not permitted to consider pre-emptive arguments in a constructive",
+              "The arguments become unusable later because they were raised too early",
+              "The speech introduces the opponent's case while leaving its own underdeveloped"
             ],
-            "correctAnswer": "To clarify the debate",
-            "hint": "Definitions set boundaries.",
-            "explanation": "Clear definitions prevent confusion and focus the round.",
-            "skillTag": "Definitions"
+            "correctAnswer": "The speech introduces the opponent's case while leaving its own underdeveloped",
+            "hint": "Ask what the judge ends up with at the end of the speech.",
+            "explanation": "Pre-empting spends your speech on their case and leaves yours thin. The cost is what the judge has at the end, not a timing problem or a rule against it — nothing forbids pre-empting, it just trades your own development for theirs.",
+            "skillTag": "Constructive"
           },
           {
-            "prompt": "How many contentions are usually easier for beginners?",
+            "prompt": "Which use of a source actually supports the contention it sits in?",
             "choices": [
-              "Two or three",
-              "Ten",
-              "Zero",
-              "One hundred"
+              "A 2024 district study is directly relevant to what this contention argues",
+              "There is strong published evidence supporting this contention from several sources",
+              "A district that ran the training saw fewer unattributed submissions the next year",
+              "This contention is supported by a study, which the other side has not disputed"
             ],
-            "correctAnswer": "Two or three",
-            "hint": "Enough depth, not overload.",
-            "explanation": "Two or three contentions are manageable and distinct.",
+            "correctAnswer": "A district that ran the training saw fewer unattributed submissions the next year",
+            "hint": "One of these tells the judge what the source found.",
+            "explanation": "Only this states a finding the warrant can rest on. The others name a study, assert that evidence exists, or point out that it went unanswered — all of which tell the judge support has been claimed without telling them what it is.",
+            "skillTag": "Evidence"
+          },
+          {
+            "prompt": "Which closing sentence is appropriate at the end of a first constructive?",
+            "choices": [
+              "Our case therefore outweighs anything at all that the other side is going to be able to say",
+              "We have shown that the requirement improves both integrity and career readiness",
+              "The other side has no response to either of the contentions we have presented",
+              "This case is now proven, so the rest of the round cannot change the outcome"
+            ],
+            "correctAnswer": "We have shown that the requirement improves both integrity and career readiness",
+            "hint": "The other side has not spoken yet.",
+            "explanation": "A constructive can honestly state what it established. The others compare against, dismiss, or declare victory over a case that has not been heard — claims the speech has no basis for and which later speeches exist to test.",
+            "skillTag": "Constructive"
+          },
+          {
+            "prompt": "A constructive presents three contentions with no labels and no breaks between them. What is the specific problem for the round?",
+            "choices": [
+              "Neither the judge nor the other side can tell where one contention ends",
+              "The speech is too long for a judge to follow at competitive speaking speed",
+              "Three contentions is more than a constructive speech is permitted to contain",
+              "The contentions cannot be given impacts unless they are separated by labels"
+            ],
+            "correctAnswer": "Neither the judge nor the other side can tell where one contention ends",
+            "hint": "Think about what boundaries do for both the judge and the opponent.",
+            "explanation": "Without boundaries the arguments blur, so the judge cannot track them separately and the opponent cannot identify what to answer. It is not about length or a rule, and impacts can technically be stated either way — the loss is that nothing is separable.",
+            "skillTag": "Speech organization"
+          },
+          {
+            "prompt": "Which of these is a job the constructive does that a later speech cannot easily do for it?",
+            "choices": [
+              "Comparing your impacts against the other side's impacts once both are in the round",
+              "Answering the strongest argument the opposition has actually made",
+              "Deciding which single argument the judge should vote on at the end",
+              "Putting your own contentions on the table so the round can run against them"
+            ],
+            "correctAnswer": "Putting your own contentions on the table so the round can run against them",
+            "hint": "Which of these has to happen first for the others to be possible?",
+            "explanation": "Establishing the case is the constructive's distinctive job — the other three all depend on material that is already in the round. Comparison, refutation and collapsing are later work, and each needs a case that a constructive has already built.",
+            "skillTag": "Constructive"
+          },
+          {
+            "prompt": "Your case has one contention about cost savings and one about access. They are independent — neither relies on the other. What does that mean for sequencing?",
+            "choices": [
+              "They must be delivered in the order the resolution mentions their subjects",
+              "Independent contentions cannot both appear in a single constructive speech",
+              "The order is a genuine choice, so pick one and make the boundary clear",
+              "They should be merged, because independent contentions weaken each other"
+            ],
+            "correctAnswer": "The order is a genuine choice, so pick one and make the boundary clear",
+            "hint": "The dependency rule tells you what order is forced — here nothing is.",
+            "explanation": "Sequencing is only constrained when one argument needs another. With independent contentions there is no forced order, so the thing that matters is that the judge can tell where one stops and the next begins. The other options invent constraints that do not exist.",
+            "skillTag": "Speech organization"
+          },
+          {
+            "prompt": "A speaker delivers two well-warranted contentions but never says what the case as a whole establishes. What has the speech left undone?",
+            "choices": [
+              "Nothing, because two well-warranted contentions are a complete constructive",
+              "It has not told the judge what the contentions add up to for the case",
+              "It has failed to provide the evidence that both contentions required",
+              "It has not pre-empted the responses the other side is most likely to give"
+            ],
+            "correctAnswer": "It has not told the judge what the contentions add up to for the case",
+            "hint": "Two good arguments are not automatically one case.",
+            "explanation": "Contentions support a case, and the speech should say what they establish together — otherwise the judge has two arguments and has to assemble the case themselves. The warrants were fine, evidence is a separate question, and pre-empting is not the constructive's job.",
             "skillTag": "Constructive"
           }
         ],
         "masteryCheck": [
           {
-            "prompt": "If the judge cannot tell what your plan means, what did you likely miss?",
+            "prompt": "You are writing a first constructive. Which plan best matches what that speech is for?",
             "choices": [
-              "Definitions",
-              "A trophy",
-              "Speaker rank",
-              "A closing thank-you"
+              "Open by answering the two arguments the other side used in their previous round",
+              "Order the contentions by what depends on what, develop each, then say what they establish",
+              "Present every argument your side has, briefly, so that nothing is left out of the round",
+              "Lead with the comparison you want the judge to make at the very end of the debate"
             ],
-            "correctAnswer": "Definitions",
-            "hint": "Terms make the plan understandable.",
-            "explanation": "Definitions clarify the case and prevent confusion.",
-            "skillTag": "Definitions"
+            "correctAnswer": "Order the contentions by what depends on what, develop each, then say what they establish",
+            "hint": "Match the plan to the speech's job: establishing your case.",
+            "explanation": "This plan establishes the case, orders it around real dependencies, gives each contention development, and closes on what was shown. Answering last round's arguments responds to nothing in this one, listing everything trades depth for coverage, and leading with the final comparison asserts a conclusion the round has not earned.",
+            "skillTag": "Constructive"
+          },
+          {
+            "prompt": "A judge says your constructive contained good arguments but they could not tell what your case was. Which change addresses that directly?",
+            "choices": [
+              "Add more evidence to each contention so the arguments carry more weight",
+              "Speak more slowly so the judge has more time to write the arguments down",
+              "Give each contention a boundary and state what they establish together",
+              "Move the strongest contention to the start so it makes a better impression"
+            ],
+            "correctAnswer": "Give each contention a boundary and state what they establish together",
+            "hint": "The arguments were good — so the gap is in the composition, not the content.",
+            "explanation": "The judge accepted the arguments and still could not see a case, which points at composition: separable contentions and a statement of what they add up to. More evidence, slower delivery and reordering all leave the same gap, because none of them tells the judge how the pieces form one case.",
+            "skillTag": "Constructive"
           }
         ]
       }
@@ -1031,88 +1111,167 @@
       "title": "Guide the judge through your speech",
       "slug": "debate-signposting-lesson",
       "summary": "Use labels, numbers, and transitions so the judge never gets lost.",
-      "estimatedMinutes": 6,
+      "estimatedMinutes": 11,
       "content": {
-        "objective": "Use signposts to organize arguments out loud.",
-        "explanation": "A signpost is a short label that tells listeners where you are in the speech. Good signposting sounds like: first, on their evidence, now on impact comparison.",
-        "whyMatters": "Debate judges track arguments quickly. If they cannot place your response on the flow, even a smart answer may be missed.",
+        "objective": "Tell the judge where each answer belongs before you give it, so every response lands on the argument it is meant to answer.",
+        "explanation": "Judges take notes in columns — a record usually called the flow, with each argument tracked down its own column as the round goes on. Signposting is anything you say that tells the judge where you are in that record rather than arguing a point. It uses three tools — a roadmap, argument labels, and transitions — and mixing them up is what usually goes wrong. Throughout, your CASE means the set of arguments your own side is running, and their case means theirs. A roadmap comes first and says how many answers are coming and in what order, so the judge knows how many places to look and in what sequence. The count is doing real work: a judge told to expect three answers who receives two can see that one is missing, where a judge told nothing has no way to notice the gap. Naming the arguments in order does the same job as stating a number, since a judge can count a list. A preview that gives neither a count nor any names is not a roadmap at all, because it leaves nothing to expect and nothing to check against. A preview that gives a count but no argument names is still a roadmap, only a weak one: the judge learns how many answers to expect but not which column each belongs in, so it warns of a gap without helping place anything. What is not a roadmap at all is a sentence that states your position or your conclusion, however confident it sounds, because it describes what you intend to prove rather than the shape of the speech. A roadmap is therefore a promise about the shape of the speech. If you end up taking the arguments in a different order, say so as you move — an unannounced reordering leaves the judge holding a plan that no longer matches the speech, which is worse than never having given one. An argument label names the specific thing you are about to answer — an area, an argument, or an inner claim — before you answer it. A transition marks a move so the judge closes one column and opens another. Moving from one of their arguments straight to another of their arguments needs no separate transition: the next argument label already does it. A separate transition earns its place on a LARGER move — leaving their arguments to return to your own case and rebuild it, or crossing from one major section of the speech to another — where the next label alone would not tell the judge that the kind of work you are doing has changed. Rebuilding means answering what they said against your own argument and putting it back in place. Label by ARGUMENT, not by speaker and not by position in their speech: \"on their cost argument\" points at one column, while \"on their second point\" or \"responding to their first speaker\" only points at one if the judge happens to have numbered things the same way you did — and judges often do not. Compare \"on their second point, the plan is cheaper than they claim\" with \"on their cost argument, the plan is cheaper than they claim\": the answer is identical, but only the second tells a judge who numbered their notes differently where to put it. The same problem shows up with labels that name a whole area when you mean one part of it, or name your own case when you are answering theirs. What a side says is stacked in levels. At the top is an AREA, a broad heading such as fairness or student wellbeing, often called a contention. Inside it sit the separate ARGUMENTS that support it, and inside each of those sit the INNER CLAIMS it rests on. No topic word owns a level: cost can be an area in one round, with several arguments underneath it, and a single argument in the next. The level comes from how the other side actually built their case, not from how big the word sounds — so read their structure before you label it. One rule covers all three: CHOOSE THE LABEL FOR WHERE THE RESPONSE IS AIMED, not for how far it might ultimately reach. Aim at an inner claim, name that claim; aim at an argument, name the argument; aim at the whole area, name the area. This holds even when knocking out a lower claim happens to undermine everything above it — the signpost says where you struck, not how much fell. Naming a level above the one you aimed at sends the judge to a heading you did not speak to. Naming a level below it files a bigger answer in a smaller place than it belongs, and the judge records you as having answered less than you did. So the narrowest label is not automatically the best one: precision that undershoots the response is its own mistake. Match the label to the scope of the response, upward or downward. Neither judgement asks you to work out what your answer brought down with it. A label can also be perfectly precise and still wrong: naming their staffing argument when your answer is about their funding argument is exact, and exactly misplaced. When several of their arguments are live at once, the failure to watch for is not skipping one but attaching an answer to the wrong one: a response filed against an argument it does not actually address leaves the argument it WAS meant for standing, and the argument it landed on looks answered when it is not. Two answers given back to back with only one label between them are the usual way this happens, so name the argument each time you move. Signposting is not analysis and does not substitute for it: a labelled answer with no reason behind it is still a bad answer, and the label does not make it true. What the label buys you is that a good answer gets recorded in the right place instead of being lost. When you have lost track mid-speech, the repair is to name where you are going next rather than to keep talking and hope the judge follows — \"I am going back to their evidence argument\" costs two seconds and rebuilds the structure.",
+        "whyMatters": "A judge who cannot place your answer may not credit it at all. This is not a judge being unfair; it is what happens when several arguments move at once and the notes have to keep up in real time. Two speakers can give word-for-word identical analysis and have it recorded differently: the one whose answers arrive labelled gets them written under the arguments they refute, and the one whose answers arrive unlabelled gets a block of text the judge has to sort out afterwards from memory. Structure is also what lets the other side answer you, which is part of a fair round — an answer nobody can locate is an answer nobody can respond to.",
         "steps": [
-          "Preview the order.",
-          "Label each argument before explaining it.",
-          "Use transition phrases when you move to a new issue."
+          "Give a roadmap that says how many answers are coming, what they are on, and in what order.",
+          "Name the specific argument before you answer it, using words that identify it rather than its number or its speaker.",
+          "Moving to another of their arguments needs no separate transition — the next label does it; add one only for a larger move, such as returning to your own case.",
+          "If you lose the thread, say where you are going next instead of pressing on."
         ],
         "workedExample": {
-          "prompt": "Respond to two arguments about cost and safety.",
-          "weakAnswer": "That is wrong because the cost is lower and safety is better too.",
-          "strongAnswer": "I have two answers. First, on cost: the plan uses existing advisory time, so the budget impact is small. Second, on safety: teaching responsible use reduces risky shortcuts.",
-          "whyItWorks": "The strong answer numbers the responses and names the issue before explaining."
+          "prompt": "You have three answers to make: one on cost, one on the safety evidence, and one on the timeline. Here are two deliveries of exactly the same three answers.",
+          "weakAnswer": "The budget impact is small because the plan uses advisory time that is already scheduled. The study they cited surveyed one district in a single year, so it cannot support a general claim. The rollout is staged over three years, so schools are not absorbing all of it at once.",
+          "strongAnswer": "Three answers, on cost, on their safety evidence, and on the timeline. On cost: the budget impact is small because the plan uses advisory time that is already scheduled. On their safety evidence: the study they cited surveyed one district in a single year, so it cannot support a general claim. On the timeline: the rollout is staged over three years, so schools are not absorbing all of it at once.",
+          "whyItWorks": "Delete the roadmap and the three labels from the strong version and what is left is the weak version, word for word — the same three claims, the same three reasons behind them, the same quality of analysis. Nothing was added to the argument. What the labels change is where each answer gets written down: the judge hears \"on cost\" and moves to the cost column before the reason arrives. In the weak version the judge has to work out, after the fact, which of three unlabelled sentences belonged to which argument — and a sentence assigned to the wrong column is answering nothing. This is also why signposting cannot rescue a weak answer: it decides where the answer lands, not whether it was any good."
         },
         "guidedQuestion": {
-          "prompt": "Which phrase is the clearest signpost?",
+          "prompt": "You are about to answer the opponent's claim that the policy is too expensive. Which opening locates that answer for the judge?",
           "choices": [
-            "That is not true",
-            "Next, on their cost argument",
-            "Everyone knows this",
-            "We win"
+            "On their cost argument",
+            "They are wrong about this, and here is the reason why",
+            "Moving on to my next point",
+            "As I said in my first speech"
           ],
-          "correctAnswer": "Next, on their cost argument",
-          "hint": "A signpost names where the judge should place the response.",
-          "explanation": "This phrase tells the judge the speaker is moving to the cost argument.",
+          "correctAnswer": "On their cost argument",
+          "hint": "A signpost names the argument the answer belongs to.",
+          "explanation": "Only this names the specific argument, so the judge knows which column to write in before the reason arrives. \"They are wrong\" says an answer is coming but not to what; \"moving on\" marks a transition without naming a destination; \"as I said\" points backwards at your own speech rather than at their argument.",
           "skillTag": "Signposting"
         },
         "practiceQuestions": [
           {
-            "prompt": "What should a preview do?",
+            "prompt": "Which roadmap is most useful to a judge at the start of a speech?",
             "choices": [
-              "Tell the judge the order of the speech",
-              "Replace evidence",
-              "Hide the main claim",
-              "End the round"
+              "I will be responding to most of what the other side said in their speech, roughly in order",
+              "I have several points to make and I will get through as many as I can",
+              "I have three answers: on cost, on the safety evidence, and on enforcement",
+              "I am going to explain why our side is winning this debate overall"
             ],
-            "correctAnswer": "Tell the judge the order of the speech",
-            "hint": "A preview is a roadmap.",
-            "explanation": "A preview helps the judge follow the structure before details begin.",
+            "correctAnswer": "I have three answers: on cost, on the safety evidence, and on enforcement",
+            "hint": "A roadmap tells the judge how many places to look, and which.",
+            "explanation": "This names the number and the destinations, so the judge can set up the columns before the content starts. The others announce that a speech is happening without telling the judge where anything will go.",
             "skillTag": "Speech organization"
           },
           {
-            "prompt": "Which transition is strongest?",
+            "prompt": "The other side made an argument about teacher workload. Which label points at one identifiable argument?",
             "choices": [
-              "Also stuff",
-              "Moving to their second contention",
-              "Anyway",
-              "Like I said"
+              "On their workload argument",
+              "On what their first speaker was saying earlier",
+              "On their second point",
+              "On the part of their case I disagree with most"
             ],
-            "correctAnswer": "Moving to their second contention",
-            "hint": "The best transition names the next flow location.",
-            "explanation": "This transition clearly identifies where the response belongs.",
+            "correctAnswer": "On their workload argument",
+            "hint": "A label has to identify the argument even if the judge numbered things differently than you did.",
+            "explanation": "Naming the subject identifies the column no matter how the judge ordered their notes. Numbers and speakers only work if the judge's notes happen to match yours, and \"the part I disagree with\" names nothing at all.",
             "skillTag": "Signposting"
           },
           {
-            "prompt": "Why does signposting improve scores?",
+            "prompt": "Which of these is signposting rather than substantive analysis?",
             "choices": [
-              "It makes arguments easier to follow",
-              "It makes speeches longer",
-              "It avoids all clash",
-              "It replaces warrants"
+              "The study covered a single district, so it cannot support a national claim",
+              "Their impact is unlikely because enforcement almost never happens",
+              "Costs fall on the same families who already have the least",
+              "Turning to their evidence argument"
             ],
-            "correctAnswer": "It makes arguments easier to follow",
-            "hint": "Think about what helps a judge flow.",
-            "explanation": "Judges reward arguments they can understand and place on the flow.",
-            "skillTag": "Clarity"
+            "correctAnswer": "Turning to their evidence argument",
+            "hint": "One of these tells the judge where to write; the rest tell the judge what to think.",
+            "explanation": "Signposting is locating, not arguing. The other three make claims with reasons attached — they are the analysis that a signpost points to. Confusing the two leads speakers to think a well-labelled speech is automatically a well-argued one.",
+            "skillTag": "Signposting"
+          },
+          {
+            "prompt": "A speaker labels every answer clearly but gives no reasons for any of them. What has the signposting achieved?",
+            "choices": [
+              "The answers are now well warranted because they have been clearly organized",
+              "The judge should credit the speech overall because it was so easy to follow",
+              "The signposting substitutes for the missing reasoning in each of the answers",
+              "The judge can locate each answer, but the answers are still unsupported"
+            ],
+            "correctAnswer": "The judge can locate each answer, but the answers are still unsupported",
+            "hint": "Ask what the label does and what it cannot do.",
+            "explanation": "A label decides where an answer is recorded, not whether it is any good. An unsupported answer filed in the right column is still unsupported. Signposting makes good analysis findable; it does not manufacture analysis.",
+            "skillTag": "Signposting"
+          },
+          {
+            "prompt": "You are answering one specific sub-point inside a larger contention about school funding. Which signpost is at the right level?",
+            "choices": [
+              "On funding, which is the area their entire second contention was about",
+              "On their funding claim that reserves are already committed",
+              "On their case, taking their contentions in the order they presented them",
+              "On everything they said about money in the second half of their speech"
+            ],
+            "correctAnswer": "On their funding claim that reserves are already committed",
+            "hint": "Match the label to the size of the thing you are actually answering.",
+            "explanation": "The answer addresses one claim inside a contention, so the label should name that claim. The others point at a whole area, at their case as a whole, or at a half of their speech — each leaves the judge to guess which part of it the response lands on.",
+            "skillTag": "Speech organization"
+          },
+          {
+            "prompt": "Halfway through your speech you realise you have skipped an argument and the judge looks lost. What is the best repair?",
+            "choices": [
+              "Say you are going back to their evidence argument, then answer it",
+              "Keep going and cover the skipped argument at the end without mentioning it",
+              "Apologise for the confusion and restate your entire roadmap from the start",
+              "Speak more slowly for the rest of the speech so the judge can keep up"
+            ],
+            "correctAnswer": "Say you are going back to their evidence argument, then answer it",
+            "hint": "Naming where you are going costs a few seconds and rebuilds the structure.",
+            "explanation": "A short, explicit relocation tells the judge which column to reopen. Covering it silently leaves the judge to work out where it went, restating the whole roadmap spends time you do not have, and speaking slowly does not tell anyone where the answer belongs.",
+            "skillTag": "Signposting"
+          },
+          {
+            "prompt": "Two speakers give identical analysis on three arguments. Speaker A labels each answer before giving it; Speaker B gives all three unlabelled. What is the difference on the flow?",
+            "choices": [
+              "A's analysis is stronger, because labelling an answer adds to its reasoning",
+              "There is no difference, because the judge hears exactly the same words either way",
+              "A's answers land in the right columns; B's must be sorted out afterwards",
+              "B's speech is better, because it spends all of its time on substance instead of labels"
+            ],
+            "correctAnswer": "A's answers land in the right columns; B's must be sorted out afterwards",
+            "hint": "The analysis is identical by construction — so the difference cannot be in the analysis.",
+            "explanation": "Because the content is the same in both, the only thing that changes is placement. A's answers arrive already located. B's arrive as a block the judge has to assign from memory after the fact, and an answer assigned to the wrong argument does not refute it. The words are the same, but the record is not.",
+            "skillTag": "Signposting"
+          },
+          {
+            "prompt": "Which transition most clearly closes one argument and opens another?",
+            "choices": [
+              "That is my second answer, and there is more to say about all of this",
+              "Also, another thing worth mentioning about this whole area is that",
+              "That answers their cost argument; next, on their enforcement argument",
+              "So as you can see, the other side is not winning any of these arguments"
+            ],
+            "correctAnswer": "That answers their cost argument; next, on their enforcement argument",
+            "hint": "A transition should end one column and name the next.",
+            "explanation": "This marks the previous argument as finished and names where the speech is going, so the judge closes one column and opens a specific other one. The others trail off, announce a vague continuation, or summarise without moving anywhere.",
+            "skillTag": "Signposting"
           }
         ],
         "masteryCheck": [
           {
-            "prompt": "You are answering the opponent's evidence. What should your signpost mention?",
+            "prompt": "The other side ran two separate arguments about cost: one that the programme is expensive to start, and one that it is expensive to maintain. You have an answer only to the second. Which signpost is accurate?",
             "choices": [
-              "Evidence",
-              "Your lunch",
-              "The room",
-              "A random voter"
+              "On their cost arguments",
+              "On cost, which the other side raised more than once in their speech",
+              "On the second cost point their speaker made after the first one",
+              "On their argument that the programme is expensive to maintain"
             ],
-            "correctAnswer": "Evidence",
-            "hint": "Name the argument area you are answering.",
-            "explanation": "A targeted signpost tells the judge this answer belongs on the evidence flow.",
+            "correctAnswer": "On their argument that the programme is expensive to maintain",
+            "hint": "You are answering one of two arguments — the label should say which.",
+            "explanation": "Naming the maintenance claim tells the judge exactly which of the two columns the answer belongs in, and leaves visible that the start-up argument is unanswered. A plural label implies you answered both, a general \"on cost\" leaves the judge to guess, and ordering by their speech only works if the judge numbered it as you did.",
+            "skillTag": "Signposting"
+          },
+          {
+            "prompt": "A judge says after the round that they could not tell which of your answers went with which argument, though they agreed with your reasoning. What most likely went wrong?",
+            "choices": [
+              "The reasoning was too complex for the judge to follow at speaking speed",
+              "The judge was not paying close enough attention to the speech as it was delivered",
+              "The answers were not labelled with the arguments they were responding to",
+              "The speech contained too few arguments for the judge to keep track of"
+            ],
+            "correctAnswer": "The answers were not labelled with the arguments they were responding to",
+            "hint": "The judge accepted the reasoning — so the problem is not the reasoning.",
+            "explanation": "The judge understood the substance and still could not place it, which points at missing labels rather than weak analysis. That is the exact failure signposting prevents: good answers that never get recorded against the arguments they defeat.",
             "skillTag": "Signposting"
           }
         ]

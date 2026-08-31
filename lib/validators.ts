@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isDrillArea, type DrillArea } from "@/lib/debate-drills";
 
 export const organizationSchema = z.enum([
   "DEBATE",
@@ -490,7 +491,9 @@ export const argumentFlowRequestSchema = z.object({
 
 // --- General Debate concept drills ---
 
-const drillAreaSchema = z.enum(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing", "clash"]);
+// Derived from DRILL_AREAS, never hand-listed: a second enumeration of the same set is a drift
+// hazard, and a missing member here silently makes a real area unreachable through its deep link.
+const drillAreaSchema = z.custom<DrillArea>(isDrillArea, { message: "unknown debate drill area" });
 
 export const debateDrillSessionRequestSchema = z.object({
   count: z.number().int().min(1).max(40),

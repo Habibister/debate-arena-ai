@@ -483,7 +483,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     assert.ok(presentIds.has(id), `4b10b. original Debate question ${id} is still present`);
   }
   assert.ok(DRILL_BANK.length >= 36, "4b10c. and the bank never shrank below its original 36");
-  assert.equal(DRILL_AREAS.length, 5, "4b11. across exactly five areas");
+  assert.equal(DRILL_AREAS.length, 7, "4b11. across exactly seven areas");
   assert.equal(presentIds.size, DRILL_BANK.length, "4b12. with no duplicate ids");
   // (iii) M13E1D introduces no second lesson or mastery renderer. The lesson component set is fixed,
   //       and the one component M13E1D touched reaches no lesson or education module.

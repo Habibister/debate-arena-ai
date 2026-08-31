@@ -32,7 +32,9 @@ async function main() {
     "rebuttal": 30,   // M14 Global G2 Slice 1
     "evidence-evaluation": 30,   // M14 Global G2 Slice 3
     "weighing": 30,   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
-    "clash": 30   // Clash measurable-practice closure — authored at the G2 depth target from day one
+    "clash": 30,   // Clash measurable-practice closure — authored at the G2 depth target from day one
+    "signposting": 30,   // Signposting + Constructive-Speech secure-evidence milestone
+    "constructive-speech": 30   // same milestone; both authored at the established 30 depth
   };
   const EXPECTED_TOTAL = Object.values(AREA_DEPTH).reduce((a, b) => a + b, 0);
   // Slice 4 completes Debate depth. This parity pair does NOT replace the exact per-area assertions

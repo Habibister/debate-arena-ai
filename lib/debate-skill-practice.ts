@@ -24,25 +24,52 @@ export type DebateWritingFeedback = {
   weakSkills: string[];
 };
 
-const skillAliases: Record<string, { name: string; focus: string[]; cue: string; weakSkill: string }> = {
-  "debate-claim-building-1": {
-    name: "Claim, warrant, impact",
-    focus: ["claim", "reasoning/warrant", "impact", "relevance"],
-    cue: "Write one complete argument with a clear claim, warrant, and impact.",
-    weakSkill: "Claim building"
-  },
-  "debate-claim-warrant-impact": {
-    name: "Claim, warrant, impact",
-    focus: ["claim", "reasoning/warrant", "impact", "relevance"],
-    cue: "Write one complete argument with a clear claim, warrant, and impact.",
-    weakSkill: "Claim building"
-  },
-  "debate-evidence-1": {
-    name: "Evidence and support",
-    focus: ["evidence/support", "reasoning/warrant", "impact", "persuasiveness"],
-    cue: "Support the argument with a realistic example, statistic type, or stakeholder impact.",
-    weakSkill: "Evidence"
-  },
+type DebateWritingScenarioAlias = { name: string; focus: string[]; cue: string; weakSkill: string };
+
+/**
+ * One scenario per SKILL, then mapped onto every slug that names that skill.
+ *
+ * Writing practice is a property of the SKILL, not of an individual lesson step, which is why the
+ * three `-1/-2/-3` lesson slugs of a skill share its scenario. Before this was made explicit, only
+ * some slugs carried a key and `aliasFor` silently substituted the claim-building scenario for the
+ * rest — so a learner practising Evidence, Refutation or Weighing was handed a claim-building
+ * prompt. Every slug below now names its OWN skill; nothing is a stand-in for another skill.
+ */
+const CLAIM_BUILDING_SCENARIO: DebateWritingScenarioAlias = {
+  name: "Claim, warrant, impact",
+  focus: ["claim", "reasoning/warrant", "impact", "relevance"],
+  cue: "Write one complete argument with a clear claim, warrant, and impact.",
+  weakSkill: "Claim building"
+};
+const EVIDENCE_SCENARIO: DebateWritingScenarioAlias = {
+  name: "Evidence and support",
+  focus: ["evidence/support", "reasoning/warrant", "impact", "persuasiveness"],
+  cue: "Support the argument with a realistic example, statistic type, or stakeholder impact.",
+  weakSkill: "Evidence"
+};
+const REFUTATION_SCENARIO: DebateWritingScenarioAlias = {
+  name: "Refutation",
+  focus: ["refutation", "reasoning/warrant", "impact", "organization"],
+  cue: "Use they say, but, because, therefore.",
+  weakSkill: "Refutation"
+};
+const WEIGHING_SCENARIO: DebateWritingScenarioAlias = {
+  name: "Weighing arguments",
+  focus: ["impact", "persuasiveness", "comparison", "clarity"],
+  cue: "Compare two impacts using magnitude, probability, timeframe, or reversibility.",
+  weakSkill: "Weighing"
+};
+
+const skillAliases: Record<string, DebateWritingScenarioAlias> = {
+  "debate-claim-building": CLAIM_BUILDING_SCENARIO,
+  "debate-claim-building-1": CLAIM_BUILDING_SCENARIO,
+  "debate-claim-building-2": CLAIM_BUILDING_SCENARIO,
+  "debate-claim-building-3": CLAIM_BUILDING_SCENARIO,
+  "debate-claim-warrant-impact": CLAIM_BUILDING_SCENARIO,
+  "debate-evidence": EVIDENCE_SCENARIO,
+  "debate-evidence-1": EVIDENCE_SCENARIO,
+  "debate-evidence-2": EVIDENCE_SCENARIO,
+  "debate-evidence-3": EVIDENCE_SCENARIO,
   "debate-signposting": {
     name: "Signposting",
     focus: ["organization/signposting", "clarity", "relevance", "flow"],
@@ -55,24 +82,15 @@ const skillAliases: Record<string, { name: string; focus: string[]; cue: string;
     cue: "Answer the opponent's main claim directly instead of repeating your case.",
     weakSkill: "Clash"
   },
-  "debate-rebuttal-1": {
-    name: "Refutation",
-    focus: ["refutation", "reasoning/warrant", "impact", "organization"],
-    cue: "Use they say, but, because, therefore.",
-    weakSkill: "Refutation"
-  },
-  "debate-refutation": {
-    name: "Refutation",
-    focus: ["refutation", "reasoning/warrant", "impact", "organization"],
-    cue: "Use they say, but, because, therefore.",
-    weakSkill: "Refutation"
-  },
-  "debate-weighing": {
-    name: "Weighing arguments",
-    focus: ["impact", "persuasiveness", "comparison", "clarity"],
-    cue: "Compare two impacts using magnitude, probability, timeframe, or reversibility.",
-    weakSkill: "Weighing"
-  },
+  "debate-rebuttal": REFUTATION_SCENARIO,
+  "debate-rebuttal-1": REFUTATION_SCENARIO,
+  "debate-rebuttal-2": REFUTATION_SCENARIO,
+  "debate-rebuttal-3": REFUTATION_SCENARIO,
+  "debate-refutation": REFUTATION_SCENARIO,
+  "debate-weighing": WEIGHING_SCENARIO,
+  "debate-weighing-1": WEIGHING_SCENARIO,
+  "debate-weighing-2": WEIGHING_SCENARIO,
+  "debate-weighing-3": WEIGHING_SCENARIO,
   "debate-constructive-speeches": {
     name: "Constructive speeches",
     focus: ["organization", "claim", "contentions", "definitions"],
@@ -112,8 +130,34 @@ const motions = [
   "Debate programs should prioritize beginner access over elite travel opportunities."
 ];
 
-function aliasFor(slug: string) {
-  return skillAliases[slug] ?? skillAliases["debate-claim-building-1"];
+/**
+ * Every slug that has a real, skill-appropriate Debate writing scenario.
+ *
+ * This is the single source of truth for WRITING-practice capability. It is deliberately NOT the
+ * same question as "is this a known Debate skill" or "can this skill be drilled securely" — a skill
+ * can be known and persisted and securely drillable while having no writing scenario at all.
+ */
+export const DEBATE_WRITING_SCENARIO_SLUGS: readonly string[] = Object.keys(skillAliases);
+
+export function hasDebateWritingScenario(slug: string): boolean {
+  return Object.prototype.hasOwnProperty.call(skillAliases, slug);
+}
+
+/**
+ * FAIL CLOSED. A slug with no scenario of its own is a configuration error, never a silent
+ * substitution: serving one skill's prompt under another skill's name is fake practice. Callers
+ * must gate on `hasDebateWritingScenario` (which `debateWritingPracticeSupported` does) before
+ * reaching here, so this throw is unreachable in a correctly configured tree — that is the point.
+ */
+function aliasFor(slug: string): DebateWritingScenarioAlias {
+  const alias = skillAliases[slug];
+  if (!alias) {
+    throw new Error(
+      `No Debate writing scenario is defined for "${slug}". Writing practice must not fall back to ` +
+        `another skill's scenario. Either add a scenario for this slug or leave it unsupported.`
+    );
+  }
+  return alias;
 }
 
 export function getDebateSkillScenario(slug: string, level: Level = "BEGINNER", scenarioIndex = 0): DebateSkillScenario {

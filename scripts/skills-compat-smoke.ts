@@ -7,6 +7,7 @@ import {
   CANONICAL_REDIRECTS,
   COMPAT_TRACK_DESTINATION,
   INTENDED_SKILL_INVENTORY,
+  INTENDED_SKILL_SLUGS,
   SEEDED_LESSON_SLUGS,
   SEEDED_SKILL_SLUGS,
   SEEDED_SKILLS,
@@ -14,6 +15,7 @@ import {
   debateWritingPracticeSupported,
   resolveSkillsSlug
 } from "../lib/education/skills-compat";
+import { getDebateSkillScenario, hasDebateWritingScenario } from "../lib/debate-skill-practice";
 import { EDUCATION_REGISTRY, EDUCATION_LESSONS, educationLessonsForTrack, getEducationLesson } from "../lib/education/registry";
 import { EDUCATION_SLUG_ALIASES } from "../lib/education/slug-map";
 import { EDUCATION_GENERIC_FILLER_SIGNATURES, validateEducationRegistry } from "../lib/education/validate";
@@ -300,6 +302,55 @@ async function main() {
                       "mun-diplomacy-1", "mun-resolution-writing", "totally-unknown-slug", "claim-warrant-impact"]) {
     assert.ok(!debateWritingPracticeSupported(slug), `18-21. "${slug}" must NOT receive Debate writing practice`);
   }
+  // ---- 21c-21j. THE CAPABILITY BOUNDARY -----------------------------------------------------------
+  // Three capabilities, deliberately NOT equivalent: a skill may be KNOWN and SECURELY DRILLABLE
+  // without having WRITING practice. Before this boundary existed the gate read
+  // `skill.track === "DEBATE"` alone, so any known Debate skill advertised writing practice and
+  // `aliasFor` silently substituted the claim-building scenario for the eight slugs that had none —
+  // Evidence, Refutation and Weighing learners were handed a claim-building prompt under their own
+  // skill's name. These assertions are driven against the REAL exports, not against generated data
+  // compared to itself, and each fails if the boundary regresses.
+  {
+    // A. Support is never claimed without a scenario of that skill's own. This is the invariant;
+    //    everything else here is a witness to it.
+    for (const slug of INTENDED_SKILL_SLUGS) {
+      if (!debateWritingPracticeSupported(slug)) continue;
+      assert.ok(hasDebateWritingScenario(slug),
+        `21c. "${slug}" claims Debate writing practice, so it MUST have its own writing scenario — no fallback`);
+    }
+    // B. The reverse leg: a supported slug resolves to ITS OWN skill, never to a stand-in. Driven by
+    //    weakSkill, which names the skill the scenario actually trains.
+    const ownScenario: Array<[string, string]> = [
+      ["debate-evidence", "Evidence and support"], ["debate-evidence-1", "Evidence and support"],
+      ["debate-evidence-3", "Evidence and support"], ["debate-rebuttal-2", "Refutation"],
+      ["debate-weighing-1", "Weighing arguments"], ["debate-claim-building-2", "Claim, warrant, impact"]
+    ];
+    for (const [slug, skillName] of ownScenario) {
+      assert.ok(debateWritingPracticeSupported(slug), `21d. "${slug}" is a supported Debate writing slug`);
+      assert.equal(getDebateSkillScenario(slug).skillName, skillName,
+        `21e. "${slug}" trains "${skillName}", not another skill's scenario`);
+    }
+    // C. POSITIVE CONTROL for the check itself: the wrong-skill bug is expressible and detectable.
+    //    Pre-repair, every slug in the list above answered "Claim, warrant, impact" via the fallback.
+    assert.notEqual(getDebateSkillScenario("debate-evidence").skillName, "Claim, warrant, impact",
+      "21f. control: Evidence is NOT served the claim-building scenario (the pre-repair defect)");
+    assert.equal(getDebateSkillScenario("debate-claim-building-1").skillName, "Claim, warrant, impact",
+      "21g. control: a genuine claim-building slug still IS claim-building, so 21f is a real check");
+    // D. The two secure-evidence skills: known and inventoried, writing practice OFF.
+    for (const slug of ["debate-flow-signposting", "debate-case-construction"]) {
+      assert.ok(INTENDED_SKILL_SLUGS.includes(slug), `21h. "${slug}" is a known, intended skill`);
+      assert.equal(resolveSkillsSlug(slug).kind, "compatibility",
+        `21h2. "${slug}" resolves as a skill — not a canonical-redirect, not unknown`);
+      assert.ok(!hasDebateWritingScenario(slug), `21i. "${slug}" has no writing scenario`);
+      assert.ok(!debateWritingPracticeSupported(slug),
+        `21j. "${slug}" therefore advertises NO writing practice — secure drill capability is a different thing`);
+    }
+    // E. FAIL CLOSED: an unsupported slug must throw rather than silently borrow a scenario.
+    assert.throws(() => getDebateSkillScenario("debate-flow-signposting"),
+      /No Debate writing scenario is defined/,
+      "21k. building a scenario for an unsupported slug is a configuration error, never a fallback");
+  }
+
   assert.ok(practice.includes("resolveSkillsSlug") && practice.includes("debatePracticeSupported"),
     "21b. the practice route gates on the resolved track");
   // Compare the CALL SITES, not the import lines (imports are alphabetical and prove nothing).
@@ -649,10 +700,11 @@ async function main() {
   // debate-clash is shadowed by the canonical clash LESSON id (the debate-weighing precedent), so
   // it resolves to authored instruction, never to compat writing practice.
   assert.deepEqual(ACTIVATION_PENDING_SKILLS.map((s) => s.slug),
-    ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations", "debate-clash"],
-    "27h. exactly the four activation-pending skills");
+    ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations", "debate-clash",
+     "debate-flow-signposting", "debate-case-construction"],
+    "27h. exactly the six activation-pending skills");
   assert.equal(INTENDED_SKILL_INVENTORY.length, SEEDED_SKILLS.length + ACTIVATION_PENDING_SKILLS.length,
-    "27h2. the intended inventory is the seeded ten plus those four, with no overlap");
+    "27h2. the intended inventory is the seeded ten plus those six, with no overlap");
   for (const skill of ACTIVATION_PENDING_SKILLS) {
     assert.ok(!SEEDED_SKILL_SLUGS.includes(skill.slug),
       `27h3. "${skill.slug}" is NOT claimed as seeded — prisma/seed.ts does not create it`);

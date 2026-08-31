@@ -32,7 +32,9 @@ const DRILL_AREA_LABELS: Record<EducationPracticeDrill["area"], string> = {
   rebuttal: "Rebuttal",
   "evidence-evaluation": "Evidence evaluation",
   weighing: "Weighing",
-  clash: "Clash"
+  clash: "Clash",
+  signposting: "Signposting",
+  "constructive-speech": "Constructive speech"
 };
 
 export function ConceptEducationLessonView({

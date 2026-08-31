@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, RotateCcw, Target, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DrillArea } from "@/lib/debate-drills";
+import { DRILL_AREAS, type DrillArea } from "@/lib/debate-drills";
 
 // Server-issued item. There is deliberately no correct answer and no explanation here: the session
 // route withholds both until the learner has actually answered, and this client has no way to grade.
@@ -387,9 +387,12 @@ export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) 
               <button type="button" onClick={() => setAreaFilter("mixed")} aria-pressed={areaFilter === "mixed"} className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${areaFilter === "mixed" ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>
                 Mixed (all skills)
               </button>
-              {(["claim-warrant-impact", "rebuttal", "evidence-evaluation", "weighing", "clash"] as DrillArea[]).map((a) => (
-                <button key={a} type="button" onClick={() => setAreaFilter(a)} aria-pressed={areaFilter === a} className={`rounded-md border px-3 py-1.5 text-sm font-semibold capitalize ${areaFilter === a ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>
-                  {a.replace(/-/g, " ")}
+              {/* Derived from DRILL_AREAS. The previous hand-listed array carried an `as DrillArea[]`
+                  cast, so adding an area left this selector silently short and TypeScript could not
+                  catch it — the area existed, was servable and had no way to be chosen here. */}
+              {DRILL_AREAS.map((area) => (
+                <button key={area.id} type="button" onClick={() => setAreaFilter(area.id)} aria-pressed={areaFilter === area.id} className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${areaFilter === area.id ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>
+                  {area.label}
                 </button>
               ))}
             </div>

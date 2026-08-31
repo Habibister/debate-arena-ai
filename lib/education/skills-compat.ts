@@ -22,6 +22,7 @@
 import { getEducationLesson, EDUCATION_LESSONS, educationLessonsForPracticeSkill } from "@/lib/education/registry";
 import { isConceptEducationLessonEntry, type EducationPracticeDrill } from "@/lib/education/types";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
+import { hasDebateWritingScenario } from "@/lib/debate-skill-practice";
 
 /** The track a legacy record belongs to, including the soft-removed Model UN. */
 export type CompatTrack = "DEBATE" | "DECA" | "HOSA" | "MODEL_UN";
@@ -121,10 +122,26 @@ export const ACTIVATION_PENDING_SKILLS: readonly CompatSkill[] = [
   // precedent), so no lessonSlugs are invented here: the registry, not this manifest, owns the
   // lesson route. Listed so the intended inventory stays the honest catalog of every skill the
   // platform means to persist.
-  { slug: "debate-clash", name: "Clash", track: "DEBATE", lessonSlugs: [], lessonTitles: [] }
+  { slug: "debate-clash", name: "Clash", track: "DEBATE", lessonSlugs: [], lessonTitles: [] },
+  // The two secure-evidence skills added for the Signposting / Constructive-Speech milestone. Their
+  // slugs deliberately DO NOT match their lesson ids (`debate-signposting`,
+  // `debate-constructive-speeches`): a slug equal to a lesson id resolves as `canonical-redirect`
+  // at rule 1 and would never reach this manifest at all. Listed here because the platform really
+  // does intend to persist them; a catalog that omitted them to dodge a CTA would be a lie.
+  // They carry NO writing scenario, so `debatePracticeSupported` is false for both — known and
+  // securely drillable is not the same capability as writing-practice supported.
+  { slug: "debate-flow-signposting", name: "Signposting", track: "DEBATE", lessonSlugs: [], lessonTitles: [] },
+  { slug: "debate-case-construction", name: "Case Construction", track: "DEBATE", lessonSlugs: [], lessonTitles: [] }
 ] as const;
 
-/** Every skill the platform intends to persist: the ten seeded plus the four activation-pending. */
+/**
+ * Every skill the platform intends to persist: the ten seeded plus the six activation-pending.
+ *
+ * This answers ONE question — "what skills does the platform mean to persist?" It is NOT the
+ * writing-practice capability list; that question is answered separately by
+ * `hasDebateWritingScenario`, and the two must never be blurred again. Membership here says nothing
+ * about whether a skill has writing practice, and nothing about whether it is securely drillable.
+ */
 export const INTENDED_SKILL_INVENTORY: readonly CompatSkill[] = [...SEEDED_SKILLS, ...ACTIVATION_PENDING_SKILLS];
 
 /**
@@ -262,7 +279,7 @@ function compatibilityFor(slug: string): SkillsCompatResolution | null {
       title: skill.name,
       skillName: skill.name,
       step: null,
-      debatePracticeSupported: skill.track === "DEBATE",
+      debatePracticeSupported: skill.track === "DEBATE" && hasDebateWritingScenario(slug),
       destination: COMPAT_TRACK_DESTINATION[skill.track]
     };
   }
@@ -274,7 +291,7 @@ function compatibilityFor(slug: string): SkillsCompatResolution | null {
       title: lesson.title,
       skillName: lesson.skill.name,
       step: { index: lesson.step, total: lesson.skill.lessonSlugs.length },
-      debatePracticeSupported: lesson.skill.track === "DEBATE",
+      debatePracticeSupported: lesson.skill.track === "DEBATE" && hasDebateWritingScenario(slug),
       destination: COMPAT_TRACK_DESTINATION[lesson.skill.track]
     };
   }

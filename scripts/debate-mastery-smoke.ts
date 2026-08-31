@@ -133,7 +133,9 @@ const DEBATE_AREA_DEPTH: Record<DrillArea, number> = {
   "rebuttal": 30,   // M14 Global G2 Slice 1
   "evidence-evaluation": 30,   // M14 Global G2 Slice 3
   "weighing": 30   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
-, "clash": 30 };
+, "clash": 30
+, "signposting": 30
+, "constructive-speech": 30 };
 const right = (q: { correctAnswer: string }) => q.correctAnswer;
 const wrongFor = (q: { choices: string[]; correctAnswer: string }) => {
   const other = q.choices.find((c) => c !== q.correctAnswer);

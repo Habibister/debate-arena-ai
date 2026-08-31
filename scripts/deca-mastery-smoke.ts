@@ -402,11 +402,11 @@ async function main() {
   assert.deepEqual(decaPending.map((s) => s.name),
     ["Performance Indicators", "Business Reasoning", "Customer Relations"], "18b. with their exact names");
   assert.deepEqual(ACTIVATION_PENDING_SKILLS.filter((s) => s.track !== "DECA").map((s) => s.slug),
-    ["debate-clash"],
-    "18c. the only non-DECA activation-pending skill is the Debate clash skill — nothing DECA-shaped hides outside the filter");
+    ["debate-clash", "debate-flow-signposting", "debate-case-construction"],
+    "18c. the only non-DECA activation-pending skills are the three Debate ones — nothing DECA-shaped hides outside the filter");
   assert.ok(ACTIVATION_PENDING_SKILLS.every((s) => s.lessonSlugs.length === 0), "18d. and none invents lessons");
   assert.equal(SEEDED_SKILL_SLUGS.length, 10, "18e. the seed mirror is still exactly the ten seeded skills");
-  assert.equal(INTENDED_SKILL_INVENTORY.length, 14, "18f. the intended inventory is ten plus four (three DECA, one Debate)");
+  assert.equal(INTENDED_SKILL_INVENTORY.length, 16, "18f. the intended inventory is ten plus six (three DECA, three Debate)");
   for (const slug of ["deca-roleplay", "deca-marketing"]) {
     assert.ok(!ACTIVATION_PENDING_SKILLS.some((s) => s.slug === slug), `18g. "${slug}" is NOT one of the three`);
   }

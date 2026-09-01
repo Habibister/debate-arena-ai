@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma, PracticeSessionKind } from "@prisma/client";
 import { HttpError } from "@/lib/api";
+import { SECURE_EVIDENCE_AREAS, aggregateSecureEvidence, type SecureAreaEvidence } from "@/lib/secure-evidence";
 
 // Server-authoritative practice sessions (M13E2 Phase C).
 //
@@ -414,6 +415,13 @@ export type AreaEvidence = {
   uniqueTotal: number;
   uniqueCorrect: number;
   evidenceScore: number;
+  /**
+   * Present ONLY for areas that have opted into secure-evidence semantics (lib/secure-evidence.ts).
+   * When present it is the figure that governs qualification, and the three legacy fields above become
+   * display-only for that area. An area absent from the policy set has no secure block at all and its
+   * behaviour is unchanged in every respect.
+   */
+  secure?: SecureAreaEvidence;
 };
 
 /**
@@ -429,12 +437,30 @@ export function aggregateAreaEvidence(answered: AnsweredItem[]): AreaEvidence[] 
     if (item.isCorrect) bucket.uniqueCorrect += 1;
     tally.set(item.area, bucket);
   }
+  // Secure evidence is computed from the SAME stored rows, independently of the tally above, and only
+  // for opted-in areas. The aggregator re-verifies every mapping itself rather than trusting whatever
+  // issuance believed: role, evidence key, area agreement and integration shape are all checked again.
+  const secureByArea = aggregateSecureEvidence(
+    answered.map((item) => ({ bankQuestionId: item.bankQuestionId, area: item.area, isCorrect: item.isCorrect }))
+  );
   return Array.from(tally.entries()).map(([area, bucket]) => ({
     area,
     skillSlug: bucket.skillSlug,
     uniqueTotal: bucket.uniqueTotal,
     uniqueCorrect: bucket.uniqueCorrect,
-    evidenceScore: bucket.uniqueTotal > 0 ? Math.round((bucket.uniqueCorrect / bucket.uniqueTotal) * 100) : 0
+    evidenceScore: bucket.uniqueTotal > 0 ? Math.round((bucket.uniqueCorrect / bucket.uniqueTotal) * 100) : 0,
+    // A policy area with no resolvable secure rows still gets a zeroed block, never `undefined` — the
+    // absence of the block is what means "legacy area", and the two must not be confused.
+    secure: SECURE_EVIDENCE_AREAS.has(area)
+      ? secureByArea.get(area) ?? {
+          area,
+          secureUniqueTotal: 0,
+          secureUniqueCorrect: 0,
+          secureEvidenceScore: 0,
+          failedClosed: false,
+          failClosedReasons: []
+        }
+      : undefined
   }));
 }
 

@@ -125,17 +125,25 @@ function control(label: string, holds: boolean) {
 
 const byArea = (area: DrillArea) => DRILL_BANK.filter((q) => q.area === area);
 
-/** Per-area Debate depth, which audit G2 asks the mastery smokes to assert. SINGLE SOURCE OF TRUTH:
- *  a Global-G2 slice raises exactly ONE entry 9 -> 30, so one area can evolve without weakening the
- *  assertion on any other. Both the precondition block (24) and the G2 depth block (29k) read it. */
+/** DECLARED FINAL per-area Debate depth, which audit G2 asks the mastery smokes to assert. SINGLE
+ *  SOURCE OF TRUTH: historically a Global-G2 slice raised exactly ONE entry 9 -> 30, so one area can
+ *  evolve without weakening the assertion on any other. Both the precondition block (24) and the G2
+ *  depth block (29k) read it.
+ *
+ *  THIS MAP IS THE DECLARED FINAL DEPTH, NOT THE CURRENT AUTHORING STATE, and the two differ today.
+ *  constructive-speech is mid-authoring at 3 of its declared 30, so assertions 24 and 29k are
+ *  EXPECTED RED until that area reaches 30. That red is the point: an area below its declared depth
+ *  cannot reach the 5-distinct evidence floor, so it must never be treated as a servable mastery
+ *  area. Do NOT lower the 30 to match a partial bank — that would pre-authorize partial Constructive
+ *  mastery and let 3 items look complete. The number changes only by authoring the remaining items. */
 const DEBATE_AREA_DEPTH: Record<DrillArea, number> = {
   "claim-warrant-impact": 30,   // M14 Global G2 Slice 2
   "rebuttal": 30,   // M14 Global G2 Slice 1
   "evidence-evaluation": 30,   // M14 Global G2 Slice 3
-  "weighing": 30   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
+  "weighing": 30   // M14 Global G2 Slice 4 — completed the original four-area G2 depth target
 , "clash": 30
-, "signposting": 30
-, "constructive-speech": 30 };
+, "signposting": 30   // Signposting secure-evidence milestone — authored to depth
+, "constructive-speech": 30 };   // DECLARED FINAL depth; currently 3 authored, so 24/29k stay red until 30
 const right = (q: { correctAnswer: string }) => q.correctAnswer;
 const wrongFor = (q: { choices: string[]; correctAnswer: string }) => {
   const other = q.choices.find((c) => c !== q.correctAnswer);
@@ -193,7 +201,8 @@ async function main() {
     "32. no real PrismaClient was constructed — the stub is still the module's client");
 
   // ---- bank + floor preconditions ------------------------------------------------------------------
-  assert.equal(DRILL_AREAS.length, 5, "exactly five Debate concept-drill areas");
+  assert.equal(DRILL_AREAS.length, Object.keys(DEBATE_AREA_DEPTH).length,
+    "DEBATE_AREA_DEPTH declares a depth contract for every registered Debate area — it cannot drift from DRILL_AREAS. Registry coverage, not a remembered area count; education-migration-smoke owns the explicit governance pin on the number itself.");
   assert.equal(DEBATE_DRILL_REQUIRED_UNIQUE, 5, "the evidence floor is five distinct questions");
   assert.equal(DRILL_PASS_THRESHOLD, 70, "the threshold is unchanged at 70%");
   for (const area of DRILL_AREAS) {
@@ -819,7 +828,7 @@ async function main() {
   assert.ok('{ correctAnswer: q.correctAnswer }'.includes("correctAnswer"),
     "29h11. control: the leak scan matches an answer-key field in a response literal");
   const hosaBank = await import("../lib/hosa-medterm");
-  assert.equal(hosaBank.MEDTERM_BANK.length, 180, "29i. the HOSA bank holds 180 questions (M14 Phase 2a-2f took all six HOSA areas to 30 each; Debate and DECA banks are untouched and still 9 per area)");
+  assert.equal(hosaBank.MEDTERM_BANK.length, 180, "29i. the HOSA bank holds 180 questions (M14 Phase 2a-2f took all six HOSA areas to 30 each; at that time the Debate and DECA banks were untouched at 9 per area — both have since been taken to depth, and DEBATE_AREA_DEPTH above is the current Debate contract)");
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 180, "29j. with unique ids");
 
   // ---- 29k. PER-AREA DEPTH, which audit G2 explicitly asks the mastery smokes to assert ----------

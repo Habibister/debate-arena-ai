@@ -14,8 +14,21 @@
  * imports `lib/debate-drills` on the same basis.
  *
  * WHAT IT PROVES. That the release is REAL rather than list-shrink: an item can vanish from the held
- * array and still never reach a learner because some other filter excludes it. Every count is derived
- * from source, never hardcoded against a remembered number.
+ * array and still never reach a learner because some other filter excludes it.
+ *
+ * TWO KINDS OF NUMBER LIVE HERE, and the distinction is deliberate — do not collapse them.
+ * CURRENT WHOLE-BANK TOPOLOGY (bank size, global eligibility, full-session capacity, the shape of the
+ * exclusive-group registry) is DERIVED from source, so growing the bank or registering a later
+ * exclusive group cannot make this proof stale or false. EXPLICIT WG08 MILESTONE EXPECTATIONS stay
+ * literal wherever the literal value is itself what the acceptance proof protects: weighing depth 30,
+ * rebuttal session capacity 29, the rb-14/rb-15 pair displacing exactly one item, DECA eligibility 119
+ * of 120, and pi-26 as the only DECA hold. Those are facts about the B2.3 release and must fail loudly
+ * if they change. Never freeze current topology into a literal, and never soften a milestone literal
+ * into a derived expression — the first makes the suite rot, the second makes it prove nothing.
+ *
+ * The 2026-08-31 repair removed four frozen topology snapshots (bank size 150, eligibility 150,
+ * pairSurplus 1, full-session 149) and the whole-registry deepEqual, all of which were true only of
+ * the wg08-era bank and went stale when the Signposting area and the sp-26/sp-27 pair landed.
  */
 import assert from "node:assert/strict";
 
@@ -41,24 +54,28 @@ function main(): void {
 
   // ---- 3. individual eligibility, derived ---------------------------------------------------------
   const served = DRILL_BANK.filter((q) => !DEBATE_DRILL_HELD_IDS.includes(q.id));
-  assert.equal(DRILL_BANK.length, 150, "3a. control: the Debate bank is 150 items");
-  assert.equal(served.length, 150, "3b. global individual eligibility is 150 of 150 — nothing is held");
+  assert.ok(DRILL_BANK.length > 0, "3a. control: the Debate bank is non-empty, so 3b is not vacuous");
+  assert.equal(served.length, DRILL_BANK.length,
+    "3b. global individual eligibility is the WHOLE bank — the held set is empty, so nothing is filtered out. Derived from DRILL_BANK, never a remembered total, so later authoring cannot make this false.");
   const weighingBank = DRILL_BANK.filter((q) => q.area === "weighing");
   const weighingServed = served.filter((q) => q.area === "weighing");
   assert.equal(weighingBank.length, 30, "3c. control: weighing is a 30-item area");
   assert.equal(weighingServed.length, 30, "3d. weighing eligibility is 30 of 30");
 
   // ---- 4. SESSION CAPACITY IS NOT ELIGIBILITY -----------------------------------------------------
-  // The pair control still displaces exactly one item from any single session, so releasing wg-08
-  // moved clean-history capacity from 148 to 149 — NOT to 150. Derived, so a future hold or a future
-  // pair changes it honestly instead of failing arbitrarily.
-  const pairSurplus = DEBATE_DRILL_EXCLUSIVE_GROUPS.reduce((n, group) => {
-    const eligibleMembers = group.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id));
-    return n + Math.max(0, eligibleMembers.length - 1);
-  }, 0);
-  assert.equal(pairSurplus, 1, "4a. exactly one item is displaced per session by the measurement-dependent pair");
+  // HISTORICAL, SCOPED: at the B2.3 release the bank held one exclusive group, so releasing wg-08
+  // moved clean-history capacity from 148 to 149 — NOT to 150. Those figures describe that moment and
+  // are not asserted here. What IS asserted is the structural identity plus the wg08-owned fact about
+  // the rb pair, both of which survive a bank that has since grown and registered a second group.
+  const surplusFor = (group: ReadonlyArray<string>): number =>
+    Math.max(0, group.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id)).length - 1);
+  const pairSurplus = DEBATE_DRILL_EXCLUSIVE_GROUPS.reduce((n, group) => n + surplusFor(group), 0);
+  const rbPair = DEBATE_DRILL_EXCLUSIVE_GROUPS.find((group) => group.includes("rb-14"));
+  assert.ok(rbPair, "4a. the rb-14/rb-15 measurement-dependent pair is still registered");
+  assert.equal(surplusFor(rbPair!), 1,
+    "4a2. WG08 MILESTONE: the rb-14/rb-15 pair still displaces exactly one item from any single session");
   assert.equal(collapseExclusiveGroups([...served]).length, served.length - pairSurplus,
-    "4b. clean-history distinct session capacity is 149 — eligibility minus the displaced pair member, never 150");
+    "4b. clean-history distinct session capacity is eligibility minus every displaced pair member — never the full eligible count");
   const rebuttalServed = served.filter((q) => q.area === "rebuttal");
   assert.equal(collapseExclusiveGroups([...rebuttalServed]).length, 29,
     "4c. rebuttal capacity is still 29 — the pair lives in rebuttal, and releasing wg-08 did not change it");
@@ -71,15 +88,24 @@ function main(): void {
   assert.equal(focused.size, 30, "5b. and all 30 weighing items serve — the release did not over- or under-filter");
   const full = new Set(buildDrillSession(300).map((q) => q.id));
   assert.ok(full.has("wg-08"), "5c. wg-08 also serves on the unfocused full-bank path");
-  assert.equal(full.size, 149, "5d. a full-bank overdraw serves 149 distinct, matching derived capacity");
+  assert.equal(full.size, DRILL_BANK.length - pairSurplus,
+    "5d. a full-bank overdraw serves exactly eligibility minus the displaced pair members — derived, so bank growth changes the number honestly instead of failing this proof");
 
   // ---- 6. wg-29 was never captured by the wg-08 hold and is unaffected by its release ------------
   assert.ok(focused.has("wg-29"),
     "6. wg-29 (fair transfer — serving valid) still serves; releasing wg-08 did not disturb it");
 
   // ---- 7. the pair control survives the release --------------------------------------------------
-  assert.deepEqual(DEBATE_DRILL_EXCLUSIVE_GROUPS.map((g) => [...g]), [["rb-14", "rb-15"]],
-    "7a. the measurement-dependent pair control is intact");
+  // Order-robust membership, NOT a registry snapshot. This milestone proves the rb-14/rb-15 control
+  // survived the release; it must not also claim no later pair may exist (sp-26/sp-27 since has).
+  // Detection is not weakened: exactly one group carries rb-14, that group is exactly the pair, and
+  // rb-15 is in no other group — so the pair cannot be split, dropped or diluted unnoticed.
+  assert.equal(DEBATE_DRILL_EXCLUSIVE_GROUPS.filter((g) => g.includes("rb-14")).length, 1,
+    "7a. exactly one exclusive group carries rb-14");
+  assert.deepEqual([...rbPair!].slice().sort(), ["rb-14", "rb-15"],
+    "7a2. and that group is exactly the rb-14/rb-15 pair, in any order");
+  assert.equal(DEBATE_DRILL_EXCLUSIVE_GROUPS.filter((g) => g.includes("rb-15")).length, 1,
+    "7a3. rb-15 belongs to no other group — the pair control cannot be silently split");
   for (let i = 0; i < 200; i += 1) {
     const s = buildDrillSession(60, ["rebuttal"]);
     const both = s.some((q) => q.id === "rb-14") && s.some((q) => q.id === "rb-15");
@@ -93,10 +119,13 @@ function main(): void {
     "8b. DECA individual eligibility is unchanged at 119 of 120");
 
   console.log(
-    "wg-08 activation smoke passed: the Debate held set is empty, all 150 items are individually " +
-    "eligible, and wg-08 positively serves on both the focused and full-bank paths. Clean-history " +
-    "distinct session capacity is 149, NOT 150 — the rb-14/rb-15 pair control still displaces one " +
-    "item from every session, and rebuttal capacity stays 29. pi-26 remains held and DECA " +
+"wg-08 activation smoke passed: the Debate held set is empty, so all " + DRILL_BANK.length + " items " +
+    "currently in the bank are individually eligible, and wg-08 positively serves on both the " +
+    "focused and full-bank paths. Clean-history distinct session capacity is " +
+    (DRILL_BANK.length - pairSurplus) + ", below eligibility — " + pairSurplus + " item(s) are " +
+    "displaced by the measurement-dependent pair control(s), of which the rb-14/rb-15 pair " +
+    "displaces exactly one, and rebuttal capacity stays 29. Bank-size figures here are read from " +
+    "source at run time and describe the CURRENT bank, not the wg08-era bank. pi-26 remains held and DECA " +
     "eligibility is unchanged at 119/120. Imports are limited to lib/debate-drills and " +
     "lib/deca-drills, neither of which is an env carrier, so this proof is safe under the no-env " +
     "controls that forbid running debate-drills:smoke."

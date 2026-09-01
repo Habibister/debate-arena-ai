@@ -68,8 +68,15 @@ export async function POST(request: Request) {
       const perSkill = [];
       for (const area of evidence) {
         const meta = DRILL_AREAS.find((a) => a.id === area.area);
-        const qualifies = area.uniqueTotal >= DEBATE_DRILL_REQUIRED_UNIQUE;
-        const passed = qualifies && area.evidenceScore >= DRILL_PASS_THRESHOLD;
+        // SECURE-EVIDENCE AREAS use distinct evidence KEYS, not distinct question ids, and practice
+        // items contribute nothing. The floor and the threshold are unchanged — only what counts as a
+        // unit changed. Legacy areas (no `secure` block) keep the original two lines exactly.
+        const secure = area.secure;
+        const evidenceTotal = secure ? secure.secureUniqueTotal : area.uniqueTotal;
+        const evidenceCorrect = secure ? secure.secureUniqueCorrect : area.uniqueCorrect;
+        const scoreForEvidence = secure ? secure.secureEvidenceScore : area.evidenceScore;
+        const qualifies = evidenceTotal >= DEBATE_DRILL_REQUIRED_UNIQUE;
+        const passed = qualifies && scoreForEvidence >= DRILL_PASS_THRESHOLD;
         const evidenceStatus = !qualifies ? "insufficient-evidence" : passed ? "passing" : "below-threshold";
 
         let persistenceStatus: PersistenceStatus = "not-attempted";
@@ -84,14 +91,14 @@ export async function POST(request: Request) {
             const review = await recordPracticeOutcomeInTransaction(tx, {
               userId: user.id,
               skillId: skill.id,
-              scorePercent: area.evidenceScore,
+              scorePercent: scoreForEvidence,
               passed,
               now
             });
             const mastery = await recordDrillMasteryInTransaction(tx, {
               userId: user.id,
               skillSlug: area.skillSlug,
-              scorePercent: area.evidenceScore,
+              scorePercent: scoreForEvidence,
               passed,
               now,
               review
@@ -108,11 +115,11 @@ export async function POST(request: Request) {
           label: meta?.label ?? area.area,
           total: area.uniqueTotal,
           correct: area.uniqueCorrect,
-          scorePercent: area.evidenceScore,
-          uniqueTotal: area.uniqueTotal,
-          uniqueCorrect: area.uniqueCorrect,
+          scorePercent: scoreForEvidence,
+          uniqueTotal: evidenceTotal,
+          uniqueCorrect: evidenceCorrect,
           requiredUnique: DEBATE_DRILL_REQUIRED_UNIQUE,
-          evidenceScore: area.evidenceScore,
+          evidenceScore: scoreForEvidence,
           evidenceStatus,
           persistenceStatus,
           passed

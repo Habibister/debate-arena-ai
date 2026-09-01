@@ -45,6 +45,7 @@
     "coach-evidence:smoke": "tsx scripts/coach-evidence-smoke.ts",
     "clash-activation:smoke": "tsx scripts/seed-debate-clash-skill-smoke.ts",
     "wg08-activation:smoke": "tsx scripts/wg08-activation-smoke.ts",
+    "secure-evidence:smoke": "tsx scripts/secure-evidence-smoke.ts",
     "assessment:quality": "tsx scripts/assessment-quality-guard.ts",
     "assessment-quality:smoke": "tsx scripts/assessment-quality-guard-smoke.ts",
     "practice-session:smoke": "tsx scripts/practice-session-smoke.ts",

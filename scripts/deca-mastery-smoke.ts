@@ -852,7 +852,7 @@ async function main() {
     "26h16. control: the leak scan matches an answer-key field in a response literal");
 
   const hosaBank = await import("../lib/hosa-medterm");
-  assert.equal(hosaBank.MEDTERM_BANK.length, 180, "26i. the HOSA bank holds 180 questions (M14 Phase 2a-2f took all six HOSA areas to 30 each; Debate and DECA banks are untouched and still 9 per area)");
+  assert.equal(hosaBank.MEDTERM_BANK.length, 180, "26i. the HOSA bank holds 180 questions (M14 Phase 2a-2f took all six HOSA areas to 30 each; at that time the Debate and DECA banks were still untouched at 9 per area — both have since been taken to depth, so that clause is HISTORICAL and describes the M14 Phase 2 moment, not the current banks)");
   assert.equal(new Set(hosaBank.MEDTERM_BANK.map((q) => q.id)).size, 180, "26j. with unique ids");
 
   // ---- 26k. PER-AREA DEPTH, which audit G2 explicitly asks the mastery smokes to assert ----------

@@ -25,25 +25,47 @@ import { retainedExposureWhere } from "../lib/practice-session";
 async function main() {
   // Bank integrity.
   // EXACT composition, not a `>= 32` floor. A floor cannot notice a bank that was rewritten in
-  // place, and audit G2 asks for real per-area depth assertions. AREA_DEPTH is the single source of
-  // truth: a Global-G2 slice raises exactly ONE entry 9 -> 30 and every assertion below follows.
+  // place, and audit G2 asks for real per-area depth assertions. HISTORICAL, SCOPED: through the
+  // Global-G2 slices, one slice raised exactly ONE AREA_DEPTH entry 9 -> 30.
+  //
+  // THREE POPULATIONS, NEVER CONFLATED. This suite went stale once because "bank size", "declared
+  // depth" and "authorised depth" were used interchangeably. They are three separate quantities and
+  // every assertion below names the one it tests:
+  //
+  //   DECLARED_FINAL     — AREA_DEPTH is the COMPLETION TARGET for every registered area. Its sum is
+  //                        the finished architecture. It is NOT a claim about what is authored today.
+  //   PHYSICAL_CURRENT   — what DRILL_BANK actually holds right now. Always derived from DRILL_BANK,
+  //                        never pinned, because Constructive authoring moves it on every batch.
+  //   AUTHORIZED_CURRENT — the secure surface: the areas EXPANDED_AREAS authorises, at their declared
+  //                        depth. Signposting and Constructive-Speech are registered and authored (or
+  //                        being authored) but deliberately NOT authorised, so they are excluded.
+  //
+  // Never "fix" a red by moving an assertion to a different population. A pending area sitting below
+  // its declared depth is the correct state, not a regression.
   const AREA_DEPTH: Record<DrillArea, number> = {
     "claim-warrant-impact": 30,   // M14 Global G2 Slice 2
     "rebuttal": 30,   // M14 Global G2 Slice 1
     "evidence-evaluation": 30,   // M14 Global G2 Slice 3
-    "weighing": 30,   // M14 Global G2 Slice 4 — Debate depth is now COMPLETE at 4 x 30
+    "weighing": 30,   // M14 Global G2 Slice 4 — completed the original four-area G2 depth target
     "clash": 30,   // Clash measurable-practice closure — authored at the G2 depth target from day one
     "signposting": 30,   // Signposting + Constructive-Speech secure-evidence milestone
     "constructive-speech": 30   // same milestone; both authored at the established 30 depth
   };
-  const EXPECTED_TOTAL = Object.values(AREA_DEPTH).reduce((a, b) => a + b, 0);
-  // Slice 4 completes Debate depth. This parity pair does NOT replace the exact per-area assertions
-  // below — those stay stronger. It exists so a future area cannot silently regress under 30.
+  const DECLARED_FINAL_TOTAL = Object.values(AREA_DEPTH).reduce((a, b) => a + b, 0);
+  // The areas registered but not yet authorised. Membership here is a deliberate governance state:
+  // an area leaves this list only by its authorization/release event, never because its bank filled.
+  const PENDING_AREAS: ReadonlyArray<DrillArea> = ["signposting", "constructive-speech"];
+  // DECLARED_FINAL. Every registered area declares the same 30-item completion target, so a future
+  // area cannot silently be declared shallower. Says nothing about what is authored today.
   assert.ok(Object.values(AREA_DEPTH).every((d) => d === 30),
-    "G0-2c. every Debate area is at the G2 depth target of 30 — Debate depth is complete");
-  assert.equal(EXPECTED_TOTAL, 150, "G0-2d. control: five Debate areas x 30 = 150");
-  assert.equal(DRILL_BANK.length, EXPECTED_TOTAL, `G0-1. the Debate bank holds exactly ${EXPECTED_TOTAL} questions`);
-  assert.equal(new Set(DRILL_BANK.map((q) => q.id)).size, EXPECTED_TOTAL, "G0-1b. with unique ids");
+    "G0-2c. DECLARED_FINAL: every registered Debate area declares the 30-item completion target");
+  assert.equal(DECLARED_FINAL_TOTAL, Object.keys(AREA_DEPTH).length * 30,
+    `G0-2d. DECLARED_FINAL: the completed architecture is ${DECLARED_FINAL_TOTAL} items — a COMPLETION TARGET, not current authored completeness`);
+  // PHYSICAL_CURRENT. Derived from DRILL_BANK, never a literal. What is invariant is the RELATION:
+  // the bank may grow toward the declared architecture but never past it.
+  assert.ok(DRILL_BANK.length <= DECLARED_FINAL_TOTAL,
+    `G0-1. PHYSICAL_CURRENT: the bank holds ${DRILL_BANK.length} items, never more than the ${DECLARED_FINAL_TOTAL} the declared architecture allows`);
+  assert.equal(new Set(DRILL_BANK.map((q) => q.id)).size, DRILL_BANK.length, "G0-1b. with unique ids");
   const ids = new Set<string>();
   const areaCounts = new Map<DrillArea, number>();
   for (const q of DRILL_BANK) {
@@ -56,14 +78,27 @@ async function main() {
     areaCounts.set(q.area, (areaCounts.get(q.area) ?? 0) + 1);
   }
 
-  // Every area is represented and maps to a skill slug.
+  // Every area is represented and maps to a skill slug — but per-area depth splits by population.
+  // An AUTHORIZED area must sit EXACTLY at its declared depth; that is the secure invariant. A
+  // PENDING area is mid-authoring: bounded by its declared depth and never over it, but NOT required
+  // to have reached it. Constructive-Speech is deliberately below target. Turning that into an
+  // equality would either fail on every authoring batch or, if "fixed" by lowering the target,
+  // pre-authorize partial mastery — both are forbidden.
   for (const area of DRILL_AREAS) {
-    assert.equal(areaCounts.get(area.id) ?? 0, AREA_DEPTH[area.id],
-      `G0-2. area ${area.id} holds exactly ${AREA_DEPTH[area.id]} questions`);
+    const authored = areaCounts.get(area.id) ?? 0;
+    if (PENDING_AREAS.includes(area.id)) {
+      assert.ok(authored > 0 && authored <= AREA_DEPTH[area.id],
+        `G0-2p. PENDING area ${area.id} holds ${authored} of its declared ${AREA_DEPTH[area.id]} — authored but not authorised, and never over target`);
+    } else {
+      assert.equal(authored, AREA_DEPTH[area.id],
+        `G0-2. AUTHORIZED_CURRENT: area ${area.id} holds exactly ${AREA_DEPTH[area.id]} questions`);
+    }
     assert.ok(area.skillSlug.startsWith("debate-"), `area ${area.id} must map to a debate skill`);
   }
   assert.equal(DRILL_AREAS.length, Object.keys(AREA_DEPTH).length,
-    "G0-2b. AREA_DEPTH covers every declared area — it cannot drift from the bank");
+    "G0-2b. AREA_DEPTH covers every declared area — it cannot drift from the registry");
+  assert.ok(PENDING_AREAS.every((a) => DRILL_AREAS.some((d) => d.id === a)),
+    "G0-2p2. every pending area is a registered area — the pending list cannot name a phantom");
 
   // Session builder: distinct within a session that fits the bank; focused filter works.
   const s = buildDrillSession(10);
@@ -83,15 +118,26 @@ async function main() {
   const q0Skill = mixed.perSkill.find((sk) => sk.area === q0.area)!;
   assert.ok(q0Skill.scorePercent < 100, "a wrong answer lowers that skill's score");
 
-  // Every area's bank must be able to REACH the evidence floor, or that skill could never be recorded.
+  // AUTHORIZED_CURRENT: every AUTHORISED area's bank must be able to REACH the evidence floor, or
+  // that skill could never be recorded. A PENDING area mid-authoring may still sit below the floor;
+  // that is the correct state, and it means buildDrillEvidence returns insufficient-evidence for it,
+  // which is exactly what "no fake progress" requires. Such an area is RECORDED below, never skipped
+  // silently, and an AUTHORISED area below the floor remains a hard failure.
+  const pendingBelowFloor: DrillArea[] = [];
   for (const area of DRILL_AREAS) {
     const pool = DRILL_BANK.filter((q) => q.area === area.id);
+    if (PENDING_AREAS.includes(area.id) && pool.length < DEBATE_DRILL_REQUIRED_UNIQUE) {
+      pendingBelowFloor.push(area.id);
+      continue;
+    }
     assert.ok(pool.length >= DEBATE_DRILL_REQUIRED_UNIQUE,
       `area ${area.id} has fewer than ${DEBATE_DRILL_REQUIRED_UNIQUE} distinct questions, so it could never qualify`);
     const ev = buildDrillEvidence(pool.slice(0, DEBATE_DRILL_REQUIRED_UNIQUE).map((q) => ({ id: q.id, selected: q.correctAnswer })));
     assert.equal(ev[0]?.evidenceStatus, "passing", `area ${area.id} reaches passing evidence at the floor`);
     assert.equal(ev[0]?.skillSlug, area.skillSlug, `area ${area.id} maps to ${area.skillSlug}`);
   }
+  assert.ok(pendingBelowFloor.every((a) => PENDING_AREAS.includes(a)),
+    `only a PENDING area may sit below the evidence floor — below-floor areas were [${pendingBelowFloor.join(", ")}] and an authorised area among them is a hard failure`);
 
   // REGRESSION: the two scores the pre-M13E1E contract conflated must stay separate.
   const w = (q: (typeof DRILL_BANK)[number]) => q.choices.find((c) => c !== q.correctAnswer)!;
@@ -457,11 +503,26 @@ async function main() {
     const eligibleMembers = group.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id));
     return n + Math.max(0, eligibleMembers.length - 1);
   }, 0);
-  assert.equal(globalEligible, 150, "B1-3a. global individual eligibility is 150 of 150 — nothing is held");
-  assert.equal(pairSurplus, 1, "B1-3b. exactly one item is displaced per session by the measurement-dependent pair");
+  assert.equal(globalEligible, DRILL_BANK.length,
+    "B1-3a. PHYSICAL_CURRENT: global individual eligibility is the WHOLE bank — the held set is empty, so nothing is filtered out. Derived from DRILL_BANK, never a remembered total.");
+  // GLOBAL PHYSICAL surplus counts every registered group. AUTHORIZED-POOL surplus counts only the
+  // groups whose members all sit in authorised areas — today just rb-14/rb-15, because sp-26/sp-27
+  // live in the pending Signposting area. One undifferentiated pairSurplus is exactly what went
+  // stale when the second group landed, so the two are asserted separately.
+  const areaOf = (id: string) => DRILL_BANK.find((q) => q.id === id)?.area;
+  const authorizedPairSurplus = DEBATE_DRILL_EXCLUSIVE_GROUPS.reduce((n, group) => {
+    const areas = group.map(areaOf);
+    if (areas.some((a) => a === undefined || PENDING_AREAS.includes(a))) return n;
+    const eligibleMembers = group.filter((id) => !DEBATE_DRILL_HELD_IDS.includes(id));
+    return n + Math.max(0, eligibleMembers.length - 1);
+  }, 0);
+  assert.equal(authorizedPairSurplus, 1,
+    "B1-3b. AUTHORIZED_CURRENT: exactly one item is displaced per session inside the authorised legacy pool — the rb-14/rb-15 pair. sp-26/sp-27 displace one too, but Signposting is pending authorisation, so they count only in the global figure.");
+  assert.ok(pairSurplus >= authorizedPairSurplus,
+    "B1-3b2. GLOBAL PHYSICAL surplus covers every registered group, so it can only meet or exceed the authorised-pool figure");
   const b1Full = buildDrillSession(300);
   assert.equal(new Set(b1Full.map((q) => q.id)).size, globalEligible - pairSurplus,
-    "B1-3. a full-bank overdraw serves 149 distinct — 150 eligible minus the one pair member excluded from any single session (NOT a missing item). Releasing wg-08 moved this from 148 to 149, never to 150: the pair control still displaces one.");
+    "B1-3. a full-bank overdraw serves exactly eligibility minus one member of each measurement-dependent pair (NOT a missing item). Both sides of this comparison are derived, so bank growth and later pairs move the number honestly. HISTORICAL, SCOPED: at the B2.3 release the figures were 149 of 150 eligible, up from 148, with one pair registered.");
   assert.ok(b1Full.every((q) => !DEBATE_DRILL_HELD_IDS.includes(q.id)),
     "B1-4. no held id is ever served, even at full-bank overdraw");
   const b1Rb = buildDrillSession(60, ["rebuttal"]);
@@ -618,9 +679,21 @@ async function main() {
   const EXPANDED_AREAS: readonly DrillArea[] =
     ["rebuttal", "claim-warrant-impact", "evidence-evaluation", "weighing", "clash"];   // G2 Slices 1-4, then the Clash closure
   assert.deepEqual([...EXPANDED_AREAS], ["rebuttal", "claim-warrant-impact", "evidence-evaluation", "weighing", "clash"],
-    "G0-6. all FIVE Debate areas are authorised — the G2 four plus clash, authorised in the same commit as its reviewed items");
+    "G0-6. AUTHORIZED_CURRENT: exactly these five areas are authorised — the G2 four plus clash, each authorised in the same commit as its reviewed items. Signposting and Constructive-Speech are registered but PENDING.");
   assert.equal(EXPANDED_AREAS.length, 5,
-    "G0-6b. every recognised Debate area has its own reviewed addition event — there is no sixth area to authorise");
+    "G0-6b. AUTHORIZED_CURRENT: five areas are authorised. Signposting and Constructive-Speech ARE registered and authored, and are deliberately NOT authorised — their authorization is deferred to the combined completion gate. Absence from this list is a PENDING state, not a missing release step and not an accidental omission.");
+  // AUTHORIZED_CURRENT total, derived from the authorization structures themselves — never pinned to
+  // a bank size. The physical bank holding more objects than this must NOT make the secure layer
+  // pretend the pending objects are authorised.
+  const AUTHORIZED_CURRENT_TOTAL = EXPANDED_AREAS.reduce((n, a) => n + AREA_DEPTH[a], 0);
+  assert.equal(AUTHORIZED_CURRENT_TOTAL, EXPANDED_AREAS.length * 30,
+    `G0-6c. AUTHORIZED_CURRENT: the authorised secure surface is ${AUTHORIZED_CURRENT_TOTAL} — the authorised areas at their declared depth, derived from EXPANDED_AREAS and AREA_DEPTH`);
+  assert.ok(AUTHORIZED_CURRENT_TOTAL < DECLARED_FINAL_TOTAL,
+    `G0-6d. the authorised surface (${AUTHORIZED_CURRENT_TOTAL}) is strictly smaller than the declared architecture (${DECLARED_FINAL_TOTAL}) while any area is pending`);
+  assert.deepEqual(
+    DRILL_AREAS.map((a) => a.id).filter((a) => !EXPANDED_AREAS.includes(a)).sort(),
+    [...PENDING_AREAS].slice().sort(),
+    "G0-6e. the pending set is exactly the registered areas minus the authorised ones — PENDING_AREAS and EXPANDED_AREAS cannot drift apart, and an area joins the authorised list only by a deliberate release event");
 
   /** THE single predicate deciding whether an added item literal is permitted. Real additions and
    *  every control below run through THIS function; a control with its own regex would prove nothing
@@ -643,11 +716,37 @@ async function main() {
   };
 
   // (d) Real additions, judged by that predicate. Slice 0 adds none, by design.
+  //
+  // PENDING-AREA ITEMS ARE PHYSICALLY PRESENT AND DELIBERATELY UNAUTHORISED. Signposting (sp-) and
+  // Constructive-Speech (cs-) were authored after the immutable baseline, so they show up as
+  // additions — but neither area has had its authorization event, so judgeAddition must still
+  // REJECT them. This split lets the freeze tell KNOWN-BUT-PENDING from UNKNOWN. It is a
+  // validation-source distinction only: nothing here makes a pending item servable, authorised or
+  // mastery-eligible, and production serving behaviour is untouched. Genuinely unknown prefixes are
+  // still rejected, and a pending id outside its area's declared range is still rejected.
+  const PENDING_PREFIX_AREA: ReadonlyArray<{ idPrefix: string; area: DrillArea }> = [
+    { idPrefix: "sp", area: "signposting" },
+    { idPrefix: "cs", area: "constructive-speech" }
+  ];
+  const isPendingId = (id: string) =>
+    PENDING_PREFIX_AREA.some((e) => new RegExp(`^${e.idPrefix}-\\d{2}$`).test(id));
   const addedIds = currentItems.map(idOf).filter((id) => !parentOrder.includes(id));
-  for (const id of addedIds) {
+  const pendingAdded = addedIds.filter(isPendingId);
+  const authorizedAdded = addedIds.filter((id) => !isPendingId(id));
+  assert.equal(authorizedAdded.length + pendingAdded.length, addedIds.length,
+    "G0-7p0. control: every addition is classified as either an authorised addition or a known pending-area item — none is left unclassified");
+  for (const id of authorizedAdded) {
     const v = judgeAddition(id, currentById.get(id) ?? "");
-    assert.ok(v.ok, `G0-7. every added Debate item must be an authorised addition — ${v.reason}`);
+    assert.ok(v.ok, `G0-7. every added Debate item outside a pending area must be an authorised addition — ${v.reason}`);
   }
+  // The load-bearing half: a pending item must FAIL the authorisation predicate. If one ever passes,
+  // an area was authorised without a release event.
+  for (const id of pendingAdded) {
+    const v = judgeAddition(id, currentById.get(id) ?? "");
+    assert.ok(!v.ok, `G0-7p. pending-area item ${id} must NOT be an authorised addition — got "${v.reason}"`);
+  }
+  assert.ok(pendingAdded.length > 0,
+    "G0-7p0b. control: the pending loop ran over real items, not zero");
   // G0-7b was "Slice 0 added nothing", then "exactly rb-10..rb-30" at Slice 1. Each slice EVOLVES it
   // into a wider exact set — it is never relaxed into "any recognised prefix above 09".
   const SLICE_ADDITIONS: ReadonlyArray<{ idPrefix: string; area: DrillArea }> = [
@@ -663,11 +762,12 @@ async function main() {
   ];
   assert.equal(EXPECTED_ADDED.length, 114,
     "G0-7b0. control: four reviewed G2 slices (84) plus the whole reviewed clash area (30) means exactly 114 expected ids");
-  assert.deepEqual([...addedIds].sort(), [...EXPECTED_ADDED].sort(),
-    "G0-7b. the additions are exactly rb/cw/ev/wg 10..30 plus cl-01..cl-30 — no other id was added");
-  assert.equal(addedIds.length, 114, "G0-7b2. exactly 114 additions exist relative to the immutable baseline");
+  assert.deepEqual([...authorizedAdded].sort(), [...EXPECTED_ADDED].sort(),
+    "G0-7b. AUTHORIZED_CURRENT: the authorised additions are exactly rb/cw/ev/wg 10..30 plus cl-01..cl-30 — no other authorised id was added");
+  assert.equal(authorizedAdded.length, 114,
+    "G0-7b2. exactly 114 AUTHORISED additions exist relative to the immutable baseline — pending-area items are counted separately and are not authorised");
   const ADDITION_EVENTS = [...SLICE_ADDITIONS, { idPrefix: "cl", area: "clash" as DrillArea }];
-  for (const id of addedIds) {
+  for (const id of authorizedAdded) {
     const slice = ADDITION_EVENTS.find((a) => id.startsWith(`${a.idPrefix}-`));
     assert.ok(slice, `G0-7b3. every addition belongs to a reviewed addition event — got ${id}`);
     assert.ok(new RegExp(`area: "${slice!.area}"`).test(currentById.get(id) ?? ""),
@@ -677,27 +777,46 @@ async function main() {
   // would read `for (const p of [])` and prove nothing. It is REPLACED, not deleted. What it
   // protected — that no addition exists outside the four exact 10..30 ranges — is asserted directly,
   // over a set proven non-empty on the very next line.
-  for (const id of addedIds) {
+  for (const id of authorizedAdded) {
     assert.ok(/^(rb|cw|ev|wg)-(1[0-9]|2[0-9]|30)$/.test(id) || /^cl-(0[1-9]|1[0-9]|2[0-9]|30)$/.test(id),
-      `G0-7b4. every addition sits inside a reviewed range — the G2 four at 10..30 or clash at 01..30 — got ${id}`);
+      `G0-7b4. every authorised addition sits inside a reviewed range — the G2 four at 10..30 or clash at 01..30 — got ${id}`);
   }
-  assert.equal(addedIds.length, 114, "G0-7b4b. control: that loop ran over 114 real additions, not zero");
+  assert.equal(authorizedAdded.length, 114, "G0-7b4b. control: that loop ran over 114 real authorised additions, not zero");
+  // PENDING population, bounded rather than pinned. Signposting is authored to its full declared
+  // depth; Constructive-Speech is mid-authoring, so its count is checked against the declared target
+  // as a BOUND. Pinning it would turn every authoring batch into a fake regression.
+  for (const id of pendingAdded) {
+    const entry = PENDING_PREFIX_AREA.find((e) => id.startsWith(`${e.idPrefix}-`))!;
+    assert.ok(/^(0[1-9]|1[0-9]|2[0-9]|30)$/.test(id.slice(entry.idPrefix.length + 1)),
+      `G0-7p2. pending id ${id} sits inside its area's declared 01..30 range`);
+    assert.ok(new RegExp(`area: "${entry.area}"`).test(currentById.get(id) ?? ""),
+      `G0-7p3. pending id ${id} declares the ${entry.area} area its prefix claims`);
+  }
+  assert.equal(pendingAdded.filter((id) => id.startsWith("sp-")).length, AREA_DEPTH.signposting,
+    "G0-7p4. Signposting is authored to its full declared depth — bank accepted, authorisation still PENDING and mastery NOT live");
+  const csAuthored = pendingAdded.filter((id) => id.startsWith("cs-")).length;
+  assert.ok(csAuthored > 0 && csAuthored <= AREA_DEPTH["constructive-speech"],
+    `G0-7p5. Constructive-Speech is mid-authoring at ${csAuthored} of its declared ${AREA_DEPTH["constructive-speech"]} — bounded, never pinned, so an authoring batch is not a regression`);
   for (const outside of ["rb-31", "wg-31", "wg-09", "xx-10"]) {
     assert.ok(!EXPECTED_ADDED.includes(outside),
       `G0-7b4c. control: ${outside} is outside the expected set, so G0-7b would reject it`);
   }
-  control("every real addition is judged permitted by the same predicate the controls use",
-    addedIds.length === 114 && addedIds.every((id) => judgeAddition(id, currentById.get(id) ?? "").ok));
+  control("every authorised addition is judged permitted, and every pending-area item is judged NOT authorised, by the same predicate the controls use",
+    authorizedAdded.length === 114
+      && authorizedAdded.every((id) => judgeAddition(id, currentById.get(id) ?? "").ok)
+      && pendingAdded.length > 0
+      && pendingAdded.every((id) => !judgeAddition(id, currentById.get(id) ?? "").ok));
 
   // ---- THE Slice 4 integrity control ------------------------------------------------------------
   // Now that every area is authorised, judgeAddition ALONE no longer bounds any Debate area: a
-  // structurally valid wg-31 passes every stage of the predicate. The exact 84-id set is therefore
+  // structurally valid wg-31 passes every stage of the predicate. The exact 114-id set is therefore
   // the FINAL bound on authorised Debate bank growth. NEVER relax G0-7b into "any known prefix
-  // above 09" — that would remove the last limit on this bank.
+  // above 09" — that would remove the last limit on this bank. Note the bound applies to the
+  // AUTHORISED population; pending sp-/cs- items are bounded separately by G0-7p2..G0-7p5.
   const beyond = judgeAddition("wg-31", '{ id: "wg-31", area: "weighing", question: "x" }');
   assert.ok(beyond.ok, `G0-7b5. control: with weighing authorised the predicate alone ACCEPTS wg-31 — ${beyond.reason}`);
-  assert.ok(!EXPECTED_ADDED.includes("wg-31"), "G0-7b5b. and only the exact 84-id set stops it");
-  assert.ok(!addedIds.includes("wg-31"), "G0-7b5c. so no such item exists in the bank today");
+  assert.ok(!EXPECTED_ADDED.includes("wg-31"), "G0-7b5b. and only the exact 114-id set stops it");
+  assert.ok(!authorizedAdded.includes("wg-31"), "G0-7b5c. so no such item exists in the bank today");
   control("G0-7b's exact 114-id set is the CURRENT bound on Debate bank growth — a new id needs a new reviewed event",
     beyond.ok && !EXPECTED_ADDED.includes("wg-31"));
 
@@ -771,8 +890,21 @@ async function main() {
     control(`${area} is authorised: ${idPrefix}-10 passes with no override`, v.ok);
   }
   assert.equal(PREFIX_AREA.filter((a) => EXPANDED_AREAS.includes(a.area)).length, 5,
-    "G0-C2b2. control: all five Debate areas are authorised, so that loop is not vacuous");
-  assert.equal(PREFIX_AREA.length, 5, "G0-C2a. control: exactly five Debate prefix->area mappings — the G2 four plus clash");
+    "G0-C2b2. control: all five AUTHORISED Debate areas are accepted under default authorisation, so that loop is not vacuous");
+  assert.equal(PREFIX_AREA.length, 5,
+    "G0-C2a. control: exactly five AUTHORISED Debate prefix->area mappings — the G2 four plus clash. sp and cs are absent BY DESIGN: they live in PENDING_PREFIX_AREA until their authorization event.");
+  // Negative controls for the pending areas. These are the assertions that keep the pending
+  // distinction from becoming a back door: a known-but-pending prefix must still be REJECTED under
+  // default authorisation, exactly like an unknown one, and for the pending reason.
+  for (const { idPrefix, area } of PENDING_PREFIX_AREA) {
+    const v = judgeAddition(`${idPrefix}-10`, `{ id: "${idPrefix}-10", area: "${area}", question: "x" }`);
+    assert.ok(!v.ok, `G0-C2c. control: ${idPrefix}-10 is REJECTED under default authorisation — ${area} is pending, not authorised`);
+    control(`${area} is NOT authorised: ${idPrefix}-10 is rejected with no override`, !v.ok);
+  }
+  assert.equal(PENDING_PREFIX_AREA.filter((e) => EXPANDED_AREAS.includes(e.area)).length, 0,
+    "G0-C2c2. control: no pending prefix names an authorised area — the two populations are disjoint");
+  assert.equal(PREFIX_AREA.filter((a) => PENDING_PREFIX_AREA.some((e) => e.idPrefix === a.idPrefix)).length, 0,
+    "G0-C2c3. control: no pending prefix has leaked into the authorisation prefix map");
 
   // Unknown / near-miss prefixes are rejected.
   for (const unknown of ["xx-10", "zz-10", "rbb-10", "r-10", "drill-10"]) {
@@ -827,7 +959,7 @@ async function main() {
   assert.equal(itemLines('export const DRILL_BANK = [\n{ id: "x-01", area: "rebuttal" },\nexport type X').length, 1,
     "G0-C7. control: the item extractor really parses item literals");
 
-  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, and every area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. all ${EXPANDED_AREAS.length} of ${PREFIX_AREA.length} areas are now authorised (${EXPANDED_AREAS.join(", ")}), and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is 5 x 30. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 (a waiver is not human review), and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. B1 (2026-08-25) then repaired three adjudicated clash defects (cl-08 rekeyed to direct clash; cl-10 and cl-30 lost their second-correct-answer distractors) and withheld seven valid but untaught items from serving — the rebuttal taxonomy six (rb-02, rb-13, rb-14, rb-15, rb-16, rb-30) and weighing-framework item wg-08, whose hold the final acceptance gate ordered after overturning an earlier fair-transfer ruling, while wg-29's fair-transfer status was independently upheld and it still serves. B2.1 (2026-08-25) then published the answer-types teaching and released rb-02, rb-13, rb-16 and rb-30 after each passed its closed-corpus reactivation gate on the final lesson bytes (AI-authored, independently AI-reviewed, owner content-review waiver 2026-08-25 — a waiver is not human review); B2.2 (2026-08-26) then published the turn-mechanics teaching and released rb-14 and rb-15, each adjudicated INDEPENDENTLY on the taught lesson (AI-authored, independently AI-reviewed, owner content-review waiver — a waiver is not human review); B2.3 then published the weighing-standard teaching and released wg-08, the last Debate hold, after a blind website-only fairness review solved the item from learner-visible teaching alone (AI-authored, independently AI-reviewed, owner content-review waiver — a waiver is not human review). The bank keeps all 150 items. TWO DIFFERENT NUMBERS now describe serving and they must not be collapsed: GLOBAL INDIVIDUAL ELIGIBILITY is Debate ${DRILL_BANK.length - DEBATE_DRILL_HELD_IDS.length} of ${DRILL_BANK.length} (rebuttal 30 of 30, weighing 30 of 30) with NOTHING held in Debate after the B2.3 wg-08 release, and pi-26 the only DECA hold (DECA 119 of 120, PI 29 of 30) — every one of those items may be served; CLEAN-HISTORY DISTINCT SESSION CAPACITY is Debate ${globalEligible - pairSurplus} and rebuttal 29, because rb-14 and rb-15 are measurement-dependent and may never co-serve, so exactly one of them appears in any single valid session. A learner's own fresh-session pool can be smaller still where retained-exposure sibling exclusion applies. Neither number is a defect in the other: raising session capacity by co-serving the pair would be a measurement-validity regression. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No recognised Debate area remains unauthorised, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
+  console.log(`Debate-drills smoke passed: ${DRILL_BANK.length} questions across ${DRILL_AREAS.length} areas at the exact per-area depths AREA_DEPTH declares, integrity + focused sessions + per-skill grading consistent, every AUTHORISED area can reach the ${DEBATE_DRILL_REQUIRED_UNIQUE}-distinct-question evidence floor while repeats count once (a PENDING area below the floor cannot qualify yet, by design) (bypass 76%->20%, honest padding 85%->67%). CONTENT INTEGRITY: the bank is additive-only against the IMMUTABLE commit ${PRE_G2_EXPANSION.slice(0, 8)} — the P0.1 assessment-integrity repair deliberately edited ${P01_REPAIRED_ORIGINALS.size} of the 36 originals (each proven DIFFERENT from the parent, a silent revert fails), the other originals are byte-identical, order is preserved, and additions are permitted only for an explicitly authorised area. ${EXPANDED_AREAS.length} of ${DRILL_AREAS.length} registered areas are AUTHORISED (${EXPANDED_AREAS.join(", ")}); the rest are registered and authored but PENDING authorisation, and the additions are exactly the 114 reviewed items: the 84 G2-slice additions rb-10..rb-30 (Slice 1), cw-10..cw-30 (Slice 2), ev-10..ev-30 (Slice 3, whose ev-27 was replaced before approval to stay inside the curriculum) and wg-10..wg-30 (Slice 4, whose wg-24 was refined before approval to remove a magnitude/probability ambiguity), all four AI-authored and HUMAN-REVIEWED AND APPROVED 2026-08-11 as originally shipped, plus the whole clash area cl-01..cl-30 (AI-assisted, submitted for the owner review gate) — Debate depth is declared at 30 per area across all seven registered areas; signposting is authored to depth and constructive-speech is mid-authoring, so the bank has not yet reached that declared total. The P0.1 repair then edited 125 Debate items for answer-form leakage; every edited item is AI-repaired and independently AI-reviewed with external human content review waived by the project owner 2026-08-25 (a waiver is not human review), and scripts/assessment-quality-guard.ts now enforces the restored answer-form property. B1 (2026-08-25) then repaired three adjudicated clash defects (cl-08 rekeyed to direct clash; cl-10 and cl-30 lost their second-correct-answer distractors) and withheld seven valid but untaught items from serving — the rebuttal taxonomy six (rb-02, rb-13, rb-14, rb-15, rb-16, rb-30) and weighing-framework item wg-08, whose hold the final acceptance gate ordered after overturning an earlier fair-transfer ruling, while wg-29's fair-transfer status was independently upheld and it still serves. B2.1 (2026-08-25) then published the answer-types teaching and released rb-02, rb-13, rb-16 and rb-30 after each passed its closed-corpus reactivation gate on the final lesson bytes (AI-authored, independently AI-reviewed, owner content-review waiver 2026-08-25 — a waiver is not human review); B2.2 (2026-08-26) then published the turn-mechanics teaching and released rb-14 and rb-15, each adjudicated INDEPENDENTLY on the taught lesson (AI-authored, independently AI-reviewed, owner content-review waiver — a waiver is not human review); B2.3 then published the weighing-standard teaching and released wg-08, the last Debate hold, after a blind website-only fairness review solved the item from learner-visible teaching alone (AI-authored, independently AI-reviewed, owner content-review waiver — a waiver is not human review). The bank keeps every item it has ever held — releases never delete. TWO DIFFERENT NUMBERS now describe serving and they must not be collapsed: GLOBAL INDIVIDUAL ELIGIBILITY is Debate ${DRILL_BANK.length - DEBATE_DRILL_HELD_IDS.length} of ${DRILL_BANK.length} (rebuttal 30 of 30, weighing 30 of 30) with NOTHING held in Debate after the B2.3 wg-08 release, and pi-26 the only DECA hold (DECA 119 of 120, PI 29 of 30) — every one of those items may be served; CLEAN-HISTORY DISTINCT SESSION CAPACITY is Debate ${globalEligible - pairSurplus} and rebuttal 29, because rb-14 and rb-15 are measurement-dependent and may never co-serve, so exactly one of them appears in any single valid session. A learner's own fresh-session pool can be smaller still where retained-exposure sibling exclusion applies. Neither number is a defect in the other: raising session capacity by co-serving the pair would be a measurement-validity regression. Slice 4's append after wg-09 exercised the terminal-comma boundary for real in pre-P0.1 history (back then wg-09's raw line differed from the immutable original by exactly one comma and normalised to identical content); the P0.1 repair then deliberately rewrote wg-09's content, so its divergence from the immutable original is now the sanctioned, protected state — the two-sided freeze fails a silent revert. No AUTHORISED Debate area remains unexpanded, so that stage is now probed with a TEST-ONLY withheld set rather than a vacuous loop, and the exact 114-id set is the CURRENT bound on Debate bank growth — a structurally valid wg-31 passes the predicate and is stopped only by G0-7b. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

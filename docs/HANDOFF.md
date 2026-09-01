@@ -43,8 +43,9 @@ below the boundary.
   substantial lessons feeding the same area — Answer Types (245 words) and Turn Mechanics (696) —
   claim no skill and are therefore invisible to remediation, so a learner who misses their material is
   routed back to the 18-word lesson.
-  **The containment is local and UNPUSHED.** Production still serves all 30 items and still writes
-  `debate-rebuttal` mastery from them. The defect is live until the owner pushes. Locally: 22 items
+  **`3065b9e` is PUSHED to `origin/main`** (push recorded 2026-09-01 13:30 from a client other than the
+  agent session). **Whether it has DEPLOYED is UNKNOWN** — no deployment was queried, and git state
+  alone never establishes what Production is running, so do not read "pushed" as "shipped". 22 items
   quarantined, 8 practice-only, durable mastery held at the persistence boundary.
   Historical mastery rows are untouched and still display; readiness does not consume MasteryProgress.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
@@ -101,15 +102,23 @@ this disclosure is not a reason to reopen B2.3, and alias binding must never be 
 
 ## Current invariants
 
-- **The held set is exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 taught the
+- **The held set is 22 Debate + 1 DECA — and the Debate 22 are LOCAL ONLY.** B2.3 taught the
   early-stated weighing-standard mechanism `wg-08` measures, then released the item in its own
-  separate commit, now Production-verified. DECA `pi-26` remains HELD (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR
-  TRANSFER / SERVING — never collapse it with `wg-08`.
-- **ELIGIBILITY IS NOT SESSION CAPACITY.** Global individual eligibility: Debate **150/150** (rebuttal
-  **30/30**, weighing 30/30), DECA **119/120** (PI 29/30). Clean-history distinct session capacity:
-  Debate **149**, rebuttal **29**. **Releasing `wg-08` moved Debate capacity from 148 to 149, never to
-  150** — the `rb-14`/`rb-15` pair still displaces one item from every session. If a test expects 29
-  for rebuttal and you are about to "fix" it to 30: don't.
+  separate commit, now Production-verified, which left the Debate held set empty. The **rebuttal
+  containment (2026-09-01, `3065b9e`, pushed to `origin/main`)** then withheld **22 of the 30 rebuttal
+  items** after an audit found the area writing durable mastery on material the published curriculum
+  does not teach. **Whether that commit has deployed is UNKNOWN** — verify the running revision before
+  describing Production either way. DECA
+  `pi-26` remains HELD (UNTAUGHT + source-gated; B2.4 target). `wg-29` is FAIR TRANSFER / SERVING —
+  never collapse it with `wg-08`. `wg-08` stays released; no non-rebuttal Debate item was withheld.
+- **ELIGIBILITY IS NOT SESSION CAPACITY.** In the LOCAL tree after the containment: global individual
+  eligibility Debate **165/187** (rebuttal **8/30**, weighing 30/30), DECA **119/120** (PI 29/30);
+  clean-history distinct session capacity Debate **163**, rebuttal **7**. In PRODUCTION the rebuttal
+  figures are still 30/30 and 29. Read every one of these as DERIVED — the suites now compute
+  eligibility as bank-minus-held and capacity as eligibility-minus-displacement, because remembered
+  totals went stale twice: once when Signposting and Constructive grew the bank past 150, and again at
+  the containment. Do not restore any figure from memory. The `rb-14`/`rb-15` pair is unrelated to the
+  containment and still displaces exactly one item from every session.
 - **The pair measurement control is ACTIVE in Production and must stay executable.** Four parts:
   (1) same-session mutual exclusion applied POOL-LEVEL inside `buildDrillSessionFrom` before the
   shuffle — never result-level, never conditional on `areas`, never undone by requested-count

@@ -20,7 +20,7 @@ export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
     return [
       { key: "practice", title: "Start an AI round", description: "Get a topic, speak through the round, and receive judge feedback.", href: "/debate" },
       { key: "tests", title: "Generate a practice test", description: "Train DECA or HOSA with original questions and explanations.", href: "/tests" },
-      { key: "skills", title: "Open mastery lessons", description: "Work through examples, guided practice, and a mastery check.", href: "/skills" },
+      { key: "skills", title: "Open mastery lessons", description: "Work through examples, guided practice, and a check on what you learned.", href: "/skills" },
       { key: "study", title: "Study weak terms", description: "Use flashcards and video resources before your next test.", href: "/study" }
     ];
   }
@@ -61,7 +61,7 @@ export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
   // the others' is their skill listing. The card says which one the learner is opening.
   actions.push(
     track.id === "GENERAL_DEBATE"
-      ? { key: "skills", title: "Drill a debate skill", description: "Short drill sets on one skill at a time, plus anything due for review.", href: `/skills?track=${slug}` }
+      ? { key: "skills", title: "Drill a debate skill", description: "Short drill sets on one skill at a time, and anything currently due for review.", href: `/skills?track=${slug}` }
       : { key: "skills", title: "Open mastery lessons", description: "Work through the skills this track trains.", href: `/skills?track=${slug}` }
   );
 

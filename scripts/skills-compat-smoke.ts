@@ -435,13 +435,17 @@ async function main() {
   // scripts/education-migration-smoke.ts. Its authored CONTENT is now owned by
   // scripts/learning-content-integrity-smoke.ts, which compares canonicalised RUNTIME values against
   // a checked-in reviewed snapshot rather than hashing source bytes against a moving HEAD.
-  for (const file of ["components/lessons/concept-education-lesson-view.tsx",
-                      "components/lessons/concept-education-lesson-practice.tsx",
+  // components/lessons/concept-education-lesson-view.tsx and app/(app)/lessons/[slug]/page.tsx are
+  // deliberately absent from M15 S2-HM onward. Both were HEAD-RELATIVE pins — green the moment HEAD
+  // advanced onto the very change they were meant to question — and the held-mastery truth milestone
+  // edits both on purpose: the concept view's drill CTA becomes capability-derived, and the legacy
+  // Debate lesson loses its promoted pre-teaching practice jump. A blanket hash can only forbid an
+  // approved repair. What the two pins protected FOR THIS SUITE is asserted directly at 27Q and 27R.
+  for (const file of ["components/lessons/concept-education-lesson-practice.tsx",
                       "components/lessons/lesson-view.tsx",
                       // app/(app)/lessons/page.tsx is deliberately absent from M14 Phase 1a onward:
                       // that milestone makes track resolution async, so the page becomes an async
                       // server component. What the hash protected is asserted at 27P below.
-                      "app/(app)/lessons/[slug]/page.tsx",
                       "lib/assignment-types.ts",
                       // lib/assignments.ts is deliberately absent from M15 S1A A3b-3 onward. That pin
                       // was HEAD-RELATIVE: it failed only while a change sat uncommitted and passed
@@ -522,6 +526,47 @@ async function main() {
     "27P5. lesson-local questions are not labelled 'Practice' — that name belongs to the drill system");
   assert.ok(/label: "Knowledge checks"/.test(lessonsIdxSrc),
     "27P6. they are labelled 'Knowledge checks', the term the migrated entries already used");
+
+  // ---- 27Q. what the concept lesson-view hash was protecting, asserted exactly -------------------
+  // This suite's stake in the shared concept renderer is that a legacy /skills slug lands on a page
+  // that TEACHES before it asks, and whose drill hand-off describes what the drill actually does.
+  // Those are properties of the component, so they survive any later edit; the hash did not.
+  const conceptViewSC = stripComments(read("components/lessons/concept-education-lesson-view.tsx"));
+  const teachAtSC = conceptViewSC.indexOf("content.explanation");
+  const checkAtSC = conceptViewSC.indexOf('id="practice"');
+  assert.ok(teachAtSC > 0 && checkAtSC > 0 && teachAtSC < checkAtSC,
+    "27Q. the concept renderer still teaches (explanation) BEFORE the practice heading");
+  assert.ok(conceptViewSC.indexOf("content.whyMatters") < checkAtSC,
+    "27Q2. and why-it-matters is teaching, so it also precedes the checks");
+  assert.ok(!/jump=|Jump to practice/.test(conceptViewSC),
+    "27Q3. it promotes no pre-teaching jump into practice");
+  // The drill hand-off must be DERIVED from the skill's real capability, never asserted flatly.
+  assert.ok(/from "@\/lib\/debate-drills"/.test(conceptViewSC) && /skillRecordSuspended\(/.test(conceptViewSC),
+    "27Q4. the drill CTA reads the canonical capability predicate from lib/debate-drills");
+  assert.ok(!/"debate-rebuttal"/.test(conceptViewSC),
+    "27Q5. and names no skill slug of its own — capability is looked up, not hardcoded");
+
+  // ---- 27R. what the /lessons/[slug] hash was protecting, asserted exactly -----------------------
+  // The compatibility contract for the lesson ROUTE is that it resolves the requested slug through
+  // the registry, refuses anything that is not learner-visible, and keeps the practice anchor that
+  // section navigation and deep links target. M15 S2-HM demotes the legacy lesson's promoted jump.
+  const slugPageSC = stripComments(read("app/(app)/lessons/[slug]/page.tsx"));
+  assert.ok(/getEducationLesson\(slug\)/.test(slugPageSC),
+    "27R. the lesson route resolves the REQUESTED slug through the education registry");
+  assert.ok(/entry\.visibility !== "learner"/.test(slugPageSC),
+    "27R2. a non-learner-visible entry is refused, so a held lesson has no reachable URL");
+  assert.ok(/getLesson\(params\.slug\)/.test(slugPageSC) && /getRoleplayLesson\(params\.slug\)/.test(slugPageSC),
+    "27R3. and legacy + roleplay lessons still resolve by the same stored slug");
+  assert.equal((slugPageSC.match(/id="practice" tabIndex=\{-1\}/g) || []).length, 2,
+    "27R4. both rendered practice sections keep a focusable #practice target");
+  // TEACH BEFORE DURABLE PRACTICE: the only lesson practice that writes durable mastery is the
+  // legacy Debate one, and it must not advertise a jump past its own instruction.
+  assert.ok(!/Jump to practice/.test(slugPageSC),
+    "27R5. no promoted jump into the durable-mastery lesson practice");
+  assert.ok(/jump=\{available \? \{ label: "Jump to guided practice"/.test(slugPageSC),
+    "27R6. control: the roleplay jump into UNSCORED guided practice is deliberately untouched");
+  assert.ok(/nav=\{<OnThisPage sections=\{DEBATE_SECTIONS\} \/>\}/.test(slugPageSC),
+    "27R7. and section navigation is not reduced — the list still reaches Practice in one click");
 
   // ---- 27L. what the lesson-practice hash was protecting, asserted exactly -----------------------
   // C3b-i converts this component to the server-issued session protocol, so a blanket hash would

@@ -270,7 +270,7 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             // tracks keep the general wording.
             detail={
               isDebate
-                ? "Drill one skill at a time and review it later — separate from the questions inside a lesson."
+                ? "Drill one skill at a time — separate from the questions inside a lesson. Each drill says whether it added to your record."
                 : "Work through the skills this track trains."
             }
           />

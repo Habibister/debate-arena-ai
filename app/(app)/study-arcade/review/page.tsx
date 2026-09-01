@@ -42,7 +42,7 @@ export default async function ReviewSessionPage() {
               <Link href={"/skills" as Route} className="font-semibold text-primary hover:underline">
                 Skills
               </Link>{" "}
-              to start their review schedule, then come back when they surface.
+              that record your practice; their review schedule starts from there, and they surface here when due.
             </p>
           </CardContent>
         </Card>

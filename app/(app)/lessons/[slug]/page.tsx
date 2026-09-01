@@ -218,7 +218,18 @@ export default async function LessonPage({ params }: { params: { slug: string } 
       {back}
       <LessonView
         lesson={lesson!}
-        nav={<OnThisPage jump={{ label: "Jump to practice", href: "#practice" }} sections={DEBATE_SECTIONS} />}
+        // TEACH BEFORE DURABLE PRACTICE. This carried a prominent primary "Jump to practice" button
+        // directly under the title, above every teaching section — and this lesson's practice is the
+        // only lesson practice that writes durable mastery (`LessonPractice` posts to the Debate
+        // drills submit route). A bright control inviting a learner to skip instruction and go
+        // straight into recorded assessment is the product recommending the exact bypass the
+        // teach-first rule exists to prevent, so the promoted jump is gone.
+        //
+        // Navigation is NOT reduced: `DEBATE_SECTIONS` still ends with Practice, so the section list
+        // reaches it in one click and keyboard users keep the same destinations. What changed is the
+        // emphasis — practice is now one entry among the lesson's sections rather than the page's
+        // loudest action. The bottom-of-lesson practice section is untouched.
+        nav={<OnThisPage sections={DEBATE_SECTIONS} />}
       />
       <section aria-labelledby="practice" className="space-y-3">
         <div className="flex items-center gap-2">

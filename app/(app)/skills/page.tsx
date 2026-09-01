@@ -32,7 +32,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
         <h1 className="mt-3 text-3xl font-bold">{isDebate ? "Practice a debate skill" : "Mastery paths"}</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           {isDebate
-            ? "Drills work one skill at a time and repeat it; reviews bring a skill back after you have drilled it. These are not the questions inside a lesson — those check the reading, and they live in the lesson."
+            ? "Drills work one skill at a time and repeat it, and each one tells you whether it added to your record; skills that record come back later for review. These are not the questions inside a lesson — those check the reading, and they live in the lesson."
             : "Skills are organized by organization and lesson sequence, with focused pages for lessons, examples, guided reps, independent practice, and mastery checks."}
         </p>
       </div>

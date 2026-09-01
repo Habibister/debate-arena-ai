@@ -145,6 +145,17 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **HELD-MASTERY LEARNER-EXPERIENCE TRUTH REPAIR — IN THE WORKING TREE, UNCOMMITTED (2026-09-01).**
+  A held skill's due-review rows were still actionable and could not be resolved by any action, and
+  nine learner surfaces still promised that practising builds a record. Both are repaired: a single
+  shared gate in `lib/spaced-review.ts` withholds held skills from `getDueReviews` and
+  `countDueReviews` (fail-closed on error, and no row, schedule or mastery is mutated), and every
+  learner-facing record/review promise is now derived from `debateMasteryHeld`. The legacy
+  Claim/Warrant/Impact lesson's promoted pre-teaching "Jump to practice" button is removed; its
+  section navigation still reaches Practice. Sixteen strict-safe suites pass, `tsc --noEmit` exit 0,
+  ENV 0 / NET 0. **Not committed, not pushed, not deployed.** `skills-compat:smoke` and
+  `coach-evidence:smoke` were repaired statically for expectations this change invalidates and were
+  **NOT EXECUTED — no pass is claimed for either.**
 - **DECA empty-pool twin — OPEN.** The Debate zero-eligible guard shipped in `a66d46cb`;
   `buildDecaDrillSession` still has no such guard. Do not record the empty-pool issue as closed —
   only the Debate half is.

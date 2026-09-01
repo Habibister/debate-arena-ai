@@ -142,7 +142,8 @@ check("D2. the predicate itself holds rebuttal and nothing else in Debate", () =
 // ---- E. review / reassessment cannot certify or raise mastery ------------------------------------
 check("E. the transaction writer refuses a held skill before it touches anything", () => {
   const sr = read("lib/spaced-review.ts");
-  assert.ok(/import \{ debateMasteryHeld \} from "@\/lib\/debate-drills"/.test(sr), "the writer imports the predicate");
+  assert.ok(/import \{[^}]*\bdebateMasteryHeld\b[^}]*\} from "@\/lib\/debate-drills"/.test(sr),
+    "the writer imports the predicate");
   assert.ok(
     /if \(debateMasteryHeld\(skillSlug\)\) return \{ status: "mastery-held" \};/.test(sr),
     "it returns mastery-held without writing"
@@ -269,6 +270,186 @@ check("H. DECA and HOSA are untouched", () => {
   for (const slug of DEBATE_MASTERY_HELD_SKILLS) {
     assert.ok(slug.startsWith("debate-"), `${slug} is a Debate skill — no other track's mastery is paused`);
   }
+});
+
+// ---- I. learner-facing copy may not promise a record a held skill does not keep --------------------
+check("I. the lesson drill CTA claims a durable record only where the skill actually records", () => {
+  const view = read("components/lessons/concept-education-lesson-view.tsx");
+  // The claim and the neutral alternative both exist, and the claim is behind the flag.
+  assert.ok(/that is where your\s+record of this skill starts/.test(view), "control: the recording claim still exists for skills that record");
+  assert.ok(/drillKeepsARecord \? \(/.test(view), "the recording claim is conditional, not unconditional");
+  assert.ok(/does not add to your record either right now/.test(view),
+    "a held skill gets wording that states the drill does not record either — not a contrast implying it does");
+  // Derived from the AREA's skill through the shared predicate — not a lesson allowlist, so a lesson
+  // pointing at a held area cannot keep the claim by being forgotten.
+  assert.ok(/DRILL_AREAS\.find\(\(area\) => area\.id === practiceDrill\.area\)\?\.skillSlug/.test(view),
+    "the flag reads the drill area's own skill");
+  assert.ok(/const drillKeepsARecord = !skillRecordSuspended\(drillSkillSlug\)/.test(view),
+    "and passes it through the one canonical hold predicate");
+  assert.ok(/debateMasteryHeld as skillRecordSuspended/.test(view),
+    "the alias really is the shared predicate, not a second local rule — it is aliased only because a separate control keeps that vocabulary out of this view");
+  // Ordering: the claim must sit in the TRUE branch and the neutral wording in the false branch.
+  const claimAt = view.indexOf("that is where your");
+  const branchAt = view.indexOf("drillKeepsARecord ? (");
+  const elseAt = view.indexOf("does not add to your record either right now");
+  assert.ok(branchAt > 0 && claimAt > branchAt && elseAt > claimAt,
+    "the recording claim is the true branch and the practice-only wording is the false branch");
+});
+
+check("I2. every published lesson pointing at a held area loses the claim, and no other does", () => {
+  // Real evaluation of the same expression the component computes, for every registered area.
+  const recordingAreas = DRILL_AREAS.filter((a) => !debateMasteryHeld(a.skillSlug)).map((a) => a.id);
+  const heldAreas = DRILL_AREAS.filter((a) => debateMasteryHeld(a.skillSlug)).map((a) => a.id);
+  assert.deepEqual(heldAreas, ["rebuttal"], "rebuttal is the only area whose skill is held");
+  assert.ok(recordingAreas.length >= 5, "control: most areas still record, so this is not a blanket removal");
+  for (const id of ["clash", "weighing", "evidence-evaluation"] as const) {
+    assert.ok(recordingAreas.includes(id), `${id} keeps the truthful recording copy`);
+  }
+});
+
+// ---- J. a held skill is never an ACTIONABLE due review ------------------------------------------
+check("J. due-review eligibility excludes a held skill, without touching its data", () => {
+  const sr = readCode("lib/spaced-review.ts");
+  assert.ok(/async function heldReviewSkillIds\(\)/.test(sr), "there is one place that resolves held skill ids");
+  // FAIL CLOSED. `heldReviewSkillIds` returns null when it cannot resolve the held set, and both
+  // readers must treat that as "prove nothing safe" rather than "nothing is held" — an empty array
+  // there would apply NO filter and surface exactly the rows this exists to withhold.
+  assert.ok(/Promise<string\[\] \| null>/.test(sr), "the held-set resolver can report failure distinctly from an empty hold");
+  assert.ok(/catch \{[\s\S]{0,80}return null;/.test(sr), "and it returns null on failure, not an empty list");
+  // ONE gate, shared. The count and the list previously filtered differently, so the learner could be
+  // told "1 skill is due", click through, and be told "Nothing due" — the same dead end, one step on.
+  assert.ok(/async function dueReviewRowsWithSkills\(/.test(sr), "there is a single shared due-row gate");
+  const gateAt = sr.indexOf("async function dueReviewRowsWithSkills(");
+  const gate = sr.slice(gateAt, sr.indexOf("export async function countDueReviews"));
+  assert.ok(/heldReviewSkillIds\(\)/.test(gate), "the gate consults the held set");
+  assert.ok(/if \(held === null\) return null;/.test(gate), "and propagates the fail-closed signal");
+  assert.ok(/skillId: \{ notIn: held \}/.test(gate), "the gate excludes held skills from the query");
+  for (const fn of ["countDueReviews", "getDueReviews"]) {
+    const at = sr.indexOf(`export async function ${fn}`);
+    assert.ok(at > 0, `control: ${fn} exists`);
+    const body = sr.slice(at, at + 1400);
+    assert.ok(/dueReviewRowsWithSkills\(/.test(body), `${fn} answers through the shared gate`);
+    assert.ok(/=== null \? 0 : |if \(due === null\) return \[\];/.test(body), `${fn} fails closed when the gate cannot prove a row safe`);
+    assert.ok(!/prisma\.skillReviewSchedule/.test(body), `${fn} does not re-query the schedule behind the gate`);
+  }
+  // Second gate by slug, applied inside the shared gate AND again in the list path, so a stale or
+  // missing Skill row cannot let one through. `SkillReviewSchedule.skillId` has no foreign key.
+  assert.ok(/return Boolean\(skill\) && !debateMasteryHeld\(skill!\.slug\);/.test(gate),
+    "the shared gate drops any row whose Skill is missing or held, so the count sees what the list will show");
+  assert.ok(/if \(debateMasteryHeld\(skill\.slug\)\) return \[\];/.test(sr),
+    "the list path also drops a held skill after resolving its slug");
+  // The READ path is a filter, not a mutation: withdrawing actionability must never edit the row.
+  // Scoped to the two readers plus the helper — `recordPracticeOutcome` elsewhere in this module
+  // legitimately updates schedules, and a whole-file ban would forbid that too.
+  const readPathStart = sr.indexOf("async function heldReviewSkillIds()");
+  const readPathEnd = sr.indexOf("export async function recordDrillMasteryDetailed");
+  assert.ok(readPathStart > 0 && readPathEnd > readPathStart, "control: the due-review read path is locatable");
+  const readPath = sr.slice(readPathStart, readPathEnd);
+  for (const banned of ["skillReviewSchedule.delete", "skillReviewSchedule.update", "skillReviewSchedule.upsert",
+                        "masteryProgress.update", "masteryProgress.delete"]) {
+    assert.ok(!readPath.includes(banned), `the due-review read path never mutates data (${banned})`);
+  }
+  assert.ok(/skillReviewSchedule\.(count|findMany)/.test(readPath), "control: it does read the table, so this is not vacuous");
+});
+
+check("J2. every due-review consumer inherits the filter — no consumer queries the table itself", () => {
+  for (const file of [
+    "app/(app)/study-arcade/review/page.tsx",
+    "app/(app)/study-arcade/page.tsx",
+    "app/(app)/home/page.tsx",
+    "lib/coach-evidence.ts"
+  ]) {
+    const src = readCode(file);
+    assert.ok(/getDueReviews|countDueReviews/.test(src), `control: ${file} really is a due-review consumer`);
+    assert.ok(!/skillReviewSchedule/.test(src),
+      `${file} must read due reviews through the filtered helpers, never the table directly`);
+  }
+});
+
+// ---- K. teaching before PROMOTED durable practice -------------------------------------------------
+check("K. no lesson promotes mastery-writing practice above its own instruction", () => {
+  const page = readCode("app/(app)/lessons/[slug]/page.tsx");
+  // The legacy Claim/Warrant/Impact lesson is the only lesson practice that writes durable mastery.
+  const cwiNav = page.match(/nav=\{<OnThisPage[^>]*sections=\{DEBATE_SECTIONS\}[^>]*\/>\}/);
+  assert.ok(cwiNav, "control: the mastery-writing lesson still renders its section navigation");
+  assert.ok(!/jump=/.test(cwiNav![0]),
+    "it must not carry a promoted jump — that button sat above every teaching section and led to recorded assessment");
+  // Navigation is not reduced: Practice is still reachable from the section list.
+  assert.ok(/\{ id: "practice", label: "Practice" \}/.test(page),
+    "K2. Practice is still a section entry, so the destination and keyboard access survive");
+  // And the concept renderer, which is already teach-first, still has no jump of its own.
+  assert.equal((read("components/lessons/concept-education-lesson-view.tsx").match(/OnThisPage/g) ?? []).length, 0,
+    "K3. concept lessons still carry no skip affordance at all");
+});
+
+// ---- L. capability-aware copy: held surfaces promise nothing durable ------------------------------
+check("L. learner-facing practice copy is derived from capability, not asserted", () => {
+  const drills = read("components/training/debate-drills.tsx");
+  assert.ok(/debateMasteryHeld/.test(drills), "the drill component consults the shared predicate");
+  // Derived on BOTH axes: which area the learner picked, and whether that area's skill records.
+  assert.ok(/const progressNote = areaFilter === "mixed"/.test(drills),
+    "its progress note is derived, not a fixed sentence");
+  assert.ok(/const someAreaInPracticeMode = DRILL_AREAS\.some\(\(area\) => debateMasteryHeld\(area\.skillSlug\)\)/.test(drills),
+    "L1b. a MIXED session is judged by whether any drawable area is held — a mixed draw can include held items");
+  assert.ok(/: debateMasteryHeld\(focusedAreaSkill\)/.test(drills),
+    "L1c. and a focused session is judged by its own area's skill");
+  assert.ok(!/Focused skill sessions can update your progress\. A mixed session[\s\S]{0,40}<\/p>/.test(drills),
+    "the unconditional claim is no longer rendered directly");
+  // The result badge must not blame the count or the score for a hold-caused non-write.
+  const badgeAt = drills.indexOf("export function resultState");
+  const badge = drills.slice(badgeAt, badgeAt + 1600);
+  assert.ok(/debateMasteryHeld\(skill\.skillSlug\)/.test(badge),
+    "L2. the result badge asks the predicate before attributing a non-write to evidence");
+  const heldAt = badge.indexOf("debateMasteryHeld(skill.skillSlug)");
+  const belowAt = badge.indexOf('evidenceStatus === "below-threshold"');
+  assert.ok(heldAt > 0 && belowAt > heldAt, "L3. and it does so BEFORE the score-based branch");
+});
+
+check("L4. the broad platform promises no longer assert that everything records", () => {
+  const claims: Array<[string, RegExp]> = [
+    ["app/(app)/study-arcade/page.tsx", /drills that feed your real mastery/],
+    ["app/(app)/home/page.tsx", /counts toward your real record/],
+    ["app/(app)/training/[track]/event/[eventSlug]/page.tsx", /real mastery \+ spaced review/],
+    ["components/skills/skill-path.tsx", /Skills you have drilled come back/],
+    // Repaired in the same milestone: every one of these told a learner that PRACTISING starts or
+    // advances a record. For a held skill that is false — practice is scored and explained, and
+    // nothing is written — so each now speaks of skills that record rather than of practice itself.
+    ["app/(app)/study-arcade/page.tsx", /practiced \$\{skillsInProgress === 1/],
+    ["app/(app)/study-arcade/page.tsx", /practice a skill to start your review schedule/],
+    ["app/(app)/study-arcade/page.tsx", /that changes with your first drill/],
+    ["app/(app)/study-arcade/review/page.tsx", /to start their review schedule, then come back/],
+    ["app/(app)/home/page.tsx", /reviews appear as you practice/],
+    ["components/skills/skill-path.tsx", /Empty until you have practised something/],
+    ["lib/dashboard-actions.ts", /guided practice, and a mastery check/],
+    ["lib/dashboard-actions.ts", /plus anything due for review/]
+  ];
+  for (const [file, claim] of claims) {
+    assert.ok(!claim.test(readCode(file)), `${file} no longer makes an unconditional record promise`);
+  }
+  // Non-vacuity: those files still say something about practice, so this is not passing on empty files.
+  assert.ok(/skill drills/i.test(readCode("app/(app)/study-arcade/page.tsx")), "L5. control: the copy still exists");
+});
+
+check("L6. the replacement copy conditions the record on the SKILL, not on the act of practising", () => {
+  // Each repaired sentence must still say something useful, and must tie any record/review promise to
+  // skills that actually record. A held skill can be practised all day and nothing is written.
+  const surfaces: Array<[string, RegExp]> = [
+    ["app/(app)/study-arcade/page.tsx", /practised skills that record come up for review/],
+    ["app/(app)/study-arcade/page.tsx", /Practise a skill that records, and its review schedule starts from there/],
+    ["app/(app)/study-arcade/page.tsx", /with a recorded result so far/],
+    ["app/(app)/study-arcade/review/page.tsx", /that record your practice; their review schedule starts from there/],
+    ["app/(app)/home/page.tsx", /reviews appear as skills record your practice/],
+    ["lib/dashboard-actions.ts", /a check on what you learned/],
+    ["lib/dashboard-actions.ts", /anything currently due for review/]
+  ];
+  for (const [file, present] of surfaces) {
+    assert.ok(present.test(readCode(file)), `${file} carries its capability-aware replacement`);
+  }
+  // The Skill Path card keeps the conditional half and drops the unconditional emptiness promise.
+  const path = readCode("components/skills/skill-path.tsx");
+  assert.ok(/Skills that record your practice come back later on a spacing schedule/.test(path),
+    "the review card still explains what review IS, conditioned on recording");
+  assert.ok(/never shows a number you did not earn/.test(path), "and keeps the no-fake-progress promise");
 });
 
 console.log(`\nrebuttal-containment: ${checks} controls passed.`);

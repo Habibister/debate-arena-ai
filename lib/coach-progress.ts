@@ -1,5 +1,6 @@
 import { HttpError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import { debateMasteryHeld } from "@/lib/debate-drills";
 
 function average(values: number[]) {
   if (values.length === 0) {
@@ -23,6 +24,9 @@ function buildRecommendations(input: {
     return ["Have the student complete one debate or practice drill first."];
   }
 
+  // `lowMasterySkills` may include a skill whose recorded figure cannot currently move. Recommending
+  // a drill for it asks the coach to assign work that cannot change the number they are looking at —
+  // on the same page that says the number is frozen. Callers filter those out before they get here.
   const haystack = [...input.weakSignals, ...input.lowMasterySkills].join(" ").toLowerCase();
   const steps: string[] = [];
 
@@ -165,13 +169,18 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
   const masteryRows = await prisma.masteryProgress.findMany({
     where: { userId: studentId },
     orderBy: [{ skill: { order: "asc" } }],
-    select: { masteryPercent: true, masteryLevel: true, lastPracticedAt: true, skill: { select: { name: true } } }
+    select: { masteryPercent: true, masteryLevel: true, lastPracticedAt: true, skill: { select: { name: true, slug: true } } }
   });
+  // The row is kept exactly as recorded — nothing is deleted, hidden or recalculated. `updating` says
+  // whether that number can still move: a skill whose durable record is suspended shows its real
+  // history, and a coach can see that it is not currently growing rather than reading a stalled bar
+  // as a student who stopped trying.
   const skills = masteryRows.map((row) => ({
     name: row.skill.name,
     masteryPercent: row.masteryPercent,
     masteryLevel: row.masteryLevel,
-    lastPracticedAt: row.lastPracticedAt
+    lastPracticedAt: row.lastPracticedAt,
+    updating: !debateMasteryHeld(row.skill.slug)
   }));
 
   // Tests.
@@ -202,7 +211,9 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
     judgedRounds,
     completedTests: completedTests.length,
     weakSignals: [...(latestFeedback?.weaknesses ?? []), ...weakCategories],
-    lowMasterySkills: skills.filter((s) => s.masteryPercent < 50).map((s) => s.name)
+    // Only skills whose figure can still move. A frozen row stays visible in Skill growth with its
+    // own note, but it must not drive a "next step" that cannot change it.
+    lowMasterySkills: skills.filter((s) => s.updating && s.masteryPercent < 50).map((s) => s.name)
   });
 
   return {

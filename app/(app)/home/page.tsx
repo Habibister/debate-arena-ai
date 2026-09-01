@@ -96,7 +96,7 @@ export default async function HomePage({ searchParams }: { searchParams: { track
     ...(trackHasPracticeTests(activeTrack?.id)
       ? [{ href: `/tests?track=${trackSlug}`, label: "Take a test", detail: "An original practice set with explanations", icon: ClipboardList }]
       : []),
-    { href: "/study-arcade/review", label: "Review missed terms", detail: reviewsDue > 0 ? `${reviewsDue} ${reviewsDue === 1 ? "skill is" : "skills are"} due for review` : "Nothing due — reviews appear as you practice", icon: RotateCcw }
+    { href: "/study-arcade/review", label: "Review missed terms", detail: reviewsDue > 0 ? `${reviewsDue} ${reviewsDue === 1 ? "skill is" : "skills are"} due for review` : "Nothing due — reviews appear as skills record your practice", icon: RotateCcw }
   ];
 
   return (
@@ -114,8 +114,8 @@ export default async function HomePage({ searchParams }: { searchParams: { track
           hasContinue
             ? "You have an unfinished session — continuing it is the fastest way back into form."
             : activeTrack
-              ? `One focused ${activeTrack.label} rep is the best next step. Everything here counts toward your real record.`
-              : "Pick a track and start a focused rep — everything here counts toward your real record."
+              ? `One focused ${activeTrack.label} rep is the best next step. Each activity tells you what it records.`
+              : "Pick a track and start a focused rep — each activity tells you what it records."
         }
       />
 

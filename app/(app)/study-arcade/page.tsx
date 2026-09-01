@@ -71,9 +71,9 @@ export default async function StudyArcadePage({
             Drills write mastery + spaced review; flashcard decks and review games make no server
             write at all (components/study/ issues none), so the copy must never lump them in. */}
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Repetition that doesn&apos;t feel like a chore: drills that feed your real mastery
-          record{activeTrack ? ` for ${activeTrack.label}` : ""}, plus flashcard decks and review games that sharpen
-          recall — decks and games aren&apos;t recorded.
+          Repetition that doesn&apos;t feel like a chore: skill drills{activeTrack ? ` for ${activeTrack.label}` : ""},
+          plus flashcard decks and review games that sharpen recall. Each drill says whether it added to your
+          record — decks and games never do.
         </p>
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -96,8 +96,8 @@ export default async function StudyArcadePage({
             ) : (
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {skillsInProgress > 0
-                  ? `Nothing due right now — ${skillsInProgress} practiced ${skillsInProgress === 1 ? "skill" : "skills"} will come up for review on schedule.`
-                  : "No reviews due yet — practice a skill to start your review schedule."}
+                  ? `Nothing due right now — practised skills that record come up for review on their own schedule.`
+                  : "No reviews due yet. Practise a skill that records, and its review schedule starts from there."}
               </p>
             )}
           </div>
@@ -125,10 +125,10 @@ export default async function StudyArcadePage({
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {practicedSkills > 0 ? (
                 <>
-                  <span className="text-lg font-bold text-foreground">{practicedSkills}</span> {practicedSkills === 1 ? "skill" : "skills"} practiced so far, recorded from real drill sessions. Deck and game reps sharpen recall but aren&apos;t recorded.
+                  <span className="text-lg font-bold text-foreground">{practicedSkills}</span> {practicedSkills === 1 ? "skill" : "skills"} with a recorded result so far, from real drill sessions. Deck and game reps sharpen recall but aren&apos;t recorded.
                 </>
               ) : (
-                "Zero so far — that changes with your first drill. Nothing here is ever simulated."
+                "Zero so far — this fills in from drills that record. Nothing here is ever simulated."
               )}
             </p>
           </div>

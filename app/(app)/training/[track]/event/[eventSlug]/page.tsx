@@ -84,7 +84,7 @@ const EVENT_HQ: Record<
     rubricEventType: "PUBLIC_FORUM",
     sections: [
       { label: "Full rounds", detail: "Live practice with an AI opponent and judged ballot.", href: "/debate?track=debate", icon: "rounds" },
-      { label: "Skill drills", detail: "Claim building, evidence, rebuttal, weighing — real mastery + spaced review.", href: "/study-arcade?track=debate", icon: "drills" },
+      { label: "Skill drills", detail: "Claim building, evidence, rebuttal, weighing — short scored sets that tell you what each one records.", href: "/study-arcade?track=debate", icon: "drills" },
       // Learn, named as Learn. This pointed at /skills?track=debate and called it "Skills & lessons"
       // with a mastery-check promise; that surface is Debate's PRACTICE index — the drill row above
       // already leads there — and the mastery checks it described do not exist. The lessons live at

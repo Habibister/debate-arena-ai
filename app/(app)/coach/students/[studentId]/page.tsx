@@ -187,6 +187,13 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
                     <span className="text-muted-foreground">{skill.masteryPercent}%</span>
                   </div>
                   <Progress value={skill.masteryPercent} />
+                  {/* The recorded figure is real and unchanged. This says only that it cannot move at
+                      the moment, so a flat bar is not misread as a student who stopped practising. */}
+                  {skill.updating ? null : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Recorded earlier. This skill is in practice mode, so the figure is not updating.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 import { cn } from "@/lib/utils";
+import { debateMasteryHeld as skillRecordSuspended, DRILL_AREAS } from "@/lib/debate-drills";
 import type { ConceptEducationLessonSource, EducationPracticeDrill } from "@/lib/education/types";
 import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
 import {
@@ -57,6 +58,14 @@ export function ConceptEducationLessonView({
   practiceDrill?: EducationPracticeDrill;
 }) {
   const { lesson } = source;
+  // Does the drill this lesson points at currently write a durable record? Read from the drill AREA's
+  // own skill rather than from the lesson, because several lessons can share one area and only the
+  // area names the skill that records. Undefined area or unheld skill both mean "records", which is
+  // the pre-existing behaviour; only an explicitly held skill loses the claim.
+  const drillSkillSlug = practiceDrill
+    ? DRILL_AREAS.find((area) => area.id === practiceDrill.area)?.skillSlug
+    : undefined;
+  const drillKeepsARecord = !skillRecordSuspended(drillSkillSlug);
   const content = lesson.content;
 
   // Presented in teaching order. `masteryCheck` is the catalog's field name; the learner sees
@@ -168,9 +177,24 @@ export function ConceptEducationLessonView({
           <h2 id="practice-drill" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">
             Practice this skill
           </h2>
+          {/* What the drill DOES for the learner depends on whether its skill is currently recording.
+              A skill whose evidence model is suspended still grades and still explains every answer,
+              but it starts no record — so the sentence that promises one is only rendered where it is
+              true. Derived from the area's own skill, never a hardcoded lesson list, so a lesson that
+              points at a recording area keeps the stronger copy and one that does not never claims it. */}
           <p className="mt-2 leading-7 text-muted-foreground">
-            The check above is for practice and records nothing. The {DRILL_AREA_LABELS[practiceDrill.area]} drill
-            is scored on the server — that is where your record of this skill starts.
+            The check above is for practice and records nothing.{" "}
+            {drillKeepsARecord ? (
+              <>
+                The {DRILL_AREA_LABELS[practiceDrill.area]} drill is scored on the server — that is where your
+                record of this skill starts.
+              </>
+            ) : (
+              <>
+                The {DRILL_AREA_LABELS[practiceDrill.area]} drill does not add to your record either right now —
+                use it for extra scored practice, with feedback on every answer.
+              </>
+            )}
           </p>
           <Link
             href={`/study-arcade?track=${practiceDrill.track}&area=${practiceDrill.area}` as Route}

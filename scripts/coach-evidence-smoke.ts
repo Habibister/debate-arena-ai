@@ -57,6 +57,7 @@ const orgFor = (slug: string) =>
 async function main() {
   const { getEvidenceBackedNextAction, coachActionExplanationTemplate } = await import("../lib/coach-evidence");
   const { PRACTICING_MASTERY_MIN } = await import("../lib/spaced-review");
+  const { DEBATE_MASTERY_HELD_SKILLS } = await import("../lib/debate-drills");
   const { coachNextActionRequestSchema } = await import("../lib/validators");
   const {
     INTENDED_SKILL_SLUGS,
@@ -69,32 +70,58 @@ async function main() {
     "S3-0. control: the stub is the module's client — no PrismaClient constructed, no database touched");
 
   // ---- S3-1. low-mastery due mapped -> the exact lesson AND the exact drill --------------------
-  seed("debate-rebuttal", 69);
+  // The pilot slug here was `debate-rebuttal` until M15 S2-HM. That skill's durable mastery is now
+  // SUSPENDED, and a suspended skill is deliberately withheld from the due-review surfaces the Coach
+  // reads (see S3-H below), so it can no longer stand for the ordinary mapped case. `debate-evidence`
+  // replaces it: also mapped, also Debate, and still active. Nothing about the mapping architecture
+  // changed — the expected object below is derived from the same registry metadata as before.
+  seed("debate-evidence", 69);
   assert.deepEqual(await getEvidenceBackedNextAction("u1"), {
     type: "REVIEW_LESSON_THEN_DRILL",
-    skill: { slug: "debate-rebuttal", name: "Debate Rebuttal", organization: "GENERAL_DEBATE" },
+    skill: { slug: "debate-evidence", name: "Debate Evidence", organization: "GENERAL_DEBATE" },
     dueSinceDate: "2026-08-20",
     belowPracticing: true,
-    lesson: { id: "debate-refutation", title: "Answer with refutation", href: "/lessons/debate-refutation" },
-    drill: { track: "debate", area: "rebuttal", label: "Rebuttal", href: "/study-arcade?track=debate&area=rebuttal" }
-  }, "S3-1. mastery 69 on debate-rebuttal yields the refutation lesson and the rebuttal drill, exact hrefs included");
+    lesson: { id: "debate-evidence-evaluation", title: "Judge the evidence", href: "/lessons/debate-evidence-evaluation" },
+    drill: { track: "debate", area: "evidence-evaluation", label: "Evidence evaluation", href: "/study-arcade?track=debate&area=evidence-evaluation" }
+  }, "S3-1. mastery 69 on debate-evidence yields the evidence lesson and the evidence-evaluation drill, exact hrefs included");
 
   // ---- S3-2. healthy due mapped -> exact drill only, and DUE stays distinct from WEAK ----------
   for (const m of [70, 71]) {
-    seed("debate-rebuttal", m);
+    seed("debate-evidence", m);
     const a = await getEvidenceBackedNextAction("u1");
     assert.equal(a.type, "REDO_EXACT_DRILL", `S3-2. mastery ${m} is re-demonstration, not remediation`);
     assert.ok(!("lesson" in a), `S3-2b. and carries NO lesson at mastery ${m}`);
     assert.equal((a as { belowPracticing?: boolean }).belowPracticing, false,
       `S3-2c. and does not classify mastery ${m} as below practicing`);
   }
-  seed("debate-rebuttal", 69);
+  seed("debate-evidence", 69);
   assert.equal((await getEvidenceBackedNextAction("u1")).type, "REVIEW_LESSON_THEN_DRILL",
     "S3-2d. 69 flips the branch — the boundary sits exactly at the canonical floor");
   assert.equal(PRACTICING_MASTERY_MIN, 70, "S3-2e. and that floor is the canonical 70, imported, not restated");
 
+  // ---- S3-H. a mastery-HELD skill is not an actionable Coach next action -----------------------
+  // A held skill's due row is never deleted and its nextReviewAt is never moved, so it stays due
+  // forever. Acting on it cannot succeed: passing pushes no schedule out, failing lowers nothing.
+  // Telling a coach to assign it would be instructing them to set a task with no resolution, so the
+  // withholding happens once, at getDueReviews, and every consumer inherits it — including this one.
+  seed("debate-rebuttal", 40);
+  assert.equal((await getEvidenceBackedNextAction("u1")).type, "NO_DUE_ACTION",
+    "S3-H. a due HELD skill yields no next action at all, at any mastery");
+  seed("debate-rebuttal", 95);
+  assert.equal((await getEvidenceBackedNextAction("u1")).type, "NO_DUE_ACTION",
+    "S3-H2. including a strong one — it is the hold, not the score, that withdraws the action");
+  // Non-vacuity: the row really was seeded, and the identical shape on an ACTIVE skill still acts.
+  assert.equal(stub.rows.length, 1, "S3-H3. control: a due row was seeded — the emptiness is the filter, not the fixture");
+  seed("debate-evidence", 95);
+  assert.equal((await getEvidenceBackedNextAction("u1")).type, "REDO_EXACT_DRILL",
+    "S3-H4. control: the same fixture on an active skill still produces an action");
+  assert.deepEqual([...DEBATE_MASTERY_HELD_SKILLS], ["debate-rebuttal"],
+    "S3-H5. and the hold list is the canonical one, imported, not restated here");
+
   // ---- S3-3. most-overdue-first: the FIRST row of the existing ordering wins -------------------
-  seed("debate-evidence", 95, { slug: "debate-rebuttal", masteryPercent: 5 });
+  // The far-weaker later-due skill was `debate-rebuttal` until M15 S2-HM; a held skill is filtered
+  // out entirely, which would make this ordering case vacuous. `debate-weighing` keeps it real.
+  seed("debate-evidence", 95, { slug: "debate-weighing", masteryPercent: 5 });
   const first = await getEvidenceBackedNextAction("u1");
   assert.equal(first.type === "NO_DUE_ACTION" ? "" : first.skill.slug, "debate-evidence",
     "S3-3. the earlier-due skill is chosen even though the later one is far weaker — no weakest-first reranking");
@@ -246,15 +273,22 @@ async function main() {
     "S3-10b. and that branch returns the deterministic template directly");
 
   // ---- S3-11. templates: truthful copy for every action type -----------------------------------
-  seed("debate-rebuttal", 69);
+  // Same slug substitution as S3-1: a held skill produces NO_DUE_ACTION, so it cannot exercise the
+  // mapped templates. The template LOGIC is unchanged and still fills from registry metadata.
+  seed("debate-evidence", 69);
   const low = await getEvidenceBackedNextAction("u1");
   assert.equal(coachActionExplanationTemplate(low),
-    "Your Debate Rebuttal review is due. Your recorded mastery is below the practicing level, so review Answer with refutation first, then retry the Rebuttal drill.",
+    "Your Debate Evidence review is due. Your recorded mastery is below the practicing level, so review Judge the evidence first, then retry the Evidence evaluation drill.",
     "S3-11. the low-mastery template states the record, the lesson, then the drill");
-  seed("debate-rebuttal", 71);
+  seed("debate-evidence", 71);
   assert.equal(coachActionExplanationTemplate(await getEvidenceBackedNextAction("u1")),
-    "Your Debate Rebuttal review is due. Retry the Rebuttal drill to re-demonstrate it.",
+    "Your Debate Evidence review is due. Retry the Evidence evaluation drill to re-demonstrate it.",
     "S3-11b. the healthy template is pure re-demonstration — no weakness language");
+  // And the held skill reaches the learner-safe template instead of a task it cannot finish.
+  seed("debate-rebuttal", 69);
+  assert.equal(coachActionExplanationTemplate(await getEvidenceBackedNextAction("u1")),
+    "No evidence-backed review is due right now.",
+    "S3-11e. a held skill yields the no-due template, never a retry instruction");
   seed("hosa-medical-terminology", 40);
   const unmappedTemplate = coachActionExplanationTemplate(await getEvidenceBackedNextAction("u1"));
   assert.ok(unmappedTemplate.startsWith("Your Hosa Medical Terminology review is due."),

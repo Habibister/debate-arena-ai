@@ -177,12 +177,28 @@ async function main() {
   // expectation from HEAD, so committing cannot make it green.
   for (const file of ["components/lessons/lesson-view.tsx",
                       "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
-                      "components/lessons/concept-education-lesson-view.tsx",
+                      // components/lessons/concept-education-lesson-view.tsx is deliberately absent
+                      // from the rebuttal containment onward — the same HEAD-RELATIVE flaw called out
+                      // for lib/assignments.ts below: it failed only while a change to the file was
+                      // uncommitted and went green the moment HEAD advanced onto that change, so it
+                      // could not protect anything across commits. The containment made the drill
+                      // call to action conditional, because a skill whose durable mastery is
+                      // suspended must not tell a learner the drill is where their record starts.
+                      // What this suite needs from that component is asserted directly at 37, which
+                      // the containment extended rather than weakened. Its no-mastery-import
+                      // property is separately asserted at 4b, which still names the file.
                       "components/lessons/concept-education-lesson-practice.tsx",
                       // app/(app)/lessons/page.tsx is deliberately absent from M14 Phase 1a onward:
                       // that milestone makes track resolution async, so the page becomes an async
                       // server component. What the hash protected is asserted at 4P below.
-                      "app/(app)/lessons/[slug]/page.tsx",
+                      // app/(app)/lessons/[slug]/page.tsx is deliberately absent from the held-mastery
+                      // UX repair onward — the same HEAD-RELATIVE flaw retired above for other files:
+                      // it failed only while a change was uncommitted and went green the moment HEAD
+                      // advanced onto it. That repair removed the promoted "Jump to practice" button
+                      // this route placed above every teaching section on the one lesson whose practice
+                      // writes durable mastery. What the freeze protected — the three-way renderer
+                      // routing — is asserted directly at 4Q below, and the teach-before-practice
+                      // property is proven by scripts/rebuttal-containment-smoke.ts control K.
                       // lib/debate-drills.ts is deliberately absent from M13E1E onward: that milestone
                       // gives Debate the duplicate-resistant evidence contract. What this suite needs
                       // to protect is the LESSON path, which is asserted at 4b9 below.
@@ -210,6 +226,20 @@ async function main() {
                       "prisma/seed.ts"]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 4Q. what the retired lesson-route pin protected, asserted directly -------------------------
+  // Three lesson kinds, three renderers, chosen by data rather than by slug. That is what the byte
+  // freeze was really holding: a lesson must not reach the wrong renderer, and no lesson id may be
+  // special-cased in the route.
+  assert.ok(/<RoleplayLessonView/.test(slugRoute), "4Q. the roleplay renderer is still routed to");
+  assert.ok(/<ConceptEducationLessonView/.test(slugRoute), "4Q2. the concept renderer is still routed to");
+  assert.ok(/<LessonView/.test(slugRoute), "4Q3. the legacy renderer is still routed to");
+  assert.ok(/if \(concept\) \{/.test(slugRoute), "4Q4. concept lessons are selected by resolution, not by slug");
+  assert.ok(!/debate-refutation|debate-signposting|debate-weighing/.test(stripComments(slugRoute)),
+    "4Q5. the route special-cases no lesson id");
+  // The mastery-writing lesson keeps its section navigation and loses only the promoted jump.
+  assert.ok(/sections=\{DEBATE_SECTIONS\}/.test(slugRoute), "4Q6. its section navigation survives");
+  assert.ok(/\{ id: "practice", label: "Practice" \}/.test(slugRoute), "4Q7. with Practice still reachable from it");
 
   // ---- 4A. what the retired lib/assignments.ts pin protected FOR THIS SUITE ------------------------
   // This suite's domain is the education/lesson migration. The only thing it needs from the assignment
@@ -648,7 +678,18 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   for (const [label, code] of [["view", view], ["practice", practice], ["index route", indexRoute]] as const) {
     assert.ok(!/\b\d+\s*%|percent|masteryPercent|progressPercent/i.test(stripComments(code)), `30. no percentage in the ${label}`);
   }
-  assert.ok(!/mastery/i.test(stripComments(view).replace(/masteryCheck/g, "")), "30b. the view never uses the word mastery outside the source field name");
+  // 30b guards what a LEARNER READS. Import specifiers are not rendered, and the containment needs
+  // this view to consult the shared `debateMasteryHeld` predicate so a suspended skill cannot be told
+  // its drill starts a record. Import lines are therefore excluded — and the rule is tightened at the
+  // same time: no rendered text may contain the word either, which is what 30b always meant.
+  const viewBody = stripComments(view).split("\n").filter((l) => !/^\s*import\b/.test(l)).join("\n");
+  assert.ok(!/mastery/i.test(viewBody.replace(/masteryCheck/g, "")),
+    "30b. the view never uses the word mastery outside the source field name and its import specifiers");
+  assert.ok(/debateMasteryHeld/.test(stripComments(view)),
+    "30b2. control: the exclusion is real — the predicate IS imported, so 30b is not passing vacuously");
+  for (const rendered of stripComments(view).match(/>[^<>{}]{4,}</g) ?? []) {
+    assert.ok(!/mastery/i.test(rendered), `30b3. no rendered text says mastery — found: ${rendered.trim()}`);
+  }
 
   // ---- 31-32. the legacy lesson path is untouched ---------------------------------------------------
   assert.ok(getLesson("claim-warrant-impact"), "31a. the CWI lesson still resolves through its legacy lookup");
@@ -752,6 +793,21 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     }
     assert.ok(/records nothing/.test(view),
       "37f. and it says plainly that the lesson check records nothing");
+    // 37g. The drill call to action may promise a durable record ONLY where the drill's skill really
+    // keeps one. A skill whose durable record is suspended still grades and still explains every
+    // answer, so the honest copy there is scored practice with feedback — never "where your record of
+    // this skill starts". Derived from the drill AREA's skill through the one shared predicate, so
+    // several lessons sharing an area cannot disagree and no lesson keeps the claim by being forgotten.
+    assert.ok(/drillKeepsARecord/.test(view),
+      "37g. the record promise is gated on whether the drill's skill actually keeps one");
+    assert.ok(/DRILL_AREAS\.find\(\(area\) => area\.id === practiceDrill\.area\)\?\.skillSlug/.test(view),
+      "37g2. the gate reads the drill AREA's own skill");
+    assert.ok(/!skillRecordSuspended\(drillSkillSlug\)/.test(view),
+      "37g3. through the shared predicate, never a lesson or area allowlist");
+    const recordClaimAt = view.indexOf("that is where your");
+    const recordBranchAt = view.indexOf("drillKeepsARecord ? (");
+    assert.ok(recordBranchAt > 0 && recordClaimAt > recordBranchAt,
+      "37g4. and the claim sits inside the true branch, so a suspended skill can never render it");
 
     // The formative practice component stays inert — Slice 1 added no persistence to it.
     const practice = stripComments(read("components/lessons/concept-education-lesson-practice.tsx"));

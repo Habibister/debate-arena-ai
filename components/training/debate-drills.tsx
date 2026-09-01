@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, RotateCcw, Target, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DRILL_AREAS, type DrillArea } from "@/lib/debate-drills";
+import { debateMasteryHeld, DRILL_AREAS, type DrillArea } from "@/lib/debate-drills";
 
 // Server-issued item. There is deliberately no correct answer and no explanation here: the session
 // route withholds both until the learner has actually answered, and this client has no way to grade.
@@ -109,6 +109,18 @@ export function resultState(skill: PerSkill): { badge: string; tone: "success" |
       explanation: "Progress tracking is not available for this skill yet."
     };
   }
+  // A skill whose durable record is suspended reaches the same evidence branches as any other,
+  // because the evidence figures are computed independently of it. Those branches would then blame
+  // the question count or the score for a non-write neither caused. Derived from the skill's own
+  // slug through the shared predicate — never a hardcoded area — so this disappears by itself the
+  // moment the skill records again.
+  if (debateMasteryHeld(skill.skillSlug)) {
+    return {
+      badge: "Practice only",
+      tone: "outline",
+      explanation: `This skill is in practice mode: your answers were scored and explained, and nothing was added to your record. You answered ${skill.uniqueCorrect} of ${skill.uniqueTotal} different questions correctly.`
+    };
+  }
   if (skill.evidenceStatus === "insufficient-evidence") {
     return {
       badge: "Practice only",
@@ -155,6 +167,25 @@ type AnswerState = { optionId: string; correct: boolean; correctAnswer: string; 
  */
 export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) {
   const [areaFilter, setAreaFilter] = useState<DrillArea | "mixed">(initialArea ?? "mixed");
+  // What this session can honestly promise. A focused run on a skill whose durable record is
+  // suspended still serves, still grades and still explains — it just does not update anything, so
+  // the "focused sessions can update your progress" line would be false for it. Derived from the
+  // selected area's own skill through the shared predicate; a mixed run keeps the ordinary wording
+  // because most areas do record and the per-skill result rows say what happened to each.
+  const focusedAreaSkill = areaFilter === "mixed"
+    ? undefined
+    : DRILL_AREAS.find((area) => area.id === areaFilter)?.skillSlug;
+  // A MIXED session draws from every servable area, so if any area is in practice mode the plain
+  // "records once you answer 5 different questions" rule is not the only condition and would be
+  // false for those items. Both cases are derived; neither names a skill.
+  const someAreaInPracticeMode = DRILL_AREAS.some((area) => debateMasteryHeld(area.skillSlug));
+  const progressNote = areaFilter === "mixed"
+    ? someAreaInPracticeMode
+      ? `A mixed session records a skill once you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it. Some skills are in practice mode and record nothing — each result below says which.`
+      : `Focused skill sessions can update your progress. A mixed session is practice and only records a skill when you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.`
+    : debateMasteryHeld(focusedAreaSkill)
+      ? "This skill is in practice mode: every answer is scored and explained, and nothing is added to your record."
+      : `This focused session can update your progress once you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions.`;
   const [count, setCount] = useState(8);
   const [areasMeta, setAreasMeta] = useState<AreaMeta[]>([]);
   const [session, setSession] = useState<SessionStart | null>(null);
@@ -354,10 +385,7 @@ export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) 
               );
             })}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Focused skill sessions can update your progress. A mixed session is practice and only records a
-            skill when you answer at least {REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.
-          </p>
+          <p className="text-xs text-muted-foreground">{progressNote}</p>
           <Button type="button" size="sm" onClick={() => { setSession(null); resetRun(); }}>
             <RotateCcw className="h-4 w-4" aria-hidden />
             New drill
@@ -396,10 +424,7 @@ export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) 
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Focused skill sessions can update your progress. A mixed session is practice and only records a
-              skill when you answer at least {REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground">{progressNote}</p>
           </div>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Questions</span>

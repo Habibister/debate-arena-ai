@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { debateMasteryHeld } from "@/lib/debate-drills";
+import { debateMasteryHeld, DEBATE_MASTERY_HELD_SKILLS } from "@/lib/debate-drills";
 
 // Spaced Reassessment v1 (Study Arcade review loop). Deliberately simple and honest:
 // - passing practice advances an expanding-interval ladder (1d -> 3d -> 7d -> 14d, then stays 14d)
@@ -234,9 +234,69 @@ export async function recordPracticeOutcome(params: {
   }
 }
 
+/**
+ * Skill ids whose durable mastery is suspended, resolved from the canonical slug list.
+ *
+ * Used to keep a held skill out of the DUE-REVIEW surfaces. The schedule row itself is never
+ * touched: it is not deleted, its `nextReviewAt` is not moved, and the learner's mastery is left
+ * exactly as it stands. Only the ACTIONABILITY is withdrawn, because a due review for a held skill
+ * cannot be resolved — passing pushes nothing out, failing lowers nothing — so presenting it as a
+ * task tells a learner to do something that cannot succeed, every day, forever.
+ *
+ * An empty hold list short-circuits to no filter, so the ordinary path costs nothing.
+ */
+async function heldReviewSkillIds(): Promise<string[] | null> {
+  if (DEBATE_MASTERY_HELD_SKILLS.length === 0) return [];
+  try {
+    const rows = await prisma.skill.findMany({
+      where: { slug: { in: [...DEBATE_MASTERY_HELD_SKILLS] } },
+      select: { id: true }
+    });
+    return rows.map((row) => row.id);
+  } catch {
+    // FAIL CLOSED, and `null` is what makes that real. Returning an empty array here would mean "no
+    // skills are held", which applies NO filter and surfaces the very rows this exists to withhold —
+    // fail-open wearing a fail-closed comment. Callers treat `null` as "cannot prove any row is safe"
+    // and show nothing, because an unresolvable card is worse than a missing one.
+    return null;
+  }
+}
+
+/**
+ * Due schedule rows with held skills removed, resolved against their Skill rows.
+ *
+ * Shared by the count and the list so the two can never disagree. They previously could: the count
+ * filtered by skill ID only, while the list additionally dropped a row whose Skill could not be
+ * resolved — and `SkillReviewSchedule.skillId` carries no foreign key, so a stale id is real. The
+ * learner saw "1 skill is due", clicked through, and read "Nothing due right now" — the same
+ * unresolvable dead end, one step further along.
+ */
+async function dueReviewRowsWithSkills(userId: string, take?: number) {
+  const held = await heldReviewSkillIds();
+  if (held === null) return null;
+  const rows = await prisma.skillReviewSchedule.findMany({
+    where: { userId, nextReviewAt: { lte: new Date() }, ...(held.length > 0 ? { skillId: { notIn: held } } : {}) },
+    orderBy: { nextReviewAt: "asc" },
+    ...(take === undefined ? {} : { take })
+  });
+  if (rows.length === 0) return { rows, skillById: new Map<string, { id: string; name: string; slug: string; organization: string }>() };
+  const skills = await prisma.skill.findMany({
+    where: { id: { in: rows.map((row) => row.skillId) } },
+    select: { id: true, name: true, slug: true, organization: true }
+  });
+  const skillById = new Map(skills.map((skill) => [skill.id, skill]));
+  // The same slug gate the list applies, applied here so the count sees exactly what the list will.
+  const resolved = rows.filter((row) => {
+    const skill = skillById.get(row.skillId);
+    return Boolean(skill) && !debateMasteryHeld(skill!.slug);
+  });
+  return { rows: resolved, skillById };
+}
+
 export async function countDueReviews(userId: string): Promise<number> {
   try {
-    return await prisma.skillReviewSchedule.count({ where: { userId, nextReviewAt: { lte: new Date() } } });
+    const due = await dueReviewRowsWithSkills(userId);
+    return due === null ? 0 : due.rows.length;
   } catch {
     return 0;
   }
@@ -256,27 +316,24 @@ export type DueReview = {
 // Due reviews joined with skill + current mastery, for the review session page.
 export async function getDueReviews(userId: string): Promise<DueReview[]> {
   try {
-    const rows = await prisma.skillReviewSchedule.findMany({
-      where: { userId, nextReviewAt: { lte: new Date() } },
-      orderBy: { nextReviewAt: "asc" },
-      take: 50
-    });
+    const due = await dueReviewRowsWithSkills(userId, 50);
+    if (due === null) return [];
+    const { rows, skillById } = due;
     if (rows.length === 0) return [];
 
     const skillIds = rows.map((row) => row.skillId);
-    const [skills, mastery] = await Promise.all([
-      prisma.skill.findMany({ where: { id: { in: skillIds } }, select: { id: true, name: true, slug: true, organization: true } }),
-      prisma.masteryProgress.findMany({
-        where: { userId, skillId: { in: skillIds } },
-        select: { skillId: true, masteryPercent: true, masteryLevel: true }
-      })
-    ]);
-    const skillById = new Map(skills.map((skill) => [skill.id, skill]));
+    const mastery = await prisma.masteryProgress.findMany({
+      where: { userId, skillId: { in: skillIds } },
+      select: { skillId: true, masteryPercent: true, masteryLevel: true }
+    });
     const masteryBySkill = new Map(mastery.map((m) => [m.skillId, m]));
 
     return rows.flatMap((row) => {
       const skill = skillById.get(row.skillId);
       if (!skill) return [];
+      // Second gate, by slug. The id filter above is the cheap one; this one cannot be defeated by a
+      // stale or missing Skill row, so a held skill never reaches a learner-facing due list.
+      if (debateMasteryHeld(skill.slug)) return [];
       const progress = masteryBySkill.get(row.skillId);
       return [
         {

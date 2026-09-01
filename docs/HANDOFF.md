@@ -51,6 +51,24 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **HELD-MASTERY LEARNER-EXPERIENCE TRUTH REPAIR — UNCOMMITTED, in the working tree (2026-09-01).**
+  Containment made `debate-rebuttal` non-recording but left the product still describing it as
+  recording, and left its historical due-review rows actionable. A due review for a held skill cannot
+  be resolved — passing pushes no schedule out, failing lowers nothing — so it would have been offered
+  every day, forever. **Fixed at the source, once:** `getDueReviews`/`countDueReviews` now answer
+  through a single shared gate that drops held skills, and `heldReviewSkillIds()` returns `null` (not
+  `[]`) when it cannot resolve the held set, so an error withholds rows instead of surfacing them.
+  That same gate also ended a count/list divergence — `SkillReviewSchedule.skillId` carries no foreign
+  key, so a stale id was counted but dropped from the list, showing "1 skill is due" then "Nothing
+  due". No schedule row is deleted, no `nextReviewAt` is moved, and no mastery is erased.
+  Every consumer inherits the filter: the review page, Study Arcade, Home, and the Coach next action.
+  Learner copy on nine surfaces now conditions any record/review promise on whether the SKILL records,
+  derived from `debateMasteryHeld`, never on the act of practising; the coach's Skill growth bar for a
+  held skill says the recorded figure is not updating, and `lowMasterySkills` no longer nominates a
+  frozen skill for assignment. The legacy Claim/Warrant/Impact lesson's top "Jump to practice" button
+  is removed — it was the one lesson practice that writes durable mastery, and a promoted control
+  above every teaching section invited the exact bypass the teach-first rule exists to prevent;
+  section navigation still reaches Practice. **Not committed, not pushed, not deployed.**
 - **DECA empty-pool twin.** `buildDecaDrillSession` has no zero-eligible guard; the Debate half
   shipped in `a66d46cb`. Do not record the empty-pool issue as closed — only the Debate half is.
 - **Signposting and Constructive Speeches** drill-and-evidence connectivity — the only two unresolved

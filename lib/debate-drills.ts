@@ -559,10 +559,66 @@ function shuffle<T>(items: T[]): T[] {
 // knowledge. The item's own bytes are unchanged. Neither the teaching nor the item is human-reviewed;
 // external human content review was owner-waived, and a waiver is not a review.
 //
-// NOTHING IS HELD IN THE DEBATE BANK. An empty list is the correct current state, not an oversight:
-// every item in the bank is individually eligible, whatever the bank currently holds. Session
-// capacity is still lower — see the eligibility-vs-capacity note below.
-export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [];
+// REBUTTAL CONTAINMENT (live P0, 2026-09-01). The paragraph above said nothing was held. That is no
+// longer true, and the reason is a defect this bank's own release discipline was built to prevent.
+//
+// A teaching-to-drill-to-mastery audit of the rebuttal area found that of its 30 items, only 19 are
+// derivable from the published learner-visible curriculum; 11 are not, and 9 of those test material
+// NO published lesson mentions at all — dropped arguments and extension, speech-time triage,
+// strategic concession, frontlining, rebuilding an attacked warrant, rebuilding a shrunken impact,
+// counterexample-against-a-universal, and false dilemma. A further two are gated on vocabulary
+// ("signposting", "warrant-level") that no reachable lesson defines. Ten items have a second
+// defensible answer. All of it was writing durable `debate-rebuttal` mastery.
+//
+// The 22 ids below are withheld from serving under the owner's containment ruling. Each fails at
+// least one of four conditions: its decisive competency is taught by learner-visible education, a
+// website-only reviewer can derive it, the answer is unique, and no material test-craft exploit
+// makes the practice misleading. Withheld for one of three reasons:
+//
+//   UNTAUGHT (11)  rb-04, rb-05, rb-09, rb-10, rb-20, rb-21, rb-22, rb-23, rb-24, rb-27, rb-29
+//                  Six of these — rb-04, rb-05, rb-22, rb-23, rb-24, rb-27 — are speech-level and
+//                  belong to the HELD `debate-rebuttal-speeches`, not to Refutation. They return
+//                  only when that lesson passes its own acceptance gate. rb-20, rb-21 and rb-29 are
+//                  argument-logic items whose curriculum owner is undecided; they stay held rather
+//                  than being assigned to Refutation to save drills.
+//
+//   NON-UNIQUE (4) rb-07, rb-18, rb-26, rb-28 — a second option is defensible from the published
+//                  teaching, so a correct answer does not distinguish a learner from a guesser.
+//
+//   CRAFT (7)      rb-01, rb-03, rb-06, rb-12, rb-19, rb-25, rb-30 — solvable without the teaching:
+//                  filler distractors nobody would choose, absolute-word elimination, or a stem that
+//                  prints the other steps as distractors and collapses a 4-way to a 2-way.
+//
+// Bytes are unchanged and ids are not renumbered: these are repair targets and release provenance,
+// exactly as the B1 hold above treated its own. Releasing any of them requires the same per-item
+// reactivation gate the B2.1/B2.2/B2.3 releases document — teaching first, then the item.
+export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
+  "rb-01", "rb-03", "rb-04", "rb-05", "rb-06", "rb-07", "rb-09", "rb-10", "rb-12", "rb-18", "rb-19",
+  "rb-20", "rb-21", "rb-22", "rb-23", "rb-24", "rb-25", "rb-26", "rb-27", "rb-28", "rb-29", "rb-30"
+];
+
+/**
+ * Skills whose DURABLE MASTERY WRITES are suspended while their evidence model is revalidated.
+ *
+ * Withholding the unfair items is not sufficient on its own. The eight rebuttal items that remain
+ * servable carry roughly five distinct judgements between them — rb-02/rb-16 are one, rb-13/rb-17
+ * are one, rb-14/rb-15 are a measurement-dependent pair — while the legacy model counts five
+ * distinct QUESTION IDS as five independent measurements. That is precisely the assumption the
+ * Constructive secure-evidence work exists to reject, so the remaining items are practice and the
+ * mastery claim pauses rather than being re-earned on a smaller version of the same mistake.
+ *
+ * Held is not deleted and not disabled: the Skill row stays, existing records are untouched, and
+ * practice still serves and still grades. What stops is new durable evidence — no MasteryProgress
+ * advance and no new review scheduling from a submission in a held skill.
+ *
+ * Lifting this requires the rebuttal evidence model to be revalidated, not merely a bigger bank.
+ */
+export const DEBATE_MASTERY_HELD_SKILLS: ReadonlyArray<string> = ["debate-rebuttal"];
+
+/** Is durable mastery writing suspended for `skillSlug`? Pure; safe to call from any layer. */
+export function debateMasteryHeld(skillSlug: string | null | undefined): boolean {
+  return Boolean(skillSlug) && DEBATE_MASTERY_HELD_SKILLS.includes(skillSlug as string);
+}
 
 // ELIGIBILITY IS NOT SESSION CAPACITY — read this before "fixing" any 29 back to a 30.
 //

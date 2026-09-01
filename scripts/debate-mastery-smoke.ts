@@ -854,14 +854,34 @@ async function main() {
     }
   }
   // The boolean contract, run for real against the stub.
+  //
+  // These used `debate-rebuttal`, which the 2026-09-01 containment placed under a mastery hold: that
+  // slug now returns `mastery-held` without writing, so it can no longer demonstrate the write path.
+  // The contract under test is the BOOLEAN one, not anything rebuttal-specific, so it is exercised on
+  // an unheld Debate skill — and the hold itself is asserted separately below, on the slug that has it.
+  const { recordDrillMasteryDetailed } = await import("../lib/spaced-review");
+  const { debateMasteryHeld } = await import("../lib/debate-drills");
+  const UNHELD_SKILL = "debate-weighing";
+  assert.equal(debateMasteryHeld(UNHELD_SKILL), false, "32c0. control: the write path is exercised on an UNHELD skill");
   resetStub("found");
-  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "debate-rebuttal", scorePercent: 80, passed: true }), true,
+  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: UNHELD_SKILL, scorePercent: 80, passed: true }), true,
     "32c. a successful write returns true");
   assert.equal(stub.calls.find((c) => c.op === "masteryProgress.create")?.data.masteryPercent, 80,
     "32d. and the EVIDENCE score is what was written");
   resetStub("write-throws");
-  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "debate-rebuttal", scorePercent: 80, passed: true }), false,
+  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: UNHELD_SKILL, scorePercent: 80, passed: true }), false,
     "32e. a failed write returns false -> not-saved");
+  // The hold, proven where it applies: a held skill writes nothing at all, and reports held rather
+  // than reusing skill-missing or a failed write.
+  resetStub("found");
+  assert.equal(await recordDrillMastery({ userId: "u", skillSlug: "debate-rebuttal", scorePercent: 80, passed: true }), false,
+    "32c2. a HELD skill returns false — no mastery is claimed");
+  assert.equal(stub.calls.filter((c) => String(c.op).startsWith("masteryProgress.")).length, 0,
+    "32c3. and touches MasteryProgress not at all");
+  assert.equal(
+    (await recordDrillMasteryDetailed({ userId: "u", skillSlug: "debate-rebuttal", scorePercent: 80, passed: true })).status,
+    "mastery-held",
+    "32c4. the detailed form reports the hold explicitly");
   // 32f. The boolean export still exists and is still boolean — that is the guarantee the route's
   // switch to the detailed form must not cost any other caller.
   const spacedReviewSrc = stripComments(read("lib/spaced-review.ts"));

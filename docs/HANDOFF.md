@@ -35,6 +35,21 @@ below the boundary.
 
 ## What remains open
 
+- **REBUTTAL LIVE P0 — CONTAINED LOCALLY, NOT IN PRODUCTION.** A teaching-to-drill-to-mastery audit
+  (2026-09-01) found the `rebuttal` drill area writing durable `debate-rebuttal` mastery on material
+  the published curriculum does not teach: 11 of 30 items not derivable from any learner-visible
+  lesson, 9 of them testing concepts no lesson mentions at all, and 10 with a second defensible
+  answer. The credited lesson, `debate-refutation`, is 18 words and supports 6 of the 30; the two
+  substantial lessons feeding the same area — Answer Types (245 words) and Turn Mechanics (696) —
+  claim no skill and are therefore invisible to remediation, so a learner who misses their material is
+  routed back to the 18-word lesson.
+  **The containment is local and UNPUSHED.** Production still serves all 30 items and still writes
+  `debate-rebuttal` mastery from them. The defect is live until the owner pushes. Locally: 22 items
+  quarantined, 8 practice-only, durable mastery held at the persistence boundary.
+  Historical mastery rows are untouched and still display; readiness does not consume MasteryProgress.
+  Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
+  held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
+  evidence identities rather than raw question ids.
 - **DECA empty-pool twin.** `buildDecaDrillSession` has no zero-eligible guard; the Debate half
   shipped in `a66d46cb`. Do not record the empty-pool issue as closed — only the Debate half is.
 - **Signposting and Constructive Speeches** drill-and-evidence connectivity — the only two unresolved

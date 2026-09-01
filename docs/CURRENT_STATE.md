@@ -98,17 +98,38 @@ non-executable. Rewrite this region after each milestone; append history below t
   areas × 30). **Live corpus 450 items total.** All five Debate drill areas and all four DECA drill
   areas are **authorised**. The 270 measured Debate + DECA items are the frozen assessment set; the
   420 in the G2 line above is the M14 G2 target scope, a different denominator.
-- **Held set — exactly 1, and it is DECA's.** The Debate held set is **empty**: B2.3 released
-  `wg-08` in Production after teaching the weighing-standard mechanism it measures. DECA `pi-26` remains HELD
-  (B2.4 target). `rb-14` and `rb-15` are **RELEASED** and individually eligible. `wg-29` is FAIR
-  TRANSFER / SERVING — never collapse it with `wg-08`.
-- **Two serving numbers, never collapsed.** GLOBAL INDIVIDUAL ELIGIBILITY — Debate **150/150**
-  (rebuttal **30/30**, weighing **30/30**), DECA **119/120** (PI **29/30**). CLEAN-HISTORY DISTINCT
-  SESSION CAPACITY — Debate **149**, rebuttal **29**, because the measurement-dependent
-  `rb-14`/`rb-15` pair never co-serves. **Releasing `wg-08` moved Debate capacity from 148 to 149,
-  never to 150** — the pair control still displaces exactly one item from every session, and rebuttal
-  capacity is unchanged. If a test expects 29 for rebuttal and you are about to "fix" it to 30:
-  don't. Raising session capacity by co-serving the pair destroys the contamination control.
+- **Held set — 22 Debate + 1 DECA.** The Debate held set was empty after B2.3 released `wg-08`. The
+  **rebuttal containment (2026-09-01)** refilled it: a teaching-to-drill-to-mastery audit found the
+  `rebuttal` area writing durable mastery on material the published curriculum does not teach, and
+  **22 of its 30 items are now withheld from serving** — 11 untaught, 4 with a second defensible
+  answer, 7 solvable without the teaching. Servable rebuttal items: `rb-02`, `rb-08`, `rb-11`,
+  `rb-13`, `rb-14`, `rb-15`, `rb-16`, `rb-17`. Item bytes are unchanged and ids are not renumbered;
+  these are repair targets, and each returns only through the same per-item reactivation gate B2.1–B2.3
+  used. Six of the untaught eleven are speech-level and belong to the HELD `debate-rebuttal-speeches`.
+  DECA `pi-26` remains HELD (B2.4 target). `wg-08` stays RELEASED and no other Debate area was
+  touched. `rb-14` and `rb-15` remain RELEASED and individually eligible. `wg-29` is FAIR TRANSFER /
+  SERVING — never collapse it with `wg-08`.
+- **`debate-rebuttal` durable mastery is HELD.** Withholding the unfair items was not sufficient on
+  its own: the eight that remain carry roughly five distinct judgements, while the legacy model counts
+  five distinct QUESTION IDS as five independent measurements. So new durable mastery for
+  `debate-rebuttal` is suspended — practice still serves and still grades, and **no MasteryProgress
+  advance and no new review scheduling** follow from it. The Skill row is untouched, existing learner
+  rows are untouched and can still display, and the threshold (70%) and floor (5) are unchanged: the
+  claim paused, not the assessment. Enforced at the persistence boundary in
+  `recordDrillMasteryDetailed` and `recordDrillMasteryInTransaction` plus the submit route, all
+  reading one predicate, `debateMasteryHeld` in `lib/debate-drills.ts`. **Containment, not the final
+  architecture** — lifting it requires the rebuttal evidence model to be revalidated, not merely a
+  bigger bank.
+- **Two serving numbers, never collapsed.** GLOBAL INDIVIDUAL ELIGIBILITY — Debate **165/187**
+  (rebuttal **8/30** after the containment, weighing **30/30**), DECA **119/120** (PI **29/30**).
+  CLEAN-HISTORY DISTINCT SESSION CAPACITY — Debate **163**, rebuttal **7**, because the
+  measurement-dependent `rb-14`/`rb-15` pair never co-serves and both are still eligible. Read both
+  numbers as DERIVED: the tests now compute eligibility as bank-minus-held and capacity as
+  eligibility-minus-displacement rather than pinning totals, precisely because remembered figures went
+  stale twice — once when Signposting and Constructive grew the bank past 150, and again here. The
+  rebuttal figures were **30/30 and 29** before the containment; do not restore them from memory. The
+  pair control is unrelated to the containment and still displaces exactly one item per session:
+  raising session capacity by co-serving the pair destroys the contamination control.
 - **The pair measurement control is ACTIVE in Production and must stay executable.** Four parts:
   (1) same-session mutual exclusion applied POOL-LEVEL inside `buildDrillSessionFrom` before the
   shuffle, keeper chosen at random; (2) retained-exposure sibling exclusion derived at the single

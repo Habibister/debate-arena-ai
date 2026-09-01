@@ -440,8 +440,15 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     "4b6c3. and exactly one push site to reason about");
   assert.ok(/persistenceStatus = "skill-missing"/.test(debateCode),
     "4b6d. an unseeded skill reports skill-missing");
-  assert.ok(/if \(qualifies && area\.skillSlug\) \{/.test(debateCode),
-    "4b6e. and a valid skill slug is required before persistence is attempted");
+  // Pinned the guard's exact expression, which the rebuttal mastery hold (2026-09-01) extended with
+  // `&& !masteryHeld`. The property this control owns is unchanged and is now asserted as the
+  // property rather than as one spelling: the evidence floor and a valid skill slug are both still
+  // required before anything persists, and conditions may only be ADDED to that guard.
+  const persistenceGuard = debateCode.match(/if \(qualifies && area\.skillSlug([^)]*)\) \{/);
+  assert.ok(persistenceGuard,
+    "4b6e. the evidence floor and a valid skill slug are both required before persistence is attempted");
+  assert.ok(/^(\s*&&\s*!?[A-Za-z][\w.]*)*\s*$/.test(persistenceGuard![1]),
+    `4b6e2. any further conditions on that guard are additional AND-restrictions, never a relaxation (found "${persistenceGuard![1].trim()}")`);
   // M15 S1B Batch I: the ordering comparison alone was vacuous — when the short-circuit
   // anchor is absent indexOf returns -1 and `-1 < n` still holds, so deleting the very
   // short-circuit this control exists to protect turned it green. Both anchors are now

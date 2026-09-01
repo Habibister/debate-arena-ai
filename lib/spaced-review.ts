@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { debateMasteryHeld } from "@/lib/debate-drills";
 
 // Spaced Reassessment v1 (Study Arcade review loop). Deliberately simple and honest:
 // - passing practice advances an expanding-interval ladder (1d -> 3d -> 7d -> 14d, then stays 14d)
@@ -342,6 +343,10 @@ export type DrillMasteryOutcome =
       review: Extract<ReviewPracticeResult, { status: "preserved-concurrent-existing" }>
             | Extract<ReviewPracticeResult, { status: "preserved-concurrent-created" }> }
   | { status: "skill-missing"; review: null }
+  // The skill's evidence model is suspended: nothing was written, and nothing is wrong. Distinct from
+  // `skill-missing`, which is a seeding fault — collapsing them would hide a real defect behind a
+  // deliberate pause.
+  | { status: "mastery-held"; review: null }
   | { status: "write-failed"; review: ReviewPracticeResult | null };
 
 /** True only when the review result licenses lowering an existing mastery percentage. */
@@ -358,6 +363,11 @@ export async function recordDrillMasteryDetailed(params: {
   now?: Date;
 }): Promise<DrillMasteryOutcome> {
   const { userId, skillSlug, scorePercent, passed } = params;
+  // MASTERY HOLD, checked at the persistence boundary rather than left to the call graph. This runs
+  // before the skill lookup and before `recordPracticeOutcome`, so a held skill causes no mastery
+  // mutation and no review scheduling. `recordDrillMastery` delegates here and therefore inherits it,
+  // which is why the slug check is not repeated there.
+  if (debateMasteryHeld(skillSlug)) return { status: "mastery-held", review: null };
   const now = params.now ?? new Date();
   let review: ReviewPracticeResult | null = null;
   try {
@@ -528,11 +538,23 @@ export async function recordPracticeOutcomeInTransaction(
   return { status: "reset-after-due-failure", previousReviewCount: priorCount, reviewCount: 0, previousNextReviewAt: priorNext, nextReviewAt };
 }
 
+/**
+ * Durable mastery write, inside a caller's transaction.
+ *
+ * Returns `mastery-held` WITHOUT writing when the skill's evidence model is suspended. The submit
+ * route already skips this call for a held skill; this second check exists so a future caller cannot
+ * reintroduce the write by forgetting the first one. It is deliberately placed at the writer rather
+ * than at one route, because the containment ruling is about the skill, not about one entry point.
+ */
 export async function recordDrillMasteryInTransaction(
   tx: Prisma.TransactionClient,
   params: { userId: string; skillSlug: string; scorePercent: number; passed: boolean; now: Date; review: TxReviewOutcome }
-): Promise<{ status: "updated" | "skill-missing" }> {
+): Promise<{ status: "updated" | "skill-missing" | "mastery-held" }> {
   const { userId, skillSlug, scorePercent, passed, now, review } = params;
+  // Checked BEFORE the skill lookup: a held skill writes nothing whether or not its row exists, and
+  // "held" must never be reported as "skill-missing" — one is a deliberate pause, the other is a
+  // seeding fault, and collapsing them would hide a real defect behind a temporary one.
+  if (debateMasteryHeld(skillSlug)) return { status: "mastery-held" };
   const skill = await tx.skill.findUnique({ where: { slug: skillSlug }, select: { id: true } });
   if (!skill) return { status: "skill-missing" }; // not seeded — never fabricate progress
 

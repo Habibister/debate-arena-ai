@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
-import { DEBATE_DRILL_REQUIRED_UNIQUE, DRILL_AREAS, DRILL_PASS_THRESHOLD } from "@/lib/debate-drills";
+import { debateMasteryHeld, DEBATE_DRILL_REQUIRED_UNIQUE, DRILL_AREAS, DRILL_PASS_THRESHOLD } from "@/lib/debate-drills";
 import {
   aggregateAreaEvidence,
   completedPurgeAfter,
@@ -80,9 +80,15 @@ export async function POST(request: Request) {
         const evidenceStatus = !qualifies ? "insufficient-evidence" : passed ? "passing" : "below-threshold";
 
         let persistenceStatus: PersistenceStatus = "not-attempted";
+        // MASTERY HOLD. A skill whose evidence model is under revalidation takes the same branch a
+        // below-floor session takes: the persistence helpers are NOT CALLED, so there is no mastery
+        // advance and no new review scheduling. Grading above is untouched — the learner still gets
+        // correctness and feedback, and the score still returns. The floor and the threshold are not
+        // altered; what pauses is the claim, not the assessment.
+        const masteryHeld = debateMasteryHeld(area.skillSlug);
         // Below the floor the persistence helpers are NOT CALLED at all — no mastery, no review, and
         // no due-review knock-down from a session too short to have earned one.
-        if (qualifies && area.skillSlug) {
+        if (qualifies && area.skillSlug && !masteryHeld) {
           const skill = await tx.skill.findUnique({ where: { slug: area.skillSlug }, select: { id: true } });
           if (!skill) {
             persistenceStatus = "skill-missing";

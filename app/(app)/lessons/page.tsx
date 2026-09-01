@@ -60,16 +60,23 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
     ...lessonsForTrack(activeTrack?.slug).map((l) => ({
       slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes,
       label: "General Debate", kind: "Concept lesson" as const,
-      // A concept lesson ends with its own practice AND the track keeps a separate drill set, so
-      // neither fact may swallow the other.
+      // A concept lesson ends with its own checks AND the track keeps a separate drill set, so
+      // neither fact may swallow the other. "Knowledge checks" is the term the migrated entries
+      // below already use: the lesson's own questions are not the drill system, and calling them
+      // "Practice" made one page name two different things the same way.
       availability: [
         { label: "Reading", value: "Available", state: "available" as const },
-        { label: "Practice", value: "Available in this lesson", state: "available" as const },
+        {
+          label: "Knowledge checks",
+          value: "Available in this lesson",
+          state: "available" as const,
+          detail: "Questions inside the lesson. They check the reading you just did and save nothing."
+        },
         {
           label: "Skill drills",
           value: "Available separately",
           state: "available" as const,
-          detail: "This track's full skill-drill set lives outside the lesson, in Skill drills."
+          detail: "A separate repeat-until-solid drill set in Study Arcade — not these questions."
         }
       ]
     })),
@@ -127,7 +134,7 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
                 label: "Skill drills",
                 value: "Available separately",
                 state: "available" as const,
-                detail: "This track's full skill-drill set lives outside the lesson, in Skill drills."
+                detail: "A separate repeat-until-solid drill set in Study Arcade — not these questions."
               }
             ]
           }))

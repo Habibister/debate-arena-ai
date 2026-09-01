@@ -59,6 +59,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "specs:seed": "tsx scripts/seed-competition-specs.ts",
     "postinstall": "prisma generate",
+    "debate-training-ux:smoke": "tsx scripts/debate-training-ux-smoke.ts",
     "drill-exclusion-boundary:smoke": "tsx scripts/debate-drill-exclusion-boundary-smoke.ts"
   },
   "engines": {

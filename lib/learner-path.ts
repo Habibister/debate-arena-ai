@@ -46,8 +46,25 @@ export const LEARNER_PATH_STAGE_ORDER: readonly LearnerPathStageId[] = ["learn",
 // ---------------------------------------------------------------------------------------------
 const DEBATE_PATH: readonly LearnerPathStage[] = [
   { id: "learn", label: "Learn", state: "available", href: "/lessons/claim-warrant-impact" },
-  { id: "practice", label: "Practice", state: "available", href: "/skills?track=debate" },
-  { id: "apply", label: "Apply", state: "available", href: "/tests?track=debate" },
+  // Practice is the drill layer, not the lesson index. This pointed at /skills?track=debate, which
+  // for Debate lists the published LESSONS — so Learn and Practice were the same page under two
+  // names. Study Arcade is where the Debate drills actually run.
+  { id: "practice", label: "Practice", state: "available", href: "/study-arcade?track=debate" },
+  {
+    id: "apply",
+    label: "Apply",
+    state: "unavailable",
+    // Deliberately no href. This pointed at /tests?track=debate, which has no Debate product behind
+    // it and answered with an empty state saying tests belong to other tracks. Debate written
+    // practice does exist, but only from a skill's own compatibility page and from the review queue;
+    // there is no authored track-level Apply destination, and naming one here would be a navigation
+    // promise rather than a product. What Debate's Apply step becomes is an open decision.
+    // Wording is about NAVIGATION, not about tests. Apply is not a synonym for practice tests: the
+    // model is Learn -> Practice -> Apply -> Compete, and Debate does have application capability in
+    // narrower places (written practice from a skill's own page, and from the review queue). What it
+    // has no destination for is a track-level Apply step, which is exactly what this stage names.
+    note: "No dedicated Apply destination yet."
+  },
   { id: "compete", label: "Compete", state: "available", href: "/debate?track=debate" }
 ] as const;
 

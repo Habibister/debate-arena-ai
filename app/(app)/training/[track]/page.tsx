@@ -13,7 +13,7 @@ import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
 import { deckSummaries } from "@/lib/study-content";
 import { hosaEventById } from "@/lib/hosa-events";
-import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, type TrainingTrack } from "@/lib/training-tracks";
+import { CONTENT_SOURCE_LABEL, isTrackRetired, TRACK_DISCLAIMER, trackBySlug, trackHasPracticeTests, type TrainingTrack } from "@/lib/training-tracks";
 
 // Event HQ pages exist only for events with real registry data — no placeholder HQs.
 const EVENT_HQ_SLUG: Partial<Record<TrainingTrack, string>> = {
@@ -75,7 +75,8 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
 
   // Reuse existing org-tagged content; only show this track's decks.
   const decks = deckSummaries().filter((d) => d.organization === track.organization);
-  const hasTests = track.organization === "DECA" || track.organization === "HOSA";
+  // Same capability statement every other surface reads, instead of a fourth local copy of it.
+  const hasTests = trackHasPracticeTests(track.id);
   const isDebate = track.id === "GENERAL_DEBATE";
   // Guided lessons are authored per track; surface the entry when this track has any (Debate concept
   // lessons or the DECA/HOSA role-play course).
@@ -264,7 +265,14 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             href={`/skills?track=${track.slug}` as Route}
             icon={BookOpenCheck}
             label="Skill drills"
-            detail="Work through examples, guided practice, and mastery checks."
+            // The old detail described a five-stage mastery path that does not exist. Debate states
+            // what its drill layer really is, and the boundary against lesson questions; the other
+            // tracks keep the general wording.
+            detail={
+              isDebate
+                ? "Drill one skill at a time and review it later — separate from the questions inside a lesson."
+                : "Work through the skills this track trains."
+            }
           />
         </ul>
       </section>

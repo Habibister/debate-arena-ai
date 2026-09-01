@@ -23,6 +23,8 @@ import { getEducationLesson, EDUCATION_LESSONS, educationLessonsForPracticeSkill
 import { isConceptEducationLessonEntry, type EducationPracticeDrill } from "@/lib/education/types";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
 import { hasDebateWritingScenario } from "@/lib/debate-skill-practice";
+import { HELD_DEBATE_CATALOG_SLUGS } from "@/lib/education/tracks/debate";
+import { LEARNING_SKILL_CATALOG } from "@/lib/learning-content";
 
 /** The track a legacy record belongs to, including the soft-removed Model UN. */
 export type CompatTrack = "DEBATE" | "DECA" | "HOSA" | "MODEL_UN";
@@ -270,6 +272,48 @@ export function resolveSkillsSlug(slug: string): SkillsCompatResolution {
   return { kind: "unknown" };
 }
 
+/**
+ * Is `slug` an AUTHORED Debate lesson that is not learner-visible?
+ *
+ * This exists because writing-practice support was, in practice, protected by an accident. All four
+ * held Debate lessons carry a scenario in `DEBATE_WRITING_SCENARIO_SLUGS`, and the only reason
+ * `/skills/<held-slug>/practice` did not serve one was that `resolveSkillsSlug` happened to return
+ * `unknown` for those slugs today. Seeding a skill under one of those names, adding a compatibility
+ * alias, or extending the redirect allowlist would each have silently made a HELD lesson's writing
+ * practice reachable — without anyone deciding to publish it.
+ *
+ * A held lesson must stay held because the code CHECKS that it is published. So support is decided
+ * here on publication, independently of how the slug resolved.
+ *
+ * Fail-closed and deliberately not keyed off `HELD_DEBATE_CATALOG_SLUGS` alone: ANY authored Debate
+ * catalog entry that is not learner-visible in the registry counts as unpublished, so a newly
+ * authored lesson that nobody remembered to add to the held list is still covered.
+ *
+ * NARROW BY CONSTRUCTION: a slug that is not an authored Debate lesson at all — the seeded
+ * skill-step slugs like `debate-weighing-2` — is not lesson-backed, so this returns false and their
+ * existing writing practice is untouched.
+ */
+function isUnpublishedAuthoredDebateLesson(slug: string): boolean {
+  const lessonBacked =
+    HELD_DEBATE_CATALOG_SLUGS.includes(slug) ||
+    LEARNING_SKILL_CATALOG.some((entry) => entry.slug === slug && entry.track === "DEBATE");
+  if (!lessonBacked) return false;
+  const published = getEducationLesson(slug);
+  return !published || published.visibility !== "learner";
+}
+
+/**
+ * Writing practice is Debate-only, scenario-backed, and never offered for an unpublished lesson.
+ *
+ * EXPORTED so the decision can be tested WITHOUT seeding anything. Both `compatibilityFor` branches
+ * call exactly this, so evaluating it with `track` forced to "DEBATE" simulates the dangerous future
+ * in which a held slug's compatibility resolution starts succeeding — and shows the answer is still
+ * false. That is the whole point of putting the publication check here rather than at the resolver.
+ */
+export function debateWritingAllowed(track: string, slug: string): boolean {
+  return track === "DEBATE" && hasDebateWritingScenario(slug) && !isUnpublishedAuthoredDebateLesson(slug);
+}
+
 function compatibilityFor(slug: string): SkillsCompatResolution | null {
   const skill = SKILL_BY_SLUG.get(slug);
   if (skill) {
@@ -279,7 +323,7 @@ function compatibilityFor(slug: string): SkillsCompatResolution | null {
       title: skill.name,
       skillName: skill.name,
       step: null,
-      debatePracticeSupported: skill.track === "DEBATE" && hasDebateWritingScenario(slug),
+      debatePracticeSupported: debateWritingAllowed(skill.track, slug),
       destination: COMPAT_TRACK_DESTINATION[skill.track]
     };
   }
@@ -291,7 +335,7 @@ function compatibilityFor(slug: string): SkillsCompatResolution | null {
       title: lesson.title,
       skillName: lesson.skill.name,
       step: { index: lesson.step, total: lesson.skill.lessonSlugs.length },
-      debatePracticeSupported: lesson.skill.track === "DEBATE" && hasDebateWritingScenario(slug),
+      debatePracticeSupported: debateWritingAllowed(lesson.skill.track, slug),
       destination: COMPAT_TRACK_DESTINATION[lesson.skill.track]
     };
   }

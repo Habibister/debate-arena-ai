@@ -1,10 +1,8 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowRight, BookOpenCheck, Compass, MessageSquareText } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Compass, Dumbbell, MessageSquareText, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { educationLessonsForTrack } from "@/lib/education/registry";
-import { EDUCATION_TRACKS, isConceptEducationLessonEntry, type EducationTrack } from "@/lib/education/types";
-import { getLesson } from "@/lib/lessons";
+import { EDUCATION_TRACKS, type EducationTrack } from "@/lib/education/types";
 import type { TrainingTrack } from "@/lib/training-tracks";
 
 /**
@@ -15,10 +13,15 @@ import type { TrainingTrack } from "@/lib/training-tracks";
  * that could never unlock because no such skill is seeded, and three destinations that 404 when
  * opened. None of it came from the database or from any real learner activity.
  *
- * It now lists what actually exists: the track's real authored lessons, and — for DECA and HOSA,
- * whose training lives outside the lesson system — the one true destination each. Every tile leads
- * somewhere that resolves. There is no percentage, no bar and no completion or mastery claim,
- * because this component has no access to real per-learner progress and will not imply otherwise.
+ * It now lists what actually exists. Every tile leads somewhere that resolves. There is no
+ * percentage, no bar and no completion or mastery claim, because this component has no access to
+ * real per-learner progress and will not imply otherwise.
+ *
+ * For General Debate it lists PRACTICE destinations. It previously listed the track's published
+ * LESSONS here, each tile opening `/lessons/<id>` — so this surface was a second copy of the Learn
+ * catalog wearing the word "skills", and the training hub linked to it as "Skill drills". A learner
+ * who followed Practice arrived back at the reading. Debate's drills and its review queue are what
+ * this surface names now; the lessons are reachable where they live, under Learn.
  */
 
 type Tile = { key: string; title: string; detail: string; href: Route; icon: typeof BookOpenCheck; cta: string };
@@ -32,21 +35,27 @@ function tilesForTrack(track: TrainingTrack | undefined): Tile[] {
   if (!canonical) return [];
 
   if (canonical === "GENERAL_DEBATE") {
-    return educationLessonsForTrack(canonical)
-      .filter((entry) => entry.visibility === "learner")
-      .map((entry) => {
-        // The shipped Claim/Warrant/Impact lesson is not a migrated concept entry, so its wording
-        // comes from its own legacy object rather than from the concept source shape.
-        const legacy = isConceptEducationLessonEntry(entry) ? null : getLesson(entry.id);
-        return {
-          key: entry.id,
-          title: isConceptEducationLessonEntry(entry) ? entry.source.lesson.title : legacy?.title ?? entry.id,
-          detail: isConceptEducationLessonEntry(entry) ? entry.source.lesson.content.objective : legacy?.subtitle ?? "",
-          href: `/lessons/${entry.id}` as Route,
-          icon: BookOpenCheck,
-          cta: "Open lesson"
-        };
-      });
+    // Exactly the two Debate practice capabilities that exist today. Written practice is deliberately
+    // absent: it is real, but it opens only from a skill's own compatibility page and from the review
+    // queue, so naming it here would be inventing a destination rather than surfacing one.
+    return [
+      {
+        key: "debate-drills",
+        title: "Debate skill drills",
+        detail: "Short sets on one skill at a time — claim/warrant/impact, rebuttal, evidence, weighing, clash, signposting, constructive.",
+        href: "/study-arcade?track=debate" as Route,
+        icon: Dumbbell,
+        cta: "Open skill drills"
+      },
+      {
+        key: "debate-review",
+        title: "Reviews due",
+        detail: "Skills you have drilled come back on a spacing schedule. Empty until you have practised something — it never shows a number you did not earn.",
+        href: "/study-arcade/review" as Route,
+        icon: RotateCcw,
+        cta: "Open reviews"
+      }
+    ];
   }
 
   if (canonical === "DECA") {

@@ -1,4 +1,4 @@
-import { trackById, type TrackInfo, type TrainingTrack } from "@/lib/training-tracks";
+import { trackById, trackHasPracticeTests, type TrackInfo, type TrainingTrack } from "@/lib/training-tracks";
 
 // Track-aware dashboard "next step" cards. Only real activities for the selected track are returned —
 // never a misleading card (e.g. a DECA/HOSA test generator for Model UN or General Debate). When no
@@ -10,8 +10,8 @@ export type DashboardAction = {
   href: string;
 };
 
-// Tests and study decks exist only for the organization-based exam tracks.
-const TRACKS_WITH_TESTS: TrainingTrack[] = ["DECA", "HOSA"];
+// Study decks exist only for the organization-based exam tracks. Practice tests are the same
+// question, so they are asked of the shared capability statement rather than of a second list here.
 const TRACKS_WITH_DECKS: TrainingTrack[] = ["DECA", "HOSA"];
 
 export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
@@ -53,12 +53,17 @@ export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
   );
 
   // Practice tests: DECA/HOSA only. Omit for Model UN and General Debate (no org exam generator).
-  if (TRACKS_WITH_TESTS.includes(track.id)) {
+  if (trackHasPracticeTests(track.id)) {
     actions.push({ key: "tests", title: `Generate a ${track.short} practice test`, description: `Original ${track.short} questions with explanations and weak-area detection.`, href: `/tests?track=${slug}` });
   }
 
-  // Skills/lessons exist for every track (shared foundations + track skills).
-  actions.push({ key: "skills", title: "Open mastery lessons", description: "Work through examples, guided practice, and a mastery check.", href: `/skills?track=${slug}` });
+  // Every track has a skills destination, but they are not the same thing: Debate's is a drill layer,
+  // the others' is their skill listing. The card says which one the learner is opening.
+  actions.push(
+    track.id === "GENERAL_DEBATE"
+      ? { key: "skills", title: "Drill a debate skill", description: "Short drill sets on one skill at a time, plus anything due for review.", href: `/skills?track=${slug}` }
+      : { key: "skills", title: "Open mastery lessons", description: "Work through the skills this track trains.", href: `/skills?track=${slug}` }
+  );
 
   // Flashcard decks: DECA/HOSA only. Omit when the track has none rather than show an empty study CTA.
   if (TRACKS_WITH_DECKS.includes(track.id)) {

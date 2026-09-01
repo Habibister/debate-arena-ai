@@ -14,7 +14,7 @@ import { MEDTERM_AREAS } from "@/lib/hosa-medterm";
 import { DECA_DRILL_AREAS } from "@/lib/deca-drills";
 import { prisma } from "@/lib/prisma";
 import { deckSummaries } from "@/lib/study-content";
-import { isTrackRetired, trackBySlug } from "@/lib/training-tracks";
+import { isTrackRetired, trackBySlug, trackHasPracticeTests } from "@/lib/training-tracks";
 import type { Organization } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -85,7 +85,11 @@ const EVENT_HQ: Record<
     sections: [
       { label: "Full rounds", detail: "Live practice with an AI opponent and judged ballot.", href: "/debate?track=debate", icon: "rounds" },
       { label: "Skill drills", detail: "Claim building, evidence, rebuttal, weighing — real mastery + spaced review.", href: "/study-arcade?track=debate", icon: "drills" },
-      { label: "Skills & lessons", detail: "Guided practice with mastery checks.", href: "/skills?track=debate", icon: "skills" }
+      // Learn, named as Learn. This pointed at /skills?track=debate and called it "Skills & lessons"
+      // with a mastery-check promise; that surface is Debate's PRACTICE index — the drill row above
+      // already leads there — and the mastery checks it described do not exist. The lessons live at
+      // /lessons, which is where this row now goes, so Event HQ names each of the three once.
+      { label: "Lessons", detail: "Learn a skill with worked weak-vs-strong examples before you drill it.", href: "/lessons?track=debate", icon: "skills" }
     ]
   }
 };
@@ -122,6 +126,12 @@ export default async function EventHqPage({ params }: { params: { track: string;
       })
     : [];
   const weakAreas = Array.from(new Set(recentTests.flatMap((t) => t.weakAreas))).slice(0, 4);
+  // Weak areas come from graded practice tests and from nothing else, so on a track with no
+  // practice-test product this card can never fill — and its empty state told the learner it would
+  // fill "from your real graded tests as you practice". A permanently empty card promising a product
+  // the track does not have is the same claim the Tests navigation was making, so the card is not
+  // rendered there at all. DECA and HOSA are unaffected.
+  const showWeakAreas = trackHasPracticeTests(track.id);
 
   const hasDeck = deckSummaries().some((d) => d.organization === config.organization);
 
@@ -198,29 +208,31 @@ export default async function EventHqPage({ params }: { params: { track: string;
 
       {config.rubricEventType ? <RubricBreakdown organization={config.organization} eventType={config.rubricEventType} /> : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Target className="h-4 w-4 text-track" aria-hidden />
-            Your common mistakes
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {weakAreas.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {weakAreas.map((area) => (
-                <span key={area} className="rounded-md border border-track/30 bg-track/10 px-3 py-1.5 text-sm font-medium">
-                  {area}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Nothing here yet — this fills in from your real graded tests as you practice. It is never invented.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {showWeakAreas ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Target className="h-4 w-4 text-track" aria-hidden />
+              Your common mistakes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {weakAreas.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {weakAreas.map((area) => (
+                  <span key={area} className="rounded-md border border-track/30 bg-track/10 px-3 py-1.5 text-sm font-medium">
+                    {area}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nothing here yet — this fills in from your real graded tests as you practice. It is never invented.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

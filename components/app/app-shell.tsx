@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTrainingTrack } from "@/components/training/training-track-context";
 import { resolveTrackFromPathname } from "@/lib/track-route";
-import { trackById } from "@/lib/training-tracks";
+import { trackById, trackHasPracticeTests } from "@/lib/training-tracks";
 
 // The shell owns ONE navigation definition. Desktop and mobile both render from these two arrays, so
 // role gating and active state cannot drift apart between the two surfaces.
@@ -156,7 +156,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const roleAllows = (item: { requiresRole?: readonly string[] }) =>
     !item.requiresRole || (role ? item.requiresRole.includes(role) : false);
   const visibleNav = navItems.filter((item) => roleAllows(item as { requiresRole?: readonly string[] }));
-  const visibleMore = moreItems.filter((item) => roleAllows(item as { requiresRole?: readonly string[] }));
+  // Capability gating, applied beside role gating. A destination with no product behind it for the
+  // track in view is not offered at all — the learner never picks Tests and then reads that Tests
+  // belongs to other tracks. Both the desktop sidebar and mobile More derive from `visibleMore`, so
+  // capability cannot drift between the two surfaces any more than role can.
+  const capabilityAllows = (item: { href: string }) =>
+    item.href !== "/tests" || trackHasPracticeTests(visualTrack);
+  const visibleMore = moreItems.filter(
+    (item) => roleAllows(item as { requiresRole?: readonly string[] }) && capabilityAllows(item)
+  );
   const bottomBarNav = visibleNav.filter((item) => (BOTTOM_BAR_HREFS as readonly string[]).includes(item.href));
   // Mobile More carries every secondary destination the bottom bar does not — the same filtered list
   // the desktop sidebar shows, so nothing is reachable on one surface but not the other. Resources is

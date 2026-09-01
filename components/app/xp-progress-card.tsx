@@ -48,8 +48,8 @@ export function XpProgressCard({ xp, rank, streak }: XpProgressCardProps) {
               move. The `streak` prop keeps its legacy schema name but holds a LIFETIME count of
               completed practice sessions, not a streak — so the copy says sessions, never days. */}
           {streak > 0
-            ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — debates and graded tests.`
-            : "Complete a debate or a practice test to start your record."}
+            ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — scored training in your track.`
+            : "Complete a scored activity in your track to start your record."}
         </div>
       </CardContent>
     </Card>

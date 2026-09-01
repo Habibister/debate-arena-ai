@@ -32,7 +32,7 @@ export default async function TrainingPage() {
       <PageHeader
         eyebrow="Training"
         heading={<h1 className="page-title">Choose your training track</h1>}
-        description="Each track has its own lessons, practice and competition. Pick one and the app focuses on it — dashboard, practice, decks, tests, and games. You can switch tracks anytime."
+        description="Each track has its own lessons, practice and competition. Pick one and the training tools update to match it — you see what that track actually offers, not a fixed list every track is assumed to have. You can switch tracks anytime."
       />
 
       {/* Three active tracks. Model UN is soft-removed and never reaches ACTIVE_TRACKS. */}

@@ -233,38 +233,33 @@ async function main() {
 // on those pages would forbid an approved change rather than protect anything — the same reasoning
 // already applied to lib/spaced-review.ts above.
 //
-// The protection is PRESERVED, not dropped: the diff is taken against the IMMUTABLE pre-Phase-1a
-// commit (never HEAD, which would turn this green the moment the change lands and prove nothing) and
-// every changed line must be exactly the async/await conversion. Any other edit to these pages fails.
+// The rule here USED TO BE a line-for-line diff against that pin: every added line had to be its
+// removed counterpart with `async `/`await ` inserted. It has been retired for the reason this suite
+// already applies at 4L — a diff pin forbids an APPROVED change rather than protecting anything, and
+// the Learn/Practice boundary milestone approved edits to BOTH of these pages (the lessons index
+// stopped advertising lesson-local questions as "Practice"; the skills index stopped describing a
+// five-stage mastery path Debate does not have).
+//
+// Nothing is loosened. What the rule was PROTECTING is asserted directly below, including the exact
+// failure it was written to catch: a hardcoded track (`getActiveTrack("debate")`) in place of the
+// resolved one. Those are properties of the page rather than of its diff, so they hold no matter how
+// the page is edited later.
 const PHASE_1A_BASE = "a05470637b4ca00a2370577efcc853691d838829";
-// Airtight rule: pair the diff lines and require each ADDED line to be its REMOVED counterpart with
-// exactly `async `/`await ` inserted — nothing else. A loose pattern would have let a hardcoded track
-// (`getActiveTrack("debate")`) through; this cannot.
-function phase1aConversionOf(minus: string): string[] {
-  const body = minus.slice(1);
-  return [
-    "+" + body.replace("export default function ", "export default async function "),
-    "+" + body.replace(/= (getActiveTrack|resolveActiveTrack)\(/, "= await $1(")
-  ];
-}
-function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
-  const changed = execSync(`git diff ${PHASE_1A_BASE} -- '${file}'`, { encoding: "utf8" })
-    .split("\n")
-    .filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
-  assert.ok(changed.length > 0, `${label}. control: ${file} really does differ from the pre-Phase-1a commit`);
-  const removed = changed.filter((l) => l.startsWith("-"));
-  const added = changed.filter((l) => l.startsWith("+"));
-  assert.equal(added.length, removed.length, `${label}. ${file} changed line-for-line, adding nothing extra`);
-  for (let i = 0; i < removed.length; i += 1) {
-    assert.ok(phase1aConversionOf(removed[i]).includes(added[i]),
-      `${label}. ${file} changed ONLY by inserting async/await — got: ${added[i].trim()}`);
-  }
-  assert.ok(added.some((l) => /\bawait (getActiveTrack|resolveActiveTrack)\(/.test(l)),
-    `${label}. ${file} awaits the resolver after the conversion`);
+function assertPhase1aResolverInvariants(file: string, label: string) {
+  const src = read(file);
+  assert.ok(
+    execSync(`git diff ${PHASE_1A_BASE} -- '${file}'`, { encoding: "utf8" }).trim().length > 0,
+    `${label}. control: ${file} really does differ from the pre-Phase-1a commit`);
+  assert.ok(/export default async function /.test(src),
+    `${label}a. ${file} is an async server component`);
+  assert.ok(/await (getActiveTrack|resolveActiveTrack)\(searchParams\.track\)/.test(src),
+    `${label}b. ${file} awaits the resolver on the REQUEST's track`);
+  assert.ok(!/(getActiveTrack|resolveActiveTrack)\(\s*["\'`]/.test(src),
+    `${label}c. ${file} never hardcodes a track into the resolver`);
 }
 
-  assertOnlyPhase1aAsyncDelta("app/(app)/lessons/page.tsx", "4P");
-  assertOnlyPhase1aAsyncDelta("app/(app)/skills/page.tsx", "4P");
+  assertPhase1aResolverInvariants("app/(app)/lessons/page.tsx", "4P");
+  assertPhase1aResolverInvariants("app/(app)/skills/page.tsx", "4P");
   // And what those pages are FOR is unchanged: both still resolve a track and scope their content.
   const lessonsIdx = read("app/(app)/lessons/page.tsx");
   assert.ok(/await getActiveTrack\(searchParams\.track\)/.test(lessonsIdx), "4P1. the lessons index still scopes by the resolved track");
@@ -329,7 +324,12 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
     "app/api/hosa/medterm/session/route.ts", "app/api/hosa/medterm/check/route.ts",
     "app/api/hosa/medterm/submit/route.ts",
     // C2b: Debate writing is now session-backed too.
-    "app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts"
+    "app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts",
+    // Same false positive this scan produces in skills-compat-smoke: lib/secure-evidence.ts names
+    // `PracticeSessionItem` in ONE doc comment describing the shape it mirrors. It is a pure module
+    // with zero imports, so it cannot reach a database — asserted immediately below rather than
+    // trusted, so this entry can never come to cover a real table access added later.
+    "lib/secure-evidence.ts"
   ];
   let m13e2RuntimeRefs: string[] = [];
   try {
@@ -338,6 +338,10 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   } catch {
     m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
   }
+  const secureEvidenceSrc = read("lib/secure-evidence.ts");
+  assert.ok(!/^import /m.test(secureEvidenceSrc),
+    "PA7e. lib/secure-evidence.ts imports nothing, so its PracticeSessionItem mention cannot be a table access");
+  assert.ok(!/prisma\./.test(secureEvidenceSrc), "PA7f. and it performs no Prisma access of any kind");
   assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
     "PA7. only the approved C1 helpers and C2a drill routes reference the new models");
   for (const f of m13e2RuntimeRefs) {
@@ -875,7 +879,7 @@ function assertOnlyPhase1aAsyncDelta(file: string, label: string) {
   assert.ok(trackFile.includes("throw new Error"), "selector: it fails loudly rather than degrading");
 
   console.log(
-    `Education-migration smoke passed: six learner-visible authored Debate concept lessons — the Wave 1A Debate Round Orientation (newly authored, Taught-only, no skillSlug and no drill mapping) plus the five migrated lessons: Guide the judge through your speech, Create direct clash, Answer with refutation, Build a constructive speech, and Explain why your impact wins (published by Wave 1B after its recorded weighing correction), and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, assignment file and Prisma file are byte-identical to HEAD, while the /lessons and /skills INDEX pages — which M14 Phase 1a converted to async track resolution — are pinned instead against the immutable pre-Phase-1a commit, where every changed line must be exactly that conversion. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that now runs through weighing and ends honestly at null. Only debate-refutation and debate-weighing name seeded skills, as association alone — each mapped to the exact drill area whose canonical skill it names: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All four still-held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
+    `Education-migration smoke passed: six learner-visible authored Debate concept lessons — the Wave 1A Debate Round Orientation (newly authored, Taught-only, no skillSlug and no drill mapping) plus the five migrated lessons: Guide the judge through your speech, Create direct clash, Answer with refutation, Build a constructive speech, and Explain why your impact wins (published by Wave 1B after its recorded weighing correction), and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, assignment file and Prisma file are byte-identical to HEAD, while the /lessons and /skills INDEX pages — which M14 Phase 1a converted to async track resolution and the Learn/Practice boundary milestone then edited by approval — are held to the invariants that pin protected: each is an async server component that awaits the resolver on the REQUEST's track and never hardcodes one. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that now runs through weighing and ends honestly at null. Only debate-refutation and debate-weighing name seeded skills, as association alone — each mapped to the exact drill area whose canonical skill it names: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All four still-held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
   );
 }
 

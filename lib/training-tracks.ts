@@ -60,6 +60,29 @@ export function isTrackRetired(id: TrainingTrack): boolean {
   return RETIRED_TRACKS.includes(id);
 }
 
+// --- Per-track capability ----------------------------------------------------------------------
+// What a track actually offers, stated once, so no navigation surface can advertise a destination
+// the track has no product behind. Deliberately small: exactly one capability varies today, and the
+// honest fix for that is one predicate — not a capability framework built ahead of a second case.
+//
+// "Practice tests" means the DECA/HOSA original-question exam generator. General Debate has no test
+// product: not an empty one, not a pending one. Its competition assessment, if it ever exists, is
+// expected to be skill evidence / constructed response / round simulation rather than a generated
+// multiple-choice set, so a Debate entry here would be a promise about a product decision nobody has
+// made. Model UN is soft-removed and never reaches a navigation surface at all.
+const TRACKS_WITH_PRACTICE_TESTS: readonly TrainingTrack[] = ["DECA", "HOSA"];
+
+/**
+ * Does this track have a practice-test product?
+ *
+ * An UNRESOLVED track (undefined) answers true, and that is not a fail-open hole: with no selection
+ * the learner is browsing broadly and /tests renders its generator unlocked to any organization,
+ * which is the behavior that already shipped. A RESOLVED track must be listed to qualify.
+ */
+export function trackHasPracticeTests(track: TrainingTrack | null | undefined): boolean {
+  return !track || TRACKS_WITH_PRACTICE_TESTS.includes(track);
+}
+
 export const DEFAULT_TRACK: TrainingTrack = "GENERAL_DEBATE";
 export const TRACK_STORAGE_KEY = "debatearena_training_track";
 // A non-auth preference cookie (slug value) written alongside localStorage so server components can

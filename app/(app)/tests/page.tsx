@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookOpenCheck, CheckCircle2, ClipboardList, Layers3, Sparkles } from "lucide-react";
 import { TestBuilderPreview } from "@/components/tests/test-builder-preview";
 import { PracticeTestGenerator } from "@/components/tests/practice-test-generator";
@@ -9,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
 import { getOfficialTestFormat } from "@/lib/competition-specs";
 import { getActiveTrack } from "@/lib/track-server";
+import { trackHasPracticeTests } from "@/lib/training-tracks";
 
 const testSteps = [
   { title: "Generate", detail: "Choose 10, 25, 50, or a 100-question mixed exam.", icon: Sparkles },
@@ -19,12 +21,20 @@ const testSteps = [
 export default async function TestsPage({ searchParams }: { searchParams: { track?: string; assignmentId?: string } }) {
   // `?track=` wins; otherwise fall back to the selected track (cookie).
   const activeTrack = await getActiveTrack(searchParams.track);
-  // The DECA/HOSA test generator is only shown when it is actually relevant. Model UN and General
-  // Debate get an honest empty state instead of another organization's generator. An assigned test
-  // (?assignmentId=) always shows the generator so a valid assignment never lands on an empty page.
   const isAssignment = Boolean(searchParams.assignmentId);
+  // A track with no practice-test product does not get a page explaining that it has no practice
+  // tests. That empty state read as a feature the track almost had, and it was reachable from a
+  // Tests entry the navigation should never have offered. The learner goes to their own track's
+  // drill destination instead — Study Arcade is track-scoped, so this stays correct for any future
+  // track without a test product.
+  //
+  // An ASSIGNED test (?assignmentId=) is exempt and always renders. An assignment is a real
+  // obligation from a coach, and redirecting away from one would break it; the generator is locked
+  // to the assignment's own organization, not to the selected track.
+  if (!isAssignment && activeTrack && !trackHasPracticeTests(activeTrack.id)) {
+    redirect(`/study-arcade?track=${activeTrack.slug}`);
+  }
   const lockedOrganization = activeTrack?.id === "DECA" ? "DECA" : activeTrack?.id === "HOSA" ? "HOSA" : undefined;
-  const showGenerator = isAssignment || !activeTrack || activeTrack.id === "DECA" || activeTrack.id === "HOSA";
   // Registry-driven official test shape (HOSA MT: 50 questions / 60 minutes). Null when the
   // registry has no timed multiple-choice round for the organization — generator is unchanged.
   const officialFormat = lockedOrganization ? await getOfficialTestFormat(lockedOrganization) : null;
@@ -61,25 +71,10 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
         </div>
       </div>
 
-      {showGenerator ? (
-        <>
-          <PracticeTestGenerator lockedOrganization={lockedOrganization} officialFormat={officialFormat} />
-          <TestBuilderPreview />
-        </>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>No practice tests for {activeTrack?.label}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p className="font-semibold text-foreground">Practice tests are available for DECA and HOSA only.</p>
-            <p>
-              Your {activeTrack?.label} track uses debate/practice and skill lessons instead of an exam generator. Switch to
-              DECA or HOSA from the Training page to generate practice tests.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Every path that reaches this render has a generator to show: a track with practice tests, an
+          assignment, or no selected track at all. The empty state that used to sit here is gone. */}
+      <PracticeTestGenerator lockedOrganization={lockedOrganization} officialFormat={officialFormat} />
+      <TestBuilderPreview />
 
       <Card>
         <CardHeader>
@@ -96,12 +91,6 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
               <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
-            </div>
-          ) : null}
-          {activeTrack && activeTrack.id !== "DECA" && activeTrack.id !== "HOSA" ? (
-            <div className="rounded-lg border bg-background p-4 md:col-span-2">
-              <p className="text-sm font-semibold">Practice tests are available for DECA and HOSA.</p>
-              <p className="mt-2 text-sm text-muted-foreground">Your {activeTrack.label} track uses debate/practice and study instead.</p>
             </div>
           ) : null}
           <div className="rounded-lg border bg-background p-4">

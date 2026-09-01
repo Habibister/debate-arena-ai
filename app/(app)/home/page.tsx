@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { countDueReviews } from "@/lib/spaced-review";
 import { getActiveTrack } from "@/lib/track-server";
 import { weakAreasForTrack } from "@/lib/track-recommendations";
-import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
+import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -91,9 +91,13 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   const quickActions = [
     { href: `/debate?track=${trackSlug}`, label: "Debate Now", detail: "A full round with an AI opponent and judge", icon: Gavel },
     { href: practiceHref, label: "Practice 10 minutes", detail: "One focused rep in your track", icon: Timer },
-    { href: `/tests?track=${trackSlug}`, label: "Take a test", detail: "An original practice set with explanations", icon: ClipboardList },
+    // Offered only where a practice-test product exists. General Debate has none, so this quick
+    // action is absent there rather than routing to another track's generator.
+    ...(trackHasPracticeTests(activeTrack?.id)
+      ? [{ href: `/tests?track=${trackSlug}`, label: "Take a test", detail: "An original practice set with explanations", icon: ClipboardList }]
+      : []),
     { href: "/study-arcade/review", label: "Review missed terms", detail: reviewsDue > 0 ? `${reviewsDue} ${reviewsDue === 1 ? "skill is" : "skills are"} due for review` : "Nothing due — reviews appear as you practice", icon: RotateCcw }
-  ] as const;
+  ];
 
   return (
     <div className="space-y-8">

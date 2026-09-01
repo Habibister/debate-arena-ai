@@ -24,7 +24,7 @@ import { nearestAiPersona } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
-import { trackAllowsOrganization, trackByOrganization } from "@/lib/training-tracks";
+import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
 import { weakAreasForTrack } from "@/lib/track-recommendations";
 import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
@@ -238,9 +238,14 @@ export default async function DashboardPage() {
           detail={`Avg practice ballot score ${avgJudgeScore ?? "—"}.`}
           icon={Trophy}
         />
-        <StatCard label="XP" value={String(xp)} detail="Earn XP from debates, lessons, and generated practice tests." icon={Medal} />
-        <StatCard label="Practice sessions" value={String(streak)} detail="Completed debates and graded tests, counted as they happen." icon={Flame} />
-        <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent tests and training outcomes." icon={Target} />
+        {/* Capability-neutral, and true for every track. These named "generated practice tests" and
+            "graded tests" to a learner of any track, including one whose track has no test product,
+            and the XP line also named lessons — which award no XP at all (the only writers of this
+            counter are the Debate judge route and the PracticeTest grade route). "Scored" is the
+            honest umbrella: it covers a judged round and a graded set, and promises neither. */}
+        <StatCard label="XP" value={String(xp)} detail="Earn XP from scored training in your track." icon={Medal} />
+        <StatCard label="Practice sessions" value={String(streak)} detail="Scored training in your track, counted as it happens." icon={Flame} />
+        <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent training outcomes." icon={Target} />
       </div>
 
       <LearningPath weakAreas={weakAreas} hasActivity={hasActivity} pendingAssignment={pendingAssignment} />
@@ -363,7 +368,7 @@ export default async function DashboardPage() {
         title="Recommended video resources"
       />
 
-      {recentTests.length === 0 && (!activeTrack || activeTrack.id === "DECA" || activeTrack.id === "HOSA") ? (
+      {recentTests.length === 0 && trackHasPracticeTests(activeTrack?.id) ? (
         <EmptyState
           icon={ClipboardList}
           title="No completed practice tests yet"

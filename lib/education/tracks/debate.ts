@@ -12,7 +12,13 @@
 //   debate-rebuttal-speeches      states "no new arguments in rebuttal" as a universal norm; the
 //                                 curriculum requires it be stated as a dated ballot instruction.
 //   debate-parliamentary-roles    parliamentary is not NSDA-governed and has no approved source.
-//   debate-case-topic-definitions its worked example is a parliamentary motion form.
+//   debate-case-topic-definitions its parliamentary-specific worked example was the original hold
+//                                 reason. The 2026-08-31 rebuild replaced the teaching with a
+//                                 style-neutral packet and rewrote all seven questions, so that
+//                                 reason no longer applies. It stays HELD because publication is a
+//                                 separate gate covering fairness, sequencing and reachability —
+//                                 and because it is a prerequisite for Constructive while still
+//                                 sitting after it in seed order.
 //
 // debate-weighing was held here for stating magnitude/probability/timeframe as required speech
 // vocabulary. Wave 1B applied that recorded correction — the lenses are now taught as names for

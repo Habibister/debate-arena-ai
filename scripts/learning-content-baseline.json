@@ -127,100 +127,126 @@
     }
   },
   {
-    "slug": "debate-case-topic-definitions",
     "organization": "DEBATE",
     "track": "DEBATE",
-    "category": "Parliamentary debate",
     "name": "Case Topic and Definitions",
-    "description": "Turn a resolution into a fair, debatable case.",
+    "slug": "debate-case-topic-definitions",
+    "description": "Read the topic, clarify what needs clarifying, and frame distinct reasons.",
+    "category": "Parliamentary debate",
     "lesson": {
-      "title": "Set a fair case topic",
+      "title": "Read the topic and frame your reasons",
       "slug": "debate-case-topic-definitions-lesson",
-      "summary": "Learn resolution, case topic, definitions, and contentions.",
+      "summary": "Read a topic accurately, clarify only what needs it, and frame reasons that answer it.",
       "estimatedMinutes": 8,
       "content": {
-        "objective": "Create a case topic with clear definitions and contentions.",
-        "explanation": "A resolution is the broad prompt. A case topic is the specific debate you create from it. Definitions explain key terms, and contentions are the main reasons the case should win.",
-        "whyMatters": "A fair case topic invites clash. If it is too vague, too narrow, or dependent on hidden knowledge, the round becomes less educational.",
+        "objective": "Read the debate topic you are given, clarify only the wording that would otherwise send the two sides in different directions, and frame distinct reasons that answer it.",
+        "explanation": "Every debate starts from a topic, and both sides are arguing about the same one. Before you write anything, read it as it stands and say it back in your own words — not what you assume it means, not the version you would rather argue, the words that are actually there. Some of those words do more work than others. A word needs clarifying when two reasonable readers could take it in materially different ways AND that difference would change what the debate is about. That is a narrower test than it sounds, because important is not the same as ambiguous in a way that matters. In a topic about banning single-use plastics, ban carries the weight of the topic, but its ordinary meaning is stable enough to argue from; single-use plastics has no agreed membership, and one reader pictures bags and straws while another pictures every piece of packaging in the shop. Those are two different debates, and the two sides will argue past each other unless someone settles it. Clarify that one. Leave the rest alone: clarifying a word nobody was going to misread spends time and hands the other side something to fight about for no gain. A clarification is doing its job when it makes the topic easier to argue about, and it fails in two ways worth knowing by name. The first is that it DRIFTS — it quietly describes something the topic did not say, so the debate that follows is not the debate that was set. Clarify single-use plastics as all plastic packaging, and single-use has gone: the words you were given covered cups and cutlery, and the debate is now about the wrapping on everything in the shop. Drift is easy to miss because a drifting clarification can be perfectly clear. Being precise is not the same as being faithful to the words you were given. The second is that it DECIDES — it is built so extreme, or so convenient, that the answer falls out of the wording rather than out of anyone's reasons. Here is the part that is easy to miss. Whether a clarification is good is a separate question from whether the thing it describes is a good idea. If someone clarifies ban as a total worldwide prohibition, immediately, with no exceptions, the natural reply is that such a ban would be unworkable — and that reply has already accepted the clarification and started arguing on the ground it chose. The fault is in the clarification, not in the policy, and saying so is a different move from arguing against it. Then come your reasons. A contention is a reason your side should win on this topic, and a reason has to say something. Student wellbeing is a heading, not a reason; requiring the course leaves students less likely to fall into avoidable debt is a reason, because someone can disagree with it. Two of them are worth having only if they are genuinely two: they are distinct when the objection that defeats one leaves the other standing. And any reason, however true, has to answer this topic — ask what part of the topic it helps establish, and if there is no answer, it is a change of subject rather than a contention.",
+        "whyMatters": "A topic that was never read carefully produces two speeches that never meet: each side argues its own version, and the judge is left choosing between them with no shared question. Getting this right is cheap at the start and expensive later, because every reason you write afterwards is attached to a topic you might not actually be arguing.",
         "steps": [
-          "Start from the resolution.",
-          "Choose a clear case topic.",
-          "Define key terms fairly.",
-          "Write distinct contentions."
+          "Read the topic and say it back in your own words, adding nothing that is not there.",
+          "Clarify only the wording whose reasonable readings would change what the debate is about.",
+          "Write each reason as a claim someone could disagree with, not as a heading.",
+          "Check each reason: does it answer this topic, and would a different objection be needed to defeat it?"
         ],
         "workedExample": {
-          "prompt": "Resolution: This House values education reform.",
-          "weakAnswer": "Education should be better.",
-          "strongAnswer": "Case topic: public high schools should require a financial literacy course. Definitions: require means graduation requirement. Contentions: student debt prevention and practical career readiness.",
-          "whyItWorks": "The strong answer turns a broad resolution into a specific, debatable case."
+          "prompt": "Topic: schools should be required to teach a personal finance course. Work through it — which word needs clarifying, which does not, and what reasons follow?",
+          "weakAnswer": "Key term: schools means places of education. Contentions: money skills, and career readiness.",
+          "strongAnswer": "Read it back: schools would have to teach a course in personal finance — required, not merely offered. Words considered: schools is ordinary and nobody will misread it, so leave it alone; personal finance could mean anything from a budgeting unit to trading shares, and those are different debates, so that is the one to clarify. A clarification that decides rather than describes: personal finance means the money skills every adult obviously needs — that makes the case true by wording and names nothing anyone could check. Better: personal finance means budgeting, credit, and basic tax. Reasons that follow: first, students taught how credit works take on less debt they did not understand; second, a required course reaches the students whose families never covered it, which an optional one does not. Now run the distinctness check on that pair, and it fails: the objection that this teaching does not change what anyone actually does defeats the first, and it defeats the second too, because reaching students with teaching that changes nothing is worth nothing. So the second is replaced by one the same objection leaves standing: a required course puts a teacher in front of every student, which is how a school notices the ones already in trouble. A third that failed and was repaired: financial skills matter was a heading, not a reason, and became the course changes what students do with money after leaving, not only what they know. One dropped: school buildings need repair is true and is about schools, but it helps establish no part of this topic.",
+          "whyItWorks": "The weak answer clarifies the one word nobody would have misread, leaves the one that could send the two sides in different directions, and then offers two headings instead of two reasons. The strong answer shows the choosing rather than the result: a word rejected for clarification and why, a clarification rejected for deciding the debate instead of describing it, a pair of reasons that failed the distinctness check and the replacement that passes it, one reason repaired from a heading, and one dropped for answering a different question. Note what the distinctness check is not: the first pair was not wrong, and both halves were real reasons. They were one reason twice over, because a single objection took both down."
         },
         "guidedQuestion": {
-          "prompt": "What is a case topic?",
+          "prompt": "What makes a word in the topic worth clarifying?",
           "choices": [
-            "The specific issue debated from a resolution",
-            "The speaker's name",
-            "The judge report",
-            "The timer"
+            "Two reasonable readers would take it differently, and that changes what the debate is about",
+            "It is the most important word in the topic, and the whole case depends on how it lands",
+            "It has more than one entry in the dictionary, so its meaning is not fixed in advance",
+            "The other side is likely to attack it, so it is safer to settle the wording first"
           ],
-          "correctAnswer": "The specific issue debated from a resolution",
-          "hint": "It narrows the broad prompt.",
-          "explanation": "A case topic is the actual issue the round will debate.",
-          "skillTag": "Case topic"
+          "correctAnswer": "Two reasonable readers would take it differently, and that changes what the debate is about",
+          "hint": "Both halves of the test have to hold.",
+          "explanation": "Importance is not the test, and neither is having several dictionary entries: a word can carry the weight of the topic and still be read the same way by everyone. Clarify where the readings diverge AND the divergence changes what is being argued.",
+          "skillTag": "Clarify what matters"
         },
         "practiceQuestions": [
           {
-            "prompt": "Why should definitions be clear?",
+            "prompt": "Topic: employers should be required to publish salary ranges in job adverts. Which wording most needs clarifying?",
             "choices": [
-              "To set fair boundaries",
-              "To confuse opposition",
-              "To avoid contentions",
-              "To replace impacts"
+              "Employers — the topic does not say whether it means the company or the hiring manager who writes the advert",
+              "Job adverts — some are posted online and some are pinned up in a window",
+              "Required — the topic does not say which year the requirement would begin",
+              "Salary ranges — a published pay band and a total package including bonuses are different things to publish"
             ],
-            "correctAnswer": "To set fair boundaries",
-            "hint": "Definitions shape the debate.",
-            "explanation": "Clear definitions help both sides understand what is being debated.",
-            "skillTag": "Definitions"
+            "correctAnswer": "Salary ranges — a published pay band and a total package including bonuses are different things to publish",
+            "hint": "Which difference changes what the two sides are arguing about?",
+            "explanation": "Every option names a real vagueness, which is the point: vagueness alone is not the test. Who writes the advert, where it appears and when the rule starts all leave the argument in much the same place. What counts as a salary range changes what employers would actually have to publish, so it changes the debate itself.",
+            "skillTag": "Term selection"
           },
           {
-            "prompt": "What is a contention?",
+            "prompt": "Topic: the council should ban e-scooters from pavements. A speaker clarifies: \"By pavements we mean all public places where people walk, including parks and shopping centres.\" What is wrong with it?",
             "choices": [
-              "A main reason for the case",
-              "A random fact",
-              "A speech order",
-              "A side badge"
+              "It decides — the wording settles the argument before either side has given a reason",
+              "It drifts — the topic said pavements, and parks and shopping centres are not pavements",
+              "It is too detailed to argue about, and that level of detail narrows a debate too far",
+              "Nothing is wrong: naming the exact places is what a clarification is for"
             ],
-            "correctAnswer": "A main reason for the case",
-            "hint": "Contentions support the case.",
-            "explanation": "Contentions are the major arguments for the proposal.",
-            "skillTag": "Contentions"
+            "correctAnswer": "It drifts — the topic said pavements, and parks and shopping centres are not pavements",
+            "hint": "Compare it with the words the topic actually used.",
+            "explanation": "It is perfectly clear, which is what makes it easy to miss. Clear is not the same as faithful. The topic covered pavements; this covers places nobody was arguing about, so the debate that follows is a different one. Nothing in the wording makes either side automatically right, so it has not decided anything — it has drifted.",
+            "skillTag": "Drift"
           },
           {
-            "prompt": "What makes a fair case topic?",
+            "prompt": "Topic: the council should fund free swimming lessons for primary schools. Which of these is a reason rather than a heading?",
             "choices": [
-              "It creates clear clash",
-              "It hides the issue",
-              "It depends on secret knowledge",
-              "It has no definitions"
+              "Child safety is what this really comes down to",
+              "Public health and wellbeing are at stake here",
+              "The cost to the council has to be considered",
+              "Children who have had lessons are less likely to drown in open water later"
             ],
-            "correctAnswer": "It creates clear clash",
-            "hint": "Fair topics can be debated by both sides.",
-            "explanation": "A fair case gives both sides a meaningful path to argue.",
-            "skillTag": "Case topic"
+            "correctAnswer": "Children who have had lessons are less likely to drown in open water later",
+            "hint": "Which one could somebody disagree with?",
+            "explanation": "A reason says something that could be false. Child safety, public health and cost are subjects dressed up as sentences — each could be used by either side, which is the giveaway, and none of them states anything to disagree with. The drowning claim names what the lessons do and invites the disagreement a debate runs on.",
+            "skillTag": "Reasons, not headings"
+          },
+          {
+            "prompt": "Same topic. Which reason is true but does not answer it?",
+            "choices": [
+              "Lessons in school hours reach children whose families never take them swimming",
+              "Children taught to swim young keep the skill for the rest of their lives",
+              "The council's swimming instructors are paid less than instructors in neighbouring towns",
+              "A council that pays for lessons can require properly qualified instructors"
+            ],
+            "correctAnswer": "The council's swimming instructors are paid less than instructors in neighbouring towns",
+            "hint": "Ask what part of the topic each one helps establish.",
+            "explanation": "Instructor pay may well be too low, and the claim is about council swimming instructors, so it looks close enough to belong — another option mentions instructors too. Ask what part of the topic it helps establish and there is no answer: it says nothing about whether funding lessons for primary schools is worth doing. Sharing a subject is not the same as bearing on the question.",
+            "skillTag": "Relevance"
           }
         ],
         "masteryCheck": [
           {
-            "prompt": "A case topic is so narrow that opposition has no answer. What is the issue?",
+            "prompt": "Topic: the town should require restaurants to show calorie counts on menus. Which pair of reasons is genuinely two reasons?",
             "choices": [
-              "Unfair case design",
-              "Strong signposting",
-              "Good weighing",
-              "A clear voter"
+              "Diners order fewer calories when the number is in front of them, and people make better choices once they can see what is actually in the food",
+              "Diners order fewer calories when the number is in front of them, and kitchens quietly reformulate dishes once the number has to be printed",
+              "Calorie labelling is good for public health, and it is good for consumers too",
+              "Diners order fewer calories when the number is in front of them, and families spend less on eating out once they can compare dishes"
             ],
-            "correctAnswer": "Unfair case design",
-            "hint": "A topic should invite clash.",
-            "explanation": "A case should be specific but still debatable.",
-            "skillTag": "Case topic"
+            "correctAnswer": "Diners order fewer calories when the number is in front of them, and kitchens quietly reformulate dishes once the number has to be printed",
+            "hint": "Find an objection that defeats one of the pair and see whether the other survives it.",
+            "explanation": "Take the objection that diners ignore the numbers. It defeats the ordering claim, and in three of these pairs it defeats the partner too. One of those is the hard case: spending less on eating out sounds like a different job from ordering fewer calories, but both need someone to read the number, so one objection takes both down. The reformulation claim is still standing afterwards — a kitchen changes the recipe whether or not anyone reads the number — which is what makes that pair two reasons rather than one said twice. All four pairs argue the same side: distinctness is about whether two reasons do different jobs, not about disagreeing with each other.",
+            "skillTag": "Distinctness"
+          },
+          {
+            "prompt": "Topic: the city should ban cars from the town centre. A speaker clarifies the ban as \"no car may enter at any hour, with no exception for deliveries, residents or emergencies\". Their opponent answers: \"That would be unworkable — the shops could not be supplied.\" What has gone wrong?",
+            "choices": [
+              "The clarification drifts from the topic, and the answer is right to call the plan unworkable as written",
+              "The clarification is too narrow to cover the topic, and the answer widens it back out again",
+              "The clarification decides the debate by its wording, and the answer argues the plan instead of the wording",
+              "The clarification names a word that needed no clarifying, and the answer simply repeats it back"
+            ],
+            "correctAnswer": "The clarification decides the debate by its wording, and the answer argues the plan instead of the wording",
+            "hint": "Look at what the answer has already accepted.",
+            "explanation": "No exception for deliveries or emergencies is built so extreme that the case falls out of the wording rather than out of anyone's reasons — that is deciding, and not drifting, because nothing has been swapped for something the topic did not say. The answer then treats that wording as settled and argues that the plan is bad, which concedes the ground it was handed. Whether a clarification is good is a separate question from whether the thing it describes is a good idea, and objecting to the wording is a different move from arguing against the plan.",
+            "skillTag": "Clarification versus merit"
           }
         ]
       }

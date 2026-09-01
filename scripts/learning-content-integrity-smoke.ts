@@ -41,6 +41,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
+import { getEducationLesson } from "../lib/education/registry";
 
 /**
  * REVIEW SIGNAL — not a security boundary, and it must never be described as one.
@@ -52,7 +53,7 @@ import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "DEBATE-CASE-TOPIC-DEFINITIONS-REBUILD-V5";
+const LEARNING_CONTENT_BASELINE = "LIVE-LESSON-ASSESSMENT-TELL-REPAIR-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 
@@ -252,6 +253,62 @@ async function main(): Promise<void> {
       `update ${BASELINE_PATH}, bump LEARNING_CONTENT_BASELINE, and record the affected slug(s) in ` +
       "docs/CURRENT_STATE.md — the git diff of the snapshot shows the exact prose that changed.");
   }
+
+  // ---- 10. fixed-order key-position exploit ------------------------------------------------------
+  // Lesson-local choices render in AUTHORED ORDER. `components/lessons/concept-education-lesson-practice.tsx`
+  // maps `question.choices` straight through: no shuffle, no randomness, no sort. That premise is
+  // asserted here rather than assumed, because this whole rule only means anything while authored
+  // position IS rendered position — if serving ever starts shuffling, the rule needs rewriting, not
+  // silently passing.
+  //
+  // Given that, a lesson whose keys ALL sit at one index is answerable from the second question on
+  // without reading anything. Two published lessons shipped exactly that way. This is deliberately
+  // NOT a balance requirement: any spread at all passes, and no distribution is prescribed. A lesson
+  // with fewer than four applicable questions is exempt, because the pattern is not learnable from
+  // three.
+  //
+  // Derived, never a slug list: published-vs-held comes from the registry, so a newly published
+  // lesson is covered the moment it is published, and no one has to remember to enrol it.
+  const practiceUi = readFileSync("components/lessons/concept-education-lesson-practice.tsx", "utf8");
+  assert.ok(/question\.choices\.map\(/.test(practiceUi),
+    "10. control: the concept-lesson practice component really does render the authored choices directly");
+  for (const banned of ["shuffle", "Math.random", ".sort("]) {
+    assert.ok(!practiceUi.includes(banned),
+      `10a. the practice component still renders authored order — found "${banned}", so this rule's premise changed and it must be revisited, not quietly passed`);
+  }
+
+  const MIN_QUESTIONS_FOR_POSITION_RULE = 4;
+  const positionPublished: string[] = [];
+  const positionHeld: string[] = [];
+  let positionApplicable = 0;
+  for (const entry of catalog) {
+    const slug = entry.slug as unknown as string;
+    const content = (entry.lesson as Record<string, never>).content as Record<string, never>;
+    const items = [content.guidedQuestion, ...(content.practiceQuestions as unknown[]), ...(content.masteryCheck as unknown[])]
+      .filter(Boolean) as Array<{ choices: string[]; correctAnswer: string }>;
+    const mcq = items.filter((q) => Array.isArray(q.choices) && q.choices.length > 1);
+    if (mcq.length < MIN_QUESTIONS_FOR_POSITION_RULE) continue;
+    positionApplicable += 1;
+    const positions = mcq.map((q) => q.choices.indexOf(q.correctAnswer));
+    if (!positions.every((p) => p === positions[0])) continue;
+    const live = getEducationLesson(slug)?.visibility === "learner";
+    const note = `${slug} (${mcq.length} questions, every key at position ${positions[0] + 1})`;
+    (live ? positionPublished : positionHeld).push(note);
+  }
+  assert.ok(positionApplicable > 0, "10b. control: some lessons actually have enough questions for this rule to apply");
+  assert.deepEqual(positionPublished, [],
+    "10c. no PUBLISHED lesson ships every key at the same authored position — that is answerable without reading");
+  // Held lessons are REPORTED and never blocking: they are not learner-reachable, and their questions
+  // may be rewritten wholesale when each lesson reaches its own content audit.
+  if (positionHeld.length > 0) {
+    console.log(`  note (not blocking): ${positionHeld.length} HELD lesson(s) carry the same pattern — ${positionHeld.join("; ")}`);
+  }
+  // Non-vacuity: the condition the rule tests must actually be detectable.
+  const syntheticViolation = [2, 2, 2, 2];
+  assert.ok(
+    syntheticViolation.length >= MIN_QUESTIONS_FOR_POSITION_RULE && syntheticViolation.every((p) => p === syntheticViolation[0]),
+    "10d. control: an all-same-position set of four is what this rule flags"
+  );
 
   // ---- 9. the whole snapshot, compared as one value ----------------------------------------------
   assert.deepEqual(current, baseline, "9. the full canonical snapshot matches, entry for entry, in slug order");

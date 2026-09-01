@@ -631,12 +631,12 @@
     }
   },
   {
-    "slug": "debate-evidence-evaluation",
     "organization": "DEBATE",
     "track": "DEBATE",
-    "category": "Debate foundations",
     "name": "Evidence Evaluation",
+    "slug": "debate-evidence-evaluation",
     "description": "Judge whether evidence actually supports the claim being made.",
+    "category": "Debate foundations",
     "lesson": {
       "title": "Judge the evidence",
       "slug": "debate-evidence-evaluation-lesson",
@@ -660,54 +660,54 @@
         "guidedQuestion": {
           "prompt": "Claim: the new crosswalk made the street safer. Evidence: accidents fell in the month after it was installed. What is the biggest weakness?",
           "choices": [
+            "Accident counts come from the council, which wanted the crosswalk built",
             "One month with no comparison cannot show the crosswalk caused the drop",
-            "The evidence is about the wrong street",
-            "Accidents are impossible to count",
-            "The source is anonymous"
+            "A month is too short for drivers to have got used to the new crossing",
+            "The evidence covers this street but not the junctions on either side"
           ],
           "correctAnswer": "One month with no comparison cannot show the crosswalk caused the drop",
           "hint": "Think about what else could explain one short window.",
-          "explanation": "A short window with no comparison leaves the drop open to chance and season. The evidence is relevant, but it cannot yet carry the causal claim.",
+          "explanation": "A short window with no comparison leaves the drop open to chance and to season. The other three name real caveats — who counted, how new the crossing is, what it covers — but each would still leave a like-for-like comparison missing, which is what the causal claim actually needs.",
           "skillTag": "Evidence"
         },
         "practiceQuestions": [
           {
             "prompt": "Claim: the gym renovation improved student fitness. Evidence: a survey shows students like the new gym. What is the problem?",
             "choices": [
-              "The evidence measures enjoyment, not fitness, so it does not fit the claim",
-              "Surveys are always worthless",
-              "The renovation was too expensive",
-              "Students cannot judge a gym"
+              "The survey ran after the work, so there is no before figure to compare",
+              "Students who disliked the old gym would answer more warmly about any change",
+              "The renovation may have improved fitness by less than the survey suggests",
+              "The evidence measures enjoyment, not fitness, so it does not fit the claim"
             ],
             "correctAnswer": "The evidence measures enjoyment, not fitness, so it does not fit the claim",
             "hint": "Compare what was measured with what is claimed.",
-            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information — about enjoyment, not fitness.",
+            "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information about enjoyment, and no missing baseline, response bias or smaller effect size would turn it into information about fitness — the mismatch is what was measured, not how well.",
             "skillTag": "Evidence"
           },
           {
             "prompt": "Neighbourhoods with more streetlights have less litter. A speaker concludes streetlights prevent litter. What should a careful debater say?",
             "choices": [
-              "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
-              "The connection proves the conclusion",
-              "Litter statistics are always unreliable",
-              "Streetlights are too expensive to matter"
+              "Overall upkeep could produce both the lights and the lower litter, so compare first",
+              "The pattern holds across many neighbourhoods, so the conclusion is supported",
+              "Litter counts move with the season, so the figures need a longer window",
+              "Streetlights may cut litter only where there was already less of it"
             ],
-            "correctAnswer": "Something else, like overall upkeep, could produce both — this needs a comparison before the causal claim stands",
+            "correctAnswer": "Overall upkeep could produce both the lights and the lower litter, so compare first",
             "hint": "Two things appearing together is not yet cause.",
-            "explanation": "The association is real evidence, but well-kept neighbourhoods may get both lights and less litter. Without a comparison that separates the factors, the causal conclusion overreaches.",
+            "explanation": "The association is real evidence, but well-kept neighbourhoods may get both the lights and the lower litter. Breadth does not fix that — a pattern repeated across many places is still a pattern, not a cause — and neither does a longer window. Only a comparison that separates upkeep from lighting does.",
             "skillTag": "Evidence"
           },
           {
             "prompt": "Two reports on a teen curfew disagree. One, from a group campaigning for curfews, highlights a single town that improved. The other, an independent review of many towns with its method disclosed, found mixed results. Which deserves more weight and why?",
             "choices": [
-              "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
-              "The campaign report, because it is more confident",
-              "Neither, because they disagree",
-              "The campaign report, because one clear example beats many mixed ones"
+              "The independent review — a mixed finding is more honest than a report that reaches a clear one",
+              "The campaign report — a documented town-level success is more concrete than an averaged review",
+              "The independent review — many towns, and its method is open; the campaign report shows one case",
+              "Neither on its own — the improved town may well be one of the towns the review already covers"
             ],
-            "correctAnswer": "The independent review — it covers the whole pattern and shows its method, while the campaign report highlights one favourable case",
+            "correctAnswer": "The independent review — many towns, and its method is open; the campaign report shows one case",
             "hint": "Compare breadth, method and incentives — do not just pick a side.",
-            "explanation": "Disagreement is where evaluation starts. An incentive to persuade plus a single selected example warrants caution; breadth and a disclosed method warrant more confidence. That is comparison, not source-bashing.",
+            "explanation": "Disagreement is where evaluation starts. Breadth and a disclosed method warrant more confidence; an incentive to persuade plus a single selected case warrants caution. Note that naming the right report is not enough — preferring it because a mixed finding sounds more honest is picking by tone, not comparing on method, and the overlap point is a fair observation that still does not say which deserves more weight.",
             "skillTag": "Evidence"
           }
         ],
@@ -715,14 +715,14 @@
           {
             "prompt": "Claim: a reading app doubled students' reading skill. Evidence: the app company surveyed volunteer users, who reported big improvement. What is the strongest evaluation?",
             "choices": [
-              "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
-              "The evidence is fine because the company knows its own app best",
-              "Reading skill cannot be measured, so the claim is meaningless",
-              "The study is acceptable because many users responded"
+              "A larger sample of the same volunteers would settle whether reading skill doubled",
+              "Volunteers self-reporting to the seller cannot support a claim as strong as 'doubled'",
+              "The claim would stand if an independent group ran the same survey of users",
+              "Users reporting big improvement does support 'doubled' once enough of them agree"
             ],
-            "correctAnswer": "Self-selected users self-reporting, gathered by the seller, cannot support a claim as strong as 'doubled' — the conclusion outruns the evidence",
+            "correctAnswer": "Volunteers self-reporting to the seller cannot support a claim as strong as 'doubled'",
             "hint": "Stack the problems: who gathered it, who answered, what was measured, what is claimed.",
-            "explanation": "Each issue alone calls for caution; together — seller incentive, volunteers, self-report, and a precise 'doubled' claim — the evidence cannot carry the conclusion. Naming that gap is exactly the skill.",
+            "explanation": "Each issue alone calls for caution; together — seller incentive, volunteers, self-report, and a precise 'doubled' claim — the evidence cannot carry the conclusion. More of the same volunteers, or the same self-report run by someone else, leaves self-selection and self-report untouched; and no number of people reporting improvement measures how much. Naming that gap is exactly the skill.",
             "skillTag": "Evidence"
           }
         ]
@@ -1029,12 +1029,12 @@
     }
   },
   {
-    "slug": "debate-round-orientation",
     "organization": "DEBATE",
     "track": "DEBATE",
-    "category": "Debate foundations",
     "name": "Debate Round Orientation",
+    "slug": "debate-round-orientation",
     "description": "Understand what happens in a debate round before your first practice.",
+    "category": "Debate foundations",
     "lesson": {
       "title": "How a debate round works",
       "slug": "debate-round-orientation-lesson",
@@ -1058,54 +1058,54 @@
         "guidedQuestion": {
           "prompt": "What is a debater's real job in a round?",
           "choices": [
+            "Say everything true about the topic that you can fit in",
+            "Show the judge you know more about the subject than they do",
             "Help the judge see why your side's reasons should win",
-            "Talk longer than the opponent",
-            "Avoid mentioning the other side's points",
-            "Use the most impressive vocabulary"
+            "Get the other side to admit that their position is wrong"
           ],
           "correctAnswer": "Help the judge see why your side's reasons should win",
           "hint": "Think about who decides the round.",
-          "explanation": "The judge decides between reasons. Everything you say should help the judge understand your side's reasoning and prefer it.",
+          "explanation": "The judge decides between reasons, so every sentence should help them follow and prefer yours. Covering the topic, out-knowing the judge and extracting a concession all aim at someone other than the person who votes.",
           "skillTag": "Orientation"
         },
         "practiceQuestions": [
           {
-            "prompt": "What is the goal of a debate round?",
+            "prompt": "Debate formats vary a great deal from one to another. What does not change?",
             "choices": [
-              "Persuade the judge that your side's position is stronger",
-              "Prove the other team is dishonest",
-              "Say as many separate points as possible",
-              "Finish your speeches quickly"
+              "The number of speeches each side is given in the round",
+              "Building your case, answering the other side, and comparing",
+              "The length of time each speaker is allowed to talk",
+              "The names each format uses for its individual speeches"
             ],
-            "correctAnswer": "Persuade the judge that your side's position is stronger",
-            "hint": "The judge is the audience that matters.",
-            "explanation": "Every speech exists to persuade the judge — not to overwhelm, insult, or outlast the other side.",
+            "correctAnswer": "Building your case, answering the other side, and comparing",
+            "hint": "Ask which part a format can change and which part it cannot.",
+            "explanation": "Speech counts, timings and names are exactly what formats vary. What no format removes is the work: introduce your side's case, answer what the other side argued, and tell the judge which points should decide it.",
             "skillTag": "Orientation"
           },
           {
             "prompt": "Which choice gives the judge an actual reason instead of only stating a position?",
             "choices": [
-              "School uniforms help because they reduce visible income differences between students",
-              "School uniforms are obviously good",
-              "Everyone already knows uniforms work",
-              "Uniforms are a topic people discuss"
+              "School uniforms are the right policy for almost every school",
+              "Most parents and teachers already support school uniforms",
+              "School uniforms have been debated in districts for years",
+              "Uniforms help because they reduce visible income differences"
             ],
-            "correctAnswer": "School uniforms help because they reduce visible income differences between students",
+            "correctAnswer": "Uniforms help because they reduce visible income differences",
             "hint": "An argument carries a reason the judge can weigh.",
-            "explanation": "A claim plus a reason gives the judge something to evaluate. The other options assert or observe without giving a reason.",
+            "explanation": "A claim plus a reason gives the judge something to evaluate. Asserting that a policy is right, reporting that people support it, and noting that it gets debated are all statements about the topic that leave the judge with nothing to weigh.",
             "skillTag": "Orientation"
           },
           {
             "prompt": "The other side just answered one of your arguments. What should you do?",
             "choices": [
               "Respond to their answer and explain why your point still stands",
-              "Repeat your original sentence more confidently",
-              "Ignore it and move to a new topic",
-              "Concede the argument immediately"
+              "Restate your original argument with more supporting detail",
+              "Point out that they answered instead of building their own case",
+              "Move on to your next argument so that you cover more ground"
             ],
             "correctAnswer": "Respond to their answer and explain why your point still stands",
             "hint": "An unanswered response usually wins the point.",
-            "explanation": "Debate is exchange: once your argument is answered, the judge needs your response to the answer — not a louder restatement.",
+            "explanation": "Once an argument is answered, the judge needs your reply to the answer. More detail on the original does not address what was said; commenting on their strategy is not a reply either; and moving on leaves their answer standing.",
             "skillTag": "Orientation"
           }
         ],
@@ -1113,14 +1113,14 @@
           {
             "prompt": "Side A says: 'Homework should be limited because students need sleep.' Side B answers: 'Students lose sleep to phones, not homework.' What does the judge most need from Side A next?",
             "choices": [
-              "Why homework is still a real cause of lost sleep worth acting on, even if phones matter too",
-              "A louder restatement that sleep is important",
-              "A brand-new argument about grades instead",
-              "A comment about Side B's sincerity"
+              "A new reason to limit homework that does not depend on sleep at all",
+              "A reason why homework still costs sleep worth acting on, even if phones matter too",
+              "Agreement that phones matter too, then a move on to whichever argument is next",
+              "A restatement that students need sleep, this time with a study attached"
             ],
-            "correctAnswer": "Why homework is still a real cause of lost sleep worth acting on, even if phones matter too",
+            "correctAnswer": "A reason why homework still costs sleep worth acting on, even if phones matter too",
             "hint": "The clash is about the cause — resolve it.",
-            "explanation": "Side B answered the reason, so the judge needs Side A to engage that answer and explain why the original concern survives it. Responding to the response is the heart of debating.",
+            "explanation": "Side B answered the reason, so the judge needs Side A to engage that answer. Switching to a new reason abandons the contested one, agreeing and moving on concedes it, and adding a study to the original restates a point nobody disputed — Side B never denied that sleep matters.",
             "skillTag": "Orientation"
           }
         ]

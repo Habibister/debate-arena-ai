@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn, titleCase } from "@/lib/utils";
@@ -50,7 +51,7 @@ export default async function ProfilePage() {
       studentDebates: {
         orderBy: { createdAt: "desc" },
         take: 3,
-        select: { id: true, topic: true, status: true, overallScore: true, createdAt: true }
+        select: { id: true, topic: true, status: true, overallScore: true, practiceMode: true, createdAt: true }
       }
     }
   });
@@ -153,6 +154,7 @@ export default async function ProfilePage() {
                         number read like a graded mastery percentage, and "judge score" implied a
                         verified result. Same value, honest name, no percent. */}
                     <p className="mt-1 text-sm text-muted-foreground">
+                      {debate.practiceMode === "LESSON" ? `${GUIDED_ROUND_LABEL} · ` : ""}
                       {titleCase(debate.status.toLowerCase())}{" "}
                       {typeof debate.overallScore === "number" ? `· practice ballot score ${debate.overallScore}` : ""}
                     </p>

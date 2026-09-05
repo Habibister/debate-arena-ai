@@ -186,6 +186,43 @@ export type ConceptEducationCommonMistake = {
 };
 
 /**
+ * Language a learner can actually say. One frame per PURPOSE (state a claim, give the reason, answer
+ * an argument), each with a few sentence starters.
+ *
+ * STARTERS ARE SCAFFOLDS, NOT ANSWERS. A starter supplies the opening words and the shape of the move
+ * — "They argue ___, but..." — and stops. It must never carry the substantive argument the learner is
+ * supposed to build: no complete objection, no finished reason, no full comparison. The validator
+ * enforces the mechanical half of that rule (a starter must leave a slot open); the authoring half is
+ * a review judgement, and the smoke suite reads every published starter against it.
+ */
+export type ConceptEducationLanguageFrame = {
+  purpose: string;
+  starters: readonly string[];
+};
+
+/**
+ * One small CONSTRUCTED attempt, placed after the teaching and before any guided application.
+ *
+ * This is the bridge the multiple-choice checks cannot be: the learner produces part of the reasoning
+ * themselves, inside a frame whose blanks are the moves the lesson taught. `frame` is the sentence
+ * with `___` where the learner writes; `slots` names each blank in order, so feedback can say WHICH
+ * move is missing. `prompt` is the situation — an opposing argument, a motion, a claim to support.
+ * The frame supplies structure only; the substance in every slot is the learner's.
+ */
+export type ConceptEducationScaffoldedTry = {
+  prompt: string;
+  frame: string;
+  slots: readonly string[];
+  /**
+   * The opponent's claim as one short phrase — "replacing the printed paper will improve coverage" —
+   * so a starter can open in the learner's actual situation: "They argue that replacing the printed
+   * paper will improve coverage, but ___". A claim, never a reason: it names what the other side
+   * says, not why, so the mechanism and the consequence stay the learner's to build.
+   */
+  opponentClaim?: string;
+};
+
+/**
  * An additional teaching example, for a skill that needs transfer to a second situation.
  *
  * `weak` is optional because not every example is a contrast — sometimes the useful thing is one more
@@ -219,6 +256,10 @@ export type ConceptEducationLessonContent = {
   misconception?: ConceptEducationMisconception;
   /** What goes wrong, why, and the fix — as learner-visible teaching, never only as a distractor. */
   commonMistakes?: readonly ConceptEducationCommonMistake[];
+  /** Sentence starters by purpose. Scaffolds only — see the type's own rule. */
+  languageFrames?: readonly ConceptEducationLanguageFrame[];
+  /** One constructed attempt after the teaching; the learner writes the reasoning, not the product. */
+  scaffoldedTry?: ConceptEducationScaffoldedTry;
   guidedQuestion: ConceptEducationQuestion;
   practiceQuestions: readonly ConceptEducationQuestion[];
   /**

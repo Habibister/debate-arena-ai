@@ -6,6 +6,7 @@ import { CheckCircle2, CircleDashed, MessageSquareText, PlayCircle } from "lucid
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { authOptions } from "@/lib/auth";
 import { getStudentDebates, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,11 @@ export default async function DebateHistoryPage() {
                         <Badge variant="outline" className="ml-2 align-middle text-[10px]">
                           Assisted Practice
                         </Badge>
+                      ) : null}
+                      {/* A guided lesson round stays in history and is named as what it is: coached
+                          practice on a curriculum-limited ballot, never a full independent round. */}
+                      {debate.practiceMode === "LESSON" ? (
+                        <Badge className="ml-2 align-middle text-[10px]">{GUIDED_ROUND_LABEL}</Badge>
                       ) : null}
                     </p>
                     <p className="flex items-center gap-1.5 font-semibold text-foreground">

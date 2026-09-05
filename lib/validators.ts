@@ -79,6 +79,9 @@ export const sideCoachRequestSchema = z.object({
   level: levelSchema.optional(),
   // The role-play scenario + goals, so coaching is specific to the actual situation (not generic).
   scenario: z.string().max(4000).optional(),
+  // The debate MOTION. Debate rounds have no scenario, and without this the coach was asked to write
+  // starters "in this round's topic" while never being given the topic. Prompt context only.
+  topic: z.string().max(400).optional(),
   goals: z.array(z.string().max(300)).max(6).optional(),
   // Stable authored-rubric IDs. ONLY the authored-lesson practice sends these; their presence is
   // what opts a request into the structured, evidence-anchored rubric contract. Debate sends no
@@ -89,7 +92,16 @@ export const sideCoachRequestSchema = z.object({
   latestStudentSpeech: z.string().max(SIDE_COACH_SPEECH_MAX_CHARS).optional(),
   requestType: z.enum(["turn-feedback", "ask"]).default("turn-feedback"),
   askKind: z.string().max(80).optional(),
-  guidanceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional()
+  guidanceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  // M15 S6 — COACHED PERFORMANCE. Present only when the round was launched from a lesson's guided
+  // application. The lesson id is resolved server-side against the curriculum's guided declarations;
+  // an id with no declaration yields an ORDINARY round (no constraint, no starters), never an error
+  // and never a half-guided state. The support level is one of the four named levels. Nothing here
+  // is trusted as a claim about the learner.
+  guided: z.object({
+    lessonId: z.string().min(1).max(80),
+    supportLevel: z.enum(["HIGH_SUPPORT", "MEDIUM_SUPPORT", "LOW_SUPPORT", "INDEPENDENT"])
+  }).optional()
 });
 
 export const judgeRequestSchema = z.object({
@@ -177,7 +189,24 @@ export const debateCreateSchema = z.object({
   side: debateSideChoiceSchema.default("GOVERNMENT"),
   mode: z.enum(["AI", "REAL_STUDENT"]),
   opponentUserId: z.string().optional(),
-  aiPersona: z.string().min(2).max(80).optional()
+  aiPersona: z.string().min(2).max(80).optional(),
+  // GUIDED LESSON ROUND. Names the lesson the round is launched from — a lesson id and NOTHING else.
+  // The server resolves what that lesson unlocks from curriculum truth, marks the row
+  // practiceMode LESSON and stores the id on the row, so the judge and the arena read guided-ness
+  // from the ROW, never from a later client claim.
+  guided: z.object({ lessonId: z.string().min(1).max(80) }).optional()
+});
+
+/**
+ * M15 S6b — the judge request body for a GUIDED round.
+ *
+ * The client may say WHICH lesson the round belongs to. It may not say what that lesson unlocks: the
+ * server resolves the rubric from curriculum truth (`guidedRubricFor`) and ignores everything else.
+ * A body with no `guided` block is a full Compete round and is judged exactly as before. A `guided`
+ * block whose lesson cannot be resolved is REFUSED — never scored against the full curriculum.
+ */
+export const guidedJudgeRequestSchema = z.object({
+  guided: z.object({ lessonId: z.string().min(1).max(80) }).optional()
 });
 
 export const practiceTestCreateSchema = z.object({

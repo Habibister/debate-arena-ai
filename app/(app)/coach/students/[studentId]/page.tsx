@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LocalDate } from "@/components/ui/local-date";
 import { Progress } from "@/components/ui/progress";
+import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { canAccessCoachTools } from "@/lib/roles";
@@ -142,6 +143,7 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
                           <p className="truncate text-sm font-semibold">{round.topic}</p>
                           <p className="text-xs text-muted-foreground">
                             <LocalDate value={round.createdAt} /> · {round.status.toLowerCase()}
+                            {round.practiceMode === "LESSON" ? ` · ${GUIDED_ROUND_LABEL.toLowerCase()}` : ""}
                           </p>
                         </div>
                         <span className="text-sm font-semibold">{round.overallScore !== null ? `${round.overallScore}` : "—"}</span>

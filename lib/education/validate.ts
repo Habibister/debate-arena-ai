@@ -182,6 +182,16 @@ function optionalListGaps(value: unknown, label: string, required: readonly stri
   return gaps;
 }
 
+/**
+ * A starter is a scaffold when it stops before the substance: it contains a blank (`___`) or ends on
+ * an open connective. A complete declarative sentence is an answer, and is refused as a starter.
+ */
+function isScaffoldStarter(starter: string): boolean {
+  const s = starter.trim();
+  if (s.includes("___")) return true;
+  return /(\.\.\.|…|\b(but|because|since|so|therefore|that|which)[,:]?)$/i.test(s);
+}
+
 /** Returns the missing structural fields of a concept source. Empty means complete. */
 function conceptSourceGaps(source: unknown): string[] {
   if (!isRecord(source)) return ["source is not an object"];
@@ -219,6 +229,50 @@ function conceptSourceGaps(source: unknown): string[] {
   gaps.push(...optionalListGaps(content.additionalExamples, "additionalExamples", ["setup", "strong", "explanation"]));
   gaps.push(...optionalListGaps(content.revisionLadder, "revisionLadder", ["attempt", "diagnosis", "revision"]));
   gaps.push(...optionalListGaps(content.commonMistakes, "commonMistakes", ["mistake", "whyItFails", "fix"]));
+  // Language frames: each purpose must carry at least one starter, and EVERY starter must be a
+  // scaffold — it leaves a blank or ends on an open connective. A starter that reads as a finished
+  // sentence has handed the learner the answer, which is the one thing a starter must never do.
+  if (content.languageFrames !== undefined) {
+    if (!Array.isArray(content.languageFrames) || content.languageFrames.length === 0) {
+      gaps.push("languageFrames");
+    } else {
+      content.languageFrames.forEach((frame, index) => {
+        if (!isRecord(frame) || !nonEmptyString(frame.purpose)) { gaps.push(`languageFrames[${index}].purpose`); return; }
+        const starters = frame.starters;
+        if (!Array.isArray(starters) || starters.length === 0 || !starters.every(nonEmptyString)) {
+          gaps.push(`languageFrames[${index}].starters`);
+          return;
+        }
+        starters.forEach((starter, j) => {
+          if (!isScaffoldStarter(starter)) gaps.push(`languageFrames[${index}].starters[${j}] is a complete sentence, not a scaffold`);
+        });
+      });
+    }
+  }
+  // The scaffolded try: a prompt, a frame with at least one blank, and one slot name per blank.
+  if (content.scaffoldedTry !== undefined) {
+    if (!isRecord(content.scaffoldedTry)) {
+      gaps.push("scaffoldedTry");
+    } else {
+      const t = content.scaffoldedTry;
+      if (!nonEmptyString(t.prompt)) gaps.push("scaffoldedTry.prompt");
+      if (!nonEmptyString(t.frame)) gaps.push("scaffoldedTry.frame");
+      const blanks = nonEmptyString(t.frame) ? (t.frame.match(/___/g) ?? []).length : 0;
+      if (blanks === 0) gaps.push("scaffoldedTry.frame has no blank for the learner to fill");
+      if (!Array.isArray(t.slots) || t.slots.length !== blanks || !t.slots.every(nonEmptyString)) {
+        gaps.push(`scaffoldedTry.slots must name each of the ${blanks} blank(s)`);
+      }
+      // The opponent's claim is optional; when present it is a short claim, not a finished reason.
+      // A "because" inside it would hand the learner the mechanism the exercise exists to make them build.
+      if (t.opponentClaim !== undefined) {
+        if (!nonEmptyString(t.opponentClaim)) gaps.push("scaffoldedTry.opponentClaim");
+        else {
+          if (t.opponentClaim.trim().split(/\s+/).length > 25) gaps.push("scaffoldedTry.opponentClaim is longer than a claim");
+          if (/\bbecause\b|\btherefore\b|\bso that\b/i.test(t.opponentClaim)) gaps.push("scaffoldedTry.opponentClaim carries reasoning, not a claim");
+        }
+      }
+    }
+  }
   if (content.misconception !== undefined) {
     if (!isRecord(content.misconception)) {
       gaps.push("misconception");

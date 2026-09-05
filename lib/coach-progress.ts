@@ -1,4 +1,5 @@
 import { HttpError } from "@/lib/api";
+import { INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
 import { debateMasteryHeld } from "@/lib/debate-drills";
 
@@ -105,9 +106,12 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
     }
   }
 
-  // Debate performance (real rows only).
+  // Debate performance (real rows only, INDEPENDENT rounds only). A guided lesson round is coached
+  // practice on a curriculum-limited ballot: it has no whole-round score and its feedback names only
+  // the taught skills, so it enters neither the judged-round count, the average, nor "latest judge
+  // feedback" (lib/guided-rounds.ts). It still appears in the recent list below, labelled.
   const judgedDebates = await prisma.debate.findMany({
-    where: { studentId, status: "JUDGED" },
+    where: { studentId, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -131,7 +135,7 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
     where: { studentId },
     orderBy: { createdAt: "desc" },
     take: 5,
-    select: { id: true, topic: true, status: true, overallScore: true, createdAt: true }
+    select: { id: true, topic: true, status: true, overallScore: true, practiceMode: true, createdAt: true }
   });
 
   const judgedRounds = judgedDebates.length;

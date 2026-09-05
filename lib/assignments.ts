@@ -1,6 +1,7 @@
 import type { AssignmentType, Role } from "@prisma/client";
 import { HttpError } from "@/lib/api";
 import { ASSIGNMENT_TYPE_META, assignmentLaunchPath, assignmentTypeLabel } from "@/lib/assignment-types";
+import { INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
 import { deckSummaries } from "@/lib/study-content";
 import { canAccessCoachTools, isAdmin } from "@/lib/roles";
@@ -370,6 +371,8 @@ async function validateEvidence(params: { assignment: Awaited<ReturnType<typeof 
       where: {
         id: input.evidenceId,
         status: "JUDGED",
+        // A guided lesson round is coached practice, not a completed debate round (lib/guided-rounds.ts).
+        ...INDEPENDENT_ROUND_WHERE,
         OR: [{ createdById: userId }, { studentId: userId }, { opponentUserId: userId }],
         ...(assignment.type === "REBUTTAL_PRACTICE" ? { format: "PRACTICE_REBUTTAL" } : {})
       },
@@ -460,6 +463,7 @@ export async function getStudentEvidenceOptions(userId: string, assignmentType: 
     const debates = await prisma.debate.findMany({
       where: {
         status: "JUDGED",
+        ...INDEPENDENT_ROUND_WHERE,
         OR: [{ createdById: userId }, { studentId: userId }, { opponentUserId: userId }],
         ...(assignmentType === "REBUTTAL_PRACTICE" ? { format: "PRACTICE_REBUTTAL" } : {})
       },

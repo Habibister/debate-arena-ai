@@ -38,6 +38,13 @@ import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel } from "@/components/debate/side-coach-panel";
 import { RoomOrientation } from "@/components/rooms/room-chrome";
 import { debateDiagnosisLesson } from "@/lib/education/diagnosis";
+import {
+  COMPETENCY_LABELS,
+  guidedRubricFor,
+  starterCategoriesFor,
+  SUPPORT_POLICY,
+  type SupportLevel
+} from "@/lib/education/coaching";
 import { draftKey } from "@/lib/debate-drafts";
 import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
 import { getAiPersona } from "@/lib/ai-personas";
@@ -95,6 +102,18 @@ type ParticipantProfile = {
 };
 
 export type JudgeReport = {
+  /**
+   * Present ONLY on a projected guided ballot. Its presence is the proof the server limited the
+   * evaluation to the lesson's unlocked skills; the modal branches on it for every section below.
+   */
+  guided?: { lessonId: string; primary: string; reinforcement: string[]; locked: string[] };
+  guidedFeedback?: {
+    newSkill: string;
+    priorSkill?: string;
+    oneThingToFix: string;
+    retryRequired: boolean;
+    nextAction: "retry" | "continue";
+  };
   overallScore: number;
   categoryScores: Array<{
     key: string;
@@ -220,6 +239,12 @@ type TranscriptSideAnalysis = {
 };
 
 type DebateArenaProps = {
+  /**
+   * Present only for a GUIDED round launched from a lesson. Resolved server-side against the
+   * curriculum's guided declarations; absent means full Compete, which is INDEPENDENT — no starters,
+   * no unsolicited coaching, no retry prompt. The arena never infers guided-ness from anything else.
+   */
+  guided?: { lessonId: string; supportLevel: SupportLevel };
   initialDebate: ArenaDebate;
   studentProfile: ParticipantProfile | null;
   opponentProfile: ParticipantProfile | null;
@@ -344,8 +369,14 @@ function profileHandle(profile: ParticipantProfile | null, fallback: string) {
 
 // Accessibility settings come from the single sitewide AccessibilityProvider mounted in the root
 // layout, so the debate-room panel, /settings, and every speak button stay synchronized.
-export function DebateArena({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport }: DebateArenaProps) {
+export function DebateArena({ initialDebate, studentProfile, opponentProfile, initialMessages, initialJudgeReport, guided }: DebateArenaProps) {
   const { settings: a11y } = useAccessibility();
+  // GUIDED ROUND config, derived once from the curriculum. Null for full Compete. Everything the arena
+  // does differently in a guided round hangs off this: the banner, the coach's constraint, the
+  // starter categories, and the post-round return to the lesson's own move.
+  const guidedRubric = guided ? guidedRubricFor(guided.lessonId) : null;
+  const guidedPolicy = guided ? SUPPORT_POLICY[guided.supportLevel] : null;
+  const guidedStarterOptions = guided ? starterCategoriesFor(guided.lessonId).map((c) => c.label) : undefined;
   const spokenIdRef = useRef<string | null>(null);
   const [debate, setDebate] = useState(initialDebate);
   const [messages, setMessages] = useState(initialMessages);
@@ -363,12 +394,14 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
   const [isJudging, setIsJudging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Beginner Side Coach (private, separate role). Enabled via a localStorage flag set in debate setup.
-  const [coachEnabled, setCoachEnabled] = useState(false);
+  // A GUIDED round starts with the coach on — that is what the support level means. An ordinary round
+  // keeps the learner's saved preference (read below), which defaults to off.
+  const [coachEnabled, setCoachEnabled] = useState(Boolean(guided));
   useEffect(() => {
     try {
-      setCoachEnabled(window.localStorage.getItem("debatearena_side_coach") === "on");
+      setCoachEnabled(Boolean(guided) || window.localStorage.getItem("debatearena_side_coach") === "on");
     } catch {
-      setCoachEnabled(false);
+      setCoachEnabled(Boolean(guided));
     }
   }, []);
   const coachStudentSide: "AFFIRMATIVE" | "NEGATIVE" =
@@ -572,7 +605,9 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
         rewardLimitReached?: boolean;
       }>(`/api/debates/${debate.id}/judge`, {
         method: "POST",
-        body: JSON.stringify({})
+        // A guided round names its lesson; the server resolves what that lesson unlocks from
+        // curriculum truth and refuses an id it cannot resolve. Full Compete sends nothing.
+        body: JSON.stringify(guided ? { guided: { lessonId: guided.lessonId } } : {})
       });
       setDebate((current) => ({ ...current, status: result.debate.status, overallScore: result.debate.overallScore }));
       setJudgeReport(result.judge);
@@ -874,6 +909,17 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
             </div>
           ) : null}
 
+          {guidedRubric && !judgeReport ? (
+            <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 p-4" role="status">
+              <p className="font-semibold">Guided round — {COMPETENCY_LABELS[guidedRubric.primary]}</p>
+              <p className="mt-1 text-sm leading-6 text-neutral-300">
+                The coach comments only on {[guidedRubric.primary, ...guidedRubric.reinforcement].map((c) => COMPETENCY_LABELS[c]).join(" and ")},
+                and so does the judge at the end. The round is saved to your practice history. It earns
+                no XP, changes no rank, and does not count toward mastery or your average score.
+              </p>
+            </div>
+          ) : null}
+
           {coachEnabled && !judgeReport ? (
             <SideCoachPanel
               debateId={debate.id}
@@ -881,7 +927,10 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
               eventType={debate.eventType}
               studentSide={coachStudentSide}
               level={debate.level}
+              topic={debate.topic}
               messages={messages}
+              guided={guided}
+              askOptionsOverride={guidedPolicy?.startersOnRequest ? guidedStarterOptions : undefined}
             />
           ) : null}
 
@@ -1014,6 +1063,7 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 
       {judgeReport && decisionOpen ? (
         <JudgeDecisionModal
+          guided={guided}
           report={judgeReport}
           xpEarned={xpEarned}
           rewardLimitReached={rewardLimitReached}
@@ -1026,12 +1076,14 @@ export function DebateArena({ initialDebate, studentProfile, opponentProfile, in
 }
 
 function JudgeDecisionModal({
+  guided,
   report,
   xpEarned,
   rewardLimitReached,
   overallScore,
   onClose
 }: {
+  guided?: { lessonId: string; supportLevel: SupportLevel };
   report: JudgeReport;
   xpEarned: number | null;
   rewardLimitReached: boolean;
@@ -1074,7 +1126,17 @@ function JudgeDecisionModal({
                 by a ?? fallback — nonsense on a solo role-play, and adding "this practice round"
                 would have made it worse. A two-sided round keeps the two-sided copy; a role-play
                 gets copy that fits what it is. */}
-            {report.teamWinner ? (
+            {report.guided ? (
+              <>
+                {/* GUIDED: a coached exercise, not a competitive result. No winner, no "round
+                    scored", no rating — the heading says what actually happened. */}
+                <h2 className="mt-3 text-3xl font-bold">Guided exercise completed</h2>
+                <p className="mt-2 text-sm text-neutral-400">
+                  Feedback below is limited to the skills your lesson has taught. Nothing here changes
+                  your XP, rank, or record.
+                </p>
+              </>
+            ) : report.teamWinner ? (
               <>
                 <h2 className="mt-3 text-3xl font-bold">{winnerLabel(report)} wins this practice round</h2>
                 <p className="mt-2 text-sm text-neutral-400">
@@ -1118,7 +1180,13 @@ function JudgeDecisionModal({
               {/* A4a: never render a bare "+0 XP". Past the daily limit the round still counted as
                   practice and still carries its full ballot — the copy says so instead of showing a
                   zero the learner has to interpret. */}
-              {rewardLimitReached ? (
+              {report.guided ? (
+                // A guided exercise grants nothing and says so — never "+0 XP", which reads as a
+                // reward that happened to be empty rather than a round that was never a reward.
+                <p className="mt-3 text-xs leading-5 text-neutral-400">
+                  A guided exercise earns no XP and changes no rank. Your record is exactly as it was.
+                </p>
+              ) : rewardLimitReached ? (
                 <p className="mt-3 text-xs leading-5 text-neutral-400">
                   No XP for this round — today&apos;s XP limit is reached. It still counts as practice, and your
                   full ballot and coaching are below.
@@ -1127,17 +1195,37 @@ function JudgeDecisionModal({
                 <p className="mt-3 text-sm text-neutral-400">+{xpEarned ?? 0} XP earned for completing the round</p>
               )}
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Short reason</p>
-                <SpeakButton
-                  text={`${compactReason}. ${reason}`}
-                  label="Read feedback aloud"
-                  className="border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10"
-                />
+            {report.guided ? (
+              // GUIDED: there is no decision to give a reason for. The box says exactly what was
+              // checked — the surviving (unlocked) categories — so no fallback sentence about a
+              // "winning side" can ever render here.
+              <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Skills checked</p>
+                  <SpeakButton
+                    text={`Skills checked: ${report.categoryScores.map((category) => category.label).join(", ")}. ${report.guidedFeedback?.newSkill ?? ""} ${report.guidedFeedback?.oneThingToFix ?? ""}`}
+                    label="Read feedback aloud"
+                    className="border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10"
+                  />
+                </div>
+                <p className="mt-2 text-lg font-semibold leading-7">
+                  {report.categoryScores.map((category) => category.label).join(" · ")}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-neutral-500">Only the skills your lesson has taught. Nothing else was scored.</p>
               </div>
-              <p className="mt-2 text-lg font-semibold leading-7">{compactReason}</p>
-            </div>
+            ) : (
+              <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Short reason</p>
+                  <SpeakButton
+                    text={`${compactReason}. ${reason}`}
+                    label="Read feedback aloud"
+                    className="border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10"
+                  />
+                </div>
+                <p className="mt-2 text-lg font-semibold leading-7">{compactReason}</p>
+              </div>
+            )}
           </div>
 
           {fairness?.emptyPhraseWarning ? (
@@ -1147,7 +1235,7 @@ function JudgeDecisionModal({
             </div>
           ) : null}
 
-          {whyBullets.length > 0 ? (
+          {whyBullets.length > 0 && !report.guided ? (
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Why you won / lost</p>
               <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-neutral-300">
@@ -1181,12 +1269,16 @@ function JudgeDecisionModal({
             </div>
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-3">
-            <InsightCard title="Biggest fix" value={biggestFix} />
-            {betterSentence ? <InsightCard title="Better sentence" value={betterSentence} /> : null}
-            {practiceNext ? <InsightCard title="Practice next" value={practiceNext} /> : null}
-          </div>
+          {!report.guided ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              <InsightCard title="Biggest fix" value={biggestFix} />
+              {betterSentence ? <InsightCard title="Better sentence" value={betterSentence} /> : null}
+              {practiceNext ? <InsightCard title="Practice next" value={practiceNext} /> : null}
+            </div>
+          ) : null}
 
+          {/* GUIDED: no full rubric exists to show, so no toggle offers one. */}
+          {!report.guided ? (
           <button
             type="button"
             onClick={() => setShowFullRubric((value) => !value)}
@@ -1195,8 +1287,22 @@ function JudgeDecisionModal({
           >
             {showFullRubric ? "Hide full rubric breakdown" : "Show full rubric breakdown"}
           </button>
+          ) : null}
 
-          {showFullRubric ? (
+          {report.guided && report.guidedFeedback ? (
+            <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4">
+              <InsightCard title="Your new skill" value={report.guidedFeedback.newSkill} />
+              {report.guidedFeedback.priorSkill ? (
+                <div className="mt-3"><InsightCard title="Keep using" value={report.guidedFeedback.priorSkill} /></div>
+              ) : null}
+              <div className="mt-3"><InsightCard title="One thing to fix" value={report.guidedFeedback.oneThingToFix} /></div>
+              <p className="mt-3 text-sm font-semibold text-emerald-100">
+                Next: {report.guidedFeedback.nextAction === "retry" ? "retry the move in the lesson, then come back" : "continue to the next lesson"}
+              </p>
+            </div>
+          ) : null}
+
+          {showFullRubric && !report.guided ? (
             <div className="space-y-5 border-t border-white/10 pt-5">
           {report.judgeFairnessReport ? (
             <div className="rounded-lg border border-amber-400/20 bg-amber-500/[0.06] p-4">
@@ -1288,7 +1394,7 @@ function JudgeDecisionModal({
             ))}
           </div>
 
-          {report.ratingChange ? (
+          {report.ratingChange && !report.guided ? (
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="font-semibold">Where to focus next</p>
@@ -1374,7 +1480,7 @@ function JudgeDecisionModal({
           </div>
 
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-            <p className="font-semibold">Recommended skills to practice next</p>
+            <p className="font-semibold">{report.guided ? "Lessons for the skills this round covered" : "Recommended skills to practice next"}</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {/* COMPETE -> LEARN. Each card opens the canonical lesson that TEACHES the weak concept.
                   It linked `/skills/<judge slug>`, which relies on a redirect layer and lands a
@@ -1399,6 +1505,7 @@ function JudgeDecisionModal({
             </div>
           </div>
 
+          {report.readinessForNextLevel && !report.guided ? (
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <p className="font-semibold">
               Readiness: {report.readinessForNextLevel.ready ? "Ready for the next level" : "Keep training"}
@@ -1406,6 +1513,7 @@ function JudgeDecisionModal({
             <p className="mt-2 text-sm leading-6 text-neutral-300">{report.readinessForNextLevel.rationale}</p>
             <p className="mt-3 text-sm font-semibold">Next milestone: {report.readinessForNextLevel.nextMilestone}</p>
           </div>
+          ) : null}
             </div>
           ) : null}
 
@@ -1420,7 +1528,26 @@ function JudgeDecisionModal({
                 It now opens the lesson that TEACHES the weak concept; that lesson offers targeted
                 practice at its end, after the teaching. When no recommendation resolves to a
                 learner-visible lesson the button is the honest catalog link, never a fabricated one. */}
+            {/* GUIDED: feedback is followed by a RETRY OF THE TARGET MOVE, not by leaving. The round
+                sends the learner back to the lesson's scaffolded try — the same move, with the
+                coaching fresh — rather than to a diagnosis of untaught skills. Full Compete keeps the
+                diagnosis-to-lesson return below. */}
+            {guided ? (
+              <p className="w-full text-xs leading-5 text-neutral-400">
+                This ballot scores the whole round, including skills the lesson has not taught yet.
+                The lesson you came from is about one of them — go back and retry that move.
+              </p>
+            ) : null}
+            {guided ? (
+              <Link
+                href={`/lessons/${encodeURIComponent(guided.lessonId)}#scaffolded-try` as Route}
+                className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}
+              >
+                Retry the move in the lesson
+              </Link>
+            ) : null}
             {(() => {
+              if (guided) return null;
               const weakest = (report.recommendedLessons ?? [])
                 .map((lesson) => debateDiagnosisLesson(lesson.lessonSlug))
                 .find((destination) => destination !== null);

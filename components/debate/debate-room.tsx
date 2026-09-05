@@ -58,7 +58,7 @@ function formatTime(seconds: number) {
   return remainder === 0 ? `${minutes} min` : `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-export function DebateRoom({ track }: { track?: string }) {
+export function DebateRoom({ track, guidedLessonId }: { track?: string; guidedLessonId?: string }) {
   // The selected training track (from the hub link ?track=slug) decides the organization the AI
   // opponent/judge use. Falls back to General Debate. URL is the strongest source of truth.
   const trackInfo = trackBySlug(track ?? "") ?? trackById(DEFAULT_TRACK);
@@ -202,7 +202,10 @@ export function DebateRoom({ track }: { track?: string }) {
         body: JSON.stringify({
           organization: trackOrganization,
           eventType: config.eventType,
-          practiceMode: "DEBATE",
+          // A guided round is created as a LESSON round and names its lesson; the server validates
+          // the lesson and stores both on the row. Every other round is an ordinary DEBATE round.
+          practiceMode: guidedLessonId ? "LESSON" : "DEBATE",
+          ...(guidedLessonId ? { guided: { lessonId: guidedLessonId } } : {}),
           format,
           category,
           level,
@@ -225,7 +228,12 @@ export function DebateRoom({ track }: { track?: string }) {
         })
       }, "Could not create your debate room. Please try again.");
 
-      router.push(`/debate/${created.debate.id}` as Route);
+      // A guided round carries its lesson to the arena in the URL. Nothing is stored: the arena and the
+      // coach resolve the lesson against the curriculum on every request, and an id that resolves to
+      // nothing yields an ordinary round.
+      router.push((guidedLessonId
+        ? `/debate/${created.debate.id}?guided=${encodeURIComponent(guidedLessonId)}`
+        : `/debate/${created.debate.id}`) as Route);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to create the debate room.");
     } finally {

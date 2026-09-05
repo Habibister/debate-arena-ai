@@ -878,6 +878,23 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     // through ONE pure resolver (`lib/education/diagnosis.ts`): read-only, no session, no database, and
     // fail-closed, so a slug with no published lesson behind it yields no destination at all.
     "components/debate/debate-arena.tsx",
+    // M15 S6 (Coached performance): the SCAFFOLDED TRY component and the /debate setup page both read
+    // the curriculum's guided declarations from lib/education/coaching — which lesson unlocks which
+    // skills, and which starter categories may be shown. Pure data, read-only, recorded here on purpose.
+    "components/coaching/scaffolded-try.tsx",
+    "app/(app)/debate/page.tsx",
+    // The arena page resolves `?guided=` against the same declarations, server-side and fail-closed.
+    "app/(app)/debate/[debateId]/page.tsx",
+    // M15 S6b (Guided judge): the JUDGE ROUTE resolves a guided lesson id to its rubric from the same
+    // curriculum declarations (server-side, fail-closed — an unresolvable id is a 400, never a full
+    // ballot) and projects the full judge result through lib/education/guided-judge, which is pure.
+    // This is the write boundary of the coached model: a guided round may store only a curriculum-
+    // limited ballot, and this consumer is where that limit is enforced. Recorded here on purpose.
+    "app/api/debates/[debateId]/judge/route.ts",
+    // The CREATE route validates a guided lesson id against the same declarations at creation and
+    // marks the row (practiceMode LESSON + formatConfig.guidedLessonId, lib/guided-rounds.ts), so
+    // guided-ness is a property of the stored round, decided server-side, never a later claim.
+    "app/api/debates/route.ts",
   ]);
   const found: string[] = [];
   for (const file of [...walkTree("app"), ...walkTree("components")]) {

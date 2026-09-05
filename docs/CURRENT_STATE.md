@@ -145,6 +145,52 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **COACHED PERFORMANCE LEARNING MODEL — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
+  Productive Debate skills are now taught by EXPLAIN → MODEL → SCAFFOLDED TRY → GUIDED DEBATE →
+  FEEDBACK → REQUIRED RETRY → CUMULATIVE USE → FADE SUPPORT → INDEPENDENT COMPETE. Refutation is the
+  pilot: language frames (scaffolds only), a constructed scaffolded try with a model-free evaluator
+  that requires a retry on an incomplete move, and a guided round launched from the lesson via
+  `?guided=`, resolved fail-closed against curriculum-level declarations (Refutation primary,
+  Claim/Warrant/Impact reinforcement; everything else LOCKED for the COACH — not coached, not named,
+  absence not penalised). Four support
+  levels exist; the pilot runs at fixed HIGH_SUPPORT and full Compete is INDEPENDENT. **Unlock truth is
+  curriculum-level, not per-learner, and adaptive fading is structurally ready but not implemented** —
+  both stated, neither faked. **The judge is now curriculum-limited at the evaluation contract**: a guided round's
+  ballot is PROJECTED onto the lesson's rubric server-side (`lib/education/guided-judge.ts`, pure;
+  rubric resolved from the lesson id, fail-closed, no client unlock list), locked skills are removed
+  from categories, score, prose and recommendations, no winner or rating or readiness is produced, and
+  the provider's prose prompt is told which skills it may write about. A guided round is STORED as a
+  round (JUDGED claim + projected ballot) and moves no part of the record: no XP, XPLog, streak, rank,
+  rating, readiness, mastery, review, per-skill score columns, or `overallScore` column (that one is
+  averaged elsewhere). The scaffolded try passes the lesson's `opponentClaim` into the live starter,
+  which still stops at the blank (baseline `REFUTATION-REBUILD-V2-GUIDED-TOPIC`; affected slug
+  `debate-refutation` only, twenty others byte-identical). The AI opponent is not curriculum-constrained (stated, not claimed).
+  `debate-rebuttal` mastery remains held. **Final closure**: a guided round is marked ON THE ROW at
+  creation with the pre-existing `PracticeMode.LESSON` value plus `formatConfig.guidedLessonId`
+  (`lib/guided-rounds.ts`, no schema change); the judge and the arena read the row, not the URL or
+  the body. Every independent-completion total and competitive aggregate (Home, Dashboard, coach
+  view, assignment evidence, same-motion comparison) uses the shared `INDEPENDENT_ROUND_WHERE`
+  predicate; guided rounds stay in history and are labelled "Guided exercise" everywhere rounds are
+  listed. The lesson page has no motion (starters are argument-grounded; API renamed
+  `contextualStarter`); the arena now passes the real motion to the side coach. `coached-performance:smoke`
+  is 48 controls; twenty-six live-path mutations fired in total. **Not committed, not pushed, not
+  deployed.**
+- **REFUTATION LESSON REBUILD — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
+  `debate-refutation` is the first lesson authored under the expanded schema: four teaching sections,
+  a repaired worked example, a second example requiring a different move, a two-rung revision ladder,
+  a misconception, five common mistakes, and **three** checks in place of five.
+  **The checks are formative only and do NOT discriminate.** Six blind rounds: website-only 3/3 with
+  every item uniquely resolvable from the lesson; the content-free control (no lesson) scored 3/3 in
+  every round, including the round built specifically to defeat it. Four distractor rebuilds moved
+  nothing. Recorded as a BLOCK on assessment quality, not on the teaching \u2014 the remedy is
+  constructed response, which does not exist yet. The armed
+  `learning-content-integrity` gate fired on the new runtime keys; five keys were classified in
+  `CONTENT_KEYS` and **exactly one** baseline block was regenerated, with the other twenty proven
+  byte-identical. `LEARNING_CONTENT_BASELINE` = `REFUTATION-REBUILD-V1`.
+  **UNCHANGED: the rebuttal drill bank, the 22 quarantined items, and the durable-mastery hold on
+  `debate-rebuttal`.** The lesson's objective is productive and its checks are multiple choice, so the
+  objective is PARTLY assessed; constructed-response evidence does not exist yet.
+  **Not committed, not pushed, not deployed.**
 - **DEBATE LEARN + COMPETE ARCHITECTURE — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
   **Debate's learner-facing journey is 1 Learn, 2 Compete.** Practice and Apply no longer exist as
   Debate categories; the drill, review, remediation and writing-practice engines all remain and are

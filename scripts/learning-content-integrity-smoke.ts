@@ -53,7 +53,7 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "LIVE-LESSON-ASSESSMENT-TELL-REPAIR-V1";
+const LEARNING_CONTENT_BASELINE = "REFUTATION-REBUILD-V2-GUIDED-TOPIC";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 
@@ -63,8 +63,27 @@ const BASELINE_PATH = "scripts/learning-content-baseline.json";
 // is always a recorded decision and never a forgotten field.
 const SEED_KEYS = ["organization", "track", "name", "slug", "description", "category", "order", "lesson"];
 const LESSON_KEYS = ["title", "slug", "summary", "estimatedMinutes", "content"];
+// M15 S5 — the FIRST five keys classified since the teaching-schema expansion, and each is here
+// because a real reviewed lesson now authors it, not because the schema permits it. All five are
+// PROTECTED AUTHORED TEACHING: every one renders to a learner in `ConceptEducationLessonView`, so a
+// silent edit to any of them changes what a student is taught and must fail this suite.
+// Deliberately NOT pre-authorized: nothing else. A sixth optional field stays unclassified until a
+// lesson actually uses it and a human reviews that use.
 const CONTENT_KEYS = ["objective", "explanation", "whyMatters", "steps", "workedExample",
-                      "guidedQuestion", "practiceQuestions", "masteryCheck"];
+                      "guidedQuestion", "practiceQuestions", "masteryCheck",
+                      "teachingSections", "additionalExamples", "revisionLadder",
+                      "misconception", "commonMistakes",
+                      // M15 S6 — the coached-performance pilot. Classified because the reviewed
+                      // Refutation lesson authors both; both render to the learner.
+                      "languageFrames", "scaffoldedTry"];
+const LANGUAGE_FRAME_KEYS = ["purpose", "starters"];
+const SCAFFOLDED_TRY_KEYS = ["prompt", "frame", "slots", "opponentClaim"];
+const SCAFFOLDED_TRY_OPTIONAL_KEYS = ["opponentClaim"];
+const TEACHING_SECTION_KEYS = ["heading", "body"];
+const EXAMPLE_KEYS = ["setup", "weak", "strong", "explanation"];
+const REVISION_RUNG_KEYS = ["attempt", "diagnosis", "revision"];
+const MISCONCEPTION_KEYS = ["wrongModel", "whyItFails", "betterModel"];
+const COMMON_MISTAKE_KEYS = ["mistake", "whyItFails", "fix"];
 const WORKED_EXAMPLE_KEYS = ["prompt", "weakAnswer", "strongAnswer", "whyItWorks"];
 const QUESTION_KEYS = ["prompt", "choices", "correctAnswer", "hint", "explanation", "skillTag",
                        "retryPrompt", "retryChoices", "retryCorrectAnswer"];
@@ -76,17 +95,26 @@ const QUESTION_KEYS = ["prompt", "choices", "correctAnswer", "hint", "explanatio
  * carries the field, this check fails until the field is deliberately classified. Do not read this as
  * "the suite detects type declarations" — it does not, and cannot.
  */
-function assertExactKeys(value: unknown, expected: string[], where: string): void {
+function assertExactKeys(value: unknown, expected: string[], where: string, optional: string[] = []): void {
   assert.ok(value && typeof value === "object" && !Array.isArray(value), `1. ${where} is an object`);
   const got = Object.keys(value as Record<string, unknown>).sort();
-  const want = [...expected].sort();
-  const unexpected = got.filter((k) => !want.includes(k));
+  // OPTIONAL classified keys may be absent; they may never be UNCLASSIFIED. The fail-closed property
+  // is unchanged — a key outside the classified union still fails, and a required key still must be
+  // present. Optionality exists because the teaching-schema expansion made five content fields
+  // genuinely per-lesson: one rebuilt lesson authors them and twenty do not, and demanding all five
+  // everywhere would force empty structures into lessons that have nothing to put in them.
+  const want = [...expected].filter((k) => !optional.includes(k) || got.includes(k)).sort();
+  const unexpected = got.filter((k) => !expected.includes(k));
   const missing = want.filter((k) => !got.includes(k));
   assert.deepEqual(got, want,
     `1. ${where}: unclassified/missing runtime key(s) — unexpected ${JSON.stringify(unexpected)}, ` +
     `missing ${JSON.stringify(missing)}. Classify it in this suite (protected or excluded) and update ` +
     `${BASELINE_PATH} before it can pass.`);
 }
+
+/** The five content keys that are classified but per-lesson. Everything else stays required. */
+const OPTIONAL_CONTENT_KEYS = ["teachingSections", "additionalExamples", "revisionLadder",
+                               "misconception", "commonMistakes", "languageFrames", "scaffoldedTry"];
 
 type CanonicalQuestion = {
   prompt: string; choices: string[]; correctAnswer: string;
@@ -104,9 +132,47 @@ type CanonicalEntry = {
       guidedQuestion: CanonicalQuestion;
       practiceQuestions: CanonicalQuestion[];
       masteryCheck: CanonicalQuestion[];
+      // OPTIONAL structured teaching. `undefined` for a lesson that authors none, which is why the
+      // twenty entries that carry none stay byte-identical to their existing baseline blocks:
+      // `JSON.stringify` omits an undefined value entirely, so no key appears for them.
+      teachingSections?: Array<{ heading: string; body: string }>;
+      additionalExamples?: Array<{ setup: string; weak?: string; strong: string; explanation: string }>;
+      revisionLadder?: Array<{ attempt: string; diagnosis: string; revision: string }>;
+      misconception?: { wrongModel: string; whyItFails: string; betterModel: string };
+      commonMistakes?: Array<{ mistake: string; whyItFails: string; fix: string }>;
+      languageFrames?: Array<{ purpose: string; starters: string[] }>;
+      scaffoldedTry?: { prompt: string; frame: string; slots: string[] };
     };
   };
 };
+
+/**
+ * Canonicalise an OPTIONAL list of authored teaching records.
+ *
+ * Absent stays absent — `undefined`, never `[]` — so a lesson that authors nothing produces exactly
+ * the snapshot block it produced before these fields existed. Present is asserted key-exact like
+ * everything else here, so a sixth sub-field cannot ride in unclassified.
+ * `optionalKeys` names sub-fields the schema marks optional (an example's `weak` side); every other
+ * listed key must be present on every record.
+ */
+function canonicalRecords<T>(
+  value: unknown, keys: string[], where: string, optionalKeys: string[] = []
+): T[] | undefined {
+  if (value === undefined) return undefined;
+  assert.ok(Array.isArray(value) && value.length > 0, `1. ${where} is a non-empty array when present`);
+  return (value as unknown[]).map((item, index) => {
+    const present = keys.filter((k) => (item as Record<string, unknown>)?.[k] !== undefined);
+    const required = keys.filter((k) => !optionalKeys.includes(k));
+    for (const k of required) {
+      assert.ok(present.includes(k), `1. ${where}[${index}] is missing required key "${k}"`);
+    }
+    assertExactKeys(item, present, `${where}[${index}]`);
+    const rec = item as Record<string, never>;
+    const out: Record<string, unknown> = {};
+    for (const k of keys) if (rec[k] !== undefined) out[k] = rec[k];
+    return out as T;
+  });
+}
 
 // Explicit key construction — never spread, never Object.keys — so canonical output is deterministic
 // and a newly added source field can never leak in unclassified. Array ORDER IS PRESERVED everywhere:
@@ -122,13 +188,54 @@ function canonicalQuestion(question: unknown, where: string): CanonicalQuestion 
   };
 }
 
+/**
+ * The five optional teaching fields, as an object carrying ONLY the ones this lesson authored.
+ *
+ * A key that is absent from the source must be absent from the snapshot, not present-and-undefined:
+ * `assert.deepEqual` distinguishes the two, so emitting `teachingSections: undefined` would make all
+ * twenty lessons that author nothing differ from their existing reviewed blocks and force a
+ * twenty-one-entry rewrite to record a one-lesson change. Each key is still named explicitly here —
+ * no spread of source data, no `Object.keys` — so an unclassified sibling still cannot ride in.
+ */
+function optionalTeaching(content: Record<string, never>, slug: string): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  const sections = canonicalRecords<{ heading: string; body: string }>(
+    content.teachingSections, TEACHING_SECTION_KEYS, `teachingSections [${slug}]`);
+  if (sections !== undefined) out.teachingSections = sections;
+  const examples = canonicalRecords<{ setup: string; weak?: string; strong: string; explanation: string }>(
+    content.additionalExamples, EXAMPLE_KEYS, `additionalExamples [${slug}]`, ["weak"]);
+  if (examples !== undefined) out.additionalExamples = examples;
+  const ladder = canonicalRecords<{ attempt: string; diagnosis: string; revision: string }>(
+    content.revisionLadder, REVISION_RUNG_KEYS, `revisionLadder [${slug}]`);
+  if (ladder !== undefined) out.revisionLadder = ladder;
+  if (content.misconception !== undefined) {
+    assertExactKeys(content.misconception, MISCONCEPTION_KEYS, `misconception [${slug}]`);
+    const m = content.misconception as Record<string, never>;
+    out.misconception = { wrongModel: m.wrongModel, whyItFails: m.whyItFails, betterModel: m.betterModel };
+  }
+  const mistakes = canonicalRecords<{ mistake: string; whyItFails: string; fix: string }>(
+    content.commonMistakes, COMMON_MISTAKE_KEYS, `commonMistakes [${slug}]`);
+  if (mistakes !== undefined) out.commonMistakes = mistakes;
+  const frames = canonicalRecords<{ purpose: string; starters: string[] }>(
+    content.languageFrames, LANGUAGE_FRAME_KEYS, `languageFrames [${slug}]`);
+  if (frames !== undefined) out.languageFrames = frames;
+  if (content.scaffoldedTry !== undefined) {
+    assertExactKeys(content.scaffoldedTry, SCAFFOLDED_TRY_KEYS, `scaffoldedTry [${slug}]`, SCAFFOLDED_TRY_OPTIONAL_KEYS);
+    const t = content.scaffoldedTry as Record<string, never>;
+    const scaffolded: Record<string, unknown> = { prompt: t.prompt, frame: t.frame, slots: t.slots };
+    if (t.opponentClaim !== undefined) scaffolded.opponentClaim = t.opponentClaim;
+    out.scaffoldedTry = scaffolded;
+  }
+  return out;
+}
+
 function canonicalEntry(entry: unknown): CanonicalEntry {
   assertExactKeys(entry, SEED_KEYS, "seed entry");
   const e = entry as Record<string, never> & { slug: string; lesson: Record<string, never> };
   const slug = e.slug;
   assertExactKeys(e.lesson, LESSON_KEYS, `lesson [${slug}]`);
   const lesson = e.lesson as Record<string, never> & { content: Record<string, never> };
-  assertExactKeys(lesson.content, CONTENT_KEYS, `content [${slug}]`);
+  assertExactKeys(lesson.content, CONTENT_KEYS, `content [${slug}]`, OPTIONAL_CONTENT_KEYS);
   const content = lesson.content;
   assertExactKeys(content.workedExample, WORKED_EXAMPLE_KEYS, `workedExample [${slug}]`);
   const we = content.workedExample as Record<string, never>;
@@ -148,7 +255,9 @@ function canonicalEntry(entry: unknown): CanonicalEntry {
         workedExample: { prompt: we.prompt, weakAnswer: we.weakAnswer, strongAnswer: we.strongAnswer, whyItWorks: we.whyItWorks },
         guidedQuestion: canonicalQuestion(content.guidedQuestion, `guidedQuestion [${slug}]`),
         practiceQuestions: (content.practiceQuestions as unknown[]).map((q, i) => canonicalQuestion(q, `practiceQuestions[${i}] [${slug}]`)),
-        masteryCheck: (content.masteryCheck as unknown[]).map((q, i) => canonicalQuestion(q, `masteryCheck[${i}] [${slug}]`))
+        masteryCheck: (content.masteryCheck as unknown[]).map((q, i) => canonicalQuestion(q, `masteryCheck[${i}] [${slug}]`)),
+        // PROTECTED AUTHORED TEACHING (M15 S5), assigned below only when the lesson authors it.
+        ...optionalTeaching(content, slug)
       }
     }
     // EXCLUDED DERIVED: retryPrompt / retryChoices / retryCorrectAnswer — gated by control 3 below.

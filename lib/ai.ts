@@ -1,4 +1,6 @@
 import type { Level, MessageRole, Organization, PracticeMode } from "@prisma/client";
+import { guidedJudgeProseInstruction } from "@/lib/education/guided-judge";
+import type { GuidedRubric } from "@/lib/education/coaching";
 import { OpenAIUnavailableError } from "@/lib/openai";
 import {
   AllProvidersUnavailableError,
@@ -1261,9 +1263,12 @@ Reference the actual motion and what was said. No debate jargon as filler.`;
 
 function judgeProsePrompt(
   input: { topic: string; studentSide?: string; transcript: DebateTranscriptMessage[] },
-  base: DebateJudgeResult
+  base: DebateJudgeResult,
+  guided?: GuidedRubric
 ): string {
-  return `Motion: ${input.topic}
+  // A guided round leads with the curriculum limit, so it governs everything the provider reads next.
+  const guidedPreamble = guided ? `${guidedJudgeProseInstruction(guided)}\n` : "";
+  return `${guidedPreamble}Motion: ${input.topic}
 Student side: ${input.studentSide ?? "unknown"}
 Winner (already decided — do not change): ${base.teamWinner ?? "unknown"} at ${base.confidenceLevel ?? "unknown"} confidence.
 Rubric scores: Government ${base.internalScoringSummary?.governmentScore ?? "?"} vs Opposition ${base.internalScoringSummary?.oppositionScore ?? "?"}.
@@ -1450,6 +1455,13 @@ export async function judgeDebate(input: {
   opponentSide?: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
   format?: string;
   aiPersona?: string | null;
+  /**
+   * M15 S6b — a GUIDED lesson round. Limits the evaluation CONTRACT: the provider is asked to write
+   * only about the unlocked skills and to declare no winner. The local numeric categories are still
+   * computed here and are projected onto the rubric by the route before anything is stored or
+   * returned, so a locked skill never reaches the learner by either path.
+   */
+  guided?: GuidedRubric;
 }): Promise<DebateJudgeResult> {
   const base = fallbackDebateJudge(input);
   // Attribute the ballot to the registry spec covering this format (PF today); the score itself
@@ -1469,7 +1481,7 @@ export async function judgeDebate(input: {
   let provider: ProviderName;
   try {
     const result = await runProviderCompletion(
-      { system: JUDGE_PROSE_SYSTEM, prompt: judgeProsePrompt(input, base), temperature: 0.5 },
+      { system: JUDGE_PROSE_SYSTEM, prompt: judgeProsePrompt(input, base, input.guided), temperature: 0.5 },
       "judge"
     );
     content = result.content;

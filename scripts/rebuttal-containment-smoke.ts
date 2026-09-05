@@ -4,8 +4,13 @@
  * A teaching-to-drill-to-mastery audit found the `rebuttal` bank writing durable `debate-rebuttal`
  * mastery on material the published curriculum does not teach: 11 of 30 items not derivable from any
  * learner-visible lesson, 9 of those testing concepts no lesson mentions at all, and 10 items with a
- * second defensible answer. The credited lesson — an 18-word `debate-refutation` — supports 6 of the
- * 30. This suite proves the containment holds.
+ * second defensible answer. At the time of that audit the credited lesson was an 18-word
+ * `debate-refutation` supporting 6 of the 30. **That lesson was rebuilt in M15 S5** — structured
+ * teaching, a repaired worked example, a misconception, common mistakes and three checks — so the
+ * teaching side of the gap has narrowed. The containment did NOT change with it: the 22 quarantined
+ * items are still quarantined, durable `debate-rebuttal` mastery is still held, and a rebuilt lesson
+ * is not by itself evidence that any item is safe to serve for mastery again. Releasing an item is a
+ * separate decision with its own acceptance gate. This suite proves the containment holds.
  *
  * STRICT-SAFE BY CONSTRUCTION. `lib/debate-drills.ts` has zero imports, so the serving and predicate
  * assertions run against real behaviour. `lib/spaced-review.ts` and the submit route import Prisma,

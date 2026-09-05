@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Route } from "next";
 import {
-  AlertTriangle, ArrowRight, Clock, Flag, Layers, Lightbulb, ListChecks, ListOrdered, ThumbsDown,
-  ThumbsUp, Target, TrendingUp
+  AlertTriangle, ArrowRight, Clock, Flag, Layers, Lightbulb, ListChecks, ListOrdered, MessageSquareQuote,
+  PenLine, ThumbsDown, ThumbsUp, Target, TrendingUp
 } from "lucide-react";
+import { ScaffoldedTry } from "@/components/coaching/scaffolded-try";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
@@ -315,6 +316,35 @@ export function ConceptEducationLessonView({
         </section>
       ) : null}
 
+      {content.languageFrames?.length ? (
+        <section aria-labelledby="language" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <MessageSquareQuote className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="language" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Words you can use</h2>
+          </div>
+          {/* STARTERS ARE SCAFFOLDS. Each one is opening words and a blank; the substance that fills
+              the blank is the learner's. The validator refuses a starter with no blank and no open
+              ending, so a finished sentence cannot be authored here by accident. */}
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Each of these gives you the opening words and stops. What goes in the blank is your reasoning.
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {content.languageFrames.map((frame) => (
+              <div key={frame.purpose} className="rounded-lg border bg-muted/20 p-4">
+                <p className="break-words font-semibold text-foreground">{frame.purpose}</p>
+                <ul className="mt-2 space-y-2">
+                  {frame.starters.map((starter) => (
+                    <li key={starter} className="break-words font-mono text-sm leading-6 text-muted-foreground">
+                      {starter.replace(/\{their claim\}|\{topic\}/g, "___")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section aria-labelledby="practice" className="space-y-3">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" aria-hidden />
@@ -322,6 +352,27 @@ export function ConceptEducationLessonView({
         </div>
         <ConceptEducationLessonPractice checks={checks} />
       </section>
+
+      {content.scaffoldedTry ? (
+        <section aria-labelledby="scaffolded-try" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <PenLine className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="scaffolded-try" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Now try the move</h2>
+          </div>
+          {/* The constructed attempt. It follows the checks because recognising the move comes before
+              producing it, and it precedes the guided round because a learner should have produced
+              the move at least once before using it against an opponent. `source.slug` is the lesson
+              id — the validator requires the two to be equal — so the guided application, the unlocked
+              skills and the starter categories are all looked up from the canonical registry data. */}
+          <div className="mt-4">
+            <ScaffoldedTry
+              lessonId={source.slug}
+              scaffoldedTry={content.scaffoldedTry}
+              languageFrames={content.languageFrames}
+            />
+          </div>
+        </section>
+      ) : null}
 
       {practiceDrill ? (
         <section aria-labelledby="practice-drill" className="rounded-lg border bg-card p-6">

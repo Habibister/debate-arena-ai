@@ -10,6 +10,11 @@ import { lockUserRow } from "@/lib/practice-session";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { awardXpInTransaction, calculateDebateRating, rewardAmountForCompletion, utcDayBounds } from "@/lib/xp";
+import { parseJson } from "@/lib/api";
+import { guidedJudgeRequestSchema } from "@/lib/validators";
+import { guidedRubricFor, type GuidedRubric } from "@/lib/education/coaching";
+import { projectGuidedJudgeResult } from "@/lib/education/guided-judge";
+import { guidedLessonIdOf } from "@/lib/guided-rounds";
 
 export const runtime = "nodejs";
 
@@ -216,7 +221,7 @@ async function runOrganizationJudge(debate: {
   opponentSide: "GOVERNMENT" | "OPPOSITION" | "FOR" | "AGAINST";
   format: string;
   aiPersona: string | null;
-}) {
+}, guided?: GuidedRubric) {
   const transcript = debate.messages.map((message) => ({
     role: message.role,
     round: message.round,
@@ -244,7 +249,8 @@ async function runOrganizationJudge(debate: {
     studentSide: debate.studentSide,
     opponentSide: debate.opponentSide,
     format: debate.format,
-    aiPersona: debate.aiPersona
+    aiPersona: debate.aiPersona,
+    guided
   });
 }
 
@@ -289,6 +295,37 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       throw new HttpError("This debate has already been judged", 409);
     }
 
+    // M15 S6b — GUIDED ROUND, ROW-AUTHORITATIVE. Whether this round is guided is a property of the
+    // STORED round, decided server-side at creation (practiceMode LESSON + formatConfig.guidedLessonId,
+    // lib/guided-rounds.ts). The SERVER resolves what that lesson unlocks from curriculum truth. The
+    // request body may CONFIRM the lesson; it cannot assert one. All fail-closed:
+    //   - a LESSON row whose lesson no longer resolves is REFUSED, never scored against the full
+    //     curriculum — scoring untaught skills is the failure this branch exists to prevent;
+    //   - a body naming a different lesson than the row is refused;
+    //   - a guided body on a round that was NOT created as a lesson round is refused: it would be
+    //     scored as coached practice while the row counted as an independent one;
+    //   - guided rounds are Debate curriculum, so a non-Debate lesson row is refused too.
+    // A non-LESSON row with no `guided` body is full Compete and is judged exactly as before.
+    const body = await parseJson(request, guidedJudgeRequestSchema);
+    const rowLessonId = guidedLessonIdOf(debate);
+    let guidedRubric: GuidedRubric | null = null;
+    let guidedLessonId: string | null = null;
+    if (rowLessonId) {
+      if (debate.organization !== "DEBATE") {
+        throw new HttpError("Guided rounds are a Debate lesson feature.", 400);
+      }
+      if (body.guided && body.guided.lessonId !== rowLessonId) {
+        throw new HttpError("This round was started for a different lesson, so it was not scored.", 400);
+      }
+      guidedRubric = guidedRubricFor(rowLessonId);
+      if (!guidedRubric) {
+        throw new HttpError("That guided lesson is not recognised, so this round was not scored.", 400);
+      }
+      guidedLessonId = rowLessonId;
+    } else if (body.guided) {
+      throw new HttpError("This round was not started as a guided round, so it cannot be scored as one.", 400);
+    }
+
     const formatConfig = parseFormatConfig(debate.formatConfig, debate.format, debate.turnTimeSeconds);
 
     if (!isSpeechComplete(debate.messages, formatConfig)) {
@@ -302,7 +339,66 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       );
     }
 
-    const result = (await runOrganizationJudge(debate)) as JudgeResult;
+    const fullResult = (await runOrganizationJudge(debate, guidedRubric ?? undefined)) as JudgeResult;
+
+    // ---- GUIDED: curriculum-limited ballot, operational storage only ------------------------------
+    // The full result is PROJECTED onto the rubric here and never read again in this branch: locked
+    // categories are removed (not hidden), the overall score is recomputed from what survives, the
+    // fairness report / winner / rating / readiness are gone, and recommendations are filtered by the
+    // competency their lesson teaches. `debateSkillRecommendations` is deliberately NOT run: it
+    // keys off whole-round weaknesses and would recommend Weighing to a learner who has not met it.
+    //
+    // WRITES, stated exactly. OPERATIONAL ROUND STORAGE: the round is claimed JUDGED and its
+    // projected ballot is stored on the Debate row so the arena can render and reload it. EDUCATIONAL
+    // PROGRESSION: none — no user-row lock, no XP award, no rank recompute, no streak increment, no
+    // XPLog row, no readiness verdict, no rating change, no per-skill score columns. A guided round
+    // is a coached teaching exercise, not an independent competitive performance, and nothing here
+    // can be read later as one: the stored report carries `guided` so every consumer can tell.
+    if (guidedRubric && guidedLessonId) {
+      const projected = projectGuidedJudgeResult(fullResult, guidedRubric, guidedLessonId);
+      const savedGuided = await prisma.$transaction(async (tx) => {
+        const claim = await tx.debate.updateMany({
+          where: { id: debate.id, status: { notIn: ["JUDGED", "ARCHIVED"] } },
+          data: { status: "JUDGED" }
+        });
+        if (claim.count === 0) {
+          throw new HttpError("This debate has already been judged", 409);
+        }
+        return tx.debate.update({
+          where: { id: debate.id },
+          data: {
+            status: "JUDGED",
+            completedAt: new Date(),
+            // `overallScore` is deliberately LEFT NULL. It is not a display field: the dashboard
+            // averages it across every judged round (`_avg`), and so does the coach's student view.
+            // A guided ballot's number is the mean of SIX categories on a curriculum-limited rubric,
+            // so folding it into an average of sixteen-category whole-round ballots would silently
+            // move a number the learner and their coach read as competitive performance. The guided
+            // score is not lost — it lives in `judgeReport.overallScore`, which is what the arena
+            // renders — it simply never enters an aggregate that means something else.
+            strengths: projected.strengths,
+            weaknesses: projected.weaknesses,
+            recommendations: [
+              ...projected.improvementAdvice,
+              ...projected.recommendedLessons.map((lesson) => lesson.reason)
+            ],
+            judgeReport: projected as never
+          }
+        });
+      });
+      return NextResponse.json({
+        debate: savedGuided,
+        // The learner's XP and rank are returned as they STAND, untouched by this round.
+        user: await prisma.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { xp: true, rank: true } }),
+        judge: projected,
+        xpEarned: 0,
+        rewardLimitReached: false,
+        guided: true
+      });
+    }
+
+    // ---- FULL COMPETE: unchanged from here down -------------------------------------------------
+    const result = fullResult;
     const targetedRecommendations = debateSkillRecommendations(result);
     result.recommendedLessons = [
       ...targetedRecommendations,

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError, hosaWithdrawn, HttpError, parseJson, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { buildDebateFormatConfig, getOpponentSide, resolveDebateSide, trackPracticeConfigForOrganization } from "@/lib/debate-formats";
+import { guidedRubricFor } from "@/lib/education/coaching";
 import { prisma } from "@/lib/prisma";
 import { debateCreateSchema } from "@/lib/validators";
 
@@ -58,6 +59,24 @@ export async function POST(request: Request) {
       return hosaWithdrawn();
     }
 
+    // GUIDED LESSON ROUND — decided HERE, at creation, and persisted on the row (see
+    // lib/guided-rounds.ts). The client may name a lesson; it may not decide what a lesson unlocks
+    // and it may not mint a LESSON row without one. Fail closed on both: an unresolvable lesson
+    // creates nothing, and a bare practiceMode LESSON is refused, so every LESSON row that exists
+    // names a lesson the curriculum recognises.
+    let guidedLessonId: string | null = null;
+    if (input.guided) {
+      if (input.organization !== "DEBATE") {
+        throw new HttpError("Guided rounds are a Debate lesson feature.", 400);
+      }
+      if (!guidedRubricFor(input.guided.lessonId)) {
+        throw new HttpError("That guided lesson is not recognised, so no round was created.", 400);
+      }
+      guidedLessonId = input.guided.lessonId;
+    } else if (input.practiceMode === "LESSON") {
+      throw new HttpError("A lesson round must name the lesson it belongs to.", 400);
+    }
+
     const format = input.format ?? "PARLIAMENTARY";
     const side = input.side ?? "GOVERNMENT";
     const category = input.category ?? "Global";
@@ -86,7 +105,8 @@ export async function POST(request: Request) {
       data: {
         organization: input.organization,
         eventType: formatConfig.eventType,
-        practiceMode: input.practiceMode,
+        // A guided round is a LESSON round whatever the client sent for practiceMode.
+        practiceMode: guidedLessonId ? "LESSON" : input.practiceMode,
         format,
         rubricId: rubric?.id,
         level: input.level,
@@ -102,7 +122,10 @@ export async function POST(request: Request) {
         formatConfig: {
           ...formatConfig,
           category,
-          aiGeneratedTopic: input.aiGeneratedTopic
+          aiGeneratedTopic: input.aiGeneratedTopic,
+          // The lesson, on the row. `parseFormatConfig` returns a stored config as-is when it has a
+          // format and speeches, so this key survives every read of the config.
+          ...(guidedLessonId ? { guidedLessonId } : {})
         },
         startedAt: new Date(),
         createdById: session.user.id,

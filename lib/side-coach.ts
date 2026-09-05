@@ -9,6 +9,15 @@ import type { Organization } from "@prisma/client";
 import { runProviderCompletion, extractJson } from "@/lib/ai-providers";
 import { validateAndCanonicalizeAuthoredRubricIds } from "@/lib/authored-rubric-feedback";
 import { getRoleplayLesson } from "@/lib/roleplay-lessons";
+import {
+  COMPETENCY_LABELS,
+  GUIDED_COACH_SAFETY_RULES,
+  SUPPORT_POLICY,
+  guidedRubricFor,
+  isIncompleteScaffold,
+  starterCategoriesFor,
+  type SupportLevel
+} from "@/lib/education/coaching";
 
 export type SideCoachTranscriptLine = { role: string; content: string };
 
@@ -22,6 +31,8 @@ export type SideCoachInput = {
   // specific to THIS situation, not generic advice.
   scenario?: string;
   goals?: string[];
+  /** The debate motion, for Debate rounds. Prompt context only — never a claim about the learner. */
+  topic?: string;
   // Present only for authored-lesson requests — see lib/validators.ts.
   rubricIds?: string[];
   transcript: SideCoachTranscriptLine[];
@@ -29,7 +40,48 @@ export type SideCoachInput = {
   requestType: "turn-feedback" | "ask";
   askKind?: string;
   guidanceLevel?: 1 | 2 | 3;
+  /** Present when the round is a lesson's guided application. See `guidedConstraint`. */
+  guided?: { lessonId: string; supportLevel: SupportLevel };
 };
+
+/**
+ * The coach's constraint for a GUIDED round, or null when the round is not guided.
+ *
+ * NEVER TEST BEFORE TEACHING, applied to the coach: it may coach and evaluate only the competencies
+ * the lesson unlocks, the current lesson's skill first and prior unlocked skills only as
+ * reinforcement, and it may not mention, score, or penalise the absence of anything else. A lesson
+ * with no guided application yields null and the round is coached as an ordinary one — there is no
+ * half-guided state. The hard rules are the same block every guided prompt carries, so a test can
+ * assert their presence on the built prompt.
+ */
+/**
+ * The resolved guided rubric for this request, or null. Resolved in ONE place so the system prompt,
+ * the user prompt and the normaliser cannot disagree about whether a round is guided. Debate only:
+ * the guided declarations are Debate curriculum, and a DECA or HOSA request carrying a `guided`
+ * block is treated as an ordinary request rather than half-constrained by another track's lessons.
+ */
+function resolvedGuidedRubric(input: SideCoachInput) {
+  if (!input.guided || input.organization !== "DEBATE") return null;
+  return guidedRubricFor(input.guided.lessonId);
+}
+
+export function guidedConstraint(input: SideCoachInput): string | null {
+  if (!input.guided) return null;
+  const rubric = resolvedGuidedRubric(input);
+  if (!rubric) return null;
+  const policy = SUPPORT_POLICY[input.guided.supportLevel];
+  const unlocked = [rubric.primary, ...rubric.reinforcement].map((c) => COMPETENCY_LABELS[c]).join(", ");
+  const locked = rubric.locked.map((c) => COMPETENCY_LABELS[c]).join(", ");
+  return [
+    `GUIDED ROUND for a lesson. CURRENT SKILL (primary, coach this first): ${COMPETENCY_LABELS[rubric.primary]}.`,
+    `UNLOCKED SKILLS (the only skills you may coach or evaluate): ${unlocked}.`,
+    `LOCKED SKILLS (never mention, score, or penalise): ${locked}.`,
+    `SUPPORT LEVEL: ${input.guided.supportLevel}.` +
+      (policy.unsolicitedCoaching ? "" : " Do not volunteer reminders; answer only what is asked."),
+    "HARD RULES:",
+    ...GUIDED_COACH_SAFETY_RULES.map((rule) => `- ${rule}`)
+  ].join(" ");
+}
 
 export type SideCoachResponse = {
   message: string;
@@ -106,8 +158,11 @@ export function buildSideCoachSystemPrompt(input: SideCoachInput): string {
     "Be encouraging, direct, specific, patient, and honest. Never insulting, never fake praise, never shaming.",
     "Explain debate terms in plain words when you use them (warrant = why your claim is true; impact = why it matters; weighing = why your impact matters more).",
     "Teach; do not do the whole task for them. " + guidanceRule(input.guidanceLevel),
+    guidedConstraint(input) ?? "",
     "ALWAYS ground your help in THIS specific scenario and the student's actual words — quote or closely paraphrase what they wrote. Reference the concrete situation, their stated goals, and unanswered questions. NEVER give generic advice like 'be clear and professional' or 'stay confident'.",
-    'Respond ONLY as compact JSON. For turn feedback use {"strength": string, "improvement": string, "nextMove": string, "example": string} where example is ONE improved version of their weakest sentence. For a question use {"message": string, "example": string} where example is optional (an opener or short model line). Keep each field to 1-2 sentences.'
+    resolvedGuidedRubric(input)
+      ? 'Respond ONLY as compact JSON. For turn feedback use {"strength": string, "improvement": string, "nextMove": string, "example": ""} — in a guided round `example` MUST be empty: never rewrite or complete the student\'s sentence. For a starter request use {"message": string, "example": string} where example is opening words that stop at a blank written as ___. Keep each field to 1-2 sentences.'
+      : 'Respond ONLY as compact JSON. For turn feedback use {"strength": string, "improvement": string, "nextMove": string, "example": string} where example is ONE improved version of their weakest sentence. For a question use {"message": string, "example": string} where example is optional (an opener or short model line). Keep each field to 1-2 sentences.'
   ].join(" ");
 }
 
@@ -115,8 +170,10 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
   const transcript = input.transcript.map((l) => `${l.role}: ${l.content}`).join("\n").slice(0, 6000);
   const scenario = input.scenario ? input.scenario.slice(0, 2000) : "";
   const goals = input.goals && input.goals.length > 0 ? input.goals.map((g, i) => `${i + 1}. ${g}`).join("\n") : "";
+  const topic = input.topic ? input.topic.slice(0, 400) : "";
   const parts = [
     `Event/format: ${input.eventType ?? "general"}. Student side: ${input.studentSide ?? "unknown"}. Stage: ${input.stage ?? "in progress"}. Level: ${input.level ?? "BEGINNER"}.`,
+    topic ? `THE MOTION being debated: ${topic}` : "",
     scenario ? `THE SCENARIO the student is handling:\n${scenario}` : "",
     goals ? `The student's goals:\n${goals}` : "",
     `Conversation so far:\n${transcript || "(the student hasn't responded yet)"}`
@@ -124,7 +181,18 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
 
   if (input.requestType === "ask") {
     const kind = (input.askKind ?? "").toLowerCase();
-    if (/start|begin/.test(kind)) {
+    // GUIDED STARTER. In a guided round a starter request must name an unlocked category, and the
+    // answer is a scaffold — opening words and a blank — never the sample response an ordinary
+    // "show a sample" ask may return. A category outside the unlocked set is refused as such.
+    const guidedRubric = resolvedGuidedRubric(input);
+    const guidedCategory = guidedRubric && input.guided
+      ? starterCategoriesFor(input.guided.lessonId).find((c) => c.id === kind || c.label.toLowerCase() === kind)
+      : null;
+    if (guidedRubric && guidedCategory) {
+      parts.push(`The student asked for a STARTER for: ${guidedCategory.label}. Reply with opening words for that move in THIS round's topic and stop at a blank written as ___. One short phrase in \`example\`; in \`message\` say in one sentence what goes in the blank, without supplying it.`);
+    } else if (guidedRubric && /sample|example response|show a sample|start|begin/.test(kind)) {
+      parts.push("This is a GUIDED round. Do not provide a sample response or a model answer. Give ONE reminder about the current skill in `message` and leave `example` empty.");
+    } else if (/start|begin/.test(kind)) {
       parts.push("The student wants help STARTING. In one or two sentences, summarize what they need to accomplish in THIS scenario, then suggest one concrete opening approach. Put a single example opening line in `example`.");
     } else if (/missing|what am i/.test(kind)) {
       parts.push("Name ONE specific requirement, goal, or question from this scenario that the student has NOT yet addressed. Be concrete — point at the exact gap, not a general reminder.");
@@ -136,7 +204,9 @@ export function buildSideCoachUserPrompt(input: SideCoachInput): string {
       parts.push("Give the student one specific hint for the current stage of THIS scenario — reference the actual situation and their goals, not generic advice.");
     }
   } else {
-    parts.push(`The student's latest response was:\n"${input.latestStudentSpeech ?? ""}"\nGive: one specific strength that QUOTES their words; one specific weakness that quotes the exact wording that's weak; a recommended next move; and in \`example\`, an improved rewrite of their weakest sentence.`);
+    parts.push(resolvedGuidedRubric(input)
+      ? `The student's latest response was:\n"${input.latestStudentSpeech ?? ""}"\nGive: one specific strength that QUOTES their words, about the CURRENT skill; one specific weakness that quotes the exact wording that's weak; a recommended next move on the current skill. Leave \`example\` empty — do not rewrite or complete their sentence.`
+      : `The student's latest response was:\n"${input.latestStudentSpeech ?? ""}"\nGive: one specific strength that QUOTES their words; one specific weakness that quotes the exact wording that's weak; a recommended next move; and in \`example\`, an improved rewrite of their weakest sentence.`);
     // C5C1b feedback-quality contract (applies to ALL turn feedback, incl. debate — these are
     // general honesty/completeness rules, consistent with the system prompt's "never fake praise").
     parts.push('HONESTY RULE: A strength must be a genuine, rubric-aligned quality demonstrated by the content itself. If the learner’s responses demonstrate no genuine rubric-aligned strength—for example, filler, word salad, unrelated language, or empty effort—set strength to exactly: "No rubric-aligned strength is demonstrated yet." Never praise effort, attempting, participation, or merely typing something.');
@@ -211,13 +281,21 @@ function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input:
     return sideCoachUnavailable("empty-response");
   }
   const message = typeof parsed.message === "string" ? parsed.message : "";
+  // GUIDED post-filter, on the live path. The prompt asks; this checks. In a guided round `example`
+  // may only ever be a SCAFFOLD — opening words that stop at a blank. Anything else the model put
+  // there (a rewrite, a model answer, a finished line) is dropped here, fail-closed, before it can
+  // reach the learner. An ordinary round keeps the pre-existing behaviour untouched.
+  const guided = resolvedGuidedRubric(input) !== null;
+  const rawExample = typeof parsed.example === "string" ? parsed.example.trim() : "";
+  const example = guided ? (rawExample && isIncompleteScaffold(rawExample) ? rawExample : undefined) : (rawExample || undefined);
 
   if (input.requestType === "ask") {
     if (!message.trim()) return sideCoachUnavailable("empty-response");
-    return { message };
+    // A guided starter ask returns its scaffold; an ordinary ask returns its message as before.
+    return guided && example ? { message, example } : { message };
   }
 
-  const hasFeedbackField = Boolean(parsed.strength || parsed.improvement || parsed.nextMove || parsed.example);
+  const hasFeedbackField = Boolean(parsed.strength || parsed.improvement || parsed.nextMove || example);
   if (!hasFeedbackField) {
     return sideCoachUnavailable("incomplete-turn-feedback");
   }
@@ -230,7 +308,7 @@ function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input:
     strength: parsed.strength,
     improvement: parsed.improvement,
     nextMove: parsed.nextMove,
-    example: parsed.example,
+    example,
     ...(rubricFeedback !== undefined ? { rubricFeedback } : {}),
     ...(responseReview !== undefined ? { responseReview } : {})
   };

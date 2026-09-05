@@ -10,6 +10,7 @@ import { Fact } from "@/components/ui/fact";
 import { PageHeader } from "@/components/ui/page-header";
 import { authOptions } from "@/lib/auth";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
+import { GUIDED_ROUND_LABEL, INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
 import { countDueReviews } from "@/lib/spaced-review";
 import { getActiveTrack } from "@/lib/track-server";
@@ -47,12 +48,16 @@ export default async function HomePage({ searchParams }: { searchParams: { track
         })
       : [];
 
-  const [judgedDebateCount, reviewsDue] = session?.user?.id
+  // "Judged rounds" counts INDEPENDENT rounds only. A guided lesson round (practiceMode LESSON) is
+  // stored and shown as learning history, but it is coached practice on a curriculum-limited ballot,
+  // not an independent completed round, so it is counted separately (lib/guided-rounds.ts).
+  const [judgedDebateCount, guidedExerciseCount, reviewsDue] = session?.user?.id
     ? await Promise.all([
-        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED" } }),
+        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE } }),
+        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON" } }),
         countDueReviews(session.user.id).catch(() => 0)
       ])
-    : [0, 0];
+    : [0, 0, 0];
 
   const completedScores = practiceTests.map((t) => t.score).filter((s): s is number => typeof s === "number");
   const mastery = completedScores.length > 0 ? Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length) : 0;
@@ -72,7 +77,9 @@ export default async function HomePage({ searchParams }: { searchParams: { track
             id: d.id,
             topic: d.topic,
             trackLabel: trackByOrganization(d.organization)?.label ?? d.organization,
-            typeLabel: practiceTypeLabel(d),
+            // An unfinished guided round is named as what it is; Continue reopens it as guided because
+            // the arena reads guided-ness from the stored round (lib/guided-rounds.ts).
+            typeLabel: d.practiceMode === "LESSON" ? `${GUIDED_ROUND_LABEL} · ${practiceTypeLabel(d)}` : practiceTypeLabel(d),
             showOpponent,
             sideLabel: showOpponent ? sideLabel(d.studentSide) : "",
             opponentLabel: showOpponent ? d.aiPersona ?? "AI opponent" : "",
@@ -202,6 +209,7 @@ export default async function HomePage({ searchParams }: { searchParams: { track
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <Fact label="Practice sessions" value={sessions} />
           <Fact label="Judged rounds" value={judgedDebateCount} />
+          {guidedExerciseCount > 0 ? <Fact label="Guided exercises" value={guidedExerciseCount} /> : null}
           <Fact label="Mastery" value={`${mastery}%`} />
         </div>
         <p className="mt-3 text-xs text-muted-foreground">

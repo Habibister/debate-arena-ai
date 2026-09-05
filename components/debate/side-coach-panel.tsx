@@ -70,6 +70,16 @@ function askOptionsForOrganization(organization: Organization): string[] {
 }
 
 type Props = {
+  /**
+   * GUIDED ROUND. Sent to the coach route, which resolves the lesson against the curriculum and
+   * constrains the coach to the skills that lesson unlocks. Absent for full Compete.
+   */
+  guided?: { lessonId: string; supportLevel: "HIGH_SUPPORT" | "MEDIUM_SUPPORT" | "LOW_SUPPORT" | "INDEPENDENT" };
+  /**
+   * The ask options to offer instead of the organisation's defaults — in a guided round, the starter
+   * categories for the unlocked skills only. A future skill's help never appears here.
+   */
+  askOptionsOverride?: readonly string[];
   // Marks a persisted debate assistedPractice when the coach is used. Optional: client-state rooms
   // (DECA/HOSA role-play) have no debate record, so it's omitted and assisted-flagging simply no-ops.
   debateId?: string;
@@ -79,19 +89,21 @@ type Props = {
   level?: "BEGINNER" | "INTERMEDIATE" | "ELITE";
   // Scenario + goals + a stage label so coaching references the actual situation (role-play rooms).
   scenario?: string;
+  /** The debate motion. Passed by the arena so a starter can be grounded in THIS round's motion. */
+  topic?: string;
   goals?: string[];
   stageLabel?: string;
   messages: OfficialMessage[]; // read-only official transcript; the coach NEVER mutates it
 };
 
-export function SideCoachPanel({ debateId, organization, eventType, studentSide, level, scenario, goals, stageLabel, messages }: Props) {
+export function SideCoachPanel({ debateId, organization, eventType, studentSide, level, scenario, topic, goals, stageLabel, messages, guided, askOptionsOverride }: Props) {
   const [entries, setEntries] = useState<CoachEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const coachedIdRef = useRef<string | null>(null);
   const seqRef = useRef(0);
   const guidanceLevel = level === "BEGINNER" ? 2 : 1;
   const isPractice = organization !== "DEBATE";
-  const baseAskOptions = askOptionsForOrganization(organization);
+  const baseAskOptions = (askOptionsOverride ?? askOptionsForOrganization(organization));
   // "Show a sample response" is Beginner-only, and only for the role-play rooms.
   const askOptions =
     level === "BEGINNER" && (organization === "DECA" || organization === "HOSA")
@@ -127,13 +139,15 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
           studentSide,
           level,
           scenario,
+          topic,
           goals,
           stage: stageLabel ?? `Turn ${studentMessages.length || 1}`,
           transcript: messages.map((m) => ({ role: m.role, content: m.content })),
           latestStudentSpeech: options?.latestStudentSpeech,
           requestType,
           askKind: options?.askKind,
-          guidanceLevel
+          guidanceLevel,
+          guided
         })
       });
       if (!response.ok) {

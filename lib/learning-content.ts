@@ -42,6 +42,8 @@ export type LearningLessonContent = {
   revisionLadder?: { attempt: string; diagnosis: string; revision: string }[];
   misconception?: { wrongModel: string; whyItFails: string; betterModel: string };
   commonMistakes?: { mistake: string; whyItFails: string; fix: string }[];
+  languageFrames?: { purpose: string; starters: string[] }[];
+  scaffoldedTry?: { prompt: string; frame: string; slots: string[]; opponentClaim?: string };
 };
 
 export type LearningSkillSeed = {
@@ -99,7 +101,8 @@ function lesson(
    * catalog for that reason rather than by exemption.
    */
   teaching?: Pick<LearningLessonContent,
-    "teachingSections" | "additionalExamples" | "revisionLadder" | "misconception" | "commonMistakes">
+    "teachingSections" | "additionalExamples" | "revisionLadder" | "misconception" | "commonMistakes"
+    | "languageFrames" | "scaffoldedTry">
 ): LearningLessonContent {
   return {
     objective,
@@ -368,28 +371,172 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
     lesson: {
       title: "Answer with refutation",
       slug: "debate-refutation-lesson",
-      summary: "Use they say, but, because, therefore to build strong rebuttal answers.",
-      estimatedMinutes: 8,
+      summary: "Pick the part of an argument that is both load-bearing and worth attacking, give a real reason it fails, and say what stops being established.",
+      estimatedMinutes: 12,
       content: lesson(
-        "Write a direct refutation using a clear four-part structure.",
-        "Refutation is the skill of answering the other side. A simple structure is: they say, but, because, therefore.",
-        "This keeps rebuttals from becoming scattered. It also makes your answer easy for the judge to evaluate.",
-        ["They say: identify the argument.", "But: state your answer.", "Because: explain why.", "Therefore: tell the judge what to do with it."],
-        {
-          prompt: "They say AI literacy wastes class time.",
-          weakAnswer: "No it does not.",
-          strongAnswer: "They say AI literacy wastes class time, but it can fit inside existing advisory lessons because schools already use that time for digital citizenship. Therefore, the time-cost argument is smaller than our preparedness benefit.",
-          whyItWorks: "The strong answer identifies, answers, explains, and weighs the argument."
-        },
-        q("Which part explains the reason the answer is true?", ["They say", "But", "Because", "Therefore"], "Because", "The word because usually introduces the warrant.", "The because part gives the reasoning behind the refutation.", "Refutation"),
+        "Build a direct refutation by picking the part of an opposing argument that is both load-bearing and open to attack, explaining why that part fails, and stating what their argument can no longer establish.",
+        "Refutation is answering one argument in a way that changes what the judge can still accept from it. That is a higher bar than disagreeing. \u201cThat is wrong,\u201d \u201cwe do not accept that,\u201d and \u201cour argument is better\u201d are all aimed at the other side, and none of them touches the reasoning that holds their conclusion up. An argument is a conclusion resting on supports. A refutation reaches into that structure, takes hold of one support, gives a reason it does not hold, and reports what the conclusion has lost. If your answer could be true and their argument could still work exactly as before, you have contradicted them without refuting anything.",
+        "A judge decides what survived. An answer that only signals disagreement leaves them holding the argument you objected to, because nothing you said gave them permission to stop believing it. A finished refutation has four parts \u2014 they say, but, because, therefore \u2014 and most beginner answers have the first two. The steps below are how you build all four, and they are also how you hear the gap in your own answer while there is still time to fix it.",
         [
-          q("What does 'therefore' do?", ["Tells the judge the result of the answer", "Starts a new claim only", "Copies the opponent", "Gives speaker points"], "Tells the judge the result of the answer", "It closes the loop.", "Therefore explains how the judge should treat the argument after your answer.", "Refutation"),
-          q("Which refutation is best?", ["They are wrong.", "They say it costs too much, but the plan uses existing resources because advisory time already exists, so cost is not a voter.", "Our case is nice.", "I disagree strongly."], "They say it costs too much, but the plan uses existing resources because advisory time already exists, so cost is not a voter.", "Look for all four parts.", "This answer identifies the claim, answers it, explains why, and gives a result.", "Refutation"),
-          q("What should refutation avoid?", ["Direct answers", "Specific warrants", "Vague denial", "Clear therefore statements"], "Vague denial", "Saying no is not enough.", "Vague denial does not explain why the opposing argument fails.", "Refutation")
+          "Restate their argument as a conclusion plus the supports it rests on: what do they want the judge to accept, and what has to be true for that to follow?",
+          "Find the steps the conclusion cannot survive losing: if the judge stopped believing this one, would the conclusion still stand? Then pick from those the one you could actually give the judge a reason to doubt \u2014 necessary is only half of it, and a step nobody disputes is not a target.",
+          "State your objection to that support in one sentence, so it is clear what you are denying.",
+          "Give the reason \u2014 the because. It has to say why the support fails, in terms someone could check or dispute, not restate that it fails.",
+          "Say what changed for their argument: what is now unproven, weaker, or no longer following. Stop there; do not switch to your own case."
+        ],
+        {
+          prompt: "They argue: requiring parking in every new apartment building protects existing residents, because without required parking the new tenants will park on the residential streets, and streets that fill with parked cars are worse to live on.",
+          weakAnswer: "They say required parking protects residents, but the street-parking worry is overstated, because residents would not actually end up facing the problem they are describing. Therefore you should prefer our side \u2014 this city needs housing, and the parking rule is standing in the way of building it.",
+          strongAnswer: "They say required parking protects residents, but the street-parking worry is overstated, because these buildings sit within a few minutes\u2019 walk of the rail line, and in comparable buildings near transit a large share of tenants own no car at all. Therefore the number of new cars competing for street space is much smaller than their argument needs, so \u201cthe streets fill up\u201d is no longer established.",
+          whyItWorks: "Both answers pick the same support \u2014 the step from new tenants to full streets \u2014 and that choice was right. Note what makes it right, because it is not that the other steps are unnecessary: \u201cfull streets are worse to live on\u201d is necessary too, and their conclusion needs it. It is simply not open to attack \u2014 nobody in the room is going to be talked out of it. The step from new tenants to full streets is the one that is both necessary and contestable, so it is the only place an answer can actually take something. What separates them is the last two moves. The weak version\u2019s because says the problem would not happen, which is what the objection already said, so a judge who did not believe the objection has been given no new reason to. And its therefore leaves their argument entirely and starts arguing for housing, so their support is still standing when the answer ends. The strong version replaces the restatement with a mechanism \u2014 near transit, fewer tenants own cars \u2014 which is specific enough that the other side could contest it, and that is exactly what makes it worth something. Then it reports the damage inside their argument and stops there."
+        },
+        q(
+          "Their argument: \u201cThe city should not make Third Street one-way. Delivery trucks make about 400 stops a week on that block, and a one-way conversion would force them to circle the block to reach the loading docks, so deliveries would take longer and the shops that depend on them would lose business.\u201d Which part is worth attacking?",
+          [
+            "That delivery trucks make about 400 stops a week on that particular block",
+            "That the shops along that block depend on those deliveries to stay open",
+            "That trucks would have to circle the block to reach the loading docks",
+            "That shops losing business would be a bad outcome for the neighbourhood"
+          ],
+          "That trucks would have to circle the block to reach the loading docks",
+          "Reread the section on finding the part that has to fall, and run both of its tests on each option.",
+          "Both halves have to pass. Take away the circling step and the argument reaches no delay and no lost business, however true everything else is \u2014 so it is necessary \u2014 and whether trucks would actually have to circle depends on which side of the block the docks sit on, which is a claim you can give the judge a reason to doubt. The 400-stops figure is the trap, and it is the most tempting option on the page: it is a specific number, so it looks checkable and beatable, and you may well be able to show it is wrong. Their argument does not need it. Circling costs time at 400 stops a week and at 150, so correcting the figure leaves the chain running and the conclusion standing \u2014 the same error as attacking an out-of-date cost figure in an argument about whether a service is worth its cost. That the shops depend on deliveries is necessary but undisputed, and that losing business would be bad is not in dispute either. Necessary is only half the test, and a beatable number is not the same as a load-bearing one.",
+          "Refutation"
+        ),
+        [
+          q(
+            "An opponent argues that a new bike lane will slow emergency vehicles. Which response\u2019s because actually explains something?",
+            [
+              "But emergency response will not get slower, because the delay they describe would not actually materialise on a corridor with this traffic pattern and this street layout.",
+              "But emergency response will not get slower, because the modelling they are relying on does not reflect the conditions this corridor actually has today.",
+              "But emergency response will not get slower, because the lane replaces on-street parking rather than a driving lane, so the road keeps the same number of through lanes.",
+              "But emergency response will not get slower, because the concerns they have raised about response times, while understandable, do not hold up under closer examination."
+            ],
+            "But emergency response will not get slower, because the lane replaces on-street parking rather than a driving lane, so the road keeps the same number of through lanes.",
+            "The section on making the because do work has a test for exactly this.",
+            "Cover the words after because in each one. Three of the four survive the cut with their meaning intact, which means those clauses explained nothing. \u201cIt would not materialise\u201d and \u201cit does not hold up under closer examination\u201d are the objection said twice, and the modelling answer is the same move wearing more vocabulary \u2014 \u201cdoes not reflect the conditions this corridor actually has\u201d asserts the estimate is wrong without ever saying WHICH condition it gets wrong or what the right one is, so there is still nothing for the other side to argue with. Naming a source of evidence is not the same as naming a mismatch in it: \u201ctheir study measured a different population than this plan affects\u201d would be a real because, because it says what the mismatch IS. Only the parking answer loses something when you cut it: parking removed rather than a driving lane, so the through-lane count is unchanged. That is a mechanism \u2014 specific, checkable against the street plans, and something the other side can come back at.",
+            "Refutation"
+          )
         ],
         [
-          q("In 'They say X, but Y because Z,' what is Y?", ["The answer", "The judge", "The impact", "The topic"], "The answer", "But introduces the response.", "Y is the direct answer to the opponent's claim.", "Refutation")
-        ]
+          q(
+            "You have shown that an opponent\u2019s cost figure came from a much larger project than the one being proposed. What does the last move of your refutation have to do?",
+            [
+              "Explain how your own side arrived at a more accurate figure for a project of this size",
+              "Say what their argument can no longer establish now that the figure does not apply",
+              "Say that their whole cost case has collapsed now that this figure has been answered",
+              "Restate the objection in stronger terms so the judge registers how serious the error is"
+            ],
+            "Say what their argument can no longer establish now that the figure does not apply",
+            "Reread \u201cSay what changed, and only that\u201d, including both habits it warns about.",
+            "Report the damage: with the figure gone, their argument no longer establishes that the proposal is unaffordable. That is the sentence a judge can write down and check. The closest wrong answer is the one that sounds strongest \u2014 saying their whole cost case has collapsed. Notice the scope: you answered one figure inside one argument, and their case for cost can rest on more than that one argument. Announcing the collapse of the case claims ground you did not take, and the first person who checks will find the rest of it standing and trust the rest of your speech less. Report the argument you actually damaged, not the case. Supplying your own better figure is useful work, but it is your case, and it leaves their support standing while you build yours. Restating the objection more forcefully adds volume, not reasoning \u2014 the objection had already landed; what was missing was what it did.",
+            "Refutation"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Disagreeing and refuting are not the same move",
+              body: "Almost every beginner answer is a disagreement wearing the clothes of a refutation. It faces the right way \u2014 it is about their argument, it sounds firm, it may even be true \u2014 and it leaves their reasoning exactly where it was. The test is simple and worth running on your own answers: suppose everything you just said is granted. Can the other side\u2019s argument still be made, in the same words, and still reach the same conclusion? If it can, you have registered an objection rather than refuted anything. \u201cWe disagree,\u201d \u201cthat is not true,\u201d and \u201cour side is stronger on this\u201d all fail that test every time, because none of them says anything about why their conclusion followed in the first place."
+            },
+            {
+              heading: "Find the part that has to fall",
+              body: "Arguments are not flat. A conclusion sits on several supports, and they are not equally important: some are doing the work, and some are scenery the other side would happily concede. Your answer needs a support that is doing the work AND that you could argue them out of \u2014 both halves, and the second is the one people forget. To find the first half, restate the argument as a short chain \u2014 this, therefore this, therefore that matters \u2014 and go through the steps asking one question: if the judge stopped believing this step, would the conclusion still follow? Where the answer is no, that step is NECESSARY \u2014 the argument cannot reach its conclusion without it. That narrows the field, and it does not finish the job, because most arguments have several necessary steps and some of them nobody would dispute. \u201cStreets full of parked cars are worse to live on\u201d is necessary to an argument about parking, and you will not win a room by denying it. So apply a second test to the necessary steps: which of them could you actually give the judge a reason to doubt? The step worth attacking is the one that is both necessary to their conclusion AND open to attack. Watch the strength of what you attack, too. An argument that needs SOME of something is not damaged by proving it does not hold for MOST. If their case runs on the shops that would lose parking, showing that most shops on the street have their own lot leaves the argument standing for exactly the shops they were talking about. An over-strong version of a premise is a tempting target precisely because it is easy to find figures against, and beating it takes nothing down. Advice like \u201cattack their weakest argument\u201d points you the same wrong way: the weakest-sounding part is often a step the argument does not need at all, or does not need in the strength you attacked. Beating it feels like progress and costs the other side nothing."
+            },
+            {
+              heading: "Make the because do work",
+              body: "The because is where a refutation is won or lost, and it fails in a specific way: it repeats the objection instead of explaining it. \u201cTheir evidence does not apply, because it is not relevant here\u201d has the shape of a reason and the content of an echo. Use the delete test. Cover the words after because and read what is left. If the answer means the same thing without them, the clause explained nothing. A real because names something \u2014 a mechanism, a condition, a mismatch, a step that does not follow \u2014 and one useful sign that you have one is that the other side could argue with it. \u201cTheir study measured a different population than the one this plan affects\u201d can be checked and disputed. \u201cTheir study is weak\u201d cannot be, because it says nothing to disagree with."
+            },
+            {
+              heading: "Say what changed, and only that",
+              body: "An answer that stops after the reason leaves the judge to work out what it did, and judges are not obliged to do that work. Finish by saying what their argument can no longer establish: which step no longer connects, what is now unproven, what has become smaller or less certain. Two habits ruin this last move. The first is drifting home \u2014 ending with why your own proposal is good, which is a different speech and leaves their support untouched. The second is overclaiming: announcing that their case has collapsed when you have taken out one support. Say what you actually took, and it will survive scrutiny; say more, and the first person to check will find the rest of their argument standing."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "An opponent argues that a proposed late-night bus route will be a waste of money, because ridership after midnight is low, the fare revenue will not cover the drivers\u2019 overtime, and the buses will often run nearly empty. Your researcher finds that the overtime figure they used is out of date \u2014 the current contract pays a lower night rate.",
+              weak: "They say the route wastes money, but their overtime number is wrong, because the union contract was renegotiated last year and the night rate is lower now. Therefore their cost estimate is inaccurate.",
+              strong: "They say the route wastes money, but the argument does not rest on the exact overtime rate \u2014 it rests on the claim that ridership after midnight is too low to justify the service. On that step: the three hospitals and the airport on this corridor run shift changes at one in the morning, so the post-midnight riders are shift workers with no alternative, not the empty buses they are picturing. Therefore the \u201cnearly empty\u201d premise is the one that does not hold, and without it their waste conclusion has nothing left to rest on.",
+              explanation: "This one is different from the worked example on purpose. There, the response picked the right support and then failed at the because and the therefore. Here the response has a perfectly good because from the start \u2014 the contract really was renegotiated, and the correction is checkable \u2014 and it still refutes nothing, because it lands on a support the argument does not need. Their conclusion is that the route wastes money; a lower overtime rate makes the service cheaper, and an argument that the service is not worth its cost survives the cost going down. True is not the same as load-bearing. The strong version says out loud which support it is going after and why that is the one that matters, then attacks the ridership premise the whole argument stands on."
+            }
+          ],
+          revisionLadder: [
+            {
+              attempt: "They say the new stadium will strain city services, but that is not going to be a problem for the surrounding neighbourhoods.",
+              diagnosis: "This is responsive \u2014 it is aimed at the right claim \u2014 and it is still only a denial. The judge is being asked to take the speaker\u2019s word over the other side\u2019s, with nothing offered to decide between them. Nothing after the objection explains anything, because there is nothing after the objection.",
+              revision: "They say the new stadium will strain city services, but that strain lands almost entirely on event days, because the stadium sits in a commercial district that is nearly empty on evenings and weekends, which is exactly when events run. Therefore the year-round burden their argument describes does not arise, and what is left is a handful of scheduled evenings."
+            },
+            {
+              attempt: "They say later school start times will hurt after-school jobs, but the shift is too small to reach the hours students actually work, because most student shifts in this district begin after five and the dismissal bell would still be well before four. This shows our side has thought carefully about students who work, and it is one more reason the later start is the right policy for this community.",
+              diagnosis: "The reason is doing real work here \u2014 shift start times against dismissal times is checkable, and the other side could contest the numbers. Then the answer walks away. The closing sentences are about the speaker\u2019s own case, so the judge is never told what happened to the argument they were answering, and \u201churts after-school jobs\u201d is left on the flow untouched.",
+              revision: "They say later school start times will hurt after-school jobs, but the shift is too small to reach the hours students actually work, because most student shifts in this district begin after five and the dismissal bell would still be well before four. Therefore the conflict their argument depends on does not arise for most working students, and the harm they described shrinks to a small number of unusually early shifts."
+            }
+          ],
+          misconception: {
+            wrongModel: "Refutation means saying something against what the other side said. If your answer is aimed at their argument and you sound confident, you have refuted it.",
+            whyItFails: "Opposing them is a direction, not a reason. An answer can point straight at the other side, be entirely true, and leave every support of their argument standing \u2014 in which case the judge still has their argument at the end of your speech. Confidence changes nothing about that: a judge cannot write down that an argument failed unless someone told them why it failed.",
+            betterModel: "A refutation is a repair to what the judge is allowed to believe. It names one support the other side\u2019s conclusion rests on and could be argued out of, gives a reason that support does not hold, and states what their argument can no longer establish without it. If you cannot point to the support you took away, you have not refuted \u2014 you have objected."
+          },
+          commonMistakes: [
+            {
+              mistake: "Objecting with no because at all",
+              whyItFails: "\u201cThat will not happen\u201d and \u201ctheir evidence does not prove that\u201d ask the judge to choose between two bare assertions, and the other side made theirs first with reasoning attached. An objection with no reason is a preference.",
+              fix: "Never let an objection end at the objection. Immediately ask yourself \u201cbecause what?\u201d and answer it out loud before moving to the next argument."
+            },
+            {
+              mistake: "A because that just restates the but",
+              whyItFails: "\u201cThe risk is overstated, because it is not as big as they claim\u201d has a reason-shaped clause carrying no reason. A judge who was not convinced by the objection has been given nothing new to be convinced by, so the answer sounds complete while doing the work of a denial.",
+              fix: "Run the delete test: cover everything after because. If the answer still means the same thing, that clause is decoration \u2014 replace it with something the other side could dispute."
+            },
+            {
+              mistake: "Attacking a part the argument does not need",
+              whyItFails: "You can be completely correct and still change nothing. If the conclusion still follows once the judge grants your point, the other side can simply concede it, and the time you spent is gone. Correcting a detail is not the same as removing a support.",
+              fix: "Before answering, test the support twice: assume the judge accepts your objection in full and reread their argument \u2014 if it still reaches its conclusion, aim somewhere else. Then ask whether the step is one anyone would actually dispute; a necessary step nobody argues with is not a target either."
+            },
+            {
+              mistake: "Stopping before you say what changed",
+              whyItFails: "You have identified the support and given the reason, and then left the last step to the judge. Judges write down what they were told; an answer that never states what the argument lost often gets recorded as an exchange rather than as a response.",
+              fix: "End inside their argument with one sentence naming what is now unproven, no longer connected, or smaller than they needed."
+            },
+            {
+              mistake: "Finishing by restarting your own case",
+              whyItFails: "This is the most common way a good answer is wasted. The objection and the reason are sound, and then the final sentence turns to why your proposal is better \u2014 so the answer never reports what happened to the argument it was answering, and their support goes unmentioned at the moment it was supposed to fall.",
+              fix: "Keep the last sentence pointed at their argument. Your own case has its own place in the speech; the end of a refutation is not it."
+            }
+          ],
+          languageFrames: [
+            {
+              purpose: "Answer their argument",
+              starters: [
+                "They argue that {their claim}, but ___",
+                "The step their argument depends on is ___, but ___",
+                "That does not establish ___, because ___"
+              ]
+            },
+            {
+              purpose: "Give the reason",
+              starters: [
+                "The problem with that reasoning is ___",
+                "That step fails because ___",
+                "The mechanism they are assuming is ___, and it does not hold because ___"
+              ]
+            },
+            {
+              purpose: "Say what changed",
+              starters: [
+                "Therefore their argument no longer establishes ___",
+                "Without that step, what is left of their argument is ___",
+                "So the harm they described shrinks to ___"
+              ]
+            }
+          ],
+          scaffoldedTry: {
+            prompt: "Their argument: \u201cThe school should replace its printed newspaper with an online edition. Printing costs the paper most of its budget, and once that money is freed up the staff can afford to send reporters to away games, so coverage gets better.\u201d Answer it. Pick the step their conclusion cannot survive losing and that you can give the judge a reason to doubt \u2014 then fill every blank yourself.",
+            frame: "They say ___, but ___ because ___. Therefore ___.",
+            slots: ["they say", "but", "because", "therefore"],
+            opponentClaim: "replacing the printed newspaper with an online edition will improve coverage"
+          }
+        }
       )
     }
   },

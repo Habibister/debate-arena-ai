@@ -226,17 +226,27 @@ function main() {
       assert.ok(typeof c.workedExample.whyItWorks === "string" && c.workedExample.whyItWorks.length > 0,
         `A2: ${entry.id} still carries its worked-example reasoning`);
     }
-    // Non-vacuity for H: NO published lesson populates an optional field yet, which is exactly what
-    // "content unchanged" means for this milestone. If that ever stops being true, this fires and the
-    // handoff claim "CONTENT CHANGED: NO" has to be re-earned rather than assumed.
+    // WHICH lessons author the new structures, named exactly. This asserted an EMPTY list while the
+    // expansion milestone added capacity and no content; M15 S5 rebuilt `debate-refutation` as the
+    // first real lesson to use it, so the list is now that one lesson. Kept as an exact set rather
+    // than relaxed to "some": a second lesson adopting these fields is a content change that must be
+    // reviewed and recorded here, not absorbed silently. Adding a slug to this list is the decision.
     const populated = (published as Array<{ id: string; source: ConceptEducationLessonSource }>)
       .filter((e) => {
         const c = e.source.lesson.content;
         return Boolean(c.teachingSections || c.additionalExamples || c.revisionLadder ||
-          c.misconception || c.commonMistakes);
+          c.misconception || c.commonMistakes || c.languageFrames || c.scaffoldedTry);
       });
-    assert.deepEqual(populated.map((e) => e.id), [],
-      "A3. no published lesson populates a new field — this milestone adds capacity, not content");
+    assert.deepEqual(populated.map((e) => e.id), ["debate-refutation"],
+      "A3. exactly the reviewed lessons author the new teaching structures");
+    // And the one that does authors WHOLE structures — the validator rejects a half-written one, so
+    // this records what was actually reviewed rather than merely that something is present.
+    const refutation = populated[0].source.lesson.content;
+    assert.ok((refutation.teachingSections ?? []).length >= 3, "A4. its teaching sections are real");
+    assert.ok(refutation.misconception && refutation.misconception.betterModel.length > 0,
+      "A5. its misconception names a replacement model");
+    assert.ok((refutation.commonMistakes ?? []).length >= 3, "A6. it teaches several common mistakes");
+    assert.ok((refutation.revisionLadder ?? []).length >= 2, "A7. its revision ladder has at least two rungs");
   });
 
   // ---- B. published lessons still render, and render exactly as before -------------------------
@@ -580,8 +590,19 @@ function main() {
         ...(entry.practiceDrill ? { practiceDrill: entry.practiceDrill } : {})
       } as never));
       assert.ok(html.includes(entry.source.lesson.title), `O4: ${entry.id} renders its title`);
-      for (const id of ['id="more-examples"', 'id="revision"', 'id="misconception"', 'id="common-mistakes"']) {
-        assert.ok(!html.includes(id), `O5: ${entry.id} renders no ${id} it did not author`);
+      // IF AND ONLY IF. This asserted the sections were absent from every published lesson, which was
+      // true while none authored them; the real invariant — and the one that still catches a renderer
+      // inventing a section — is that a section appears exactly when its field does.
+      const c = entry.source.lesson.content;
+      const expected: Array<[string, boolean]> = [
+        ['id="more-examples"', Boolean(c.additionalExamples?.length)],
+        ['id="revision"', Boolean(c.revisionLadder?.length)],
+        ['id="misconception"', Boolean(c.misconception)],
+        ['id="common-mistakes"', Boolean(c.commonMistakes?.length)]
+      ];
+      for (const [id, authored] of expected) {
+        assert.equal(html.includes(id), authored,
+          `O5: ${entry.id} renders ${id} exactly when it authors it (authored=${authored})`);
       }
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
@@ -591,7 +612,7 @@ function main() {
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);
   console.log("  Teaching capacity added: sections, examples, revision ladder, misconception, mistakes.");
-  console.log("  Every one optional; no published lesson populates any of them yet.");
+  console.log("  Every one optional. Reviewed lessons authoring them: debate-refutation.");
 }
 
 main();

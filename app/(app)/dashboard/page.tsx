@@ -30,6 +30,7 @@ import { weakAreasForTrack } from "@/lib/track-recommendations";
 import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
+import { GUIDED_ROUND_LABEL, INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
 import { getStudentTeams } from "@/lib/teams";
 import { calculateDebateRating } from "@/lib/xp";
@@ -99,13 +100,20 @@ export default async function DashboardPage() {
           select: { score: true, weakAreas: true, organization: true }
         })
       : [];
+  // INDEPENDENT rounds only: a guided lesson round (practiceMode LESSON) is coached practice on a
+  // curriculum-limited ballot and is counted on its own line, never as a judged round
+  // (lib/guided-rounds.ts). It still counts as ACTIVITY below — the learner really did practise.
   const judgedDebateCount = session?.user?.id
     ? await prisma.debate.count({
         where: {
           studentId: session.user.id,
-          status: "JUDGED"
+          status: "JUDGED",
+          ...INDEPENDENT_ROUND_WHERE
         }
       })
+    : 0;
+  const guidedExerciseCount = session?.user?.id
+    ? await prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON" } })
     : 0;
   // Real evidence for the dashboard: the average judge score across this student's judged rounds.
   // Null (shown as "—") until at least one round has actually been judged — never a synthetic number.
@@ -113,7 +121,7 @@ export default async function DashboardPage() {
     ? (
         await prisma.debate.aggregate({
           _avg: { overallScore: true },
-          where: { studentId: session.user.id, status: "JUDGED", overallScore: { not: null } }
+          where: { studentId: session.user.id, status: "JUDGED", overallScore: { not: null }, ...INDEPENDENT_ROUND_WHERE }
         })
       )._avg.overallScore
     : null;
@@ -167,7 +175,9 @@ export default async function DashboardPage() {
               id: debate.id,
               topic: debate.topic,
               trackLabel: trackByOrganization(debate.organization)?.label ?? debate.organization,
-              typeLabel: practiceTypeLabel(debate),
+              // An unfinished guided round is named as what it is; Continue reopens it as guided because
+            // the arena reads guided-ness from the stored round (lib/guided-rounds.ts).
+            typeLabel: debate.practiceMode === "LESSON" ? `${GUIDED_ROUND_LABEL} · ${practiceTypeLabel(debate)}` : practiceTypeLabel(debate),
               showOpponent,
               sideLabel: showOpponent ? sideLabel(debate.studentSide) : "",
               opponentLabel: showOpponent ? debate.aiPersona ?? "AI opponent" : "",
@@ -177,7 +187,7 @@ export default async function DashboardPage() {
           })
       : [];
   // Real signals for the learning path (no fabricated progress).
-  const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0;
+  const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0 || guidedExerciseCount > 0;
   const pendingAssignment = assignments.some((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED");
   const studentTeams: StudentTeam[] = studentTeamRows.map((row) => ({
     membershipId: row.id,
@@ -235,7 +245,9 @@ export default async function DashboardPage() {
         <StatCard
           label="Judged rounds"
           value={String(judgedDebateCount)}
-          detail={`Avg practice ballot score ${avgJudgeScore ?? "—"}.`}
+          detail={`Avg practice ballot score ${avgJudgeScore ?? "—"}.${
+            guidedExerciseCount > 0 ? ` ${guidedExerciseCount} guided ${guidedExerciseCount === 1 ? "exercise" : "exercises"} completed, not counted here.` : ""
+          }`}
           icon={Trophy}
         />
         {/* Capability-neutral, and true for every track. These named "generated practice tests" and

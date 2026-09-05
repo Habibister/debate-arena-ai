@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocalDate } from "@/components/ui/local-date";
+import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { getAttemptsForMotion, getDebateReplay, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
@@ -107,6 +108,8 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
           <Badge variant="outline">{track?.label ?? debate.organization}</Badge>
           <Badge variant="outline">{practiceTypeLabel(debate)}</Badge>
           {judged ? <Badge>Completed</Badge> : <Badge variant="outline">Not yet judged</Badge>}
+          {/* A guided lesson round is named as coached practice on a curriculum-limited ballot. */}
+          {debate.practiceMode === "LESSON" ? <Badge>{GUIDED_ROUND_LABEL}</Badge> : null}
           {debate.assistedPractice ? <Badge variant="outline">Assisted Practice</Badge> : null}
         </div>
         <h1 className="text-2xl font-bold">{debate.topic}</h1>

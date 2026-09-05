@@ -1,4 +1,5 @@
 import { HttpError } from "@/lib/api";
+import { INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
 
 // A student's own debates for history + unfinished recovery. Only official fields — no coaching.
@@ -18,6 +19,9 @@ export async function getStudentDebates(userId: string) {
       overallScore: true,
       aiPersona: true,
       assistedPractice: true,
+      // Guided lesson rounds STAY in history (learning history is preserved); the mode is selected so
+      // every list can label them "Guided exercise" instead of showing them as full rounds.
+      practiceMode: true,
       createdAt: true,
       updatedAt: true
     }
@@ -102,6 +106,7 @@ export async function getDebateReplay(viewerId: string, viewerRole: string | nul
       eventType: true,
       format: true,
       level: true,
+      practiceMode: true,
       studentSide: true,
       opponentSide: true,
       status: true,
@@ -154,9 +159,11 @@ export async function getDebateReplay(viewerId: string, viewerRole: string | nul
 }
 
 // Real prior attempts at the same motion (for honest comparison — only stored values, never fabricated).
+// INDEPENDENT rounds only: a guided lesson round on the same motion was scored on a curriculum-limited
+// ballot with no whole-round score, so it is not a comparable attempt (lib/guided-rounds.ts).
 export async function getAttemptsForMotion(userId: string, topic: string, excludeId: string) {
   return prisma.debate.findMany({
-    where: { studentId: userId, topic, status: "JUDGED", id: { not: excludeId } },
+    where: { studentId: userId, topic, status: "JUDGED", id: { not: excludeId }, ...INDEPENDENT_ROUND_WHERE },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

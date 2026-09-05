@@ -26,6 +26,22 @@ export type LearningLessonContent = {
   guidedQuestion: LearningQuestion;
   practiceQuestions: LearningQuestion[];
   masteryCheck: LearningQuestion[];
+  // --- OPTIONAL structured teaching, mirroring `ConceptEducationLessonContent` ---------------------
+  // These exist so the AUTHORING surface can express what the concept renderer can now show. Without
+  // them the capacity would be unreachable: every catalog entry is built by `lesson()` below, so a
+  // field the helper cannot produce is a field no lesson can ever carry, however willing the type.
+  //
+  // Declaring them changes NO runtime object. `lesson()` spreads them only when an author passes
+  // them, and no entry passes any today, so every content object still has exactly its eight keys.
+  // That is deliberate: `scripts/learning-content-integrity-smoke.ts` asserts the exact RUNTIME key
+  // set and fails closed on an unclassified key. The first lesson that actually authors one of these
+  // will trip that guard until a human classifies the field and regenerates the reviewed baseline —
+  // which is the guard working, not an obstacle to route around.
+  teachingSections?: { heading: string; body: string }[];
+  additionalExamples?: { setup: string; weak?: string; strong: string; explanation: string }[];
+  revisionLadder?: { attempt: string; diagnosis: string; revision: string }[];
+  misconception?: { wrongModel: string; whyItFails: string; betterModel: string };
+  commonMistakes?: { mistake: string; whyItFails: string; fix: string }[];
 };
 
 export type LearningSkillSeed = {
@@ -75,7 +91,15 @@ function lesson(
   workedExample: LearningLessonContent["workedExample"],
   guidedQuestion: LearningQuestion,
   practiceQuestions: LearningQuestion[],
-  masteryCheck: LearningQuestion[]
+  masteryCheck: LearningQuestion[],
+  /**
+   * Optional structured teaching. Spread only when supplied, so an entry that passes nothing produces
+   * the exact eight-key object it produced before this parameter existed — byte-identical content, and
+   * the runtime-key guard in `scripts/learning-content-integrity-smoke.ts` stays green on today's
+   * catalog for that reason rather than by exemption.
+   */
+  teaching?: Pick<LearningLessonContent,
+    "teachingSections" | "additionalExamples" | "revisionLadder" | "misconception" | "commonMistakes">
 ): LearningLessonContent {
   return {
     objective,
@@ -85,7 +109,8 @@ function lesson(
     workedExample,
     guidedQuestion,
     practiceQuestions,
-    masteryCheck
+    masteryCheck,
+    ...(teaching ?? {})
   };
 }
 

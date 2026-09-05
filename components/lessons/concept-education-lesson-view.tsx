@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowRight, Clock, Flag, Lightbulb, ListOrdered, ThumbsDown, ThumbsUp, Target } from "lucide-react";
+import {
+  AlertTriangle, ArrowRight, Clock, Flag, Layers, Lightbulb, ListChecks, ListOrdered, ThumbsDown,
+  ThumbsUp, Target, TrendingUp
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
@@ -18,12 +21,28 @@ import {
  *
  * It renders ONLY what the source object actually contains: objective, explanation, why it matters,
  * the numbered process, one worked example shown weak-then-strong with the authored reason the
- * strong version works, and the lesson's own deterministic checks. Nothing is invented — there is no
- * revision ladder, no evidence upgrade, no misconception section, no common-mistakes list and no
- * video, because these four lessons do not have them. An empty section would be exactly the generic
- * filler this milestone exists to remove.
+ * strong version works, and the lesson's own deterministic checks. Nothing is invented, and an empty
+ * section would be exactly the generic filler this renderer exists to avoid.
  *
- * The legacy Claim/Warrant/Impact lesson keeps its own `LessonView`, untouched.
+ * TEACHING CAPACITY. The schema now also carries optional titled teaching sections, further examples,
+ * a revision ladder, a misconception and a common-mistakes list. Each renders if and only if the
+ * lesson authored it, so a lesson that carries none renders byte-for-byte the page it rendered
+ * before they existed. These were added because their absence was an EDUCATIONAL limit rather than a
+ * cosmetic one: without them a lesson could only buy depth as one longer paragraph, and could not
+ * teach a wrong mental model or a common failure anywhere a learner would read it.
+ *
+ * TEACH FIRST, and the ORDER below is the invariant, not a layout preference:
+ *   objective -> explanation -> teaching sections -> why it matters -> process
+ *   -> worked example -> further examples -> revision ladder
+ *   -> misconception -> common mistakes
+ *   -> knowledge checks -> optional drill call to action -> next lesson
+ * Every piece of instruction precedes every check. No question may move ahead of the teaching it
+ * depends on, and error correction is teaching — a misconception a learner meets first inside a
+ * question has been tested, not taught.
+ *
+ * The legacy Claim/Warrant/Impact lesson keeps its own `LessonView`, untouched. That lesson is the
+ * QUALITY REFERENCE for what these sections are for; it is not the template — its shape is bespoke
+ * and this one stays reusable.
  *
  * Server-rendered apart from the checks, which need ephemeral selection state.
  */
@@ -111,6 +130,15 @@ export function ConceptEducationLessonView({
           <h2 id="what-it-is" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">What it is</h2>
         </div>
         <p className="mt-3 leading-7 text-muted-foreground">{content.explanation}</p>
+        {/* Authored teaching blocks, each with the lesson's OWN heading. The headings are never chosen
+            here: "How to think about it" fits one concept and "When it fails" fits another, and a
+            global heading set would force every lesson into a shape its material does not have. */}
+        {content.teachingSections?.map((section) => (
+          <div key={section.heading} className="mt-5">
+            <h3 className="break-words font-semibold text-foreground">{section.heading}</h3>
+            <p className="mt-2 break-words leading-7 text-muted-foreground">{section.body}</p>
+          </div>
+        ))}
         <h3 className="mt-5 font-semibold text-foreground">Why it matters</h3>
         <p className="mt-2 leading-7 text-muted-foreground">{content.whyMatters}</p>
       </section>
@@ -163,6 +191,129 @@ export function ConceptEducationLessonView({
           {content.workedExample.whyItWorks}
         </p>
       </section>
+
+      {content.additionalExamples?.length ? (
+        <section aria-labelledby="more-examples" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <Layers className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="more-examples" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">More situations</h2>
+          </div>
+          <div className="mt-4 space-y-5">
+            {content.additionalExamples.map((example) => (
+              <div key={example.setup} className="rounded-lg border bg-muted/20 p-4">
+                <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">The situation</p>
+                <p className="mt-1 break-words leading-7 text-foreground">{example.setup}</p>
+                {/* A contrast only where the lesson authored one. A missing weak side is not an
+                    omission to fill in — inventing a straw answer teaches nothing. */}
+                {example.weak ? (
+                  <p className="mt-3 flex flex-wrap items-baseline gap-x-2 break-words leading-7 text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 font-semibold text-foreground">
+                      <ThumbsDown className="h-4 w-4 shrink-0 text-warning" aria-hidden />
+                      Weak answer.{" "}
+                    </span>
+                    {example.weak}
+                  </p>
+                ) : null}
+                <p className="mt-2 flex flex-wrap items-baseline gap-x-2 break-words leading-7 text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 font-semibold text-foreground">
+                    <ThumbsUp className="h-4 w-4 shrink-0 text-success" aria-hidden />
+                    Strong answer.{" "}
+                  </span>
+                  {example.strong}
+                </p>
+                <p className="mt-3 break-words leading-7 text-foreground">
+                  <span className="font-semibold">Why. </span>
+                  {example.explanation}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {content.revisionLadder?.length ? (
+        <section aria-labelledby="revision" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="revision" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">
+              Turning a weak answer into a strong one
+            </h2>
+          </div>
+          {/* An ordered list: each rung is the previous one repaired, so the sequence carries meaning. */}
+          <ol className="mt-4 space-y-4">
+            {content.revisionLadder.map((rung, index) => (
+              <li key={rung.attempt} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-bold text-primary">
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="break-words leading-7 text-muted-foreground">
+                    <span className="font-semibold text-foreground">Attempt. </span>
+                    {rung.attempt}
+                  </p>
+                  <p className="mt-2 break-words leading-7 text-muted-foreground">
+                    <span className="font-semibold text-foreground">What is missing. </span>
+                    {rung.diagnosis}
+                  </p>
+                  <p className="mt-2 break-words leading-7 text-muted-foreground">
+                    <span className="font-semibold text-foreground">Revised. </span>
+                    {rung.revision}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      {content.misconception ? (
+        <section aria-labelledby="misconception" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="misconception" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">
+              The mental model to fix
+            </h2>
+          </div>
+          {/* Named, refuted, replaced — in that order. A wrong model displaced by nothing leaves the
+              learner worse off than before it was named. */}
+          <p className="mt-3 break-words leading-7 text-muted-foreground">
+            <span className="font-semibold text-foreground">What people think. </span>
+            {content.misconception.wrongModel}
+          </p>
+          <p className="mt-2 break-words leading-7 text-muted-foreground">
+            <span className="font-semibold text-foreground">Why that fails. </span>
+            {content.misconception.whyItFails}
+          </p>
+          <p className="mt-2 break-words leading-7 text-muted-foreground">
+            <span className="font-semibold text-foreground">Think of it this way instead. </span>
+            {content.misconception.betterModel}
+          </p>
+        </section>
+      ) : null}
+
+      {content.commonMistakes?.length ? (
+        <section aria-labelledby="common-mistakes" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="common-mistakes" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Common mistakes</h2>
+          </div>
+          <ul className="mt-4 space-y-4">
+            {content.commonMistakes.map((mistake) => (
+              <li key={mistake.mistake} className="rounded-lg border bg-muted/20 p-4">
+                <p className="break-words font-semibold text-foreground">{mistake.mistake}</p>
+                <p className="mt-2 break-words leading-7 text-muted-foreground">
+                  <span className="font-semibold text-foreground">Why it fails. </span>
+                  {mistake.whyItFails}
+                </p>
+                <p className="mt-2 break-words leading-7 text-muted-foreground">
+                  <span className="font-semibold text-foreground">The fix. </span>
+                  {mistake.fix}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section aria-labelledby="practice" className="space-y-3">
         <div className="flex items-center gap-2">

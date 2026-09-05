@@ -148,6 +148,40 @@ function questionDefects(value: unknown): string[] {
   return defects;
 }
 
+/**
+ * Gaps in an OPTIONAL array of teaching records: absent is fine, present-but-empty is not.
+ *
+ * An empty array is reported, because `[]` is a section the author started and did not write — the
+ * renderer would emit nothing for it, so the lesson silently loses teaching the author intended.
+ * `required` lists only the fields that must carry text; a field the schema marks optional (an
+ * example's `weak` side) is deliberately absent from every list below.
+ */
+function optionalListGaps(value: unknown, label: string, required: readonly string[]): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length === 0) return [label];
+  const gaps: string[] = [];
+  const seen = new Set<string>();
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      gaps.push(`${label}[${index}]`);
+      return;
+    }
+    for (const field of required) {
+      if (!nonEmptyString(item[field])) gaps.push(`${label}[${index}].${field}`);
+    }
+    // The FIRST required field is the item's identity: a section's heading, an example's setup, a
+    // rung's attempt, a mistake's name. The renderer keys each list by exactly that string, so two
+    // items sharing one would collide as React keys — and two identically-named mistakes are a
+    // duplicate the learner reads twice regardless of any framework concern.
+    const identity = String(item[required[0]] ?? "").trim();
+    if (identity.length > 0) {
+      if (seen.has(identity)) gaps.push(`${label}[${index}].${required[0]} duplicates an earlier entry`);
+      seen.add(identity);
+    }
+  });
+  return gaps;
+}
+
 /** Returns the missing structural fields of a concept source. Empty means complete. */
 function conceptSourceGaps(source: unknown): string[] {
   if (!isRecord(source)) return ["source is not an object"];
@@ -174,6 +208,26 @@ function conceptSourceGaps(source: unknown): string[] {
   if (!isRecord(content.guidedQuestion)) gaps.push("guidedQuestion");
   if (!Array.isArray(content.practiceQuestions) || content.practiceQuestions.length === 0) gaps.push("practiceQuestions");
   if (!Array.isArray(content.masteryCheck) || content.masteryCheck.length === 0) gaps.push("masteryCheck");
+
+  // OPTIONAL teaching structures. Presence is never required — a lesson whose concept needs none of
+  // them is complete without them, and demanding all five would recreate the generic-filler problem
+  // this schema exists to avoid. But a structure that IS authored must be whole: a misconception with
+  // an empty `betterModel` names a wrong mental model and then replaces it with nothing, and a mistake
+  // with an empty `fix` tells a learner they are wrong and walks away. Both would render as a labelled
+  // blank, which is worse than the section's absence. So: optional to have, complete once you have it.
+  gaps.push(...optionalListGaps(content.teachingSections, "teachingSections", ["heading", "body"]));
+  gaps.push(...optionalListGaps(content.additionalExamples, "additionalExamples", ["setup", "strong", "explanation"]));
+  gaps.push(...optionalListGaps(content.revisionLadder, "revisionLadder", ["attempt", "diagnosis", "revision"]));
+  gaps.push(...optionalListGaps(content.commonMistakes, "commonMistakes", ["mistake", "whyItFails", "fix"]));
+  if (content.misconception !== undefined) {
+    if (!isRecord(content.misconception)) {
+      gaps.push("misconception");
+    } else {
+      for (const field of ["wrongModel", "whyItFails", "betterModel"]) {
+        if (!nonEmptyString(content.misconception[field])) gaps.push(`misconception.${field}`);
+      }
+    }
+  }
   return gaps;
 }
 

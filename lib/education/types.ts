@@ -90,7 +90,17 @@ export type EducationSourceKind = "authored-lesson" | "roleplay-lesson" | "conce
 // A registry entry holds the ORIGINAL catalog object by reference; this type only lets the renderer
 // read it without a cast. No learner-facing string is ever copied out of it.
 
-/** One deterministic multiple-choice item. Every field below exists on every selected question. */
+/**
+ * One deterministic multiple-choice item. Every field below exists on every selected question.
+ *
+ * This is the MULTIPLE-CHOICE check kind, not "the check kind". A productive objective — one whose
+ * verb is write, construct, deliver, refute, weigh or respond — cannot be evidenced by recognition
+ * alone, and several published Debate lessons carry exactly such an objective today. Nothing here
+ * forecloses a constructed-response sibling: the renderer builds ONE `checks` array and every check
+ * flows through it (see `ConceptEducationLessonView`), so a second kind is added at that seam rather
+ * than by unpicking the render tree. That kind is deliberately NOT declared yet — declaring a type
+ * with no engine behind it would be the speculative shape this file has always refused.
+ */
 export type ConceptEducationQuestion = {
   prompt: string;
   choices: readonly string[];
@@ -108,12 +118,107 @@ export type ConceptEducationWorkedExample = {
   whyItWorks: string;
 };
 
+// --- OPTIONAL structured teaching capacity --------------------------------------------------------
+//
+// Everything below is optional and additive. It exists because the eight fields above were an
+// EDUCATIONAL BOTTLENECK, not merely a small type: they can express a concept and one weak/strong
+// pair, and nothing else. A lesson that needed to teach a misconception, a set of common mistakes, or
+// how a weak answer becomes a strong one had exactly one place to put that material — `explanation`,
+// a single string the renderer prints as one paragraph. Depth could therefore only be bought as
+// paragraph length, which is why the deepest published concept lesson reached a 1055-word explanation
+// block while shallower ones reached for more multiple-choice items instead.
+//
+// The legacy Claim/Warrant/Impact lesson is the quality reference for what a Debate lesson should
+// teach, and it carries seven distinct teaching structures through its own renderer. The types below
+// give the CONCEPT architecture the same educational capabilities without copying that lesson's
+// bespoke shape: these are reusable across tracks and lessons, every one is optional, and a lesson
+// that has nothing to say in a section renders no section at all. An empty heading would be exactly
+// the generic filler the concept renderer exists to avoid.
+//
+// None of this changes what a check is worth. These structures are TEACHING. They are learner-visible
+// instruction that must stand on its own — a misconception explained only inside a question's
+// explanation string has not been taught, it has been hidden behind a quiz.
+
+/**
+ * One titled block of teaching prose.
+ *
+ * The heading is authored per lesson, never chosen globally: "How to think about it" fits one concept
+ * and "When it fails" fits another, and a fixed global heading set would force every lesson into a
+ * shape its own material does not have.
+ */
+export type ConceptEducationTeachingSection = {
+  heading: string;
+  body: string;
+};
+
+/**
+ * What learners commonly believe, why that mental model fails, and the model that replaces it.
+ *
+ * All three parts are required together: naming a wrong model without replacing it leaves the learner
+ * worse off than before, and asserting a right model without naming the wrong one does not displace
+ * the belief they arrived with.
+ */
+export type ConceptEducationMisconception = {
+  wrongModel: string;
+  whyItFails: string;
+  betterModel: string;
+};
+
+/**
+ * One rung of a repair ladder: an attempt, what is wrong with it, and the revision that fixes it.
+ *
+ * A ladder is a sequence of these, and the number of rungs is the lesson's decision — some skills
+ * improve in two moves and some in four. This is the structure that makes reasoning quality visible
+ * for a PRODUCTIVE objective, where the difference between a weak and a strong answer is a process
+ * rather than a fact.
+ */
+export type ConceptEducationRevisionStep = {
+  attempt: string;
+  diagnosis: string;
+  revision: string;
+};
+
+/** One thing that goes wrong, why it fails, and how to fix it. */
+export type ConceptEducationCommonMistake = {
+  mistake: string;
+  whyItFails: string;
+  fix: string;
+};
+
+/**
+ * An additional teaching example, for a skill that needs transfer to a second situation.
+ *
+ * `weak` is optional because not every example is a contrast — sometimes the useful thing is one more
+ * strong answer in a different context, and forcing a weak counterpart would invent a straw answer.
+ * `explanation` is required for the same reason `whyItWorks` is required on the worked example: an
+ * example shown without its reasoning is output, not teaching.
+ */
+export type ConceptEducationExample = {
+  setup: string;
+  weak?: string;
+  strong: string;
+  explanation: string;
+};
+
 export type ConceptEducationLessonContent = {
   objective: string;
   explanation: string;
   whyMatters: string;
   steps: readonly string[];
   workedExample: ConceptEducationWorkedExample;
+  /**
+   * Titled teaching blocks, rendered between the explanation and why-it-matters. Optional: a lesson
+   * whose concept fits one paragraph adds none, and renders exactly as it did before these existed.
+   */
+  teachingSections?: readonly ConceptEducationTeachingSection[];
+  /** Further examples for transfer. The single `workedExample` above is unchanged and still required. */
+  additionalExamples?: readonly ConceptEducationExample[];
+  /** A weak attempt improved through named revisions. Any number of rungs; two is a valid ladder. */
+  revisionLadder?: readonly ConceptEducationRevisionStep[];
+  /** The belief to displace, and what replaces it. */
+  misconception?: ConceptEducationMisconception;
+  /** What goes wrong, why, and the fix — as learner-visible teaching, never only as a distractor. */
+  commonMistakes?: readonly ConceptEducationCommonMistake[];
   guidedQuestion: ConceptEducationQuestion;
   practiceQuestions: readonly ConceptEducationQuestion[];
   /**

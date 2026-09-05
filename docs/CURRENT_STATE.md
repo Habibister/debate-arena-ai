@@ -145,6 +145,26 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **CONCEPT LESSON TEACHING-SCHEMA EXPANSION — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
+  The concept lesson schema was an educational bottleneck: eight fields that could express a concept
+  and one weak/strong pair, with no way to teach a misconception, a common failure, or how a weak
+  answer becomes a strong one. Five OPTIONAL structures were added to
+  `ConceptEducationLessonContent` and rendered by `ConceptEducationLessonView`: teaching sections with
+  author-chosen headings, additional examples, a revision ladder, a misconception, and common
+  mistakes. Every one renders only when authored; a lesson carrying none is unchanged. Teach-first is
+  now an asserted invariant — all teaching, including error correction, precedes every check.
+  `validateEducationRegistry` rejects a half-written structure, a duplicated item identity, and an
+  empty section list, but never requires a structure to be present.
+  The AUTHORING type `LearningLessonContent` and its `lesson()` helper were widened too — without that
+  the capacity was unreachable, since every concept lesson is the original catalog object returned by
+  reference. No entry supplies the new argument, so all 21 authored entries stay byte-for-byte
+  identical to the reviewed baseline. The first lesson to author one of these fields will trip
+  `learning-content-integrity:smoke`'s exact-runtime-key gate until the field is classified there and
+  the baseline regenerated — that is the guard working, and it must not be loosened.
+  **No lesson content, no question, and no navigation changed.** New strict-safe suite
+  `concept-lesson-schema:smoke` (15 controls). **Not committed, not pushed, not deployed.**
+  **The Debate LEARN + COMPETE simplification, the broken Compete-to-Learn return, and the Refutation
+  rebuild are the agreed next steps, in that order — none of them is started.**
 - **HELD-MASTERY LEARNER-EXPERIENCE TRUTH REPAIR — IN THE WORKING TREE, UNCOMMITTED (2026-09-01).**
   A held skill's due-review rows were still actionable and could not be resolved by any action, and
   nine learner surfaces still promised that practising builds a record. Both are repaired: a single

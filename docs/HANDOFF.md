@@ -51,6 +51,48 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **CONCEPT LESSON TEACHING-SCHEMA EXPANSION — UNCOMMITTED, in the working tree (2026-09-05).**
+  A Learn+Compete architecture audit established that the nine published Debate concept lessons were
+  not merely written thinly — the SCHEMA could not hold deeper teaching.
+  `ConceptEducationLessonContent` carried eight fields, of which four could teach: `explanation` and
+  `whyMatters` (one string each, each printed as a single `<p>`), `steps`, and one fixed four-string
+  `workedExample`. There was no field for a misconception, a common-mistakes list, a revision ladder,
+  or a second example, and `lib/learning-content.ts` contains zero paragraph breaks with no renderer
+  that splits on them — so depth could only be bought as one longer paragraph. The legacy
+  Claim/Warrant/Impact lesson reaches ~1642 teaching words across SEVEN structures because it uses a
+  different renderer entirely. The concept renderer states the limit in its own header comment.
+  **Fixed by adding capacity, not content.** Five optional structures now exist on the concept schema
+  — `teachingSections` (author-named headings), `additionalExamples` (weak side optional),
+  `revisionLadder` (attempt / diagnosis / revision, any number of rungs), `misconception`
+  (wrongModel / whyItFails / betterModel) and `commonMistakes` (mistake / whyItFails / fix) — each
+  rendered only when authored, so a lesson carrying none renders exactly the page it rendered before.
+  The render order is now an asserted invariant: objective, explanation, teaching sections, why it
+  matters, process, worked example, further examples, revision ladder, misconception, common
+  mistakes, THEN the checks, THEN the optional drill CTA, THEN the next lesson. `validateEducationRegistry`
+  now reports a half-written structure (a misconception with no replacement model, a mistake with no
+  fix, an empty section list) while never requiring one to be present. **No lesson content changed, no
+  question changed, no navigation changed.** New strict-safe suite `concept-lesson-schema:smoke`,
+  15 controls, renders a fully-populated fixture, a bare fixture, one fixture per individual structure,
+  and all nine published lessons through `react-dom/server`; three scratch mutations were used to prove
+  the ordering and optionality controls fire.
+  **THE AUTHORING PATH IS OPEN, WITH ONE STEP LEFT FOR THE FIRST LESSON THAT USES IT.** An independent
+  review caught that widening only the education type would have left the capacity unreachable: every
+  concept lesson is the ORIGINAL `LEARNING_SKILL_CATALOG` object returned by reference from
+  `selectCatalogLesson`, so a field `lesson()` cannot produce is a field no lesson can carry. So
+  `LearningLessonContent` carries the same five optional fields and `lesson()` takes an optional
+  trailing `teaching` argument, spread only when supplied. No entry passes it today, so every content
+  object still has exactly its eight runtime keys — `learning-content-integrity:smoke` confirms all 21
+  entries remain byte-for-byte identical to the reviewed baseline. **The first lesson that actually
+  authors one of these fields will fail that suite's exact-runtime-key gate until the field is
+  classified in `scripts/learning-content-integrity-smoke.ts` (`CONTENT_KEYS`) and
+  `scripts/learning-content-baseline.json` is regenerated from review.** That gate is fail-closed by
+  design and must not be loosened — expect it, and do it deliberately as the rebuild's first step.
+  AUTHORING CAUTIONS for the rebuild, recorded now rather than discovered later: the worked example
+  still carries a single `whyItWorks` string where the legacy reference carries reason ARRAYS on both
+  sides; `revisionLadder` makes rung N's `revision` and rung N+1's `attempt` the same prose, which the
+  learner would read twice unless the ladder is authored to avoid it; there is no per-example honesty
+  note and the misconception has no short `name`. None of these blocks a rebuild; all of them shape it.
+  **Not committed, not pushed, not deployed.**
 - **HELD-MASTERY LEARNER-EXPERIENCE TRUTH REPAIR — UNCOMMITTED, in the working tree (2026-09-01).**
   Containment made `debate-rebuttal` non-recording but left the product still describing it as
   recording, and left its historical due-review rows actionable. A due review for a held skill cannot

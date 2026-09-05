@@ -82,14 +82,15 @@ const EVENT_HQ: Record<
       // figure. Scoring detail now defers to the event's own current rules or ballot.
       "Partner-style debate judged holistically. Scoring details depend on the event format and its current rules or ballot. Train the round itself, then drill the skills the ballot actually rewards.",
     rubricEventType: "PUBLIC_FORUM",
+    // LEARN, then COMPETE — the order a learner actually moves in, and the order Debate's journey now
+    // names. These were three peers with the full round FIRST, which put the performance environment
+    // ahead of the teaching and made drills read as a third destination of equal standing. Drills are
+    // Learn-supporting: a lesson finds the gap, the drill repeats it. Same three routes, unchanged;
+    // what changed is which one leads and how the other two are described relative to it.
     sections: [
-      { label: "Full rounds", detail: "Live practice with an AI opponent and judged ballot.", href: "/debate?track=debate", icon: "rounds" },
-      { label: "Skill drills", detail: "Claim building, evidence, rebuttal, weighing — short scored sets that tell you what each one records.", href: "/study-arcade?track=debate", icon: "drills" },
-      // Learn, named as Learn. This pointed at /skills?track=debate and called it "Skills & lessons"
-      // with a mastery-check promise; that surface is Debate's PRACTICE index — the drill row above
-      // already leads there — and the mastery checks it described do not exist. The lessons live at
-      // /lessons, which is where this row now goes, so Event HQ names each of the three once.
-      { label: "Lessons", detail: "Learn a skill with worked weak-vs-strong examples before you drill it.", href: "/lessons?track=debate", icon: "skills" }
+      { label: "Lessons", detail: "Start here. Learn a skill with worked weak-vs-strong examples, then practise it.", href: "/lessons?track=debate", icon: "skills" },
+      { label: "Skill drills", detail: "Short scored sets on one skill at a time, after the lesson that teaches it. Each says what it records.", href: "/study-arcade?track=debate", icon: "drills" },
+      { label: "Full rounds", detail: "Compete: a live round with an AI opponent and a judged ballot.", href: "/debate?track=debate", icon: "rounds" }
     ]
   }
 };

@@ -868,7 +868,16 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     "app/(app)/skills/[slug]/page.tsx",
     "app/(app)/skills/[slug]/practice/page.tsx",
     "components/skills/skill-path.tsx",
-    "app/(app)/study-arcade/review/page.tsx"
+    "app/(app)/study-arcade/review/page.tsx",
+    // Compete -> Learn return (M15 S4)
+    // M15 S4 (Learn + Compete): the post-round DEBATE ARENA resolves a judge diagnosis to the canonical
+    // lesson that teaches the weak concept. It is a deliberate addition to this allowlist, not drift.
+    // The arena built `/skills/<judge slug>/practice`, a route that serves only a legacy compatibility
+    // slug, so every canonical recommendation answered 404 at the exact moment a learner had been told
+    // what to fix — the Compete-to-Learn return failing at its only step. It consumes the registry
+    // through ONE pure resolver (`lib/education/diagnosis.ts`): read-only, no session, no database, and
+    // fail-closed, so a slug with no published lesson behind it yields no destination at all.
+    "components/debate/debate-arena.tsx",
   ]);
   const found: string[] = [];
   for (const file of [...walkTree("app"), ...walkTree("components")]) {

@@ -51,6 +51,40 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **DEBATE LEARN + COMPETE ARCHITECTURE — UNCOMMITTED, in the working tree (2026-09-05).**
+  **Debate's learner journey is now exactly two stages: 1 Learn, 2 Compete.** Practice and Apply are
+  removed as CATEGORIES, not as capabilities — every drill, due review, remediation link and the
+  writing-practice route still works and is still reachable, from inside Learn.
+  `DEBATE_PATH` in `lib/learner-path.ts` is the only path literal edited; DECA and HOSA keep their
+  four stages and their destinations byte-for-byte. The rail numbers by ARRAY POSITION, which is why
+  Debate reads "1 Learn, 2 Compete" — a phantom "4" for Compete would tell a Debate learner that
+  steps 2 and 3 exist and are missing. The shared rail component was deliberately not modified.
+  **LEARN now opens the catalog** (`/lessons?track=debate`), not `/lessons/claim-warrant-impact`. One
+  lesson had been behaving as the whole Learn product. The catalog filters to learner-visible entries,
+  so the four held Debate lessons still cannot appear. A secondary block after the lesson list reaches
+  drills and reviews; it reads no learner state, so it names destinations and claims no counts.
+  **The COMPETE -> LEARN return is repaired.** The post-round arena built `/skills/<judge slug>/practice`,
+  a route serving only a legacy compatibility slug, so every canonical recommendation answered 404 at
+  the moment a learner had just been told what to fix. A new pure resolver `lib/education/diagnosis.ts`
+  maps a judge slug to the canonical lesson that TEACHES the concept; the lesson then offers targeted
+  practice at its end, after the teaching. **5 of 5 judge slugs now resolve** — the fifth,
+  `debate-constructive-speeches-lesson`, had no alias at all and resolved nowhere; its alias is
+  recorded in `EDUCATION_SLUG_ALIASES` and the approved-slug list in `education-registry:smoke` was
+  raised from four to five deliberately. The resolver fails closed: an unmapped, unregistered or held
+  slug yields no destination, and an unresolvable recommendation card is not rendered.
+  Also repaired: Home's "Practice 10 minutes" and "Debate Now" resolved to the SAME full-round href
+  for Debate, so a "focused rep" opened a judged round; the focused action is now a scored drill. The
+  Debate branch of the shared `/training/[track]/practice` route rendered a second copy of the Compete
+  setup under the heading "Debate practice" and now redirects to `/debate?track=debate`; that route is
+  kept because DECA and HOSA still render their own surfaces there — Model UN is a RETIRED track whose
+  branch sits behind the retirement redirect and is unreachable residue, never a reason the route
+  lives. Event HQ leads with Lessons, then drills, then
+  the round. The `/skills` Debate heading is an ACTION ("Drill a debate skill"), not a category, and
+  `/lessons` has a Debate-gated shell nav entry so the teaching is no longer the only education
+  surface without one. The debate arena is now a recorded consumer of `lib/education` on both
+  allowlists. **No lesson content and no question content changed.** New strict-safe suite
+  `learn-compete:smoke` (14 controls); four scratch mutations proved the decisive controls fire.
+  **Not committed, not pushed, not deployed.**
 - **CONCEPT LESSON TEACHING-SCHEMA EXPANSION — UNCOMMITTED, in the working tree (2026-09-05).**
   A Learn+Compete architecture audit established that the nine published Debate concept lessons were
   not merely written thinly — the SCHEMA could not hold deeper teaching.

@@ -10,6 +10,12 @@ separate sign-off.
 ### 1.1 The universal progression
 
 **Learn → Practice → Apply → Compete**, across every track:
+> **SUPERSEDED FOR DEBATE (2026-09-05).** The owner ruled Debate's learner-facing journey is
+> exactly **Learn → Compete**. Practice and Apply were removed as Debate CATEGORIES; the drill,
+> review, remediation and writing-practice engines all remain and are reached from inside Learn.
+> DECA and HOSA keep the four-stage progression described below. This document is design history
+> and is not the authority on current product state — `docs/CURRENT_STATE.md` is.
+
 
 - **Learn** — worked model with line-level annotation. No learner output requested first.
 - **Practice** — completion tasks and guided production **with the rubric visible**.

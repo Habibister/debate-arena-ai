@@ -1,7 +1,15 @@
 import type { TrainingTrack } from "@/lib/training-tracks";
 
 /**
- * The Learn → Practice → Apply → Compete path, as CompeteReady can honestly describe it today.
+ * The learner path for each active track, as CompeteReady can honestly describe it today.
+ *
+ * The stage VOCABULARY is shared; the JOURNEY is per track. DECA and HOSA describe four stages.
+ * DEBATE describes two — Learn, then Compete — because that is what Debate actually is: teaching,
+ * then the round. Practice and Apply were removed from Debate as PRODUCT CATEGORIES, not as
+ * capabilities: drills, spaced review, remediation and writing practice all still exist and are all
+ * still reachable, as supporting actions inside Learn rather than as stages a learner must first
+ * understand. Numbering is positional within a track, so Debate reads "1 Learn, 2 Compete" — a
+ * phantom "4" for Compete would tell a Debate learner that steps 2 and 3 are missing.
  *
  * This module is a static description of what the product currently offers. It reads nothing — no
  * session, no database, no storage, no cookie, no query string — and it derives nothing: no
@@ -27,6 +35,11 @@ export type LearnerPathStageState =
 
 export type LearnerPathStageId = "learn" | "practice" | "apply" | "compete";
 
+/**
+ * NOTE ON THE STAGE UNION. `practice` and `apply` remain in the type because DECA and HOSA still use
+ * them, and their definitions below are unchanged. Debate simply no longer declares those stages.
+ */
+
 export type LearnerPathStage = {
   id: LearnerPathStageId;
   label: "Learn" | "Practice" | "Apply" | "Compete";
@@ -37,34 +50,38 @@ export type LearnerPathStage = {
   note?: string;
 };
 
-/** The canonical order. Callers render stages in this sequence. */
+/**
+ * The order stage ids are DECLARED in, for a track that uses all four.
+ *
+ * Not a rendering contract and never was: every caller renders the array `learnerPathForTrack`
+ * returns, in that array's own order, and numbers each stage by its position there. A track that
+ * declares two stages therefore numbers them 1 and 2. Kept as the documented declaration order for
+ * the four-stage tracks; do not reintroduce it as a global numbering source.
+ */
 export const LEARNER_PATH_STAGE_ORDER: readonly LearnerPathStageId[] = ["learn", "practice", "apply", "compete"] as const;
 
 // ---------------------------------------------------------------------------------------------
 // Per-track definitions. Only the three ACTIVE tracks appear — Model UN is soft-removed and has no
 // entry, so it cannot leak into any surface that renders this map.
 // ---------------------------------------------------------------------------------------------
+// DEBATE: two stages. Learn, then Compete.
+//
+// PRACTICE was a stage pointing at `/study-arcade?track=debate`. It is gone as a stage and the drill
+// surface is untouched: the lesson call to action, the review queue, remediation and the Coach all
+// still deep-link into it, and it keeps its own entry in the app shell. What a learner no longer has
+// to do is understand "Practice" as a product area standing between learning a skill and using it.
+//
+// APPLY was a stage with no destination, carrying the note "No dedicated Apply destination yet."
+// That sentence was the product admitting the category had no purpose for Debate. It is removed
+// rather than reworded — there is no Debate Apply stage, so there is nothing to say about one.
+// DECA and HOSA keep their Apply stages, which do have destinations.
+//
+// LEARN now opens the lesson CATALOG, not one lesson. It pointed at `/lessons/claim-warrant-impact`,
+// which made a single lesson behave like the whole Learn product: a learner who had already read it
+// had nowhere to go, and the other eight published lessons were reachable only by knowing they
+// existed. `claim-warrant-impact` remains a published lesson in that catalog.
 const DEBATE_PATH: readonly LearnerPathStage[] = [
-  { id: "learn", label: "Learn", state: "available", href: "/lessons/claim-warrant-impact" },
-  // Practice is the drill layer, not the lesson index. This pointed at /skills?track=debate, which
-  // for Debate lists the published LESSONS — so Learn and Practice were the same page under two
-  // names. Study Arcade is where the Debate drills actually run.
-  { id: "practice", label: "Practice", state: "available", href: "/study-arcade?track=debate" },
-  {
-    id: "apply",
-    label: "Apply",
-    state: "unavailable",
-    // Deliberately no href. This pointed at /tests?track=debate, which has no Debate product behind
-    // it and answered with an empty state saying tests belong to other tracks. Debate written
-    // practice does exist, but only from a skill's own compatibility page and from the review queue;
-    // there is no authored track-level Apply destination, and naming one here would be a navigation
-    // promise rather than a product. What Debate's Apply step becomes is an open decision.
-    // Wording is about NAVIGATION, not about tests. Apply is not a synonym for practice tests: the
-    // model is Learn -> Practice -> Apply -> Compete, and Debate does have application capability in
-    // narrower places (written practice from a skill's own page, and from the review queue). What it
-    // has no destination for is a track-level Apply step, which is exactly what this stage names.
-    note: "No dedicated Apply destination yet."
-  },
+  { id: "learn", label: "Learn", state: "available", href: "/lessons?track=debate" },
   { id: "compete", label: "Compete", state: "available", href: "/debate?track=debate" }
 ] as const;
 
@@ -117,8 +134,11 @@ const LEARNER_PATHS: Readonly<Partial<Record<TrainingTrack, readonly LearnerPath
 };
 
 /**
- * The four stages for an active track, or an empty list for a track we do not describe (including
- * the soft-removed Model UN). Callers render nothing rather than guessing.
+ * The stages for an active track, in that track's own order, or an empty list for a track we do not
+ * describe (including the soft-removed Model UN). Callers render nothing rather than guessing.
+ *
+ * The LENGTH is per track and is part of the answer: DECA and HOSA return four stages, Debate returns
+ * two. Never assume four.
  */
 export function learnerPathForTrack(track: TrainingTrack): readonly LearnerPathStage[] {
   return LEARNER_PATHS[track] ?? [];

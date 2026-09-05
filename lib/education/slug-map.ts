@@ -45,6 +45,17 @@ export const EDUCATION_SLUG_ALIASES: readonly EducationSlugAlias[] = [
     note: "Post-round judge recommendation. Wave 1B published the corrected weighing lesson as `debate-weighing`, so this target now resolves canonically and the alias redirects there instead of rendering the old compatibility page."
   },
   {
+    // The FIFTH judge recommendation, and the one that resolved nowhere until this milestone. The
+    // post-round arena builds its "weak skill" destination from these slugs, so an unmapped one is a
+    // dead end at exactly the moment a learner has been told what they got wrong. `debate-constructive-speeches`
+    // is published and learner-visible, so this redirects there like the other four.
+    legacySlug: "debate-constructive-speeches-lesson",
+    target: "debate-constructive-speeches",
+    targetKind: "lesson",
+    status: "active",
+    note: "Post-round judge recommendation. The canonical constructive-speeches lesson is published and learner-visible, so this alias redirects to it instead of resolving nowhere."
+  },
+  {
     legacySlug: "debate-signposting-lesson",
     target: "debate-signposting",
     targetKind: "lesson",

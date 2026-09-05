@@ -12,6 +12,7 @@ import {
   FileCheck2,
   Gamepad2,
   Gavel,
+  BookOpen,
   GraduationCap,
   History,
   Home as HomeIcon,
@@ -51,6 +52,11 @@ const BOTTOM_BAR_HREFS = ["/home", "/training", "/compete", "/teams"] as const;
 // Secondary destinations: one click away in the desktop sidebar, one tap away inside mobile More.
 const moreItems = [
   { href: "/dashboard", label: "Progress", icon: LayoutDashboard },
+  // LEARN, reachable from the shell. The lesson catalog had no navigation entry at all while
+  // `/skills` — Debate's DRILL index, which was headed "Practice a debate skill" — did. Under
+  // Learn + Compete that is backwards: the teaching is Debate's education home and the drills support
+  // it. Debate-gated below, so DECA and HOSA nav is byte-identical to what it was.
+  { href: "/lessons", label: "Lessons", icon: BookOpen },
   { href: "/study-arcade", label: "Study Arcade", icon: Gamepad2 },
   { href: "/assignments", label: "Assignments", icon: FileCheck2 },
   { href: "/debates/history", label: "History", icon: History },
@@ -147,7 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? `Viewing: ${trackById(visualTrack).short}`
     : `Track: ${trackById(track).short}`;
   // Preserve the selected track when navigating to track-filterable content routes.
-  const TRACK_AWARE = ["/home", "/compete", "/study-arcade", "/tests", "/skills", "/debate"];
+  const TRACK_AWARE = ["/home", "/compete", "/study-arcade", "/tests", "/skills", "/debate", "/lessons"];
   const withTrack = (href: string) => (TRACK_AWARE.includes(href) ? `${href}?track=${trackSlug}` : href);
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
@@ -160,8 +166,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // track in view is not offered at all — the learner never picks Tests and then reads that Tests
   // belongs to other tracks. Both the desktop sidebar and mobile More derive from `visibleMore`, so
   // capability cannot drift between the two surfaces any more than role can.
-  const capabilityAllows = (item: { href: string }) =>
-    item.href !== "/tests" || trackHasPracticeTests(visualTrack);
+  // Capability gating, per destination and per track in view.
+  //   /tests   — offered only where a practice-test product exists. Debate has none.
+  //   /lessons — Debate's primary education home. DECA and HOSA reach their lessons from their own
+  //              hubs and Event HQ, and adding a shell entry for them is a navigation change this
+  //              milestone deliberately does not make.
+  const capabilityAllows = (item: { href: string }) => {
+    if (item.href === "/tests") return trackHasPracticeTests(visualTrack);
+    if (item.href === "/lessons") return visualTrack === "GENERAL_DEBATE";
+    return true;
+  };
   const visibleMore = moreItems.filter(
     (item) => roleAllows(item as { requiresRole?: readonly string[] }) && capabilityAllows(item)
   );

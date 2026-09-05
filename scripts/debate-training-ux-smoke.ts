@@ -72,22 +72,27 @@ check("C2. an unresolved track still browses broadly, exactly as it did before",
 });
 
 // ---- D-E. the learner path ----------------------------------------------------------------------
-check("D. the Debate learner path exposes no /tests destination", () => {
+check("D. the Debate journey is exactly Learn then Compete", () => {
   const debate = learnerPathForTrack("GENERAL_DEBATE");
-  assert.ok(debate.length > 0, "control: the Debate path is not empty");
-  assert.ok(debate.every((stage) => !(stage.href ?? "").startsWith("/tests")));
-  const apply = debate.find((stage) => stage.id === "apply");
-  assert.ok(apply, "control: the Debate path still has an Apply stage");
-  // Not actionable, and not a link — a stage with no destination must never be clickable.
-  assert.equal(apply!.href, undefined);
-  assert.equal(isActionableStage(apply!), false);
-  // The note describes NAVIGATION availability. Apply is not a synonym for practice tests, so the
-  // wording must not define it as one.
-  assert.ok(!/test/i.test(apply!.note ?? ""), `Apply note must not mention tests — got: ${apply!.note}`);
-});
-check("D2. Debate Practice points at the drill layer, never at the lesson index", () => {
-  const practice = learnerPathForTrack("GENERAL_DEBATE").find((stage) => stage.id === "practice");
-  assert.equal(practice?.href, "/study-arcade?track=debate");
+  // This asserted a four-stage Debate path — that an Apply stage EXISTED but was unclickable, and
+  // that Practice pointed at the drill layer. Both were true and both are now wrong by decision:
+  // Debate has two stages. Practice and Apply are gone as CATEGORIES; every capability underneath
+  // them is asserted still reachable by the Learn+Compete suite.
+  assert.deepEqual(debate.map((stage) => stage.id), ["learn", "compete"], "D. exactly two stages, in order");
+  assert.deepEqual(debate.map((stage) => stage.label), ["Learn", "Compete"], "D2. labelled Learn and Compete");
+  // Positional numbering is what the rail renders, so two stages read "1 Learn, 2 Compete". A phantom
+  // "4" for Compete would tell a Debate learner that steps 2 and 3 are missing.
+  assert.equal(debate.findIndex((stage) => stage.id === "compete") + 1, 2, "D3. Compete is step 2 of 2");
+  for (const gone of ["practice", "apply"] as const) {
+    assert.equal(debate.find((stage) => stage.id === gone), undefined, `D4. no ${gone} stage`);
+  }
+  assert.ok(debate.every((stage) => !(stage.href ?? "").startsWith("/tests")), "D5. no /tests destination");
+  assert.ok(debate.every((stage) => isActionableStage(stage)), "D6. both stages are real destinations");
+  // LEARN opens the CATALOG. It pointed at one lesson, which made that lesson the whole Learn product.
+  const learn = debate.find((stage) => stage.id === "learn");
+  assert.equal(learn?.href, "/lessons?track=debate", "D7. Learn opens the Debate lesson catalog");
+  assert.ok(!/^\/lessons\/[a-z]/.test(learn?.href ?? ""), "D8. and never a single hardcoded lesson");
+  assert.equal(debate.find((stage) => stage.id === "compete")?.href, "/debate?track=debate", "D9. Compete is the round");
 });
 check("E. DECA and HOSA keep their own paths and their test cards", () => {
   for (const track of ["DECA", "HOSA"] as const) {

@@ -280,7 +280,15 @@ function main() {
     "app/(app)/skills/[slug]/page.tsx",
     "app/(app)/skills/[slug]/practice/page.tsx",
     "components/skills/skill-path.tsx",
-    "app/(app)/study-arcade/review/page.tsx"
+    "app/(app)/study-arcade/review/page.tsx",
+    // M15 S4 (Learn + Compete): the post-round DEBATE ARENA resolves a judge diagnosis to the canonical
+    // lesson that teaches the weak concept. It is a deliberate addition to this allowlist, not drift.
+    // The arena built `/skills/<judge slug>/practice`, a route that serves only a legacy compatibility
+    // slug, so every canonical recommendation answered 404 at the exact moment a learner had been told
+    // what to fix — the Compete-to-Learn return failing at its only step. It consumes the registry
+    // through ONE pure resolver (`lib/education/diagnosis.ts`): read-only, no session, no database, and
+    // fail-closed, so a slug with no published lesson behind it yields no destination at all.
+    "components/debate/debate-arena.tsx",
   ]);
   const consumers: string[] = [];
   for (const file of [...appFiles, ...componentFiles]) {
@@ -305,7 +313,10 @@ function main() {
   assert.ok(readFileSync("lib/education/registry.ts", "utf8").includes('from "@/lib/lessons"'), "17b. the registry imports the legacy lesson module");
   assert.ok(readFileSync("lib/education/registry.ts", "utf8").includes('from "@/lib/roleplay-lessons"'), "17c. and the legacy role-play module");
   // No new `any`, no suppressions, no unsafe double cast in the four production files.
-  for (const file of ["lib/education/types.ts", "lib/education/slug-map.ts", "lib/education/registry.ts", "lib/education/validate.ts"]) {
+  // `diagnosis.ts` joins the list in M15 S4: it is imported by a CLIENT component (the debate arena),
+  // so its purity is not a preference — a database or session reference there would ship to the browser.
+  for (const file of ["lib/education/types.ts", "lib/education/slug-map.ts", "lib/education/registry.ts",
+                      "lib/education/validate.ts", "lib/education/diagnosis.ts"]) {
     const src = stripComments(readFileSync(file, "utf8"));
     for (const banned of [": any", "<any>", "as any", "as unknown as", "@ts-ignore", "@ts-expect-error", "react", "next/", "@/lib/prisma", "process.env", "fetch("]) {
       assert.ok(!src.includes(banned), `17d. ${file} does not use ${banned}`);
@@ -313,14 +324,20 @@ function main() {
   }
 
   // ---- 18-20. slug map --------------------------------------------------------------------------
+  // FIVE from M15 S4, not four. `debate-constructive-speeches-lesson` is emitted by the post-round
+  // judge exactly like the other four and had no alias, so it resolved nowhere — a dead end in the
+  // Compete-to-Learn return. Its canonical lesson is published and learner-visible, so the alias
+  // redirects there. Recorded here deliberately: this list is the approval, and a sixth entry must
+  // be argued for the same way rather than appearing.
   const approved = [
     "debate-claim-warrant-impact-lesson",
     "debate-refutation-lesson",
     "debate-weighing-lesson",
-    "debate-signposting-lesson"
+    "debate-signposting-lesson",
+    "debate-constructive-speeches-lesson"
   ];
   assert.deepEqual([...EDUCATION_SLUG_ALIASES].map((a) => a.legacySlug).sort(), [...approved].sort(),
-    "18. the slug map contains exactly the four approved historical slugs");
+    "18. the slug map contains exactly the five approved historical slugs");
   const byLegacy = new Map(EDUCATION_SLUG_ALIASES.map((a) => [a.legacySlug, a]));
   const registeredSkills = new Set(EDUCATION_LESSONS.flatMap((e) => (e.skillSlug ? [e.skillSlug] : [])));
   const registeredIds = new Set(EDUCATION_LESSONS.map((e) => e.id));
@@ -545,7 +562,7 @@ function main() {
   assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [], "the real registry is untouched by the controls");
 
   console.log(
-    `Education-registry smoke passed: the canonical registry holds exactly twelve lessons — the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: no file under app/ or components/ imports lib/education, and lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the four historical judge-recommendation slugs, all four now active — Wave 1B published the corrected weighing lesson, so the last compatibility-active alias redirects canonically. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
+    `Education-registry smoke passed: the canonical registry holds exactly twelve lessons — the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: every file under app/ or components/ that imports lib/education is on the recorded allowlist — the lessons surface, the legacy /skills compatibility surface, and, from M15 S4, the post-round debate arena, which resolves a judge diagnosis to the canonical lesson through one pure fail-closed resolver. lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the five historical judge-recommendation slugs, all five active — Wave 1B published the corrected weighing lesson, and M15 S4 added the constructive-speeches alias that previously resolved nowhere. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }
 

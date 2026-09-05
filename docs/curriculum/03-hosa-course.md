@@ -116,7 +116,9 @@ Classification: family-specific branch; **supervision-labeled; validation-gated*
 > clinical event.**
 
 **Compete stage: DEFERRED pending advisor/judge validation. No hands-on simulation.** This is an
-**explicit, deliberate exception** to the universal Learn → Practice → Apply → Compete progression
+**explicit, deliberate exception** to the four-stage Learn → Practice → Apply → Compete progression
+(which is HOSA's and DECA's; Debate's journey is Learn → Compete as of 2026-09-05, so the progression
+below is not universal)
 (doc 04). ⟨H1/HR-5⟩ **Performed patient communication inside clinical skill rounds remains
 unvalidated** — neither the HOSA anecdotal pass nor the HOSA caption pass produced usable evidence of
 it. If a Compete stage is ever enabled here it may only be a **timed communication-only simulation

@@ -37,6 +37,7 @@ import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel } from "@/components/debate/side-coach-panel";
 import { RoomOrientation } from "@/components/rooms/room-chrome";
+import { debateDiagnosisLesson } from "@/lib/education/diagnosis";
 import { draftKey } from "@/lib/debate-drafts";
 import { accessibilityFrameClass, resolveSpeechParams } from "@/lib/accessibility";
 import { getAiPersona } from "@/lib/ai-personas";
@@ -285,8 +286,15 @@ function speechForMessage(config: DebateFormatConfig, message: DebateMessage, sp
   return config.speeches[index] ?? null;
 }
 
+/**
+ * The lesson title a diagnosis names.
+ *
+ * Prefers the REGISTRY's own title, so a learner reads the same words on the recommendation card and
+ * on the lesson page. The de-slugged fallback only ever applies to a slug that resolves to no
+ * canonical lesson — and such a slug is no longer offered as a destination at all (see below).
+ */
 function lessonTitle(slug: string) {
-  return titleCase(slug.replaceAll("-", " ").replace(" lesson", ""));
+  return debateDiagnosisLesson(slug)?.title ?? titleCase(slug.replaceAll("-", " ").replace(" lesson", ""));
 }
 
 function winnerLabel(report: JudgeReport) {
@@ -1368,13 +1376,23 @@ function JudgeDecisionModal({
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <p className="font-semibold">Recommended skills to practice next</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {(report.recommendedLessons ?? []).slice(0, 6).map((lesson) => (
+              {/* COMPETE -> LEARN. Each card opens the canonical lesson that TEACHES the weak concept.
+                  It linked `/skills/<judge slug>`, which relies on a redirect layer and lands a
+                  learner on a compatibility surface rather than the teaching. A recommendation whose
+                  slug resolves to no learner-visible lesson is not rendered at all — an unresolvable
+                  card is a dead end offered at the exact moment the learner was told what to fix. */}
+              {(report.recommendedLessons ?? [])
+                .map((lesson) => ({ lesson, destination: debateDiagnosisLesson(lesson.lessonSlug) }))
+                .filter((row): row is { lesson: typeof row.lesson; destination: NonNullable<typeof row.destination> } =>
+                  row.destination !== null)
+                .slice(0, 6)
+                .map(({ lesson, destination }) => (
                 <Link
                   key={lesson.lessonSlug}
-                  href={`/skills/${lesson.lessonSlug}` as Route}
+                  href={destination.href as Route}
                   className="rounded-md border border-white/10 bg-neutral-950 p-3 transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
                 >
-                  <p className="font-semibold">{lessonTitle(lesson.lessonSlug)}</p>
+                  <p className="font-semibold">{destination.title}</p>
                   <p className="mt-1 text-sm leading-6 text-neutral-400">{lesson.reason}</p>
                 </Link>
               ))}
@@ -1395,9 +1413,26 @@ function JudgeDecisionModal({
             <Link href="/debate" className={cn(buttonVariants({ variant: "secondary" }), "bg-white text-neutral-950 hover:bg-neutral-200")}>
               New debate
             </Link>
-            <Link href={(report.recommendedLessons?.[0] ? `/skills/${report.recommendedLessons[0].lessonSlug}/practice` : "/skills") as Route} className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
-              Practice weak skill
-            </Link>
+            {/* THE COMPETE -> LEARN RETURN, and the single step it used to fail at.
+                This built `/skills/<judge slug>/practice`, a route that serves only a legacy
+                COMPATIBILITY slug. Every canonical judge slug resolves as a redirect instead, so the
+                action answered 404 for exactly the learner the diagnosis was written for.
+                It now opens the lesson that TEACHES the weak concept; that lesson offers targeted
+                practice at its end, after the teaching. When no recommendation resolves to a
+                learner-visible lesson the button is the honest catalog link, never a fabricated one. */}
+            {(() => {
+              const weakest = (report.recommendedLessons ?? [])
+                .map((lesson) => debateDiagnosisLesson(lesson.lessonSlug))
+                .find((destination) => destination !== null);
+              return (
+                <Link
+                  href={(weakest ? weakest.href : "/lessons?track=debate") as Route}
+                  className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}
+                >
+                  {weakest ? `Learn: ${weakest.title}` : "Open the Debate lessons"}
+                </Link>
+              );
+            })()}
             <Link href="/dashboard" className={cn(buttonVariants({ variant: "outline" }), "border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10")}>
               Back to dashboard
             </Link>

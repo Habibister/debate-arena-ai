@@ -145,6 +145,18 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **DEBATE LEARN + COMPETE ARCHITECTURE — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
+  **Debate's learner-facing journey is 1 Learn, 2 Compete.** Practice and Apply no longer exist as
+  Debate categories; the drill, review, remediation and writing-practice engines all remain and are
+  reached from inside Learn. Learn opens the lesson CATALOG rather than one hardcoded lesson. The
+  Compete-to-Learn return, which could 404, now resolves every one of the five judge-emitted slugs to
+  a published lesson through a pure fail-closed resolver. Home's duplicate Debate action is fixed, and
+  the Debate branch of the shared practice route redirects to Compete instead of presenting a second
+  "Debate practice" surface. DECA and HOSA keep their four-stage journeys and every destination
+  unchanged. No lesson or question content changed. New strict-safe suite `learn-compete:smoke`
+  (14 controls). **Not committed, not pushed, not deployed.**
+  **Next: rebuild the lessons under the expanded schema — Refutation first, then Clash, then Round
+  Orientation and Evidence Evaluation, then rebalance the four question-heavy "strong" lessons.**
 - **CONCEPT LESSON TEACHING-SCHEMA EXPANSION — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
   The concept lesson schema was an educational bottleneck: eight fields that could express a concept
   and one weak/strong pair, with no way to teach a misconception, a common failure, or how a weak

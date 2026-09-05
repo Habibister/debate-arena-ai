@@ -11,7 +11,12 @@ import {
 } from "@/lib/learner-path";
 
 /**
- * LearnerPathRail — Learn → Practice → Apply → Compete, exactly as the caller describes it.
+ * LearnerPathRail — a track's own journey, exactly as the caller describes it.
+ *
+ * The stage sequence is NOT universal. DECA and HOSA describe four stages; Debate describes two,
+ * Learn then Compete. The number beside each stage is its POSITION IN THE ARRAY THE CALLER PASSED,
+ * so a two-stage track reads "1 Learn, 2 Compete" — never "1 Learn, 4 Compete", which would tell a
+ * learner that steps 2 and 3 exist and are missing.
  *
  * A presentation component and nothing else. It infers no state, computes no completion, calculates
  * no percentage, picks no "recommended" stage, writes nothing and fetches nothing. Whatever the

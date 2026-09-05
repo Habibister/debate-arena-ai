@@ -87,7 +87,8 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     label: "HOSA Clinical-Skill Communication (Branch B)",
     moduleIds: ["hosa-communication-layer"],
     // Branch B's Compete stage is deferred pending advisor/judge validation, with no hands-on
-    // simulation — the one documented exception to Learn -> Practice -> Apply -> Compete.
+    // simulation — an exception to HOSA's own four-stage journey. That journey is HOSA's, not a
+    // platform rule: Debate describes two stages, Learn then Compete.
     maxRung: 4
   }
 ] as const;

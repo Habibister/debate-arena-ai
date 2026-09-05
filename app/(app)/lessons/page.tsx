@@ -219,6 +219,40 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
           ))}
         </div>
       )}
+
+      {/* SECONDARY, and deliberately last. Debate's journey is Learn then Compete: drills and reviews
+          are things a learner does inside Learn, not a separate product area, so Learn has to reach
+          them — but the teaching stays the page. This is one small block of links after every lesson
+          card, never a grid of drill cards competing with the lessons above it.
+
+          No counts and no due badge here on purpose: this page reads no session and imports no
+          persistence layer (education-migration asserts that), so it cannot know what is due without
+          becoming a different kind of page. It names the destination; the destination knows. */}
+      {activeTrack?.id === "GENERAL_DEBATE" && cards.length > 0 ? (
+        <Card>
+          <CardContent className="p-5">
+            <h2 className="text-base font-semibold">After a lesson</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              A lesson teaches the skill; a drill repeats it and tells you whether it added to your record.
+              Skills that record come back later for review.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link
+                href={"/study-arcade?track=debate" as Route}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 px-4")}
+              >
+                Drill a skill
+              </Link>
+              <Link
+                href={"/study-arcade/review" as Route}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 px-4")}
+              >
+                Reviews that are due
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

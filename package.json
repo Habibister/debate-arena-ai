@@ -59,6 +59,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "specs:seed": "tsx scripts/seed-competition-specs.ts",
     "postinstall": "prisma generate",
+    "learn-compete:smoke": "tsx scripts/learn-compete-smoke.ts",
     "concept-lesson-schema:smoke": "tsx scripts/concept-lesson-schema-smoke.ts",
     "rebuttal-containment:smoke": "tsx scripts/rebuttal-containment-smoke.ts",
     "debate-training-ux:smoke": "tsx scripts/debate-training-ux-smoke.ts",

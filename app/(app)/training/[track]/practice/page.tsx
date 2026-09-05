@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { DebateRoom } from "@/components/debate/debate-room";
 import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { HosaEventPrep } from "@/components/training/hosa-event-prep";
 import { MunConference } from "@/components/training/mun-conference";
@@ -18,6 +17,22 @@ export default async function TrackPracticePage({ params }: { params: { track: s
   if (isTrackRetired(track.id)) {
     redirect("/training");
   }
+  // DEBATE has no Practice stage. This route's Debate branch rendered a SECOND copy of the same
+  // `DebateRoom` that `/debate` renders, under the heading "Debate practice" — a duplicate of the
+  // Compete setup, named as a stage Debate no longer has. Nothing has linked it for Debate since the
+  // hub sent "Start practice" to `/debate` directly, but a typed or bookmarked URL still reached it,
+  // so a learner could land on a page telling them Practice is where Debate training happens.
+  // It redirects to the canonical Compete setup instead of being deleted, because the route is SHARED
+  // and DECA and HOSA both still render their own real surfaces below. Those two are the reason this
+  // route stays; nothing else is.
+  //
+  // MODEL UN IS NOT A REASON. It is a RETIRED track (`RETIRED_TRACKS` in lib/training-tracks.ts), and
+  // the `isTrackRetired` redirect above fires before any branch below, so the `MunConference` branch
+  // is UNREACHABLE legacy residue. It is left untouched as debt rather than deleted in a routing
+  // milestone — but it must never be cited as evidence that this route, or Model UN, is supported.
+  if (track.id === "GENERAL_DEBATE") {
+    redirect("/debate?track=debate");
+  }
 
   return (
     <div className="space-y-6">
@@ -26,16 +41,7 @@ export default async function TrackPracticePage({ params }: { params: { track: s
         {track.label} hub
       </Link>
 
-      {track.id === "GENERAL_DEBATE" ? (
-        <>
-          <div>
-            <Badge variant="secondary">Training in: {track.label}</Badge>
-            <h1 className="mt-3 text-2xl font-bold">Debate practice</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Choose a format, then practice with an AI opponent and judge.</p>
-          </div>
-          <DebateRoom track={track.slug} />
-        </>
-      ) : track.id === "MODEL_UN" ? (
+      {track.id === "MODEL_UN" ? (
         <>
           <div>
             <Badge variant="secondary">Training in: {track.label}</Badge>

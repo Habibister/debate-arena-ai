@@ -85,12 +85,23 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   const firstName = (user?.name ?? user?.displayName)?.split(" ")[0] ?? "there";
   const hasContinue = unfinished.length > 0;
 
-  // Debate start-actions launch straight into /debate (no General Debate hub in between); non-debate
-  // tracks open their own role-play setup.
-  const practiceHref = activeTrack?.id === "GENERAL_DEBATE" ? `/debate?track=${trackSlug}` : `/training/${trackSlug}/practice`;
+  // Two actions, two destinations. For Debate these were BYTE-IDENTICAL: both resolved to
+  // `/debate?track=...`, so "One focused rep in your track" opened a full judged round — a false
+  // availability statement, and two differently-named buttons doing the same thing.
+  //
+  // Under Learn + Compete the split is the product's own: Debate Now is COMPETE, the full round. A
+  // focused rep is LEARN-supporting practice, which for Debate is a scored skill drill. Non-Debate
+  // tracks keep their own role-play setup, unchanged.
+  const isDebateTrack = activeTrack?.id === "GENERAL_DEBATE";
+  const practiceHref = isDebateTrack ? `/study-arcade?track=${trackSlug}` : `/training/${trackSlug}/practice`;
   const quickActions = [
     { href: `/debate?track=${trackSlug}`, label: "Debate Now", detail: "A full round with an AI opponent and judge", icon: Gavel },
-    { href: practiceHref, label: "Practice 10 minutes", detail: "One focused rep in your track", icon: Timer },
+    {
+      href: practiceHref,
+      label: "Practice 10 minutes",
+      detail: isDebateTrack ? "A short scored drill on one skill" : "One focused rep in your track",
+      icon: Timer
+    },
     // Offered only where a practice-test product exists. General Debate has none, so this quick
     // action is absent there rather than routing to another track's generator.
     ...(trackHasPracticeTests(activeTrack?.id)

@@ -22,6 +22,12 @@ compare → annotate → guided practice → learner production → feedback on 
 transfer mini-scenario → spaced review with a different example → one next lesson.
 
 Progression across the course: **Learn → Practice → Apply → Compete.**
+> **SUPERSEDED FOR DEBATE (2026-09-05).** The owner ruled Debate's learner-facing journey is
+> exactly **Learn → Compete**. Practice and Apply were removed as Debate CATEGORIES; the drill,
+> review, remediation and writing-practice engines all remain and are reached from inside Learn.
+> DECA and HOSA keep the four-stage progression described below. This document is design history
+> and is not the authority on current product state — `docs/CURRENT_STATE.md` is.
+
 
 ## Module 1 — Understanding the Event
 

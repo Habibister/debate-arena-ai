@@ -244,7 +244,9 @@ function main() {
     // evidence-bounding scenario; no frames, no ladder, no guided application) — still an exact set.
     // Answer Types repaired 2026-09-06 (perfection audit: sections, misconception, mistakes, a small
     // classification scenario; no frames, no ladder, no guided application) — still an exact set.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation"],
+    // Turn Mechanics repaired 2026-09-06 (perfection audit: sections, misconception, mistakes, a small
+    // classification scenario; no frames, no ladder, no guided application) — still an exact set.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-turn-mechanics"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.
@@ -259,18 +261,29 @@ function main() {
   });
 
   // ---- B. published lessons still render, and render exactly as before -------------------------
+  const UNPOPULATED_EXEMPLAR = DEBATE_MIGRATED_LESSONS.find((e: { id: string }) => e.id === "debate-weighing") as {
+    source: ConceptEducationLessonSource; practiceDrill?: unknown;
+  };
   check("B. a real published lesson still renders through the widened renderer", () => {
+    assert.ok(UNPOPULATED_EXEMPLAR, "B0. the exemplar exists");
+    const ec = UNPOPULATED_EXEMPLAR.source.lesson.content as Record<string, unknown>;
+    for (const field of ["teachingSections", "additionalExamples", "revisionLadder", "misconception",
+                         "commonMistakes", "languageFrames", "scaffoldedTry"]) {
+      assert.equal(ec[field], undefined, `B0b. the exemplar authors no ${field} — otherwise B3 below is vacuous`);
+    }
     const real = render(React.createElement(ConceptEducationLessonView, {
-      // Turn Mechanics is the exemplar of a lesson that authors NONE of the structures: Evidence
-      // Evaluation, the previous exemplar, was repaired on 2026-09-05 and now authors most of them.
-      source: DEBATE_TURN_MECHANICS_LESSON.source,
+      // The exemplar must be a lesson that authors NONE of the structures, and each repair moves the
+      // goalposts: Evidence Evaluation held this role until 2026-09-05, Turn Mechanics until
+      // 2026-09-06. Weighing is the current one, and it is asserted unpopulated below rather than
+      // assumed, so this control cannot go vacuous when Weighing is repaired in its turn.
+      source: UNPOPULATED_EXEMPLAR.source,
       provenance: MIGRATED_DEBATE_PROVENANCE,
       moduleLabel: "Round strategy",
       next: null,
-      practiceDrill: DEBATE_TURN_MECHANICS_LESSON.practiceDrill
+      practiceDrill: UNPOPULATED_EXEMPLAR.practiceDrill
     } as never));
     const text = visible(real);
-    assert.ok(text.includes(DEBATE_TURN_MECHANICS_LESSON.source.lesson.title), "B: its title renders");
+    assert.ok(text.includes(UNPOPULATED_EXEMPLAR.source.lesson.title), "B: its title renders");
     assert.ok(text.includes("What it is") && text.includes("Why it matters") && text.includes("How to do it"),
       "B2: its original teaching sections all render");
     // None of the new headings appear for a lesson that authored none of them. An empty section would

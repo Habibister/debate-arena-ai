@@ -856,6 +856,120 @@ export function evaluateAnswerTypesScaffold(
 export type ScaffoldContext = { motion?: string };
 
 /**
+ * TURN MECHANICS. The lesson's four named moves, as the learner meets them. Multi-word terms, so the
+ * label slot is normalised as a WHOLE ANSWER and must BE one of these — never merely contain one:
+ * "link turn" passes, "Link Turn" passes, "turn" does not (two of the four are turns), and
+ * "link turn impact turn" does not. Same contract as the answer-types label, one vocabulary wider.
+ */
+export const TURN_MOVE_TERMS = ["no-link", "link turn", "impact defense", "impact turn"] as const;
+export type TurnMoveTerm = (typeof TURN_MOVE_TERMS)[number];
+
+/** Accepted spellings, normalised. Hyphen and space are the same separator; British spelling passes. */
+const TURN_MOVE_BY_PHRASE: Readonly<Record<string, TurnMoveTerm>> = {
+  "no link": "no-link", "nolink": "no-link", "no link answer": "no-link",
+  "link turn": "link turn", "link turns": "link turn",
+  "impact defense": "impact defense", "impact defence": "impact defense",
+  "impact turn": "impact turn", "impact turns": "impact turn"
+};
+
+/** The whole answer, normalised, or null when it is not exactly one of the four moves. */
+export function soleTurnMoveTerm(text: string): TurnMoveTerm | null {
+  const words = canonical(text.replace(/-/g, " ")).split(" ").filter(Boolean);
+  if (words[0] === "a" || words[0] === "an" || words[0] === "the") words.shift();
+  return TURN_MOVE_BY_PHRASE[words.join(" ")] ?? null;
+}
+
+/**
+ * The learner reasons first and names the move second, in the lesson's own order: what changes in
+ * their causal story, what becomes true if the answer succeeds, then the move. The two reasoning
+ * slots are SHAPE-ONLY — present, distinct, and not the move name standing in for a thought. The
+ * move slot is an exact whole-answer match against the authored classification, which is honest
+ * because the vocabulary is closed. A correct label proves the label and nothing about the reasoning.
+ */
+export function evaluateTurnMechanicsScaffold(
+  slots: { changes: string; becomesTrue: string; move: string },
+  expected: TurnMoveTerm
+): ScaffoldEvaluation {
+  const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount(slots.changes) < 3) {
+    return {
+      complete: false,
+      slot: "what changes in their story",
+      coach: "Start inside their argument: which part is your answer working on, the connection between action and outcome, or the endpoint where the outcome is called bad?",
+      retryRequired: true
+    };
+  }
+  // Same closed-vocabulary guard as the answer-types scaffold, applied to BOTH reasoning slots: the
+  // NAME of the move cannot stand in for the account of what happened. The move words are genuinely
+  // removed before the length is counted — a length check, never a judgment about meaning.
+  const namesMove = (text: string) => Object.keys(TURN_MOVE_BY_PHRASE)
+    .some((phrase) => canonical(text.replace(/-/g, " ")).includes(phrase));
+  const withoutMoves = (text: string) => {
+    let stripped = canonical(text.replace(/-/g, " "));
+    for (const phrase of Object.keys(TURN_MOVE_BY_PHRASE)) stripped = stripped.split(phrase).join(" ");
+    return words(stripped);
+  };
+  const reasoningSlots = [
+    { key: "changes" as const, label: "which part, and what it does to it",
+      thin: "Say which part of their argument your answer works on, and what it does to that part." },
+    { key: "becomesTrue" as const, label: "what becomes true",
+      thin: "Suppose the answer works completely: what is then true about their outcome, and does anything now count for your side?" }
+  ];
+  for (const { key, label, thin } of reasoningSlots) {
+    if (withoutMoves(slots[key]).length >= 3) continue;
+    return {
+      complete: false,
+      slot: label,
+      coach: namesMove(slots[key])
+        ? "This blank is for what happens inside their argument, not for the name of the move. The name goes in the last blank."
+        : thin,
+      retryRequired: true
+    };
+  }
+  if (essentiallyTheSame(slots.changes, slots.becomesTrue)) {
+    return {
+      complete: false,
+      slot: "what becomes true",
+      coach: "The second blank is not a repeat of the first. The first says what your answer does to their argument; this one says what is true in the round once it succeeds.",
+      retryRequired: true
+    };
+  }
+  const named = soleTurnMoveTerm(slots.move);
+  if (named === null) {
+    return {
+      complete: false,
+      slot: "the move, in the lesson's words",
+      coach: "This blank takes one move name on its own: no-link, link turn, impact defense or impact turn. \u201cTurn\u201d by itself does not say which one.",
+      retryRequired: true
+    };
+  }
+  if (named !== expected) {
+    // One message for every wrong move. Naming which axis was wrong would halve the four-term space
+    // on the next guess, and the slot is the only graded element here; the coaching re-runs the
+    // lesson's own two questions instead, which is true whichever move the learner named.
+    return {
+      complete: false,
+      slot: "the move, in the lesson's words",
+      coach: "That is not the move. Read your own second blank again and ask the lesson's two questions of it: does your answer change whether their outcome arrives, or what it is worth once it does — and does anything now count for your side?",
+      retryRequired: true
+    };
+  }
+  return {
+    complete: true,
+    coach: "",
+    exactCheck: "The move is right: this answer is an " + expected + ". The two sentences above were checked only for being there and being different \u2014 nothing read whether your account of the reversal is correct.",
+    retryRequired: false
+  };
+}
+
+/**
+ * The authored classification for the turn-mechanics exercise: the answer grants that the families
+ * arrive and defends their arrival as what makes the street safer, so it reverses the endpoint.
+ * `coached-performance:smoke` pins the authored response this was keyed against.
+ */
+const TURN_MECHANICS_EXPECTED: TurnMoveTerm = "impact turn";
+
+/**
  * The authored classification for the answer-types exercise: the response in that lesson's prompt
  * reverses the opponent's own worry, so it is a turn. It lives here rather than in the lesson because
  * `scaffoldedTry` has no field for an expected answer and inventing one to hold a key would make a
@@ -870,7 +984,9 @@ export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly stri
   "debate-round-orientation": (v) => evaluateRoundTrackingScaffold({ answered: v[0] ?? "", unresolved: v[1] ?? "", noResponse: v[2] ?? "" }),
   "debate-evidence-evaluation": (v) => evaluateEvidenceScaffold({ shows: v[0] ?? "", notYet: v[1] ?? "", need: v[2] ?? "" }),
   "debate-answer-types": (v) =>
-    evaluateAnswerTypesScaffold({ ifItSucceeds: v[0] ?? "", direction: v[1] ?? "", type: v[2] ?? "" }, ANSWER_TYPES_EXPECTED)
+    evaluateAnswerTypesScaffold({ ifItSucceeds: v[0] ?? "", direction: v[1] ?? "", type: v[2] ?? "" }, ANSWER_TYPES_EXPECTED),
+  "debate-turn-mechanics": (v) =>
+    evaluateTurnMechanicsScaffold({ changes: v[0] ?? "", becomesTrue: v[1] ?? "", move: v[2] ?? "" }, TURN_MECHANICS_EXPECTED)
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

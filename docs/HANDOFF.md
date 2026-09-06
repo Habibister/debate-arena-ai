@@ -1,6 +1,6 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-08-30._
+_Last updated: 2026-09-06._
 
 **This region is the only operational part of this file.** Everything below the
 `PREVIOUS HANDOFF ARCHIVE` boundary is preserved historical handoff material: non-normative,
@@ -55,7 +55,50 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
-- **ANSWER TYPES — PERFECTION AUDIT, THEN REPAIR — UNCOMMITTED, in the working tree (2026-09-06).**
+- **TURN MECHANICS — PERFECTION AUDIT, THEN REPAIR — UNCOMMITTED, in the working tree (2026-09-06).**
+  The opposite diagnosis to Answer Types, and the case that justifies the audit-first rule: the
+  TEACHING was already good — both website-only readers answered all nine checks with every deciding
+  idea marked TAUGHT — while the DOCTRINE was partly wrong and the assessment was exploitable behind a
+  healthy-looking aggregate (H_LONG 22% / UL 22% / R_MED 0.95, healthy only because keys were uniquely
+  shortest in three items and uniquely longest in four and the two signatures cancelled; 8 of 9 checks
+  were adjudicated exploitable and 27/27 blind no-lesson solvers scored). The governing rule "never
+  reverse both parts of the same chain" is not general: three of the lesson's own illustrations
+  composed answers about different quantities, and two answers on two DIFFERENT arguments can collide
+  when they meet on one outcome. The double turn is now taught as a COLLISION — two answers that,
+  granted about the same outcome (same measure, same who or what in the same place, same stretch of
+  time, same conditions), ADD UP to a reason against your own side — with a five-move test whose
+  deciding question is SELF-DEFEAT, not logical incompatibility. That correction was itself the most
+  important finding of the review: the first repair draft said the pair "cannot both be true", which
+  ACQUITS the paradigm double turn, since both claims usually can be true and that is exactly why the
+  opponent can agree with both and take the ballot. A reversal now "counts as offense only when the
+  result it creates would give the judge a reason to prefer your side", success-conditional and in
+  Answer-Types vocabulary. Checks 9 -> 6, question text 2,450 -> 1,139 words, teaching 1,196 -> 1,757.
+  A MOVE SCENARIO reasons first and names second: two shape-only reasoning slots, then one exact
+  whole-answer label from no-link / link turn / impact defense / impact turn. NO guided round — the
+  double turn is a relation between two of the learner's own answers, which no ballot can score.
+  The assessment then went through five panels under the permanent content-free protocol. Beyond the
+  item-level tells (a key ending on the stem's own proposal noun; a key that was the only option with
+  a modal; an A/B twinned pair whose key was the un-trimmed twin; a key that was the only graded
+  option among totalizing distractors — all fixed by giving distractors the same surface, never by
+  re-wording the key), the last rounds found three defects worth carrying forward as lessons about the
+  method itself. (1) The CATALOG `description` still stated the superseded co-truth test: sweeps that
+  read "learner-visible lesson strings" never read it. Sweep the catalog fields too. (2) A learner-nit
+  repair introduced a doctrine error — restoring "or place" made the sameness count a DISJUNCTION,
+  which scores both of the lesson's own contrast cases backwards; its conjunctive fix then named
+  PEOPLE, which cannot certify this lesson's own DOG collision. It is "the same who or what in the
+  same place", and the fix is only provable by running the printed procedure literally against the
+  lesson's own keyed cases. (3) A rewritten distractor became defensible: conceding that an impact is
+  bad is sound practice when you are link-turning it, so the concession had to be of CAUSATION.
+  Final adjudication: both contested checks CLEAN, the key holding zero single-option properties while
+  every distractor holds several. The recorded ceiling: zero isolating properties is NOT reachable in
+  four-option form, so the standard is a balanced lattice in which no privileged cue points at the key.
+  Guard after: H_LONG 8% / H_SHORT 25% / H_ELIM 17% / UL 0% / R_MED 0.97. Two WARNs are expected —
+  DUP_SET 16.7% is the arithmetic floor for a six-item bank, and LEN_SPREAD 0.06 is the deliberate
+  length matching (`debate-refutation` 0.06, Answer Types 0.08). Drill bank, the 22-item containment
+  and the `debate-rebuttal` mastery hold are untouched; `lib/debate-drills.ts` and `prisma/` are 0
+  lines changed. Baseline `TURN-MECHANICS-REPAIR-V1`, one block changed, twenty byte-identical.
+  20/20 strict-safe battery, coached-performance 90 controls, ENV 0 / NET 0, `tsc --noEmit` clean.
+- **ANSWER TYPES — PERFECTION AUDIT, THEN REPAIR — COMMITTED `0c0da45` (2026-09-06).**
   The first "previously strong" lesson re-audited under the new standard, by 55 independent reviewers
   plus my own measurements. It failed on three counts the old standard never checked. (1) BALANCE:
   421 teaching words against 1,099 words of quiz, with five load-bearing ideas — a fully successful
@@ -124,7 +167,7 @@ below the boundary.
   "turn offense", "defense indict turn offense", "turn blah blah", "this is a turn" and "reversal" are
   refused, so enumerating the vocabulary in one box cannot pass. The slot label states the contract
   ("the answer type, in one word"). Teaching prose 1,250. **Not committed.**
-- **EVIDENCE EVALUATION — AUDIT-FIRST REPAIR — UNCOMMITTED, in the working tree (2026-09-05).**
+- **EVIDENCE EVALUATION — AUDIT-FIRST REPAIR — COMMITTED `09ea14f` (2026-09-05).**
   Second lesson under the audit-first rule. The audit (nine reviewers) found it under-taught, not
   mis-taught: no definition of evidence, no "what must be shown" step, the rule for what evidence
   proves never stated, size-of-claim and representativeness absent, the drill's recurring patterns
@@ -184,7 +227,7 @@ below the boundary.
   it." — naming the connection without teaching how to build it; the noun "warrant" now appears
   exactly twice (that sentence and the CWI pointer), pinned. Teaching prose 1,166 words.
   **Not committed.**
-- **ROUND ORIENTATION — AUDIT-FIRST REPAIR — UNCOMMITTED, in the working tree (2026-09-05).**
+- **ROUND ORIENTATION — AUDIT-FIRST REPAIR — COMMITTED `d61dbde` (2026-09-05).**
   The first lesson handled under the rule "perfect for its purpose, not identical to the others."
   A read-only audit (nine reviewers: beginner and coach confusion tests, neutrality, ownership,
   question audit, two application opinions, blind and content-free answering) found: role CONCEPTUAL;

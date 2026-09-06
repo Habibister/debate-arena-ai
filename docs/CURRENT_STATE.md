@@ -145,6 +145,76 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **TURN MECHANICS — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).**
+  The opposite diagnosis to Answer Types, and the reason the audit-first rule matters: the TEACHING
+  was already good — both website-only readers answered all nine checks correctly with every deciding
+  idea marked TAUGHT — while the DOCTRINE was partly wrong and the assessment was exploitable behind a
+  healthy-looking aggregate. Three findings drove the repair. (1) The governing rule, "never reverse
+  both parts of the same chain", is not general: three of the lesson's own illustrations composed
+  answers whose referents were different quantities (scrolling vs reading, roaming vs accompanied
+  dogs, loiterers vs market visitors) so the contradiction did not follow, while two answers on two
+  DIFFERENT arguments can collide when they meet on one outcome. (2) "Only the two reversals turn
+  their argument into offense" was unqualified — a reversal whose result arrives either way creates no
+  reason to prefer your side. (3) Eight of nine checks were adjudicated structurally exploitable and
+  27/27 blind no-lesson solvers answered correctly, while the form guard read H_LONG 22% / UL 22% /
+  R_MED 0.95 — healthy, because keys were uniquely shortest in three items and uniquely longest in
+  four and the two signatures cancelled. Repaired to those gaps: the double turn is now taught as a
+  COLLISION about the same outcome under the same scope (same measure, same who or what in the same
+  place, same stretch of time, same conditions), with a five-move test whose deciding question is
+  SELF-DEFEAT — matching measures make two claims comparable, only granting both and asking whether
+  your own side is then the thing that removes the good, or delivers the harm, the other answer named
+  makes the pair self-defeating — and both consequences stated: two reversals about different
+  outcomes sit together perfectly well, two answers to two different arguments may collide. A reversal
+  "counts as offense only when the result it creates would give the judge a reason to prefer your
+  side", success-conditional and in Answer-Types vocabulary, with no policy-debate jargon imported.
+  The WHAT-reverses/WHY-it-follows duty now applies to both reversals; turn versus denial, versus
+  independent offense and versus indict are each drawn; shrinking is split into less-of-the-outcome
+  and matters-less without touching weighing; the untested "internal links" jargon is gone; and a
+  compressed argument can be split with three questions. Independent review then caught the most
+  important error the panel could have caught, and it was in the repair itself: the rewritten rule
+  said two answers collide when they "cannot both be true", which ACQUITS the paradigm double turn —
+  both claims usually can be true, which is exactly why the opponent can agree with both and take the
+  ballot. Corrected throughout, heading included: a collision is two answers that, granted together
+  about the same outcome, ADD UP to a reason against your own side, and the deciding question is
+  scoped to self-defeat so a merely unwise but consistent pair acquits. The same review found a
+  membership contradiction with Answer Types (a turn is always offense, versus a reversal counting as
+  offense only when the result depends on your side), closed by making the comparative test part of
+  earning the name; a repair check that assumed a later speech exists, reframed as a pre-delivery
+  audit; and three scenario defects — coaching that described a no-link while claiming to describe a
+  link turn, a direction disclosure that collapsed the four-term label space to two guesses, and a
+  guard whose comment did not match its code. Three teaching sections, one misconception, five
+  mistakes, teaching prose 1,196 -> 1,757, checks 9 -> 6, question text 2,450 -> 1,139, whole lesson
+  4,084 -> 3,942 words. Guard after: H_LONG 8% / H_SHORT 25% / H_ELIM 17% / UL 0% / R_MED 0.97. A small MOVE SCENARIO
+  reasons first and names second: two shape-only reasoning slots, then one exact whole-answer move
+  label from no-link / link turn / impact defense / impact turn — "turn" alone, a sentence, and any
+  enumeration are all refused. NO guided round: no `DebateCompetency`, no judge category, and the
+  double turn is a relation between two of the learner's own answers, which no ballot can score.
+  The assessment was then taken through the permanent content-free protocol until it stopped moving:
+  five panels of blind solvers, structure-only tell hunters and adjudicators, plus literal doctrine
+  sweeps. What they closed, in order: six doctrine leaks in the first sweep; then a key isolated by
+  ending on the stem's own proposal noun (check 3) and a key that was the only option carrying a modal
+  and a free-choice determiner (check 6); then, once those were fixed, an A/B twinned-shell pair whose
+  key was simply the un-trimmed twin, and a check 6 whose key was the only graded option among three
+  totalizing distractors — both repaired by giving distractors the same surface rather than by
+  re-wording the key. The last two rounds found defects the earlier ones could not: the CATALOG
+  DESCRIPTION still stated the superseded co-truth test (learner-facing authored copy the lesson-body
+  sweeps never read); the sameness count read as a DISJUNCTION ("the same people or place"), which
+  scores both of the lesson's own contrast cases backwards, and its conjunctive repair then named
+  PEOPLE, which cannot certify this lesson's own dog-park collision — now "the same who or what in the
+  same place", enumerated identically in all three places; the step list was the only statement of the
+  test missing the sameness screen; and a rewritten distractor was defensible under a charitable
+  reading (conceding that an impact is bad is sound practice when you are link-turning it), fixed by
+  making it concede CAUSATION. Final adjudication: both remaining checks CLEAN, with the key holding
+  zero single-option properties in check 6 while every distractor holds several. The adjudicator's
+  ruling on the format is recorded because it bounds this work: zero isolating properties is not
+  reachable in four-option form — four options that must differ in meaning will differ in length,
+  shell, modality and specificity — so the standard is a balanced lattice in which no privileged cue
+  points at the key, and both checks are at it. Drill bank, 22-item containment and the
+  `debate-rebuttal` mastery hold untouched. Baseline `TURN-MECHANICS-REPAIR-V1`, one block changed,
+  twenty byte-identical. Two form-guard WARNs are expected and recorded honestly: DUP_SET 16.7% is the
+  arithmetic floor for a six-item bank (every item has a distinct distractor set), and LEN_SPREAD 0.06
+  is the deliberate length matching that removes the length cue — `debate-refutation` sits at 0.06 and
+  Answer Types at 0.08 for the same reason. **Not committed.**
 - **ANSWER TYPES — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).** The
   first lesson audited under the perfection standard, and it did not survive the old label "strong":
   421 words of teaching against 1,099 words of quiz text, five load-bearing ideas taught ONLY inside

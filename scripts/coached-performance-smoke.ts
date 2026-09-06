@@ -503,8 +503,8 @@ function main() {
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
     assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 5,
-      "five lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, and Answer Types' classification scenario");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 6,
+      "six lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, and Turn Mechanics' move scenario");
   });
 
   // ================================================================================================
@@ -1541,6 +1541,246 @@ function main() {
       assert.ok(!drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} was already servable and stays so`);
     }
     assert.ok(!/mastery|mastered/i.test(atAll), "the lesson claims no durable mastery");
+  });
+
+
+  // ================================================================================================
+  // R. TURN MECHANICS — the perfection repair (2026-09-06). The audit found teaching that already
+  // worked (both website-only readers 9/9, everything TAUGHT) wrapped in 2,450 words of quiz across
+  // nine checks, eight of which an adjudicator ruled structurally exploitable — while the aggregate
+  // form guard read HEALTHY, because keys were uniquely shortest in three items and uniquely longest
+  // in four and the two signatures cancelled. It also found the governing doctrine partly wrong.
+  // What follows pins the corrected doctrine, the quiz reduction, and the move scenario.
+  // ================================================================================================
+  const TM = "debate-turn-mechanics";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tmEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === TM) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tm = tmEntry.source.lesson.content as any;
+  const tmChecks = [tm.guidedQuestion, ...tm.practiceQuestions, ...tm.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
+  const tmAll = [tm.objective, tm.explanation, tm.whyMatters, ...tm.steps,
+    ...tm.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body),
+    ...Object.values(tm.workedExample as Record<string, string>),
+    ...Object.values(tm.misconception as Record<string, string>),
+    ...tm.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)),
+    tm.scaffoldedTry.prompt, tm.scaffoldedTry.frame, ...tm.scaffoldedTry.slots,
+    ...tmChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation])].join("\n");
+
+  check("RA. Turn Mechanics is MIXED: a move scenario, six checks, no guided round, no frames, no ladder", () => {
+    assert.equal(guidedApplicationFor(TM), null, "no guided round: no competency and no judge category measures this mechanic");
+    assert.equal(tm.languageFrames, undefined); assert.equal(tm.revisionLadder, undefined); assert.equal(tm.additionalExamples, undefined);
+    assert.equal(tm.teachingSections.length, 3); assert.ok(tm.misconception); assert.equal(tm.commonMistakes.length, 5);
+    assert.equal(1 + tm.practiceQuestions.length + tm.masteryCheck.length, 6, "nine checks became six distinct judgments");
+    assert.deepEqual(tm.scaffoldedTry.slots, ["which part, and what it does to it", "what becomes true", "the move, in the lesson's words"]);
+    assert.equal(tmEntry.skillSlug, undefined, "still no skill claim");
+    assert.deepEqual(tmEntry.practiceDrill, { track: "debate", area: "rebuttal" }, "the drill CTA is unchanged");
+    const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
+    const qWords = tmChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]).map(words).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(qWords < 1300, `the quiz layer shrank from 2,450 words: ${qWords}`);
+    const prose = [tm.objective, tm.explanation, tm.whyMatters, ...tm.steps, ...tm.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body)].map(words).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(prose > qWords, `teaching now outweighs quiz text: ${prose} vs ${qWords}`);
+  });
+
+  check("RB. the double turn is taught as a collision about one outcome, not as a count of reversals", () => {
+    const collision = tm.teachingSections[1].body;
+    // The heading is learner-facing doctrine too: it must not say the claims cannot both be true.
+    assert.equal(tm.teachingSections[1].heading, "When two answers add up against you");
+    // The old governing rule keyed on "the same chain" and was provably not general: two answers on
+    // two different arguments can collide, and two reversals on one chain can be compatible.
+    assert.ok(!/never reverse both parts of the same chain/i.test(tmAll), "the old absolute rule is gone");
+    assert.ok(!/the contradiction lives inside a single chain/i.test(tmAll), "and so is 'nowhere else'");
+    assert.ok(/It is a collision between two claims, not a rule about how many reversals you are allowed\./.test(collision),
+      "the doctrine is stated as a collision");
+    // A double turn is NOT a contradiction: both claims usually can be true, which is exactly why the
+    // opponent can agree with both. Saying "cannot both be true" acquits the paradigm case.
+    assert.ok(!/cannot both be true/i.test(tmAll), "the doctrine never says the two claims cannot both be true");
+    assert.ok(/both of them, granted about the SAME outcome[\s\S]{0,140}add up to a reason against your own side/.test(collision),
+      "keyed on the outcome, and on what the pair adds up to");
+    assert.ok(/Note what that does not require: the two claims usually can both be true, and that is exactly why the opponent can agree with both\./.test(collision),
+      "and says so outright, phrased so it cannot be read as denying joint truth");
+    // Sameness of outcome is the SCREEN, never the verdict: no sentence may end there.
+    assert.ok(!/fail the test because it is the same outcome/i.test(tmAll), "sameness is never given as the reason a pair fails");
+    assert.ok(/then grant both and ask whether they can stand without making your own side remove the good, or deliver the harm, the other just named/.test(tmAll),
+      "and the mistakes list carries the deciding question, not just the four counts");
+    // Partial overlap has one road, not two.
+    assert.ok(/If they share none of it, they are not candidates for a collision\. If they overlap only in part, they are candidates for that part alone/.test(collision),
+      "partial overlap is scoped inside the screen rather than sent down a second road");
+    // The safe pairing is licensed by being alternatives, never by consistency.
+    assert.ok(!/consistent branches/i.test(tmAll), "the safe pairing is not licensed on consistency");
+    assert.ok(/the same measure, the same who or what in the same place, the same stretch of time, the same conditions/.test(collision),
+      "with the scope conditions spelled out");
+    // CONJUNCTIVE, not disjunctive: read as "people OR place" the rule scores the lesson's own two
+    // contrast cases backwards — the market case shares a place and differs in people, the teenagers
+    // case shares the people and differs in place, and the lesson calls both DIFFERENT outcomes.
+    assert.ok(!/people or place/i.test(tmAll + tmEntry.source.description), "the second count is never a disjunction");
+    // Every enumeration of the four counts uses the same words, so "all four counts" resolves to one list.
+    // WHO OR WHAT, not people: this lesson's own collision drill is about dogs, and a count that
+    // names people cannot certify it. All three enumerations use the one wording.
+    assert.equal((tmAll.match(/same measure, (?:the )?same who or what in the same place, (?:the )?same stretch of time, (?:the )?same conditions/g) ?? []).length, 3,
+      "the four counts are enumerated identically wherever they are enumerated");
+    assert.ok(!/same people in the same place/.test(tmAll), "no people-shaped count the dog collision cannot satisfy");
+    // The catalog line is authored learner-facing copy and was the last place still stating the
+    // superseded co-truth test. It carries the self-defeat formulation now.
+    assert.ok(/test whether two answers, granted together, add up to a reason against your own side/.test(tmEntry.source.description),
+      "the catalog description states the corrected test");
+    // The step list is a statement of the test in its own right and must not be a move short.
+    assert.ok(/check whether those outcomes are the same on all four counts — and if they overlap only in part, run the last question on the part they share — grant them both/.test(tm.steps[4]),
+      "the steps carry the sameness screen and the partial-overlap branch, not just the deciding question");
+    // The compressed statements of the test are five moves in the same order as the long one, so a
+    // learner who only sees the steps list or the misconception card runs the same procedure.
+    for (const compressed of [tm.steps[4], tm.misconception.betterModel, tm.commonMistakes[3].fix]) {
+      assert.ok(/comparable words/.test(compressed) && /the same on all four counts/.test(compressed) && /overlap only in part, run the last question on the part they share/.test(compressed) && /grant (both|them both)/.test(compressed) && /removes? the good, or delivers? the harm/.test(compressed),
+        "every compressed statement of the test carries name, compare, screen, the partial-overlap branch, grant, decide");
+    }
+    // Matching scope makes two claims comparable; only granting both and testing them decides it.
+    // The deciding question is scoped to self-defeat, so an unwise-but-consistent pair acquits.
+    assert.ok(/can both stand without making your own side the thing that removes the good, or delivers the harm, that your other answer just named\?/.test(collision),
+      "the deciding question is self-defeat, not mere strategic tension");
+    // "hold together" reads as a consistency word on its own; the doctrine is about self-defeat.
+    assert.ok(!/hold together/i.test(tmAll), "no residue of the consistency framing");
+    // The objective is the most-read sentence in the lesson and carried the superseded rule.
+    assert.ok(/check that answers you run together do not add up to a reason against your own side/.test(tm.objective),
+      "the objective states the corrected rule, not truth-compatibility");
+    // The phrase survives EXACTLY once, in the sentence that denies the old rule. Anywhere else it
+    // would be the superseded criterion coming back, so the count is pinned rather than the absence.
+    assert.equal((tmAll.match(/can both be true|be true together/gi) ?? []).length, 1,
+      "the truth-compatibility phrase appears once, and only where the lesson rejects it as the test");
+    assert.ok(/Note what that does not require: the two claims usually can both be true/.test(collision),
+      "and that one occurrence is the rejection");
+    assert.ok(/Matching measures make two claims comparable; only that last question makes the pair self-defeating\./.test(collision),
+      "stated explicitly, so 'same variable' cannot become the new oversimplification");
+    assert.ok(/If they overlap only in part, they are candidates for that part alone: name the part they share and run the last question on it\./.test(collision),
+      "and partial overlap has a rule");
+    assert.ok(/Reversals that look like a pair may not be one/.test(collision), "compatible reversals are taught");
+    assert.ok(/answers to two different arguments can collide/.test(collision), "and cross-argument collisions are taught");
+  });
+
+  check("RC. a reversal counts as offense only when the result depends on the learner's side", () => {
+    const body = tm.teachingSections[2].body;
+    assert.ok(/A reversal counts as offense only when the result it creates would give the judge a reason to prefer your side\./.test(body),
+      "the condition is stated in Answer-Types vocabulary");
+    assert.ok(/The test is what the answer would establish if it were accepted, not whether the judge ends up believing it\./.test(body),
+      "and stays success-conditional, so classification never depends on persuasion");
+    // Format-neutral language: no policy-debate jargon imported into a mechanics lesson.
+    for (const jargon of ["uniqueness", "non-unique", "fiat", "solvency", "inherency", "permutation"]) {
+      assert.ok(!new RegExp(jargon, "i").test(tmAll), `no imported jargon: ${jargon}`);
+    }
+    assert.ok(/That duty is the same for both reversals|it is the same for both reversals/.test(body),
+      "the causal duty applies to link turns and impact turns alike");
+    // Membership stays absolute: a reversal that fails the comparative test never becomes a turn, so
+    // "a turn is always offense" and "counts as offense only when…" cannot contradict each other.
+    assert.ok(/A reversal that fails that test has not earned the name: it is a claim about something that happens either way, not a turn\./.test(body),
+      "a failed reversal is not a turn, so Answer Types' absolute membership survives");
+    assert.ok(/a turn takes their outcome and makes it yours/.test(body), "turn is excluded from independent offense");
+    assert.ok(/an indict from the last lesson, which is defense/.test(body), "the indict prerequisite is a reminder, not a re-teach");
+    assert.ok(/is the refutation lesson\u2019s job|refutation lesson\u2019s job/.test(body), "and the Refutation handoff is present");
+  });
+
+  check("RD. shrinking is split into less-of-the-outcome and matters-less, without teaching weighing", () => {
+    const four = tm.teachingSections[0].body;
+    assert.ok(/You can say less of the outcome arrives/.test(four), "less of it");
+    assert.ok(/the outcome arrives and matters less than they say/.test(four), "or it matters less");
+    assert.ok(/which is really a claim about how strongly the connection works/.test(four), "and which part each is about");
+    for (const weighing of ["outweigh", "magnitude", "probability", "timeframe", "net benefit", "more important than"]) {
+      assert.ok(!new RegExp(weighing, "i").test(tmAll), `no weighing vocabulary: ${weighing}`);
+    }
+    // The stray "internal links" term was named once and never demonstrated or tested; it is gone,
+    // and longer chains are covered by one clause instead.
+    assert.ok(!/internal link/i.test(tmAll), "the untested jargon is dropped");
+    assert.ok(/Some arguments have more steps in the middle than one, and the same questions apply at each of them\./.test(tm.explanation),
+      "longer chains are still covered");
+    assert.ok(/Split it with three questions/.test(tm.explanation), "and a compressed argument can be split");
+  });
+
+  check("RE. the six checks are length-balanced: no key is extremal on any metric", () => {
+    const wc = (t: string) => t.trim().split(/\s+/).length;
+    tmChecks.forEach((q, i) => {
+      const lens = q.choices.map(wc), chars = q.choices.map((o) => o.length);
+      const k = q.choices.indexOf(q.correctAnswer);
+      const mw = Math.max(...lens), nw = Math.min(...lens), mc = Math.max(...chars), nc = Math.min(...chars);
+      assert.ok(!(lens.filter((x) => x === mw).length === 1 && lens[k] === mw), `Q${i + 1}: key not uniquely longest by words`);
+      assert.ok(!(lens.filter((x) => x === nw).length === 1 && lens[k] === nw), `Q${i + 1}: nor uniquely shortest by words`);
+      assert.ok(!(chars.filter((x) => x === mc).length === 1 && chars[k] === mc), `Q${i + 1}: nor uniquely longest by characters`);
+      assert.ok(!(chars.filter((x) => x === nc).length === 1 && chars[k] === nc), `Q${i + 1}: nor uniquely shortest by characters`);
+      assert.ok(mw - nw <= 5 && mc - nc <= 16, `Q${i + 1}: options are length-matched (${lens.join("/")} words, ${chars.join("/")} chars)`);
+      assert.equal(new Set(q.choices).size, 4, `Q${i + 1}: four distinct options`);
+    });
+    assert.deepEqual(tmChecks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["B", "B", "B", "C", "B", "A"], "keys as authored and reviewed");
+    // The lesson must teach acquittal as well as conviction: one check's key is the COMPATIBLE case.
+    const acquit = tmChecks.find((q) => /Do these two answers collide\?/.test(q.prompt));
+    assert.ok(acquit && /^No, because the first answer names the drifters and the second the paying shoppers/.test(acquit.correctAnswer),
+      "a learner who memorised 'two reversals = double turn' fails at least one check");
+    // The repair check must not assume a later speech exists: the audit happens before delivery.
+    const repair = tmChecks.find((q) => /What should you do\?/.test(q.prompt));
+    assert.ok(repair && /You run the audit before you speak\./.test(repair.prompt), "the repair is a pre-delivery audit");
+    assert.ok(!/cheerfully agrees with both|next speech|in your next/i.test(tmAll), "no later-speech assumption anywhere");
+  });
+
+  check("RF. the move scenario reasons first and names second; reasoning shape-only, move exact", () => {
+    const { evaluateTurnMechanicsScaffold, soleTurnMoveTerm, TURN_MOVE_TERMS } = coaching;
+    assert.deepEqual([...TURN_MOVE_TERMS], ["no-link", "link turn", "impact defense", "impact turn"], "the closed vocabulary is the lesson's four moves");
+    assert.ok(/the market takes|families on that pavement|slows the traffic down/i.test(tm.scaffoldedTry.prompt), "the authored response the key belongs to");
+    assert.equal(tm.scaffoldedTry.motion, undefined, "no field is made to lie");
+    assert.equal(tm.scaffoldedTry.opponentClaim, undefined);
+    const good = ["the answer works on the endpoint where they called the crowd a hazard", "the families still arrive and their arrival is what makes the street safer"];
+    for (const spelling of ["impact turn", "Impact Turn", " impact turn ", "an impact turn", "impact turns"]) {
+      assert.equal(evaluateScaffoldFor(TM, [good[0], good[1], spelling]).complete, true, `normalised to the term: "${spelling}"`);
+    }
+    // Whole-answer equality, not containment: enumerating the vocabulary or wrapping it in a sentence fails.
+    for (const notATerm of ["turn", "link turn impact turn", "this is an impact turn", "impact", "reversal", ""]) {
+      assert.equal(evaluateScaffoldFor(TM, [good[0], good[1], notATerm]).complete, false, `refused, not one move name: "${notATerm}"`);
+    }
+    for (const wrong of ["no-link", "link turn", "impact defense"]) {
+      assert.equal(evaluateScaffoldFor(TM, [good[0], good[1], wrong]).complete, false, `wrong move refused: "${wrong}"`);
+    }
+    assert.equal(soleTurnMoveTerm("an Impact Turn."), "impact turn");
+    assert.equal(soleTurnMoveTerm("link turn impact turn"), null);
+    assert.ok(/nothing read whether your account of the reversal is correct/.test(evaluateScaffoldFor(TM, [good[0], good[1], "impact turn"]).exactCheck ?? ""),
+      "and the completion copy says what was and was not judged");
+    assert.equal(evaluateScaffoldFor(TM, [good[0], good[0], "impact turn"]).complete, false, "the two reasoning slots must differ");
+    // The move name may not stand in for either account, and the guard applies to BOTH slots.
+    for (const filler of ["impact turn impact turn impact turn", "an impact turn", "link turn"]) {
+      assert.equal(evaluateScaffoldFor(TM, [filler, good[1], "impact turn"]).complete, false, `slot 1 refuses the move name: "${filler}"`);
+      assert.equal(evaluateScaffoldFor(TM, [good[0], filler, "impact turn"]).complete, false, `slot 2 refuses the move name: "${filler}"`);
+    }
+    // One message for every wrong move: naming the axis would halve the space on the next guess.
+    const wrongCoaches = new Set(["no-link", "link turn", "impact defense"].map((m) => evaluateScaffoldFor(TM, [good[0], good[1], m]).coach));
+    assert.equal(wrongCoaches.size, 1, "the wrong-move coaching discloses nothing about which axis was wrong");
+    const body = String(evaluateTurnMechanicsScaffold);
+    assert.ok(!/overlap\(|containedIn/.test(body), "no word-overlap heuristics in the reasoning slots");
+    const withTry = LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).map((e: { slug: string }) => e.slug).sort();
+    assert.deepEqual(withTry, Object.keys(SCAFFOLD_EVALUATORS).sort(), "every scaffolded lesson has an evaluator, none orphaned");
+  });
+
+  check("RG. no speech-level strategy, and the drill containment is untouched", () => {
+    for (const banned of ["four minutes", "\\bextend\\b", "collapse", "frontlin", "prioriti", "time allocation", "final focus"]) {
+      assert.ok(!new RegExp(banned, "i").test(tmAll), `no speech-level vocabulary: ${banned}`);
+    }
+    const drills = require("../lib/debate-drills");
+    assert.equal(drills.debateMasteryHeld("debate-rebuttal"), true, "durable rebuttal mastery stays held");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.length, 22, "22 items remain withheld");
+    for (const id of ["rb-14", "rb-15"]) assert.ok(!drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} keeps its existing servable state`);
+    assert.ok(!/mastery|mastered/i.test(tmAll), "the lesson claims no durable mastery");
+  });
+
+  check("RH. no key is isolated by a terminal stem echo or by a lone modal", () => {
+    // Two tells the blind panels found and this pins shut. Q3's key was the only option ENDING on the
+    // stem's proposal noun ("lighting"); Q6's key was the only option carrying a modal and a
+    // free-choice determiner ("whichever ... you can win"). Both let a test-wise reader pick without
+    // the lesson. Every isolating property must be shared with at least one distractor.
+    const words = (t: string) => (t.toLowerCase().match(/[a-z\u2019'-]+/g) ?? []);
+    const STOP = new Set(["the", "a", "an", "and", "or", "of", "to", "in", "on", "it", "is", "are", "that", "this", "them", "they", "you", "your", "both", "for", "with", "not", "no", "so", "at", "as", "by", "one", "two", "their", "its", "what", "which", "when", "than", "then", "does", "do", "up"]);
+    const MODALS = /\b(can|could|may|might|would|should|must|whichever|whatever|whoever|any)\b/i;
+    tmChecks.forEach((q, i) => {
+      const k = q.choices.indexOf(q.correctAnswer);
+      const stem = new Set(words(q.prompt));
+      const echoes = q.choices.map((o) => { const w = words(o); const last = w[w.length - 1]; return Boolean(last) && !STOP.has(last) && stem.has(last); });
+      assert.ok(!(echoes[k] && echoes.filter(Boolean).length === 1),
+        `Q${i + 1}: the key must not be the only option whose final word echoes the stem`);
+      const modal = q.choices.map((o) => MODALS.test(o));
+      assert.ok(!(modal[k] && modal.filter(Boolean).length === 1),
+        `Q${i + 1}: the key must not be the only option carrying a modal or free-choice determiner`);
+    });
   });
 
   console.log(`\ncoached-performance: ${checks} controls passed.`);

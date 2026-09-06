@@ -460,6 +460,13 @@ export type ScaffoldEvaluation = {
   slot?: string;
   /** Whether the learner must try the same move again before moving on. */
   retryRequired: boolean;
+  /**
+   * Present ONLY where something was verified exactly rather than by shape — today, the answer-types
+   * label, which is drawn from a closed four-term vocabulary. The component renders this sentence
+   * verbatim on completion so the learner is told what was and was not judged. Absent everywhere
+   * else, which keeps every other lesson's completion copy unchanged.
+   */
+  exactCheck?: string;
 };
 
 const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s']/g, " ").split(/\s+/).filter((w) => w.length > 3);
@@ -709,17 +716,161 @@ export function evaluateEvidenceScaffold(slots: { shows: string; notYet: string;
 }
 
 /**
+ * ANSWER TYPES. The lesson's own procedure, in the lesson's own order: say what is true in the round
+ * if the answer succeeds, read the direction that outcome points, then name the type. The two
+ * reasoning slots are checked for SHAPE ONLY — present, distinct, and not the label word standing in
+ * for a thought. The third slot is different in kind: the taxonomy is a CLOSED four-term vocabulary,
+ * so comparing it to the authored classification is an exact deterministic judgment, not a heuristic.
+ * A matching label therefore proves the label and nothing about the reasoning that reached it, and
+ * the learner-facing copy says exactly that (`exactCheck` below).
+ */
+export const ANSWER_TYPE_TERMS = ["defense", "indict", "turn", "offense"] as const;
+export type AnswerTypeTerm = (typeof ANSWER_TYPE_TERMS)[number];
+
+/** Every spelling and inflection that names one term. Two terms named is not a classification. */
+const ANSWER_TYPE_BY_WORD: Readonly<Record<string, AnswerTypeTerm>> = {
+  defense: "defense", defence: "defense", defensive: "defense", defensively: "defense",
+  indict: "indict", indicts: "indict", indicted: "indict", indictment: "indict",
+  turn: "turn", turns: "turn", turned: "turn", turning: "turn",
+  offense: "offense", offence: "offense", offensive: "offense", offensively: "offense"
+};
+
+/** Which direction each named move points. Membership is absolute: an indict is always defense and a
+ *  turn is always offense, so an evidence-aimed answer that reverses is a turn rather than an indict. */
+const ANSWER_TYPE_DIRECTION: Readonly<Record<AnswerTypeTerm, "defense" | "offense">> = {
+  defense: "defense", indict: "defense", turn: "offense", offense: "offense"
+};
+
+/** Which of the four terms `text` names, in no particular order. Exact word matching, never fuzzy. */
+export function namedAnswerTypes(text: string): AnswerTypeTerm[] {
+  const seen = new Set<AnswerTypeTerm>();
+  for (const word of canonical(text).split(" ")) {
+    const term = ANSWER_TYPE_BY_WORD[word];
+    if (term) seen.add(term);
+  }
+  return [...seen];
+}
+
+/**
+ * The label slot's input contract: ONE taxonomy term, not a sentence about one. The slot is
+ * normalised (case, punctuation, surrounding space, a leading article) and must then BE one of the
+ * four terms — not merely contain one. So "Turn", " turn " and "a turn" are the term; "this is a
+ * turn", "turn blah blah", "turn offense" and "defense indict turn offense" are not classifications
+ * and are refused. Enumerating the vocabulary in one box therefore cannot pass.
+ */
+export function soleAnswerTypeTerm(text: string): AnswerTypeTerm | null {
+  const words = canonical(text).split(" ").filter(Boolean);
+  if (words[0] === "a" || words[0] === "an" || words[0] === "the") words.shift();
+  if (words.length !== 1) return null;
+  return ANSWER_TYPE_BY_WORD[words[0]] ?? null;
+}
+
+export function evaluateAnswerTypesScaffold(
+  slots: { ifItSucceeds: string; direction: string; type: string },
+  expected: AnswerTypeTerm
+): ScaffoldEvaluation {
+  const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount(slots.ifItSucceeds) < 3) {
+    return {
+      complete: false,
+      slot: "what is now true",
+      coach: "Start with the outcome: suppose the answer works completely — what has changed about their argument, and what has changed for your side?",
+      retryRequired: true
+    };
+  }
+  // Not a semantic judgment: the four term words are dropped from the shared word list (which already
+  // ignores anything four letters or shorter) and what is left is counted, so the NAME of the move
+  // cannot stand in for the outcome it is supposed to describe — "it is a turn" leaves nothing.
+  const withoutLabels = words(slots.ifItSucceeds).filter((w) => !ANSWER_TYPE_BY_WORD[w]);
+  if (withoutLabels.length < 3) {
+    return {
+      complete: false,
+      slot: "what is now true",
+      // Two different failures share one length check, and they must not share one message: naming
+      // the move instead of the outcome is a different mistake from writing too little.
+      coach: namedAnswerTypes(slots.ifItSucceeds).length > 0
+        ? "This blank is for what becomes true in the round, not for the name of the move. Say what happens to their argument and whether anything now counts for your side."
+        : "Say a little more about what becomes true: what happens to their argument, and whether anything now counts for your side.",
+      retryRequired: true
+    };
+  }
+  if (wordCount(slots.direction) < 3) {
+    return {
+      complete: false,
+      slot: "which direction that is",
+      coach: "Read your own sentence back and say which of the two it describes: their argument only counts for less, or something now counts for your side.",
+      retryRequired: true
+    };
+  }
+  if (essentiallyTheSame(slots.ifItSucceeds, slots.direction)) {
+    return {
+      complete: false,
+      slot: "which direction that is",
+      coach: "The second blank is not a repeat of the first. The first says what became true; this one says which direction that outcome points.",
+      retryRequired: true
+    };
+  }
+  const named = soleAnswerTypeTerm(slots.type);
+  if (named === null) {
+    const mentioned = namedAnswerTypes(slots.type);
+    return {
+      complete: false,
+      slot: "the answer type",
+      coach: mentioned.length > 1
+        ? "One term, not several. Decide which single name fits the outcome you wrote."
+        : "This blank takes one word on its own: defense, indict, turn or offense.",
+      retryRequired: true
+    };
+  }
+  if (named !== expected) {
+    // A learner who names the right direction but the wrong move inside it has not said something
+    // false — a turn IS offense — so the coaching must not tell them it did. Two cases, split on the
+    // closed vocabulary: wrong direction goes back to the outcome sentence; wrong move inside the
+    // right direction goes to the question that discriminates the two. Neither names the answer.
+    const sameDirection = ANSWER_TYPE_DIRECTION[named] === ANSWER_TYPE_DIRECTION[expected];
+    return {
+      complete: false,
+      slot: "the answer type",
+      coach: sameDirection
+        ? (ANSWER_TYPE_DIRECTION[expected] === "offense"
+            ? "The direction is right, but not the name. Did their own argument supply what now counts for your side, or is this a reason of your own standing beside it?"
+            : "The direction is right, but not the name. Did the answer go after their evidence itself, or after the step they were using it for?")
+        : "That is not the direction this answer points. Go back to your own first blank: if that is what becomes true, does their argument only count for less, or does something now count for your side?",
+      retryRequired: true
+    };
+  }
+  return {
+    complete: true,
+    coach: "",
+    // The whole truth about what just happened, for the component to show.
+    exactCheck: "The type is right: this answer is a " + expected + ". The two sentences above were checked only for being there and being different — nothing read whether your reasoning is correct.",
+    retryRequired: false
+  };
+}
+
+/**
  * The evaluator for each lesson's scaffolded try, keyed by lesson id and taking the slot values in
  * the lesson's own slot order. A lesson with a scaffolded try and no entry here cannot be checked and
  * therefore cannot open its guided round — fail closed, and asserted by the smoke suite.
  */
 export type ScaffoldContext = { motion?: string };
 
+/**
+ * The authored classification for the answer-types exercise: the response in that lesson's prompt
+ * reverses the opponent's own worry, so it is a turn. It lives here rather than in the lesson because
+ * `scaffoldedTry` has no field for an expected answer and inventing one to hold a key would make a
+ * content field lie. `coached-performance:smoke` pins the authored response text this was keyed
+ * against, so prompt and key cannot drift apart silently.
+ */
+const ANSWER_TYPES_EXPECTED: AnswerTypeTerm = "turn";
+
 export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
   "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
   "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context),
   "debate-round-orientation": (v) => evaluateRoundTrackingScaffold({ answered: v[0] ?? "", unresolved: v[1] ?? "", noResponse: v[2] ?? "" }),
-  "debate-evidence-evaluation": (v) => evaluateEvidenceScaffold({ shows: v[0] ?? "", notYet: v[1] ?? "", need: v[2] ?? "" })
+  "debate-evidence-evaluation": (v) => evaluateEvidenceScaffold({ shows: v[0] ?? "", notYet: v[1] ?? "", need: v[2] ?? "" }),
+  "debate-answer-types": (v) =>
+    evaluateAnswerTypesScaffold({ ifItSucceeds: v[0] ?? "", direction: v[1] ?? "", type: v[2] ?? "" }, ANSWER_TYPES_EXPECTED)
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

@@ -503,8 +503,8 @@ function main() {
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
     assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 4,
-      "four lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, and Evidence Evaluation's bounding scenario");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 5,
+      "five lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, and Answer Types' classification scenario");
   });
 
   // ================================================================================================
@@ -1367,6 +1367,180 @@ function main() {
       assert.ok(!all.toLowerCase().includes(banned), `no out-of-scope teaching: ${banned}`);
     }
     assert.ok(/You are not a researcher, and the round does not need you to be one/.test(evid.teachingSections[1].body), "the in-round scope is stated");
+  });
+
+
+  // ================================================================================================
+  // P. ANSWER TYPES — the perfection repair (2026-09-06). The audit found 421 words of teaching
+  // against 1,099 words of quiz, five ideas taught ONLY inside question explanations, two questions
+  // testing speech-level strategy the curriculum never teaches, and — measured, not asserted — the
+  // key as the uniquely longest option in all 7 items. What follows pins the repair: the settled
+  // taxonomy, the vocabulary that may not come back, the four rebuilt checks, and a scenario whose
+  // reasoning is shape-only while its label is exact.
+  // ================================================================================================
+  const AT = "debate-answer-types";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const atEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === AT) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const at = atEntry.source.lesson.content as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const atChecks = [at.guidedQuestion, ...at.practiceQuestions, ...at.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
+  // EVERY learner-visible string and nothing else: the schema's own field names (masteryCheck,
+  // practiceQuestions) are not lesson text, and a JSON dump would let them answer these controls.
+  const atAll = [at.objective, at.explanation, at.whyMatters, ...at.steps,
+    ...at.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body),
+    ...Object.values(at.workedExample as Record<string, string>),
+    ...Object.values(at.misconception as Record<string, string>),
+    ...at.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)),
+    at.scaffoldedTry.prompt, at.scaffoldedTry.frame, ...at.scaffoldedTry.slots,
+    ...atChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation])].join("\n");
+
+  check("PA. Answer Types is MIXED: a classification scenario, four checks, no guided round, no frames, no ladder", () => {
+    assert.equal(guidedApplicationFor(AT), null, "no guided round is declared: no competency and no judge category measures answer-type classification");
+    assert.equal(at.languageFrames, undefined, "no language frames: this lesson classifies, it does not teach phrasing");
+    assert.equal(at.revisionLadder, undefined); assert.equal(at.additionalExamples, undefined);
+    assert.equal(at.teachingSections.length, 3); assert.ok(at.misconception); assert.equal(at.commonMistakes.length, 5);
+    assert.equal(1 + at.practiceQuestions.length + at.masteryCheck.length, 4, "seven checks became four distinct judgments");
+    assert.deepEqual(at.scaffoldedTry.slots, ["what is now true", "which direction that is", "the answer type, in one word"]);
+    assert.equal(atEntry.skillSlug, undefined, "still no skill claim: Refutation remains the module's teaching home for debate-rebuttal");
+    assert.deepEqual(atEntry.practiceDrill, { track: "debate", area: "rebuttal" }, "the drill CTA is unchanged");
+    const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
+    const prose = [at.objective, at.explanation, at.whyMatters, ...at.steps, ...at.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body)].map(words).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(prose >= 900 && prose <= 1300, `teaching prose inside the guard: ${prose} words (was 421)`);
+    const qWords = atChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]).map(words).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(prose > qWords * 1.5, `teaching now outweighs quiz text: ${prose} vs ${qWords}`);
+  });
+
+  check("PB. the taxonomy is stated as two directions with one named move inside each, consistently", () => {
+    assert.ok(/an INDICT is a kind of defense, a TURN is a kind of offense/.test(at.explanation), "the hierarchy is stated in the explanation");
+    // The binary is a CLASSIFICATION rule, not a claim that an answer has one effect: a reversal
+    // usually neutralises their argument as well as creating a reason, and is classed by the reason.
+    assert.ok(/Every answer is classed one of two ways, by what it creates/.test(at.explanation), "the binary is framed as classification");
+    assert.ok(/One answer can do more than one thing at once [\s\S]{0,140}classed by the reason it creates/.test(at.explanation), "and multiple effects are acknowledged");
+    assert.ok(/Two directions, and the named move inside each/.test(at.teachingSections[0].heading), "and in the heading of the section that exemplifies it");
+    assert.ok(/defense if only for less \(an indict if you went after their evidence\), offense if something counts for you \(a turn if their own argument is what supplies it\)/.test(at.steps.join(" ")),
+      "and in the naming step, which pairs each direction with the move inside it");
+    // Membership is ABSOLUTE. A hedge ("an indict is usually defense") turns indict back into a
+    // fourth peer, which is the collision this repair exists to remove; the reversing evidence
+    // attack is a turn, and the lesson says so rather than leaving the case unnamed.
+    assert.ok(!/indict is usually|usually a kind of defense|usually defense/i.test(atAll), "the category is never hedged");
+    assert.ok(/what you have is a turn, not an indict/.test(at.teachingSections[1].body), "and the reversing evidence attack is named");
+    // The residuals are named as themselves rather than left unnamed — the audited genus/species collision.
+    assert.ok(/That is DEFENSE, and among these four names it has no second one/.test(at.teachingSections[0].body), "plain defense is shown and named");
+    assert.ok(/That is OFFENSE, and among these four it too has no second name: a reason of your own/.test(at.teachingSections[0].body), "independent offense is shown and named");
+    for (const type of ["DEFENSE", "INDICT", "OFFENSE", "TURN"]) {
+      assert.ok(at.teachingSections[0].body.includes(`That is ${type === "INDICT" ? "an INDICT" : type === "TURN" ? "a TURN" : type}`), `${type} has a worked instance in the teaching, not only in a check`);
+    }
+  });
+
+  check("PC. the two audited factual overstatements are gone and the indict boundary is settled", () => {
+    assert.ok(!/never reverses/i.test(atAll), "the false absolute 'an indict weakens; it never reverses' is gone");
+    assert.ok(!/defense explains why they lose an argument/i.test(atAll), "and so is 'defense explains why they lose an argument'");
+    assert.ok(/if what you show about it makes their own argument point your way/.test(at.teachingSections[1].body), "an evidence attack that reverses is taught");
+    assert.ok(/Indict is narrower \u2014 the defensive answer aimed at the evidence itself/.test(at.teachingSections[1].body),
+      "indict is settled as the DEFENSIVE evidence-aimed answer: aim alone is not sufficient, since the reversing evidence attack is a turn");
+    assert.ok(/refutation calls every load-bearing part of an argument a support/.test(at.teachingSections[1].body), "and reconciled with Refutation's broader 'support'");
+  });
+
+  check("PD. the ideas that used to live only in quiz explanations are now taught", () => {
+    const teaching = [at.objective, at.explanation, at.whyMatters, ...at.steps, ...at.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body),
+      at.workedExample.strongAnswer, at.workedExample.whyItWorks, at.misconception.whyItFails, at.misconception.betterModel].join("\n");
+    assert.ok(/an answer can work completely[\s\S]{0,120}still be defense/.test(teaching), "success is not direction");
+    assert.ok(/direction is set by what the finding does, not by how good it is/.test(teaching), "evidence quality is not direction");
+    assert.ok(/a reason of your own, standing beside their argument/.test(teaching), "independent offense exists and is illustrated");
+    assert.ok(/More than one direction is often available on the same argument/.test(teaching), "several directions may be available");
+    assert.ok(/Classifying correctly is not refuting/.test(teaching), "naming is not refuting");
+    assert.ok(/ask what needs to change about it/.test(teaching), "the model is taught in reverse, as a direction choice");
+  });
+
+  check("PE. no speech-level strategy is taught or tested: the owner's forbidden vocabulary is absent", () => {
+    for (const banned of ["four minutes", "extend", "extended", "collapse", "collapsing", "frontlin", "weigh", "prioriti", "spend time", "speech time", "time left", "dropped argument"]) {
+      assert.ok(!new RegExp(banned, "i").test(atAll), `no speech-level vocabulary: ${banned}`);
+    }
+    assert.ok(!/final speech|last speech|first speech/i.test(atAll), "no speech-position framing");
+  });
+
+  check("PF. the four checks test four distinct judgments and none is decidable by option form", () => {
+    const wc = (t: string) => t.trim().split(/\s+/).length;
+    atChecks.forEach((q, i) => {
+      const lens = q.choices.map(wc); const chars = q.choices.map((o) => o.length);
+      const k = q.choices.indexOf(q.correctAnswer);
+      const longW = Math.max(...lens), shortW = Math.min(...lens), longC = Math.max(...chars), shortC = Math.min(...chars);
+      assert.ok(!(lens.filter((x) => x === longW).length === 1 && lens[k] === longW), `Q${i + 1}: key is not the uniquely longest option by words`);
+      assert.ok(!(lens.filter((x) => x === shortW).length === 1 && lens[k] === shortW), `Q${i + 1}: nor the uniquely shortest`);
+      assert.ok(!(chars.filter((x) => x === longC).length === 1 && chars[k] === longC), `Q${i + 1}: nor the uniquely longest by characters`);
+      assert.ok(!(chars.filter((x) => x === shortC).length === 1 && chars[k] === shortC), `Q${i + 1}: nor the uniquely shortest by characters`);
+      assert.ok(longW - shortW <= 2 && longC - shortC <= 12, `Q${i + 1}: options are length-matched (${lens.join("/")} words, ${chars.join("/")} chars)`);
+      const commas = q.choices.map((o) => (o.match(/,/g) ?? []).length);
+      assert.ok(!(commas[k] > 0 && commas.filter((x) => x > 0).length === 1), `Q${i + 1}: the key is not the only option carrying a comma`);
+      assert.equal(new Set(q.choices).size, 4, `Q${i + 1}: four distinct options`);
+    });
+    // Absolutes may not cluster in the distractors, which would make elimination alone decide it.
+    atChecks.forEach((q, i) => {
+      const abs = q.choices.map((o) => /\b(never|always|any|every|all|guarantees|whenever)\b/i.test(o));
+      assert.ok(!(abs.filter(Boolean).length === 3 && !abs[q.choices.indexOf(q.correctAnswer)]), `Q${i + 1}: the key is not the lone option without an absolute`);
+    });
+    assert.deepEqual(atChecks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["A", "A", "A", "C"], "keys as authored and reviewed");
+  });
+
+  check("PG. the classification scenario reasons first and labels second; reasoning shape-only, label exact", () => {
+    const { evaluateAnswerTypesScaffold, namedAnswerTypes, ANSWER_TYPE_TERMS } = coaching;
+    assert.deepEqual([...ANSWER_TYPE_TERMS], ["defense", "indict", "turn", "offense"], "the closed vocabulary is the taxonomy");
+    // The key lives in coaching.ts; this pins the authored response it was keyed against, so the two cannot drift.
+    assert.ok(/the market takes more on a Sunday, not less/.test(at.scaffoldedTry.prompt), "the authored response the 'turn' key belongs to");
+    assert.equal(at.scaffoldedTry.motion, undefined, "no field is made to lie: the argument lives in the prompt");
+    assert.equal(at.scaffoldedTry.opponentClaim, undefined);
+    const good = ["the market takes more money on a Sunday than it does on a Saturday", "something now counts for our side", "a turn"];
+    assert.equal(evaluateScaffoldFor(AT, good).complete, true, "dispatched by lesson id");
+    assert.ok(/The two sentences above were checked only for being there and being different/.test(evaluateScaffoldFor(AT, good).exactCheck ?? ""),
+      "and says exactly what was and was not judged");
+    assert.equal(evaluateScaffoldFor(AT, [good[0], good[1], "defense"]).complete, false, "a wrong label is refused");
+    // The label slot takes ONE term, normalised — not a sentence containing one, and not the
+    // vocabulary enumerated in one box, which would otherwise pass a contains-a-term check.
+    for (const spelling of ["Turn", " turn ", "a turn", "turns"]) {
+      assert.equal(evaluateScaffoldFor(AT, [good[0], good[1], spelling]).complete, true, `normalised to the term: "${spelling}"`);
+    }
+    for (const notATerm of ["turn or offense", "defense indict turn offense", "turn blah blah", "this is a turn", "reversal", ""]) {
+      assert.equal(evaluateScaffoldFor(AT, [good[0], good[1], notATerm]).complete, false, `refused, not one term: "${notATerm}"`);
+    }
+    assert.equal(coaching.soleAnswerTypeTerm("a Turn."), "turn");
+    assert.equal(coaching.soleAnswerTypeTerm("defense indict turn offense"), null);
+    assert.equal(evaluateScaffoldFor(AT, ["it is a turn", good[1], "turn"]).complete, false, "the label cannot stand in for the outcome sentence");
+    assert.equal(evaluateScaffoldFor(AT, [good[0], good[0], "turn"]).complete, false, "the direction slot is not a repeat of the outcome slot");
+    assert.deepEqual(namedAnswerTypes("So this answer is an indict."), ["indict"]);
+    assert.deepEqual(namedAnswerTypes("defensive"), ["defense"]);
+    assert.deepEqual(namedAnswerTypes("nothing here"), []);
+    const body = String(evaluateAnswerTypesScaffold);
+    assert.ok(!/overlap\(|containedIn|includes\(".{6,}"\)/.test(body), "no word-overlap or loaded-word heuristics in the reasoning slots");
+    const withTry = LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).map((e: { slug: string }) => e.slug).sort();
+    assert.deepEqual(withTry, Object.keys(SCAFFOLD_EVALUATORS).sort(), "every scaffolded lesson has an evaluator, none orphaned");
+  });
+
+  check("PH. the answer-types page renders teach-first, ends at the scenario, offers no guided round, keeps its drill CTA", () => {
+    const html = render(React.createElement(ConceptEducationLessonView, {
+      source: atEntry.source, provenance: MIGRATED_DEBATE_PROVENANCE, moduleLabel: "Round strategy", next: null, practiceDrill: atEntry.practiceDrill
+    } as never));
+    const text = visible(html);
+    const order = ["Know what your answer does", at.teachingSections[0].heading, at.teachingSections[2].heading, "Now try the move", "Practice this skill"];
+    let at_ = -1;
+    for (const marker of order) { const idx = text.indexOf(marker); assert.ok(idx > at_, `render order: ${marker}`); at_ = idx; }
+    assert.ok(!text.includes("Use it in a guided round") && !text.includes("The guided round opens after"), "no guided-round link or promise");
+    for (const slot of ["1. what is now true", "2. which direction that is", "3. the answer type, in one word"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
+    assert.ok(text.includes("Practice this skill in the Rebuttal drill"), "the rebuttal drill CTA is unchanged");
+  });
+
+  check("PI. the drill bank, its containment and the rebuttal mastery hold are untouched by this repair", () => {
+    const drills = require("../lib/debate-drills");
+    assert.equal(drills.debateMasteryHeld("debate-rebuttal"), true, "durable rebuttal mastery stays held");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.length, 22, "22 items remain withheld");
+    for (const id of ["rb-30", "rb-04", "rb-05", "rb-09", "rb-10", "rb-20", "rb-21", "rb-22", "rb-23", "rb-24", "rb-27", "rb-29"]) {
+      assert.ok(drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} is still held`);
+    }
+    // Diagnostic only: these four servable items are the ones this lesson's teaching actually covers.
+    for (const id of ["rb-02", "rb-13", "rb-16", "rb-17"]) {
+      assert.ok(!drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} was already servable and stays so`);
+    }
+    assert.ok(!/mastery|mastered/i.test(atAll), "the lesson claims no durable mastery");
   });
 
   console.log(`\ncoached-performance: ${checks} controls passed.`);

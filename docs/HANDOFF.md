@@ -55,6 +55,75 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **ANSWER TYPES — PERFECTION AUDIT, THEN REPAIR — UNCOMMITTED, in the working tree (2026-09-06).**
+  The first "previously strong" lesson re-audited under the new standard, by 55 independent reviewers
+  plus my own measurements. It failed on three counts the old standard never checked. (1) BALANCE:
+  421 teaching words against 1,099 words of quiz, with five load-bearing ideas — a fully successful
+  answer is still defense; evidence quality does not set direction; independent offense exists; the
+  model run in reverse; weighing — living only in check explanations. (2) JUDGING WHAT WE HAD NOT
+  TAUGHT: checks 5 and 7 tested speech-time, extension and weighing; verified across the whole
+  learner-visible chain, "extend" appeared nowhere but inside this lesson's own quiz text, and
+  weighing is deferred by Clash and taught only by the terminal Weighing lesson. (3) STRUCTURAL
+  EXPLOITABILITY: the key was the uniquely longest option by words AND characters in all seven items
+  (H_LONG 100%, UL 100%, R_MED 1.68 by the repo's own guard, versus 0-33% H_LONG for every other
+  Debate lesson); 14/14 structure-only hunters and 7/7 adjudicators isolated the key, and 21/21 blind
+  no-lesson solvers answered correctly. Keys were all still correct with no second defensible answer:
+  the defect was form, not substance. Repair per the owner's rulings: objective keeps the selection
+  purpose but strictly in this lesson's vocabulary; taxonomy settled as two directions each holding
+  one named move, with plain defense and independent offense shown in the teaching; indict narrowed
+  to the evidence-aimed answer and reconciled with Refutation's "support"; both factual overstatements
+  removed; quiz-only teaching moved into the lesson; type-is-not-quality stated and handed off;
+  worked example rebuilt to diagnose, classify, show a MISapplied type and say what is still undone;
+  7 -> 4 checks, all length- and form-balanced (guard after repair: H_LONG 8%, UL 0%, R_MED 0.98);
+  and a constructed classification scenario — reasoning slots shape-only, label slot an exact
+  closed-vocabulary check keyed in `coaching.ts` (the lesson has no field for an expected answer and
+  none was invented), with `coached-performance:smoke` pinning the authored response it was keyed
+  against. `ScaffoldEvaluation` gained an optional `exactCheck` sentence so the completion copy can
+  say what was and was not judged; absent on every other lesson, so their copy is unchanged. No
+  guided application, no frames, no ladder, no architecture change. Drill bank, containment and the
+  rebuttal mastery hold untouched — this repair does NOT make the shared rebuttal area safe, and the
+  missing-skillSlug remediation-attribution problem for Answer Types and Turn Mechanics stays open.
+  Independent review then found four classes of defect, all closed: (a) the taxonomy hedged its own
+  category — "an indict is a kind of defense" in three places, "usually defense" in two — which put
+  indict back where the repair had removed it; the ruling taken is that membership is ABSOLUTE and an
+  evidence-aimed answer that reverses is a TURN, which the lesson now says outright instead of leaving
+  the case unnamed; (b) the decision rule was one question where the taxonomy needs two, since indict
+  is defined by what the answer is aimed at — the thesis now states both axes and the steps agree;
+  (c) four residual factual overstatements, including the sister-lesson class ("a large, well-designed
+  study beats a small survey" — size and design do not settle a comparison) and a worked-example line
+  that made a turn's identity depend on whether it lands, contradicting the lesson's own
+  success-conditional rule; (d) structural tells still isolating three of the four keys — the key was
+  the only option withholding credit (Q1), the only label another option quoted (Q2), and carried the
+  stem's whole predicate (Q4). All rewritten one option at a time. The scenario's wrong-label coach
+  told a learner who typed "offense" that "this is not what this answer does", which is false under
+  the lesson's own hierarchy; it now branches on direction. Guard after: H_LONG 0%, UL 0%, R_MED 0.96.
+  Two review findings were declined with reasons: the field's speech-order rule that new offense
+  cannot be introduced in a rebuttal (real, but speech-level and forbidden here — it belongs to the
+  held `debate-rebuttal-speeches`), and rewording the two-direction claim to "some point both" (a turn
+  also removes their argument, which the turn paragraph now says, but an answer still has ONE
+  direction). A recheck panel then confirmed the taxonomy, decision-rule and objective defects CLOSED
+  and found seven more, all fixed: the worked example still claimed one question produced every
+  judgment while its own strong answer used both axes; "Indict is narrower — the answer aimed at the
+  evidence itself" made aim sufficient, which the sentence two lines earlier denies; "if every answer
+  points the same way" was false on the offense branch; "same study, different direction" described
+  two different findings; a common-mistake example had a team bearing a policy cost; "usually
+  available" overstated how often a turn exists; and the fourth check's key ended on the stem's own
+  closing phrase in the stem's own credit vocabulary. Two evaluator messages were wrong too: the
+  too-short-outcome coach accused learners of writing a label when they had not, and the
+  same-direction coach asked an offense-side question whichever direction was expected. A final panel
+  then returned all four checks CLEAN (structure isolates no key; blind no-lesson solvers 3/3 on each,
+  by general reasoning), both taxonomy defects CLOSED, and two last items which were fixed: a
+  common-mistake example that after its own repair no longer described a reversal at all, and the two
+  check explanations that derived the NAME from what the answer was aimed at before settling the
+  DIRECTION — the order the lesson tells learners not to use. Owner closure (2026-09-06) then made two
+  precision fixes: the two-direction binary is now framed as a CLASSIFICATION rule rather than a claim
+  about effects ("Every answer is classed one of two ways, by what it creates … One answer can do more
+  than one thing at once — a reversal usually stops their argument helping them as well as giving you
+  a reason — and it is classed by the reason it creates"), and the label slot's contract is now exact
+  normalised equality on ONE term rather than "contains a term": "Turn", " turn " and "a turn" pass;
+  "turn offense", "defense indict turn offense", "turn blah blah", "this is a turn" and "reversal" are
+  refused, so enumerating the vocabulary in one box cannot pass. The slot label states the contract
+  ("the answer type, in one word"). Teaching prose 1,250. **Not committed.**
 - **EVIDENCE EVALUATION — AUDIT-FIRST REPAIR — UNCOMMITTED, in the working tree (2026-09-05).**
   Second lesson under the audit-first rule. The audit (nine reviewers) found it under-taught, not
   mis-taught: no definition of evidence, no "what must be shown" step, the rule for what evidence

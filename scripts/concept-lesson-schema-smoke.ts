@@ -242,7 +242,9 @@ function main() {
     // tracking scenario; no frames, no ladder, no guided application) — still an exact set.
     // Evidence Evaluation repaired 2026-09-05 (audit-first: sections, misconception, mistakes, a small
     // evidence-bounding scenario; no frames, no ladder, no guided application) — still an exact set.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation"],
+    // Answer Types repaired 2026-09-06 (perfection audit: sections, misconception, mistakes, a small
+    // classification scenario; no frames, no ladder, no guided application) — still an exact set.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.

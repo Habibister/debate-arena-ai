@@ -145,6 +145,37 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **ANSWER TYPES — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).** The
+  first lesson audited under the perfection standard, and it did not survive the old label "strong":
+  421 words of teaching against 1,099 words of quiz text, five load-bearing ideas taught ONLY inside
+  question explanations, two checks (one of them a FINAL check) testing time allocation, extension
+  and weighing that no reachable lesson teaches, and — measured, not asserted — the key as the
+  uniquely longest option by both words and characters in ALL SEVEN items. Running this repo's own
+  `assessment-quality-guard` metrics over those checks gave H_LONG 100%, UL 100%, R_MED 1.68: a
+  non-reader picking the longest option scored 7/7. Both figures are past the guard's hard-fail
+  lines and print as WARN only because the n>=20 small-bank rule downgrades them, and lesson checks
+  are not under that guard at all (`banksUnderGuard()` covers drill banks only). 21/21 blind
+  no-lesson solvers, 14/14 structure-only hunters isolating the key, and 7/7 adjudicators returning
+  TELL_PRESENT confirmed it. Repaired to those gaps: the taxonomy is settled as TWO DIRECTIONS
+  (defense, offense) each holding ONE NAMED MOVE (indict inside defense, turn inside offense), with
+  the residuals carrying the genus name and shown with worked instances in the teaching; indict is
+  narrowed to the evidence-aimed answer and reconciled with Refutation's broader "support"; the two
+  factual overstatements ("an indict weakens; it never reverses"; "defense explains why they lose an
+  argument") are gone; the quiz-only ideas are now taught; type-is-not-quality is stated outright and
+  handed to Refutation. Three teaching sections, one misconception, five mistakes, teaching prose
+  421 -> 1,250 words, checks 7 -> 4, and a small CLASSIFICATION SCENARIO whose two reasoning slots
+  are shape-only and whose label slot is an exact closed-vocabulary check (the learner types one of
+  defense / indict / turn / offense; a match proves the label and nothing about the reasoning, and
+  the completion copy says so). NO guided round: no `DebateCompetency` and no judge category
+  measures answer-type classification. Drill bank, its 22-item containment and the `debate-rebuttal`
+  mastery hold are untouched. Independent review (eight lenses plus the full assessment protocol)
+  then found and closed four classes of defect: a category-destroying hedge that let "indict" float
+  free of defense (settled ABSOLUTE, with the reversing evidence attack named a turn), a one-question
+  decision rule where the taxonomy needs two axes (outcome sets the direction, target names the move),
+  four residual factual overstatements including the sister-lesson class about what better evidence
+  proves, and structural tells still pointing at three of the four keys. The form guard after those
+  fixes: H_LONG 100% -> 0%, UL 100% -> 0%, R_MED 1.68 -> 0.96. Baseline `ANSWER-TYPES-REPAIR-V1`,
+  one block changed, twenty byte-identical. **Not committed.**
 - **EVIDENCE EVALUATION — AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-05).** Nine
   read-only reviewers plus my own read: role MIXED (a conceptual frame plus one productive judgment,
   bounding what a piece of evidence establishes); ownership and style neutrality PASS; remove-

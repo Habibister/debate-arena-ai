@@ -237,11 +237,19 @@ export function ScaffoldedTry({
                   round, a coach with the whole round in view does that there; where it has none
                   (a conceptual or evaluative lesson), nothing here does, and the copy must not point
                   at a round that does not exist. */}
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                This checked the shape of the move: every part is present and none of the named faults is
-                there. It did not judge whether what you wrote is true or whether you chose the point that
-                matters{application ? " — that is what the guided round is for." : ". Compare it with the worked example above."}
-              </p>
+              {/* Where a lesson verified something EXACTLY — today only the answer-types label, drawn
+                  from a closed four-term vocabulary — the evaluator says so in its own words, and that
+                  sentence replaces the generic one. Everywhere else the field is absent and the copy is
+                  unchanged. Neither version ever claims the learner's reasoning was read. */}
+              {evaluation.exactCheck ? (
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">{evaluation.exactCheck}</p>
+              ) : (
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  This checked the shape of the move: every part is present and none of the named faults is
+                  there. It did not judge whether what you wrote is true or whether you chose the point that
+                  matters{application ? " — that is what the guided round is for." : ". Compare it with the worked example above."}
+                </p>
+              )}
             </>
           ) : (
             <>

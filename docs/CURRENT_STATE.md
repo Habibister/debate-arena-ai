@@ -145,7 +145,71 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
-- **TURN MECHANICS — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).**
+- **SIGNPOSTING — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).**
+  The third diagnosis in the series, and a new one: teaching STRONG, assessment measuring NOTHING.
+  The audit rated the method strong, the structure-versus-substance proof a pass, and found 22 of the
+  lesson's own 30 drill items answerable from stated sentences — while five independent no-lesson
+  panels (a beginner, an adult reasoner, a test-wise exploiter and two structure-only hunters with the
+  STEMS WITHHELD) returned identical 11/11 sheets. The mechanism was measured, not asserted: "strike
+  any option containing a vague quantifier, then take the shortest survivor" scored 8/11 (73%) against
+  25% chance, and the key was uniquely shortest on at least one length metric in 8 of 11 items. The
+  aggregate read healthy throughout — H_LONG 0%, R_MED 0.84 — because this is the INVERSE of the
+  Answer Types signature, and H_LONG alone cannot see it. Three further defects: one check was keyed
+  against the lesson's own transition rule (its key models the move the lesson says needs no separate
+  transition, and the drill bank's `sp-13` keys the opposite); the 11 checks collapsed to 5 distinct
+  judgments while the roadmap gradient, transition economy, the undershoot error and the
+  precise-but-wrong label went untested; and four ideas lived ONLY inside quiz options. Repair per the
+  owner's rulings, and it is mostly subtraction: 11 checks to 6, none surviving verbatim, each testing
+  one distinct judgment — locating versus moving or arguing, the roadmap gradient asked in the
+  negative, which move earns a separate transition, what a label achieves when no reason follows, a
+  precise label pointed at the wrong argument, and stable argument identity. About 180 words of
+  teaching moved out of the deleted quiz and into the lesson: what over-signposting costs ("Label the
+  moves, not the sentences"), a spoken transition and its empty counterpart, wording freedom, stable
+  argument identity, and announcing an answer you decide to cut. Four honesty fixes: the note-taking
+  premise is now what most judges do rather than a fact about all of them; the roadmap is scoped to a
+  speech that answers rather than stated universally; the card summary no longer tells the learner to
+  use "numbers", which the body's own rule forbids; and "contention" survives only in its gloss. The
+  1,043-word single paragraph is now five. NO teachingSections, misconception, mistakes or language
+  frames were added — all refused as padding, the frames because a phrase bank would teach this
+  lesson's own functional rule backwards. A SCAFFOLDED TRY was added, the first entry in the schema
+  set that authors only a production surface: the learner classifies the level and writes the
+  signpost. Its truth is bounded and stated in the completion copy — LEVEL CLASSIFICATION EXACT
+  (whole-answer match against the lesson's closed area/argument/inner-claim stack), SIGNPOST FORM
+  SHAPE-ONLY, SIGNPOST SEMANTIC QUALITY NOT PROVEN, FULL PRODUCTIVE COMPETENCE NOT PROVEN; the guard
+  refuses ordinals, speaker references and placeholder nouns, and a control asserts that invented
+  content still passes, so the limit is disclosed rather than implied. Three review rounds ran on the
+  six items, each closing a measured route and each verified by re-measurement: the vague-then-shortest
+  exploit 8/11 -> 0/6; a stance rule (strike the option that denies a loss, praises, or prescribes a
+  remedy) 4/6 at 100% precision -> 1.75/6; and an uncompensated-speaker rule 3.25/6 -> 2.25/6 with NO
+  item isolated, because every outcome item now carries at least two concession-bearing options. The
+  round-2 panel also caught a defect the repair itself had introduced: the added transition exemplar
+  modelled a move between two of the opponent's arguments, which the lesson says needs no separate
+  transition — the same class of error as the check that was deleted for it. Final adjudication:
+  6 of 6 CLEAN, 0 key-isolating tells, with the ceiling recorded — a locative phrase looks like
+  locating, a roadmap looks like a list, and leaving their case looks bigger than moving inside it;
+  deleting those cues deletes the items. Guard after: H_LONG 17% / H_SHORT 0% / H_ELIM 33% / UL 0% /
+  R_MED 0.97 / LEN_SPREAD 0.16, no verdicts. Baseline
+  `SIGNPOSTING-REPAIR-V1`, one block changed, twenty byte-identical. **Not committed.**
+  **FOUR INTEGRATION DEFECTS REMAIN OPEN and are NOT part of this content repair** (architecture
+  freeze). Signposting is NOT end-to-end complete until all four close: (1) DRILL COVERAGE — `sp-16`
+  and `sp-24` are servable but test round-management judgments the lesson does not teach; (2) DRILL
+  RATIONALES — `sp-03` and `sp-07` describe their own keyed option as wrong (off-by-one ordinals in a
+  bank whose explanations refer to options by position); (3) PROGRESS TRUTH — the pre-session copy
+  promises "This focused session can update your progress" for an area whose skill row is
+  activation-pending, so every submission returns `skill-missing`; (4) JUDGE MEASURE — the full
+  judge's `organization` category is mapped to the signposting competency and declared `direct: true`,
+  but scores a keyword count over "first/second/third/point"; run against this lesson's own worked
+  example, the model signposted answer scores 57 (below the 60 retry threshold) and the label the
+  lesson marks WRONG scores higher than the one it marks right. No guided application may be added
+  while that stands.
+  **Signposting integration status, in the exact labels the audit uses:**
+  `SIGNPOSTING DRILL COVERAGE BLOCKER: OPEN` (sp-16, sp-24) ·
+  `SIGNPOSTING DRILL RATIONALE DEFECT: OPEN` (sp-03, sp-07) ·
+  `SIGNPOSTING PROGRESS-TRUTH DEFECT: OPEN` ·
+  `SIGNPOSTING JUDGE-MEASURE DEFECT: OPEN` ·
+  `SIGNPOSTING END-TO-END: INCOMPLETE`. The local lesson checkpoint does NOT close any of these, and
+  accepting the lesson must never be read as accepting the system.
+- **TURN MECHANICS — PERFECTION-AUDITED, THEN REPAIRED. COMMITTED `a268ff4` (2026-09-06).**
   The opposite diagnosis to Answer Types, and the reason the audit-first rule matters: the TEACHING
   was already good — both website-only readers answered all nine checks correctly with every deciding
   idea marked TAUGHT — while the DOCTRINE was partly wrong and the assessment was exploitable behind a

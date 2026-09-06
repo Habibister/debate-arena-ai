@@ -55,7 +55,50 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
-- **TURN MECHANICS — PERFECTION AUDIT, THEN REPAIR — UNCOMMITTED, in the working tree (2026-09-06).**
+- **SIGNPOSTING — PERFECTION AUDIT, THEN REPAIR — UNCOMMITTED, in the working tree (2026-09-06).**
+  The third pattern in the series: TEACHING STRONG, ASSESSMENT MEASURING NOTHING. Five independent
+  no-lesson panels — including two structure-only hunters with the STEMS WITHHELD — returned identical
+  11/11 sheets, because "strike any option with a vague quantifier, then take the shortest" scored
+  8/11 (73%) while the aggregate read healthy (H_LONG 0%, R_MED 0.84). That is the INVERSE of the
+  Answer Types signature and the reason H_LONG alone is not a sufficient guard: read H_SHORT and the
+  per-item extremes, or a one-directional brevity bias is invisible. One check was keyed against the
+  lesson's own transition rule and contradicted drill `sp-13`. Repair: 11 checks to 6 (one distinct
+  judgment each, no key isolated by any surface property, exploit 0/6); about 180 words of teaching
+  moved out of deleted quiz options into the lesson (over-signposting cost, a spoken transition and
+  its empty counterpart, wording freedom, stable argument identity, announcing an answer you cut);
+  four honesty fixes (the note-taking premise hedged, the roadmap scoped to answering speeches, the
+  card's "numbers" instruction deleted, "contention" left only in its gloss); the 1,043-word paragraph
+  split into five. No teaching structures and no language frames were added — refused as padding. A
+  SCAFFOLDED TRY was added with an exact level check and a shape-only label guard; the completion
+  copy states what was not judged — on BOTH slots — and a control asserts invented content still
+  passes the shape check, so the limit is disclosed rather than implied.
+  Three review rounds ran on the six items and each closed a MEASURED route: vague-then-shortest
+  8/11 -> 0/6; a stance rule 4/6 at 100% precision -> 1.75/6; an uncompensated-speaker rule 3.25/6 ->
+  2.25/6 with no item isolated. Final adjudication 6/6 CLEAN, 0 tells, ceiling recorded. The lesson
+  for the next audit: the repair itself introduced a defect of the same class it was fixing — the new
+  transition exemplar modelled a move the lesson says needs no transition — so re-read added teaching
+  against the rule it illustrates, not only against the gap it fills.
+  **DO NOT CALL SIGNPOSTING FINISHED.** Four integration defects are OPEN, out of scope for the
+  content patch (architecture freeze) and blocking for the Debate end-to-end pass: (1) `sp-16` and
+  `sp-24` are servable but untaught — round-management judgments the lesson does not draw; (2)
+  `sp-03` and `sp-07` carry off-by-one rationales that describe their own keyed option as wrong; (3)
+  the drills pre-session copy promises a progress update for an area with no seeded Skill row, so
+  every submission returns `skill-missing`; (4) the full judge's `organization` measure is mapped to
+  signposting, declared `direct: true`, and rewards "first/second/third/point" — the lesson's own
+  model answer scores 57 against a 60 retry threshold, and the label the lesson calls WRONG scores
+  higher than the one it calls right. No guided application may be added while (4) stands.
+  Status labels, verbatim, for the integration audit that comes next:
+  `SIGNPOSTING DRILL COVERAGE BLOCKER: OPEN` · `SIGNPOSTING DRILL RATIONALE DEFECT: OPEN` ·
+  `SIGNPOSTING PROGRESS-TRUTH DEFECT: OPEN` · `SIGNPOSTING JUDGE-MEASURE DEFECT: OPEN` ·
+  `SIGNPOSTING END-TO-END: INCOMPLETE`.
+  Two invariants for that pass, ruled by the owner: do NOT teach extra curriculum to justify a
+  servable drill item — if sp-16 and sp-24 test what this curriculum deliberately does not teach, the
+  default is to CONTAIN them, not to bloat the lesson; and repairing sp-03/sp-07 must preserve the
+  keyed judgment — if a key is itself wrong, that is a bank-content review, not a rationale edit.
+  For the judge defect the acceptance target is NOT "the model answer scores above 60": the measure
+  must reward the property Signposting teaches, must not reward the labels the lesson calls wrong,
+  and must not drive remediation from a gameable substring count.
+- **TURN MECHANICS — PERFECTION AUDIT, THEN REPAIR — COMMITTED `a268ff4` (2026-09-06).**
   The opposite diagnosis to Answer Types, and the case that justifies the audit-first rule: the
   TEACHING was already good — both website-only readers answered all nine checks with every deciding
   idea marked TAUGHT — while the DOCTRINE was partly wrong and the assessment was exploitable behind a

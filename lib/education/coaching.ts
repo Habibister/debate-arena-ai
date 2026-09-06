@@ -978,6 +978,126 @@ const TURN_MECHANICS_EXPECTED: TurnMoveTerm = "impact turn";
  */
 const ANSWER_TYPES_EXPECTED: AnswerTypeTerm = "turn";
 
+/**
+ * The three levels the Signposting lesson names, in its own words. A closed set, so the level slot
+ * can be an EXACT whole-answer check rather than a guess: "At the top is an AREA... Inside it sit
+ * the separate ARGUMENTS that support it, and inside each of those sit the INNER CLAIMS it rests on."
+ */
+export const SIGNPOST_LEVEL_TERMS = ["area", "argument", "inner claim"] as const;
+export type SignpostLevelTerm = (typeof SIGNPOST_LEVEL_TERMS)[number];
+
+/**
+ * Accepted spellings, normalised. "contention" is the lesson's OWN gloss for an area ("often called
+ * a contention"), and a bare "claim" is the same level as an inner claim in a three-term stack —
+ * neither adds a term to the taxonomy. Nothing else is accepted, and the match is on the WHOLE
+ * answer, so "area or argument" and "argument, then the claim underneath it" both fail.
+ */
+const SIGNPOST_LEVEL_BY_PHRASE: Readonly<Record<string, SignpostLevelTerm>> = {
+  area: "area", contention: "area",
+  argument: "argument",
+  "inner claim": "inner claim", claim: "inner claim"
+};
+
+/** The whole answer, normalised, or null when it is not exactly one of the three levels. */
+export function soleSignpostLevelTerm(text: string): SignpostLevelTerm | null {
+  const words = canonical(text.replace(/-/g, " ")).split(" ").filter(Boolean);
+  if (words[0] === "a" || words[0] === "an" || words[0] === "the") words.shift();
+  if (words[words.length - 1] === "level") words.pop();
+  return SIGNPOST_LEVEL_BY_PHRASE[words.join(" ")] ?? null;
+}
+
+/**
+ * Words that cannot, on their own, identify a column. Ordinals and speaker references are what the
+ * lesson rules out by name ("Label by ARGUMENT, not by speaker and not by position in their speech");
+ * the rest are the placeholder nouns and function words a label is built from. Removing them leaves
+ * the SUBJECT of the label, if there is one.
+ *
+ * This is a FORM guard and nothing more. Residue proves only that some content word survived — it
+ * cannot tell whether that word names the argument the answer is actually aimed at, and invented
+ * words pass it. The completion copy says so.
+ */
+const SIGNPOST_GENERIC_WORDS = new Set([
+  "first", "second", "third", "fourth", "fifth", "1st", "2nd", "3rd", "4th", "5th", "one", "two", "three",
+  "speaker", "speakers", "partner", "partners", "opponent", "opponents", "side", "sides", "team", "teams",
+  "point", "points", "argument", "arguments", "claim", "claims", "case", "contention", "contentions",
+  "thing", "things", "part", "parts", "bit", "bits", "issue", "issues", "matter", "stuff",
+  "on", "onto", "to", "the", "a", "an", "of", "in", "for", "with", "about", "and", "that", "this", "it",
+  "is", "was", "am", "are", "i", "we", "my", "our", "their", "theirs", "them", "they", "his", "her", "hers",
+  "next", "last", "now", "then", "going", "go", "turn", "turning", "move", "moving", "answer", "answering",
+  "respond", "responding", "response", "reply", "replying", "back", "against", "coming", "come",
+  "speaking", "talking", "saying", "say", "over", "across", "onto",
+  "s", "said", "made", "just", "which", "what", "where", "here"
+]);
+
+const signpostResidue = (text: string) =>
+  canonical(text).split(" ").filter((word) => word.length > 2 && !SIGNPOST_GENERIC_WORDS.has(word));
+
+/**
+ * The learner classifies the level the response is aimed at, then writes the signpost they would say.
+ *
+ * ONLY the level is judged. It is a whole-answer match against a three-term closed vocabulary the
+ * lesson defines, so a wrong or enumerated answer is a real failure rather than a guess about
+ * meaning. The written signpost is checked for FORM only — that it exists, is long enough to be a
+ * label, and is not built entirely out of ordinals, speaker references and placeholder nouns. No
+ * check reads whether it names the right argument, and the completion copy refuses to imply one did.
+ */
+export function evaluateSignpostingScaffold(
+  slots: { level: string; signpost: string },
+  expected: SignpostLevelTerm
+): ScaffoldEvaluation {
+  const named = soleSignpostLevelTerm(slots.level);
+  if (named === null) {
+    return {
+      complete: false,
+      slot: "the level your answer is aimed at",
+      coach: "This blank takes one level on its own: area, argument, or inner claim. Naming two, or describing the answer instead, does not pick a level.",
+      retryRequired: true
+    };
+  }
+  if (named !== expected) {
+    // One message for every wrong level: naming which way it was wrong would leave one term standing
+    // in a three-term space. The coaching re-runs the lesson's own rule instead, which is true
+    // whichever level the learner picked.
+    return {
+      complete: false,
+      slot: "the level your answer is aimed at",
+      coach: "Not that level. Read their case again from the bottom up and ask what your answer actually strikes \u2014 the label names where the response is aimed, not how much of their case might fall with it.",
+      retryRequired: true
+    };
+  }
+  const words = slots.signpost.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 3) {
+    return {
+      complete: false,
+      slot: "the label you would say",
+      coach: "Write the words you would actually say, not the level again. It is one short phrase that names the thing you are about to answer.",
+      retryRequired: true
+    };
+  }
+  if (signpostResidue(slots.signpost).length === 0) {
+    return {
+      complete: false,
+      slot: "the label you would say",
+      coach: "Strip out the ordinals, the speaker and the words like \"point\" and \"argument\" and nothing is left, so nothing here names a column. A judge who numbered their notes differently could not place this. Name the subject the argument is about.",
+      retryRequired: true
+    };
+  }
+  return {
+    complete: true,
+    coach: "",
+    exactCheck: "The level is right: this answer is aimed at " + (expected === "inner claim" ? "an inner claim" : "an " + expected) + " \u2014 though that was a choice between three level names, and nothing here asked why. Your label was checked only for shape: that it is there, and that it is not built entirely out of ordinals, speakers and words like \"point\". Nothing read whether it names the thing you meant, and a sentence with nothing to do with the lamps would have passed too.",
+    retryRequired: false
+  };
+}
+
+/**
+ * The authored classification for the signposting exercise: the response answers the claim that half
+ * the lamps are broken, which sits under the lighting argument, which sits under the safety heading.
+ * The answer strikes the claim, so the label belongs at inner-claim level. `coached-performance:smoke`
+ * pins the authored prompt this was keyed against.
+ */
+const SIGNPOSTING_EXPECTED: SignpostLevelTerm = "inner claim";
+
 export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
   "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
   "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context),
@@ -986,7 +1106,9 @@ export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly stri
   "debate-answer-types": (v) =>
     evaluateAnswerTypesScaffold({ ifItSucceeds: v[0] ?? "", direction: v[1] ?? "", type: v[2] ?? "" }, ANSWER_TYPES_EXPECTED),
   "debate-turn-mechanics": (v) =>
-    evaluateTurnMechanicsScaffold({ changes: v[0] ?? "", becomesTrue: v[1] ?? "", move: v[2] ?? "" }, TURN_MECHANICS_EXPECTED)
+    evaluateTurnMechanicsScaffold({ changes: v[0] ?? "", becomesTrue: v[1] ?? "", move: v[2] ?? "" }, TURN_MECHANICS_EXPECTED),
+  "debate-signposting": (v) =>
+    evaluateSignpostingScaffold({ level: v[0] ?? "", signpost: v[1] ?? "" }, SIGNPOSTING_EXPECTED)
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

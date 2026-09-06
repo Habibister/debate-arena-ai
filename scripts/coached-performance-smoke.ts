@@ -503,8 +503,8 @@ function main() {
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
     assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 6,
-      "six lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, and Turn Mechanics' move scenario");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 7,
+      "seven lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, Turn Mechanics' move scenario, and Signposting's level-and-label scenario");
   });
 
   // ================================================================================================
@@ -1781,6 +1781,215 @@ function main() {
       assert.ok(!(modal[k] && modal.filter(Boolean).length === 1),
         `Q${i + 1}: the key must not be the only option carrying a modal or free-choice determiner`);
     });
+  });
+
+  // ================================================================================================
+  // S. SIGNPOSTING — the perfection repair (2026-09-06). The audit found the opposite of Answer
+  // Types: teaching already strong (method STRONG, structure-vs-substance PASS, 22 of its own 30
+  // drill items answerable from stated sentences), wrapped in an assessment that measured nothing.
+  // Five independent no-lesson panels — a beginner, an adult reasoner, a test-wise exploiter and two
+  // structure-only hunters with the STEMS WITHHELD — returned identical 11/11 sheets, because
+  // "strike any option with a vague quantifier, then take the shortest" scored 8/11 while the
+  // aggregate read healthy (H_LONG 0%, R_MED 0.84: the inverse of the Answer Types signature, which
+  // is why H_LONG alone never catches it). One check was keyed AGAINST the lesson's own transition
+  // rule. What follows pins the corrected teaching, the reduced bank, and the scaffold's honesty.
+  // ================================================================================================
+  const SP = "debate-signposting";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const spEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === SP) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sp = spEntry.source.lesson.content as any;
+  const spChecks = [sp.guidedQuestion, ...sp.practiceQuestions, ...sp.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
+  const spTeaching = [sp.objective, sp.explanation, sp.whyMatters, ...sp.steps,
+    ...Object.values(sp.workedExample as Record<string, string>),
+    sp.scaffoldedTry.prompt, sp.scaffoldedTry.frame, ...sp.scaffoldedTry.slots].join("\n");
+  const spAll = [spTeaching, spEntry.source.name, spEntry.source.description, spEntry.source.lesson.title,
+    spEntry.source.lesson.summary, ...spChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation])].join("\n");
+
+  check("SA. Signposting is teach-and-produce: 11 checks became 6, and only a scaffold was added", () => {
+    assert.equal(1 + sp.practiceQuestions.length + sp.masteryCheck.length, 6, "eleven checks became six distinct judgments");
+    assert.ok(sp.scaffoldedTry, "the productive obligation now has a surface");
+    // Everything else was REFUSED as padding: the audit rated the teaching strong at ~1,264 words.
+    for (const field of ["teachingSections", "additionalExamples", "revisionLadder", "misconception", "commonMistakes", "languageFrames"]) {
+      assert.equal(sp[field], undefined, `no ${field} — the repair is subtraction plus one production surface`);
+    }
+    assert.equal(guidedApplicationFor(SP), null, "no guided round: the round's only signposting measure contradicts the lesson");
+    assert.equal(spEntry.skillSlug, undefined, "still no skill claim");
+    assert.equal(spEntry.practiceDrill, undefined, "and no drill CTA: the sp- skill row is activation-pending");
+    const spWords = (t: string) => (t.match(/[A-Za-z’'-]+/g) ?? []).length;
+    const qWords = spChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]).map(spWords).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(qWords < 900, `the quiz layer shrank from 1,207 words: ${qWords}`);
+  });
+
+  check("SB. the explanation renders as paragraphs, and the four honesty fixes hold", () => {
+    // The renderer splits on blank lines; before the repair this lesson was ONE 1,043-word block.
+    const spWords = (t: string) => (t.match(/[A-Za-z’'-]+/g) ?? []).length;
+    const paragraphs = sp.explanation.split(/\n{2,}/);
+    assert.ok(paragraphs.length >= 4 && paragraphs.length <= 6, `the explanation is ${paragraphs.length} paragraphs`);
+    assert.ok(paragraphs.every((p: string) => spWords(p) < 400), "no paragraph is a wall of its own");
+    // (a) note-taking is a convention, not a fact about every judge.
+    assert.ok(!/Judges take notes in columns/.test(spAll), "the column premise is no longer asserted of all judges");
+    assert.ok(/most track them as separate threads/.test(sp.explanation), "and is stated as what most do");
+    // (b) the roadmap is scoped to the speech that HAS answers to count.
+    assert.ok(/In a speech that answers what the other side said, a roadmap normally comes first/.test(sp.explanation),
+      "the roadmap is scoped by speech function and hedged, not made universal");
+    // The column model is a convention the whole lesson leans on, so the dependency is stated once
+    // in the mechanics rather than hedged into invisibility sentence by sentence.
+    assert.ok(/a judge who keeps no such record still has to work out which argument you are answering/.test(sp.explanation),
+      "and the lesson says what holds when the judge keeps no columns");
+    assert.ok(!/judges often do not/.test(sp.explanation), "no unsourced claim about how often judges number things");
+    assert.ok(/^In a speech that answers what the other side said, give a roadmap/.test(sp.steps[0]), "and the step agrees");
+    // The step used to demand a count AND names while the body says naming does the counting for you.
+    assert.ok(/a bare count does a weaker version of the same job/.test(sp.steps[0]), "the step is no stricter than the principle");
+    assert.ok(/if you drop an answer you promised, say so as you pass it/.test(sp.steps[3]), "and the cut-answer rule reaches the steps");
+    // (c) the card no longer tells the learner to number what the body says never to number.
+    assert.ok(!/\bnumbers\b/i.test(spEntry.source.lesson.summary), "the summary drops the numbers instruction");
+    assert.ok(/Label by ARGUMENT, not by speaker and not by position/.test(sp.explanation), "which the body contradicted");
+    // (d) format-specific vocabulary survives only where the lesson glosses it.
+    assert.equal((spAll.match(/contention/gi) ?? []).length, 1, "\"contention\" appears once, in its gloss");
+    assert.ok(/often called a contention/.test(sp.explanation), "and that one is the gloss");
+  });
+
+  check("SC. the teaching that used to live only inside deleted questions is in the lesson now", () => {
+    const body = sp.explanation + "\n" + Object.values(sp.workedExample as Record<string, string>).join("\n");
+    // A spoken transition, and its empty counterpart, both outside the quiz layer.
+    assert.ok(/that is their case answered; now back to our own access argument/.test(body), "a real transition is modelled — and on a move the lesson says earns one");
+    assert.ok(!/now, on their enforcement argument/.test(body), "never between two of their arguments, which the lesson says needs no transition");
+    assert.ok(/"moving on" or "secondly"/.test(body), "and the empty kind is shown, not just named");
+    // What labelling costs — the lesson pushed only toward MORE labels before.
+    assert.ok(/Label the moves, not the sentences/.test(body), "over-signposting has a stated cost");
+    // Placement is not quality, in the teaching rather than in a check.
+    assert.ok(/Signposting is not analysis and does not substitute for it/.test(body), "structure is not substance");
+    assert.ok(/it decides where the answer lands, not whether it was any good/.test(body), "stated twice, once on the example");
+    // The three verified gaps.
+    assert.ok(/it is the identity that cannot drift/.test(body), "stable argument identity is taught");
+    assert.ok(/No phrasing here is required/.test(body), "the wording is explicitly free");
+    assert.ok(/if you decide not to give an answer you promised: say so as you pass it/.test(body), "a promise you cut is announced");
+    // And the worked example now cashes out the roadmap, not only the labels.
+    assert.ok(/Notice what the labels leave out/.test(sp.workedExample.whyItWorks), "the example says what a label omits");
+  });
+
+  check("SD. no key is isolated by a surface property, and the measured exploit is dead", () => {
+    const wc = (t: string) => t.trim().split(/\s+/).length;
+    const VAGUE = /\b(most|several|some|roughly|everything|overall|as many as|whole|entire|anything)\b/i;
+    const MODAL = /\b(can|could|may|might|would|should|must|whichever|whatever|any)\b/i;
+    const ABSOLUTE = /\b(never|always|nothing|every|all|none|entirely|completely)\b/i;
+    let exploit = 0;
+    spChecks.forEach((q, i) => {
+      const k = q.choices.indexOf(q.correctAnswer);
+      const lens = q.choices.map(wc), chars = q.choices.map((o) => o.length);
+      const uniqueAt = (a: number[], v: number) => a.filter((x) => x === v).length === 1 && a[k] === v;
+      assert.ok(!uniqueAt(lens, Math.max(...lens)), `Q${i + 1}: key not uniquely longest by words`);
+      assert.ok(!uniqueAt(lens, Math.min(...lens)), `Q${i + 1}: nor uniquely shortest by words`);
+      assert.ok(!uniqueAt(chars, Math.max(...chars)), `Q${i + 1}: nor uniquely longest by characters`);
+      assert.ok(!uniqueAt(chars, Math.min(...chars)), `Q${i + 1}: nor uniquely shortest by characters`);
+      // Single-option lexical properties: allowed on a distractor, never only on the key.
+      for (const [label, re] of [["a vague quantifier", VAGUE], ["a modal", MODAL], ["an absolute", ABSOLUTE]] as const) {
+        const hit = q.choices.map((o) => re.test(o));
+        assert.ok(!(hit[k] && hit.filter(Boolean).length === 1), `Q${i + 1}: the key is not the only option with ${label}`);
+        const clear = q.choices.map((o) => !re.test(o));
+        assert.ok(!(clear[k] && clear.filter(Boolean).length === 1), `Q${i + 1}: nor the only option without ${label}`);
+      }
+      const comma = q.choices.map((o) => o.includes(","));
+      assert.ok(!(comma[k] && comma.filter(Boolean).length === 1) && !(!comma[k] && comma.filter((x) => !x).length === 1),
+        `Q${i + 1}: comma use does not single out the key`);
+      assert.equal(new Set(q.choices).size, 4, `Q${i + 1}: four distinct options`);
+      // THE MEASURED EXPLOIT, run as a control: strike the vague options, take the shortest survivor.
+      const pool = q.choices.map((o, j) => (VAGUE.test(o) ? -1 : j)).filter((j) => j >= 0);
+      const live = pool.length ? pool : q.choices.map((_, j) => j);
+      const shortest = Math.min(...live.map((j) => q.choices[j].length));
+      const picks = live.filter((j) => q.choices[j].length === shortest);
+      exploit += picks.includes(k) ? 1 / picks.length : 0;
+    });
+    assert.ok(exploit <= 1, `the 8/11 exploit is dead: it now scores ${exploit.toFixed(2)}/6`);
+    assert.deepEqual(spChecks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["B", "D", "C", "B", "A", "C"], "keys as authored and reviewed");
+  });
+
+  check("SE. the six checks test six distinct judgments, and none contradicts the lesson", () => {
+    // The defect the audit found: a check keyed to a transition the lesson says is unnecessary.
+    const transition = spChecks.find((q) => /earns a separate transition/.test(q.prompt));
+    assert.ok(transition, "the transition check now asks which move EARNS one");
+    assert.ok(/rebuilding your own access argument/.test(transition!.correctAnswer), "and keys the larger move");
+    assert.ok(!spChecks.some((q) => /closes one argument and opens another\?/.test(q.prompt)),
+      "the old check, keyed against the lesson's own rule, is gone");
+    // One judgment per item, named by the phrase only that item's stem carries.
+    const judgments = ["Which opening tells the judge where the answer belongs", "is not a roadmap at all",
+      "earns a separate transition", "What have the labels achieved", "What is the result", "What follows"];
+    for (const j of judgments) {
+      assert.equal(spChecks.filter((q) => q.prompt.includes(j)).length, 1, `exactly one check asks: ${j}`);
+    }
+    // The failure the lesson calls the one to watch for is now judged.
+    const misfiled = spChecks.find((q) => /never touches/.test(q.correctAnswer));
+    assert.ok(misfiled && /keeps none/.test(misfiled.correctAnswer), "a precise label pointed at the wrong argument is tested");
+    assert.ok(spChecks.some((q) => /both names are one argument/.test(q.correctAnswer)), "and so is stable argument identity");
+    // The two outcome items ran one four-family template in the same order, and "anyway" marked the
+    // rescue option in both, so calibrating on one gave the other away. Neither may return.
+    assert.equal((spAll.match(/\banyway\b/g) ?? []).length, 0, "no shared rescue-family marker across the outcome items");
+    assert.ok(spChecks.some((q) => q.choices.some((o) => /You lose the seconds it takes/.test(o))),
+      "a distractor names a real cost, so naming a cost no longer means naming the key");
+    // THE SURVIVING CROSS-ITEM ROUTE, pinned at its measured ceiling. Where a stem stipulates an
+    // error, a test-wise reader takes the option that leaves the speaker uncompensated. On the three
+    // outcome items that route must never isolate the key: at least two options have to carry the
+    // concession, so splitting them needs the taught judgment. Measured 2.25/6 with 0 items isolated.
+    const concedes = /\b(unsupported|wasted|keeps none|left to work out|lose|nothing|never)\b/i;
+    let isolated = 0;
+    for (const q of spChecks) {
+      const k = q.choices.indexOf(q.correctAnswer);
+      const bearing = q.choices.filter((o) => concedes.test(o));
+      if (bearing.length === 1 && concedes.test(q.choices[k])) isolated += 1;
+    }
+    assert.equal(isolated, 0, "no item lets the concession route isolate the key on its own");
+  });
+
+  check("SF. the scaffold grades the level exactly and refuses to imply more", () => {
+    const { evaluateSignpostingScaffold, soleSignpostLevelTerm, SIGNPOST_LEVEL_TERMS } = coaching;
+    assert.deepEqual([...SIGNPOST_LEVEL_TERMS], ["area", "argument", "inner claim"], "the closed vocabulary is the lesson's own stack");
+    assert.ok(/At the top is an AREA/.test(sp.explanation) && /INNER CLAIMS/.test(sp.explanation), "which the lesson defines in capitals");
+    assert.deepEqual(sp.scaffoldedTry.slots, ["the level your answer is aimed at", "the label you would say"]);
+    assert.ok(/half of them are broken/.test(sp.scaffoldedTry.prompt), "the authored case the key was set against");
+    assert.equal(sp.scaffoldedTry.motion, undefined, "no field is made to lie");
+    // WHOLE-ANSWER equality, never "contains a level".
+    assert.equal(soleSignpostLevelTerm("inner claim"), "inner claim");
+    assert.equal(soleSignpostLevelTerm("an inner claim"), "inner claim");
+    assert.equal(soleSignpostLevelTerm("contention"), "area", "the lesson's own gloss for an area");
+    assert.equal(soleSignpostLevelTerm("argument level"), "argument");
+    assert.equal(soleSignpostLevelTerm("inner claim or argument"), null, "an enumeration is not an answer");
+    assert.equal(soleSignpostLevelTerm("the claim about the lamps"), null, "nor is a sentence containing the word");
+    const run = (level: string, signpost: string) => evaluateSignpostingScaffold({ level, signpost }, "inner claim");
+    assert.equal(run("argument", "on their lighting argument").complete, false, "the wrong level fails");
+    assert.equal(run("area", "on safety").complete, false, "in both directions");
+    // FORM ONLY on the written signpost: what it refuses is exactly what the lesson rules out.
+    assert.equal(run("inner claim", "on their second point").complete, false, "an ordinal names no column");
+    assert.equal(run("inner claim", "responding to their first speaker").complete, false, "nor does a speaker");
+    assert.equal(run("inner claim", "on it").complete, false, "nor two words");
+    const ok = run("inner claim", "on their claim that half the lamps are broken");
+    assert.equal(ok.complete, true);
+    // The honesty the audit demanded: the completion copy must not imply the signpost was read.
+    assert.ok(/Your label was checked only for shape/.test(ok.exactCheck ?? ""), "the copy says the label was shape-checked");
+    assert.ok(/Nothing read whether it names the thing you meant/.test(ok.exactCheck ?? ""),
+      "and refuses the semantic claim outright");
+    assert.ok(/a sentence with nothing to do with the lamps would have passed too/.test(ok.exactCheck ?? ""),
+      "in the blunt form, so the learner cannot mistake a shape check for a reading");
+    assert.ok(/nothing here asked why/.test(ok.exactCheck ?? ""),
+      "and the level check discloses its own limit too, rather than only the label's");
+    assert.ok(/the ___ level/.test(sp.scaffoldedTry.frame), "the frame asks for the level name, not the target");
+    // And the disclosed limit is real, not a claim: invented content passes the shape check.
+    assert.equal(run("inner claim", "on their zxqv argument").complete, true,
+      "a shape guard cannot tell a real label from an invented one — which is why the copy claims nothing about it");
+  });
+
+  check("SG. the Signposting repair leaves the drill bank, the judge and the containment alone", () => {
+    const drills = require("../lib/debate-drills");
+    // 30 sp- items serve today and NONE is held. This repair does not release, rewrite or credit any
+    // of them: sp-16 and sp-24 remain untaught-but-servable, and that stays recorded as OPEN debt.
+    assert.equal(drills.DRILL_BANK.filter((q: { area: string }) => q.area === "signposting").length, 30, "the signposting bank is untouched");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.length, 22, "22 items remain withheld, all rebuttal");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("sp-")).length, 0, "no signposting item was held or released here");
+    assert.equal(drills.debateMasteryHeld("debate-rebuttal"), true, "durable rebuttal mastery stays held");
+    // The lesson claims no mastery and no guided competency, so nothing it says is scored anywhere.
+    assert.ok(!/mastery|mastered/i.test(spTeaching), "the lesson claims no durable mastery");
+    assert.deepEqual(guidedRubricFor(PILOT).locked.includes("signposting") ? "locked" : "unlocked", "locked",
+      "signposting stays locked in the pilot rubric: the judge's organization measure rewards the labels this lesson calls wrong");
   });
 
   console.log(`\ncoached-performance: ${checks} controls passed.`);

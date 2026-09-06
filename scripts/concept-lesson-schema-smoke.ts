@@ -246,7 +246,12 @@ function main() {
     // classification scenario; no frames, no ladder, no guided application) — still an exact set.
     // Turn Mechanics repaired 2026-09-06 (perfection audit: sections, misconception, mistakes, a small
     // classification scenario; no frames, no ladder, no guided application) — still an exact set.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-turn-mechanics"],
+    // Signposting repaired 2026-09-06 and is the FIRST entry here that authors ONLY a scaffoldedTry:
+    // the audit found its teaching already strong, so the repair added a production surface and no
+    // teaching structures. Sections were refused (the readability fix was paragraph breaks inside the
+    // existing explanation) and frames were refused (a phrase bank would teach the lesson's own rule
+    // backwards). If a later change gives it sections or frames, that is a decision to record here.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.

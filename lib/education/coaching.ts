@@ -639,6 +639,41 @@ export function evaluateClashScaffold(
 }
 
 /**
+ * Evaluate the Round Orientation tracking scenario WITHOUT a model. SHAPE ONLY, like the others:
+ * three slots filled, and the three answers distinct from one another — a learner who writes the same
+ * argument under "answered" and under "no response" has not yet separated the two questions the
+ * lesson teaches. Whether the learner picked the RIGHT argument for each slot is not judged here:
+ * that needs the exchange to be read, and a string cannot do it. No guided round follows this
+ * lesson; the scenario is the application, and its feedback stays at the shape.
+ */
+export function evaluateRoundTrackingScaffold(slots: { answered: string; unresolved: string; noResponse: string }): ScaffoldEvaluation {
+  const filled = (s: string) => s.trim().split(/\s+/).filter(Boolean).length >= 2;
+  const missing = (["answered", "unresolved", "noResponse"] as const).find((k) => !filled(slots[k]));
+  if (missing) {
+    const label = { answered: "answered", unresolved: "still unresolved", noResponse: "no response" }[missing];
+    return {
+      complete: false,
+      slot: label,
+      coach: missing === "answered"
+        ? "Start with the argument Side B replied to. Name it in a few words."
+        : missing === "unresolved"
+          ? "Now the issue the two sides are still disagreeing about after the defence — what do they still not agree on?"
+          : "One of Side A's arguments was never touched. Name it.",
+      retryRequired: true
+    };
+  }
+  if (essentiallyTheSame(slots.answered, slots.noResponse)) {
+    return {
+      complete: false,
+      slot: "no response",
+      coach: "The argument that was answered and the argument that got no response cannot be the same one. Look again at which of Side A's two arguments Side B actually spoke about.",
+      retryRequired: true
+    };
+  }
+  return { complete: true, coach: "", retryRequired: false };
+}
+
+/**
  * The evaluator for each lesson's scaffolded try, keyed by lesson id and taking the slot values in
  * the lesson's own slot order. A lesson with a scaffolded try and no entry here cannot be checked and
  * therefore cannot open its guided round — fail closed, and asserted by the smoke suite.
@@ -647,7 +682,8 @@ export type ScaffoldContext = { motion?: string };
 
 export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
   "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
-  "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context)
+  "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context),
+  "debate-round-orientation": (v) => evaluateRoundTrackingScaffold({ answered: v[0] ?? "", unresolved: v[1] ?? "", noResponse: v[2] ?? "" })
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

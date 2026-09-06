@@ -503,8 +503,8 @@ function main() {
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
     assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 2,
-      "two lessons carry a scaffolded try: the Refutation pilot and Clash");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 3,
+      "three lessons carry a scaffolded try: the Refutation pilot, Clash, and Round Orientation's tracking scenario");
   });
 
   // ================================================================================================
@@ -1153,6 +1153,104 @@ function main() {
     // Weighing cannot re-enter through the Clash mapping.
     assert.equal(guidedJudge.JUDGE_CATEGORY_COMPETENCY.clash, "weighing", "control: the lexical 'clash' category is weighing");
     assert.ok(!allowedJudgeCategories(clashRubric).includes("clash"), "and it is not allowed in a Clash round");
+  });
+
+  // ================================================================================================
+  // ROUND ORIENTATION — a CONCEPTUAL lesson repaired after an audit, not rebuilt. It proves the
+  // model is applied per lesson: no guided round, no frames, no ladder; a small tracking scenario.
+  // ================================================================================================
+  const ORIENT = "debate-round-orientation";
+  const orientEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === ORIENT);
+  const orient = orientEntry.source.lesson.content;
+  const { evaluateRoundTrackingScaffold } = coaching;
+
+  check("MA. Round Orientation is conceptual: no guided application, no frames, no ladder, one small scenario, three checks", () => {
+    assert.equal(guidedApplicationFor(ORIENT), null, "no guided round is declared — and none is added for consistency's sake");
+    assert.equal(guidedRubricFor(ORIENT), null);
+    assert.equal(orient.languageFrames, undefined, "no language frames: there is no speaking move to scaffold");
+    assert.equal(orient.revisionLadder, undefined, "no revision ladder: no authored performance is rewritten");
+    assert.equal(orient.additionalExamples, undefined, "the scenario is the second example");
+    assert.equal(orient.teachingSections.length, 3); assert.ok(orient.misconception); assert.equal(orient.commonMistakes.length, 4);
+    assert.equal(1 + orient.practiceQuestions.length + orient.masteryCheck.length, 3, "five checks became three");
+    assert.ok(orient.scaffoldedTry && orient.scaffoldedTry.slots.length === 3, "one small round-tracking scenario");
+    assert.ok(!("skillSlug" in orientEntry) || !orientEntry.skillSlug, "still no skillSlug (formative only, by design)");
+    assert.ok(!orientEntry.practiceDrill, "still no practice drill");
+    const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
+    // Sized for orientation, not for Clash. Two bounds, stated separately because they answer
+    // different questions: the teaching PROSE (objective, explanation, why it matters, steps,
+    // sections) is what a beginner reads to get the map; the example, misconception, mistakes and
+    // scenario are the parts that put the map to work. Neither may inflate toward Clash's 3,500.
+    const prose = [orient.objective, orient.explanation, orient.whyMatters, ...orient.steps, ...orient.teachingSections.map((s: { heading: string; body: string }) => s.heading + " " + s.body)]
+      .map(words).reduce((a: number, b: number) => a + b, 0);
+    const applied = [orient.workedExample.prompt, orient.workedExample.weakAnswer, orient.workedExample.strongAnswer, orient.workedExample.whyItWorks,
+      orient.misconception.wrongModel, orient.misconception.whyItFails, orient.misconception.betterModel,
+      ...orient.commonMistakes.flatMap((m: { mistake: string; whyItFails: string; fix: string }) => [m.mistake, m.whyItFails, m.fix]),
+      orient.scaffoldedTry.prompt, orient.scaffoldedTry.frame].map(words).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(prose >= 600 && prose <= 1300, `teaching prose is orientation-sized: ${prose} words`);
+    assert.ok(prose + applied <= 1800, `whole lesson stays far from Clash's size: ${prose + applied} words`);
+  });
+
+  check("MB. the two semantic corrections are taught as written, and the absolute dropped-argument rule is not", () => {
+    const text = [orient.explanation, ...orient.teachingSections.map((s: { body: string }) => s.body), orient.workedExample.whyItWorks,
+      orient.misconception.whyItFails, ...orient.commonMistakes.map((m: { whyItFails: string }) => m.whyItFails)].join("\n");
+    assert.ok(/they have given the judge less reason to reject it/.test(text), "silence is taught as LESS REASON TO REJECT, not as an automatic point");
+    assert.ok(!/judge (will )?counts? it|treats? it as (still )?true|automatically (wins|true)/i.test(text), "no absolute dropped-argument doctrine");
+    assert.ok(/two separate questions/.test(text) && /Was it answered: yes or no/.test(text) && /what state is it in now/.test(text), "answered? and current state? are taught as two separate questions");
+    assert.ok(/An argument that was answered can still be very much alive/.test(text), "answered and still standing is explicitly possible — the statuses are not one bucket");
+    assert.ok(/still unresolved/.test(text) && /no response at all/.test(text), "the teaching uses the scenario's own words for argument state");
+    assert.deepEqual(orient.scaffoldedTry.slots, ["answered", "still unresolved", "no response"], "the scenario asks three separate questions, not one status per argument");
+  });
+
+  check("MC. the worked example MOVES and is accurate: answered, defended, and one argument left alone", () => {
+    const { strongAnswer, weakAnswer, whyItWorks } = orient.workedExample;
+    assert.ok(/On concentration:/.test(strongAnswer) && /On that:/.test(strongAnswer), "Side B answers Side A's REASON and Side A defends it — the reply is aimed at the argument, not a separate concern");
+    assert.ok(/Nothing was said about the money/.test(strongAnswer), "one argument is visibly left without a response");
+    assert.ok(/nobody answers anything/.test(whyItWorks), "the weak version is a round where nothing changes, not a rude one");
+    assert.ok(!/outweigh|magnitude|probability|matters more/i.test(strongAnswer + whyItWorks), "no weighing criterion is named");
+    assert.ok(!/because .* therefore/i.test(strongAnswer), "no refutation chain is modelled");
+    assert.ok(weakAnswer.split("Also,").length >= 3, "control: the weak version really is a list");
+  });
+
+  check("MD. style neutrality and ownership: no procedural claims, no later-skill method", () => {
+    const all = JSON.stringify(orient);
+    for (const procedural of ["first speaker", "second speaker", "cross-examination", "cross examination", "minutes", "affirmative must", "negative must", "government must", "opposition must", "new arguments are not allowed", "rebuttal speech"]) {
+      assert.ok(!all.toLowerCase().includes(procedural), `no format-specific procedure: ${procedural}`);
+    }
+    assert.ok(/Formats differ in speech names, order and timing/.test(orient.explanation), "the format disclaimer stays");
+    assert.ok(/mostly constructive/.test(orient.explanation) && /mostly responsive/.test(orient.explanation), "the phase claim stays hedged");
+    for (const method of ["they say ___", "because ___. Therefore", "outweigh", "compare the impacts", "the real clash is whether", "signpost", "warrant test", "delete test"]) {
+      assert.ok(!all.toLowerCase().includes(method.toLowerCase()), `no later-skill method: ${method}`);
+    }
+    assert.ok(/the Claim, Warrant, Impact lesson teaches how to build one/.test(orient.explanation), "argument-building is deferred, not taught");
+    assert.ok(/a skill with its own lesson later/.test(orient.teachingSections[2].body), "weighing is pointed at, not taught");
+  });
+
+  check("ME. the tracking-scenario evaluator is shape-only, exact, and never writes the answer", () => {
+    const good = { answered: "projects show understanding", unresolved: "whether projects show the student or the home", noResponse: "exam week costs two weeks of lessons" };
+    assert.deepEqual(evaluateRoundTrackingScaffold(good), { complete: true, coach: "", retryRequired: false });
+    for (const k of ["answered", "unresolved", "noResponse"] as const) {
+      const r = evaluateRoundTrackingScaffold({ ...good, [k]: "" });
+      assert.equal(r.retryRequired, true, `${k} missing → retry`); assert.ok(!r.coach.includes(good[k]), "the coach never supplies the answer");
+    }
+    const same = evaluateRoundTrackingScaffold({ ...good, noResponse: good.answered });
+    assert.ok(same.retryRequired && /cannot be the same one/.test(same.coach), "the same argument under answered and no-response is sent back");
+    const src = stripComments(read("lib/education/coaching.ts"));
+    const body = src.slice(src.indexOf("export function evaluateRoundTrackingScaffold"), src.indexOf("export type ScaffoldContext"));
+    assert.ok(!/overlap\(|containedIn|obviously|should\b/.test(body), "no word-overlap or loaded-word heuristics");
+    assert.equal(evaluateScaffoldFor(ORIENT, [good.answered, good.unresolved, good.noResponse]).complete, true, "dispatched by lesson id");
+  });
+
+  check("MF. the orientation page renders teach-first, ends at the scenario, and offers NO guided round", () => {
+    const html = render(React.createElement(ConceptEducationLessonView, {
+      source: orientEntry.source, provenance: MIGRATED_DEBATE_PROVENANCE, moduleLabel: "Argument construction", next: null, practiceDrill: undefined
+    } as never));
+    const text = visible(html);
+    assert.ok(text.includes("A round is a set of arguments that change") && text.includes("Now try the move"), "sections and the scenario render");
+    assertOrder(html, "A round is a set of arguments that change", "What are they choosing between", "teaching precedes the first check");
+    assert.ok(!text.includes("Words you can use"), "no frames section");
+    assert.ok(!text.includes("Use it in a guided round") && !text.includes("The guided round opens after"), "no guided-round link or promise of one");
+    for (const slot of ["1. answered", "2. still unresolved", "3. no response"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
+    assert.ok(!/practice-drill/.test(html) || !text.includes("Practice this skill"), "no drill CTA for a lesson with no drill");
   });
 
   console.log(`\ncoached-performance: ${checks} controls passed.`);

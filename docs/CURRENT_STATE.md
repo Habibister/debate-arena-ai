@@ -145,6 +145,25 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **ROUND ORIENTATION — AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-05).** Audit
+  first, by nine independent read-only reviewers plus my own read: the lesson's job is CONCEPTUAL
+  (a map of the round), its style neutrality and ownership already PASSED, and its gap was a
+  missing map of round STATE — what to listen for, what to keep, that an unanswered argument stays
+  where it was left, and that the judge decides on what remains. Repaired to exactly that: three
+  teaching sections (a round is a set of arguments that change; what to listen for and keep; the
+  round narrows and the judge decides on what remains), a worked example that MOVES (one argument
+  introduced, answered on its reason, defended; one argument never addressed and said so; the weak
+  version is a round in which nothing changes), one owned misconception (the round resets each
+  speech), four owned mistakes, and a SMALL SCENARIO as the application — a fixed three-turn
+  exchange scored as three separate questions (answered / still unresolved / no response) through
+  the existing scaffold structure and a shape-only evaluator (`evaluateRoundTrackingScaffold`).
+  Two semantic corrections written in by owner instruction: silence is taught as "less reason to
+  reject", never as an automatic point; "was it answered?" and "what state is it in?" are two
+  separate questions, so an answered argument can still be alive. Checks 5 → 3 (Q2 recall and Q3
+  warrant-recognition deleted; Q1 and Q4 rewritten; Q5 kept). NO guided round, NO language frames,
+  NO revision ladder, NO guided application, NO skillSlug, NO drill — still formative by design.
+  Teaching prose about 900 words; whole lesson about 1,650 (example, misconception, mistakes, scenario). Baseline
+  `ORIENTATION-REPAIR-V1`, one block changed, twenty byte-identical. **Not committed.**
 - **CLASH LESSON REBUILD — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).** `debate-clash` is the
   second lesson rebuilt on the coached model and the first cumulative one: guided target Clash,
   reinforcement Claim/Warrant/Impact + Refutation, everything later locked. Title "Find the real

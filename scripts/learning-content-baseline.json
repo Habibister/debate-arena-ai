@@ -1203,83 +1203,58 @@
     }
   },
   {
+    "slug": "debate-round-orientation",
     "organization": "DEBATE",
     "track": "DEBATE",
-    "name": "Debate Round Orientation",
-    "slug": "debate-round-orientation",
-    "description": "Understand what happens in a debate round before your first practice.",
     "category": "Debate foundations",
+    "name": "Debate Round Orientation",
+    "description": "Understand what happens in a debate round before your first practice.",
     "lesson": {
       "title": "How a debate round works",
       "slug": "debate-round-orientation-lesson",
-      "summary": "What debate is, what each side is doing, and what the judge needs from you.",
-      "estimatedMinutes": 6,
+      "summary": "What a round is trying to accomplish, how the arguments in it change, and what to pay attention to while it happens.",
+      "estimatedMinutes": 9,
       "content": {
-        "objective": "Understand what a debate round is and what you are trying to do in one.",
-        "explanation": "A debate round is a structured disagreement: two sides give reasons for different positions, answer each other, and a judge decides which side argued more persuasively. Your job is not just to speak — it is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and why your strongest points should decide the round. An argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive — introducing and building your side's case. Later speaking is mostly responsive — answering what has already been argued and comparing the two sides. Formats differ in speech names, order and timing, but these jobs stay the same.",
-        "whyMatters": "Beginners who enter a round without knowing the goal tend to list facts or repeat themselves. Judges can only vote on what they can follow: once you know the judge is deciding between reasons, every sentence gets a purpose — building a point, answering one, or explaining why yours matters more.",
+        "objective": "Understand what a debate round is trying to accomplish, what changes as it unfolds, and what to pay attention to while it happens.",
+        "explanation": "A debate round is a structured disagreement: two sides take turns giving reasons for different positions on a motion, the statement the round is about, and a judge decides which side argued more persuasively. The sides have different names in different formats, such as Pro and Con or Government and Opposition, but there are always two, and the judge decides on what was said in the round, not on their own view of the topic. So your job is not just to speak. It is to help the judge see what your side claims, why it is true, why the other side's answers do not defeat it, and what is still standing at the end.\n\nAn argument is a claim backed by a reason and a why-it-matters; the Claim, Warrant, Impact lesson teaches how to build one. Early speaking in a round is mostly constructive, introducing and building your side's case. Later speaking is mostly responsive, answering what has already been argued and comparing what remains. Formats differ in speech names, order and timing, but these jobs stay the same, and so does the idea underneath them: a round is a small set of arguments that change as it goes on, and the judge decides on what they have become.",
+        "whyMatters": "Beginners without this map list facts, repeat themselves, or treat each speech as a fresh start. Once you know the judge is deciding between reasons that were introduced, answered and defended in front of them, every sentence you say gets a purpose, and every sentence the other side says becomes something to notice rather than something to wait out.",
         "steps": [
-          "Know your side's position and the strongest reasons for it.",
-          "Track what the other side actually argues, and answer it directly instead of repeating yourself.",
-          "Tell the judge which argument you are on and why your most important points should decide the round."
+          "Know your side's position and its two or three strongest reasons, so you know what is worth protecting when the round gets busy.",
+          "While the other side speaks, listen for their claim and the reason under it, and note which of your arguments they answered and which they left alone.",
+          "Keep a short record of every argument, yours and theirs, with two notes beside each: answered or not, and what state it is in now.",
+          "As the round narrows, know which of your arguments are still standing, and make sure the judge knows too."
         ],
         "workedExample": {
-          "prompt": "A short exchange on whether the school day should start later.",
-          "weakAnswer": "Side A: Later starts are good. Side B: No, they are not. Side A: Yes, they really are.",
-          "strongAnswer": "Side A: A later start helps because students sleep more and focus better in class. Side B: But buses and family schedules make a later start hard for many households. Side A: Schedules can be adjusted once — lost focus in every class is a cost that repeats every single day.",
-          "whyItWorks": "Each side makes a claim with a reason, the reply answers that claim directly, and the final turn explains why one concern should matter more to the judge. That is a debate round in miniature."
+          "prompt": "Motion: the school canteen should stop selling sugary drinks. Read two versions of the same short exchange. In both, Side A opens with two arguments. Watch what happens to each argument as the exchange goes on.",
+          "weakAnswer": "Side A: Sugary drinks cause energy crashes, so students concentrate worse after lunch. Also, the canteen would not lose money, because sales would shift to water and juice. Side B: Students should be trusted to choose what they drink. Also, the canteen menu has not been changed in ten years. Side A: And sugary drinks are bad for teeth.",
+          "strongAnswer": "Side A: Sugary drinks cause energy crashes, so students concentrate worse after lunch. Also, the canteen would not lose money, because sales would shift to water and juice. Side B: On concentration: students who want a sugary drink will bring one from home, so a canteen ban changes where they buy it, not what they drink. Side A: On that: the canteen is where most students buy drinks at school, because a lunchbox is packed once in the morning and the canteen is open all day. Nothing was said about the money, so that argument stands as we made it.",
+          "whyItWorks": "Follow each argument, not each speech. In the weak version nobody answers anything: every argument is left where it was introduced, so the judge holds five points with no response and no reason to prefer one side's over the other's. In the strong version the concentration argument is introduced, answered, then defended, so at the end it is still unresolved and the judge knows exactly what the two sides disagree about. The money argument got no response, and Side A says so: Side A has not won it by Side B's silence, but Side B has given the judge less reason to reject it. Two questions about each argument, asked whenever a speech ends, are the whole map: was it answered, and what state is it in now?"
         },
         "guidedQuestion": {
-          "prompt": "What is a debater's real job in a round?",
+          "prompt": "A judge is about to decide a round. What are they choosing between?",
           "choices": [
-            "Say everything true about the topic that you can fit in",
-            "Show the judge you know more about the subject than they do",
-            "Help the judge see why your side's reasons should win",
-            "Get the other side to admit that their position is wrong"
+            "Which side spoke with more confidence and fewer pauses",
+            "Which side introduced the larger number of reasons overall",
+            "Which side's reasons survived the other side's answers better",
+            "Which side the judge personally agrees with on the motion"
           ],
-          "correctAnswer": "Help the judge see why your side's reasons should win",
-          "hint": "Think about who decides the round.",
-          "explanation": "The judge decides between reasons, so every sentence should help them follow and prefer yours. Covering the topic, out-knowing the judge and extracting a concession all aim at someone other than the person who votes.",
+          "correctAnswer": "Which side's reasons survived the other side's answers better",
+          "hint": "Think about what the judge is allowed to decide on.",
+          "explanation": "The judge decides on what was said in the round, not on delivery or on their own opinion, and not by counting: a side can introduce more reasons and still lose if those reasons were answered while the other side's went unanswered. What is compared at the end is what each side's arguments have become after being answered, defended, or left alone.",
           "skillTag": "Orientation"
         },
         "practiceQuestions": [
           {
-            "prompt": "Debate formats vary a great deal from one to another. What does not change?",
+            "prompt": "Late in a round, Side A has made three arguments. Side B answered two of them and never mentioned the third. What should Side A do with its next speech?",
             "choices": [
-              "The number of speeches each side is given in the round",
-              "Building your case, answering the other side, and comparing",
-              "The length of time each speaker is allowed to talk",
-              "The names each format uses for its individual speeches"
+              "Answer only what Side B said last and leave the earlier arguments, since each speech is judged alone",
+              "Defend the two that were answered and note that the third was not, so all three stay live",
+              "Repeat all three in the same words and add a source to each, so the judge remembers them",
+              "Concede the two that were answered and spend the speech on the third, since it is unanswered"
             ],
-            "correctAnswer": "Building your case, answering the other side, and comparing",
-            "hint": "Ask which part a format can change and which part it cannot.",
-            "explanation": "Speech counts, timings and names are exactly what formats vary. What no format removes is the work: introduce your side's case, answer what the other side argued, and tell the judge which points should decide it.",
-            "skillTag": "Orientation"
-          },
-          {
-            "prompt": "Which choice gives the judge an actual reason instead of only stating a position?",
-            "choices": [
-              "School uniforms are the right policy for almost every school",
-              "Most parents and teachers already support school uniforms",
-              "School uniforms have been debated in districts for years",
-              "Uniforms help because they reduce visible income differences"
-            ],
-            "correctAnswer": "Uniforms help because they reduce visible income differences",
-            "hint": "An argument carries a reason the judge can weigh.",
-            "explanation": "A claim plus a reason gives the judge something to evaluate. Asserting that a policy is right, reporting that people support it, and noting that it gets debated are all statements about the topic that leave the judge with nothing to weigh.",
-            "skillTag": "Orientation"
-          },
-          {
-            "prompt": "The other side just answered one of your arguments. What should you do?",
-            "choices": [
-              "Respond to their answer and explain why your point still stands",
-              "Restate your original argument with more supporting detail",
-              "Point out that they answered instead of building their own case",
-              "Move on to your next argument so that you cover more ground"
-            ],
-            "correctAnswer": "Respond to their answer and explain why your point still stands",
-            "hint": "An unanswered response usually wins the point.",
-            "explanation": "Once an argument is answered, the judge needs your reply to the answer. More detail on the original does not address what was said; commenting on their strategy is not a reply either; and moving on leaves their answer standing.",
+            "correctAnswer": "Defend the two that were answered and note that the third was not, so all three stay live",
+            "hint": "Ask what state each of the three arguments is in now.",
+            "explanation": "Two arguments have been answered, so the judge now needs Side A's reply to those answers, or they stay where Side B's answers put them. The third was left alone, so it stands as made, and pointing that out costs one sentence. Answering only the last speech treats the round as if it reset, and leaves the two answered arguments where Side B put them; repeating all three with a source attached still does not engage the answers; and conceding the two that were answered gives up the arguments that are actually in dispute to protect one nobody attacked.",
             "skillTag": "Orientation"
           }
         ],
@@ -1287,17 +1262,67 @@
           {
             "prompt": "Side A says: 'Homework should be limited because students need sleep.' Side B answers: 'Students lose sleep to phones, not homework.' What does the judge most need from Side A next?",
             "choices": [
-              "A new reason to limit homework that does not depend on sleep at all",
-              "A reason why homework still costs sleep worth acting on, even if phones matter too",
-              "Agreement that phones matter too, then a move on to whichever argument is next",
-              "A restatement that students need sleep, this time with a study attached"
+              "A new reason to limit homework that has nothing to do with sleep",
+              "An agreement that phones matter, then a move to the next argument",
+              "The same point about students needing sleep, repeated more firmly",
+              "A reason homework still costs sleep, even if phones do as well"
             ],
-            "correctAnswer": "A reason why homework still costs sleep worth acting on, even if phones matter too",
-            "hint": "The clash is about the cause — resolve it.",
-            "explanation": "Side B answered the reason, so the judge needs Side A to engage that answer. Switching to a new reason abandons the contested one, agreeing and moving on concedes it, and adding a study to the original restates a point nobody disputed — Side B never denied that sleep matters.",
+            "correctAnswer": "A reason homework still costs sleep, even if phones do as well",
+            "hint": "Which part of Side A's argument did Side B actually contest?",
+            "explanation": "Side B did not deny that students need sleep; they denied that homework is what costs it. That is the part now in dispute, so the judge needs Side A to engage it. Switching to a new reason abandons the contested one, agreeing and moving on concedes it, and repeating the sleep point more firmly restates the part nobody disputed.",
             "skillTag": "Orientation"
           }
-        ]
+        ],
+        "teachingSections": [
+          {
+            "heading": "A round is a set of arguments that change",
+            "body": "Picture the round from the judge's chair. What the judge is holding is not a list of speeches; it is a handful of arguments, and each one has a history. It was introduced. Then the other side answered it or left it alone. Then, if it was answered, its maker defended it or moved on. Every speech is doing one of those things to one of those arguments, and the judge is tracking the results.\n\nSo for every argument there are two separate questions, worth keeping separate. Was it answered: yes or no. And what state is it in now. An argument that was answered can still be very much alive, because the answer was weak or the defence held, so the issue is still unresolved between the two sides; it can be weakened, because it was answered and never defended; or it can sit exactly where it was introduced because it got no response at all.\n\nThat last case matters more than beginners expect. If the other side never addresses an argument, they have not beaten it, and they have given the judge less reason to reject it. It is still there at the end, in the shape its maker gave it. That is why the arguments you did not answer can decide a round you thought you were winning."
+          },
+          {
+            "heading": "What to listen for, and what to keep",
+            "body": "The hardest beginner habit is listening while the other side speaks instead of rehearsing what to say next. Two things are worth catching in every opposing speech. First, for each argument they make, the claim and the reason under it: not just that they are against your position, but why. The reason is the part you will need later, and the part beginners forget. Second, for each argument you made, whether they answered it or skipped it.\n\nYou cannot know that without keeping score, and keeping score means a written record, however rough: one line per argument, theirs and yours, with a note beside each saying answered or not, and how it stands. A record is not a transcript. You will not remember everything, and you are not supposed to. Hold the main claims and their current state, and let the details go."
+          },
+          {
+            "heading": "The round narrows, and the judge decides on what remains",
+            "body": "In the later speeches of a round, whatever the format calls them, the work shifts. Most of the arguments are already on the table and have been answered at least once, and the speeches are increasingly about which of them survive and which of the survivors should decide the result. That is the narrowing: the round shrinks from everything anyone said to the few disagreements still standing at the end.\n\nThe judge decides on that remainder: not which side had more to say, not which side sounded more certain, not what they themselves believe about the motion, but which of the surviving arguments should decide this round. Saying which disagreement matters most, and why, is a skill with its own lesson later. What you need now is to know the round is heading there, so that you protect the arguments that will still be standing when it arrives."
+          }
+        ],
+        "misconception": {
+          "wrongModel": "The round starts over every time a new speaker stands up, so each speech is judged on its own.",
+          "whyItFails": "Nothing resets. Every speech acts on the arguments already in the round, answering them, defending them, or leaving them alone, and the judge carries the results forward. A speech that ignores what came before has not started fresh; it has left every earlier argument exactly where the other side put it.",
+          "betterModel": "Think of the round as a small set of arguments changing state. Each speech should be able to say what it is doing to each argument it touches, and each speech you listen to should be scored the same way."
+        },
+        "commonMistakes": [
+          {
+            "mistake": "Trying to respond to every sentence the other side said.",
+            "whyItFails": "Arguments, not sentences, are the unit of a round. The judge is tracking two or three arguments per speech, not every remark, and a reply aimed at everything lands on none of them.",
+            "fix": "Listen for the two or three arguments inside their speech; those are what the judge is tracking, and what you are tracking too."
+          },
+          {
+            "mistake": "Thinking only about your own arguments while the other side speaks.",
+            "whyItFails": "You stand up not knowing which of your points were answered, and spend your time defending what nobody attacked.",
+            "fix": "Score their speech as it happens: claim and reason for each of theirs, answered or skipped for each of yours."
+          },
+          {
+            "mistake": "Assuming an argument you made once stays as strong as when you made it.",
+            "whyItFails": "An argument that was answered and never defended has been left where the other side's answer put it, however good it sounded the first time.",
+            "fix": "After every opposing speech, check the state of each of your arguments and defend the ones that were answered."
+          },
+          {
+            "mistake": "Believing the judge votes for the side that sounded more confident, or for the side they agree with.",
+            "whyItFails": "The judge decides on what was said in the round: which reasons were given, answered, and still standing at the end. Confidence is not a reason, and the judge's own opinion is not in the round.",
+            "fix": "Put your effort into the arguments' history: introduce them, answer theirs, defend yours, say what remains."
+          }
+        ],
+        "scaffoldedTry": {
+          "prompt": "Motion: the school should replace exam week with project assessments. Side A: Projects show what a student understands better than a timed test does. Also, exam week costs two weeks of lessons that go to revision. Side B: On projects: they are done with help at home, so they show what the family knows, not what the student knows. Side A: On that: the projects would be completed in class time with the teacher present, so the home does not come into it. Now score the exchange. Name the argument that was answered, the issue that is still unresolved between the two sides, and the argument that received no response at all.",
+          "frame": "Answered: ___. Still unresolved: ___. No response: ___.",
+          "slots": [
+            "answered",
+            "still unresolved",
+            "no response"
+          ]
+        }
       }
     }
   },

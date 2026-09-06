@@ -55,6 +55,45 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **ROUND ORIENTATION — AUDIT-FIRST REPAIR — UNCOMMITTED, in the working tree (2026-09-05).**
+  The first lesson handled under the rule "perfect for its purpose, not identical to the others."
+  A read-only audit (nine reviewers: beginner and coach confusion tests, neutrality, ownership,
+  question audit, two application opinions, blind and content-free answering) found: role CONCEPTUAL;
+  neutrality PASS; ownership PASS; remove-questions PARTIAL; mental model and worked example
+  PARTIAL; questions 5 → recommended 3; application SMALL SCENARIO, no guided debate. The exact
+  gaps: no consequence for an unanswered argument, no named listening targets, "track" with no
+  object, no thread model (and the example mislabelled a competing cost as a "direct answer"), no
+  narrowing/focus filter. Repaired only those, with the owner's two wording corrections: silence
+  gives the judge LESS REASON TO REJECT an argument (never "the judge counts it"), and each argument
+  gets two SEPARATE questions — answered? and what state now? — so answered-and-still-standing is
+  possible. Shape: 3 sections, a moving worked example on a fresh motion, 1 misconception, 4
+  mistakes, a three-slot tracking scenario (answered / still unresolved / no response) on the
+  existing scaffold structure with a shape-only evaluator that never judges which argument was
+  right, 3 checks (keys C, B, D). Nothing added that the lesson does not need: no frames (no speaking
+  move to scaffold), no ladder (no authored performance rewritten), no guided application (nothing
+  to perform in a round), no extra example. `coached-performance:smoke` gains MA–MF (67 controls),
+  including the two semantic corrections as pins. Baseline `ORIENTATION-REPAIR-V1`; 20 other blocks
+  byte-identical. Independent review of the repaired lesson (eight reviewers): two blind readers 3/3
+  with high confidence and no second defensible answer standing; content-free 3/3 trivial (the
+  known multiple-choice ceiling, not manufactured away); completeness A–H all YES on the beginner
+  lens and H PARTLY on the coach lens because one sentence asserted an unhedged new-argument norm
+  ("by the second half nobody is building a new case") — neutrality BLOCK on that sentence alone,
+  now hedged to "in the later speeches … the work shifts"; ownership PASS; the dropped-argument
+  wording judged on the orientation side of the line. The over-building sceptic's verified points
+  were fixed: Step 4 no longer tells a beginner to perform weighing; mistake 1's fix stays at
+  listening, not reply structure; the answered-but-undefended wording no longer contradicts the
+  two-questions model; one vocabulary for argument state (answered / still unresolved / no
+  response) across teaching, mistakes and scenario; the weak example now really contains no
+  answers; side names and "motion" are defined once; meta-commentary removed. Question fixes: Q3's
+  ambiguous "study attached" distractor became plain repetition and its explanation now uses the
+  lesson's own vocabulary; Q2's key gained a rationale clause like its distractors. Kept, disclosed:
+  the scenario prompt labels its own moves ("On projects:"), which is the habit being modelled, and
+  the three-slot frame asks three separate questions rather than two per argument, by owner
+  instruction. Final polish at the owner's request: Q2's key had been the only compound-action
+  option; all four options are now compound actions with a rationale clause at 17–18 words, and the
+  two distractors that shared one wrong model were split so each targets a misconception the lesson
+  names (the round resets each speech; repetition; conceding what was answered). Judgment unchanged,
+  one defensible answer, re-reviewed blind. **Not committed.**
 - **CLASH LESSON REBUILD — UNCOMMITTED, in the working tree (2026-09-05).**
   The second lesson on the coached model, and the first CUMULATIVE one. Clash has a different job
   from Refutation and the lesson is built around it: Refutation answers an argument; Clash finds the

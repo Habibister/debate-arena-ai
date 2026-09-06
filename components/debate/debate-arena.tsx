@@ -108,6 +108,7 @@ export type JudgeReport = {
    */
   guided?: { lessonId: string; primary: string; reinforcement: string[]; locked: string[] };
   guidedFeedback?: {
+    measure?: { label: string; direct: boolean; directEvidence?: string };
     newSkill: string;
     priorSkill?: string;
     oneThingToFix: string;
@@ -1291,7 +1292,22 @@ function JudgeDecisionModal({
 
           {report.guided && report.guidedFeedback ? (
             <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4">
-              <InsightCard title="Your new skill" value={report.guidedFeedback.newSkill} />
+              {/* MEASUREMENT TRUTH. When the round's judge measures the skill itself, the card is
+                  "Your new skill". When it measures an ADJACENT application — Clash, where the judge
+                  scores engagement with the central disagreement and cannot score identification —
+                  the card is named for what was measured, and the learner is told where the direct
+                  check happened. The round never claims to have proved a skill it did not test. */}
+              {report.guidedFeedback.measure && !report.guidedFeedback.measure.direct ? (
+                <>
+                  <InsightCard title="How you applied it in the round" value={report.guidedFeedback.newSkill} />
+                  <p className="mt-2 text-xs leading-5 text-emerald-100/80">
+                    This round measured {report.guidedFeedback.measure.label}, not whether you can identify the clash.
+                    {report.guidedFeedback.measure.directEvidence ? ` That was checked in ${report.guidedFeedback.measure.directEvidence}.` : ""}
+                  </p>
+                </>
+              ) : (
+                <InsightCard title="Your new skill" value={report.guidedFeedback.newSkill} />
+              )}
               {report.guidedFeedback.priorSkill ? (
                 <div className="mt-3"><InsightCard title="Keep using" value={report.guidedFeedback.priorSkill} /></div>
               ) : null}

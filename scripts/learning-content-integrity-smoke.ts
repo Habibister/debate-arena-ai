@@ -53,7 +53,7 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "REFUTATION-REBUILD-V2-GUIDED-TOPIC";
+const LEARNING_CONTENT_BASELINE = "CLASH-REBUILD-V2-EXACT-SCAFFOLD-CHECKS";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 
@@ -77,8 +77,8 @@ const CONTENT_KEYS = ["objective", "explanation", "whyMatters", "steps", "worked
                       // Refutation lesson authors both; both render to the learner.
                       "languageFrames", "scaffoldedTry"];
 const LANGUAGE_FRAME_KEYS = ["purpose", "starters"];
-const SCAFFOLDED_TRY_KEYS = ["prompt", "frame", "slots", "opponentClaim"];
-const SCAFFOLDED_TRY_OPTIONAL_KEYS = ["opponentClaim"];
+const SCAFFOLDED_TRY_KEYS = ["prompt", "frame", "slots", "opponentClaim", "motion"];
+const SCAFFOLDED_TRY_OPTIONAL_KEYS = ["opponentClaim", "motion"];
 const TEACHING_SECTION_KEYS = ["heading", "body"];
 const EXAMPLE_KEYS = ["setup", "weak", "strong", "explanation"];
 const REVISION_RUNG_KEYS = ["attempt", "diagnosis", "revision"];
@@ -141,7 +141,7 @@ type CanonicalEntry = {
       misconception?: { wrongModel: string; whyItFails: string; betterModel: string };
       commonMistakes?: Array<{ mistake: string; whyItFails: string; fix: string }>;
       languageFrames?: Array<{ purpose: string; starters: string[] }>;
-      scaffoldedTry?: { prompt: string; frame: string; slots: string[] };
+      scaffoldedTry?: { prompt: string; frame: string; slots: string[]; opponentClaim?: string; motion?: string };
     };
   };
 };
@@ -224,6 +224,7 @@ function optionalTeaching(content: Record<string, never>, slug: string): Record<
     const t = content.scaffoldedTry as Record<string, never>;
     const scaffolded: Record<string, unknown> = { prompt: t.prompt, frame: t.frame, slots: t.slots };
     if (t.opponentClaim !== undefined) scaffolded.opponentClaim = t.opponentClaim;
+    if (t.motion !== undefined) scaffolded.motion = t.motion;
     out.scaffoldedTry = scaffolded;
   }
   return out;

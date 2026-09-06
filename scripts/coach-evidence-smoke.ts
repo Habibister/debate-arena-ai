@@ -205,7 +205,7 @@ async function main() {
     skill: { slug: "debate-clash", name: "Debate Clash", organization: "GENERAL_DEBATE" },
     dueSinceDate: "2026-08-20",
     belowPracticing: true,
-    lesson: { id: "debate-clash", title: "Create direct clash", href: "/lessons/debate-clash" },
+    lesson: { id: "debate-clash", title: "Find the real clash", href: "/lessons/debate-clash" },
     drill: { track: "debate", area: "clash", label: "Clash", href: "/study-arcade?track=debate&area=clash" }
   }, "S3-C1. mastery 69 on debate-clash yields the clash lesson and the clash drill, exact hrefs included");
   for (const m of [70, 71]) {

@@ -130,14 +130,20 @@ export function ConceptEducationLessonView({
           <Lightbulb className="h-5 w-5 text-primary" aria-hidden />
           <h2 id="what-it-is" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">What it is</h2>
         </div>
-        <p className="mt-3 leading-7 text-muted-foreground">{content.explanation}</p>
+        {content.explanation.split(/\n{2,}/).map((paragraph, index) => (
+          <p key={index} className="mt-3 leading-7 text-muted-foreground">{paragraph}</p>
+        ))}
         {/* Authored teaching blocks, each with the lesson's OWN heading. The headings are never chosen
             here: "How to think about it" fits one concept and "When it fails" fits another, and a
             global heading set would force every lesson into a shape its material does not have. */}
         {content.teachingSections?.map((section) => (
           <div key={section.heading} className="mt-5">
             <h3 className="break-words font-semibold text-foreground">{section.heading}</h3>
-            <p className="mt-2 break-words leading-7 text-muted-foreground">{section.body}</p>
+            {/* A body may carry blank-line paragraph breaks; a single wall of text hides the sentence
+                that matters on a phone. Bodies without breaks render exactly as before. */}
+            {section.body.split(/\n{2,}/).map((paragraph, index) => (
+              <p key={index} className="mt-2 break-words leading-7 text-muted-foreground">{paragraph}</p>
+            ))}
           </div>
         ))}
         <h3 className="mt-5 font-semibold text-foreground">Why it matters</h3>

@@ -16,7 +16,8 @@ import {
   guidedRubricFor,
   isIncompleteScaffold,
   starterCategoriesFor,
-  type SupportLevel
+  type SupportLevel,
+  mentionsCompetency
 } from "@/lib/education/coaching";
 
 export type SideCoachTranscriptLine = { role: string; content: string };
@@ -113,7 +114,10 @@ export type SideCoachResponse = {
 export type SideCoachUnavailableReason =
   | "provider-error"
   | "empty-response"
-  | "incomplete-turn-feedback";
+  | "incomplete-turn-feedback"
+  /** The round this request is about could not be established from the stored row, so nothing about
+   *  it — guided or not — was taken from the request, and no coaching was produced. */
+  | "round-unverified";
 
 // Track-specific framing so coaching matches the event, not a generic debate.
 function trackFraming(org: Organization): string {
@@ -154,9 +158,15 @@ export function buildSideCoachSystemPrompt(input: SideCoachInput): string {
   return [
     "You are a private Side Coach for a beginner competitor. You are NOT the opponent and NOT the judge.",
     "You help ONLY the student. Never argue against them, never role-play the opponent, and never reveal or invent judge scores or the opponent's future speeches.",
-    trackFraming(input.organization),
+    // A guided round names its own skills; the generic Debate framing lists weighing, which may be
+    // LOCKED for the lesson, so it steps aside rather than contradict the constraint below.
+    resolvedGuidedRubric(input) ? "This is competitive debate practice inside a lesson." : trackFraming(input.organization),
     "Be encouraging, direct, specific, patient, and honest. Never insulting, never fake praise, never shaming.",
-    "Explain debate terms in plain words when you use them (warrant = why your claim is true; impact = why it matters; weighing = why your impact matters more).",
+    // The glossary defines weighing, which is LOCKED in every guided round declared so far, so the
+    // guided variant drops that entry rather than naming a skill the constraint forbids mentioning.
+    resolvedGuidedRubric(input)
+      ? "Explain debate terms in plain words when you use them (warrant = why your claim is true; impact = why it matters)."
+      : "Explain debate terms in plain words when you use them (warrant = why your claim is true; impact = why it matters; weighing = why your impact matters more).",
     "Teach; do not do the whole task for them. " + guidanceRule(input.guidanceLevel),
     guidedConstraint(input) ?? "",
     "ALWAYS ground your help in THIS specific scenario and the student's actual words — quote or closely paraphrase what they wrote. Reference the concrete situation, their stated goals, and unanswered questions. NEVER give generic advice like 'be clear and professional' or 'stay confident'.",
@@ -280,14 +290,27 @@ function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input:
   if (!parsed || typeof parsed !== "object") {
     return sideCoachUnavailable("empty-response");
   }
-  const message = typeof parsed.message === "string" ? parsed.message : "";
-  // GUIDED post-filter, on the live path. The prompt asks; this checks. In a guided round `example`
-  // may only ever be a SCAFFOLD — opening words that stop at a blank. Anything else the model put
-  // there (a rewrite, a model answer, a finished line) is dropped here, fail-closed, before it can
-  // reach the learner. An ordinary round keeps the pre-existing behaviour untouched.
-  const guided = resolvedGuidedRubric(input) !== null;
+  // GUIDED post-filter, on the live path, applied to EVERY learner-facing field of EVERY request
+  // type before anything returns. The prompt asks; this checks. Two rules:
+  //   - `example` may only ever be a SCAFFOLD — opening words that stop at a blank. A rewrite, a
+  //     model answer or a finished line is dropped;
+  //   - no field may name a LOCKED skill. One that does is dropped whole, never trimmed.
+  // Placed above the `ask` return on purpose: an earlier version filtered only the turn-feedback
+  // branch, so an "ask" answer — the one a learner reads in full — was never checked, and `example`
+  // was never checked for locked skills at all. An ordinary round is untouched by both rules.
+  const rubric = resolvedGuidedRubric(input);
+  const guided = rubric !== null;
+  const namesLockedSkill = (text: string) => Boolean(rubric) && rubric!.locked.some((c) => mentionsCompetency(text, c));
+  const clean = (text: unknown) => {
+    if (typeof text !== "string" || !text.trim()) return undefined;
+    return guided && namesLockedSkill(text) ? undefined : text;
+  };
+  const rawMessage = typeof parsed.message === "string" ? parsed.message : "";
+  const message = guided ? clean(rawMessage) ?? "" : rawMessage;
   const rawExample = typeof parsed.example === "string" ? parsed.example.trim() : "";
-  const example = guided ? (rawExample && isIncompleteScaffold(rawExample) ? rawExample : undefined) : (rawExample || undefined);
+  const example = guided
+    ? (rawExample && isIncompleteScaffold(rawExample) && !namesLockedSkill(rawExample) ? rawExample : undefined)
+    : (rawExample || undefined);
 
   if (input.requestType === "ask") {
     if (!message.trim()) return sideCoachUnavailable("empty-response");
@@ -295,7 +318,12 @@ function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input:
     return guided && example ? { message, example } : { message };
   }
 
-  const hasFeedbackField = Boolean(parsed.strength || parsed.improvement || parsed.nextMove || example);
+  // Guided rounds only: an ordinary round keeps the pre-existing pass-through exactly, so a field
+  // this filter would have dropped (a blank string, a non-string) behaves as it always did.
+  const strength = guided ? clean(parsed.strength) : parsed.strength;
+  const improvement = guided ? clean(parsed.improvement) : parsed.improvement;
+  const nextMove = guided ? clean(parsed.nextMove) : parsed.nextMove;
+  const hasFeedbackField = Boolean(strength || improvement || nextMove || example);
   if (!hasFeedbackField) {
     return sideCoachUnavailable("incomplete-turn-feedback");
   }
@@ -305,9 +333,9 @@ function normalize(parsed: Partial<SideCoachResponse> | null | undefined, input:
   const responseReview = parsed.responseReview;
   return {
     message,
-    strength: parsed.strength,
-    improvement: parsed.improvement,
-    nextMove: parsed.nextMove,
+    strength,
+    improvement,
+    nextMove,
     example,
     ...(rubricFeedback !== undefined ? { rubricFeedback } : {}),
     ...(responseReview !== undefined ? { responseReview } : {})

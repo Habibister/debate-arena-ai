@@ -264,6 +264,7 @@ function conceptSourceGaps(source: unknown): string[] {
       }
       // The opponent's claim is optional; when present it is a short claim, not a finished reason.
       // A "because" inside it would hand the learner the mechanism the exercise exists to make them build.
+      if (t.motion !== undefined && !nonEmptyString(t.motion)) gaps.push("scaffoldedTry.motion");
       if (t.opponentClaim !== undefined) {
         if (!nonEmptyString(t.opponentClaim)) gaps.push("scaffoldedTry.opponentClaim");
         else {

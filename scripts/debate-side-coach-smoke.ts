@@ -105,10 +105,20 @@ function main() {
   const fetchCalls = PANEL.split("fetch(").length - 1;
   assert.equal(fetchCalls, 1, "the panel makes exactly one kind of network request");
   assert.ok(PANEL.includes('fetch("/api/ai/side-coach"'), "and it is the Side Coach route");
-  // The route writes only the assisted-practice honesty flag — never progress, score or completion.
-  const routeWrites = ROUTE.split("prisma.").length - 1;
-  assert.equal(routeWrites, 1, "the route performs exactly one database statement");
+  // The route WRITES only the assisted-practice honesty flag — never progress, score or completion.
+  // Counted by write method rather than by statement: the route also performs one scoped READ, of the
+  // round's own guided marker, so a lesson round is coached as one even when the request omits the
+  // claim (the row decides, as it does for the judge). A read is not a write and is asserted as such.
+  for (const write of ["prisma.debate.update(", "prisma.debate.create(", "prisma.debate.upsert(", "prisma.debate.delete(",
+                       "prisma.user.update(", "prisma.xPLog.create(", "prisma.masteryProgress"]) {
+    assert.ok(!ROUTE.includes(write), `the route performs no ${write} write`);
+  }
+  assert.equal(ROUTE.split("prisma.debate.updateMany").length - 1, 1, "exactly one write statement");
   assert.ok(ROUTE.includes("prisma.debate.updateMany") && ROUTE.includes("assistedPractice: true"), "that statement is the assisted-practice flag only");
+  const reads = ROUTE.split("prisma.").length - 1;
+  assert.equal(reads, 2, "one write and one read, and nothing else touches the database");
+  assert.ok(/prisma\.debate\.findFirst\(\{\s*where: \{ id: debateId, studentId: userId \},\s*select: \{ organization: true, practiceMode: true, formatConfig: true \}/.test(ROUTE),
+    "the read is the guided marker, scoped to the owning student, selecting no learner data");
   for (const banned of ["score", "completedAt", "xp", "rating", "mastery", "ballot"]) {
     assert.ok(!ROUTE.includes(`${banned}:`), `the route writes no ${banned} field`);
   }

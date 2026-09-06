@@ -171,11 +171,13 @@ export type GuidedApplication = {
  * record exists, `unlockedCompetenciesFor` gains a learner argument and this table becomes the
  * fallback — the shape of every consumer is unchanged.
  *
- * ONE ENTRY: the Refutation pilot. Lessons migrate one at a time after acceptance, and a held lesson
- * can never appear here (asserted by the smoke suite against the registry).
+ * Lessons migrate one at a time after acceptance, and a held lesson can never appear here (asserted
+ * by the smoke suite against the registry). Refutation was the pilot; Clash is the first lesson to
+ * follow it, reinforcing BOTH earlier skills — the cumulative use the model calls for.
  */
 export const GUIDED_APPLICATIONS: readonly GuidedApplication[] = [
-  { lessonId: "debate-refutation", primary: "refutation", reinforcement: ["claim-warrant-impact"] }
+  { lessonId: "debate-refutation", primary: "refutation", reinforcement: ["claim-warrant-impact"] },
+  { lessonId: "debate-clash", primary: "clash", reinforcement: ["claim-warrant-impact", "refutation"] }
 ] as const;
 
 export function guidedApplicationFor(lessonId: string): GuidedApplication | null {
@@ -233,6 +235,9 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   { id: "impact", label: "Help me explain the impact", competency: "claim-warrant-impact", purpose: "Say why it matters" },
   { id: "refute", label: "Help me refute", competency: "refutation", purpose: "Answer their argument" },
   { id: "consequence", label: "Help me say what changed", competency: "refutation", purpose: "Say what changed" },
+  { id: "disagreement", label: "Help me find the disagreement", competency: "clash", purpose: "Identify the disagreement" },
+  { id: "neutral", label: "Help me state it neutrally", competency: "clash", purpose: "State the clash neutrally" },
+  { id: "connect", label: "Help me connect the two sides", competency: "clash", purpose: "Connect the two sides" },
   { id: "transition", label: "Help me transition", competency: "signposting", purpose: "Move to the next point" },
   { id: "weigh", label: "Help me weigh", competency: "weighing", purpose: "Weigh the impacts" }
 ] as const;
@@ -526,4 +531,126 @@ export function evaluateRefutationScaffold(slots: {
     };
   }
   return { complete: true, coach: "", retryRequired: false };
+}
+
+/**
+ * Evaluate a Clash scaffolded attempt WITHOUT a model, against only the current lesson skill.
+ *
+ * The three slots are the three moves the lesson teaches: what Side A is trying to prove, what Side B
+ * is trying to prove, and the question both depend on. The checks are the lesson's own tests, applied
+ * mechanically and conservatively:
+ *   - every slot has to be filled;
+ *   - the clash must not simply restate one side's position (content-word overlap with one side and
+ *     almost none with the other) — a clash question is one BOTH sides are answering;
+ *   - the clash must not carry a verdict: a word that presumes the answer ("obviously", "fails",
+ *     "unfairly", "our side"), or a "why ..." that has already decided it;
+ *   - the clash must not be the motion: an actor-should question ("the school should…") is the whole
+ *     debate, not the disagreement; a narrow question that merely contains "should" is not refused.
+ * The coaching names the issue and never writes the clash for the learner. When it cannot be sure,
+ * it passes the attempt — the guided round's coach sees the whole context and does the real judging.
+ */
+/** Whitespace, case and punctuation removed, so "copied it out" is judged on the words themselves. */
+const canonical = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+/** Is `text` the same sentence as `other`, allowing for a trailing or leading fragment? */
+function essentiallyTheSame(text: string, other: string): boolean {
+  const a = canonical(text);
+  const b = canonical(other);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return long.includes(short) && short.length >= long.length * 0.8;
+}
+
+/**
+ * Evaluate a Clash scaffolded attempt WITHOUT a model, against only the current lesson skill.
+ *
+ * SHAPE ONLY, and the boundary is drawn deliberately narrowly. The three slots are the three moves
+ * the lesson teaches: what Side A is trying to prove, what Side B is trying to prove, and the
+ * question both depend on. What is checked here is what can be checked WITHOUT understanding the
+ * argument:
+ *   - every slot is filled;
+ *   - the clash is not one of the two sides copied out — judged by near-identity of the text, not by
+ *     word overlap;
+ *   - the clash is not the MOTION restated — judged against the motion the lesson authored, not by
+ *     guessing from sentence shape;
+ *   - a clash that opens "why …" presupposes its own answer.
+ *
+ * WHAT IS DELIBERATELY NOT CHECKED, after four review rounds proved each attempt wrong in both
+ * directions. A word-overlap test for "copied one side" refused correct answers (a good clash
+ * question is short and built from the words both sides used) and, tuned the other way, went inert
+ * whenever Side B was written as the negation of Side A. A sentence-shape test for "this is the
+ * motion" refused principle-level clashes the lesson itself teaches, such as "whether a school
+ * should be able to decide what its students wear". A word list for loaded phrasing refused the
+ * disputed proposition itself in any fairness round, where "unfairly" is precisely what the two
+ * sides disagree about. Those judgments need the argument, not the string, so they belong to the
+ * guided round's coach, which has the whole round in view. A heuristic that blocks a learner who is
+ * right is worse than one that lets a borderline attempt through to a coach who can read it.
+ */
+export function evaluateClashScaffold(
+  slots: { sideA: string; sideB: string; clash: string },
+  context: { motion?: string } = {}
+): ScaffoldEvaluation {
+  const filled = (s: string) => s.trim().split(/\s+/).filter(Boolean).length >= 3;
+  const missing = (["sideA", "sideB", "clash"] as const).find((k) => !filled(slots[k]));
+  if (missing) {
+    const label = { sideA: "side a", sideB: "side b", clash: "the real clash" }[missing];
+    return {
+      complete: false,
+      slot: label,
+      coach: missing === "sideA"
+        ? "Start by saying what Side A is trying to prove, in one sentence."
+        : missing === "sideB"
+          ? "Now say what Side B is trying to prove \u2014 their position, in their own terms."
+          : "You have both positions. Now name the question they are both answering \u2014 the one thing that cannot go both ways.",
+      retryRequired: true
+    };
+  }
+  const clash = slots.clash.trim();
+  // The motion is not the disagreement. Compared against the motion this exercise actually set, so a
+  // narrow question that merely contains "should" is never mistaken for it.
+  if (context.motion && essentiallyTheSame(clash, context.motion)) {
+    return {
+      complete: false,
+      slot: "the real clash",
+      coach: "That is the motion, not the disagreement \u2014 every argument in the round fits under it. Name the specific question the two arguments take opposite positions on.",
+      retryRequired: true
+    };
+  }
+  // A question that opens "why X" has already decided X.
+  if (/^\s*(why|how come)\b/i.test(clash)) {
+    return {
+      complete: false,
+      slot: "the real clash",
+      coach: "A question that starts with \u201cwhy\u201d has already decided the answer. Phrase it so that either side could still win it.",
+      retryRequired: true
+    };
+  }
+  // One side copied out is not the question they are both answering.
+  if (essentiallyTheSame(clash, slots.sideA) || essentiallyTheSame(clash, slots.sideB)) {
+    return {
+      complete: false,
+      slot: "the real clash",
+      coach: "That is one side's position copied out, not the question they are both answering. Name the thing they take opposite positions on, so that either side could still win it.",
+      retryRequired: true
+    };
+  }
+  return { complete: true, coach: "", retryRequired: false };
+}
+
+/**
+ * The evaluator for each lesson's scaffolded try, keyed by lesson id and taking the slot values in
+ * the lesson's own slot order. A lesson with a scaffolded try and no entry here cannot be checked and
+ * therefore cannot open its guided round — fail closed, and asserted by the smoke suite.
+ */
+export type ScaffoldContext = { motion?: string };
+
+export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
+  "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
+  "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context)
+};
+
+export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {
+  const evaluator = SCAFFOLD_EVALUATORS[lessonId];
+  return evaluator ? evaluator(values, context) : null;
 }

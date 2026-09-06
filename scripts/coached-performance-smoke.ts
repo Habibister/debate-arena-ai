@@ -269,9 +269,17 @@ function main() {
   check("I2. on the live side-coach path a guided example is a scaffold or is dropped, and a guided turn-feedback never rewrites the learner", () => {
     const src = stripComments(read("lib/side-coach.ts"));
     // The normaliser gates `example` through the scaffold rule in a guided round.
-    assert.ok(/const guided = resolvedGuidedRubric\(input\) !== null;/.test(src), "the normaliser resolves guided-ness once");
-    assert.ok(/guided \? \(rawExample && isIncompleteScaffold\(rawExample\) \? rawExample : undefined\)/.test(src),
-      "a guided example survives only if it is a scaffold");
+    assert.ok(/const rubric = resolvedGuidedRubric\(input\);\s*const guided = rubric !== null;/.test(src), "the normaliser resolves guided-ness once");
+    assert.ok(/guided\s*\? \(rawExample && isIncompleteScaffold\(rawExample\) && !namesLockedSkill\(rawExample\) \? rawExample : undefined\)/.test(src),
+      "a guided example survives only if it is a scaffold AND names no locked skill");
+    // The filter is defined ABOVE the `ask` return, so both request types pass through it. An earlier
+    // version filtered only turn-feedback, leaving the answer a learner reads in full unchecked.
+    // Scoped to the normaliser: `if (input.requestType === "ask")` also appears in the prompt builder
+    // earlier in the file, and a whole-file indexOf would compare against that one instead.
+    const normalizeBody = src.slice(src.indexOf("function normalize("));
+    assert.ok(normalizeBody.indexOf("const clean = (text: unknown)") < normalizeBody.indexOf('if (input.requestType === "ask")'),
+      "every learner-facing field of BOTH request types is filtered");
+    assert.ok(/const message = guided \? clean\(rawMessage\) \?\? "" : rawMessage;/.test(src), "the message a learner reads is filtered too");
     assert.ok(/return guided && example \? \{ message, example \} : \{ message \};/.test(src),
       "a guided starter ask returns its scaffold; an ordinary ask is unchanged");
     assert.ok(!/example: parsed\.example,/.test(src), "the turn-feedback return uses the FILTERED example, never the raw one");
@@ -490,11 +498,13 @@ function main() {
     assert.ok(text.includes("Words you can use") && text.includes("Now try the move"), "both new sections render");
     assertOrder(html, 'id="language"', 'id="practice"', "frames are teaching and precede the checks");
     assertOrder(html, 'id="scaffolded-try"', 'id="practice-drill"', "the constructed attempt precedes the drill CTA");
-    // No other published lesson was migrated: pilot one at a time.
+    // Lessons migrate one at a time: the pilot, then Clash. An exact set, so a third lesson adopting
+    // the model is a reviewed decision recorded here, never absorbed silently.
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
-      e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id);
-    assert.deepEqual(withFrames, [PILOT], "exactly one lesson carries the coached model");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 1);
+      e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
+    assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 2,
+      "two lessons carry a scaffolded try: the Refutation pilot and Clash");
   });
 
   // ================================================================================================
@@ -832,6 +842,317 @@ function main() {
     assert.equal(contextualStarter("They argue that {their claim}, but ___", { topic: "school uniforms" }), "They argue that ___, but ___", "a missing claim becomes a blank, never a template token");
     assert.equal(contextualStarter("{their claim} is wrong because the data is old, so it fails.", { opponentClaim: "uniforms improve discipline" }), null, "a starter that would complete the reasoning is not returned");
     assert.ok(!/topicAwareStarter/.test(read("lib/education/coaching.ts")), "the misleading name is gone");
+  });
+
+  // ================================================================================================
+  // CLASH — the first lesson after the pilot. Cumulative: Clash targeted, CWI + Refutation reinforced.
+  // ================================================================================================
+  const CLASH = "debate-clash";
+  const clashEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === CLASH);
+  assert.ok(clashEntry, "control: the Clash lesson is registered");
+  const clashContent = clashEntry.source.lesson.content;
+  const clashRubric = guidedRubricFor(CLASH);
+  const { evaluateClashScaffold, evaluateScaffoldFor, SCAFFOLD_EVALUATORS } = coaching;
+
+  check("LA. the Clash guided rubric is exact: Clash targeted, CWI + Refutation reinforced, everything later locked", () => {
+    assert.deepEqual(clashRubric, { primary: "clash", reinforcement: ["claim-warrant-impact", "refutation"], locked: ["signposting", "constructive-speech", "weighing"] });
+    assert.deepEqual([...allowedJudgeCategories(clashRubric)].sort(),
+      ["argument", "centralClashResponse", "impact", "mechanism", "refutation", "responsiveness", "warrant"]);
+  });
+
+  check("LB. a Clash guided ballot keeps central-clash engagement and drops weighing, organisation and every locked card", () => {
+    const projectedClash = projectGuidedJudgeResult(FULL_RESULT, clashRubric, CLASH);
+    const keys = projectedClash.categoryScores.map((c: { key: string }) => c.key);
+    assert.ok(keys.includes("centralClashResponse") && keys.includes("refutation") && keys.includes("argument"));
+    assert.ok(!keys.includes("clash") && !keys.includes("organization") && !keys.includes("collapse"), "weighing (lexical 'clash'), signposting and strategy categories are removed");
+    assert.equal(projectedClash.overallScore, Math.round((80 + 74 + 70 + 66 + 58 + 64 + 40) / 7), "overall = mean of the seven permitted categories only");
+    assert.ok(!("ratingChange" in projectedClash) && !("judgeFairnessReport" in projectedClash) && !("teamWinner" in projectedClash));
+    assert.ok(projectedClash.guidedFeedback.newSkill.startsWith("Clash"), "the new-skill line is about Clash");
+    assert.equal(projectedClash.guidedFeedback.nextAction, "retry", "central-clash 40 < 60 asks for a retry");
+    assert.equal(projectedClash.guidedFeedback.oneThingToFix, guidedJudge.COMPETENCY_FIX.clash, "on a retry the fix is the Clash move in the lesson's own terms, not the lexical judge's engagement advice");
+    assert.ok(!/name their best point and beat it/i.test(projectedClash.guidedFeedback.oneThingToFix), "no refutation-shaped fix line for a Clash round");
+    const rewrites = projectGuidedJudgeResult({ ...FULL_RESULT, improvementAdvice: ["Better sentence to add: \"Uniforms cut pressure.\"", "Model rewrite: their claim. Uniforms cut pressure.", "Explain why the step fails, not that it fails."] }, clashRubric, CLASH).improvementAdvice;
+    assert.deepEqual(rewrites, ["Explain why the step fails, not that it fails."], "a guided ballot never carries the judge's model rewrite of the learner's sentence");
+    const strong = { ...FULL_RESULT, categoryScores: FULL_RESULT.categoryScores.map((c) => c.key === "centralClashResponse" ? { ...c, score: 72 } : c) };
+    assert.equal(projectGuidedJudgeResult(strong, clashRubric, CLASH).guidedFeedback.nextAction, "continue", "central-clash 72 continues; locked categories cannot change that");
+    const { guided: _m, ...readable } = projectedClash;
+    assert.ok(!/outweigh|dropped|signpost/i.test(JSON.stringify(readable)), "no locked-skill prose survives in a Clash ballot");
+    const recs = projectGuidedJudgeResult({ ...FULL_RESULT, recommendedLessons: [
+      { lessonSlug: "debate-clash-lesson", reason: "Find the disputed question.", priority: "high" },
+      { lessonSlug: "debate-weighing-lesson", reason: "Practice comparing impacts.", priority: "medium" },
+      { lessonSlug: "debate-refutation-lesson", reason: "Build direct refutation.", priority: "high" }
+    ] }, clashRubric, CLASH).recommendedLessons.map((r: { lessonSlug: string }) => r.lessonSlug);
+    assert.deepEqual(recs, ["debate-clash-lesson", "debate-refutation-lesson"], "a Clash recommendation survives; a Weighing one cannot");
+  });
+
+  check("LC. the rebuilt Clash lesson has the reference shape and exactly three checks; the old questions are gone", () => {
+    assert.equal(clashEntry.source.lesson.title, "Find the real clash");
+    assert.equal(1 + clashContent.practiceQuestions.length + clashContent.masteryCheck.length, 3, "three checks: guided + 1 practice + 1 final");
+    assert.ok(clashContent.teachingSections.length >= 4 && clashContent.additionalExamples.length >= 1 && clashContent.revisionLadder.length >= 2);
+    assert.ok(clashContent.misconception && clashContent.commonMistakes.length === 7, "seven owned mistakes, including the strawmanned restatement");
+    assert.deepEqual(clashContent.languageFrames.map((f: { purpose: string }) => f.purpose), ["Identify the disagreement", "State the clash neutrally", "Connect the two sides"]);
+    assert.equal(clashContent.scaffoldedTry.frame.split(SLOT).length - 1, clashContent.scaffoldedTry.slots.length, "three blanks, three slots");
+    assert.ok(!("opponentClaim" in clashContent.scaffoldedTry), "a two-sided exercise carries no single opponent claim");
+    const everything = JSON.stringify(clashContent);
+    for (const gone of ["Which response creates clash?", "Which is weakest?", "ballot color", "Our first contention is still true."]) {
+      assert.ok(!everything.includes(gone), `old thin-lesson item removed: ${gone}`);
+    }
+    assert.ok(/both.true/i.test(everything) && /either side could/i.test(everything), "the both-true test and the neutral-question rule are taught");
+    assert.deepEqual(validateEducationRegistry(EDUCATION_REGISTRY), [], "the registry validates clean with the rebuilt lesson");
+  });
+
+  check("LD. Clash starters are scaffolds, and the help categories for the Clash lesson are Clash + CWI + Refutation only", () => {
+    for (const frame of clashContent.languageFrames) for (const starter of frame.starters) assert.ok(isIncompleteScaffold(starter.replace(/\{topic\}|\{their claim\}/g, SLOT)), starter);
+    const ids = starterCategoriesFor(CLASH).map((c: { id: string }) => c.id).sort();
+    assert.deepEqual(ids, ["claim", "connect", "consequence", "disagreement", "impact", "neutral", "reason", "refute"]);
+    assert.ok(!ids.includes("transition") && !ids.includes("weigh"), "no locked-skill help category");
+    for (const category of starterCategoriesFor(CLASH).filter((c: { competency: string }) => c.competency === "clash")) {
+      assert.ok(clashContent.languageFrames.some((f: { purpose: string }) => f.purpose === category.purpose), `category ${category.id} has a frame to draw from`);
+    }
+    const live = contextualStarter("On {topic}, the two cases only meet at ___", { topic: "free bus fares" });
+    assert.equal(live, "On free bus fares, the two cases only meet at ___");
+  });
+
+  check("LE. the Clash scaffold evaluator checks SHAPE exactly, and every case four review rounds raised behaves", () => {
+    const MOTION = { motion: clashContent.scaffoldedTry.motion as string };
+    assert.equal(MOTION.motion, "this school should move to a four-day week", "the exercise authors the motion it is set on");
+    const good = { sideA: "a four-day week improves attendance because appointments move to the free weekday", sideB: "longer days mean younger students lose focus by the seventh hour", clash: "students learn more in four long days than in five shorter ones" };
+    // Each row is a case an independent reviewer raised across the four rounds. `true` = the attempt
+    // must reach the guided round; `false` = it must be sent back for a retry.
+    const CASES: Array<[string, { sideA: string; sideB: string; clash: string }, { motion?: string }, boolean]> = [
+      ["a correct answer passes", good, MOTION, true],
+      ["a verbatim copy of one side is refused", { ...good, clash: good.sideA }, MOTION, false],
+      ["and is still refused when Side B is written as the negation of Side A, sharing every word",
+        { sideA: "uniforms reduce the pressure students feel about clothing", sideB: "uniforms do not reduce the pressure students feel about clothing", clash: "uniforms reduce the pressure students feel about clothing" }, {}, false],
+      ["the motion restated is refused, judged against the AUTHORED motion", { ...good, clash: "this school should move to a four-day week" }, MOTION, false],
+      ["a principle-level clash the lesson itself teaches is NOT refused as the motion",
+        { sideA: "a school may set rules about appearance", sideB: "students own their own presentation", clash: "whether a school should be able to decide what its students wear" }, { motion: "schools should require uniforms" }, true],
+      ["in a fairness round the disputed word itself is not treated as a loaded verdict",
+        { sideA: "the policy treats poorer families unfairly", sideB: "the policy applies the same rule to everyone", clash: "the policy unfairly burdens families without a car" }, {}, true],
+      ["a question opening \u201cwhy\u201d has decided its own answer", { ...good, clash: "why the four-day week improves attendance" }, MOTION, false],
+      ["a short correct question built from one side's words is not mistaken for a copy",
+        { sideA: "uniforms reduce the pressure to wear the right clothes", sideB: "students signal status with shoes and bags", clash: "uniforms reduce clothing pressure" }, {}, true],
+      ["an empty slot is refused", { ...good, clash: "" }, MOTION, false],
+      ["a two-word slot is refused", { ...good, sideB: "they disagree" }, MOTION, false]
+    ];
+    for (const [name, slots, context, shouldPass] of CASES) {
+      const result = evaluateClashScaffold(slots, context);
+      assert.equal(result.complete, shouldPass, name);
+      assert.equal(result.retryRequired, !shouldPass, `${name} (retry follows the verdict)`);
+      if (!shouldPass) {
+        assert.ok(result.coach.trim().length > 0, "a refusal always names the fault");
+        if (slots.clash.trim()) assert.ok(!result.coach.includes(slots.clash), "and never writes the clash for the learner");
+      }
+    }
+    // The evaluator judges SHAPE and says so: it does not attempt the judgments that need the argument.
+    const src = stripComments(read("lib/education/coaching.ts"));
+    const body = src.slice(src.indexOf("export function evaluateClashScaffold"), src.indexOf("export type ScaffoldContext"));
+    assert.ok(!/overlap\(/.test(body), "no word-overlap heuristic — it refused correct answers in both tunings");
+    assert.ok(!/obviously|unfairly|we are right/.test(body), "no loaded-word list — it refused the disputed proposition in a fairness round");
+    assert.ok(/essentiallyTheSame\(clash, context\.motion\)/.test(body), "the motion check compares against the authored motion");
+    assert.ok(/essentiallyTheSame\(clash, slots\.sideA\) \|\| essentiallyTheSame\(clash, slots\.sideB\)/.test(body), "the copy check compares whole text, not word counts");
+    // Dispatch: the live component reads the lesson's slot order and its motion through one function.
+    assert.equal(evaluateScaffoldFor(CLASH, [good.sideA, good.sideB, good.clash], MOTION).complete, true);
+    assert.equal(evaluateScaffoldFor("debate-weighing", ["a", "b"]), null, "a lesson with no evaluator cannot be checked");
+    const withTry = LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).map((e: { slug: string }) => e.slug).sort();
+    assert.deepEqual(withTry, Object.keys(SCAFFOLD_EVALUATORS).sort(), "every lesson with a scaffolded try has a registered evaluator, and no evaluator is orphaned");
+    const tryComponent = stripComments(read("components/coaching/scaffolded-try.tsx"));
+    assert.ok(/evaluateScaffoldFor\(\s*lessonId,\s*scaffoldedTry\.slots\.map\(\(_, i\) => values\[keyFor\(i\)\] \?\? ""\),\s*\{ motion: scaffoldedTry\.motion \}\s*\)/.test(tryComponent),
+      "the live component dispatches by lesson id and passes the authored motion");
+    assert.ok(!/evaluateRefutationScaffold|theySay/.test(tryComponent), "the component no longer hard-codes the pilot's slots");
+    assert.ok(/\?\? UNCHECKABLE/.test(tryComponent), "no evaluator → cannot complete → guided round stays closed");
+  });
+
+  check("LF. Clash owns identification only: no weighing moves are taught, refutation is named as a different job", () => {
+    const teaching = [
+      clashContent.objective, clashContent.explanation, clashContent.whyMatters, ...clashContent.steps,
+      ...clashContent.teachingSections.map((s: { body: string }) => s.body),
+      ...clashContent.commonMistakes.flatMap((m: { mistake: string; whyItFails: string; fix: string }) => [m.mistake, m.whyItFails, m.fix]),
+      ...clashContent.languageFrames.flatMap((f: { starters: string[] }) => f.starters),
+      clashContent.scaffoldedTry.prompt
+    ].join("\n");
+    for (const move of ["outweigh", "compare the impacts", "magnitude", "probability", "bigger harm", "matters more than"]) {
+      assert.ok(!new RegExp(move, "i").test(teaching), `no weighing move is taught (${move})`);
+    }
+    assert.ok(/Refutation answers a different one/.test(teaching) && /Weighing answers a third/.test(teaching), "the boundary section separates the three jobs");
+    assert.ok(!/\bbecause ___\. Therefore/.test(clashContent.scaffoldedTry.frame), "the scaffold is not the Refutation frame");
+    assert.ok(!/refute|answer their|say what changed/i.test(clashContent.objective), "the objective asks for identification, not for the answer");
+    for (const frame of clashContent.languageFrames) assert.ok(!/therefore|because their|fails because/i.test(frame.starters.join(" ")), "no Refutation chain in a Clash frame");
+  });
+
+  check("LG. never test before teaching holds for Clash: nothing later than Clash is scored, coached, or recommended", () => {
+    const prose = guidedJudgeProseInstruction(clashRubric);
+    assert.ok(/Write ONLY about these skills: Clash, Claim, warrant and impact, Refutation\./.test(prose));
+    assert.ok(/Do NOT evaluate, mention, or penalise: Signposting, Constructive speech, Weighing\./.test(prose));
+    const system = buildSideCoachSystemPrompt({ organization: "DEBATE", transcript: [], requestType: "ask", guided: { lessonId: CLASH, supportLevel: "HIGH_SUPPORT" } });
+    assert.ok(/CURRENT SKILL \(primary, coach this first\): Clash\./.test(system), "the live coach is told the current skill is Clash");
+    assert.ok(/UNLOCKED SKILLS \(the only skills you may coach or evaluate\): Clash, Claim, warrant and impact, Refutation\./.test(system), "and exactly which skills it may coach");
+    assert.ok(/LOCKED SKILLS \(never mention, score, or penalise\): Signposting, Constructive speech, Weighing\./.test(system), "and which skills are locked");
+    const refused = validateGuidedRequest(baseRequest({ lessonId: CLASH, targetCompetency: "weighing", unlockedCompetencies: ["clash", "claim-warrant-impact", "refutation"] }));
+    assert.equal(refused.ok, false, "a request to target a locked skill in the Clash round is refused");
+  });
+
+  check("LH. the Clash lesson renders teach-first: frames before the checks, the constructed attempt before the drill CTA, three slots", () => {
+    const clashHtml = render(React.createElement(ConceptEducationLessonView, {
+      source: clashEntry.source, provenance: MIGRATED_DEBATE_PROVENANCE, moduleLabel: "Round strategy",
+      next: null, practiceDrill: clashEntry.practiceDrill
+    } as never));
+    const text = visible(clashHtml);
+    assert.ok(text.includes("Find the real clash") && text.includes("Different is not the same as opposed"), "the rebuilt teaching renders");
+    assert.ok(text.includes("Words you can use") && text.includes("Now try the move"), "frames and the constructed attempt render");
+    assertOrder(clashHtml, 'id="language"', 'id="practice"', "frames are teaching and precede the checks");
+    assertOrder(clashHtml, 'id="scaffolded-try"', 'id="practice-drill"', "the constructed attempt precedes the drill CTA");
+    assertOrder(clashHtml, "Different is not the same as opposed", "Which of Side B", "teaching precedes the first check");
+    for (const slot of ["1. side a", "2. side b", "3. the real clash"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
+    const firstSection = clashHtml.slice(clashHtml.indexOf("Different is not the same as opposed"), clashHtml.indexOf("Find the question both sides"));
+    assert.ok((firstSection.match(/<p class="mt-2 break-words leading-7/g) ?? []).length >= 3, "a section body with blank-line breaks renders as several paragraphs, not a wall");
+    assert.ok(clashContent.teachingSections.every((s: { body: string }) => s.body.includes("\n\n")), "every Clash section is paragraphed");
+    assert.ok(text.includes("The guided round opens after a complete attempt here."), "the guided round is closed until the move is produced");
+    assert.ok(!text.includes("Use it in a guided round"), "no guided link before a complete attempt");
+    assert.ok(!/because ___|therefore ___/i.test(text), "no Refutation slots leak into the Clash page");
+  });
+
+  check("LI. the live coach's guided post-filter drops any field that names a locked skill, and the generic framing steps aside", () => {
+    const { generateSideCoachResponse: _g, ...sc } = require("../lib/side-coach");
+    const normalizeSrc = stripComments(read("lib/side-coach.ts"));
+    assert.ok(/const namesLockedSkill = \(text: string\) => Boolean\(rubric\) && rubric!\.locked\.some\(\(c\) => mentionsCompetency\(text, c\)\);/.test(normalizeSrc),
+      "the post-filter checks every locked competency stem");
+    for (const field of ["strength", "improvement", "nextMove"]) {
+      assert.ok(new RegExp(`const ${field} = guided \\? clean\\(parsed\\.${field}\\) : parsed\\.${field};`).test(normalizeSrc),
+        `${field} is filtered in a guided round and passes through untouched in an ordinary one`);
+    }
+    assert.ok(/const message = guided \? clean\(rawMessage\) \?\? "" : rawMessage;/.test(normalizeSrc), "and so does the message");
+    assert.ok(/return guided && namesLockedSkill\(text\) \? undefined : text;/.test(normalizeSrc), "an ordinary round is untouched by the filter");
+    assert.ok(/resolvedGuidedRubric\(input\) \? "This is competitive debate practice inside a lesson\." : trackFraming\(input\.organization\)/.test(normalizeSrc), "the generic 'coach … weighing' framing is replaced in a guided round");
+    const guidedSystem = sc.buildSideCoachSystemPrompt({ organization: "DEBATE", transcript: [], requestType: "turn-feedback", guided: { lessonId: CLASH, supportLevel: "HIGH_SUPPORT" } });
+    assert.ok(!/Coach claim, warrant, evidence, rebuttal, impact, and weighing\./.test(guidedSystem), "no generic instruction to coach weighing in a Clash round");
+    const ordinarySystem = sc.buildSideCoachSystemPrompt({ organization: "DEBATE", transcript: [], requestType: "turn-feedback" });
+    assert.ok(/Coach claim, warrant, evidence, rebuttal, impact, and weighing\./.test(ordinarySystem), "control: an ordinary round keeps its framing");
+  });
+
+  check("LJ. a locked skill cannot reach a guided ballot through a category's own reason line", () => {
+    const leaky = { ...FULL_RESULT, categoryScores: FULL_RESULT.categoryScores.map((c) =>
+      c.key === "refutation" ? { ...c, reason: "Good engagement, but you never compare the impacts or say which outweighs the other." } : c) };
+    const out = projectGuidedJudgeResult(leaky, clashRubric, CLASH);
+    const refutation = out.categoryScores.find((c: { key: string }) => c.key === "refutation");
+    assert.ok(refutation, "the unlocked category survives");
+    assert.equal(refutation.reason, undefined, "its reason is dropped because it names a locked skill");
+    assert.ok(!/outweigh|compare the impacts/i.test(JSON.stringify(out)), "and no locked-skill prose reaches the ballot by any route");
+    const clean = projectGuidedJudgeResult(FULL_RESULT, clashRubric, CLASH).categoryScores.find((c: { key: string }) => c.key === "refutation");
+    assert.ok(clean.reason, "control: an ordinary reason is kept");
+  });
+
+  check("LK. the live coach path takes guided-ness from the ROW, and its glossary stops naming a locked skill", () => {
+    const route = stripComments(read("app/api/ai/side-coach/route.ts"));
+    assert.ok(/const truth: RowGuidedTruth = input\.debateId \? await guidedTruthFromRow\(input\.debateId, user\.id\) : \{ kind: "ordinary" \};/.test(route),
+      "the row is consulted first, and its answer is a three-way truth: guided, ordinary, or unavailable");
+    // FAIL CLOSED. An unavailable row refuses the request outright; nothing is taken from the caller.
+    assert.ok(/if \(truth\.kind === "unavailable"\) \{\s*return NextResponse\.json\(sideCoachUnavailable\("round-unverified"\)\);\s*\}/.test(route),
+      "an unresolvable row REFUSES the request with an honest unavailable response");
+    assert.ok(route.indexOf('sideCoachUnavailable("round-unverified")') < route.indexOf("generateSideCoachResponse("), "and it refuses BEFORE any provider call");
+    // The caller's claim never becomes guided truth: not as a fallback, not on an ordinary round.
+    assert.ok(/const guided = truth\.kind === "guided"\s*\? \{ lessonId: truth\.lessonId, supportLevel: input\.guided\?\.supportLevel \?\? defaultSupportLevel\("guided"\) \}\s*: undefined;/.test(route),
+      "guided config comes ONLY from a guided row; on an ordinary row the caller's guided block is discarded");
+    assert.ok(!/\?\? input\.guided/.test(route) && !/: input\.guided;/.test(route), "no code path falls back to the caller's guided claim");
+    // Inside the helper: a missing or foreign row, a read error, and a LESSON row whose lesson no
+    // longer resolves are all UNAVAILABLE — none of them is quietly downgraded to ordinary coaching.
+    const helper = route.slice(route.indexOf("async function guidedTruthFromRow"), route.indexOf("export async function POST"));
+    assert.ok(/if \(!debate\) return \{ kind: "unavailable" \};/.test(helper), "a missing or foreign row is unavailable");
+    assert.ok(/catch \{\s*return \{ kind: "unavailable" \};/.test(helper), "a read error is unavailable");
+    assert.ok(/if \(!guidedRubricFor\(lessonId\)\) return \{ kind: "unavailable" \};/.test(helper), "a lesson row whose lesson no longer resolves is unavailable, not ordinary");
+    assert.ok(/if \(!lessonId\) return \{ kind: "ordinary" \};/.test(helper), "a real, non-lesson row is ordinary");
+    // The unavailable reason is a declared, distinct reason the panel renders as not-evaluated.
+    assert.ok(/"round-unverified"/.test(read("lib/side-coach.ts")), "the reason is part of the declared contract");
+    // The ORGANIZATION comes from the row too: the coach resolves a rubric only for a Debate request,
+    // so a caller sending organization "DECA" on a Debate lesson round would otherwise drop the
+    // constraint through the side door — closing the `guided`-omission vector alone left that open.
+    assert.ok(/const organization = truth\.kind === "guided" \? truth\.organization : input\.organization;/.test(route),
+      "a lesson round is coached as Debate whatever organisation the request claims");
+    assert.ok(/return \{ kind: "guided", lessonId, organization: "DEBATE" \};/.test(route), "and that organisation comes from the row's own value");
+    // The support level is never RAISED by the override: the row's default is the most permissive.
+    assert.ok(/supportLevel: input\.guided\?\.supportLevel \?\? defaultSupportLevel\("guided"\)/.test(route),
+      "the caller's support level is kept when they sent one, so the row cannot hand out more help");
+    assert.ok(/guidedLessonIdOf\(debate\)/.test(route) && /guidedRubricFor\(lessonId\)/.test(route), "resolved from the row marker against curriculum truth");
+    assert.ok(/where: \{ id: debateId, studentId: userId \}/.test(route), "scoped to the owning student");
+    assert.ok(/generateSideCoachResponse\(\{\s*\.\.\.input,\s*organization,\s*guided,/.test(route), "and the resolved values are what the coach receives");
+    // A guided claim must name the round it is about: without a `debateId` there is no row to check
+    // the claim against, so the request is refused rather than coached on the caller's word.
+    const validators = require("../lib/validators");
+    const noRound = validators.sideCoachRequestSchema.safeParse({ organization: "DEBATE", transcript: [], guided: { lessonId: CLASH, supportLevel: "HIGH_SUPPORT" } });
+    assert.equal(noRound.success, false, "a guided coaching request with no round is refused");
+    const withRound = validators.sideCoachRequestSchema.safeParse({ organization: "DEBATE", debateId: "abc", transcript: [], guided: { lessonId: CLASH, supportLevel: "HIGH_SUPPORT" } });
+    assert.equal(withRound.success, true, "and is accepted when it names one");
+    assert.equal(validators.sideCoachRequestSchema.safeParse({ organization: "DECA", transcript: [] }).success, true, "control: an ordinary request needs no round");
+    // Auth before rate-limit before body parse is unchanged.
+    assert.ok(route.indexOf("requireUser()") < route.indexOf("enforceRateLimit({") && route.indexOf("enforceRateLimit({") < route.indexOf("parseJson(request"), "security ordering preserved: auth, then rate limit, then body parse");
+    const coach = stripComments(read("lib/side-coach.ts"));
+    assert.ok(/resolvedGuidedRubric\(input\)\s*\?\s*"Explain debate terms in plain words when you use them \(warrant = why your claim is true; impact = why it matters\)\."/.test(coach),
+      "the guided glossary drops the weighing definition");
+    const guidedSystem = require("../lib/side-coach").buildSideCoachSystemPrompt({ organization: "DEBATE", transcript: [], requestType: "turn-feedback", guided: { lessonId: CLASH, supportLevel: "HIGH_SUPPORT" } });
+    const beforeConstraint = guidedSystem.slice(0, guidedSystem.indexOf("GUIDED ROUND for a lesson"));
+    assert.ok(!/weighing/i.test(beforeConstraint), "nothing before the constraint names a locked skill");
+    const ordinary = require("../lib/side-coach").buildSideCoachSystemPrompt({ organization: "DEBATE", transcript: [], requestType: "turn-feedback" });
+    assert.ok(/weighing = why your impact matters more/.test(ordinary), "control: an ordinary round keeps the full glossary");
+  });
+
+  check("LL. the teaching additions the review panel required are present and cannot be dropped silently", () => {
+    const teaching = [clashContent.explanation, ...clashContent.teachingSections.map((s: { body: string }) => s.body),
+      ...clashContent.commonMistakes.flatMap((m: { mistake: string; whyItFails: string; fix: string }) => [m.mistake, m.whyItFails, m.fix]),
+      ...clashContent.revisionLadder.flatMap((r: { attempt: string; diagnosis: string; revision: string }) => [r.attempt, r.diagnosis, r.revision]),
+      clashContent.scaffoldedTry.prompt].join("\n");
+    // DEGREE. The both-true test is taught for the "how much" case, not only for flat contradiction.
+    assert.ok(/meaningfully, mostly, or enough/.test(teaching) && /Most real disagreements are about how much/.test(teaching),
+      "the both-true test is taught for degree claims, with the threshold words the model answers use");
+    // And the degree move stays inside Clash: the cost-benefit look-alike is named as WEIGHING and
+    // excluded, rather than modelled as a clash question the way an earlier draft did.
+    assert.ok(/Keep the amount inside the question the two sides are answering/.test(teaching), "the degree move is bounded");
+    assert.ok(/worth the cost[\s\S]{0,120}which is weighing/.test(teaching), "the cost-benefit look-alike is named as weighing and excluded");
+    // NO-CLASH EXIT. Digging that finds nothing is an honest answer, and the alternative is named.
+    assert.ok(/Sometimes the honest result of digging is that there is no shared question/.test(teaching), "the exit condition is taught");
+    assert.ok(/Do not invent a dependency/.test(teaching), "and inventing a dependency is named as the failure");
+    // FAIR RESTATEMENT. Taught, and carried by its own mistake and its own ladder rung.
+    assert.ok(/Restate each side at the strength they gave it/.test(teaching), "fairness applies to the positions, not only the question");
+    assert.ok(clashContent.commonMistakes.some((m: { mistake: string }) => /Restating the other side more weakly/.test(m.mistake)), "the strawman has its own mistake bullet");
+    assert.ok(clashContent.revisionLadder.some((r: { diagnosis: string }) => /a position Side B never took/.test(r.diagnosis)), "and a ladder rung repairs one");
+    // The two ladder rungs repair DIFFERENT failures.
+    const [first, second] = clashContent.revisionLadder;
+    assert.ok(/wrong one of|paired the wrong|the wrong one/.test(first.diagnosis) || /can be true on the same/.test(first.diagnosis), "rung 1 is the both-true failure");
+    assert.ok(!/can be true on the same/.test(second.diagnosis), "rung 2 is a different failure, not the same repair twice");
+    // The scaffold makes the learner choose which of two opposing arguments meets Side A.
+    assert.ok(/Only ONE of Side B's arguments meets Side A/.test(clashContent.scaffoldedTry.prompt), "the constructed attempt exercises the choice, not a flat contradiction");
+    // The irrelevant-dispute example is one a debater would actually raise.
+    assert.ok(!/blue or green/.test(teaching), "the throwaway example is gone");
+    assert.ok(/eleven million or nine/.test(teaching), "and is replaced by a dispute a real round would have");
+  });
+
+  check("LM. the guided round never claims to measure Clash IDENTIFICATION — it measures engagement, and says so", () => {
+    const { COMPETENCY_ROUND_MEASURE } = guidedJudge;
+    assert.equal(COMPETENCY_ROUND_MEASURE.clash.direct, false, "the round's only Clash-mapped category is an ADJACENT measure");
+    assert.equal(COMPETENCY_ROUND_MEASURE.clash.label, "central-clash engagement");
+    assert.ok(/constructed attempt in the lesson/.test(COMPETENCY_ROUND_MEASURE.clash.directEvidence), "the direct evidence is named: the scaffolded try");
+    assert.equal(COMPETENCY_ROUND_MEASURE.refutation.direct, true, "control: refutation in a round IS refutation");
+    // The Clash ballot carries the measure and names itself by it — never "Clash:" alone under a
+    // "new skill" heading.
+    const ballot = projectGuidedJudgeResult(FULL_RESULT, clashRubric, CLASH);
+    assert.deepEqual(ballot.guidedFeedback.measure, COMPETENCY_ROUND_MEASURE.clash);
+    assert.ok(/^Clash in the round \(central-clash engagement\)/.test(ballot.guidedFeedback.newSkill), `named by what was measured: ${ballot.guidedFeedback.newSkill}`);
+    assert.ok(!/you can identify|proved you can|identified the clash/i.test(JSON.stringify(ballot)), "no identification claim anywhere on the ballot");
+    const refutationBallot = projectGuidedJudgeResult(FULL_RESULT, rubric, PILOT);
+    assert.ok(/^Refutation:/.test(refutationBallot.guidedFeedback.newSkill), "control: a direct measure keeps the plain skill name");
+    // The provider is told the same truth, for Clash only.
+    assert.ok(/this round shows central-clash engagement only[\s\S]*do not say the student can or cannot identify the clash/.test(guidedJudgeProseInstruction(clashRubric)), "the prose contract forbids an identification verdict");
+    assert.ok(!/central-clash engagement/.test(guidedJudgeProseInstruction(rubric)), "control: the Refutation contract carries no such clause");
+    // The arena renders the adjacent card by what it measured and points at the direct check.
+    const arena = stripComments(read("components/debate/debate-arena.tsx"));
+    assert.ok(/report\.guidedFeedback\.measure && !report\.guidedFeedback\.measure\.direct \? \([\s\S]{0,200}title="How you applied it in the round"/.test(arena), "an adjacent measure is headed as application, not as a new skill");
+    assert.ok(/This round measured \{report\.guidedFeedback\.measure\.label\}, not whether you can identify the clash\./.test(arena), "and the learner is told exactly what was and was not measured");
+    assert.ok(/<InsightCard title="Your new skill" value=\{report\.guidedFeedback\.newSkill\} \/>/.test(arena), "control: a direct measure keeps the new-skill card");
+    // The required retry stays tied to the DIRECT task: the round's retry link reopens the scaffold.
+    assert.ok(/#scaffolded-try/.test(arena), "the retry link reopens the constructed attempt");
+    assert.ok(/retry the move in the lesson, then come back/.test(arena), "and the copy says the move is retried in the lesson");
+    // Weighing cannot re-enter through the Clash mapping.
+    assert.equal(guidedJudge.JUDGE_CATEGORY_COMPETENCY.clash, "weighing", "control: the lexical 'clash' category is weighing");
+    assert.ok(!allowedJudgeCategories(clashRubric).includes("clash"), "and it is not allowed in a Clash round");
   });
 
   console.log(`\ncoached-performance: ${checks} controls passed.`);

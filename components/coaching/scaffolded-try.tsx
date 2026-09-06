@@ -7,7 +7,7 @@ import { ArrowRight, CircleHelp, RotateCcw } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  evaluateRefutationScaffold,
+  evaluateScaffoldFor,
   guidedApplicationFor,
   starterCategoriesFor,
   contextualStarter,
@@ -42,11 +42,17 @@ import type { ConceptEducationLanguageFrame, ConceptEducationScaffoldedTry } fro
 
 type SlotValues = Record<string, string>;
 
-const SLOT_KEYS = ["theySay", "but", "because", "therefore"] as const;
-
-function keyFor(index: number): (typeof SLOT_KEYS)[number] {
-  return SLOT_KEYS[index] ?? SLOT_KEYS[SLOT_KEYS.length - 1];
+/** Slots are addressed by position; each lesson's evaluator reads them in the lesson's own order. */
+function keyFor(index: number): string {
+  return `slot-${index}`;
 }
+
+/** The only evaluation a lesson with no registered evaluator can receive: it cannot pass. */
+const UNCHECKABLE: ScaffoldEvaluation = {
+  complete: false,
+  coach: "This exercise cannot be checked yet, so the guided round stays closed.",
+  retryRequired: false
+};
 
 /** The learner's sentence, assembled from the frame and their own words, for display only. */
 function assemble(frame: string, values: string[]): string {
@@ -90,12 +96,12 @@ export function ScaffoldedTry({
   const anyFilled = slotValues.some((v) => v.trim().length > 0);
 
   function submit() {
-    const result = evaluateRefutationScaffold({
-      theySay: values.theySay ?? "",
-      but: values.but ?? "",
-      because: values.because ?? "",
-      therefore: values.therefore ?? ""
-    });
+    // Fail closed: no evaluator for this lesson means no completion and no guided launch.
+    const result = evaluateScaffoldFor(
+      lessonId,
+      scaffoldedTry.slots.map((_, i) => values[keyFor(i)] ?? ""),
+      { motion: scaffoldedTry.motion }
+    ) ?? UNCHECKABLE;
     setEvaluation(result);
     setAttempts((n) => n + 1);
   }
@@ -224,14 +230,14 @@ export function ScaffoldedTry({
           {complete ? (
             <>
               <p className="font-semibold">Every blank is filled, and the shape holds.</p>
-              {/* Honest about what this check IS: a shape check. It confirmed four filled moves, a because
-                  that is not a restatement of the but, and a therefore that stays inside their argument.
-                  It did not judge whether the step you chose is load-bearing or whether the reason is
-                  true — a coach with the whole round in view does that, in the guided round. */}
+              {/* Honest about what this check IS: a shape check by the lesson's own evaluator (every
+                  slot present, none of the lesson's named faults). It did not judge whether what was
+                  written is true or whether the right point was chosen — a coach with the whole round
+                  in view does that, in the guided round. */}
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                This checked three things: all four moves are present, your because does not just repeat the
-                but, and your therefore stays inside their argument. It did not judge whether you picked the
-                step that matters or whether your reason is true — that is what the guided round is for.
+                This checked the shape of the move: every part is present and none of the named faults is
+                there. It did not judge whether what you wrote is true or whether you chose the point that
+                matters — that is what the guided round is for.
               </p>
             </>
           ) : (

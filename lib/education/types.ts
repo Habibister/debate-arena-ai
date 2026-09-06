@@ -214,6 +214,12 @@ export type ConceptEducationScaffoldedTry = {
   frame: string;
   slots: readonly string[];
   /**
+   * The motion this exercise is set on, when it has one. Present so a check can tell the MOTION from
+   * the disagreement exactly, by comparing against the authored text, instead of guessing from
+   * sentence shape — a guess that refused principle-level questions the lesson teaches as correct.
+   */
+  motion?: string;
+  /**
    * The opponent's claim as one short phrase — "replacing the printed paper will improve coverage" —
    * so a starter can open in the learner's actual situation: "They argue that replacing the printed
    * paper will improve coverage, but ___". A claim, never a reason: it names what the other side

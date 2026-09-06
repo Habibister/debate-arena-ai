@@ -237,11 +237,14 @@ function main() {
         return Boolean(c.teachingSections || c.additionalExamples || c.revisionLadder ||
           c.misconception || c.commonMistakes || c.languageFrames || c.scaffoldedTry);
       });
-    assert.deepEqual(populated.map((e) => e.id), ["debate-refutation"],
+    // M15 S7 rebuilt `debate-clash` as the second — still an exact set.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-clash", "debate-refutation"],
       "A3. exactly the reviewed lessons author the new teaching structures");
-    // And the one that does authors WHOLE structures — the validator rejects a half-written one, so
+    // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.
-    const refutation = populated[0].source.lesson.content;
+    const refutation = populated.find((e) => e.id === "debate-refutation")!.source.lesson.content;
+    const clash = populated.find((e) => e.id === "debate-clash")!.source.lesson.content;
+    assert.ok((clash.teachingSections ?? []).length >= 4 && clash.scaffoldedTry && (clash.languageFrames ?? []).length === 3, "A4b. Clash authors whole structures too");
     assert.ok((refutation.teachingSections ?? []).length >= 3, "A4. its teaching sections are real");
     assert.ok(refutation.misconception && refutation.misconception.betterModel.length > 0,
       "A5. its misconception names a replacement model");

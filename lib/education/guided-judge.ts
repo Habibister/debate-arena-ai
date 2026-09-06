@@ -80,8 +80,41 @@ export type FullJudgeResultLike = {
   [key: string]: unknown;
 };
 
+/**
+ * What the ROUND'S judge actually measures for each competency, stated exactly. The lexical judge
+ * has no category that measures whether a learner can IDENTIFY the clash — `centralClashResponse`
+ * scores whether they ENGAGED the central disagreement, which is adjacent to the skill and is not
+ * it. Calling the two the same would tell a learner the round proved something it did not test.
+ * Where the round's measure is adjacent, the DIRECT evidence is the lesson's constructed attempt,
+ * which checks the identification move itself, and the ballot says so in those words.
+ */
+export type RoundMeasure = {
+  /** Learner-facing name of what the round measured. */
+  label: string;
+  /** Does the round's category measure the lesson skill itself, or an adjacent application of it? */
+  direct: boolean;
+  /** Where the direct evidence lives when the round's measure is adjacent. */
+  directEvidence?: string;
+};
+
+export const COMPETENCY_ROUND_MEASURE: Readonly<Record<DebateCompetency, RoundMeasure>> = {
+  "claim-warrant-impact": { label: "building a claim with a warrant and an impact", direct: true },
+  refutation: { label: "answering the other side's arguments directly", direct: true },
+  clash: {
+    label: "central-clash engagement",
+    direct: false,
+    directEvidence: "the constructed attempt in the lesson, which checks whether you can name the disputed question"
+  },
+  signposting: { label: "signposting", direct: true },
+  "constructive-speech": { label: "constructive speech", direct: true },
+  weighing: { label: "weighing", direct: true }
+};
+
 export type GuidedFeedback = {
-  /** What went well on the CURRENT lesson skill. */
+  /** Exactly what the round measured for the current skill, and whether that IS the skill. */
+  measure: RoundMeasure;
+  /** What went well on the CURRENT lesson skill — or, when the round's measure is adjacent, on the
+   *  round's application of it, named as such. */
   newSkill: string;
   /** One reinforcement note on a prior unlocked skill, when there is one to give. */
   priorSkill?: string;
@@ -117,6 +150,20 @@ export type GuidedJudgeResult = {
 /** Below this, the current skill's move is treated as materially incomplete and a retry is asked for. */
 export const GUIDED_RETRY_THRESHOLD = 60;
 
+/** The one thing to fix when a round asks for a retry, in each lesson's own terms — never a rewrite. */
+export const COMPETENCY_FIX: Readonly<Record<DebateCompetency, string>> = {
+  "claim-warrant-impact": "Rebuild the argument: state the claim, give the reason it is true, say why it matters.",
+  refutation: "Rebuild the refutation: name the step their argument rests on, give the reason it fails, say what changed.",
+  clash: "Name the question both sides are answering before you answer it, and state it so that either side could still win it.",
+  signposting: "Tell the judge where you are: number the points and say which one you are on.",
+  "constructive-speech": "Build your own case first: claim, reason, impact, in that order.",
+  weighing: "Compare the impacts: say which matters more and why."
+};
+
+/** Advice lines the local judge writes as a model rewrite of the student's own sentence. A guided
+ *  round coaches the learner's move and never writes it for them, so these never reach a guided ballot. */
+const REWRITE_ADVICE = /^(better sentence to add|model rewrite)\b/i;
+
 const normalize = (score: number) => Math.max(0, Math.min(100, Math.round(score <= 5 ? score * 20 : score)));
 
 /** Does this prose name any LOCKED competency? Locked-skill prose is dropped, never trimmed. */
@@ -127,6 +174,7 @@ function namesLocked(text: string, locked: readonly DebateCompetency[]): boolean
 /** The competency a judge recommendation is about, resolved from the JUDGE slug's canonical lesson. */
 const JUDGE_SLUG_LESSON: Readonly<Record<string, string>> = {
   "debate-refutation-lesson": "debate-refutation",
+  "debate-clash-lesson": "debate-clash",
   "debate-signposting-lesson": "debate-signposting",
   "debate-claim-warrant-impact-lesson": "claim-warrant-impact",
   "debate-weighing-lesson": "debate-weighing",
@@ -150,9 +198,15 @@ export function projectGuidedJudgeResult(
   lessonId: string
 ): GuidedJudgeResult {
   const allowed = new Set(allowedJudgeCategories(rubric));
+  // A category's own `reason` is learner-facing prose and gets the same treatment as every other
+  // line on the ballot: if it names a locked competency the reason is dropped and the score stays.
   const categoryScores = full.categoryScores
     .filter((category) => allowed.has(category.key))
-    .map((category) => ({ ...category, score: normalize(category.score) }));
+    .map((category) => ({
+      ...category,
+      score: normalize(category.score),
+      ...(category.reason && namesLocked(category.reason, rubric.locked) ? { reason: undefined } : {})
+    }));
   const overallScore = categoryScores.length > 0
     ? Math.round(categoryScores.reduce((sum, category) => sum + category.score, 0) / categoryScores.length)
     : 0;
@@ -172,7 +226,7 @@ export function projectGuidedJudgeResult(
     categoryScores,
     strengths: keepProse(full.strengths),
     weaknesses: keepProse(full.weaknesses),
-    improvementAdvice: keepProse(full.improvementAdvice),
+    improvementAdvice: keepProse(full.improvementAdvice).filter((text) => !REWRITE_ADVICE.test(text.trim())),
     recommendedLessons,
     guidedFeedback: guidedFeedbackFrom(categoryScores, rubric),
     aiProvider: full.aiProvider,
@@ -205,18 +259,23 @@ export function guidedFeedbackFrom(
   // same reason), "your new skill" and "one thing to fix" would be the same sentence under two
   // headings. In that case the new-skill line states the result and the reason is kept for the fix.
   const distinctReasons = Boolean(best?.reason) && best !== worst && best?.reason !== worst?.reason;
+  const measure = COMPETENCY_ROUND_MEASURE[rubric.primary];
+  // An adjacent measure is named by what it measured, never by the skill's name alone — "Clash: …"
+  // under a "your new skill" heading would read as proof of identification.
+  const measuredAs = measure.direct ? primaryLabel : `${primaryLabel} in the round (${measure.label})`;
   const newSkill = primaryScore === null
-    ? `${primaryLabel} could not be assessed from this round — nothing here counts against you.`
+    ? `${measuredAs} could not be assessed from this round — nothing here counts against you.`
     : distinctReasons
-      ? `${primaryLabel}: ${best.reason}`
-      : `${primaryLabel} scored ${primaryScore} on this practice ballot.`;
+      ? `${measuredAs}: ${best.reason}`
+      : `${measuredAs} scored ${primaryScore} on this practice ballot.`;
 
   const retryRequired = primaryScore !== null && primaryScore < GUIDED_RETRY_THRESHOLD;
-  const oneThingToFix = worst?.reason
-    ? worst.reason
-    : retryRequired
-      ? `Rebuild the ${primaryLabel.toLowerCase()} move: name the step, give the reason it fails, say what changed.`
-      : `Keep the ${primaryLabel.toLowerCase()} move complete every time you use it.`;
+  // The lexical judge's category reasons are engagement-shaped ("name their best point and beat it"),
+  // which is refutation advice. When the round asks for a retry, the fix line is the CURRENT skill's
+  // own move, in that lesson's terms; otherwise the category reason stands as the diagnosis.
+  const oneThingToFix = retryRequired
+    ? COMPETENCY_FIX[rubric.primary]
+    : worst?.reason ?? `Keep the ${primaryLabel.toLowerCase()} move complete every time you use it.`;
 
   const prior = rubric.reinforcement
     .map((competency) => ({ competency, score: mean(forCompetency(competency)), categories: forCompetency(competency) }))
@@ -226,6 +285,7 @@ export function guidedFeedbackFrom(
     : undefined;
 
   return {
+    measure,
     newSkill,
     priorSkill,
     oneThingToFix,
@@ -245,6 +305,9 @@ export function guidedJudgeProseInstruction(rubric: GuidedRubric): string {
   return [
     `GUIDED LESSON ROUND. The student is learning ${COMPETENCY_LABELS[rubric.primary]}.`,
     `Write ONLY about these skills: ${unlocked}.`,
+    ...(COMPETENCY_ROUND_MEASURE[rubric.primary].direct ? [] : [
+      `For ${COMPETENCY_LABELS[rubric.primary]}, this round shows ${COMPETENCY_ROUND_MEASURE[rubric.primary].label} only. Describe how the student engaged the disagreement; do not say the student can or cannot identify the clash — that was checked in the lesson, not here.`
+    ]),
     `Do NOT evaluate, mention, or penalise: ${locked}. Do not comment on dropped arguments, weighing, signposting, speech structure, or time use.`,
     "Do not declare a winner or a loser. Do not rewrite the student's sentences. Coach the current skill; name one thing to fix."
   ].join(" ");

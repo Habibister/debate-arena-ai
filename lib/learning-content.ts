@@ -43,7 +43,7 @@ export type LearningLessonContent = {
   misconception?: { wrongModel: string; whyItFails: string; betterModel: string };
   commonMistakes?: { mistake: string; whyItFails: string; fix: string }[];
   languageFrames?: { purpose: string; starters: string[] }[];
-  scaffoldedTry?: { prompt: string; frame: string; slots: string[]; opponentClaim?: string };
+  scaffoldedTry?: { prompt: string; frame: string; slots: string[]; opponentClaim?: string; motion?: string };
 };
 
 export type LearningSkillSeed = {
@@ -329,34 +329,188 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
     track: "DEBATE",
     name: "Clash",
     slug: "debate-clash",
-    description: "Find the real disagreement and answer it directly.",
+    description: "Find the real disagreement and state the question the round must resolve.",
     category: "Debate foundations",
     order: 3,
     lesson: {
-      title: "Create direct clash",
+      title: "Find the real clash",
       slug: "debate-clash-lesson",
-      summary: "Learn how to identify and resolve the main disagreement.",
-      estimatedMinutes: 7,
+      summary: "Find what the two sides actually disagree about, and state it so the judge can decide it.",
+      estimatedMinutes: 12,
       content: lesson(
-        "Identify what both sides disagree about and answer that point directly.",
-        "Clash happens when two arguments meet on the same point. It starts with finding what the two sides actually disagree about — not what they both accept. A responsive answer targets the opponent's reasoning on that disputed point: repeating your own case is not clash, and answering a claim the opponent never made is not clash either. The strongest clash goes one step further and explains why your direct answer changes the disputed issue in your favour.",
-        "Rounds are won on comparison. Clash shows the judge that you are not just speaking well, you are winning the debate.",
-        ["Name the opponent's claim.", "State your answer.", "Explain why your answer matters more or proves their claim wrong."],
-        {
-          prompt: "Opponent says the plan costs too much.",
-          weakAnswer: "Our plan is still good.",
-          strongAnswer: "On cost, they assume a new class is required. Our plan uses existing advisory time, so their budget objection does not apply.",
-          whyItWorks: "The strong answer names the opposing argument and directly removes its assumption."
-        },
-        q("Which response creates clash?", ["Our case is important.", "On cost, their objection assumes a new class, but our plan uses advisory time.", "I will move on.", "This topic is interesting."], "On cost, their objection assumes a new class, but our plan uses advisory time.", "Look for a direct answer to the other side.", "This response meets the cost argument directly.", "Clash"),
+        "Identify the real disagreement between two sides, explain the competing positions fairly, and state the question the round must resolve.",
+        "Two sides are not in clash just because they say different things. Clash is the point where competing arguments answer the same question in different ways, so that only one of them can be right about it. Most beginner rounds are full of arguments that sound opposed and never actually meet: one side says uniforms reduce the pressure to wear the right clothes, the other says uniforms are cheap, and both can be true at once.\n\nFinding clash means finding the question both sides are already answering, sometimes without noticing, and stating it in words that do not decide it in advance. Judges use the word more loosely than this, writing “not enough clash” on a ballot to mean the two teams never engaged each other at all. This lesson teaches the specific skill underneath that complaint, because you cannot engage a disagreement you have not found.\n\nIt is a different job from answering the other side, which is refutation, and from arguing which side's answer should count for more, which is weighing. Both are covered in their own lessons. Clash comes first: until you can say what the round is actually about, the judge cannot tell what you have won.",
+        "Judges decide rounds by resolving disagreements, not by counting arguments. A speaker who names the disputed question tells the judge where to look, connects the arguments that belong together, and stops both sides talking past each other for a whole speech. It is the move behind every rebuttal or summary that begins “this round comes down to”. Without it, even a strong speech is a list.",
         [
-          q("Side A argues a longer lunch break improves focus in afternoon classes. Side B argues the schedule cannot fit a longer lunch without cutting class time. Where is the real disagreement?", ["Whether the schedule can absorb a longer lunch, since Side B never disputed the focus benefit", "Whether focus matters in afternoon classes", "Whether students enjoy lunch", "Whether school days have schedules"], "Whether the schedule can absorb a longer lunch, since Side B never disputed the focus benefit", "Find the point Side B actually contests.", "Side B accepts the focus claim and attacks the schedule fit, so that is where the clash lives. Engaging anything else answers a point nobody disputed.", "Clash"),
-          q("Which is weakest?", ["They say cost, we answer with existing time.", "They say safety, we answer with training.", "Our first contention is still true.", "They say delay, we answer with phase-in."], "Our first contention is still true.", "Repeating your case is not direct clash.", "This does not answer a specific opposing argument.", "Clash"),
-          q("The opponent argues a school garden takes up field space used for sports. Which reply creates clash?", ["Gardens teach responsibility, which is our first contention.", "The garden plan uses the unused corner lot, so no field space is lost.", "Sports are also valuable to students.", "We will now summarise our own case."], "The garden plan uses the unused corner lot, so no field space is lost.", "Which reply meets the space objection itself?", "Only the corner-lot answer engages the opponent's actual objection. Restating your contention or agreeing sports matter leaves the space argument standing.", "Clash")
+          "Say what Side A is trying to prove, in one sentence they would accept.",
+          "Say what Side B is trying to prove, in one sentence they would accept.",
+          "Ask whether both sentences can be true at the same time. If they can, the two sides are not in direct clash yet.",
+          "Find the underlying question that would make one side's point matter against the other. If there is none, say so: those two arguments are independent, and comparing them is a different, later job.",
+          "State that question neutrally, so that either side could still win it."
+        ],
+        {
+          prompt: "Motion: this city should make its buses free to ride. Side A argues that free buses will cut car traffic, because people who currently drive short trips across town will switch to the bus once it costs nothing. Side B makes two arguments: first, that free buses will cost the city about eleven million a year in lost fares; second, that the extra journeys will come from people who already ride taking more trips, not from drivers giving up their cars. You are asked to identify the clash.",
+          weakAnswer: "The clash in this round is traffic against cost. Side A says free buses reduce traffic, and Side B says they cost eleven million, so the judge has to decide between less traffic and the money.",
+          strongAnswer: "Side A's traffic claim needs the new riders to be former drivers. Side B's second argument says the new riders will be today's passengers riding more often. Those two cannot both be right, and both conclusions turn on the same question: who the extra riders are. The clash is whether free fares actually move people out of cars, or mostly add trips for the people already on the bus. The eleven-million cost sits outside that clash: it can be true whichever way the question goes.",
+          whyItWorks: "The weak version pairs two relevant arguments that can both be true at once, so choosing between them settles no disagreement. The repaired version looks through Side B's arguments for the one that actually meets Side A, finds the proposition both are taking a position on, states it as a question neither side has won yet, and says plainly which argument stays outside the clash."
+        },
+        q(
+          "Motion: this school should start the day an hour later. Side A argues that students would arrive more rested. Which of Side B's replies is actually in clash with that?",
+          [
+            "Better-rested students would still be sitting the same exams under the same timetable pressure.",
+            "After-school sports would finish in the dark for most of the winter term.",
+            "Students would push their bedtime back an hour and gain no extra sleep.",
+            "Teachers would lose the planning hour they currently use before the first lesson."
+          ],
+          "Students would push their bedtime back an hour and gain no extra sleep.",
+          "Ask whether Side A's statement and the reply can both be true at the same time.",
+          "Only one reply takes the opposite position on the thing Side A's argument depends on: that a later bell actually buys students more sleep. Each of the other replies can be true at the same time as Side A's statement — students can be better rested and still face the same exams, and the sports and staffing costs do not touch how rested anyone is — so choosing between them resolves nothing about it. Note that the first reply talks about rest as well: sharing a subject with the claim is not the same as contesting it.",
+          "Clash"
+        ),
+        [
+          q(
+            "Side A says a ban on phones during the school day reduces distraction in class. Side B says students will hide their phones and be distracted by that instead. Which question states their clash neutrally?",
+            [
+              "Would a ban cut distraction, or would students just find a worse way to lose focus?",
+              "Would a ban reduce distraction overall, or only change what students are distracted by?",
+              "Is banning phones during the school day the right policy for this school?",
+              "How much less distracted will students be once their phones are banned?"
+            ],
+            "Would a ban reduce distraction overall, or only change what students are distracted by?",
+            "A clash question is one that either side could still win.",
+            "Two of the questions decide the answer before the debate starts. One asks whether students would find a worse way to lose focus, which is stronger than anything Side B said — Side B claimed the distraction moves, not that it grows — so it hands Side B a verdict they did not argue for. One presumes the ban reduces distraction at all, which is Side A's conclusion. One is the motion in different clothes, which every argument in the round fits under. Only the remaining question names the thing the two sides take opposite positions on and leaves it open — note that it and the loaded first option have the same shape, so the shape is not what makes it neutral.",
+            "Clash"
+          )
         ],
         [
-          q("If the opponent says your plan is unrealistic, what should you answer first?", ["The feasibility objection", "A new unrelated benefit", "Your speaking time", "The ballot color"], "The feasibility objection", "Answer their exact pressure point.", "Directly answering feasibility creates clash.", "Clash")
-        ]
+          q(
+            "Motion: the council should close the high street to cars on Saturdays. Side A argues that shops will gain customers, because people browse when they can walk without traffic. Side B argues that shops will lose customers, because the people who spend the most drive in from outside town and park behind the shops. Which question do both of these arguments turn on?",
+            [
+              "Should the high street be closed to cars on Saturdays, or left open?",
+              "Why would these shops lose the customers who drive in from outside town?",
+              "Would the high street be quieter on a Saturday morning once it is closed?",
+              "Do the shoppers these shops rely on arrive on foot or by car?"
+            ],
+            "Do the shoppers these shops rely on arrive on foot or by car?",
+            "Ask what each argument needs to be true in order to reach its conclusion.",
+            "Side A's gain needs the shops' best customers to be people on foot; Side B's loss needs them to be people who drive. One option is the motion, which every argument in the round fits under. One asks why the shops would lose those customers, which assumes Side B's conclusion before it is argued. One is a real question, but both sides would answer it the same way — yes, it would be quieter — and neither conclusion changes with the answer, so settling it settles nothing. Only the remaining question is the one both arguments stand or fall on.",
+            "Clash"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Different is not the same as opposed",
+              body: "Put two arguments from opposite sides next to each other and they will usually sound like a disagreement, because they were written by people who want different outcomes. Sounding opposed is not the test. The test is whether the two arguments can both be true at the same time.\n\nSide A says school uniforms reduce the pressure to wear the right clothes. Side B says uniforms are expensive for large families. Both of those can be completely true on the same morning in the same school, and a judge who believed every word of both would still not know who had won the disagreement, because there is no disagreement there: neither statement touches the other. Now change Side B to: uniforms do not reduce clothing pressure, because students find other ways to signal who has money, from shoes to bags to phones. That one cannot be true at the same time as Side A. Both sides are now taking positions on one question, whether uniforms actually reduce the pressure, and whatever the judge decides about that question decides something in the round.\n\nThat is clash: two arguments answering the same question in ways that cannot both stand. Run the both-true test on any pair you think is a clash. If both statements survive together, you have found two arguments, not a disagreement, and the round is still waiting for you to say what it is about.\n\nMost real disagreements are about how much, not about yes or no, and the test still works — you just have to put the amount into the question. Almost nobody argues that uniforms do nothing whatsoever; the other side argues that they do far less than you claim. “Do uniforms reduce clothing pressure?” is answered yes by both teams. Add the amount the round actually turns on — “do uniforms meaningfully reduce clothing pressure?”, “do they reduce it for the students who feel it most?” — and the two sides separate again. Keep the amount inside the question the two sides are answering. “Do they reduce it enough to be worth the cost?” looks like the same move and is not: it asks the judge to trade one thing off against another, which is weighing, and it belongs to a later lesson. When both statements look partly true, sharpen the question with a word like meaningfully, mostly, or enough, and check that the two sides still land on opposite sides of it."
+            },
+            {
+              heading: "Find the question both sides are already answering",
+              body: "Real clash is rarely lying on the surface. Speakers write their arguments separately, so even when the two sides are genuinely in dispute, the dispute is usually buried one step below what each of them said. The way to dig it out is to ask, for each argument, what it is trying to prove and what has to be true for it to prove that. Side A wants free buses to reduce traffic, and that needs the new riders to be people who used to drive. Side B says the new riders will be today's passengers making extra trips. Neither speaker said the words “who rides”, and both of their arguments stand or fall on it.\n\nThat shared dependency is the clash, and it has three properties you can check. One side needs the answer to go one way and the other side needs it to go the other way. Each side's conclusion actually changes depending on the answer, so it is not a side issue that both could concede without losing anything. And it is specific enough that evidence and reasoning could settle it, rather than being the motion restated. The shared question is not always about facts, either: two sides can disagree about a principle, such as whether a school may decide what its students wear at all, and the same three checks apply.\n\nWhen you find it, you have also found which arguments belong together. Most opponents make several arguments, and usually only one of them meets yours; two contentions that looked unrelated turn out to be answering the same question, and you can put them in front of the judge as a pair instead of a list. The hardest part is usually that the two sides used different words for the same issue. Cutting traffic and adding trips do not sound like the same subject, and they are, because both rest on who rides. Translate each argument into the question it depends on, and the disagreements that matter appear.\n\nSometimes the honest result of digging is that there is no shared question. Free buses can cut traffic and cost eleven million at the same time; those arguments are independent, and the round will have to compare them rather than resolve them. Say so. Do not invent a dependency the other side's argument does not have just to manufacture a clash, because the judge will see the words you put in their mouth. Comparing independent arguments is weighing, which you will learn later; finding out that they are independent is part of this skill."
+            },
+            {
+              heading: "State the clash so either side could still win it",
+              body: "Once you have found the disputed question, you have to say it out loud, and the way you say it decides whether the judge trusts it. A clash question phrased from inside your own case is not a clash question; it is your conclusion with a question mark on the end. “Why do uniforms fail to reduce pressure?” has already decided that they fail. “Why is our side obviously right on cost?” is not a question anyone could answer against you. Judges notice this, and it costs more than it gains: a loaded question tells the judge that you cannot describe the disagreement fairly, which makes everything you then say about it less believable.\n\nThe neutral version names the proposition and leaves the answer open. “Do uniforms meaningfully reduce clothing pressure?” can be won by either side, and that is exactly the point, because it forces you to say what must actually be resolved. A good check is to imagine your opponent reading the question aloud. If they would accept it as a fair description of what you both disagree about, it is a clash question. If they would object to a word in it, that word is doing your arguing for you, and it should come out.\n\nThe same check applies to the two positions you state on the way to the question. “Side A says uniforms magically fix bullying” is not what Side A said, and a clash built on a weakened version of their argument is a clash they never joined; the judge will hand it straight back. Restate each side at the strength they gave it, in words they would recognise as their own, and then find where those two honest sentences meet.\n\nNeutral does not mean vague. “Are uniforms a good idea?” is neutral and useless, because it is the motion. The clash question sits between the motion and your conclusion: narrower than the whole debate, and open in a way your conclusion is not."
+            },
+            {
+              heading: "Clash is not refutation, and it is not weighing",
+              body: "Three different moves get called clash in beginner rounds, and keeping them apart is most of the skill. Identifying the clash answers one question: what are the sides actually disagreeing about? Refutation answers a different one: why does their reasoning on that point fail? Weighing answers a third, later in the round: once both sides have answered, or when the arguments turn out to be independent, which should count for more?\n\nYou can do the first without the second. Saying “both sides are really arguing about whether the new riders come out of cars” is a complete and useful move even before you have shown that the other side is wrong about it, and a judge who hears it knows where the round will be decided. The confusion runs the other way too. A speaker who answers an argument has not necessarily found the clash: they may have answered a point that was never in dispute, or one the round does not turn on, and they will sound responsive while the real disagreement sits untouched.\n\nTwo more traps look like clash and are not. Naming the motion as the disagreement, “the clash is whether we should have free buses,” tells the judge nothing, because every argument in the room fits under it. And picking a disagreement that is real but changes neither side's conclusion produces a genuine dispute the round does not need: the two sides may argue hard about whether the lost fares come to eleven million or nine, and if both conclusions survive either number, the judge who settles it has settled nothing. The clash worth naming is the one both conclusions depend on."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Motion: primary schools should stop setting homework. Side A argues that homework builds the habit of working without a teacher in the room. Side B argues that at that age homework mostly measures whether a parent is free to sit with the child. A speaker on Side B tries to name the clash.",
+              weak: "The real clash is whether homework unfairly punishes children whose parents cannot help them.",
+              strong: "Both sides are answering the same question: who is actually doing the work when a seven-year-old does homework. Side A says the child, and that is where the habit comes from. Side B says the parent, whenever there is one free. The clash is whether primary-age homework builds a habit in the child or depends on the adult at home.",
+              explanation: "This fails differently from the worked example. The weak version has found the right issue and then states it from inside Side B's case: “unfairly punishes” has already decided that homework is unfair and that it is a punishment, so Side A could never accept the question as a description of the debate. The strong version keeps the same issue and takes the verdict out of it. Either side could win the question as stated, which is what lets the judge treat it as the thing to resolve rather than as one side's slogan."
+            }
+          ],
+          revisionLadder: [
+            {
+              attempt: "Side A says opening the library on Saturdays would give students somewhere quiet to study. Side B says the council cannot afford weekend staff, and that the students who want somewhere quiet already use the public library in town. So the clash is quiet study versus staffing costs.",
+              diagnosis: "Both of the paired statements can be true on the same Saturday: the library can be badly needed and expensive to staff at once, so choosing between them resolves nothing. The speaker has paired Side A with the wrong one of Side B's two arguments. “X versus Y” is the sound of two arguments being placed side by side rather than a disagreement being found.",
+              revision: "Side B's second argument is the one that meets Side A. Side A's benefit needs students who have nowhere quiet to go; Side B says those students already have somewhere. The clash is whether the students Side A describes lack a quiet place now, or already have one in town. The staffing cost stays outside it, and can be true either way."
+            },
+            {
+              attempt: "Side A says a skatepark would give teenagers somewhere to go. Side B says the teenagers already gather in the leisure-centre car park and a park will not move them. Side A answers: they are claiming teenagers do not want anywhere better, which is obviously false. The real clash is whether teenagers would prefer a skatepark to a car park.",
+              diagnosis: "The clash question is well phrased and it is built on a position Side B never took. Side B said the teenagers would not move, not that they would not prefer to; the speaker has swapped a claim about behaviour for a claim about taste, because the second is easier to beat. A judge who heard Side B speak will hand this straight back, and the disagreement that was actually on the table is now unanswered.",
+              revision: "Side B says the teenagers already have a place and would not move to a new one. Side A says they have nowhere to go. Taking Side B at their strongest, the clash is whether the car park those teenagers use now already does what a skatepark would do for them."
+            }
+          ],
+          misconception: {
+            wrongModel: "Clash means taking one argument from each side and setting them against each other.",
+            whyItFails: "Two arguments can come from opposite sides, be about the same motion, and still answer different questions. Cutting traffic and costing eleven million are both about free buses, and both can be true at once, so choosing between them settles no disagreement; it compares two independent things, which is a later and different job. Opposite sides is where you look for clash; it is not what clash is.",
+            betterModel: "Clash exists when competing arguments answer the same question in ways that cannot both be right. Find the question first, then the arguments that answer it, and state the question so that either side could still win it."
+          },
+          commonMistakes: [
+            {
+              mistake: "Pairing two arguments only because they come from opposite sides.",
+              whyItFails: "Opposite sides tell you where to look, not what you have found. Arguments written separately usually answer different questions, and a pair that does not share a question is a list, not a clash.",
+              fix: "Before you call a pair a clash, write down the one question both arguments are answering. If you cannot write it, look at the other side's other arguments; the one that meets yours is usually there."
+            },
+            {
+              mistake: "Choosing two claims that can both be true at the same time.",
+              whyItFails: "If the judge can believe both statements together, deciding between them settles no disagreement, and the round has not moved.",
+              fix: "Run the both-true test. If both statements survive, go one level down to what each argument depends on. If there is still no shared question, say the arguments are independent rather than inventing a link."
+            },
+            {
+              mistake: "Writing a clash question that assumes your own side is right.",
+              whyItFails: "“Why does their plan fail?” is your conclusion with a question mark on it, and a judge who hears it stops trusting your description of the round.",
+              fix: "Phrase the question so that your opponent could read it aloud and accept it. Remove any word that presumes the answer."
+            },
+            {
+              mistake: "Naming the motion instead of the actual disagreement.",
+              whyItFails: "The motion is the question the whole round answers, so every argument fits under it and it points the judge nowhere in particular.",
+              fix: "Narrow it. The clash sits between the motion and your conclusion: the specific proposition the two sides take opposite positions on."
+            },
+            {
+              mistake: "Confusing identifying the clash with refuting it.",
+              whyItFails: "Naming the disagreement does not say why the other side is wrong about it, and answering an argument does not prove it was the disagreement the round turns on.",
+              fix: "Do the two jobs in order. Say what the sides disagree about first; then, separately, argue why your side of that question holds."
+            },
+            {
+              mistake: "Restating the other side more weakly than they put it.",
+              whyItFails: "A clash built on a version of their argument they never made is a clash they never joined. The judge heard what they actually said, so the disagreement you named is not the one on the table, and their real argument goes unanswered.",
+              fix: "Write each side's position in words they would recognise as their own, at the strength they gave it. If they would object to a word in your restatement, that word is yours, not theirs."
+            },
+            {
+              mistake: "Naming a real disagreement that the round does not turn on.",
+              whyItFails: "Two sides can genuinely disagree about a detail that changes neither conclusion. A judge who resolves it has resolved nothing.",
+              fix: "Ask what each side's conclusion would lose if the question went against them. Name the disagreement whose answer changes the outcome for both."
+            }
+          ],
+          languageFrames: [
+            {
+              purpose: "Identify the disagreement",
+              starters: [
+                "The real disagreement is whether ___",
+                "Both sides are answering the question of whether ___",
+                "Side A says ___, while Side B says ___"
+              ]
+            },
+            {
+              purpose: "State the clash neutrally",
+              starters: [
+                "The judge needs to decide whether ___",
+                "The key question in this round is whether ___",
+                "Neither side has yet shown whether ___"
+              ]
+            },
+            {
+              purpose: "Connect the two sides",
+              starters: [
+                "This matters to both arguments, because each depends on whether ___",
+                "Their point and ours meet on the question of whether ___",
+                "The two cases about {topic} meet on whether ___"
+              ]
+            }
+          ],
+          scaffoldedTry: {
+            prompt: "Motion: this school should move to a four-day week. Side A argues that attendance would improve, because families could book medical and dental appointments on the free weekday instead of pulling students out of lessons. Side B makes two arguments: first, that the four remaining days would each run an hour longer, and younger students lose focus in the final hour; second, that clinics hand families whatever appointment slot is free, and most of those will still fall on school days whichever day is off. Only ONE of Side B's arguments meets Side A. Find it, say what each of those two sides is trying to prove in words they would accept, and state the question both of them depend on, so that either side could still win it.",
+            frame: "Side A argues ___. Side B argues ___. The real clash is whether ___.",
+            slots: ["side a", "side b", "the real clash"],
+            motion: "this school should move to a four-day week"
+          }
+        }
       )
     }
   },

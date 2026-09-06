@@ -895,6 +895,9 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     // marks the row (practiceMode LESSON + formatConfig.guidedLessonId, lib/guided-rounds.ts), so
     // guided-ness is a property of the stored round, decided server-side, never a later claim.
     "app/api/debates/route.ts",
+    // The SIDE-COACH route resolves the same row marker against the same declarations, so a lesson
+    // round is coached under its lesson's constraint even if the request does not say it is one.
+    "app/api/ai/side-coach/route.ts",
   ]);
   const found: string[] = [];
   for (const file of [...walkTree("app"), ...walkTree("components")]) {

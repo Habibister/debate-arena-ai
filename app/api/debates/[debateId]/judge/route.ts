@@ -371,7 +371,8 @@ export async function POST(request: Request, { params }: { params: { debateId: s
             completedAt: new Date(),
             // `overallScore` is deliberately LEFT NULL. It is not a display field: the dashboard
             // averages it across every judged round (`_avg`), and so does the coach's student view.
-            // A guided ballot's number is the mean of SIX categories on a curriculum-limited rubric,
+            // A guided ballot's number is the mean of only the PERMITTED categories (six for the
+            // Refutation lesson, seven for Clash) on a curriculum-limited rubric,
             // so folding it into an average of sixteen-category whole-round ballots would silently
             // move a number the learner and their coach read as competitive performance. The guided
             // score is not lost — it lives in `judgeReport.overallScore`, which is what the arena

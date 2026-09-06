@@ -145,6 +145,58 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **CLASH LESSON REBUILD — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).** `debate-clash` is the
+  second lesson rebuilt on the coached model and the first cumulative one: guided target Clash,
+  reinforcement Claim/Warrant/Impact + Refutation, everything later locked. Title "Find the real
+  clash"; objective "Identify the real disagreement between two sides, explain the competing positions
+  fairly, and state the question the round must resolve." Four teaching sections (the both-true test;
+  finding the question both sides already answer; stating the clash so either side could win it; the
+  boundary with Refutation and Weighing; every section paragraphed), a worked example (free bus
+  fares: the speaker pairs the traffic claim with the cost argument, which can both be true, then
+  finds the opponent's OTHER argument that actually meets it — who the extra riders are), an
+  additional example on the biased-question failure, a two-rung ladder (the wrong one of two
+  opposing arguments paired; the motion named as the clash), a misconception, six common mistakes,
+  three language-frame purposes (nine scaffold starters), the honest exit when digging finds no
+  shared question (the arguments are independent; comparing them is Weighing, taught later; never
+  invent a dependency), fairness applied to the restated positions as well as to the question,
+  a constructed scaffold ("Side A argues ___. Side B argues ___. The real clash is whether ___.") with
+  its own deterministic evaluator (missing slot, motion-as-clash, biased question, restated side →
+  retry; SHAPE-ONLY, never writes the clash), and **three** checks in place of five (which pair is in
+  clash; which question is neutral; which reply talks past). No opponent-claim field: the exercise is
+  two-sided. The only structural change is a per-lesson evaluator dispatch (`SCAFFOLD_EVALUATORS`,
+  `evaluateScaffoldFor`) replacing the pilot component's hard-coded Refutation slots; a lesson with a
+  scaffolded try and no evaluator cannot complete and cannot open its guided round. Judge slug map
+  gains `debate-clash-lesson`. Round-2 review fixes on the live paths: the guided coach's post-filter
+  now drops any strength/improvement/next-move/message field that names a locked skill (was
+  example-only), the generic "coach … weighing" framing steps aside in a guided round, a guided
+  ballot never carries the judge's model rewrite of the learner's sentence, and a retry's "one thing
+  to fix" is the current skill's own move (`COMPETENCY_FIX`), not the lexical judge's engagement
+  advice. Round-3 fixes after a second panel: the scaffold evaluator was REFUSING CORRECT ANSWERS
+  (symmetric overlap read a short, correct clash question as a restatement of one side) and now
+  measures directional containment; the verdict and motion guards were narrowed; the guided coach
+  glossary no longer defines Weighing; a locked-skill reason can no longer reach a ballot through a
+  category's reason line; and the live coach reads guided-ness from the ROW rather than the request,
+  with the caller's claim able only to add constraint. Teaching added: degree clash, the honest
+  no-clash exit that hands the comparison to Weighing, fairness for the restated positions, and a
+  harder constructed attempt where only one of the opponent's two arguments meets Side A. Round-4
+  fixes after a third panel: the degree paragraph had modelled a cost-benefit question as a clash
+  question (now named as weighing and excluded); Q1 had a second defensible answer and a
+  topic-matching shortcut; Q3's explanation mis-described a distractor; the copy rule in the scaffold
+  evaluator had gone inert when both sides share vocabulary; the guided locked-skill filter did not
+  cover the "ask" path or `example`; and the coach route's row authority could still be bypassed with
+  a different `organization`. All closed and pinned. Round-5, after a fourth panel: the scaffold
+  evaluator's remaining heuristics were REMOVED rather than tuned a fourth time — word overlap,
+  sentence-shape motion guessing and a loaded-word list had each been shown to fail in both
+  directions, refusing correct answers (a principle-level clash, the disputed word in a fairness
+  round) while missing real copies. It now checks near-identity against the two sides and against an
+  AUTHORED motion (`scaffoldedTry.motion`, new optional field), plus a leading "why"; everything that
+  needs the argument is left to the guided round's coach. A guided coaching request must also name
+  its round now. Final closure: the coach route FAILS CLOSED — an unresolvable row refuses the
+  request (`round-unverified`) and an ordinary row discards any caller guided claim; and the guided
+  ballot states that a Clash round measures central-clash ENGAGEMENT, not identification, with the
+  constructed attempt named as the direct evidence. Baseline
+  `CLASH-REBUILD-V2-EXACT-SCAFFOLD-CHECKS`, one block changed, twenty byte-identical.
+  Clash mastery is not claimed live; adaptive fading remains structurally ready. **Not committed.**
 - **COACHED PERFORMANCE LEARNING MODEL — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
   Productive Debate skills are now taught by EXPLAIN → MODEL → SCAFFOLDED TRY → GUIDED DEBATE →
   FEEDBACK → REQUIRED RETRY → CUMULATIVE USE → FADE SUPPORT → INDEPENDENT COMPETE. Refutation is the
@@ -201,8 +253,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   "Debate practice" surface. DECA and HOSA keep their four-stage journeys and every destination
   unchanged. No lesson or question content changed. New strict-safe suite `learn-compete:smoke`
   (14 controls). **Not committed, not pushed, not deployed.**
-  **Next: rebuild the lessons under the expanded schema — Refutation first, then Clash, then Round
-  Orientation and Evidence Evaluation, then rebalance the four question-heavy "strong" lessons.**
+  **Next (as of 2026-09-05): Refutation and Clash are rebuilt under the expanded schema; Round
+  Orientation and Evidence Evaluation follow, then a re-audit of the four question-heavy "strong"
+  lessons against the same bar — would you want to learn Debate from it if the quizzes disappeared.**
 - **CONCEPT LESSON TEACHING-SCHEMA EXPANSION — IN THE WORKING TREE, UNCOMMITTED (2026-09-05).**
   The concept lesson schema was an educational bottleneck: eight fields that could express a concept
   and one weak/strong pair, with no way to teach a misconception, a common failure, or how a weak

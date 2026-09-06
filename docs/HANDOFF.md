@@ -55,6 +55,133 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **CLASH LESSON REBUILD — UNCOMMITTED, in the working tree (2026-09-05).**
+  The second lesson on the coached model, and the first CUMULATIVE one. Clash has a different job
+  from Refutation and the lesson is built around it: Refutation answers an argument; Clash finds the
+  question the two sides are actually disagreeing about. `debate-clash` (registry id, catalog slug,
+  judge slug `debate-clash-lesson` all unchanged; title now "Find the real clash") teaches: different
+  is not the same as opposed (the both-true test); finding the question both sides are already
+  answering (what each argument depends on; three properties of a real clash; connecting arguments
+  that answer the same issue); stating the clash so either side could still win it (the loaded
+  question, the opponent-reads-it-aloud check, neutral-but-not-vague); and the boundary — Clash
+  identifies, Refutation answers, Weighing compares — with the two look-alikes (naming the motion;
+  a real dispute the round does not turn on). Worked example: free bus fares — the speaker pairs the
+  traffic claim with the cost argument (both true, so no disagreement is resolved), then finds the
+  opponent's other argument that actually meets it; the clash is who the extra riders are, and the
+  cost is named as sitting outside it. The section on digging ends with the honest exit: when no
+  shared question exists the arguments are independent and comparing them is Weighing, taught later
+  — never invent a dependency. Fairness is taught for the restated positions, not only the question. Additional example: the
+  biased clash question (homework "unfairly punishes"). Ladder: side-by-side pairing; the motion
+  named as the clash. Misconception, six owned mistakes, three frame purposes with nine scaffold
+  starters, and a two-sided constructed scaffold with a deterministic evaluator
+  (`evaluateClashScaffold`: missing slot, "should" = the motion, a verdict word or "why ...", a clash
+  that restates one side → required retry; SHAPE-ONLY, never writes the clash). Checks cut from
+  five to THREE, each a distinct judgment: which pair is in clash / which question is neutral /
+  which reply talks past. **Guided**: `GUIDED_APPLICATIONS` gains `debate-clash` → primary clash,
+  reinforcement CWI + Refutation; the guided judge keeps argument/warrant/mechanism/impact,
+  refutation/responsiveness and `centralClashResponse` and drops the lexical Weighing category,
+  organisation and every locked card; the side coach is told the current skill is Clash and which
+  three skills it may coach; three Clash starter categories draw on the new frames. Row authority,
+  zero progression writes and NULL overallScore are inherited unchanged. **Only structural change**:
+  the pilot component hard-coded Refutation's four slots and evaluator; it now dispatches by lesson
+  id through `SCAFFOLD_EVALUATORS` / `evaluateScaffoldFor`, and a lesson with a scaffolded try and no
+  evaluator cannot complete or open its guided round (asserted). Integrity: baseline
+  `CLASH-REBUILD-V1`, one block regenerated, twenty byte-identical. Static pin in the env-tainted
+  `coach-evidence` suite updated to the new title (suite not executed). An independent twelve-reviewer
+  panel (three blind website-only, three content-free, two completeness lenses, ownership, adversarial
+  question quality, two inspect-only code reviews) ran on the first draft; the verified defects it
+  found were fixed before the second panel: the flagship example and one ladder rung had asserted a
+  dependency the opponent's argument did not have (both rewritten around the opponent's OTHER
+  argument); benefit-versus-cost was dismissed instead of handed to Weighing (exit condition added);
+  "explain positions fairly" was promised and not taught (now taught); the scaffold pair shared no
+  buried question (rewritten); Q1 had a filler choice and a lexical tell, Q2's distractors copied the
+  teaching's templates, Q3 duplicated Q1 (all three rewritten; Q3 now tests the dig-one-level-down
+  move); section bodies were single walls (renderer now honours blank-line paragraphs). Live-path
+  code fixes from the same panel: guided coach post-filter on every text field, guided framing, no
+  model rewrite on a guided ballot, competency-specific fix lines, motion test narrowed to
+  actor-should shape.
+  A SECOND twelve-reviewer panel then answered the rebuilt lesson blind (3/3 keys, all high
+  confidence, no reviewer found a second defensible answer) and found one MAJOR defect plus content
+  gaps, all fixed in a third round: the scaffold evaluator's "restates one side" rule used symmetric
+  content-word overlap and REFUSED CORRECT ANSWERS — a short clash question built from the side whose
+  claim is under test scored 0.75 against it and 0.00 against the other, so the learner was told a
+  false diagnosis and the guided round stayed shut; it now measures directional CONTAINMENT and
+  refuses only a near-verbatim copy (regression cases pinned). The verdict regex no longer fires on
+  ordinary uses of "fails"/"wrong"/"clearly"; the motion guard now also catches a leading "whether".
+  The guided side-coach glossary stopped defining Weighing, a locked skill. A locked-skill reason can
+  no longer ride onto a guided ballot through `categoryScores[].reason`. And guided-ness on the live
+  coach path is now read from the ROW (`guidedLessonIdOf`, scoped to the owning student) with the
+  caller's claim as a fallback that can only ADD constraint — omitting `guided` no longer buys
+  unconstrained coaching inside a lesson round; the route's writes are still exactly one
+  (assisted-practice), the added statement is a scoped read, and auth-before-ratelimit-before-parse is
+  unchanged. Teaching added in the same round: the both-true test for DEGREE disputes (threshold
+  words), the honest exit when digging finds no shared question (the arguments are independent and
+  comparing them is Weighing — never invent a dependency), fairness applied to the restated positions
+  with its own mistake bullet and ladder rung, a rewritten flagship example that no longer asserts a
+  dependency Side B's argument does not have, two ladder rungs repairing DIFFERENT failures, and a
+  credible real-but-irrelevant dispute. All three checks rewritten to remove a filler choice, a
+  length tell, a shape tell and a stem echo.
+  A THIRD panel (nine reviewers) answered the result blind 3/3 with high confidence and found a
+  further set, all fixed in a fourth round. Content: the degree paragraph modelled a COST-BENEFIT
+  question as a clash question, contradicting the lesson's own Clash/Weighing boundary — the
+  look-alike is now named as weighing and excluded. Questions: Q1 carried a genuine SECOND
+  DEFENSIBLE ANSWER (a bus-timetable reply denied the same dependency the key denies) and its key was
+  the only option that mentioned rest at all, so it fell to topic-matching; Q1 is rewritten with a
+  rest-mentioning distractor that survives the both-true test. Q3's explanation asserted that a
+  distractor was a question "neither conclusion turns on" when Side B's stated harm did turn on it;
+  that distractor and the explanation are replaced. Q2's key branches were not mutually exclusive and
+  its explanation over-stated Side B's position; both fixed. Code: the copy rule in
+  `evaluateClashScaffold` had been rewritten to be conservative and had gone INERT whenever the two
+  sides share vocabulary, letting a verbatim copy through — it now refuses only when a question of
+  five or more content words contributes NO word of its own and draws more from one side than the
+  other, which catches the copy and exempts the short questions where the false positives lived. The
+  guided locked-skill filter sat BELOW the `ask` return, so the answer a learner reads in full was
+  never checked and `example` was never checked for locked skills at all; the filter now sits above
+  both paths and covers every learner-facing field. The coach route's row authority closed only the
+  `guided`-omission vector — a caller sending `organization: "DECA"` on a Debate lesson round still
+  dropped the constraint — so the ORGANIZATION now comes from the row too, and the support level is
+  taken from the caller so the override can never grant more help than the page decided. The verdict
+  guard no longer matches "of course" inside ordinary words and the motion guard accepts plural and
+  additional actors. `coached-performance:smoke` is 60 controls (LA–LL); twenty-two Clash-specific
+  mutations fired across four rounds, each failing its named control (one is caught by the baseline
+  integrity guard rather than a control, proved separately), with every file restored byte-identical.
+  A FOURTH panel (six reviewers) answered the rewritten checks blind 3/3 with high confidence, each
+  reviewer arguing the best case for a second answer and rejecting it, and confirmed the Q1 defect
+  closed and the degree paragraph CLEAN. Its code reviewer found the scaffold evaluator still broken
+  in both directions, and that produced the last change: **the tunable heuristics were removed rather
+  than tuned again.** Three successive reviewers had broken the same rule three different ways — word
+  overlap refused correct answers; the conservative rewrite went inert when Side B was the negation of
+  Side A; the actor-plus-"should" motion guess refused a principle-level clash the lesson itself
+  teaches ("whether a school should be able to decide what its students wear"); and the loaded-word
+  list refused the disputed proposition in any fairness round, where "unfairly" is exactly what the
+  two sides disagree about. The evaluator now checks only what a string CAN decide: every slot
+  filled; the clash is not one of the two sides copied out, judged by near-identity of the whole text
+  rather than word counts; the clash is not the MOTION restated, judged against a motion the lesson
+  now AUTHORS (`scaffoldedTry.motion`, a new optional field carried through types, validator,
+  integrity key set and baseline) instead of guessed from sentence shape; and a clash opening "why"
+  has decided its own answer. Loaded phrasing is coached in the guided round, which has the argument
+  in view, and the module says so. Also closed: a guided coaching request must now name its round
+  (`debateId`), since a guided claim with no row to check it against was previously coached on the
+  caller's word; and the locked-skill filter is guided-only on the ordinary path again, so a
+  non-guided round behaves exactly as before. Ten cases the four panels raised are pinned as the
+  evaluator's regression suite. `coached-performance:smoke` is 60 controls; twenty-nine mutations
+  fired across five rounds.
+  **Final closure (owner block, two items).** (1) FAIL CLOSED: the side-coach route's row lookup
+  had fallen back to the caller's own claim when the read failed, which handed the caller the
+  power row authority exists to remove. The lookup now returns a three-way truth — `guided`,
+  `ordinary`, `unavailable` — and an unavailable row (missing, not this student's, read error, or a
+  LESSON row whose lesson no longer resolves) REFUSES the request with a declared
+  `round-unverified` unavailable response before any provider call; an ordinary row DISCARDS any
+  guided block the caller sent. No code path reads the caller's guided claim as truth. (2)
+  MEASUREMENT TRUTH: the lexical judge's only Clash-mapped category, `centralClashResponse`,
+  measures engagement with the central disagreement, not the ability to identify it. That is now
+  stated exactly: `COMPETENCY_ROUND_MEASURE` marks Clash as an ADJACENT measure ("central-clash
+  engagement") whose direct evidence is the lesson's constructed attempt; the guided ballot names
+  itself by what it measured ("Clash in the round (central-clash engagement)"), the arena heads the
+  card "How you applied it in the round" and tells the learner the round did not measure
+  identification, the provider is told not to issue an identification verdict, and the required
+  retry still reopens the scaffold. Refutation and CWI are direct measures and keep the plain
+  "Your new skill" card. Lesson content untouched. **Not committed, not pushed, not deployed.**
 - **COACHED PERFORMANCE LEARNING MODEL — UNCOMMITTED, in the working tree (2026-09-05).**
   The owner ruled that productive Debate skills are taught by
   **EXPLAIN → MODEL → SCAFFOLDED TRY → GUIDED DEBATE → FEEDBACK → REQUIRED RETRY → ADD NEXT SKILL →

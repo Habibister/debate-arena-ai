@@ -102,6 +102,12 @@ export const sideCoachRequestSchema = z.object({
     lessonId: z.string().min(1).max(80),
     supportLevel: z.enum(["HIGH_SUPPORT", "MEDIUM_SUPPORT", "LOW_SUPPORT", "INDEPENDENT"])
   }).optional()
+}).refine((value) => !value.guided || Boolean(value.debateId), {
+  // A guided claim is only meaningful about a stored round, and the row is what decides whether a
+  // round is guided. Without a `debateId` there is nothing to check the claim against, so the
+  // request is refused rather than coached on the caller's word.
+  message: "A guided coaching request must name the round it belongs to.",
+  path: ["debateId"]
 });
 
 export const judgeRequestSchema = z.object({

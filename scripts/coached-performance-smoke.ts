@@ -503,8 +503,8 @@ function main() {
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
     assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 3,
-      "three lessons carry a scaffolded try: the Refutation pilot, Clash, and Round Orientation's tracking scenario");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 4,
+      "four lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, and Evidence Evaluation's bounding scenario");
   });
 
   // ================================================================================================
@@ -961,6 +961,31 @@ function main() {
       "the live component dispatches by lesson id and passes the authored motion");
     assert.ok(!/evaluateRefutationScaffold|theySay/.test(tryComponent), "the component no longer hard-codes the pilot's slots");
     assert.ok(/\?\? UNCHECKABLE/.test(tryComponent), "no evaluator → cannot complete → guided round stays closed");
+    // A lesson with no guided application (Orientation, Evidence) must never be told a guided round
+    // judges its attempt or that a "next step" opens: every guided-round sentence is conditional on
+    // `application`, and the no-evaluator copy names no round at all.
+    assert.ok(
+      tryComponent.includes('matters{application ? " — that is what the guided round is for." : ". Compare it with the worked example above."}'),
+      "pass copy names the guided round only where the lesson has one"
+    );
+    assert.ok(
+      tryComponent.includes('Change that part and check again.{application ? " The next step opens once the move is complete." : ""}'),
+      "retry copy promises a next step only where the lesson has one"
+    );
+    assert.ok(!/UNCHECKABLE[\s\S]{0,200}guided round/.test(tryComponent), "no-evaluator copy names no guided round");
+    {
+      const lines = tryComponent.split("\n");
+      const guardOpen = lines.findIndex((line) => line.includes("{application ? ("));
+      const guardClose = lines.findIndex((line, index) => index > guardOpen && line.trim() === ") : null}");
+      assert.ok(guardOpen > 0 && guardClose > guardOpen, "guided-round launch block is guarded by application");
+      const visible = lines
+        .map((line, index) => ({ line, index }))
+        .filter(({ line }) => /guided round/.test(line) && !/^\s*(\*|\{\/\*|\/\/)/.test(line));
+      assert.strictEqual(visible.length, 3, "exactly three learner-visible guided-round strings");
+      for (const { line, index } of visible) {
+        assert.ok(/application \?/.test(line) || (index > guardOpen && index < guardClose), `guided-round copy guarded: ${line.trim()}`);
+      }
+    }
   });
 
   check("LF. Clash owns identification only: no weighing moves are taught, refutation is named as a different job", () => {
@@ -1251,6 +1276,97 @@ function main() {
     assert.ok(!text.includes("Use it in a guided round") && !text.includes("The guided round opens after"), "no guided-round link or promise of one");
     for (const slot of ["1. answered", "2. still unresolved", "3. no response"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
     assert.ok(!/practice-drill/.test(html) || !text.includes("Practice this skill"), "no drill CTA for a lesson with no drill");
+  });
+
+  // ================================================================================================
+  // EVIDENCE EVALUATION — MIXED lesson repaired after an audit: a bounding scenario, no guided round.
+  // ================================================================================================
+  const EVID = "debate-evidence-evaluation";
+  const evidEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === EVID);
+  const evid = evidEntry.source.lesson.content;
+  const { evaluateEvidenceScaffold } = coaching;
+
+  check("NA. Evidence Evaluation is MIXED: a bounding scenario, no guided round, no frames, no ladder; the durable drill stays", () => {
+    assert.equal(guidedApplicationFor(EVID), null, "no guided round is declared");
+    assert.equal(evid.languageFrames, undefined, "no language frames: judgment, not sentence production");
+    assert.equal(evid.revisionLadder, undefined); assert.equal(evid.additionalExamples, undefined);
+    assert.equal(evid.teachingSections.length, 3); assert.ok(evid.misconception); assert.equal(evid.commonMistakes.length, 5);
+    assert.equal(1 + evid.practiceQuestions.length + evid.masteryCheck.length, 4, "five checks became four distinct judgments");
+    assert.deepEqual(evid.scaffoldedTry.slots, ["shows", "does not yet establish", "would need"]);
+    assert.equal(evidEntry.skillSlug, "debate-evidence", "the durable drill's skill is untouched");
+    assert.deepEqual(evidEntry.practiceDrill, { track: "debate", area: "evidence-evaluation" }, "and so is its drill");
+    const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
+    const prose = [evid.objective, evid.explanation, evid.whyMatters, ...evid.steps, ...evid.teachingSections.map((s: { heading: string; body: string }) => s.heading + " " + s.body)].map(words).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(prose >= 800 && prose <= 1500, `teaching prose inside the guard: ${prose} words`);
+  });
+
+  check("NB. the owner's four precision rulings are taught as written, and the crude versions are not", () => {
+    const text = [evid.explanation, ...evid.teachingSections.map((s: { body: string }) => s.body), ...evid.commonMistakes.flatMap((m: { whyItFails: string; fix: string }) => [m.whyItFails, m.fix])].join("\n");
+    assert.ok(/usually cannot, by itself, justify a broad claim about many cases/.test(text), "generalisation: one case supports a claim about that case; not by itself a broad claim");
+    assert.ok(!/one case proves one case/.test(text), "the crude 'one case proves one case' is not taught");
+    assert.ok(/does not create independent corroboration/.test(text), "repeated sources: no independent corroboration");
+    assert.ok(/can still contain several distinct findings/.test(text), "a single source may still carry several findings");
+    assert.ok(!/counts once|count once|counts as one\b/.test(text), "the crude 'counts once' is not taught");
+    assert.ok(/limits how much confidence the evidence deserves/.test(text), "undescribed method: limited confidence");
+    assert.ok(!/counts as (an )?assertion|= assertion|becomes an assertion/.test(text), "no 'undisclosed method = assertion'");
+    assert.ok(/not a reason to throw the result away/.test(text), "conflict of interest: scrutiny, not rejection");
+    assert.ok(/taking it as true, and you show how far it reaches/.test(evid.explanation), "in-round: take it as true, show how far it reaches");
+    assert.equal(evid.scaffoldedTry.motion, undefined, "the claim under evaluation is NOT smuggled into the motion field");
+    assert.equal(evid.scaffoldedTry.opponentClaim, undefined, "nor into opponentClaim — no field is made to lie");
+  });
+
+  check("NC. the worked example bounds the WINNING evidence: shows / does not show / still needed, with no weighing", () => {
+    const { strongAnswer, weakAnswer, whyItWorks } = evid.workedExample;
+    for (const beat of ["What it shows:", "What it does not show:", "What is still needed:"]) assert.ok(strongAnswer.includes(beat), `beat present: ${beat}`);
+    assert.ok(/still bigger than its evidence/.test(strongAnswer), "the claim as stated is sized against the evidence");
+    assert.ok(/The claim is proved\./.test(weakAnswer), "the first impression stops at 'real data with a comparison'");
+    assert.ok(/fits the topic and not the claim/.test(whyItWorks), "the comparison beat uses the same questions");
+    assert.ok(!/outweigh|impact matters more|magnitude|probability/i.test(strongAnswer + whyItWorks), "no weighing vocabulary");
+    assert.ok(!/deserves more weight/.test(evid.objective), "the objective no longer headlines 'deserves more weight'");
+    assert.ok(/what it leaves unproven/.test(evid.objective), "it headlines bounding");
+  });
+
+  check("ND. the bounding-scenario evaluator is shape-only, exact, and dispatched by lesson id", () => {
+    const good = { shows: "on one street, on one Saturday, traffic was a third lighter than the week before", notYet: "that the whole city's car traffic fell, or that it stays down", need: "traffic on several streets over months, compared with a similar city" };
+    assert.deepEqual(evaluateEvidenceScaffold(good), { complete: true, coach: "", retryRequired: false });
+    for (const k of ["shows", "notYet", "need"] as const) {
+      const r = evaluateEvidenceScaffold({ ...good, [k]: "" }); assert.equal(r.retryRequired, true, `${k} missing → retry`); assert.ok(!r.coach.includes(good[k]));
+    }
+    const same = evaluateEvidenceScaffold({ ...good, notYet: good.shows });
+    assert.ok(same.retryRequired && /cannot be the same thing/.test(same.coach), "shows and does-not-yet-establish must differ");
+    const src = stripComments(read("lib/education/coaching.ts"));
+    const body = src.slice(src.indexOf("export function evaluateEvidenceScaffold"), src.indexOf("export type ScaffoldContext"));
+    assert.ok(!/overlap\(|containedIn|obviously|\bshould\b/.test(body), "no word-overlap or loaded-word heuristics");
+    assert.equal(evaluateScaffoldFor(EVID, [good.shows, good.notYet, good.need]).complete, true, "dispatched by lesson id");
+    const withTry = LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).map((e: { slug: string }) => e.slug).sort();
+    assert.deepEqual(withTry, Object.keys(SCAFFOLD_EVALUATORS).sort(), "every scaffolded lesson has an evaluator, none orphaned");
+  });
+
+  check("NE. the evidence page renders teach-first, ends at the scenario, offers no guided round, and keeps its drill CTA", () => {
+    const html = render(React.createElement(ConceptEducationLessonView, {
+      source: evidEntry.source, provenance: MIGRATED_DEBATE_PROVENANCE, moduleLabel: "Argument construction", next: null, practiceDrill: evidEntry.practiceDrill
+    } as never));
+    const text = visible(html);
+    assert.ok(text.includes("What evidence proves, and how big a claim it can carry") && text.includes("Now try the move"), "sections and the scenario render");
+    assertOrder(html, "What evidence proves, and how big a claim it can carry", "What is the problem with this evidence", "teaching precedes the first check");
+    assertOrder(html, 'id="scaffolded-try"', 'id="practice-drill"', "the constructed attempt precedes the drill CTA");
+    assert.ok(!text.includes("Words you can use"), "no frames section");
+    assert.ok(!text.includes("Use it in a guided round") && !text.includes("The guided round opens after"), "no guided-round link or promise");
+    for (const slot of ["1. shows", "2. does not yet establish", "3. would need"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
+  });
+
+  check("NF. ownership: the warrant is pointed at, not retaught; no research-method or weighing teaching", () => {
+    const all = JSON.stringify(evid);
+    assert.ok(/Claim, Warrant, Impact lesson's job/.test(evid.explanation), "the reasoning link is deferred to CWI");
+    // Exactly twice: once naming the connection ("That connection is the warrant, the reasoning that
+    // says why…") so evidence and reasoning stay distinct, once in the pointer to CWI. Never a third
+    // time — a third use would be teaching how to build one, which is CWI's job.
+    assert.equal((all.match(/\bwarrant\b/gi) ?? []).length, 2, "the noun 'warrant' appears twice: the one-line distinction and the CWI pointer (the verb 'warrants caution' is ordinary English)");
+    assert.ok(/That connection is the warrant, the reasoning that says why this evidence supports this claim; the evidence itself never states it\./.test(all), "the evidence/reasoning distinction is stated once, in plain words");
+    for (const banned of ["p-value", "statistical significance", "confidence interval", "sample size of", "peer review", "peer-review", "outweigh", "impact matters more", "fallacy", "ad hominem"]) {
+      assert.ok(!all.toLowerCase().includes(banned), `no out-of-scope teaching: ${banned}`);
+    }
+    assert.ok(/You are not a researcher, and the round does not need you to be one/.test(evid.teachingSections[1].body), "the in-round scope is stated");
   });
 
   console.log(`\ncoached-performance: ${checks} controls passed.`);

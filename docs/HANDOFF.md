@@ -55,6 +55,66 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **EVIDENCE EVALUATION — AUDIT-FIRST REPAIR — UNCOMMITTED, in the working tree (2026-09-05).**
+  Second lesson under the audit-first rule. The audit (nine reviewers) found it under-taught, not
+  mis-taught: no definition of evidence, no "what must be shown" step, the rule for what evidence
+  proves never stated, size-of-claim and representativeness absent, the drill's recurring patterns
+  (self-report, hand-picked windows, recency relative to the claim, correlation versus causation,
+  repeated citations) unnamed, partial support and the grant-and-gap move missing, and an objective
+  that headlined "deserves more weight" — weighing vocabulary. Both application reviewers: MIXED,
+  SMALL SCENARIO, no guided debate. Repaired to those gaps only, with the owner's four rulings:
+  no `motion` overloading (the claim under evaluation is carried in the prompt only; the evaluator
+  is honestly shape-only and cannot detect a restated claim — the smallest honest representation
+  change, if wanted, is an optional `scaffoldedTry.claim` field, reported and NOT added); method
+  not described = limited confidence, never "assertion"; one case usually cannot by itself justify a
+  broad claim; repeating a source does not create independent corroboration while a source may
+  carry several findings; the durable drill is recognition/evaluation evidence under its existing
+  semantics and is not claimed to prove the productive objective. `coached-performance:smoke`
+  gains NA–NF; `concept-lesson-schema` A3's exact set grows to four and its unpopulated exemplar
+  moves from Evidence to Turn Mechanics. Independent review of the repaired lesson (eight
+  reviewers): two blind readers 4/4 with high confidence; content-free 4/4 trivial (the known
+  multiple-choice ceiling); completeness A–H all YES except E PARTLY on both lenses, by design —
+  the evidence/reasoning link is pointed at CWI, not retaught; boundaries evidence/warrant PASS,
+  relevance-vs-strength PASS, scope PARTIAL on one overstated sentence; all four owner rulings
+  verified in the exact sense; ownership and neutrality PASS; application RIGHT-SIZED. Two FACTUAL
+  overstatements found and fixed: the worked example had said a comparison library made the rise
+  "fairly attributed to the fee change" (a comparison rules out only what both groups share; now
+  "the likeliest explanation, not a proven one"), and the teaching had said a comparison "rules
+  out the other explanations" (now: the usual tool, ruling out only shared explanations). The
+  over-building sceptic's verified points fixed: the refutation-tactics sentence after grant-and-gap
+  removed; "size the claim to fit" now shown; "what would close the gap" added to Step 5; the bare
+  "studies show" case handled; five restatements cut; the mistake example that Q1 reused replaced so
+  Q1 tests transfer; Q2's muddled distractor and signature-word key reworded; Q3's key trimmed to one
+  reason and its explanation now addresses every distractor; Q4's options given one shape. A
+  recheck panel after those fixes found every fix closed, scope PASS, rulings intact and no critical
+  defect; its four precision residuals were then applied: Q2's key says the CAUSE, not "the link",
+  is unshown (the association is shown), Q3's key and explanation rest on the campaign report having
+  set out no method rather than on "a single chosen case cannot be examined", Q2's explanation no
+  longer claims only a comparison could ever help, and the worked example says the sized claim is one
+  the evidence "supports", not "carries". Final pre-checkpoint truth check found one real
+  learner-facing defect outside the lesson text: `ScaffoldedTry`'s pass copy told EVERY lesson "that
+  is what the guided round is for", its retry copy promised "the next step opens", and its
+  no-evaluator copy said "the guided round stays closed" — false for the two lessons with no guided
+  application (Orientation, Evidence). All three sentences are now conditional on the lesson's
+  `application` (no application → "Compare it with the worked example above." / plain "check again"
+  / "cannot be checked yet"); `coached-performance:smoke` pins that every learner-visible
+  "guided round" string sits under that guard. The same check ran a fresh content-free panel
+  (three blind solvers, two structure-only tell hunters and an adjudicator per item, no lesson): all
+  four items were solvable by general reasoning (12/12 blind correct), but structure ALONE also
+  isolated every key — a lone "X, not Y" contrast shape, a lone pronoun subject, the heaviest stem
+  echo, the only hedge/negation, a verbatim five-word stem echo, the only compound option. Every
+  option set was rewritten so each such property is shared by the key and at least one distractor
+  (or by all four), with meanings, keys and explanations unchanged; fresh panels then
+  re-adjudicated until every item was CLEAN (Items 2 and 3 after one rewrite, Item 1 after two,
+  Item 4 after three). Final truth: all four are solvable by general reasoning without the lesson
+  (12/12 blind, the known multiple-choice ceiling); structure alone narrows each item to two options
+  and never isolates the key; the only remaining leans are a one-token stem-echo edge and
+  "surviving twin" heuristics that the adjudicator ruled narrowing, not tells. The evidence/reasoning check (three readers) came back YES /
+  PARTLY / PARTLY, so ONE sentence was added to the explanation — "That connection is the warrant,
+  the reasoning that says why this evidence supports this claim; the evidence itself never states
+  it." — naming the connection without teaching how to build it; the noun "warrant" now appears
+  exactly twice (that sentence and the CWI pointer), pinned. Teaching prose 1,166 words.
+  **Not committed.**
 - **ROUND ORIENTATION — AUDIT-FIRST REPAIR — UNCOMMITTED, in the working tree (2026-09-05).**
   The first lesson handled under the rule "perfect for its purpose, not identical to the others."
   A read-only audit (nine reviewers: beginner and coach confusion tests, neutrality, ownership,

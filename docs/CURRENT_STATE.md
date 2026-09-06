@@ -145,6 +145,47 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **EVIDENCE EVALUATION — AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-05).** Nine
+  read-only reviewers plus my own read: role MIXED (a conceptual frame plus one productive judgment,
+  bounding what a piece of evidence establishes); ownership and style neutrality PASS; remove-
+  questions PARTIAL; mental model PARTIAL (four labelled lenses, no chain); worked example PARTIAL (a
+  good/better ranking that never bounded the winning evidence); evidence/warrant and relevance-vs-
+  strength PARTIAL; scope PASS. Repaired to exactly the gaps: objective now leads with bounding
+  ("Evaluate what a piece of evidence actually supports, identify what it leaves unproven, and use
+  the same questions to compare competing evidence"); five steps forming the chain claim → what
+  must be shown → what it shows → does it connect → how much → what remains; three sections (what
+  evidence proves and how big a claim it can carry; where it came from at a debater's level; what it
+  does not prove and the grant-and-gap move) that give every pattern the durable 30-item drill tests
+  a one-line home; a worked example rebuilt to claim / evidence / first impression / what it shows /
+  what it does NOT show / what is still needed, on the winning evidence; one misconception (true ≠
+  proved); five owned mistakes; a SMALL SCENARIO on the existing scaffold structure ("The evidence
+  shows ___. It does not yet establish ___. To carry the claim we would need ___.") with a shape-only
+  evaluator; checks 5 → 4 distinct judgments (fit; alternative explanation; comparing two pieces on
+  the same questions; overclaiming). Owner rulings written in: one case usually cannot by itself
+  justify a broad claim; repeating a source does not create independent corroboration while a
+  source may still carry several findings; an undescribed method limits confidence rather than
+  turning evidence into assertion; conflict of interest is scrutiny, not rejection. The claim under
+  evaluation is NOT stored in `motion` or `opponentClaim` — no field is made to lie — so the
+  evaluator cannot check "the learner merely restated the claim"; that remains SHAPE-ONLY.
+  Measurement truth: the scenario is DIRECT constructed practice of the productive objective,
+  shape-only unless separately validated; the durable drill remains recognition/evaluation evidence
+  under its existing reviewed semantics and is not claimed to prove the productive objective. NO
+  guided round, NO frames, NO ladder. skillSlug and drill unchanged. Independent review (eight
+  reviewers) then a recheck panel: two factual overstatements about what a comparison proves fixed,
+  question-shape tells removed, and four precision residuals applied (Q2 key names the unshown
+  CAUSE, Q3 key rests on the undisclosed method, Q2 explanation no longer says only a comparison
+  could help, worked example "supports" not "carries"). Final truth check: `ScaffoldedTry`'s
+  guided-round sentences (pass, retry, no-evaluator) are now conditional on the lesson's
+  `application`, so Orientation and Evidence no longer point learners at a round they do not have.
+  A fresh content-free panel showed all four checks solvable by general reasoning AND isolable by
+  option structure alone (contrast shape, pronoun subject, stem echo, lone hedge, lone compound);
+  every option set was rewritten so each such property is shared across options, keys and
+  explanations unchanged, and re-adjudicated by fresh panels until all four were CLEAN (structure
+  now narrows each item to two options and never isolates the key; all four remain solvable by
+  general reasoning without the lesson, the multiple-choice ceiling). One sentence added to name the evidence/reasoning
+  connection ("That connection is the warrant, the reasoning that says why…"); CWI still owns how
+  to build one. Teaching prose 1,166 words. Baseline `EVIDENCE-REPAIR-V1`, one block changed,
+  twenty byte-identical. **Not committed.**
 - **ROUND ORIENTATION — AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-05).** Audit
   first, by nine independent read-only reviewers plus my own read: the lesson's job is CONCEPTUAL
   (a map of the round), its style neutrality and ownership already PASSED, and its gap was a

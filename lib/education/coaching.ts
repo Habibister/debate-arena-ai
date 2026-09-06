@@ -674,6 +674,41 @@ export function evaluateRoundTrackingScaffold(slots: { answered: string; unresol
 }
 
 /**
+ * Evaluate the Evidence Evaluation bounding scenario WITHOUT a model. SHAPE ONLY, and honestly so:
+ * three slots filled, and "does not yet establish" distinct from "shows" — a learner who writes the
+ * same thing in both has not yet separated what the evidence reaches from what it leaves. Whether
+ * the learner bounded the evidence CORRECTLY is not judged here: that needs the claim and the
+ * evidence read together, which a string cannot do. The scenario is direct constructed practice of
+ * the lesson's productive objective; its evaluation is shape-only unless separately validated.
+ */
+export function evaluateEvidenceScaffold(slots: { shows: string; notYet: string; need: string }): ScaffoldEvaluation {
+  const filled = (s: string) => s.trim().split(/\s+/).filter(Boolean).length >= 3;
+  const missing = (["shows", "notYet", "need"] as const).find((k) => !filled(slots[k]));
+  if (missing) {
+    const label = { shows: "shows", notYet: "does not yet establish", need: "would need" }[missing];
+    return {
+      complete: false,
+      slot: label,
+      coach: missing === "shows"
+        ? "Start with what was actually observed: what was measured, where, over what period, compared with what."
+        : missing === "notYet"
+          ? "Now the gap. Which part of the claim as stated does this evidence not reach?"
+          : "Say what evidence would close that gap — what would have to be shown for the claim as stated.",
+      retryRequired: true
+    };
+  }
+  if (essentiallyTheSame(slots.shows, slots.notYet)) {
+    return {
+      complete: false,
+      slot: "does not yet establish",
+      coach: "What it shows and what it does not yet establish cannot be the same thing. The second is the part of the claim that is still only a claim.",
+      retryRequired: true
+    };
+  }
+  return { complete: true, coach: "", retryRequired: false };
+}
+
+/**
  * The evaluator for each lesson's scaffolded try, keyed by lesson id and taking the slot values in
  * the lesson's own slot order. A lesson with a scaffolded try and no entry here cannot be checked and
  * therefore cannot open its guided round — fail closed, and asserted by the smoke suite.
@@ -683,7 +718,8 @@ export type ScaffoldContext = { motion?: string };
 export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
   "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
   "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context),
-  "debate-round-orientation": (v) => evaluateRoundTrackingScaffold({ answered: v[0] ?? "", unresolved: v[1] ?? "", noResponse: v[2] ?? "" })
+  "debate-round-orientation": (v) => evaluateRoundTrackingScaffold({ answered: v[0] ?? "", unresolved: v[1] ?? "", noResponse: v[2] ?? "" }),
+  "debate-evidence-evaluation": (v) => evaluateEvidenceScaffold({ shows: v[0] ?? "", notYet: v[1] ?? "", need: v[2] ?? "" })
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

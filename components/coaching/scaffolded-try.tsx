@@ -47,10 +47,11 @@ function keyFor(index: number): string {
   return `slot-${index}`;
 }
 
-/** The only evaluation a lesson with no registered evaluator can receive: it cannot pass. */
+/** The only evaluation a lesson with no registered evaluator can receive: it cannot pass. Says
+ *  nothing about a guided round: whether one exists is the lesson's, rendered below from `application`. */
 const UNCHECKABLE: ScaffoldEvaluation = {
   complete: false,
-  coach: "This exercise cannot be checked yet, so the guided round stays closed.",
+  coach: "This exercise cannot be checked yet.",
   retryRequired: false
 };
 
@@ -232,12 +233,14 @@ export function ScaffoldedTry({
               <p className="font-semibold">Every blank is filled, and the shape holds.</p>
               {/* Honest about what this check IS: a shape check by the lesson's own evaluator (every
                   slot present, none of the lesson's named faults). It did not judge whether what was
-                  written is true or whether the right point was chosen — a coach with the whole round
-                  in view does that, in the guided round. */}
+                  written is true or whether the right point was chosen. Where the lesson has a guided
+                  round, a coach with the whole round in view does that there; where it has none
+                  (a conceptual or evaluative lesson), nothing here does, and the copy must not point
+                  at a round that does not exist. */}
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 This checked the shape of the move: every part is present and none of the named faults is
                 there. It did not judge whether what you wrote is true or whether you chose the point that
-                matters — that is what the guided round is for.
+                matters{application ? " — that is what the guided round is for." : ". Compare it with the worked example above."}
               </p>
             </>
           ) : (
@@ -249,7 +252,7 @@ export function ScaffoldedTry({
               <p className="mt-1 text-sm leading-6 text-foreground">{evaluation.coach}</p>
               {mustRetry ? (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Change that part and check again. The next step opens once the move is complete.
+                  Change that part and check again.{application ? " The next step opens once the move is complete." : ""}
                 </p>
               ) : null}
             </>

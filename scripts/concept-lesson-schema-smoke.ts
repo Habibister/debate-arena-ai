@@ -28,7 +28,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 (globalThis as { React?: unknown }).React = React;
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { ConceptEducationLessonView } = require("../components/lessons/concept-education-lesson-view");
-const { DEBATE_MIGRATED_LESSONS, DEBATE_EVIDENCE_LESSON, MIGRATED_DEBATE_PROVENANCE } =
+const { DEBATE_MIGRATED_LESSONS, DEBATE_EVIDENCE_LESSON, DEBATE_TURN_MECHANICS_LESSON, MIGRATED_DEBATE_PROVENANCE } =
   require("../lib/education/tracks/debate");
 const { isConceptEducationLessonEntry } = require("../lib/education/types");
 const { EDUCATION_REGISTRY } = require("../lib/education/registry");
@@ -240,7 +240,9 @@ function main() {
     // M15 S7 rebuilt `debate-clash` as the second — still an exact set.
     // Round Orientation repaired 2026-09-05 (audit-first: sections, misconception, mistakes, a small
     // tracking scenario; no frames, no ladder, no guided application) — still an exact set.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-clash", "debate-refutation", "debate-round-orientation"],
+    // Evidence Evaluation repaired 2026-09-05 (audit-first: sections, misconception, mistakes, a small
+    // evidence-bounding scenario; no frames, no ladder, no guided application) — still an exact set.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.
@@ -257,14 +259,16 @@ function main() {
   // ---- B. published lessons still render, and render exactly as before -------------------------
   check("B. a real published lesson still renders through the widened renderer", () => {
     const real = render(React.createElement(ConceptEducationLessonView, {
-      source: DEBATE_EVIDENCE_LESSON.source,
+      // Turn Mechanics is the exemplar of a lesson that authors NONE of the structures: Evidence
+      // Evaluation, the previous exemplar, was repaired on 2026-09-05 and now authors most of them.
+      source: DEBATE_TURN_MECHANICS_LESSON.source,
       provenance: MIGRATED_DEBATE_PROVENANCE,
-      moduleLabel: "Argument construction",
+      moduleLabel: "Round strategy",
       next: null,
-      practiceDrill: DEBATE_EVIDENCE_LESSON.practiceDrill
+      practiceDrill: DEBATE_TURN_MECHANICS_LESSON.practiceDrill
     } as never));
     const text = visible(real);
-    assert.ok(text.includes(DEBATE_EVIDENCE_LESSON.source.lesson.title), "B: its title renders");
+    assert.ok(text.includes(DEBATE_TURN_MECHANICS_LESSON.source.lesson.title), "B: its title renders");
     assert.ok(text.includes("What it is") && text.includes("Why it matters") && text.includes("How to do it"),
       "B2: its original teaching sections all render");
     // None of the new headings appear for a lesson that authored none of them. An empty section would

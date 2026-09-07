@@ -135,7 +135,32 @@ function logDiagnostic(fields: DiagnosticFields) {
   );
 }
 
+/**
+ * TEST-ONLY provider boundary stub. A judge smoke that validates provider RESPONSE SHAPE previously
+ * loaded real keys out of .env and made a live call — non-deterministic, credential-dependent, and a
+ * real outbound request from a test the audit rules forbid one in. The socket guard logged that call
+ * but did not stop it, so intercepting after socket creation was never enough.
+ *
+ * When `AI_STUB_COMPLETION` is set, the chain becomes exactly one synthetic provider that returns
+ * that value as the completion body. It needs no API key, opens no socket, and still runs the real
+ * parse/validate path the shape assertions exist to exercise.
+ *
+ * It is inert unless the variable is set, and nothing in the application sets it — only a test does.
+ * `AI_STUB_PROVIDER_NAME` names the provider the result is attributed to, defaulting to gemini, so a
+ * suite can assert a non-fallback attribution without a network call.
+ */
+const STUB_COMPLETION_VAR = "AI_STUB_COMPLETION";
+
+function stubProvider(): Provider | null {
+  const body = process.env[STUB_COMPLETION_VAR];
+  if (body === undefined) return null;
+  const name = (process.env.AI_STUB_PROVIDER_NAME ?? "gemini") as ProviderName;
+  return { name, paid: false, apiKey: "stub", run: async () => body };
+}
+
 function allProviders(): Provider[] {
+  const stub = stubProvider();
+  if (stub) return [stub];
   return [
     { name: "gemini", paid: false, apiKey: usableKey("GEMINI_API_KEY"), run: callGemini },
     { name: "groq", paid: false, apiKey: usableKey("GROQ_API_KEY"), run: callGroq },

@@ -55,6 +55,26 @@ below the boundary.
   Next: rebuild `debate-refutation`, then re-credit Answer Types and Turn Mechanics, then audit the
   held `debate-rebuttal-speeches` (which owns six of the quarantined items), then rebuild the bank on
   evidence identities rather than raw question ids.
+- **SIGNPOSTING INTEGRATION — C1/C2/C3/C4 COMMITTED, J OPEN (2026-09-06).** Four commits after the
+  lesson checkpoint. `b1e1a26` made the drill progress copy truthful: capability now mirrors the submit
+  writer's conditions and is resolved server-side, because the client cannot see whether a `Skill` row
+  exists; unknown never becomes a promise. `5a06014` contained `sp-16` and `sp-24` — untaught
+  judgments, bytes and ids intact, 28 items still serving — and generalised four suites that encoded
+  "every Debate hold is a rebuttal id". `aaa55c1` closed the whole Debate shuffled-rationale class: 23
+  rationales re-anchored to option content (the census found `sp-11` on top of the logged `sp-03` and
+  `sp-07`), enforced by a new `POS_REF` guard metric whose detection is narrow enough to leave the
+  corpus's semantic ordinals alone. `chore(education): record unfrozen debate drill debt` then
+  converted the 150-of-187 freeze gap into explicit, fail-closed governance debt.
+  **STILL OPEN: the judge measure (J).** The Debate `organization` score is a substring count that
+  scores the lesson's own model answer 57, the label the lesson calls WRONG 73, and pure ordinal
+  stuffing 95. J withdraws it rather than tuning it, in ONE commit: sever the marker count from
+  `claimClarity`, `organization` and `style`; drop the category; redistribute its 0.04 proportionally
+  (the 13 weights sum to exactly 1.00); cut the HIGH-priority recommendation trigger in the same
+  commit or it fires at 100% of learners; flip `direct: true -> false`. Component-wise fixtures are the
+  gate — marker stuffing must show zero increase in claimClarity, organization, style, sharedSpeaking,
+  speaker points, overall and the winner — and MODEL_UN, MOCK_TRIAL and PUBLIC_SPEAKING share the path.
+  If a surface needs a numeric organization value and no truthful "unmeasured" representation exists,
+  STOP rather than write 0, 50 or a renormalised score.
 - **SIGNPOSTING — PERFECTION AUDIT, THEN REPAIR — UNCOMMITTED, in the working tree (2026-09-06).**
   The third pattern in the series: TEACHING STRONG, ASSESSMENT MEASURING NOTHING. Five independent
   no-lesson panels — including two structure-only hunters with the STEMS WITHHELD — returned identical

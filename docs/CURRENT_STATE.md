@@ -145,6 +145,33 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **DEBATE DRILL CONTENT FREEZE — COVERAGE ACCOUNTED FOR, CONTENT NOT FROZEN (2026-09-06).**
+  `scripts/debate-drill-bank-baseline.json` freezes **150** of the bank's **187** items. The
+  signposting (30) and constructive-speech (7) areas were authored after that snapshot was taken and
+  were never added, so `debate-drills:smoke` had been failing on `CF-1` — masked, because the suite
+  died there before reaching three further stale controls. The 37 are NOT snapshotted now: existing is
+  not reviewed, and freezing them would convert "never reviewed" into "accepted baseline" without
+  earning it. They are recorded instead in `scripts/debate-drill-unbaselined.json` as
+  `KNOWN_UNBASELINED_DEBATE_DRILL_IDS`, and the invariant is closed: every bank id is either frozen or
+  explicitly listed, with no overlap and no third set, all three counts pinned, and the debt ids
+  printed on every run. **The freeze still cannot detect a content mutation in those 37 items** —
+  the state is COVERAGE ACCOUNTED FOR, not CONTENT FREEZE COMPLETE. An id leaves the debt list only by
+  earning the freeze: reviewed, bytes added to the baseline, id removed in the same commit. No
+  automatic promotion, no prefix rule. **SIGNPOSTING DRILL REVIEW DEBT: OPEN** (the lesson was audited;
+  its 30 drill items were not). **CONSTRUCTIVE DRILL REVIEW DEBT: OPEN** (no audit has happened).
+  Repairing `CF-1` also uncovered three controls that had been stale behind it since the rebuttal
+  containment — a hardcoded 20-distinct rebuttal session, a hardcoded 29 under count pressure, a
+  hardcoded 20 after an exclusion — and one governance hole: the runtime carried an `sp-26`/`sp-27`
+  exclusive group whose finding existed ONLY as a comment above the constant, which is the state
+  `scripts/debate-pair-adjudications.json` exists to prevent. The finding was transcribed into that
+  record (not re-adjudicated) and the control now derives from it. `debate-drills:smoke` is green for
+  the first time since the rebuttal containment.
+- **DECA SHUFFLED-RATIONALE REVIEW DEBT: OPEN — exactly six items** (`br-13`, `br-17`, `cr-17`,
+  `cr-18`, `cr-23`, `cr-26`). The `POS_REF` guard that closed the Debate class flags these too. They
+  are NOT repaired: DECA is a different curriculum this milestone did not audit. Waived by exact bank
+  and metric in `MCQ_GUARD_WAIVERS`, named and dated, printed on every run — temporary review debt,
+  not an accepted exception to the authoring standard. **DECA cannot be called end-to-end complete
+  while it stands, and closing it belongs at the front of the DECA audit.**
 - **SIGNPOSTING — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).**
   The third diagnosis in the series, and a new one: teaching STRONG, assessment measuring NOTHING.
   The audit rated the method strong, the structure-versus-substance proof a pass, and found 22 of the

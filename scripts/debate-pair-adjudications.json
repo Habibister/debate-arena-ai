@@ -1,13 +1,44 @@
 [
   {
-    "pair": ["rb-14", "rb-15"],
+    "pair": [
+      "rb-14",
+      "rb-15"
+    ],
     "finding": "measurement-dependent",
     "reason": "Each item materially discloses the answer logic the other exists to measure. rb-14's keyed contrast states, in the same scenario terms, the two component claims whose composition is rb-15's key; rb-15's clause-ordered choices positionally label the exact label-to-claim binding rb-14 tests. Disclosure runs through the immediate post-answer explanation AND through the rendered choice text alone, so the choice-text channel is independently sufficient.",
-    "requiredControls": ["same-session-mutual-exclusion", "retained-exposure-sibling-exclusion"],
-    "rejectedControls": ["delayed-feedback", "fixed-serve-order", "arbitrary-spacing-N", "one-canonical-item"],
+    "requiredControls": [
+      "same-session-mutual-exclusion",
+      "retained-exposure-sibling-exclusion"
+    ],
+    "rejectedControls": [
+      "delayed-feedback",
+      "fixed-serve-order",
+      "arbitrary-spacing-N",
+      "one-canonical-item"
+    ],
     "decision": "ACCEPTED",
     "decidedOn": "2026-08-25",
     "decidedBy": "project owner",
     "note": "This record is the EXPECTED requirement and is deliberately independent of the runtime policy constant. Deleting DEBATE_DRILL_EXCLUSIVE_GROUPS must not delete the fact that this pair requires a control: the smoke suite reads this file and fails when the runtime policy does not satisfy it. Truth direction is checked-in adjudication -> required control, runtime policy -> actual control, compare. Never regenerate this file from the runtime constant."
+  },
+  {
+    "pair": [
+      "sp-26",
+      "sp-27"
+    ],
+    "finding": "measurement-dependent",
+    "reason": "One-directional disclosure, sp-27 -> sp-26. The pair was already separated semantically, given different task forms and stripped of lexical overlap, and sp-27 was rebuilt as a balanced 2x2 with the return-to-own-case transition held constant and correct across all four options. Adversarial serve-order review still found the dependency MATERIAL: sp-27's stem certifies that constant as correct and names its function, so a learner can diff it against sp-26's bare label and select sp-26's key with no rule and regardless of how they answered sp-27. The reverse direction is transfer-only.",
+    "requiredControls": [
+      "same-session-mutual-exclusion"
+    ],
+    "rejectedControls": [
+      "rewording",
+      "different-task-form",
+      "lexical-separation"
+    ],
+    "decision": "ACCEPTED",
+    "decidedOn": "2026-09-06",
+    "decidedBy": "transcribed from the runtime record",
+    "note": "TRANSCRIPTION, not a new adjudication. The finding above was made by the post-30 hostile audit and existed only as a comment above DEBATE_DRILL_EXCLUSIVE_GROUPS in lib/debate-drills.ts — which is precisely the state this file exists to prevent, since a runtime constant must never be the sole record of its own necessity. Nothing about the pair was re-reviewed here; the finding was moved to the record that the smoke suite compares against. sp-26 and sp-27 are both in KNOWN_UNBASELINED_DEBATE_DRILL_IDS: their content is accounted for, not frozen, and not independently reviewed."
   }
 ]

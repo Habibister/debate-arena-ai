@@ -94,13 +94,23 @@ type OpponentResponse = {
 
 type DebateJudgeResult = {
   rubricSource?: RubricSourceTag;
-  overallScore: number;
-  categoryScores: CategoryScore[];
-  sharedSpeaking: SharedSpeakingScores;
+  /**
+   * ABSENT means NOT SEMANTICALLY JUDGED, never 0 and never a poor round.
+   *
+   * The deterministic Debate transcript producer withdrew semantic performance scoring on
+   * 2026-09-07: every category it emitted was a marker/length formula, and length-matched fixtures
+   * showed grammatical nonsense beating a genuinely strong speech and flipping the winner. It now
+   * records the round and reports non-semantic diagnostics only, so it supplies none of these
+   * fields. Producers that genuinely evaluate a performance — DECA and HOSA role-play judging, which
+   * ask the model to score each official category — still supply all of them.
+   */
+  overallScore?: number;
+  categoryScores?: CategoryScore[];
+  sharedSpeaking?: SharedSpeakingScores;
   // M14 Phase 1d (audit G21): one entry per REAL participant — a two-person round carries exactly
   // two cards, ranked 1-2. Identity is server-derived from the persisted sides; `role` marks the
   // learner vs the opponent without exposing account data. Never padded back to four.
-  speakerScores: Array<{
+  speakerScores?: Array<{
     speaker: string;
     team: "GOVERNMENT" | "OPPOSITION";
     role: "student" | "opponent";
@@ -109,12 +119,12 @@ type DebateJudgeResult = {
     descriptor: "poor" | "developing" | "competent" | "good" | "excellent" | "outstanding" | "exceptional";
     rationale: string;
   }>;
-  teamWinner: "GOVERNMENT" | "OPPOSITION";
+  teamWinner?: "GOVERNMENT" | "OPPOSITION";
   losingSide?: "GOVERNMENT" | "OPPOSITION";
   confidenceLevel?: "low" | "medium" | "high";
   shortReasonForDecision?: string;
   longReasonForDecision?: string;
-  reasonForDecision: string;
+  reasonForDecision?: string;
   sideFeedback?: {
     government: {
       didWell: string[];
@@ -1494,6 +1504,16 @@ export async function judgeDebate(input: {
 
   // No external provider configured -> keep the local ballot (already full rubric + side-correct).
   if (getProviderOrder().length === 0) {
+    base.aiProvider = "fallback";
+    return base;
+  }
+
+  // The prose layer explains an ALREADY-SCORED ballot: its contract is "Do NOT re-score and do NOT
+  // change the winner", and it is asked to write whyWinnerWon and whyLoserLost. With semantic scoring
+  // withdrawn there is no ballot and no winner to explain, so asking it would be asking for prose
+  // about a decision nobody made. It is skipped rather than repurposed — building a provider that
+  // genuinely scores a Debate round is a separate milestone, and DECA already shows the shape.
+  if (base.overallScore === undefined || base.teamWinner === undefined) {
     base.aiProvider = "fallback";
     return base;
   }

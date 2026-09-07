@@ -100,8 +100,28 @@ export type RoundMeasure = {
 };
 
 export const COMPETENCY_ROUND_MEASURE: Readonly<Record<DebateCompetency, RoundMeasure>> = {
-  "claim-warrant-impact": { label: "building a claim with a warrant and an impact", direct: true },
-  refutation: { label: "answering the other side's arguments directly", direct: true },
+  // WITHDRAWN 2026-09-07, in the final Debate audit. These were the last two competencies claiming a
+  // round measures them DIRECTLY, and both rested on the same marker counts every other withdrawal
+  // here removed one at a time: claim-warrant-impact on argument/warrant/mechanism/impact, refutation
+  // on refutation/responsiveness. Measured on length-matched fixtures, 118 words of grammatical
+  // nonsense beat a genuinely strong 147-word speech 70 to 55 and won 11 of 14 categories — warrant
+  // 83 to 48, mechanism 76 to 47, refutation 73 to 53 — and 50 words of nonsense flipped a decision.
+  // A category that a nonsense speech wins is not a measure of the competency it is named after.
+  // The transcript producer no longer emits these categories at all, so the honest declaration is
+  // that a round shows none of this competency and the lesson's own exercises carry the evidence.
+  //
+  // DEBATE COMPETENCIES WITH direct: true IS NOW ZERO. That is the truthful state until a producer
+  // exists that actually reads the argument.
+  "claim-warrant-impact": {
+    label: "building a claim with a warrant and an impact",
+    direct: false,
+    directEvidence: "the Claim/Warrant/Impact lesson's own constructed attempt, and the claim-warrant-impact drill"
+  },
+  refutation: {
+    label: "answering the other side's arguments directly",
+    direct: false,
+    directEvidence: "the Refutation lesson's own constructed attempt, and the refutation drill"
+  },
   clash: {
     label: "central-clash engagement",
     direct: false,

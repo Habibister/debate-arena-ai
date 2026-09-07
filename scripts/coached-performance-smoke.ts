@@ -655,7 +655,15 @@ function main() {
   check("JL. full Compete still uses the full judge, unchanged", () => {
     const route = stripComments(read("app/api/debates/[debateId]/judge/route.ts"));
     assert.ok(/const result = fullResult;[\s\S]*debateSkillRecommendations\(result\)/.test(route), "the whole-round recommender still runs for full Compete");
-    assert.ok(/ratingChange: \{/.test(route), "the rating block is still built for full Compete");
+    // The rating block is still built for full Compete, but it is now CONDITIONED on the round having
+    // been semantically scored. Debate's transcript producer withdrew semantic scoring on 2026-09-07,
+    // so a Debate round supplies no overall and no winner and the block is omitted; a DECA or HOSA
+    // round, which a provider genuinely scores, still gets it. What this control exists to prove is
+    // that the guided branch did not globally weaken full Compete — and that still holds.
+    assert.ok(/const ratingChange =\n?[\s\S]{0,400}?ratingDelta === undefined/.test(route),
+      "the rating block is still built for full Compete, gated on a real score");
+    assert.ok(/\.\.\.\(ratingChange === undefined \? \{\} : \{ ratingChange \}\)/.test(route),
+      "and it is omitted entirely rather than emitted empty when the round was not scored");
     assert.equal(defaultSupportLevel("compete"), "INDEPENDENT");
     const ai = stripComments(read("lib/ai.ts"));
     assert.ok(/const guidedPreamble = guided \?/.test(ai) && /: "";/.test(ai),
@@ -1181,7 +1189,19 @@ function main() {
     assert.equal(COMPETENCY_ROUND_MEASURE.clash.direct, false, "the round's only Clash-mapped category is an ADJACENT measure");
     assert.equal(COMPETENCY_ROUND_MEASURE.clash.label, "central-clash engagement");
     assert.ok(/constructed attempt in the lesson/.test(COMPETENCY_ROUND_MEASURE.clash.directEvidence), "the direct evidence is named: the scaffolded try");
-    assert.equal(COMPETENCY_ROUND_MEASURE.refutation.direct, true, "control: refutation in a round IS refutation");
+    // This control read "refutation in a round IS refutation" — a contrast that made the Clash
+    // withdrawal meaningful by pointing at a competency a round still measured directly. The final
+    // Debate audit withdrew that one too: refutation mapped to the `refutation` and `responsiveness`
+    // categories, both marker counts, and length-matched nonsense scored 73 on refutation against a
+    // strong speech's 53. So the contrast is gone, and the control now asserts the state that
+    // replaced it — no Debate competency claims a direct round measure at all.
+    assert.equal(COMPETENCY_ROUND_MEASURE.refutation.direct, false,
+      "refutation's round measure was withdrawn with the marker counts behind it");
+    assert.ok(/constructed attempt/.test(COMPETENCY_ROUND_MEASURE.refutation.directEvidence ?? ""),
+      "and its direct evidence names the lesson's own exercise instead");
+    assert.equal(
+      Object.values(COMPETENCY_ROUND_MEASURE).filter((measure) => (measure as { direct: boolean }).direct).length, 0,
+      "no Debate competency claims a direct round measure while the transcript judge cannot score");
     // The Clash ballot carries the measure and names itself by it — never "Clash:" alone under a
     // "new skill" heading.
     const ballot = projectGuidedJudgeResult(FULL_RESULT, clashRubric, CLASH);
@@ -1189,7 +1209,14 @@ function main() {
     assert.ok(/^Clash in the round \(central-clash engagement\)/.test(ballot.guidedFeedback.newSkill), `named by what was measured: ${ballot.guidedFeedback.newSkill}`);
     assert.ok(!/you can identify|proved you can|identified the clash/i.test(JSON.stringify(ballot)), "no identification claim anywhere on the ballot");
     const refutationBallot = projectGuidedJudgeResult(FULL_RESULT, rubric, PILOT);
-    assert.ok(/^Refutation:/.test(refutationBallot.guidedFeedback.newSkill), "control: a direct measure keeps the plain skill name");
+    // Was "control: a direct measure keeps the plain skill name". Refutation's direct claim was
+    // withdrawn with the marker counts behind it, so its ballot now takes the SAME adjacent form the
+    // Clash ballot takes — headed by what the round actually showed rather than by the skill name.
+    // That is the withdrawal reaching the learner-facing ballot, which is the point of it.
+    assert.ok(/^Refutation in the round \(/.test(refutationBallot.guidedFeedback.newSkill),
+      `an adjacent measure is named by what was measured: ${refutationBallot.guidedFeedback.newSkill}`);
+    assert.ok(!/^Refutation:/.test(refutationBallot.guidedFeedback.newSkill),
+      "and no longer claims the plain skill name a direct measure would have earned");
     // The provider is told the same truth, for Clash only.
     assert.ok(/this round shows central-clash engagement only[\s\S]*do not say the student can or cannot identify the clash/.test(guidedJudgeProseInstruction(clashRubric)), "the prose contract forbids an identification verdict");
     assert.ok(!/central-clash engagement/.test(guidedJudgeProseInstruction(rubric)), "control: the Refutation contract carries no such clause");

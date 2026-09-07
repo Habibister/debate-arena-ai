@@ -61,7 +61,9 @@ type JudgeResult = {
   // exists for the event, "seed" otherwise. Read here so `scoredBy` reports what actually happened
   // instead of what the organization implies.
   scoringMode?: "registry-weighted" | "seed";
-  scoredBy?: "local-lexical-rubric" | "ai-seed-rubric" | "ai-registry-weighted";
+  // "transcript-diagnostics": the round was processed and recorded, but nothing semantically scored
+  // it. It lives in judgeReport JSON, not a DB enum, so no migration is involved.
+  scoredBy?: "local-lexical-rubric" | "ai-seed-rubric" | "ai-registry-weighted" | "transcript-diagnostics";
   // Always "completion-only" while this route exists in its A3a form. Both scoring paths produce
   // FORMATIVE numbers: Path A is demonstrably gameable, and Path B, though semantically stronger and
   // registry-grounded, has never been validated against human judge ballots. So no ballot NUMBER and
@@ -435,11 +437,22 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           ? normalizeScore(result.sharedSpeaking.confidence)
           : undefined
     };
-    const overallScore = normalizeScore(result.overallScore);
+    // ABSENT means NOT SEMANTICALLY JUDGED. The Debate transcript producer withdrew semantic
+    // scoring on 2026-09-07, so it supplies no overall at all; DECA and HOSA provider judging still
+    // does. `undefined` must never become 0 here — the column is nullable and a null round reads as
+    // unscored everywhere downstream.
+    const overallScore = result.overallScore === undefined ? undefined : normalizeScore(result.overallScore);
     // M15 S1A A3a — the winner is still COMPUTED and still shown, because it is useful coaching. It
     // simply has no progression authority any more. Every use of `wonDebate` below is confined to
     // the formative ballot payload (rating-movement prose, decision copy); it reaches no write.
-    const wonDebate = didStudentWin(result, debate.studentSide, overallScore);
+    // A missing judge is not a tied debate and not a loss. With no winner and no overall there is
+    // nothing to decide from, so `wonDebate` is UNDEFINED rather than false: the old
+    // `overallScore >= 80` fallback would have manufactured a result out of a score that no longer
+    // exists. Every consumer below treats undefined as "no decision was made".
+    const wonDebate =
+      result.teamWinner === undefined && overallScore === undefined
+        ? undefined
+        : didStudentWin(result, debate.studentSide, overallScore ?? 0);
     // A3a: completion-only. The bonus is gone because the winner that would have earned it is not
     // trustworthy on EITHER scoring path. Path A (Debate/MT/PS/MUN) derives the winner from lexical
     // marker counts, and a marker-stuffed circular speech was measured beating genuine reasoning
@@ -459,12 +472,19 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const evidenceCategory = findCategory(result, ["contentEvidence", "performanceIndicators", "medicalAccuracy"]);
     const organizationCategory = findCategory(result, ["organization", "signposting", "taskCompletion"]);
     const deliveryCategory = findCategory(result, ["delivery", "style", "professionalCommunication"]);
-    const ratingDelta = overallRatingDelta({
-      wonDebate,
-      overallScore,
-      completedTurns: completedSpeechCount,
-      requiredTurns: formatConfig.speeches.length
-    });
+    // RATING MOVEMENT WITHDRAWN for an unscored round. `overallRatingDelta` reads a result swing and
+    // a quality swing; with no winner and no overall there is no truthful input for either, and a
+    // completion-only swing dressed as a rating change would tell the learner their debating moved
+    // when only their attendance did. Omitted rather than zeroed, so the ballot renders no movement.
+    const ratingDelta =
+      wonDebate === undefined || overallScore === undefined
+        ? undefined
+        : overallRatingDelta({
+            wonDebate,
+            overallScore,
+            completedTurns: completedSpeechCount,
+            requiredTurns: formatConfig.speeches.length
+          });
     let resultWithRating: JudgeResult = result;
 
     const [updatedDebate, updatedUser] = await prisma.$transaction(async (tx) => {
@@ -536,27 +556,54 @@ export async function POST(request: Request, { params }: { params: { debateId: s
         xp: awarded.xp,
         wins: user.wins
       });
-      const argumentDelta = skillDelta(scores.logic, overallScore);
-      const refutationDelta = skillDelta(scores.rebuttal, overallScore);
+      // SEMANTIC SKILL DELTAS WITHDRAWN for an unscored round. `skillDelta` substitutes the overall
+      // for an absent category, so with no overall it would have written movement for competencies
+      // nothing measured — the same defect the weighing and organization withdrawals closed, applied
+      // to the whole ballot. Omitted, never zeroed.
+      //
+      // `scoredOverall` narrows once here: every delta below exists exactly when a real overall does,
+      // which is exactly when the producer semantically judged the round.
+      const scoredOverall = overallScore;
+      const argumentDelta = scoredOverall === undefined ? undefined : skillDelta(scores.logic, scoredOverall);
+      const refutationDelta = scoredOverall === undefined ? undefined : skillDelta(scores.rebuttal, scoredOverall);
       // NOT MEASURED is not MEASURED POORLY. `skillDelta` substitutes the overall score for an
       // absent category, which would have written a weighing rating movement off the overall ballot
       // for a competency nothing measured. Same shape as the organization withdrawal below.
       const weighingCategoryScore = categoryScore(result, ["weighing"]);
-      const weighingDelta = weighingCategoryScore === undefined ? undefined : skillDelta(weighingCategoryScore, overallScore);
-      const evidenceDelta = skillDelta(scores.evidence, overallScore);
+      const weighingDelta =
+        weighingCategoryScore === undefined || scoredOverall === undefined
+          ? undefined
+          : skillDelta(weighingCategoryScore, scoredOverall);
+      const evidenceDelta = scoredOverall === undefined ? undefined : skillDelta(scores.evidence, scoredOverall);
       // NOT MEASURED is not MEASURED POORLY. `skillDelta` substitutes the overall score for an absent
       // category, which would have rendered an Organization focus row — with a reason naming
       // "structure and signposting" — for a category no longer measured at all. The row is omitted
       // instead: `organizationCategoryScore` is undefined exactly when nothing scored it.
       const organizationCategoryScore = categoryScore(result, ["organization", "signposting", "taskCompletion"]);
-      const organizationDelta = organizationCategoryScore === undefined
-        ? undefined
-        : skillDelta(organizationCategoryScore, overallScore);
-      const deliveryDelta = skillDelta(categoryScore(result, ["delivery", "style", "professionalCommunication"]), scores.communication ?? overallScore);
+      const organizationDelta =
+        organizationCategoryScore === undefined || scoredOverall === undefined
+          ? undefined
+          : skillDelta(organizationCategoryScore, scoredOverall);
+      const deliveryFallback = scores.communication ?? overallScore;
+      const deliveryDelta =
+        deliveryFallback === undefined
+          ? undefined
+          : skillDelta(categoryScore(result, ["delivery", "style", "professionalCommunication"]), deliveryFallback);
 
-      resultWithRating = {
-        ...result,
-        ratingChange: {
+      // The whole ratingChange block is omitted for an unscored round: with no overall and no winner
+      // every field inside it — the swing, each focus delta, and the prose that narrates them — is
+      // derived from numbers that no longer exist. A partial block would be worse than none, because
+      // the arena reads its presence as "your rating moved".
+      const ratingChange =
+        ratingDelta === undefined ||
+        argumentDelta === undefined ||
+        refutationDelta === undefined ||
+        evidenceDelta === undefined ||
+        deliveryDelta === undefined ||
+        scoredOverall === undefined ||
+        wonDebate === undefined
+          ? undefined
+          : {
           overall: ratingDelta,
           argument: argumentDelta,
           refutation: refutationDelta,
@@ -566,7 +613,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           deliveryStyle: deliveryDelta,
           recommendedBot: nearestAiPersona(projectedRating).name,
           reasons: {
-            overall: `The practice judge gave ${wonDebate ? "this round" : "the other side"} the decision on a ${overallScore} practice ballot score.`,
+            overall: `The practice judge gave ${wonDebate ? "this round" : "the other side"} the decision on a ${scoredOverall} practice ballot score.`,
             argument: focusReason("argument", argumentDelta, argumentCategory, "of how clearly the student stated their claim."),
             refutation: focusReason("refutation", refutationDelta, refutationCategory, "of how specifically the student answered the opponent."),
             ...(weighingDelta === undefined ? {} : { weighing: focusReason("weighing", weighingDelta, weighingCategory, "of how impacts were compared and framed for the ballot.") }),
@@ -576,7 +623,11 @@ export async function POST(request: Request, { params }: { params: { debateId: s
               : { organization: focusReason("organization", organizationDelta, organizationCategory, "of the speech structure and signposting.") }),
             deliveryStyle: focusReason("delivery and style", deliveryDelta, deliveryCategory, "of the style, clarity, and communication shown.")
           }
-        },
+        };
+
+      resultWithRating = {
+        ...result,
+        ...(ratingChange === undefined ? {} : { ratingChange }),
         // A3a basis metadata — written into `judgeReport` on every judged round from here on.
         //
         // `scoredBy` reports what ACTUALLY scored the round, never what the organization implies.
@@ -593,12 +644,17 @@ export async function POST(request: Request, { params }: { params: { debateId: s
         // provider-down states — the provider is asked for prose alone and cannot alter a number or
         // the winner. So no `degradedJudge` flag is written: there is no degraded numeric state to
         // describe, and inventing one would imply the live path scores when it does not.
+        // "local-lexical-rubric" is no longer truthful for a round that produced no score. When the
+        // producer supplies no overall it did not semantically judge anything, and the label has to
+        // say so rather than name a rubric that returned nothing.
         scoredBy:
-          debate.organization !== "DECA"
-            ? "local-lexical-rubric"
-            : result.scoringMode === "registry-weighted"
-              ? "ai-registry-weighted"
-              : "ai-seed-rubric",
+          overallScore === undefined
+            ? "transcript-diagnostics"
+            : debate.organization !== "DECA"
+              ? "local-lexical-rubric"
+              : result.scoringMode === "registry-weighted"
+                ? "ai-registry-weighted"
+                : "ai-seed-rubric",
         progressionBasis: "completion-only",
         assisted: debate.assistedPractice
       };
@@ -614,7 +670,9 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           persuasionScore: scores.persuasion,
           clarityScore: scores.clarity,
           communicationScore: scores.communication,
-          overallScore,
+          // Explicit null, not undefined: an unscored round must READ as unscored, and `undefined`
+          // in a Prisma update means "leave whatever is there".
+          overallScore: overallScore ?? null,
           strengths: result.strengths,
           weaknesses: result.weaknesses,
           recommendations: [

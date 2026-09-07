@@ -1089,209 +1089,90 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
   const opposition = analyzeSide("OPPOSITION", input.transcript, topicKeywords);
   government.dropped = unansweredClaims(opposition.claims, government.combinedText, government.scores.responsiveness);
   opposition.dropped = unansweredClaims(government.claims, opposition.combinedText, opposition.scores.responsiveness);
-  const winner = winnerFromTranscriptScores(government, opposition);
-  const loser: DebateSide = winner === "GOVERNMENT" ? "OPPOSITION" : "GOVERNMENT";
-  const winnerMetrics = winner === "GOVERNMENT" ? government : opposition;
-  const loserMetrics = loser === "GOVERNMENT" ? government : opposition;
   const studentSide = normalizeStudentSide(input.studentSide);
   const student = studentSide === "GOVERNMENT" ? government : opposition;
   const opponent = studentSide === "GOVERNMENT" ? opposition : government;
-  const diff = Math.abs(government.scores.overall - opposition.scores.overall);
-  const confidence = confidenceLevel(diff);
-  const governmentFeedback = sideFeedback(government, opposition);
-  const oppositionFeedback = sideFeedback(opposition, government);
-  const studentRecommendation = recommendationForStudent(student);
-  const betterSentence = betterSentenceFor(student, opponent);
-  const winnerReason = winnerSelectionReason(winnerMetrics, loserMetrics);
-  const keyClash = `The debate really turned on whether ${cleanClaim(government.bestClaim, 110)} outweighed ${cleanClaim(opposition.bestClaim, 110)}. ${sideLabel(winner)} won that clash because ${
-    "its reasoning was more complete than the answer it got back"
-  }.`;
-  const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default, scoring ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall}. ${winnerReason} Its strongest idea was that ${cleanClaim(winnerMetrics.bestClaim)}. ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left an important point unanswered: ${cleanClaim(loserMetrics.dropped[0])}.` : `had a weakest point — ${cleanClaim(loserMetrics.weakestClaim)} — that still lacked the warrant, impact, or comparison needed to overtake the winning argument.`}`;
 
-  const jargonySide = government.isMostlyJargon ? government : opposition.isMostlyJargon ? opposition : null;
-  const emptyPhraseWarning = jargonySide
-    ? `${sideLabel(jargonySide.side)} leaned on debate-sounding language${jargonySide.jargonPhrase ? ` like "${jargonySide.jargonPhrase}"` : ""} without proving the underlying argument. That is not enough on its own: it has to explain what causes what, why the link is true, and how it applies to "${motion}". It did not win on that language.`
-    : student.counts.jargon > 0
-      ? `Watch the weighing words${student.jargonPhrase ? ` like "${student.jargonPhrase}"` : ""}: they only count when you have already proven the claim, the warrant, and the impact behind them.`
-      : null;
+  // SEMANTIC PERFORMANCE SCORING WITHDRAWN 2026-09-07.
+  //
+  // Everything this function used to return — a fourteen-category ballot, an overall, a winner, a
+  // readiness verdict, speaker ranks, and every line of decision prose — was computed from marker
+  // and length counts. Measured on length-matched fixtures:
+  //
+  //   * appending 29 words of grammatical nonsense containing marker words to a substantive speech
+  //     moved 11 categories and raised the overall from 47 to 71 (warrant +47, mechanism +48);
+  //   * 118 words of pure nonsense beat a 147-word genuinely strong speech 70 to 55, winning 11 of
+  //     14 categories — only motionConnection preferred the real speech;
+  //   * 50 words of nonsense flipped the decision, turning a side losing 42 to a strong opponent
+  //     into a 75-point winner.
+  //
+  // The `nonSubstantive` guard did not stop any of it: it gates on `meaningfulWords < 6`, so it is
+  // itself a length heuristic, and long nonsense passes straight through. That is the whole lesson —
+  // a surface heuristic cannot certify a surface heuristic, so no further gate is added here.
+  //
+  // What remains is an OPERATIONAL RECORDER plus NON-SEMANTIC DIAGNOSTICS. There is no Debate
+  // provider scorer to fall back to either: the provider is a prose layer over an already-scored
+  // ballot and is told "Do NOT re-score and do NOT change the winner". So a round completes, the
+  // transcript persists, and the ballot is UNAVAILABLE rather than invented.
+  //
+  // ABSENT IS NOT ZERO, NOT A LOSS, AND NOT A TIE. A missing judge is not a tied debate.
+  //
+  // `winnerFromTranscriptScores`, `buildCategoryScores`, `buildSpeakerScores`, `sharedSpeakingFor`
+  // and the marker-driven `scores` block are retained but unread, in the same way SIGNPOST_MARKERS
+  // and WEIGHING_MARKERS were kept after their withdrawals: the analysis still computes them for the
+  // diagnostics below, and leaving the code in place makes a future revert a visible diff rather
+  // than a silent re-addition.
 
-  const motionConnection =
-    student.counts.topicEngagement >= 2
-      ? `Your argument stayed connected to the motion "${motion}" by engaging its actual terms, which is what a judge needs to see.`
-      : `This was weak because it did not clearly tie back to the motion "${motion}". Name the specific thing the motion changes and argue about that, not the topic in general.`;
-
-  const mechanismCheck =
-    student.counts.realWarrant > 0 && student.scores.warrant >= 60
-      ? `You explained at least one cause-and-effect ("because"/"leads to") rather than only asserting it, which is the right move. Tighten it so every claim has that link.`
-      : `You needed to explain the mechanism: HOW does your claim actually produce the result you want on "${motion}"? Right now the cause-and-effect is asserted, not shown.`;
-
-  const betterVersion = `Instead of a bare label, write a full argument: ${betterSentence}`;
-
-  const fairWinnerLogic = `${sideLabel(winner)} won on real argument quality, not on debate vocabulary. ${winnerReason}${
-    loserMetrics.isMostlyJargon
-      ? ` ${sideLabel(loser)} mostly used ballot phrases without a proven claim, so that language earned no credit.`
-      : ""
-  }`;
-
-  const realArgumentQuality = winnerMetrics.isMostlyJargon
-    ? `Neither side proved much, but ${sideLabel(winner)} edged it. Both still need a real claim-warrant-impact chain tied to "${motion}".`
-    : `${sideLabel(winner)} proved the more complete argument on "${motion}" — a claim with a warrant and an impact the judge could actually weigh${
-        loserMetrics.isMostlyJargon ? `, while ${sideLabel(loser)} mostly asserted debate vocabulary.` : "."
-      }`;
-
-  // Generic coaching, not a verdict. It used to be gated on `scores.weighing >= 70` and would tell a
-  // learner they had "compared impacts with real substance" on the strength of a marker count. The
-  // advice below claims nothing about what this speech did, so it survives the withdrawal unchanged.
-  const weighingCheck = `Don't just say you "outweigh" — compare on magnitude, probability, timeframe, scope, or reversibility and explain why your impact wins.`;
-
-  const droppedArguments = student.dropped[0]
-    ? `You did not answer the opponent's point that ${cleanClaim(student.dropped[0])}. An unanswered argument is treated as conceded.`
-    : `No major argument was fully dropped, but extend your answers — a one-line mention is not the same as engaging the point.`;
-
-  const practiceSkill = practiceSkillFor(student);
-  const whyWinnerWon = `${sideLabel(winner)} won because it proved the more complete argument: ${cleanClaim(winnerMetrics.bestClaim, 120)}.`;
-  const whyLoserLost = loserMetrics.isMostlyJargon
-    ? `${sideLabel(loser)} leaned on debate vocabulary without proving a real claim.`
-    : `${sideLabel(loser)} fell short because its key point — ${cleanClaim(loserMetrics.weakestClaim, 120)} — lacked enough warrant, impact, or direct clash.`;
-
-  // Proof the judge read the whole transcript: name each side's best material (clean paraphrase) and
-  // explain, in plain English, why that clash decided the round.
-  const roundDecidingClash = {
-    governmentBestArgument: cleanClaim(government.bestClaim),
-    oppositionBestAnswer: cleanClaim(opposition.bestClaim),
-    whyItDecides: `${sideLabel(winner)} takes the round-deciding clash: ${
-      loserMetrics.isMostlyJargon
-        ? `${sideLabel(loser)} leaned on debate vocabulary without proving its case`
-        : loserMetrics.dropped[0]
-          ? `${sideLabel(loser)} left "${cleanClaim(loserMetrics.dropped[0], 90)}" unanswered`
-          : `${sideLabel(loser)} had the weaker warrant and impact on the central question`
-    }, while ${sideLabel(winner)} ${
-      winnerMetrics.scores.motionConnection > loserMetrics.scores.motionConnection
-          ? "stayed more tightly connected to the motion"
-          : "gave the more complete reasoning"
-    }.`
+  // The three diagnostics that survive, and exactly what each one measures. None of them is a
+  // performance claim, none is weighted into anything, and they are deliberately NOT returned as
+  // `categoryScores` — a three-row ballot would read as "these are the parts of debate that count".
+  const diagnostics = {
+    // Topic-stem overlap between the speech and the motion. The only measure that preferred the real
+    // speech over nonsense in the fixtures above (82 to 50), because nonsense cannot fake the motion's
+    // own vocabulary. It reports whether the speech engaged the motion's terms — not how well.
+    motionEngaged: student.counts.topicEngagement >= 2,
+    // A one-sided detector over EMPTY_JARGON_MARKERS: debate vocabulary used without a proven claim.
+    // It can only ever count against, never for, so it cannot be farmed.
+    emptyJargonDetected: student.isMostlyJargon || student.counts.jargon > 0,
+    // Structural rule compliance: a genuinely new argument introduced in the final speech. Detected
+    // from speech position, not from vocabulary.
+    newArgumentInFinalSpeech: student.counts.finalNewArgument > 0,
+    // Operational facts about what happened, not about how good it was.
+    wordCount: student.counts.words,
+    speechCount: input.transcript.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length
   };
 
   return {
-    overallScore: student.scores.overall,
-    categoryScores: buildCategoryScores(student),
-    sharedSpeaking: sharedSpeakingFor(student),
-    speakerScores: buildSpeakerScores(government, opposition, studentSide),
-    teamWinner: winner,
-    losingSide: loser,
-    confidenceLevel: confidence,
-    shortReasonForDecision: `${sideLabel(winner)} wins, ${confidence === "high" ? "fairly clearly" : confidence === "medium" ? "but not by a lot" : "but only just"}. The clearer topic-specific argument was that ${cleanClaim(winnerMetrics.bestClaim, 120)}. ${
-      loserMetrics.isMostlyJargon
-        ? `${sideLabel(loser)} mostly leaned on debate vocabulary without proving the claim behind it.`
-        : `${sideLabel(loser)} needed more ${loserMetrics.scores.warrant < 60 ? "warrant" : "concrete impact"} to overtake it.`
-    }`,
-    longReasonForDecision: reasonForDecision,
-    reasonForDecision,
-    sideFeedback: {
-      government: governmentFeedback,
-      opposition: oppositionFeedback
-    },
-    sideAnalysis: {
-      government: {
-        whatTheyClaimed: government.claims.map((claim) => cleanClaim(claim)),
-        bestArgument: cleanClaim(government.bestClaim),
-        weakestArgument: cleanClaim(government.weakestClaim),
-        failedToAnswer: government.dropped,
-        dropped: government.dropped,
-        neededMoreWarrant: government.scores.warrant < 68 ? `Explain why ${cleanClaim(government.bestClaim, 120)} is true, not just that it matters.` : "Warrants were present.",
-        neededMoreImpact: government.scores.impact < 68 ? "Add a concrete harm or benefit and explain who experiences it." : "Impacts were present.",
-        vagueOrUnsupported: government.counts.vague > 0 || government.scores.evidence < 65 ? `Most unsupported part: ${cleanClaim(government.weakestClaim, 130)}.` : "No major unsupported claim stood out.",
-        hiddenAssumptionAttack: government.scores.refutation >= 76 ? "Pressed an assumption in the opposing case." : "Needed to expose the opponent's hidden assumption more directly."
-      },
-      opposition: {
-        whatTheyClaimed: opposition.claims.map((claim) => cleanClaim(claim)),
-        bestArgument: cleanClaim(opposition.bestClaim),
-        weakestArgument: cleanClaim(opposition.weakestClaim),
-        failedToAnswer: opposition.dropped,
-        dropped: opposition.dropped,
-        neededMoreWarrant: opposition.scores.warrant < 68 ? `Explain why ${cleanClaim(opposition.bestClaim, 120)} is true, not just that it matters.` : "Warrants were present.",
-        neededMoreImpact: opposition.scores.impact < 68 ? "Add a concrete harm or benefit and explain who experiences it." : "Impacts were present.",
-        vagueOrUnsupported: opposition.counts.vague > 0 || opposition.scores.evidence < 65 ? `Most unsupported part: ${cleanClaim(opposition.weakestClaim, 130)}.` : "No major unsupported claim stood out.",
-        hiddenAssumptionAttack: opposition.scores.refutation >= 76 ? "Pressed an assumption in the opposing case." : "Needed to expose the opponent's hidden assumption more directly."
-      }
-    },
-    transcriptFeedback: {
-      studentSide,
-      strongestClaim: `You argued that ${cleanClaim(student.bestClaim)}.`,
-      weakestClaim: `Your weakest moment was the idea that ${cleanClaim(student.weakestClaim)}.`,
-      bestRefutation:
-        student.scores.refutation >= 68
-          ? `Your best refutation was the part where you answered opposing material around "${excerpt(opponent.bestClaim, 120)}."`
-          : "You did not give a specific refutation; you mostly asserted your side without directly answering the opposing mechanism.",
-      biggestDroppedArgument: student.dropped[0] ?? `You did not clearly compare against the opponent's best claim: "${excerpt(opponent.bestClaim, 120)}."`,
-      mostMissingPiece:
-        student.scores.warrant < 68
-          ? "The missing piece was warrant: explain why your claim is true."
-          : "The biggest next step is collapsing your best point into a cleaner voter.",
-      betterSentence,
-      modelRewrite: `Your idea — ${cleanClaim(student.bestClaim, 110)} — gets stronger like this: "${betterSentence}"`,
-      skillToPractice: studentRecommendation.lessonSlug
-    },
-    keyClash,
-    strongestArgument: `Best winning argument: "${excerpt(winnerMetrics.bestClaim)}."`,
-    weakestArgument: `Weakest losing-side argument: "${excerpt(loserMetrics.weakestClaim)}."`,
-    strengths: [
-      `Your strongest idea: ${cleanClaim(student.bestClaim)}.`,
-      "You had at least one identifiable position to evaluate.",
-      student.scores.refutation >= 70 ? "You made at least one direct answer to the other side." : "You gave the judge a starting point for your side."
-    ],
-    weaknesses: [
-      student.scores.warrant < 68 ? `Warrant gap: "${excerpt(student.weakestClaim, 130)}" needed a because sentence.` : "Warrants were present but could be sharper.",
-      student.scores.impact < 68 ? "Impact gap: explain who is harmed or helped, how much, and why that matters." : "Impacts were present but need stronger comparison.",
-      student.dropped[0] ? `Dropped argument: "${student.dropped[0]}."` : "No obvious full drop, but some answers were not extended enough."
-    ],
-    improvementAdvice: [
-      `Better sentence to add: "${betterSentence}"`,
-      `Model rewrite: ${excerpt(student.bestClaim, 110)}. ${betterSentence}`,
-      `Next skill: ${studentRecommendation.reason}`
-    ],
+    // NO overallScore. NO categoryScores. NO teamWinner. NO losingSide. NO confidenceLevel.
+    // NO sharedSpeaking. NO speakerScores. NO readinessForNextLevel. NO decision prose.
+    // Each is omitted rather than defaulted, so every consumer reads NOT MEASURED.
+    semanticScoring: "unavailable" as const,
+    transcriptDiagnostics: diagnostics,
+    // Static curriculum pointers. Identical on every transcript round, conditioned on no score, so
+    // they are educational navigation rather than a diagnosis. The score-derived recommendation that
+    // used to lead this list is gone with the scores it read.
     recommendedLessons: [
-      studentRecommendation,
       {
         lessonSlug: "claim-warrant-impact",
         reason: "Strengthen every claim with a because sentence and a concrete impact.",
-        priority: studentRecommendation.lessonSlug === "claim-warrant-impact" ? "high" : "medium"
+        priority: "medium" as const
       },
       {
         lessonSlug: "debate-weighing",
         reason: "Practice comparing why your best impact should decide the round.",
-        priority: studentRecommendation.lessonSlug === "debate-weighing" ? "high" : "medium"
+        priority: "medium" as const
       }
     ],
-    internalScoringSummary: {
-      governmentScore: government.scores.overall,
-      oppositionScore: opposition.scores.overall,
-      reasonWinnerSelected: winnerReason
-    },
-    judgeFairnessReport: {
-      centralClash: keyClash,
-      realArgumentQuality,
-      emptyPhraseWarning,
-      droppedArguments,
-      motionConnection,
-      mechanismCheck,
-      weighingCheck,
-      betterVersion,
-      fairWinnerLogic,
-      practiceSkill,
-      whyWinnerWon,
-      whyLoserLost
-    },
-    roundDecidingClash,
-    // READINESS WITHDRAWN 2026-09-07. "Ready for the next level" required overall >= 82 AND
-    // weighing >= 75 AND refutation >= 75. One of its three gates was a marker count, and answering
-    // on the remaining two would quietly redefine readiness and make promotion easier without saying
-    // so. `false` is not available either: it means "we measured you and you are not ready". So the
-    // field is omitted, and the arena renders nothing where it is absent. UNAVAILABLE, not FAILED.
-    fallbackNotice: "AI is temporarily unavailable, so we used a backup response.",
+    strengths: [] as string[],
+    weaknesses: [] as string[],
+    improvementAdvice: [] as string[],
+    fallbackNotice:
+      "This round was recorded, and the transcript is saved. It was not scored: the practice judge cannot tell substantive argument from filler, so it does not say who won.",
     eventType,
     topic: input.topic,
     organization: input.organization,
-    level: input.level
+    level: input.level,
+    studentSide,
+    opponentSide: opponent.side
   };
 }

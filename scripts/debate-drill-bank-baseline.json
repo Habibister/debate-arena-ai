@@ -2338,5 +2338,96 @@
     ],
     "correctAnswer": "I have three answers to make to what they have just told you",
     "explanation": "A count is enough to make a preview a roadmap: a judge told to expect three can see it if only two arrive. What it does not do is say where any of the three belongs, so it warns of a gap without helping place anything. The opening that promises a number of problems gives neither a count nor a name, so there is nothing to expect and nothing to check against. The one that names cost, rota and timetable alongside the count gives both, which is the strong version rather than the weak one. The one that predicts their case cannot survive states what the speaker intends to prove, which describes a conclusion rather than the shape of the speech."
+  },
+  {
+    "id": "cs-01",
+    "area": "constructive-speech",
+    "question": "A first constructive for a funded late-night bus route has three contentions. Cost argues that fares absorb the subsidy, and the fares it counts are the ones the route's new riders pay. Reach sets out which districts the route would serve. Safety argues that workers in those districts stop walking home after midnight and ride instead; it holds only once the districts have been accepted, and those workers are the new riders. Which order should the speech take?",
+    "choices": [
+      "Reach, then cost, then safety — the districts come first, and the fares are counted from the districts the route serves",
+      "Cost, then reach, then safety — settle the subsidy first, then place the route, then argue for the riders it carries",
+      "Reach, then safety, then cost — the districts come first, and the riders are argued for before the fares they supply",
+      "Safety, then reach, then cost — the walk is what the case is for, and the districts and the fares fill in behind it"
+    ],
+    "correctAnswer": "Reach, then safety, then cost — the districts come first, and the riders are argued for before the fares they supply",
+    "explanation": "Two dependencies run through this case and they run the same way: the walk cannot be argued until the districts are accepted, and the fares cannot be counted until the riders paying them have been argued for. The order the contentions were introduced in is not the order they can be argued in. Counting the fares from the districts is the near miss, and it is a misreading of where the fares come from: the districts are places, and the fares are paid by the workers safety puts on the bus, so respecting the dependency the stem marks with 'only once' still leaves the second one broken. Settling the subsidy first inverts the chain outright. Opening on the walk breaks the first dependency on the ground that the walk is what the case is for; a contention that other contentions rest on does not become background because it is undramatic."
+  },
+  {
+    "id": "cs-02",
+    "area": "constructive-speech",
+    "question": "A first constructive on a four-day working week has two contentions. Capacity argues the same work gets done in four days once meeting time is cut, and it is inside capacity that the speech shows pay need not fall. Retention argues workers stay in the job longer, and that argument assumes pay has not fallen. The draft runs retention first, because the speaker wrote it first and finds it easier to begin there. What is wrong with the draft?",
+    "choices": [
+      "The order was chosen for the speaker's convenience, and a case has to be ordered before any of it is drafted",
+      "A contention has to establish what it assumes rather than borrow it, and retention never argues the pay premise itself",
+      "Retention is argued before capacity has shown pay holds, so its premise is still to come when the judge reaches it",
+      "Nothing is wrong — with capacity and retention both in the speech, which of them opens is the speaker's own choice"
+    ],
+    "correctAnswer": "Retention is argued before capacity has shown pay holds, so its premise is still to come when the judge reaches it",
+    "explanation": "Retention assumes pay has not fallen, and capacity is where the speech argues that, so putting retention first asks the judge to accept it on a basis the speech has not laid. The order being chosen for the speaker's convenience is how the draft went wrong, not what is wrong with it: an order drawn up before a word was written could be the same broken order, and this one would be sound if the two contentions were independent. Nor does a contention have to establish what it assumes rather than draw on an earlier one — a premise argued in one contention and relied on by a later one is the ordinary shape the lesson describes, and that condition is unchanged by putting capacity first, so it cannot be the fault. And with a dependency on the table, which contention opens is not the speaker's to choose."
+  },
+  {
+    "id": "cs-03",
+    "area": "constructive-speech",
+    "question": "A constructive plan on a later school start time runs in this order: first, attendance rises; second, students get more sleep; third, the bus schedule absorbs the change. Attendance runs on the sleep gain, since students attend because they are rested. The bus contention prices the extra runs the attendance rise calls for, so it runs on attendance. What is the smallest change that fixes the plan?",
+    "choices": [
+      "Move the sleep contention in front of the attendance contention, and leave the rest of the plan as it is",
+      "Bring the bus contention in front of attendance, so everything the attendance rise needs is settled first",
+      "Name the sleep gain at the top of the attendance contention, keeping the three contentions where they are",
+      "Shift the attendance contention to the end, so the plan runs sleep first, then the bus, then attendance"
+    ],
+    "correctAnswer": "Move the sleep contention in front of the attendance contention, and leave the rest of the plan as it is",
+    "explanation": "Two contentions here run on something earlier in the plan: attendance on the sleep gain, and the bus schedule on the attendance rise. Sleep, attendance, bus is the only arrangement that satisfies both, and moving sleep to the front reaches it while leaving everything else where it stands. Bringing the bus contention forward costs one move too, but the bus schedule is what the attendance rise calls for rather than what it runs on, so that move settles nothing attendance needs and puts the bus contention ahead of the thing it prices. Shifting attendance to the end also costs one move, and it repairs the first dependency by breaking the second. And naming the sleep gain is a smaller change than any of these, which is what makes it tempting: the argument is still heard before the thing it rests on, and naming what an argument rests on is not the same as having argued it."
+  },
+  {
+    "id": "cs-04",
+    "area": "constructive-speech",
+    "question": "A first constructive for making entry to public museums free. The speaker has established one contention, that free entry raises school visits, and has room for one more stretch of the same length. Her case has a second contention, that free entry widens who uses museums, which she has not argued. The other side has not spoken. Which stretch belongs in this speech?",
+    "choices": [
+      "Argue the second contention: why the charge keeps particular groups out of museums, and why removing it brings those groups in",
+      "Answer the cost objection the other side is likely to run, showing where the lost admission revenue would be made up from",
+      "Close on what the case has established, since both contentions have now been stated and the judge knows where the case stands",
+      "Return to the school-visits contention and take it further, since one contention argued deeply does more for the museums case than two argued thinly"
+    ],
+    "correctAnswer": "Argue the second contention: why the charge keeps particular groups out of museums, and why removing it brings those groups in",
+    "explanation": "A constructive establishes rather than responds, and in the first constructive there is often nothing yet to answer. The cost objection has not been made, so answering it spends the speech supplying the other side's case and then replying to it — the judge hears their argument, in this speaker's voice, before hearing what this side is for. Closing here treats the second contention as done because it was stated, and a contention is not established because it was named; the speech would end with half its case unargued. Taking the first contention further is not a response at all, but it leaves the second contention unargued, and a contention the speech never establishes is hard to revive later. Only one of these four puts the part of her case that is still unargued on the table."
+  },
+  {
+    "id": "cs-05",
+    "area": "constructive-speech",
+    "question": "A first constructive for calorie labels on menus opens by answering three arguments: that labels are ignored, that they burden small restaurants, and that they shame customers. The answers are reasonable ones. No one on the other side has yet spoken, and none of those three arguments has been made. The speech then goes on to establish both of its own contentions in full within the time it has. What does that opening cost the speaker?",
+    "choices": [
+      "The judge gets three arguments against the proposal before getting anything for it, and it is this speech that supplies them",
+      "The two contentions reach the judge with less development than they needed, so neither is established as firmly as it could be",
+      "The work is wasted if the other side runs a different case, since none of those three arguments may ever be made",
+      "The rebuttal speech is left with nothing to do, because the answers arrived before the arguments they answer"
+    ],
+    "correctAnswer": "The judge gets three arguments against the proposal before getting anything for it, and it is this speech that supplies them",
+    "explanation": "The cost is not time — the stem grants that both contentions were established in full. It is what the opening put in the judge's head: three arguments against this case, stated by the side that has to beat them, ahead of the case itself. That is the move the lesson names, and it is why pre-empting in a constructive gives the judge your opponent's case instead of yours. The wasted-work objection is real but is not what makes this a composition problem; the speech would still have opened on the other side's arguments even if all three were later made. And nothing was answered, because nothing had been said: an answer to an argument nobody has run does not clear the rebuttal's work, it only moves the speaker's own case later in the speech."
+  },
+  {
+    "id": "cs-07",
+    "area": "constructive-speech",
+    "question": "A first constructive for funding school counsellors ends: \"Those are our two contentions, and taken together they are worth more than anything the other side is going to bring.\" Both contentions were argued in full and the speaker is happy with them. Nobody has spoken against the case, and the speech contains no comparison of the two sides. What is the smallest change to that closing sentence?",
+    "choices": [
+      "Cut the comparison and say instead what the two contentions establish about what school counsellors would change",
+      "Soften the comparison, so the two contentions are said to be likely to outlast the case coming rather than certain to",
+      "Keep the comparison and give its reason, so the judge hears why the school counsellors case beats the one that is coming",
+      "Mark the comparison as a promise, telling the judge the counsellors case will be shown to win in a later speech"
+    ],
+    "correctAnswer": "Cut the comparison and say instead what the two contentions establish about what school counsellors would change",
+    "explanation": "The two contentions are fine and the speaker is right to be happy with them; the only thing wrong is the last clause, which claims this case is worth more than one nobody has heard. Replacing that clause with what the contentions establish repairs the close and touches nothing else in the speech. Softening the same claim leaves it a comparison, only a hedged one — the round still has nothing to compare against. Adding a reason gives a comparison a warrant it cannot have, because half of what it compares does not exist yet. And marking it as a promise still asserts it here: the judge has been told the case wins before the case it beats has been made, and saying the proof is coming does not withdraw the claim."
+  },
+  {
+    "id": "cs-08",
+    "area": "constructive-speech",
+    "question": "A first constructive for building a covered market runs in three stretches: first, why the objection that the site floods does not hold; second, that traders get year-round trade; third, that a roof makes the site usable through the winter. The year-round trade argument runs on the site being usable in winter, which is what the roof stretch shows. Nobody has raised the flooding point. What should the speaker change?",
+    "choices": [
+      "Cut the flooding stretch, and put the roof stretch in front of the year-round trade stretch",
+      "Cut the flooding stretch, and leave the two remaining stretches in the draft's order",
+      "Keep the flooding stretch where it is, and put the roof stretch in front of the trade stretch",
+      "Cut the roof stretch, and move the flooding answer to after the year-round trade stretch"
+    ],
+    "correctAnswer": "Cut the flooding stretch, and put the roof stretch in front of the year-round trade stretch",
+    "explanation": "Two different things are wrong and each needs its own rule. The flooding stretch answers an argument nobody has made, and a constructive establishes rather than responds, so that stretch is not this speech's work. Cutting it is not enough on its own: what is left still argues year-round trade before the roof stretch it runs on, and a contention that others depend on has to come before them. Keeping the flooding stretch and fixing only the order leaves the speech supplying and answering an argument the round does not contain. And cutting the roof stretch removes the very thing the trade argument stands on, then moves the flooding answer rather than dropping it — two changes that leave both faults in place, because the roof stretch is not background and responsive material does not stop being responsive by arriving later."
   }
 ]

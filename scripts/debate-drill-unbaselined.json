@@ -11,27 +11,10 @@
     "There is no automatic promotion, and no prefix rule: adding an area does not add its items to either set."
   ],
   "limits": [
-    "Constructive speech: no perfection audit has happened at all. Nothing about these 7 items is reviewed.",
-    "Signposting LEFT this record on 2026-09-07 by earning the freeze: all 30 ids are now byte-frozen in scripts/debate-drill-bank-baseline.json. What that freeze means is stated in the baseline's own terms -- 28 servable items reviewed and accepted FOR SERVING, and sp-16 and sp-24 reviewed and accepted AS QUARANTINED. Frozen is not released."
+    "EMPTY. Every Debate drill item is now byte-frozen in scripts/debate-drill-bank-baseline.json.",
+    "Signposting left this record on 2026-09-07; constructive-speech left it on 2026-09-07 after a fresh content review that repaired one rationale defect (cs-04). What a freeze asserts is content governance, NOT mastery: the constructive-speech area carries 4 independent secure-evidence keys against a floor of 5, so it may be practised and CANNOT qualify for durable mastery. No Skill row exists for debate-case-construction, and none was seeded to make that copy pass.",
+    "This record stays in the tree, empty, so a new unfrozen id has somewhere to be declared rather than appearing unaccounted for."
   ],
-  "ids": [
-    "cs-01",
-    "cs-02",
-    "cs-03",
-    "cs-04",
-    "cs-05",
-    "cs-07",
-    "cs-08"
-  ],
-  "byArea": {
-    "constructive-speech": [
-      "cs-01",
-      "cs-02",
-      "cs-03",
-      "cs-04",
-      "cs-05",
-      "cs-07",
-      "cs-08"
-    ]
-  }
+  "ids": [],
+  "byArea": {}
 }

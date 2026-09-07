@@ -114,7 +114,19 @@ export const COMPETENCY_ROUND_MEASURE: Readonly<Record<DebateCompetency, RoundMe
   // longer exists, and nothing in a transcript measures signposting, so the honest declaration is
   // that a round shows none of it. No guided application may name signposting while this stands.
   signposting: { label: "signposting", direct: false, directEvidence: "the Signposting lesson's own level-and-label exercise, and the signposting drill" },
-  "constructive-speech": { label: "constructive speech", direct: true },
+  // WITHDRAWN 2026-09-07. This declared that a round measures constructive speech DIRECTLY. No judge
+  // category maps to `constructive-speech` in JUDGE_CATEGORY_COMPETENCY, so
+  // `allowedJudgeCategories({ primary: "constructive-speech" })` returns [] — the ballot would have
+  // claimed a direct measure while emitting nothing. The claim is unreachable today because
+  // GUIDED_APPLICATIONS declares no constructive round, which is exactly why it had to be withdrawn
+  // now: it would have armed silently the moment one was added, which is the failure the signposting
+  // note above warns about. Nothing in a transcript measures whole-speech composition, so the honest
+  // declaration is that a round shows none of it. The lesson's own planning scaffold is the evidence.
+  "constructive-speech": {
+    label: "constructive speech",
+    direct: false,
+    directEvidence: "the Constructive lesson's own case-planning exercise, and the constructive-speech drill"
+  },
   weighing: { label: "weighing", direct: true }
 };
 
@@ -168,7 +180,7 @@ export const COMPETENCY_FIX: Readonly<Record<DebateCompetency, string>> = {
   // their notes as you did). Signposting is locked in every guided rubric, so this string is unreachable
   // today; it is corrected rather than left as a trap for whoever unlocks it.
   signposting: "Name the argument each answer is aimed at, in words that identify it rather than its number or its speaker.",
-  "constructive-speech": "Build your own case first: claim, reason, impact, in that order.",
+  "constructive-speech": "Order the contentions so nothing arrives before what it rests on, keep each one doing a job the others do not, and close on what they establish together.",
   weighing: "Compare the impacts: say which matters more and why."
 };
 

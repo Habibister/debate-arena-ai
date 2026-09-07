@@ -262,10 +262,19 @@ async function main() {
   // — shipped green through the whole suite. Both holes are closed below by (a) extracting each
   // write's FULL balanced argument block and (b) pinning the XP value flow to a bare identifier so
   // no arithmetic can be spliced in.
-  assert.ok(/const wonDebate = didStudentWin\(/.test(judgeRouteSrc),
-    "A3a-5. control: the winner is still computed (coaching preserved)");
+  // This control read "the winner is still computed (coaching preserved)" — the A3a contrast that
+  // made the no-write assertions meaningful: a winner existed, and the point was that it reached no
+  // write. The final Debate audit withdrew the winner itself for the transcript producer, because
+  // 50 words of grammatical nonsense could flip it. So the winner is computed only when a producer
+  // genuinely judged the round, and is UNDEFINED otherwise — never falling back to the old
+  // `overallScore >= 80`, which would have manufactured one. The no-write guarantees below are
+  // unchanged and still enforced by value flow.
+  assert.ok(/const wonDebate =\s*\n?\s*result\.teamWinner === undefined && overallScore === undefined/.test(judgeRouteSrc),
+    "A3a-5. the winner is absent when nothing judged the round");
+  assert.ok(/\? undefined\s*\n?\s*: didStudentWin\(result, debate\.studentSide, overallScore \?\? 0\)/.test(judgeRouteSrc),
+    "A3a-5b. and is computed only from a producer that supplied one");
   assert.ok(/teamWinner/.test(judgeRouteSrc),
-    "A3a-5c. teamWinner remains available to the formative ballot");
+    "A3a-5c. teamWinner remains available to the formative ballot where a producer supplies it");
 
   // Extract the full balanced (...) argument block of every tx write in the route.
   const writeBlocks: Array<{ call: string; block: string }> = [];

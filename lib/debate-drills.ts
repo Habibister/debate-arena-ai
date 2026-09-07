@@ -634,7 +634,22 @@ export function progressTrackingForAreas(seededSkillSlugs: ReadonlySet<string>):
 
 export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
   "rb-01", "rb-03", "rb-04", "rb-05", "rb-06", "rb-07", "rb-09", "rb-10", "rb-12", "rb-18", "rb-19",
-  "rb-20", "rb-21", "rb-22", "rb-23", "rb-24", "rb-25", "rb-26", "rb-27", "rb-28", "rb-29", "rb-30"
+  "rb-20", "rb-21", "rb-22", "rb-23", "rb-24", "rb-25", "rb-26", "rb-27", "rb-28", "rb-29", "rb-30",
+  // SIGNPOSTING CONTAINMENT (2026-09-06). The Signposting lesson was audited and repaired, and two
+  // of this area's thirty items turned out to test judgments that lesson deliberately does not
+  // teach. Held, not deleted, and not renumbered: both are re-homable if a round-management block is
+  // ever authored. Every other sp- item stays servable — 28 of 30 are taught and sound.
+  //   sp-16 — its four options are four plans for TIME, not four placements: the key and its
+  //     strongest rival both name an argument and would both be filed correctly, so the item turns
+  //     on coverage triage under uncertainty (prefer a known gap over re-insuring an uncertain one).
+  //     That rule appears nowhere in the lesson, and the rival is refutable only on an unstated
+  //     time-economy premise, so a learner who mastered the lesson has no way to reject it.
+  //   sp-24 — asks for a retroactive re-file of an answer already delivered. The lesson is
+  //     prospective throughout ("before you give it", "before you answer it"), and sp-11 keys
+  //     AGAINST the same move: its after-the-fact relabel is that item's distractor. The stem also
+  //     requires the speaker to read the judge's private flow mid-round, an assumption made nowhere
+  //     else in this curriculum and false in ordinary rounds.
+  "sp-16", "sp-24"
 ];
 
 /**

@@ -49,8 +49,11 @@ function main(): void {
   // says nothing about wg-08, so this suite now asserts what it actually owns — wg-08 serves — and
   // additionally that the rebuttal containment never reached weighing.
   assert.ok(!DEBATE_DRILL_HELD_IDS.includes("wg-08"), "1. wg-08 specifically is not held");
-  assert.ok(DEBATE_DRILL_HELD_IDS.every((id) => id.startsWith("rb-")),
-    "1b. every current Debate hold is a rebuttal id — no other area was caught by that containment");
+  // Was "every hold is a rebuttal id". This suite owns WEIGHING, so what it can honestly assert is
+  // that no weighing item is held — the Signposting containment (2026-09-06) added two sp- holds and
+  // must not force this control to widen into "holds may be anything".
+  assert.ok(!DEBATE_DRILL_HELD_IDS.some((id) => id.startsWith("wg-")),
+    "1b. no weighing item is held — neither containment reached this area");
 
   // ---- 2. the item still EXISTS — released means served, never deleted ---------------------------
   const wg08 = DRILL_BANK.find((q) => q.id === "wg-08");

@@ -417,7 +417,10 @@ function main() {
   check("Q. debate-rebuttal mastery remains HELD, and the pilot does not touch the hold", () => {
     const { debateMasteryHeld, DEBATE_DRILL_HELD_IDS } = require("../lib/debate-drills");
     assert.equal(debateMasteryHeld("debate-rebuttal"), true);
-    assert.equal(DEBATE_DRILL_HELD_IDS.length, 22, "22 items still quarantined");
+    // 22 rebuttal + the 2 Signposting items contained on 2026-09-06. Split, so a later change to one
+    // containment cannot be absorbed by the other.
+    assert.equal(DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("rb-")).length, 22, "22 rebuttal items still quarantined");
+    assert.equal(DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("sp-")).length, 2, "and the two untaught Signposting items");
     assert.ok(!/DEBATE_MASTERY_HELD_SKILLS|DEBATE_DRILL_HELD_IDS|debateMasteryHeld/.test(read("lib/education/coaching.ts")),
       "the coaching module neither reads nor edits the hold — it has no opinion on mastery");
   });
@@ -1532,7 +1535,7 @@ function main() {
   check("PI. the drill bank, its containment and the rebuttal mastery hold are untouched by this repair", () => {
     const drills = require("../lib/debate-drills");
     assert.equal(drills.debateMasteryHeld("debate-rebuttal"), true, "durable rebuttal mastery stays held");
-    assert.equal(drills.DEBATE_DRILL_HELD_IDS.length, 22, "22 items remain withheld");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("rb-")).length, 22, "22 rebuttal items remain withheld");
     for (const id of ["rb-30", "rb-04", "rb-05", "rb-09", "rb-10", "rb-20", "rb-21", "rb-22", "rb-23", "rb-24", "rb-27", "rb-29"]) {
       assert.ok(drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} is still held`);
     }
@@ -1758,7 +1761,7 @@ function main() {
     }
     const drills = require("../lib/debate-drills");
     assert.equal(drills.debateMasteryHeld("debate-rebuttal"), true, "durable rebuttal mastery stays held");
-    assert.equal(drills.DEBATE_DRILL_HELD_IDS.length, 22, "22 items remain withheld");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("rb-")).length, 22, "22 rebuttal items remain withheld");
     for (const id of ["rb-14", "rb-15"]) assert.ok(!drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} keeps its existing servable state`);
     assert.ok(!/mastery|mastered/i.test(tmAll), "the lesson claims no durable mastery");
   });
@@ -1983,8 +1986,15 @@ function main() {
     // 30 sp- items serve today and NONE is held. This repair does not release, rewrite or credit any
     // of them: sp-16 and sp-24 remain untaught-but-servable, and that stays recorded as OPEN debt.
     assert.equal(drills.DRILL_BANK.filter((q: { area: string }) => q.area === "signposting").length, 30, "the signposting bank is untouched");
-    assert.equal(drills.DEBATE_DRILL_HELD_IDS.length, 22, "22 items remain withheld, all rebuttal");
-    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("sp-")).length, 0, "no signposting item was held or released here");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("rb-")).length, 22, "22 rebuttal items remain withheld");
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("sp-")).length, 2, "and the Signposting containment is the two untaught items, which this repair did not touch");
+    // The LESSON repair held nothing. The two sp- holds arrived later, in the Signposting INTEGRATION
+    // milestone, which adjudicated them against this lesson's accepted text — so this control now
+    // pins that the lesson repair itself neither released nor rewrote a drill item.
+    assert.equal(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("sp-")).length, 2,
+      "the Signposting containment is exactly the two integration-adjudicated items");
+    assert.deepEqual(drills.DEBATE_DRILL_HELD_IDS.filter((id: string) => id.startsWith("sp-")).sort(), ["sp-16", "sp-24"],
+      "and no other Signposting item was ever held");
     assert.equal(drills.debateMasteryHeld("debate-rebuttal"), true, "durable rebuttal mastery stays held");
     // The lesson claims no mastery and no guided competency, so nothing it says is scored anywhere.
     assert.ok(!/mastery|mastered/i.test(spTeaching), "the lesson claims no durable mastery");

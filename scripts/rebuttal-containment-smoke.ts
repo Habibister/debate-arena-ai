@@ -26,6 +26,7 @@ import {
   debateMasteryHeld,
   gradeDrillAnswers,
   DEBATE_DRILL_HELD_IDS,
+  DEBATE_DRILL_REQUIRED_UNIQUE,
   DEBATE_MASTERY_HELD_SKILLS,
   DRILL_AREAS,
   DRILL_BANK
@@ -248,12 +249,17 @@ check("F. every other Debate skill still writes mastery — this is a scoped hol
   for (const slug of otherSkills) {
     assert.equal(debateMasteryHeld(slug), false, `${slug} still writes mastery`);
   }
-  // And their banks are untouched by the quarantine.
+  // And no OTHER area's bank was touched. The Signposting containment (2026-09-06) is the second
+  // deliberate use of the same mechanism and is adjudicated separately in P below, so it is named
+  // here rather than allowed to widen this control into "holds may appear anywhere".
+  const ADJUDICATED_AREAS = new Set(["rebuttal", "signposting"]);
   for (const area of DRILL_AREAS) {
-    if (area.id === "rebuttal") continue;
+    if (ADJUDICATED_AREAS.has(area.id)) continue;
     const items = DRILL_BANK.filter((q) => q.area === area.id);
-    assert.ok(items.every((q) => !held.has(q.id)), `no ${area.id} item was withheld by the rebuttal containment`);
+    assert.ok(items.every((q) => !held.has(q.id)), `no ${area.id} item was withheld — holds stay inside adjudicated areas`);
   }
+  assert.equal(DRILL_BANK.filter((q) => q.area === "signposting" && held.has(q.id)).length, 2,
+    "and the Signposting hold is exactly its two adjudicated items, not an area-wide switch-off");
 });
 
 // ---- G. Constructive secure evidence unchanged ----------------------------------------------------
@@ -270,7 +276,11 @@ check("H. DECA and HOSA are untouched", () => {
   const debateIds = new Set(DRILL_BANK.map((q) => q.id));
   for (const id of DEBATE_DRILL_HELD_IDS) {
     assert.ok(debateIds.has(id), `${id} is a Debate id — this hold list may never name another track's item`);
-    assert.ok(id.startsWith("rb-"), `${id} is a rebuttal id — the containment is scoped to one area`);
+    // Was `startsWith("rb-")`, which encoded WHICH area had been adjudicated rather than the property
+    // that matters for track isolation: a hold may only name an item of an adjudicated Debate area.
+    const area = DRILL_BANK.find((q) => q.id === id)?.area;
+    assert.ok(area === "rebuttal" || area === "signposting",
+      `${id} sits in an adjudicated Debate area (${area}) — a hold never reaches an unaudited area or another track`);
   }
   for (const slug of DEBATE_MASTERY_HELD_SKILLS) {
     assert.ok(slug.startsWith("debate-"), `${slug} is a Debate skill — no other track's mastery is paused`);
@@ -462,6 +472,47 @@ check("L6. the replacement copy conditions the record on the SKILL, not on the a
   assert.ok(/Skills that record your practice come back later on a spacing schedule/.test(path),
     "the review card still explains what review IS, conditioned on recording");
   assert.ok(/never shows a number you did not earn/.test(path), "and keeps the no-fake-progress promise");
+});
+
+// ---- P. SIGNPOSTING CONTAINMENT (2026-09-06) -----------------------------------------------------
+// The same mechanism, second use. The Signposting integration audit found two of that area's thirty
+// items testing judgments the repaired lesson deliberately does not teach — sp-16 turns on coverage
+// triage under uncertainty, sp-24 on a retroactive re-file that sp-11 keys AGAINST and on reading the
+// judge's private flow. Held, not rewritten and not deleted, and the lesson was NOT expanded to
+// legitimise them: teaching new curriculum to save a servable item is the failure this guards.
+check("P. sp-16 and sp-24 are contained, and the other 28 Signposting items are untouched", () => {
+  const signposting = DRILL_BANK.filter((q) => q.area === "signposting");
+  assert.equal(signposting.length, 30, "P0. control: the area is intact — nothing deleted");
+  const quarantined = signposting.filter((q) => held.has(q.id)).map((q) => q.id).sort();
+  assert.deepEqual(quarantined, ["sp-16", "sp-24"], "P1. exactly the two adjudicated ids are held");
+  assert.equal(signposting.filter((q) => !held.has(q.id)).length, 28, "P2. and 28 remain servable");
+  // Serving: neither id can reach a focused OR a mixed session, at any draw size.
+  for (const areas of [["signposting"] as const, undefined]) {
+    const served = buildDrillSessionFrom(DRILL_BANK, DEBATE_DRILL_HELD_IDS, 120, areas as never, []);
+    for (const id of ["sp-16", "sp-24"]) {
+      assert.ok(!served.some((q) => q.id === id), `P3. ${id} never serves (${areas ? "focused" : "mixed"})`);
+    }
+  }
+  // Evidence: a held id cannot contribute to durable mastery, because it cannot be answered.
+  const servedIds = new Set(buildDrillSessionFrom(DRILL_BANK, DEBATE_DRILL_HELD_IDS, 120, ["signposting"], []).map((q) => q.id));
+  assert.ok(!servedIds.has("sp-16") && !servedIds.has("sp-24"),
+    "P4. so neither can enter evidence, review scheduling or a session completion count");
+  // The area still works: 28 items is far above the evidence floor, so containment starves nothing.
+  assert.ok(servedIds.size >= DEBATE_DRILL_REQUIRED_UNIQUE,
+    "P5. and the area still supplies more than the unique-question floor a record needs");
+});
+
+check("P6. the containment did not touch the items themselves, or the rebuttal holds", () => {
+  const byId = (id: string) => DRILL_BANK.find((q) => q.id === id)!;
+  for (const id of ["sp-16", "sp-24"]) {
+    const item = byId(id);
+    assert.ok(item, `P6a. ${id} is still IN the bank — held means unserved, never deleted`);
+    assert.equal(item.area, "signposting", `P6b. ${id} keeps its area, so it is re-homable rather than rewritten`);
+    assert.ok(item.choices.includes(item.correctAnswer), `P6c. ${id} keeps a coherent key`);
+  }
+  assert.equal(DEBATE_DRILL_HELD_IDS.filter((id) => id.startsWith("rb-")).length, 22,
+    "P6d. the 22 rebuttal holds are unchanged by this containment");
+  assert.equal(DEBATE_DRILL_HELD_IDS.length, 24, "P6e. and the held set grew by exactly two");
 });
 
 console.log(`\nrebuttal-containment: ${checks} controls passed.`);

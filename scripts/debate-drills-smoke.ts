@@ -162,13 +162,24 @@ async function main() {
   assert.equal(buildDrillEvidence(padded)[0].uniqueTotal, 9, "twenty answers still resolve to nine distinct questions");
   assert.equal(buildDrillEvidence(padded)[0].evidenceScore, 67, "but its evidence score is 67 — repeats count once");
 
-  // BUILDER DEPTH. Rebuttal now holds 30, so a normal focused session no longer pads at all — that
-  // is the observable effect audit G2 asked for. The padding BRANCH still exists above the pool and
-  // is proven separately, so growing the bank never silently deletes that coverage.
+  // BUILDER DEPTH. This was written as "rebuttal holds 30, so a normal session no longer pads at
+  // all" and hardcoded 20 distinct. The rebuttal containment then withheld 22 of those 30, so the
+  // suite had been asserting a pre-containment world and failing on it. Both sides are derived now:
+  // a focused session always serves the requested COUNT, and its DISTINCT count is whatever the
+  // eligible pool can supply once measurement-dependent pairs are displaced. The padding branch is
+  // what makes the first true when the pool is smaller than the request, and it is still exercised.
   const focused20 = buildDrillSession(20, ["rebuttal"]);
-  assert.equal(focused20.length, 20, "a 20-question focused rebuttal session serves 20");
-  assert.equal(new Set(focused20.map((q) => q.id)).size, 20,
-    "over 20 DISTINCT items — rebuttal no longer pads at a normal session size");
+  assert.equal(focused20.length, 20, "a 20-question focused rebuttal session serves 20 slots");
+  const rebuttalPool = DRILL_BANK.filter((q) => q.area === "rebuttal" && !DEBATE_DRILL_HELD_IDS.includes(q.id));
+  const rebuttalPairDisplacement = DEBATE_DRILL_EXCLUSIVE_GROUPS.reduce((n, group) => {
+    const eligible = group.filter((id) => rebuttalPool.some((q) => q.id === id));
+    return n + Math.max(0, eligible.length - 1);
+  }, 0);
+  const rebuttalCapacity = rebuttalPool.length - rebuttalPairDisplacement;
+  assert.equal(new Set(focused20.map((q) => q.id)).size, Math.min(20, rebuttalCapacity),
+    "and covers every distinct item the eligible pool can supply, padding only when the pool is smaller than the request");
+  assert.ok(rebuttalCapacity < 20,
+    "control: with 22 items contained the pool IS smaller than a normal session, so the padding branch is the live path here");
   const OVERDRAW = 40; // > pool enters the repeat branch; < 2x pool makes the while loop append exactly once
   const overdrawn = buildDrillSession(OVERDRAW, ["rebuttal"]);
   assert.equal(overdrawn.length, OVERDRAW, "a 40-question request on the rebuttal pool still serves 40");
@@ -179,8 +190,8 @@ async function main() {
   // may never co-serve. If you are here because 29 "looks like" a missing item: it is not. Raising
   // this to 30 would require co-serving the pair and would silently destroy the contamination
   // control. See the eligibility-vs-capacity note in lib/debate-drills.ts.
-  assert.equal(new Set(overdrawn.map((q) => q.id)).size, 29,
-    "over exactly 29 distinct items — one of the measurement-dependent pair is excluded from any single session, by design");
+  assert.equal(new Set(overdrawn.map((q) => q.id)).size, rebuttalCapacity,
+    "over exactly the area's session capacity — eligibility minus one member of each measurement-dependent pair, never a missing item. Derived, because a hold or a release moves it.");
 
   // Slice 2: the same depth proof for claim-warrant-impact. There was no legacy CWI padding fixture
   // to re-base, so these are additions rather than replacements.
@@ -498,10 +509,23 @@ async function main() {
   // were withheld. B1-1 asserted EMPTY; it now asserts the property that actually matters and that
   // survives both a hold and a release — every held id is a real bank id, and the containment is
   // scoped to the one area it adjudicated.
+  // SIGNPOSTING CONTAINMENT (2026-09-06) generalised this. B1-1 asserted that every hold was a
+  // rebuttal id, which encoded WHICH area had been adjudicated rather than the invariant that
+  // matters. Two Signposting items were then contained for testing judgments their repaired lesson
+  // does not teach, and a hold-area allowlist is the honest form: a hold may only exist in an area
+  // whose coverage has actually been adjudicated, and adding a new area here is the decision.
+  const ADJUDICATED_HOLD_AREAS: ReadonlyArray<DrillArea> = ["rebuttal", "signposting"];
   for (const id of DEBATE_DRILL_HELD_IDS) {
-    assert.ok(id.startsWith("rb-"),
-      `B1-1. every current Debate hold is a rebuttal id — the containment never reached another area (found ${id})`);
+    const area = DRILL_BANK.find((q) => q.id === id)?.area;
+    assert.ok(area && ADJUDICATED_HOLD_AREAS.includes(area),
+      `B1-1. every current Debate hold sits in an adjudicated area — a hold never reaches an unaudited area (found ${id} in ${area})`);
   }
+  assert.deepEqual(
+    [...new Set(DEBATE_DRILL_HELD_IDS.map((id) => DRILL_BANK.find((q) => q.id === id)?.area))].sort(),
+    ["rebuttal", "signposting"],
+    "B1-1a. and both adjudicated areas are actually represented, so the allowlist is not carrying a dead entry");
+  assert.equal(DEBATE_DRILL_HELD_IDS.filter((id) => id.startsWith("sp-")).length, 2,
+    "B1-1c. the Signposting containment is exactly the two adjudicated items");
   assert.ok(!DEBATE_DRILL_HELD_IDS.includes("wg-08"),
     "B1-1b. wg-08 stays released — the rebuttal containment did not re-hold it");
   for (const id of DEBATE_DRILL_HELD_IDS) {
@@ -547,8 +571,11 @@ async function main() {
   // Was a remembered 30 eligible / 29 per session. The rebuttal containment withheld 22, so both are
   // derived now. The structural relation is what this control owns: eligibility is the area minus its
   // holds, and session capacity is that minus the pair's displacement.
-  assert.equal(rebuttalEligible.length, rebuttalBank.length - DEBATE_DRILL_HELD_IDS.length,
-    "B1-5b. GLOBAL ELIGIBILITY: rebuttal eligibility is its bank minus exactly the held ids");
+  // Subtracts only the holds that BELONG to this area. It previously subtracted the whole held list,
+  // which was arithmetically identical only while every hold was a rebuttal id.
+  const rebuttalHolds = DEBATE_DRILL_HELD_IDS.filter((id) => rebuttalBank.some((q) => q.id === id));
+  assert.equal(rebuttalEligible.length, rebuttalBank.length - rebuttalHolds.length,
+    "B1-5b. GLOBAL ELIGIBILITY: rebuttal eligibility is its own bank minus its own held ids");
   assert.ok(rebuttalEligible.length > 0, "B1-5b2. control: rebuttal still serves, so B1-5 is not vacuous");
   const rbPairEligible = DEBATE_DRILL_EXCLUSIVE_GROUPS.reduce((n, group) => {
     if (!group.some((id) => rebuttalEligible.some((q) => q.id === id))) return n;

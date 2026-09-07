@@ -2,8 +2,8 @@
   "record": "KNOWN_UNBASELINED_DEBATE_DRILL_IDS",
   "why": [
     "scripts/debate-drill-bank-baseline.json is the CONTENT FREEZE for the Debate drill bank: a checked-in copy of accepted educational fields, so an item edit has to be a deliberate two-file diff a reviewer can read.",
-    "It covers 150 items. The bank now holds 187: the signposting area (30) and the constructive-speech area (7) were authored after the freeze was taken and were never added to it.",
-    "Those 37 items are NOT frozen here either. Their bytes are deliberately not snapshotted: existing is not the same as reviewed, and snapshotting them would convert 'never reviewed' into 'accepted baseline' without earning it.",
+    "It covers all 187 items in the bank. It once covered 150: the signposting area (30) and the constructive-speech area (7) were authored after the freeze was taken, and both earned the freeze on 2026-09-07 by the migration rule below.",
+    "A freeze is CONTENT GOVERNANCE, not a review certificate. Being frozen means an edit has to be a deliberate two-file diff a reviewer can read; it does not by itself assert that every item was independently reviewed. Review provenance is recorded per area in the milestone history, not here.",
     "What this record buys is COVERAGE ACCOUNTING, not content protection. Every bank id is now either frozen or listed here, so a new uncovered id cannot appear silently — and the freeze still cannot detect a content mutation in any id listed below."
   ],
   "migration": [

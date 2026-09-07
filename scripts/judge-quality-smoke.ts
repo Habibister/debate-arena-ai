@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 // Force the deterministic development fallback so we can test opponent generation without a live key.
 Object.assign(process.env, { NODE_ENV: "development" });
@@ -785,6 +786,103 @@ async function speakerCardTests() {
   assert.ok(!strip('// "Government 1"\n/* "Speaker 3" */').includes("Government 1"),
     "P1d-C3d. control: the stripper removes both comment styles");
 }
+
+// ==================================================================================================
+// SIGNPOSTING MEASURE WITHDRAWAL (2026-09-06). The judge scored "organization" as
+// clamp(38 + markers*11 + ...) over twelve substrings, and the same count also fed claimClarity (+3)
+// and style (+5). Measured against the Signposting lesson's own material it was INVERTED, not weak:
+// the lesson's model answer scored 57, the label the lesson calls WRONG scored 73, ordinal stuffing
+// with no navigation scored 95, and appending marker words to unchanged substance moved a speech
+// from 40 to 100. The measure is withdrawn rather than tuned. These fixtures are the acceptance gate
+// and they are COMPONENT-WISE: an overall score that happens to match is not proof, because two
+// compensating changes could leave overall equal while an intermediate score is still contaminated.
+// ==================================================================================================
+function markerStuffingBuysNothing() {
+  const SUBSTANCE = "The reserves they cite are already committed elsewhere, so the money is not available for this programme, and the district would have to cut something already running to find it. That is the trade they have not costed.";
+  // MINIMAL PAIR. The two tails are the same length, the same word count and the same punctuation
+  // shape; only one is built from the twelve substrings the withdrawn proxy counted. Any difference
+  // between these two ballots is attributable to the MARKERS and to nothing else — appending plain
+  // text also moves the length and claim-count terms, which legitimately read what a speaker said.
+  const MARKER_TAIL = " First, second, third, on the point, my first contention, the voter, finally, to start.";
+  const NEUTRAL_TAIL = " Alpha, bravo, charlie, in a place, our early section, the ballot, lastly, to begin.";
+  assert.equal(MARKER_TAIL.split(/\s+/).length, NEUTRAL_TAIL.split(/\s+/).length,
+    "J-0. control: the minimal pair differs in wording only, not in length");
+  const speech = (content: string) => [
+    { role: "AFFIRMATIVE" as const, round: 1, content },
+    { role: "NEGATIVE" as const, round: 1, content: "The reserves are uncommitted and the programme pays for itself within two years, because the maintenance line already funds it." }
+  ];
+  const marked = judge(speech(SUBSTANCE + MARKER_TAIL));
+  const neutral = judge(speech(SUBSTANCE + NEUTRAL_TAIL));
+  const gov = (r: ReturnType<typeof judge>) => r.speakerScores.find((x) => x.team === "GOVERNMENT" && x.role === "student")!;
+
+  // 1. The withdrawn category is ABSENT from the ballot — not zero, not renormalised, not renamed.
+  for (const [label, result] of [["marker", marked], ["neutral", neutral]] as const) {
+    assert.equal(result.categoryScores.find((c) => c.key === "organization"), undefined,
+      `J-1 ${label}. the organization category is absent from the ballot — withdrawn, never a substitute number`);
+    assert.equal(result.categoryScores.find((c) => c.key === "signposting"), undefined,
+      `J-1b ${label}. and no replacement signposting category appeared`);
+    assert.equal(result.sharedSpeaking.organization, undefined,
+      `J-1c ${label}. sharedSpeaking carries no organization value either`);
+  }
+
+  // 2. COMPONENT-WISE. Marker words buy nothing anywhere, not merely nothing on the total.
+  const cat = (r: ReturnType<typeof judge>, key: string) => r.categoryScores.find((c) => c.key === key)!.score;
+  assert.equal(cat(marked, "argument"), cat(neutral, "argument"),
+    `J-2. claim clarity is identical with and without the markers (${cat(neutral, "argument")})`);
+  assert.equal(cat(marked, "delivery"), cat(neutral, "delivery"),
+    `J-3. style is identical (${cat(neutral, "delivery")})`);
+  assert.equal(marked.sharedSpeaking.clarity, neutral.sharedSpeaking.clarity, "J-4. sharedSpeaking.clarity is identical");
+  assert.equal(marked.sharedSpeaking.confidence, neutral.sharedSpeaking.confidence,
+    "J-5. sharedSpeaking.confidence is identical — it used to average the withdrawn score in");
+  assert.equal(gov(marked).score, gov(neutral).score, `J-6. speaker points are identical (${gov(neutral).score})`);
+  assert.equal(marked.overallScore, neutral.overallScore, `J-7. the overall score is identical (${neutral.overallScore})`);
+  assert.equal(marked.teamWinner, neutral.teamWinner, "J-8. and the winner is unchanged");
+  assert.deepEqual(marked.categoryScores.map((c) => [c.key, c.score]), neutral.categoryScores.map((c) => [c.key, c.score]),
+    "J-8b. EVERY emitted category is identical — no intermediate score is still contaminated");
+
+  // 3. The inversion is gone: the label the lesson calls WRONG can no longer outscore the one it
+  //    calls RIGHT on any emitted category, because neither is read any more.
+  const RIGHT = "On their cost argument, the plan is cheaper than they claim, because the maintenance line already funds it.";
+  const WRONG = "On their second point, the plan is cheaper than they claim, because the maintenance line already funds it.";
+  const right = judge(speech(RIGHT));
+  const wrong = judge(speech(WRONG));
+  for (const c of right.categoryScores) {
+    const other = wrong.categoryScores.find((x) => x.key === c.key);
+    assert.ok(other && other.score <= c.score,
+      `J-9. ${c.key}: the label the lesson calls wrong (${other?.score}) does not beat the one it calls right (${c.score})`);
+  }
+  assert.ok(wrong.overallScore <= right.overallScore, "J-9b. and not on the overall either");
+
+  // 4. NOT MEASURED is not MEASURED POORLY: nothing may read a low score, a retry or a readiness
+  //    penalty out of the category's absence.
+  assert.ok(neutral.readinessForNextLevel !== undefined, "J-10. control: readiness is still computed");
+  assert.deepEqual(marked.readinessForNextLevel, neutral.readinessForNextLevel,
+    "J-10b. and markers do not move it");
+
+  // 5. WEIGHTS still sum to 1.00 after the 0.04 redistribution, asserted on the source.
+  const src = readFileSync("lib/debate-judge-analysis.ts", "utf8");
+  const weights = [...src.matchAll(/scores\.\w+ \* \((0\.\d+) \/ 0\.96\)/g)].map((m) => Number(m[1]));
+  assert.equal(weights.length, 12, "J-11. twelve categories carry the overall weight");
+  const total = weights.reduce((a, b) => a + b, 0) / 0.96;
+  assert.ok(Math.abs(total - 1) < 1e-9, `J-11b. and they sum to exactly 1.00 (${total})`);
+  assert.ok(!/scores\.organization/.test(src), "J-11c. no formula reads the withdrawn score");
+  assert.ok(!/signpost \* \d/.test(src), "J-12. and the marker count reaches no formula at all");
+
+  // 6. SHARED PATH. Model UN, Mock Trial and Public Speaking fall through to this same judge.
+  for (const organization of ["MODEL_UN", "MOCK_TRIAL", "PUBLIC_SPEAKING"] as const) {
+    const base = { eventType: "PARLIAMENTARY_DEBATE" as const, level: "INTERMEDIATE" as const,
+      topic: "Schools should require financial literacy.", studentSide: "GOVERNMENT" as const };
+    const sharedMarked = buildTranscriptBasedDebateJudge({ ...base, organization, transcript: speech(SUBSTANCE + MARKER_TAIL) });
+    const sharedNeutral = buildTranscriptBasedDebateJudge({ ...base, organization, transcript: speech(SUBSTANCE + NEUTRAL_TAIL) });
+    assert.equal(sharedMarked.categoryScores.find((c) => c.key === "organization"), undefined,
+      `J-13 ${organization}. the category is absent on the shared path too`);
+    assert.equal(sharedMarked.overallScore, sharedNeutral.overallScore,
+      `J-13b ${organization}. and markers buy nothing there either`);
+  }
+  console.log("  ok  signposting measure withdrawal: absent, uncontaminated, component-wise");
+}
+
+markerStuffingBuysNothing();
 
 opponentSoundsHuman()
   .then(() => sideFidelityTests())

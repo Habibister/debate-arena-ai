@@ -145,6 +145,41 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Current open gaps
 
+- **SIGNPOSTING JUDGE MEASURE — WITHDRAWN (2026-09-06).** The Debate transcript judge scored
+  `organization` as `clamp(38 + markers*11 + min(10, sentences*2) - vague*3)` over twelve substrings
+  (`first`, `second`, `third`, `contention`, `voter`, `my first`, `next`, `finally`, `to start`,
+  `on the`, `point`, `argument`), and the same count also fed `claimClarity` (+3 each) and `style`
+  (+5). Measured against the Signposting lesson's own material the proxy was INVERTED, not weak: the
+  lesson's model answer scored **57** (below the 60 retry threshold), the label the lesson calls
+  **wrong** scored **73** against the right label's 62, ordinal stuffing with no navigation at all
+  scored **95**, speaker-position stuffing **100**, and appending marker words to unchanged substance
+  moved a speech from **40 to 100**. A category at or below 65 puts its label into `weakText`, which
+  fired a HIGH-priority signposting recommendation — so the learner who signposted correctly without
+  marker words was diagnosed and the one stuffing markers never was.
+  It is WITHDRAWN, not tuned: no better word list, no replacement heuristic, no substitute number.
+  The count reaches no formula; the category is absent from the ballot (15 emitted, not 16); its 0.04
+  weight is redistributed PROPORTIONALLY across the twelve legitimate categories (each `/0.96`) so the
+  scale stays normalised to exactly 1.00 instead of every future ballot dropping ~4 points;
+  `sharedSpeaking.organization` is omitted and `confidence` stops averaging it in;
+  `COMPETENCY_ROUND_MEASURE.signposting` is `direct: false`; the recommendation trigger is gone in the
+  SAME commit as the score, and the terminal fallback that emitted `debate-signposting` whenever three
+  other categories cleared 65 — a default dressed as a diagnosis — now names the weakest surviving
+  category instead. **Independent Compete offers NO automatic signposting diagnosis.** That is an
+  honest limitation, not a regression: nothing in a transcript measures signposting today.
+  NOT MEASURED is kept distinct from MEASURED POORLY at every consumer. `skillDelta` substitutes the
+  overall score for an absent category, which would have rendered an "Organization" focus row for
+  something nothing scored, so the row is omitted; the arena drops any rating-change row whose value
+  is undefined (rendering it would have run `focusLabel(NaN)` and shown a red "Priority" state);
+  readiness reads `overall`, `weighing` and `refutation` only; and
+  `SpeakingSkillSnapshot.organizationScore` is a nullable column with no writer, so nothing needed a
+  number. **HISTORICAL ROWS ARE NOT REWRITTEN.** Ballots judged from this commit forward will differ
+  from earlier ones because a false input was removed, so dashboard and coach averages mix two
+  scoring regimes for a period. Acceptance is component-wise, proven on a minimal pair whose two
+  tails have identical word counts and differ only in marker vocabulary: every emitted category,
+  `sharedSpeaking.clarity`, `confidence`, speaker points, `overallScore`, the winner and readiness are
+  all IDENTICAL. Validated for `MODEL_UN`, `MOCK_TRIAL` and `PUBLIC_SPEAKING`, which fall through to
+  the same judge. Re-measured after the change: the wrong label no longer beats the right one (32 vs
+  33), and ordinal stuffing scores 13 overall.
 - **DEBATE DRILL CONTENT FREEZE — COVERAGE ACCOUNTED FOR, CONTENT NOT FROZEN (2026-09-06).**
   `scripts/debate-drill-bank-baseline.json` freezes **150** of the bank's **187** items. The
   signposting (30) and constructive-speech (7) areas were authored after that snapshot was taken and

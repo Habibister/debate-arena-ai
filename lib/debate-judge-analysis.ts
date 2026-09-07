@@ -22,7 +22,8 @@ type SharedSpeakingScores = {
   confidence: number;
   pacing: number;
   volume: number;
-  organization: number;
+  /** ABSENT when nothing measured it. A missing value means NOT MEASURED, never a low score. */
+  organization?: number;
   vocabulary: number;
   persuasion: number;
   professionalism: number;
@@ -53,7 +54,6 @@ type SideMetrics = {
     motionConnection: number;
     sideFidelity: number;
     centralClashResponse: number;
-    organization: number;
     responsiveness: number;
     finalSpeech: number;
     ruleCompliance: number;
@@ -226,6 +226,12 @@ const REFUTATION_MARKERS = [
   "turns"
 ];
 
+// WITHDRAWN 2026-09-06. These twelve substrings were counted and fed into claimClarity (+3 each),
+// organization (+11) and style (+5). Measured against the Signposting lesson's own material, the
+// count was INVERTED, not weak: the lesson's model answer scored 57 while the label the lesson calls
+// WRONG scored 73, ordinal stuffing with no navigation at all scored 95, and appending marker words
+// to unchanged substance moved a speech from 40 to 100. The count no longer reaches any score. The
+// list is kept, unread, next to the finding — deleting it would delete the record of what was wrong.
 const SIGNPOST_MARKERS = [
   "first",
   "second",
@@ -648,7 +654,7 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     : 45;
 
   const scores = {
-    claimClarity: clamp(36 + lengthBonus + claims.length * 9 + signpost * 3 - vaguePenalty - jargonPenalty),
+    claimClarity: clamp(36 + lengthBonus + claims.length * 9 - vaguePenalty - jargonPenalty),
     warrant: clamp(30 + warrant * 15 + Math.min(10, wordCount / 30) - vague * 7 - jargonPenalty),
     mechanism: clamp(28 + grounded * realWarrant * 16 + (grounded && impact > 0 ? 8 : 0) - vague * 5 - jargonPenalty),
     impact: clamp(30 + groundedValue * impact * 9 + groundedValue * warrant * 2 - vague * 5 - jargonPenalty),
@@ -664,11 +670,10 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     // Did the side directly answer the other side's strongest material — the central clash — rather
     // than sounding polished while never engaging it? Polished-but-vague speeches score low here.
     centralClashResponse: clamp(22 + grounded * (opponentReference * 9 + refutation * 7 + directAnswerBonus) - vague * 5 - jargonPenalty),
-    organization: clamp(38 + signpost * 11 + Math.min(10, sideSentences.length * 2) - vague * 3),
     responsiveness: clamp(30 + grounded * (opponentReference * 8 + refutation * 7) + Math.round(directAnswerBonus / 2) - vague * 4 - jargonPenalty),
     finalSpeech: finalSpeechScore,
     ruleCompliance: clamp(88 - finalNewArgument * 22 - vague * 2),
-    style: clamp(45 + Math.min(18, wordCount / 18) + signpost * 5 - vague * 5),
+    style: clamp(45 + Math.min(18, wordCount / 18) - vague * 5),
     overall: 0
   };
 
@@ -686,20 +691,24 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     scores.sideFidelity = Math.min(scores.sideFidelity, 12);
   }
 
+  // WEIGHTS. Organization carried 0.04 and has been withdrawn — it was a substring count, not a
+  // measure — so its share is redistributed PROPORTIONALLY across the twelve legitimate categories
+  // (each old weight / 0.96) rather than deleted or handed to a chosen favourite. The relative
+  // importance of every surviving category is unchanged and the total is still exactly 1.00, so a
+  // future ballot stays on the same scale instead of dropping about four points for everyone.
   scores.overall = clamp(
-    scores.claimClarity * 0.1 +
-      scores.warrant * 0.11 +
-      scores.mechanism * 0.08 +
-      scores.impact * 0.1 +
-      scores.refutation * 0.12 +
-      scores.weighing * 0.12 +
-      scores.evidence * 0.08 +
-      scores.motionConnection * 0.06 +
-      scores.centralClashResponse * 0.08 +
-      scores.sideFidelity * 0.03 +
-      scores.organization * 0.04 +
-      scores.responsiveness * 0.04 +
-      scores.finalSpeech * 0.04 -
+    scores.claimClarity * (0.1 / 0.96) +
+      scores.warrant * (0.11 / 0.96) +
+      scores.mechanism * (0.08 / 0.96) +
+      scores.impact * (0.1 / 0.96) +
+      scores.refutation * (0.12 / 0.96) +
+      scores.weighing * (0.12 / 0.96) +
+      scores.evidence * (0.08 / 0.96) +
+      scores.motionConnection * (0.06 / 0.96) +
+      scores.centralClashResponse * (0.08 / 0.96) +
+      scores.sideFidelity * (0.03 / 0.96) +
+      scores.responsiveness * (0.04 / 0.96) +
+      scores.finalSpeech * (0.04 / 0.96) -
       (isMostlyJargon ? 10 : 0) -
       (sideInverted ? 18 : 0)
   );
@@ -809,9 +818,13 @@ function recommendationForStudent(student: SideMetrics) {
     };
   }
 
+  // This used to fall through to Signposting whenever refutation, weighing and evidence all cleared
+  // 65 — a DEFAULT dressed as a diagnosis, and the only remaining place a signposting recommendation
+  // could come from once the organization proxy was withdrawn. Nothing in this analyzer measures
+  // signposting, so nothing here may recommend it. The weakest surviving category is named instead.
   return {
-    lessonSlug: "debate-signposting",
-    reason: "Make the judge's path through the speech easier to follow.",
+    lessonSlug: "claim-warrant-impact",
+    reason: "Tighten the claim, the warrant behind it, and the impact it leads to.",
     priority: "medium" as const
   };
 }
@@ -957,7 +970,6 @@ function buildCategoryScores(student: SideMetrics): CategoryScore[] {
           ? "No empty debate vocabulary — points stood on real substance."
           : `Leaned on debate vocabulary${student.jargonPhrase ? ` like "${student.jargonPhrase}"` : ""}; such words only count when a proven claim sits behind them.`
     },
-    { key: "organization", label: "Organization", score: student.scores.organization, reason: scoreReason("organization", student.scores.organization, student) },
     { key: "delivery", label: "Style", score: student.scores.style, reason: scoreReason("style", student.scores.style, student) },
     { key: "responsiveness", label: "Responsiveness", score: student.scores.responsiveness, reason: scoreReason("responsiveness", student.scores.responsiveness, student) },
     {
@@ -975,10 +987,11 @@ function buildCategoryScores(student: SideMetrics): CategoryScore[] {
 function sharedSpeakingFor(student: SideMetrics): SharedSpeakingScores {
   return {
     clarity: student.scores.claimClarity,
-    confidence: clamp((student.scores.style + student.scores.organization) / 2),
+    // Was the mean of style and organization. Organization is withdrawn, so this is the remaining
+    // component rather than an average with a number that no longer exists — never a substitute value.
+    confidence: clamp(student.scores.style),
     pacing: clamp(70 + Math.min(12, student.counts.words / 35) - student.counts.vague * 4),
     volume: 75,
-    organization: student.scores.organization,
     vocabulary: clamp(60 + Math.min(20, keywords(student.combinedText).length * 3)),
     persuasion: clamp((student.scores.impact + student.scores.weighing + student.scores.warrant) / 3),
     professionalism: clamp(82 - student.counts.vague * 3)
@@ -1243,7 +1256,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     weakestArgument: `Weakest losing-side argument: "${excerpt(loserMetrics.weakestClaim)}."`,
     strengths: [
       `Your strongest idea: ${cleanClaim(student.bestClaim)}.`,
-      student.scores.organization >= 70 ? "Your structure gave the judge some signposts to follow." : "You had at least one identifiable position to evaluate.",
+      "You had at least one identifiable position to evaluate.",
       student.scores.refutation >= 70 ? "You made at least one direct answer to the other side." : "You gave the judge a starting point for your side."
     ],
     weaknesses: [

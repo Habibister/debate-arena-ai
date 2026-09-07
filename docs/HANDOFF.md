@@ -65,7 +65,10 @@ below the boundary.
   `sp-07`), enforced by a new `POS_REF` guard metric whose detection is narrow enough to leave the
   corpus's semantic ordinals alone. `chore(education): record unfrozen debate drill debt` then
   converted the 150-of-187 freeze gap into explicit, fail-closed governance debt.
-  **STILL OPEN: the judge measure (J).** The Debate `organization` score is a substring count that
+  **J IS DONE (2026-09-06).** The measure is withdrawn, not tuned — see docs/CURRENT_STATE.md for the
+  measured before/after. Future Debate ballots differ from historical rows because a false input was
+  removed; historical rows are NOT rewritten, so averages mix two regimes for a period.
+  What J replaced: The Debate `organization` score is a substring count that
   scores the lesson's own model answer 57, the label the lesson calls WRONG 73, and pure ordinal
   stuffing 95. J withdraws it rather than tuning it, in ONE commit: sever the marker count from
   `claimClarity`, `organization` and `style`; drop the category; redistribute its 0.04 proportionally

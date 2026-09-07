@@ -202,7 +202,8 @@ export type JudgeReport = {
     refutation: number;
     weighing: number;
     evidence: number;
-    organization: number;
+    /** OMITTED when nothing measured it — the row is skipped rather than shown at a default state. */
+    organization?: number;
     deliveryStyle: number;
     recommendedBot?: string;
     reasons?: {
@@ -1419,6 +1420,11 @@ function JudgeDecisionModal({
                 ) : null}
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {/* A row whose value is undefined is NOT MEASURED and is dropped. Rendering it would
+                    run focusLabel(NaN), whose comparisons all fail, and the learner would be shown a
+                    red "Priority" state for something nothing scored — the exact confusion between
+                    "not measured" and "measured badly" that withdrawing the signposting proxy exists
+                    to end. */}
                 {[
                   ["Argument", report.ratingChange.argument, report.ratingChange.reasons?.argument],
                   ["Refutation", report.ratingChange.refutation, report.ratingChange.reasons?.refutation],
@@ -1426,7 +1432,7 @@ function JudgeDecisionModal({
                   ["Evidence", report.ratingChange.evidence, report.ratingChange.reasons?.evidence],
                   ["Organization", report.ratingChange.organization, report.ratingChange.reasons?.organization],
                   ["Delivery", report.ratingChange.deliveryStyle, report.ratingChange.reasons?.deliveryStyle]
-                ].map(([label, value, reason]) => {
+                ].filter(([, value]) => typeof value === "number").map(([label, value, reason]) => {
                   const focus = focusLabel(Number(value));
                   return (
                     <div key={String(label)} className="rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm">

@@ -44,7 +44,13 @@ type SharedSpeakingScores = {
   confidence: number;
   pacing: number;
   volume: number;
-  organization: number;
+  /**
+   * ABSENT when nothing measured it. The Debate transcript judge withdrew its organization score on
+   * 2026-09-06 — it was a substring count that rewarded the labels the Signposting lesson calls wrong
+   * — and omits this field rather than substituting a number. A missing value means NOT MEASURED and
+   * must never be read as a low one. Other producers that genuinely measure it still supply it.
+   */
+  organization?: number;
   vocabulary: number;
   persuasion: number;
   professionalism: number;

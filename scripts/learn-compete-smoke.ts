@@ -56,7 +56,13 @@ function judgeEmittedSlugs(): string[] {
   assert.ok(start > 0, "control: the recommendation builder is locatable");
   const body = src.slice(start, src.indexOf("return recommendations"));
   const slugs = [...body.matchAll(/add\("([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(slugs.length >= 5, `control: the judge really emits recommendations — found ${slugs.length}`);
+  // Was `>= 5`. The signposting branch was withdrawn on 2026-09-06 with the measure that drove it —
+  // it fired on the label of a category scoring at or below 65, and that category was a substring
+  // count — so the route now emits four. The floor tracks that decision rather than blocking it; its
+  // job is to prove the builder is not empty, which four still does.
+  assert.ok(slugs.length >= 4, `control: the judge really emits recommendations — found ${slugs.length}`);
+  assert.ok(!slugs.includes("debate-signposting-lesson"),
+    "control: and no signposting recommendation survives — nothing measures it from a transcript");
   return [...new Set(slugs)];
 }
 

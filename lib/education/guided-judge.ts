@@ -58,6 +58,9 @@ export const JUDGE_CATEGORY_COMPETENCY: Readonly<Record<string, DebateCompetency
   responsiveness: "refutation",
   centralClashResponse: "clash",
   clash: "weighing", // the lexical judge's "clash" category is LABELLED "Weighing" and scores weighing
+  // `organization` was withdrawn from the ballot on 2026-09-06, so this maps nothing today. Kept as
+  // the declared mapping for a future category that genuinely measures placement — a guided rubric
+  // must never silently acquire one by an unmapped key appearing.
   organization: "signposting"
 };
 
@@ -105,7 +108,12 @@ export const COMPETENCY_ROUND_MEASURE: Readonly<Record<DebateCompetency, RoundMe
     direct: false,
     directEvidence: "the constructed attempt in the lesson, which checks whether you can name the disputed question"
   },
-  signposting: { label: "signposting", direct: true },
+  // WITHDRAWN 2026-09-06. This declared that a round measures signposting DIRECTLY. The only judge
+  // category mapped to it was `organization`, a substring count that scored the lesson's own model
+  // answer 57 and the label the lesson calls WRONG 73 — so the claim was false. That category no
+  // longer exists, and nothing in a transcript measures signposting, so the honest declaration is
+  // that a round shows none of it. No guided application may name signposting while this stands.
+  signposting: { label: "signposting", direct: false, directEvidence: "the Signposting lesson's own level-and-label exercise, and the signposting drill" },
   "constructive-speech": { label: "constructive speech", direct: true },
   weighing: { label: "weighing", direct: true }
 };
@@ -155,7 +163,11 @@ export const COMPETENCY_FIX: Readonly<Record<DebateCompetency, string>> = {
   "claim-warrant-impact": "Rebuild the argument: state the claim, give the reason it is true, say why it matters.",
   refutation: "Rebuild the refutation: name the step their argument rests on, give the reason it fails, say what changed.",
   clash: "Name the question both sides are answering before you answer it, and state it so that either side could still win it.",
-  signposting: "Tell the judge where you are: number the points and say which one you are on.",
+  // Was "number the points and say which one you are on" — which instructs the learner to do the very
+  // thing the Signposting lesson marks wrong ("on their second point" only lands if the judge numbered
+  // their notes as you did). Signposting is locked in every guided rubric, so this string is unreachable
+  // today; it is corrected rather than left as a trap for whoever unlocks it.
+  signposting: "Name the argument each answer is aimed at, in words that identify it rather than its number or its speaker.",
   "constructive-speech": "Build your own case first: claim, reason, impact, in that order.",
   weighing: "Compare the impacts: say which matters more and why."
 };

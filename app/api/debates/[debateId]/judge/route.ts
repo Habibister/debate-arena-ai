@@ -79,7 +79,8 @@ type JudgeResult = {
     refutation: number;
     weighing: number;
     evidence: number;
-    organization: number;
+    /** OMITTED when no category measured it. Absent means not measured, never a low focus state. */
+    organization?: number;
     deliveryStyle: number;
     recommendedBot: string;
     reasons?: {
@@ -88,7 +89,7 @@ type JudgeResult = {
       refutation: string;
       weighing: string;
       evidence: string;
-      organization: string;
+      organization?: string;
       deliveryStyle: string;
     };
   };
@@ -129,9 +130,13 @@ function debateSkillRecommendations(result: JudgeResult) {
     add("debate-refutation-lesson", "Build direct refutation so each answer clearly clashes with the opponent's claim.", "high");
   }
 
-  if (weakText.includes("signpost") || weakText.includes("organization")) {
-    add("debate-signposting-lesson", "Strengthen organization and signposting so the judge can follow the flow.", "high");
-  }
+  // WITHDRAWN 2026-09-06, in the same commit as the measure that drove it. `weakText` is built from
+  // the LABELS of categories scoring at or below 65, so this fired whenever the organization category
+  // was low — and that category was a substring count which scored the Signposting lesson's own model
+  // answer 57 while scoring the label the lesson calls wrong 73. It diagnosed the wrong learners and
+  // never diagnosed the one stuffing marker words. Nothing measures signposting from a transcript, so
+  // nothing here recommends it. Independent Compete now offers NO automatic signposting diagnosis,
+  // which is the honest state; a replacement proxy would be the same defect with a new list.
 
   if (weakText.includes("evidence") || weakText.includes("support") || weakText.includes("content")) {
     add("debate-claim-warrant-impact-lesson", "Improve support by connecting claims, warrants, and impacts.", "medium");
@@ -525,7 +530,14 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       const refutationDelta = skillDelta(scores.rebuttal, overallScore);
       const weighingDelta = skillDelta(categoryScore(result, ["clash", "weighing", "solutionQuality"]), overallScore);
       const evidenceDelta = skillDelta(scores.evidence, overallScore);
-      const organizationDelta = skillDelta(categoryScore(result, ["organization", "signposting", "taskCompletion"]), overallScore);
+      // NOT MEASURED is not MEASURED POORLY. `skillDelta` substitutes the overall score for an absent
+      // category, which would have rendered an Organization focus row — with a reason naming
+      // "structure and signposting" — for a category no longer measured at all. The row is omitted
+      // instead: `organizationCategoryScore` is undefined exactly when nothing scored it.
+      const organizationCategoryScore = categoryScore(result, ["organization", "signposting", "taskCompletion"]);
+      const organizationDelta = organizationCategoryScore === undefined
+        ? undefined
+        : skillDelta(organizationCategoryScore, overallScore);
       const deliveryDelta = skillDelta(categoryScore(result, ["delivery", "style", "professionalCommunication"]), scores.communication ?? overallScore);
 
       resultWithRating = {
@@ -536,7 +548,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           refutation: refutationDelta,
           weighing: weighingDelta,
           evidence: evidenceDelta,
-          organization: organizationDelta,
+          ...(organizationDelta === undefined ? {} : { organization: organizationDelta }),
           deliveryStyle: deliveryDelta,
           recommendedBot: nearestAiPersona(projectedRating).name,
           reasons: {
@@ -545,7 +557,9 @@ export async function POST(request: Request, { params }: { params: { debateId: s
             refutation: focusReason("refutation", refutationDelta, refutationCategory, "of how specifically the student answered the opponent."),
             weighing: focusReason("weighing", weighingDelta, weighingCategory, "of how impacts were compared and framed for the ballot."),
             evidence: focusReason("evidence", evidenceDelta, evidenceCategory, "of the examples, evidence, and support given."),
-            organization: focusReason("organization", organizationDelta, organizationCategory, "of the speech structure and signposting."),
+            ...(organizationDelta === undefined
+              ? {}
+              : { organization: focusReason("organization", organizationDelta, organizationCategory, "of the speech structure and signposting.") }),
             deliveryStyle: focusReason("delivery and style", deliveryDelta, deliveryCategory, "of the style, clarity, and communication shown.")
           }
         },

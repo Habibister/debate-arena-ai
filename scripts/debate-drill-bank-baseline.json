@@ -18,11 +18,11 @@
     "question": "The 'warrant' of an argument is the part that:",
     "choices": [
       "States your position",
-      "Explains WHY the claim is true",
+      "Explains why the claim is true",
       "Describes the real-world consequence",
       "Cites a source"
     ],
-    "correctAnswer": "Explains WHY the claim is true",
+    "correctAnswer": "Explains why the claim is true",
     "explanation": "The warrant is the reasoning link — why the claim follows. The claim is the position; the impact is the consequence; a citation is evidence, not a warrant."
   },
   {
@@ -408,11 +408,11 @@
     "question": "A 'turn' in debate is when you:",
     "choices": [
       "Point out that their evidence does not support the claim they read it for",
-      "Show the opponent's own argument actually supports YOUR side",
+      "Show the opponent's own argument actually supports your side",
       "Show their argument is too weak to produce the impact they claimed",
       "Restate their argument in your own words before answering it"
     ],
-    "correctAnswer": "Show the opponent's own argument actually supports YOUR side",
+    "correctAnswer": "Show the opponent's own argument actually supports your side",
     "explanation": "A turn flips an argument so its logic favors you (e.g., 'that harm is actually worse under their plan'). It's more powerful than merely blocking the argument."
   },
   {
@@ -602,12 +602,12 @@
     "area": "rebuttal",
     "question": "Two possible responses are equally well supported and take about the same speech time. One only reduces the strength of their argument; the other answers it AND creates a reason to prefer your side. The second has the extra advantage of:",
     "choices": [
-      "Giving the judge something to vote FOR, on top of answering them",
+      "Giving the judge something to vote for, on top of answering them",
       "Being safer, because creating doubt is always enough to win",
       "Taking noticeably less speech time than the first",
       "Removing any need to answer their argument at all"
     ],
-    "correctAnswer": "Giving the judge something to vote FOR, on top of answering them",
+    "correctAnswer": "Giving the judge something to vote for, on top of answering them",
     "explanation": "With support and time held equal, the response that also generates offense does more work. Offense is not automatically better everywhere: a weak turn, or one that risks becoming a double turn, can make a clean defensive answer the stronger choice."
   },
   {
@@ -1281,7 +1281,7 @@
       "Argue magnitude again, in more detail than the other side did",
       "Introduce timeframe or reversibility to break the tie",
       "Tell the judge the two impacts are tied, so no comparison is possible",
-      "Point out that you named a weighing standard first"
+      "Point out that you named the timeframe and reversibility standards first"
     ],
     "correctAnswer": "Introduce timeframe or reversibility to break the tie",
     "explanation": "A rule only decides where the two impacts come out differently under it. With size and likelihood level, the work is to look for a difference somewhere else — timeframe and reversibility are the usual next places, and they settle it only if these impacts really do differ there. Re-arguing a dimension already tied, or having named a standard first, gives the judge no reason to prefer either impact; announcing a tie just hands the choice back to them."
@@ -1423,7 +1423,7 @@
     "choices": [
       "Yours arrives early enough that their impact never gets the chance to occur",
       "Theirs is larger, so its size should still control even though it starts in year three",
-      "Both impacts still occur, so timeframe cannot separate them",
+      "Both impacts still occur and timeframe cannot separate them",
       "Yours is smaller, so the comparison has to be made on another dimension"
     ],
     "correctAnswer": "Yours arrives early enough that their impact never gets the chance to occur",

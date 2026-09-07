@@ -708,10 +708,19 @@ async function main() {
 
   assert.ok(!/lesson/i.test(cardSrc),
     "A4b-1. the practice-session card no longer claims lessons count");
-  assert.ok(/completed — debates and graded tests\./.test(cardSrc),
-    "A4b-2. the populated state names only the two real session writers");
-  assert.ok(/Complete a debate or a practice test to start your record\./.test(cardSrc),
-    "A4b-3. and the empty state names only those two");
+  // The copy since moved from naming the two writers by event ("debates and graded tests") to naming
+  // the CLASS of thing that writes ("scored training in your track"). That is the same claim made
+  // track-aware: the counter's two writers are the Debate judge route and the PracticeTest grade
+  // route, and a DECA or HOSA learner sees this card too, so an event list naming Debate rounds was
+  // narrower than the number it describes. A4b-1 above still forbids the lessons claim, which was
+  // the defect these assertions were written to hold shut; what they pin now is that the copy names
+  // SCORED activity and nothing weaker.
+  assert.ok(/completed — scored training in your track\./.test(cardSrc),
+    "A4b-2. the populated state names scored training, the class of thing that actually writes it");
+  assert.ok(/Complete a scored activity in your track to start your record\./.test(cardSrc),
+    "A4b-3. and the empty state asks for a scored activity, not a lesson");
+  assert.ok(!/\b(lesson|read|watch|study)\b/i.test(cardSrc),
+    "A4b-3b. and neither state credits an unscored activity");
   // The counter is a session count, never a streak or a run of days.
   for (const banned of ["consecutive day", "practice day", "day streak", "streak of"]) {
     assert.ok(!new RegExp(banned, "i").test(cardSrc), `A4b-4. no day-based wording ("${banned}")`);
@@ -773,8 +782,14 @@ async function main() {
     assert.ok(/Complete a debate, test, or lesson to start your record\./.test(cardAtBaseline),
       "A4b-C2. control: and in its empty state");
     // ...and the A4a policy files are untouched by A4b.
-    for (const p of ["lib/xp.ts", "lib/practice-session.ts", "app/api/debates/[debateId]/judge/route.ts",
-                     "app/api/tests/[testId]/grade/route.ts", "components/debate/debate-arena.tsx",
+    // This byte-pin was scoped to ONE commit: it proved the A4b card-copy change did not smuggle in an
+    // XP-policy change. It cannot be a permanent pin, because three of the six files legitimately moved
+    // in later accepted milestones — the judge route and the arena in the signposting and weighing
+    // withdrawals, the clash rebuild and coached performance; lib/practice-session.ts in the
+    // constructive evidence hardening and the turn-mechanics reactivation. Pinning them here would
+    // force a passing test to block accepted work. The three that carry the XP/session-counter policy
+    // itself are still pinned, which is what the control was protecting.
+    for (const p of ["lib/xp.ts", "app/api/tests/[testId]/grade/route.ts",
                      "app/(app)/tests/[testId]/results/page.tsx"]) {
       const atPin = execSync(`git show ${PRE_M15_A4B}:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
       const now = execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
@@ -801,18 +816,31 @@ async function main() {
             /\$?\{wins\} \$?\{wins === 1 \? "win" : "wins"\}/.test('{wins} {wins === 1 ? "win" : "wins"}'),
     "A3b-2a2. control: that detector matches both the template and the JSX form");
   assert.ok(!/avg judge score/i.test(dashSrc), "A3b-2b. and no 'avg judge score'");
-  assert.ok(/Avg practice ballot score \$\{avgJudgeScore \?\? "—"\}\./.test(dashSrc),
-    "A3b-2c. the stat card shows an average practice ballot score");
+  // The label gained "(current scoring)" when the weighing withdrawal renormalised the ballot: rows
+  // either side of that boundary are not comparable, so the average is scoped and says so. The claim
+  // this assertion protects is unchanged — a ballot score, never a verified result, and "—" when
+  // unavailable rather than 0.
+  assert.ok(/Avg practice ballot score \(current scoring\) \$\{avgJudgeScore \?\? "—"\}\./.test(dashSrc),
+    "A3b-2c. the stat card shows an average practice ballot score, scoped to the current scoring era");
   assert.ok(/\{judgedDebateCount\} judged \{judgedDebateCount === 1 \? "round" : "rounds"\}/.test(dashSrc),
     "A3b-2d. the judged-round panel uses the real existing judged-round count");
   assert.ok(/avg practice ballot score/.test(dashSrc), "A3b-2e. and the practice-ballot wording");
-  // No new query was introduced to replace wins: the aggregate count is the pre-existing one.
-  assert.equal((dashSrc.match(/prisma\.debate\.count\(/g) ?? []).length,
-    (strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/dashboard/page.tsx'`, { encoding: "utf8" })).match(/prisma\.debate\.count\(/g) ?? []).length,
-    "A3b-2f. no new debate count query was added");
-  assert.equal((dashSrc.match(/prisma\.\w+\.(aggregate|count|findMany|findFirst|findUnique)\(/g) ?? []).length,
-    (strip(execSync(`git show ${PRE_M15_A3B2}:'app/(app)/dashboard/page.tsx'`, { encoding: "utf8" })).match(/prisma\.\w+\.(aggregate|count|findMany|findFirst|findUnique)\(/g) ?? []).length,
-    "A3b-2f2. and the dashboard's total query count is unchanged");
+  // A3b-2f originally diffed the dashboard's query count against PRE_M15_A3B2 to prove that removing
+  // `wins` did not smuggle in a replacement query. That was a claim about ONE commit, and two later
+  // accepted milestones legitimately added queries: a96f1af counts guided LESSON rounds on their own
+  // line (guided work must never land in the judged-round count), and 6f325ae scopes the ballot
+  // average to the current scoring era. A moving baseline diff would now block accepted work, so the
+  // control names the queries the dashboard is allowed to make instead of counting them.
+  const debateCounts = dashSrc.match(/prisma\.debate\.count\(/g) ?? [];
+  assert.equal(debateCounts.length, 2, "A3b-2f. the dashboard makes exactly two debate count queries");
+  assert.ok(/const judgedDebateCount[\s\S]{0,200}?status: "JUDGED",[\s\S]{0,80}?INDEPENDENT_ROUND_WHERE/.test(dashSrc),
+    "A3b-2f1. one counts INDEPENDENT judged rounds");
+  assert.ok(/const guidedExerciseCount[\s\S]{0,200}?practiceMode: "LESSON"/.test(dashSrc),
+    "A3b-2f2. and the other counts guided rounds separately, never as judged rounds");
+  // `wins` still exists on this page as a RATING INPUT (calculateDebateRating reads it) and that is
+  // untouched by A3b-2, which removed the displayed chip. A3b-2a above already pins the display side,
+  // so asserting the identifier is absent here would be stricter than the accepted design.
+  assert.ok(!/prisma\.\w+\.\w+\([^)]*wins/.test(dashSrc), "A3b-2f3. and no query was reintroduced to fetch wins for display");
 
   // PROFILE.
   assert.ok(!/\{user\.wins\} wins/.test(profileSrc), "A3b-2g. the profile renders no wins chip");
@@ -872,8 +900,10 @@ async function main() {
 
   // COACH STUDENT DETAIL.
   assert.ok(!/Avg judge score/.test(detailSrc), "A3b-3g. the coach detail no longer says 'Avg judge score'");
-  assert.ok(/label="Avg practice ballot score"/.test(detailSrc),
-    "A3b-3h. it says 'Avg practice ballot score'");
+  // Same scoping suffix as the dashboard label: the weighing withdrawal renormalised the ballot, so
+  // the coach's average is restricted to the current scoring era and says so rather than mixing eras.
+  assert.ok(/label="Avg practice ballot score \(current scoring\)"/.test(detailSrc),
+    "A3b-3h. it says 'Avg practice ballot score', scoped to the current scoring era");
   assert.ok(/label="Judged rounds"/.test(detailSrc), "A3b-3i. and still shows the judged-round count");
   assert.ok(!/label="Wins"/.test(detailSrc) && !/label="Losses"/.test(detailSrc),
     "A3b-3j. with no Wins/Losses record restored");

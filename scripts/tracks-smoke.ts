@@ -340,7 +340,16 @@ async function main() {
   // ===== C5B2A: Debate launches directly to /debate; Compete is track-aware =====
   // Every "start debating" action opens /debate directly (no General Debate hub in between).
   assert.ok(homeSrc.includes('label: "Debate Now"') && homeSrc.includes("/debate?track="), "Home 'Debate Now' -> /debate");
-  assert.ok(/GENERAL_DEBATE" \? `\/debate/.test(homeSrc), "Home 'Practice' launches Debate straight into /debate");
+  // "Debate Now" is COMPETE and still opens /debate directly (asserted above). "Practice 10 minutes"
+  // is LEARN-supporting and deliberately does NOT open a full round: under Learn + Compete a focused
+  // Debate rep is a scored skill drill. This assertion previously required Practice to launch /debate
+  // too, which the current architecture contradicts on purpose.
+  assert.ok(/const isDebateTrack = activeTrack\?\.id === "GENERAL_DEBATE"/.test(homeSrc),
+    "Home resolves the Debate track for its own practice destination");
+  assert.ok(/practiceHref = isDebateTrack \? `\/study-arcade\?track=/.test(homeSrc),
+    "Home 'Practice' sends Debate to the scored skill drill, not into a full round");
+  assert.ok(!/practiceHref = isDebateTrack \? `\/debate/.test(homeSrc),
+    "and Practice never reopens Compete under another label");
   const hubSrc2 = readFileSync("app/(app)/training/[track]/page.tsx", "utf8");
   assert.ok(/isDebate \? "\/debate"/.test(hubSrc2), "Training hub Debate start-action -> /debate directly");
   assert.ok(readFileSync("lib/dashboard-actions.ts", "utf8").includes('href: "/debate"'), "dashboard next-step for Debate -> /debate");
@@ -528,8 +537,16 @@ async function main() {
 
   // 4. Model UN tests hide the DECA/HOSA generator (gated by track, honest empty state otherwise).
   const testsPage = readFileSync("app/(app)/tests/page.tsx", "utf8");
-  assert.ok(testsPage.includes("showGenerator"), "tests page gates the generator by track");
-  assert.ok(testsPage.includes("showGenerator ?"), "generator is only rendered when the track supports tests");
+  // The gate moved from a `showGenerator` conditional render to a redirect: a track with no practice
+  // tests never reaches this page at all. That is the same guarantee enforced earlier, so the
+  // assertion follows the behaviour rather than the old variable name. Debate is the track this
+  // protects — trackHasPracticeTests("GENERAL_DEBATE") is false, so Debate tests stay hidden.
+  assert.ok(/if \(!isAssignment && activeTrack && !trackHasPracticeTests\(activeTrack\.id\)\) \{/.test(testsPage),
+    "tests page gates the generator by track");
+  assert.ok(/redirect\(`\/study-arcade\?track=\$\{activeTrack\.slug\}`\)/.test(testsPage),
+    "a track without practice tests is redirected away instead of shown an empty generator");
+  assert.ok(!testsPage.includes("showGenerator"),
+    "and the old conditional-render gate is gone rather than duplicated");
   assert.ok(testsPage.includes("lockedOrganization"), "generator organization is locked to the selected track");
 
   // 5. Model UN practice uses Model UN terminology only — never parliamentary labels.
@@ -692,7 +709,16 @@ async function main() {
      "debate-turn-mechanics", "debate-signposting", "debate-clash", "debate-refutation",
      "debate-constructive-speeches", "debate-weighing"],
     "Debate exposes exactly the ten canonical lessons, orientation first (B2.2 added turn-mechanics)");
-  assert.ok(skillPath.includes("`/lessons/${entry.id}`"), "and each Debate tile links to its canonical lesson");
+  // The Skills surface used to render one tile per lesson, each opening /lessons/<id> — a second copy
+  // of the Learn catalog, so a learner who followed "Practice" arrived back at the reading. It now
+  // names Debate's drills and its review queue, and the lessons stay where they live, under Learn.
+  // The registry assertion above is what pins the canonical ten; this pins the destination change.
+  assert.ok(skillPath.includes('href: "/study-arcade?track=debate" as Route'),
+    "the Debate skills surface opens the drills");
+  assert.ok(skillPath.includes('href: "/study-arcade/review" as Route'),
+    "and the review queue");
+  assert.ok(!skillPath.includes("`/lessons/${entry.id}`"),
+    "and no longer duplicates the Learn catalog as skill tiles");
   assert.ok(skillPath.includes("/training/deca/practice"), "DECA exposes its real practice destination");
   assert.ok(skillPath.includes("/training/hosa/events"), "HOSA exposes its real Event Navigator destination");
   assert.ok(/canonicalTrack\(track\)/.test(skillPath) && skillPath.includes("return [];"),

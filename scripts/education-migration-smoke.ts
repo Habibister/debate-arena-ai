@@ -834,8 +834,8 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
       "38e. the page narrows the query value instead of casting it");
     assert.ok(!/as DrillArea/.test(arcade),
       "38f. and never asserts an untrusted string into the area type");
-    assert.ok(/<DebateDrills initialArea=\{debateArea\} \/>/.test(arcade),
-      "38g. the validated area reaches the Debate drill only");
+    assert.ok(/<DebateDrills initialArea=\{debateArea\} progressTracking=\{debateProgressTracking\} \/>/.test(arcade),
+      "38g. the validated area reaches the Debate drill only, alongside the server-resolved progress capability");
     // Track isolation: the Debate area is applied to the Debate component alone.
     const decaBlock = arcade.slice(arcade.indexOf("<ConceptDrills"), arcade.indexOf("<ConceptDrills") + 600);
     assert.ok(!decaBlock.includes("debateArea"),

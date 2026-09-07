@@ -394,10 +394,17 @@ check("L. learner-facing practice copy is derived from capability, not asserted"
   // Derived on BOTH axes: which area the learner picked, and whether that area's skill records.
   assert.ok(/const progressNote = areaFilter === "mixed"/.test(drills),
     "its progress note is derived, not a fixed sentence");
-  assert.ok(/const someAreaInPracticeMode = DRILL_AREAS\.some\(\(area\) => debateMasteryHeld\(area\.skillSlug\)\)/.test(drills),
-    "L1b. a MIXED session is judged by whether any drawable area is held — a mixed draw can include held items");
-  assert.ok(/: debateMasteryHeld\(focusedAreaSkill\)/.test(drills),
-    "L1c. and a focused session is judged by its own area's skill");
+  // WIDENED by the progress-truth repair: a mixed draw can include an area that cannot record for
+  // EITHER reason — its mastery is held, or no Skill row exists for its slug — and an unresolved
+  // capability counts as cannot-record, so the copy fails closed.
+  assert.ok(/const someAreaCannotRecord = progressTracking === undefined/.test(drills),
+    "L1b. a MIXED session is judged by whether any drawable area cannot record — held or unseeded");
+  assert.ok(/\.some\(\(entry\) => !entry\.available\)/.test(drills),
+    "L1c. including every area the server resolved as untracked");
+  assert.ok(/const focusedTracking = areaFilter === "mixed" \? undefined : trackingFor\(areaFilter\)/.test(drills),
+    "L1d. and a focused session is judged by its own area's resolved capability");
+  assert.ok(/focusedTracking\?\.reason === "mastery-held"/.test(drills),
+    "L1e. which still names the practice-mode case separately from the untracked one");
   assert.ok(!/Focused skill sessions can update your progress\. A mixed session[\s\S]{0,40}<\/p>/.test(drills),
     "the unconditional claim is no longer rendered directly");
   // The result badge must not blame the count or the score for a hold-caused non-write.

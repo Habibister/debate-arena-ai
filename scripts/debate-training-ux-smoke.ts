@@ -305,4 +305,69 @@ check("N. no Debate test generator or product exists", () => {
   assert.ok(!/practiceTest|PracticeTest/.test(drills), "the Debate drill bank is not wired to a test product");
 });
 
+// ==================================================================================================
+// O. PROGRESS-TRUTH. The Debate drills setup card used to promise "This focused session can update
+// your progress" for every area whose mastery was not held — including areas whose Skill row was
+// never seeded, where the submit writer returns `skill-missing` and writes nothing. The promise and
+// its own refutation could render on the same results card six lines apart. The capability is now
+// resolved from the SAME conditions the writer uses, server-side, and unknown never becomes a promise.
+// ==================================================================================================
+check("O1. the capability helper mirrors the submit writer's conditions, in its precedence order", () => {
+  const { progressTrackingFor, progressTrackingForAreas, DRILL_AREAS, debateMasteryHeld } = require("../lib/debate-drills");
+  const slugOf = (area: string) => DRILL_AREAS.find((a: { id: string }) => a.id === area)?.skillSlug as string;
+  const everySlug = new Set<string>(DRILL_AREAS.map((a: { skillSlug: string }) => a.skillSlug));
+  // 1. no Skill row -> the writer's `skill-missing` branch. This is the case the old copy got wrong.
+  assert.deepEqual(progressTrackingFor("signposting", new Set<string>()),
+    { area: "signposting", available: false, reason: "skill-missing" });
+  // 2. mastery held wins over row existence, exactly as the writer checks it first.
+  assert.ok(debateMasteryHeld(slugOf("rebuttal")), "control: rebuttal mastery is held");
+  assert.deepEqual(progressTrackingFor("rebuttal", everySlug),
+    { area: "rebuttal", available: false, reason: "mastery-held" });
+  // 3. seeded and unheld is the only combination that may promise anything.
+  assert.deepEqual(progressTrackingFor("evidence-evaluation", new Set([slugOf("evidence-evaluation")])),
+    { area: "evidence-evaluation", available: true, reason: "available" });
+  // FAIL CLOSED. An unknown answer must produce "not tracked", never a promise.
+  for (const tracking of progressTrackingForAreas(new Set<string>())) {
+    assert.equal(tracking.available, false, `${tracking.area}: an empty seed set promises nothing`);
+  }
+  // The floor is a property of the SESSION, not of the area, so it is not a capability condition.
+  assert.ok(!/DEBATE_DRILL_REQUIRED_UNIQUE/.test(
+    read("lib/debate-drills.ts").slice(read("lib/debate-drills.ts").indexOf("export function progressTrackingFor"),
+      read("lib/debate-drills.ts").indexOf("export const DEBATE_DRILL_HELD_IDS"))),
+    "the unique-question floor is not folded into the capability");
+});
+
+check("O2. the copy promises only what the server can do, and cannot contradict the result card", () => {
+  const view = read("components/training/debate-drills.tsx");
+  // The promise branch is gated on the resolved capability, never on the mastery hold alone.
+  assert.ok(/focusedAvailable[\s\S]{0,40}This focused session can update your progress/.test(view),
+    "the promise is made only when tracking is available");
+  assert.ok(!/debateMasteryHeld\(focusedAreaSkill\)/.test(view),
+    "the old mastery-only condition is gone");
+  // The unavailable wording is the result card's own `skill-missing` sentence, so the two agree.
+  assert.ok(/Progress tracking is not available for this skill yet/.test(view),
+    "the unavailable copy reuses the honest result-card wording");
+  assert.equal((view.match(/Progress tracking is not available for this skill yet/g) ?? []).length, 2,
+    "and it is the same sentence in both places");
+  // Absent capability data is UNKNOWN, and unknown must not promise.
+  assert.ok(/progressTracking === undefined[\s\S]{0,20}\|\|/.test(view),
+    "a caller that passes no capability gets the untracked wording");
+  // Mixed sessions say some skills record nothing whenever any area cannot record.
+  assert.ok(/Some skills record nothing/.test(view), "the mixed wording covers the untracked case too");
+});
+
+check("O3. the capability is resolved on the server, read-only, and fails closed", () => {
+  const page = read("app/(app)/study-arcade/page.tsx");
+  assert.ok(/progressTrackingForAreas\(seededDrillSkills\)/.test(page), "the page resolves it");
+  assert.ok(/prisma\.skill\.findMany\(\{ where: \{ slug: \{ in: slugs \} \}, select: \{ slug: true \} \}\)/.test(page),
+    "by reading which Skill rows exist — select-only, no write");
+  assert.ok(/catch \{[\s\S]{0,200}const debateProgressTracking/.test(page),
+    "and an error leaves the set empty rather than promising");
+  assert.ok(/<DebateDrills initialArea=\{debateArea\} progressTracking=\{debateProgressTracking\} \/>/.test(page),
+    "the capability reaches the component");
+  for (const forbidden of ["skill.create", "skill.upsert", "masteryProgress.update", "awardXp"]) {
+    assert.ok(!page.includes(forbidden), `the page writes nothing: ${forbidden}`);
+  }
+});
+
 console.log(`\ndebate-training-ux: ${checks} controls passed.`);

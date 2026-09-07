@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, RotateCcw, Target, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { debateMasteryHeld, DRILL_AREAS, type DrillArea } from "@/lib/debate-drills";
+import { debateMasteryHeld, DRILL_AREAS, type AreaProgressTracking, type DrillArea } from "@/lib/debate-drills";
 
 // Server-issued item. There is deliberately no correct answer and no explanation here: the session
 // route withholds both until the learner has actually answered, and this client has no way to grade.
@@ -165,27 +165,40 @@ type AnswerState = { optionId: string; correct: boolean; correctAnswer: string; 
  * areas freely afterwards, and callers that pass nothing keep today's "mixed" behaviour exactly.
  * The caller is responsible for narrowing untrusted input with `drillAreaFromQuery` first.
  */
-export function DebateDrills({ initialArea }: { initialArea?: DrillArea } = {}) {
+export function DebateDrills({ initialArea, progressTracking }: {
+  initialArea?: DrillArea;
+  /**
+   * Per-area progress-tracking capability, resolved on the server from the SAME conditions the
+   * submit writer uses — including whether a `Skill` row actually exists, which this component
+   * cannot see. Absent means UNKNOWN, and unknown must never become a promise: every area is then
+   * treated as untracked. The caller is `app/(app)/study-arcade/page.tsx`.
+   */
+  progressTracking?: readonly AreaProgressTracking[];
+} = {}) {
   const [areaFilter, setAreaFilter] = useState<DrillArea | "mixed">(initialArea ?? "mixed");
-  // What this session can honestly promise. A focused run on a skill whose durable record is
-  // suspended still serves, still grades and still explains — it just does not update anything, so
-  // the "focused sessions can update your progress" line would be false for it. Derived from the
-  // selected area's own skill through the shared predicate; a mixed run keeps the ordinary wording
-  // because most areas do record and the per-skill result rows say what happened to each.
-  const focusedAreaSkill = areaFilter === "mixed"
-    ? undefined
-    : DRILL_AREAS.find((area) => area.id === areaFilter)?.skillSlug;
-  // A MIXED session draws from every servable area, so if any area is in practice mode the plain
+  // What this session can honestly promise. Two things can stop a record: the skill's durable record
+  // is suspended (practice mode), or no Skill row exists for it at all, in which case the server
+  // returns `skill-missing` and writes nothing. The second is invisible from the client, so it is
+  // resolved server-side and passed in; with nothing passed in, nothing is promised.
+  const trackingFor = (area: DrillArea) => progressTracking?.find((entry) => entry.area === area);
+  const focusedTracking = areaFilter === "mixed" ? undefined : trackingFor(areaFilter);
+  const focusedAvailable = focusedTracking?.available === true;
+  // A MIXED session draws from every servable area, so if ANY of them cannot record, the plain
   // "records once you answer 5 different questions" rule is not the only condition and would be
-  // false for those items. Both cases are derived; neither names a skill.
-  const someAreaInPracticeMode = DRILL_AREAS.some((area) => debateMasteryHeld(area.skillSlug));
+  // false for those items. Derived; neither branch names a skill.
+  const someAreaCannotRecord = progressTracking === undefined
+    || progressTracking.some((entry) => !entry.available)
+    || DRILL_AREAS.some((area) => !progressTracking.some((entry) => entry.area === area.id));
   const progressNote = areaFilter === "mixed"
-    ? someAreaInPracticeMode
-      ? `A mixed session records a skill once you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it. Some skills are in practice mode and record nothing — each result below says which.`
+    ? someAreaCannotRecord
+      ? `A mixed session records a skill once you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it. Some skills record nothing — each result below says which.`
       : `Focused skill sessions can update your progress. A mixed session is practice and only records a skill when you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions from it.`
-    : debateMasteryHeld(focusedAreaSkill)
-      ? "This skill is in practice mode: every answer is scored and explained, and nothing is added to your record."
-      : `This focused session can update your progress once you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions.`;
+    : focusedAvailable
+      ? `This focused session can update your progress once you answer at least ${REQUIRED_UNIQUE_FOR_PROGRESS} different questions.`
+      : focusedTracking?.reason === "mastery-held"
+        ? "This skill is in practice mode: every answer is scored and explained, and nothing is added to your record."
+        // Same wording the result card uses for `skill-missing`, so the two cannot contradict each other.
+        : "Progress tracking is not available for this skill yet: every answer is scored and explained, and nothing is added to your record.";
   const [count, setCount] = useState(8);
   const [areasMeta, setAreasMeta] = useState<AreaMeta[]>([]);
   const [session, setSession] = useState<SessionStart | null>(null);

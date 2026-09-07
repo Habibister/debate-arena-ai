@@ -5,7 +5,7 @@ import { BookOpenCheck, Gamepad2, Layers3, PlayCircle, RotateCcw, Sparkles } fro
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { ConceptDrills } from "@/components/training/concept-drills";
 import { DebateDrills } from "@/components/training/debate-drills";
-import { drillAreaFromQuery } from "@/lib/debate-drills";
+import { DRILL_AREAS, drillAreaFromQuery, progressTrackingForAreas } from "@/lib/debate-drills";
 import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
 import { DECA_DRILL_AREAS } from "@/lib/deca-drills";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,21 @@ export default async function StudyArcadePage({
   // DECA Full Simulation entry point: fetch the registry-driven prep format only when DECA is in view.
   // Null (no spec) makes the simulation degrade to an untimed flow with no fake "official" clock.
   const showDeca = !activeTrack || activeTrack.id === "DECA";
+
+  // PROGRESS-TRACKING CAPABILITY for the Debate drills setup copy. The client cannot see whether a
+  // `Skill` row exists, and the submit writer refuses to record without one, so the promise had to
+  // be resolved here or not made. Fails CLOSED: any error leaves the set empty, every area resolves
+  // to `skill-missing`, and the learner is told progress is not tracked rather than promised a
+  // record that will not happen. Read-only; this seeds nothing.
+  let seededDrillSkills = new Set<string>();
+  try {
+    const slugs = DRILL_AREAS.map((area) => area.skillSlug).filter(Boolean);
+    const rows = await prisma.skill.findMany({ where: { slug: { in: slugs } }, select: { slug: true } });
+    seededDrillSkills = new Set(rows.map((row) => row.slug));
+  } catch {
+    // leave empty — no promise is made when the answer is unknown
+  }
+  const debateProgressTracking = progressTrackingForAreas(seededDrillSkills);
 
   // Real practice signals for the review tiles (0 for a brand-new account; never sample data).
   const session = await getServerSession(authOptions);
@@ -137,7 +152,7 @@ export default async function StudyArcadePage({
 
       {/* General Debate has no flashcard decks; its drills are the argument/rebuttal/evidence/weighing
           concept reps that feed mastery + spaced review. */}
-      {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills initialArea={debateArea} /> : null}
+      {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills initialArea={debateArea} progressTracking={debateProgressTracking} /> : null}
 
       {/* DECA concept drills (performance indicators, business reasoning, customer relations, marketing)
           — concept-level practice that feeds mastery + spaced review, separate from role-play judging. */}

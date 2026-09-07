@@ -592,6 +592,46 @@ function shuffle<T>(items: T[]): T[] {
 // Bytes are unchanged and ids are not renumbered: these are repair targets and release provenance,
 // exactly as the B1 hold above treated its own. Releasing any of them requires the same per-item
 // reactivation gate the B2.1/B2.2/B2.3 releases document — teaching first, then the item.
+/**
+ * PROGRESS-TRACKING CAPABILITY. What a drill session in an area can HONESTLY promise before it runs.
+ *
+ * The submit writer (`app/api/debate/drills/submit/route.ts`) takes the persistence branch only when
+ * `qualifies && area.skillSlug && !debateMasteryHeld(...)` AND a `Skill` row exists for that slug —
+ * otherwise it returns `skill-missing` and writes nothing. The pre-session copy used to derive from
+ * the mastery hold ALONE, so an area whose skill row was never seeded promised a record it could not
+ * make. This mirrors the writer's own conditions instead of approximating them.
+ *
+ * `qualifies` is deliberately NOT one of them: the unique-question floor is a property of the session
+ * the learner is about to run, not of the area, and the copy still states it when tracking is on.
+ *
+ * The seeded slugs are passed in rather than read here: this module is pure and is imported by the
+ * client. The caller resolves them from the database and fails CLOSED — an unknown answer must
+ * produce "not tracked", never a promise.
+ */
+export type ProgressTrackingReason = "available" | "skill-missing" | "mastery-held" | "unsupported";
+
+export type AreaProgressTracking = {
+  area: DrillArea;
+  available: boolean;
+  reason: ProgressTrackingReason;
+};
+
+export function progressTrackingFor(
+  area: DrillArea,
+  seededSkillSlugs: ReadonlySet<string>
+): AreaProgressTracking {
+  const row = DRILL_AREAS.find((entry) => entry.id === area);
+  if (!row?.skillSlug) return { area, available: false, reason: "unsupported" };
+  if (debateMasteryHeld(row.skillSlug)) return { area, available: false, reason: "mastery-held" };
+  if (!seededSkillSlugs.has(row.skillSlug)) return { area, available: false, reason: "skill-missing" };
+  return { area, available: true, reason: "available" };
+}
+
+/** Every area's capability, in DRILL_AREAS order. Same fail-closed rule as the singular form. */
+export function progressTrackingForAreas(seededSkillSlugs: ReadonlySet<string>): AreaProgressTracking[] {
+  return DRILL_AREAS.map((area) => progressTrackingFor(area.id, seededSkillSlugs));
+}
+
 export const DEBATE_DRILL_HELD_IDS: ReadonlyArray<string> = [
   "rb-01", "rb-03", "rb-04", "rb-05", "rb-06", "rb-07", "rb-09", "rb-10", "rb-12", "rb-18", "rb-19",
   "rb-20", "rb-21", "rb-22", "rb-23", "rb-24", "rb-25", "rb-26", "rb-27", "rb-28", "rb-29", "rb-30"

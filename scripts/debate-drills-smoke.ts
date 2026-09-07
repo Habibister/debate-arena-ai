@@ -775,7 +775,12 @@ async function main() {
   // and scripts/assessment-quality-guard.ts enforces the answer-form property the repair restored.
   // Repaired items are independently AI-reviewed with external human content review waived by the
   // project owner 2026-08-25 (see the in-bank waiver record; a waiver is not human review).
-  const P01_REPAIRED_ORIGINALS = new Set(["cw-01","cw-04","cw-05","cw-07","cw-08","cw-09","rb-01","rb-02","rb-03","rb-04","rb-05","rb-07","rb-08","rb-09","ev-01","ev-02","ev-03","ev-04","ev-06","ev-07","ev-08","ev-09","wg-01","wg-02","wg-03","wg-04","wg-05","wg-06","wg-07","wg-08","wg-09"]);
+  // cw-02 and rb-17 joined this set in the final Debate audit, for the reason the set exists. Emphasis
+  // capitalisation inside a choice occurred in exactly four of the 187 items and was the key in all
+  // four (p = 0.004) — an answer-form tell a stem-blind learner can use. wg-04 was lowercased with
+  // Weighing, rb-02 was already listed, and cw-02 ("WHY") and rb-17 ("FOR") were the remainder. Being
+  // listed makes the freeze two-sided for them too: a silent revert back to the capitalised key fails.
+  const P01_REPAIRED_ORIGINALS = new Set(["cw-01","cw-02","cw-04","cw-05","cw-07","cw-08","cw-09","rb-01","rb-02","rb-03","rb-04","rb-05","rb-07","rb-08","rb-09","rb-17","ev-01","ev-02","ev-03","ev-04","ev-06","ev-07","ev-08","ev-09","wg-01","wg-02","wg-03","wg-04","wg-05","wg-06","wg-07","wg-08","wg-09"]);
   for (const parentLine of parentItems) {
     const id = idOf(parentLine);
     if (P01_REPAIRED_ORIGINALS.has(id)) {

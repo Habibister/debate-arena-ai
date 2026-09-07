@@ -115,6 +115,8 @@ export type JudgeReport = {
     retryRequired: boolean;
     nextAction: "retry" | "continue";
   };
+  /** "unavailable" when the producer recorded the round but did not semantically score it. */
+  semanticScoring?: "unavailable";
   overallScore: number;
   categoryScores: Array<{
     key: string;
@@ -282,7 +284,18 @@ function coerceJudgeReport(value: unknown): JudgeReport | null {
     return null;
   }
 
-  const candidate = value as Partial<JudgeReport>;
+  const candidate = value as Partial<JudgeReport> & { semanticScoring?: string };
+
+  // A round the producer did not semantically score is a VALID report, not a malformed one. The
+  // Debate transcript judge withdrew semantic scoring on 2026-09-07: it records the round and reports
+  // diagnostics, and supplies no overall and no categories. Rejecting it here would show the learner
+  // nothing at all after a completed round — absence rendered as breakage, which is the failure this
+  // whole withdrawal exists to avoid. It is accepted, and the panels below render only what exists.
+  if (candidate.semanticScoring === "unavailable") {
+    return candidate as JudgeReport;
+  }
+
+  // A scored report still has to carry a score and its categories, or it is malformed.
   if (typeof candidate.overallScore !== "number" || !Array.isArray(candidate.categoryScores)) {
     return null;
   }
@@ -1152,6 +1165,16 @@ function JudgeDecisionModal({
                   {report.confidenceLevel ? ` · ${titleCase(report.confidenceLevel)} confidence` : ""}
                 </p>
               </>
+            ) : report.semanticScoring === "unavailable" ? (
+              <>
+                {/* Not "Practice round scored" — nothing scored it. And not a tie: a missing judge is
+                    not a drawn debate, so no side is named and no result is implied. */}
+                <h2 className="mt-3 text-3xl font-bold">Practice round recorded</h2>
+                <p className="mt-2 text-sm text-neutral-400">
+                  No decision was made. The practice judge does not score rounds or pick a winner — your speeches and the
+                  transcript are saved, and completing the round still counts.
+                </p>
+              </>
             ) : (
               <h2 className="mt-3 text-3xl font-bold">Practice round scored</h2>
             )}
@@ -1178,11 +1201,27 @@ function JudgeDecisionModal({
           {/* Compact default view — the whole result in about 15 seconds. */}
           <div className="grid gap-3 md:grid-cols-[0.55fr_1.45fr]">
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5 text-center">
-              <p className="text-sm font-semibold text-neutral-400">Practice ballot score</p>
-              {/* 6xl -> 5xl: still the biggest number on the page, no longer dominating the decision
-                  itself. The value is unchanged. */}
-              <p className="mt-3 text-5xl font-bold">{overallScore ?? report.overallScore}</p>
-              <p className="mt-2 text-xs leading-5 text-neutral-500">Formative coaching score — not mastery or readiness.</p>
+              {/* An unscored round says so in words instead of showing a number. There is no "—" in a
+                  score slot either: a dash in a score position reads as a score that failed to load.
+                  The round happened, the transcript is saved, and nothing judged how well it went. */}
+              {report.semanticScoring === "unavailable" ? (
+                <>
+                  <p className="text-sm font-semibold text-neutral-400">Round recorded</p>
+                  <p className="mt-3 text-lg font-semibold leading-6">Not scored</p>
+                  <p className="mt-2 text-xs leading-5 text-neutral-500">
+                    Your transcript is saved. The practice judge cannot tell substantive argument from filler, so it does
+                    not score the round or say who won.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-neutral-400">Practice ballot score</p>
+                  {/* 6xl -> 5xl: still the biggest number on the page, no longer dominating the decision
+                      itself. The value is unchanged. */}
+                  <p className="mt-3 text-5xl font-bold">{overallScore ?? report.overallScore}</p>
+                  <p className="mt-2 text-xs leading-5 text-neutral-500">Formative coaching score — not mastery or readiness.</p>
+                </>
+              )}
               {/* XP is real and earned for COMPLETING the round (M15 A3a), not for this score or for
                   winning — so it is stated separately and never as a consequence of the number above. */}
               {/* A4a: never render a bare "+0 XP". Past the daily limit the round still counted as

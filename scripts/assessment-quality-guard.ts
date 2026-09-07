@@ -73,6 +73,7 @@ export type BankReport = {
   lenSpread: number;  // median of (max-min)/mean choice length — anti-padding floor
   hElim: number;      // blind strategy: eliminate longest+shortest, pick randomly among the rest
   posRef: number;     // count of items whose rationale identifies an option by its authored position
+  posRefIds: string[];// and exactly which — a waiver is granted per id, never per bank
 };
 
 export type BankConfig = { enforced: boolean; servedShuffled: boolean };
@@ -81,7 +82,7 @@ export type BankConfig = { enforced: boolean; servedShuffled: boolean };
  * Committed, loud, per-bank per-metric waivers. NEVER a silent skip: every entry names its reason
  * and is printed on every run. Empty today — the repaired banks must stand on their own.
  */
-export const MCQ_GUARD_WAIVERS: ReadonlyArray<{ bank: string; metric: string; reason: string; date: string }> = [
+export const MCQ_GUARD_WAIVERS: ReadonlyArray<{ bank: string; metric: string; reason: string; date: string; ids?: readonly string[] }> = [
   // POS_REF landed with the Signposting integration repair, which closed the whole DEBATE class:
   // 23 servable Debate rationales were re-anchored to option content in the same commit. The census
   // that produced the metric also found six DECA rationales with the same defect (br-13, br-17,
@@ -89,8 +90,14 @@ export const MCQ_GUARD_WAIVERS: ReadonlyArray<{ bank: string; metric: string; re
   // items this milestone did not audit, and rewriting them blind is the kind of expansion the owner
   // asked to be reported rather than absorbed. Waived LOUDLY — every run prints these — so the debt
   // is visible and quantified instead of being rediscovered by the next audit.
-  { bank: "deca:business-reasoning", metric: "POS_REF", reason: "2 rationales name an option by authored position (br-13, br-17); DECA rationale repair is a separate, unaudited scope", date: "2026-09-06" },
-  { bank: "deca:customer-relations", metric: "POS_REF", reason: "4 rationales name an option by authored position (cr-17, cr-18, cr-23, cr-26); same scope", date: "2026-09-06" }
+  //
+  // Each entry names the EXACT ids and is honoured only on an exact-set match, so a seventh
+  // violation, a repaired one, or a listed id leaving the bank all break it and the verdict stops
+  // being waived. These are TEMPORARY REVIEW DEBT, not an accepted exception to the authoring
+  // standard: DECA cannot be called end-to-end complete while any entry stands, and closing them
+  // belongs at the front of the DECA audit.
+  { bank: "deca:business-reasoning", metric: "POS_REF", ids: ["br-13", "br-17"], reason: "2 rationales name an option by authored position (br-13, br-17); DECA rationale repair is a separate, unaudited scope", date: "2026-09-06" },
+  { bank: "deca:customer-relations", metric: "POS_REF", ids: ["cr-17", "cr-18", "cr-23", "cr-26"], reason: "4 rationales name an option by authored position (cr-17, cr-18, cr-23, cr-26); same scope", date: "2026-09-06" }
 ];
 
 const norm = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -187,6 +194,7 @@ export function computeBankReport(bank: string, items: GuardItem[]): BankReport 
     posMax, posPeriod, dupSet, keyCue,
     lenSpread: median(spreads),
     posRef: items.filter((q) => referencesOptionByPosition(q.explanation)).length,
+    posRefIds: items.filter((q) => referencesOptionByPosition(q.explanation)).map((q) => q.id).sort(),
   };
 }
 
@@ -197,7 +205,17 @@ const lift = (acc: number) => (acc - RANDOM) / (1 - RANDOM);
 
 export function evaluateBank(report: BankReport, config: BankConfig): Verdict[] {
   const out: Verdict[] = [];
-  const waived = (metric: string) => MCQ_GUARD_WAIVERS.some((w) => w.bank === report.bank && w.metric === metric);
+  // A waiver naming ids is honoured ONLY when the bank's violating set is exactly that set. A seventh
+  // violation, a listed id that stopped violating, or a listed id that left the bank all break the
+  // equality and the verdict stops being waived — so the debt cannot silently grow behind the waiver,
+  // and cannot silently persist after it is repaired. A waiver with no ids stays bank-scoped.
+  const waived = (metric: string) => MCQ_GUARD_WAIVERS.some((w) => {
+    if (w.bank !== report.bank || w.metric !== metric) return false;
+    if (!w.ids) return true;
+    const actual = metric === "POS_REF" ? report.posRefIds : [];
+    const recorded = [...w.ids].sort();
+    return actual.length === recorded.length && actual.every((id, i) => id === recorded[i]);
+  });
   const add = (metric: string, level: "FAIL" | "WARN", detail: string) =>
     out.push({ bank: report.bank, metric, level, detail, waived: waived(metric) });
 

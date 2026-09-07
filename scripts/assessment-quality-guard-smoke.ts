@@ -19,6 +19,8 @@ const fails = (items: GuardItem[], metric: string, config = CONFIG) =>
 const warns = (items: GuardItem[], metric: string, config = CONFIG) =>
   evaluateBank(computeBankReport("mut", items), config).some((v) => v.metric === metric);
 
+const computeItems = (items: GuardItem[]) => items;
+
 async function run() {
   // Base material: the healthy marketing control bank (H_LONG ≈ 28%, at random) — healthy by
   // MEASURED form behavior; its recorded provenance is AI-reviewed with external human review
@@ -235,6 +237,40 @@ async function run() {
     assert.ok(waiver.reason.length > 60 && /\b[a-z]{2}-\d{2}\b/.test(waiver.reason),
       "W0c. every waiver names the offending items and says why it is not repaired here");
     assert.ok(/^2\d{3}-\d{2}-\d{2}$/.test(waiver.date), "W0d. and is dated");
+    // NO WILDCARDS. A waiver covers named ids, never a bank, an area, a metric or a prefix.
+    assert.ok(Array.isArray(waiver.ids) && waiver.ids!.length > 0,
+      "W0f. every waiver names the exact ids it covers — a bank-wide waiver would absorb the next violation silently");
+  }
+  // The recorded debt is EXACTLY six ids, and the live violations are exactly those six.
+  const DECA_POSITIONAL_DEBT = ["br-13", "br-17", "cr-17", "cr-18", "cr-23", "cr-26"];
+  const waivedIds = MCQ_GUARD_WAIVERS.flatMap((w) => [...(w.ids ?? [])]).sort();
+  assert.deepEqual(waivedIds, [...DECA_POSITIONAL_DEBT].sort(),
+    "W1. the waiver covers exactly the six known DECA positional rationales");
+  const liveDecaViolations = DECA_DRILL_BANK.filter((q) => referencesOptionByPosition(q.explanation)).map((q) => q.id).sort();
+  assert.deepEqual(liveDecaViolations, [...DECA_POSITIONAL_DEBT].sort(),
+    "W1b. and the bank's actual violations are exactly that set — a seventh, or a repaired one, breaks this");
+  assert.equal(liveDecaViolations.length, 6, "W1c. count pinned at six");
+  for (const id of DECA_POSITIONAL_DEBT) {
+    assert.ok(DECA_DRILL_BANK.some((q) => q.id === id), `W1d. waived id ${id} is a real bank item`);
+  }
+  // NON-VACUITY: a SEVENTH violation must fail, even though the bank is waived.
+  {
+    const withSeventh = DECA_DRILL_BANK.filter((q) => q.id.startsWith("br-")).map((q, i) => (i === 0
+      ? { ...q, explanation: `${q.explanation} The second states a rule these facts do not support.` }
+      : q)) as GuardItem[];
+    const verdicts = evaluateBank(computeBankReport("deca:business-reasoning", withSeventh), { enforced: true, servedShuffled: true });
+    const posRef = verdicts.filter((v) => v.metric === "POS_REF");
+    assert.equal(posRef.length, 1, "W2. a seventh DECA violation still produces a POS_REF verdict");
+    assert.equal(posRef[0].waived, false,
+      "W2b. and it is NOT waived — the waiver is an exact-set match, so new debt cannot hide behind old debt");
+  }
+  // And a waived bank whose listed items were REPAIRED stops being waived, so the entry must be removed.
+  {
+    const repaired = DECA_DRILL_BANK.filter((q) => q.id.startsWith("cr-"))
+      .map((q) => (DECA_POSITIONAL_DEBT.includes(q.id) ? { ...q, explanation: "The reply that names a timeframe is the one that keeps the promise." } : q)) as GuardItem[];
+    const verdicts = evaluateBank(computeBankReport("deca:customer-relations", computeItems(repaired)), { enforced: true, servedShuffled: true });
+    assert.equal(verdicts.filter((v) => v.metric === "POS_REF").length, 0,
+      "W3. once the listed items are repaired the metric goes quiet, and the waiver entry becomes dead wood to delete");
   }
   // Non-vacuity: the waiver must not be hiding a Debate failure.
   for (const { bank, items, config } of banksUnderGuard()) {

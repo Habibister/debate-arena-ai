@@ -1180,7 +1180,7 @@
       "Which impact cannot be undone once it lands"
     ],
     "correctAnswer": "Which impact affects more people or is more severe",
-    "explanation": "Magnitude = size/severity/scope of the impact. Timeframe is about sooner; probability is about likelihood."
+    "explanation": "Magnitude is the size comparison: how many people the harm reaches, and how hard it hits each of them. Arriving first is a timeframe comparison, being more likely to happen is probability, and a harm that cannot be undone is reversibility."
   },
   {
     "id": "wg-02",
@@ -1214,11 +1214,11 @@
     "question": "Why is explicit weighing important even when you're winning arguments?",
     "choices": [
       "It reminds the judge how many arguments you are ahead on, which is what decides a close round",
-      "It tells the judge HOW to decide when both sides have impacts",
-      "It replaces the need to keep defending your impacts once you are ahead",
+      "It tells the judge how to decide when both sides have impacts",
+      "It replaces the need to keep defending impacts once one side is ahead",
       "It shows your impact was described in more detail"
     ],
-    "correctAnswer": "It tells the judge HOW to decide when both sides have impacts",
+    "correctAnswer": "It tells the judge how to decide when both sides have impacts",
     "explanation": "Without weighing, the judge chooses which impacts matter — maybe against you. Weighing gives them your framework for the decision."
   },
   {
@@ -1232,7 +1232,7 @@
       "Millions could be displaced, and no later policy could bring their homes back."
     ],
     "correctAnswer": "Our economic harm outweighs their climate impact because it is far more probable in the next year.",
-    "explanation": "Weighing compares two impacts on a named metric (probability + timeframe). The others state a single impact without comparison."
+    "explanation": "Weighing sets the two impacts against each other and gives a reason one should decide — here, that yours is far more likely inside the next year. The comparison does not need a familiar lens name to count. The others each describe a single impact, however vividly, without measuring it against the other side."
   },
   {
     "id": "wg-06",
@@ -1242,10 +1242,10 @@
       "Magnitude",
       "Probability",
       "Reversibility",
-      "Scope"
+      "Timeframe"
     ],
     "correctAnswer": "Probability",
-    "explanation": "If an impact is large but improbable, argue probability: prefer the more likely harm. Meeting magnitude with magnitude concedes their frame, and reversibility and scope are real standards that never target what is weakest here — the likelihood."
+    "explanation": "If an impact is large but improbable, argue probability: prefer the more likely harm. Meeting magnitude with magnitude concedes their frame, and reversibility and timeframe are real standards that never target what is weakest here — the likelihood."
   },
   {
     "id": "wg-07",
@@ -1284,7 +1284,7 @@
       "Point out that you named a weighing standard first"
     ],
     "correctAnswer": "Introduce timeframe or reversibility to break the tie",
-    "explanation": "When magnitude and probability tie, a different axis (timeframe, reversibility) breaks the tie. Re-arguing a dimension the impacts are already tied on, or having named a standard first, gives the judge no reason to prefer either impact."
+    "explanation": "A rule only decides where the two impacts come out differently under it. With size and likelihood level, the work is to look for a difference somewhere else — timeframe and reversibility are the usual next places, and they settle it only if these impacts really do differ there. Re-arguing a dimension already tied, or having named a standard first, gives the judge no reason to prefer either impact; announcing a tie just hands the choice back to them."
   },
   {
     "id": "wg-10",
@@ -1356,13 +1356,13 @@
     "area": "weighing",
     "question": "A speaker says: \"Our impact is enormous — millions of people lose access to clean water.\" By itself this is:",
     "choices": [
-      "An impact claim, not yet weighing, because nothing is compared to the other side",
+      "Not weighing, because nothing is compared to the other side's impact",
       "Weighing, because stating how many people are affected is what a magnitude comparison does",
       "Weighing, because the word 'enormous' compares this harm to an ordinary one",
       "Not weighing, because the sentence never names a weighing dimension"
     ],
-    "correctAnswer": "An impact claim, not yet weighing, because nothing is compared to the other side",
-    "explanation": "Describing your own impact, however large, only puts it on the table. Weighing begins at the comparison — a reason this impact should matter more than the one still standing across the flow."
+    "correctAnswer": "Not weighing, because nothing is compared to the other side's impact",
+    "explanation": "Describing your own impact, however large, only puts it on the table — this sentence is an impact claim, not a comparison. Weighing begins where you give a reason this impact should matter more than the one still standing across the flow. The failure is not that no dimension is named: a comparison can separate two harms without using a lens word at all. Counting the people a harm reaches, or calling it enormous, describes it rather than measuring it against anything."
   },
   {
     "id": "wg-16",
@@ -1486,13 +1486,13 @@
     "area": "weighing",
     "question": "A team argues \"prefer magnitude\", but both impacts affect a similar number of people with similar severity. Their weighing:",
     "choices": [
-      "Names a dimension that does not separate the two impacts, so it decides nothing",
-      "Wins, because they were first to name a standard and no one offered another",
+      "Fails, because the dimension it names does not separate the two impacts",
+      "Wins, because they were first to name a standard",
       "Fails, because magnitude is the weakest of the four dimensions to argue",
       "Succeeds, because the judge has only the one standard to work from"
     ],
-    "correctAnswer": "Names a dimension that does not separate the two impacts, so it decides nothing",
-    "explanation": "A standard only helps if the impacts actually differ on it. Here it returns a tie, so the next move is finding a dimension on which the two genuinely come apart — being first to name one does not resolve a clash."
+    "correctAnswer": "Fails, because the dimension it names does not separate the two impacts",
+    "explanation": "A standard only helps if the impacts actually differ on it. Here it returns a tie, so the next move is finding a dimension on which the two genuinely come apart. Magnitude is not the weak dimension — size decides plenty of rounds; the fault is that this round has made it level. And being first to name a standard, or being the only side to name one, does not resolve a clash that standard cannot settle."
   },
   {
     "id": "wg-26",
@@ -1525,12 +1525,12 @@
     "area": "weighing",
     "question": "A student says: \"Their harm takes a decade and might not happen; ours is already hitting families this year.\" They never say magnitude, probability or timeframe. This is:",
     "choices": [
-      "Weighing — it compares both impacts and gives a reason one should control",
+      "Weighing, because it compares both impacts and gives a reason one should control",
       "Not weighing, because the student never names magnitude, probability or timeframe",
-      "Not weighing, because the student never uses the word 'outweighs' about the comparison",
+      "Not weighing, since the word 'outweighs' is missing from what the student said",
       "Weighing only if the judge already knows the four categories well enough to supply them"
     ],
-    "correctAnswer": "Weighing — it compares both impacts and gives a reason one should control",
+    "correctAnswer": "Weighing, because it compares both impacts and gives a reason one should control",
     "explanation": "The four categories are ways of analysing a comparison, not words a speaker has to say. What makes this weighing is that both impacts are set against each other with a reason attached."
   },
   {

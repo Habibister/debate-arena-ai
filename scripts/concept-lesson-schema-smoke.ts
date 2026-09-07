@@ -251,7 +251,12 @@ function main() {
     // teaching structures. Sections were refused (the readability fix was paragraph breaks inside the
     // existing explanation) and frames were refused (a phrase bank would teach the lesson's own rule
     // backwards). If a later change gives it sections or frames, that is a decision to record here.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics"],
+    // Constructive repaired 2026-09-07 (perfection audit): a revisionLadder and a case-planning
+    // scaffoldedTry, and nothing else. Sections were refused — the audit found the 1,027-word
+    // explanation sound and adding headings would have been quota, not teaching — and frames were
+    // refused because this lesson's productive problem is speech architecture, not sentence openings.
+    // It is the first entry to author a ladder without sections.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.

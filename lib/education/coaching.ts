@@ -1098,6 +1098,121 @@ export function evaluateSignpostingScaffold(
  */
 const SIGNPOSTING_EXPECTED: SignpostLevelTerm = "inner claim";
 
+/**
+ * CONSTRUCTIVE SPEECH — planning scaffold. Three contentions are handed to the learner already
+ * argued; none of the arguing is theirs. They put the three in an order the speech can be argued
+ * in, name the contention the fees come out of, and write the sentence they would close on.
+ *
+ * WHAT IS PROVEN AND WHAT IS NOT. The order and the fee source are CLOSED-VOCABULARY: the whole
+ * normalised answer must equal one authored string, so a wrong arrangement or a wrong contention is
+ * a real failure rather than a guess about meaning. The closing sentence is FORM ONLY — present,
+ * long enough, and not built entirely out of the words the frame handed over. A comparison-word
+ * screen catches the premature-comparison mistake the lesson names, and it is a WORD CHECK, not a
+ * judgment: the same comparison in other words goes straight through. Nothing reads whether the
+ * sentence is true of this case, or about this case at all. The completion copy says all of that in
+ * the learner's own words, and says that ordering three contentions somebody else argued is not
+ * composing a speech.
+ */
+const CONSTRUCTIVE_ORDER = "hours clubs upkeep";
+const CONSTRUCTIVE_CONTENTIONS = new Set(["hours", "clubs", "upkeep"]);
+/** Carries no meaning in an ordering answer. Contention names are never dropped. */
+const CONSTRUCTIVE_ORDER_FILLER = new Set([
+  "the", "a", "an", "this", "my", "is", "order", "i", "would", "take", "them", "in", "then", "and",
+  "next", "first", "second", "third", "finally", "lastly", "start", "starting", "begin", "beginning",
+  "open", "opening", "with", "1", "2", "3", "1st", "2nd", "3rd", "contention", "contentions"
+]);
+/** The words the frame and the stem hand over. A close made only of these says nothing of its own. */
+const CONSTRUCTIVE_FRAME_WORDS = new Set([
+  "hours", "clubs", "upkeep",
+  "case", "cases", "contention", "contentions", "argument", "arguments",
+  "establish", "establishes", "established", "show", "shows", "shown",
+  "together", "taken", "judge", "side", "sides", "speech", "close", "closing", "sentence",
+  "we", "our", "us", "my", "i", "would", "have", "has", "that", "this", "it", "and",
+  "the", "a", "an", "is", "are", "of", "to", "in", "on", "for", "what", "which"
+]);
+/** The premature comparison the lesson rules out of a first constructive. A word check, not a judgment. */
+const CONSTRUCTIVE_COMPARISONS = [
+  "outweigh", "outweighs", "outweighed", "outweighing", "beats", "stronger than", "better than",
+  "no response", "nothing the other side", "already won", "we win", "cannot be answered", "unanswerable"
+];
+
+const constructiveOrderTokens = (text: string) =>
+  canonical(text).split(" ").filter((word) => word && !CONSTRUCTIVE_ORDER_FILLER.has(word));
+
+export function evaluateConstructiveScaffold(
+  slots: { order: string; feeSource: string; close: string }
+): ScaffoldEvaluation {
+  const ordered = constructiveOrderTokens(slots.order);
+  if (ordered.length === 0 || ordered.some((word) => !CONSTRUCTIVE_CONTENTIONS.has(word))) {
+    return {
+      complete: false,
+      slot: "the order",
+      coach: "This blank takes the three contention names in the order you would speak them, and nothing else: HOURS, CLUBS and UPKEEP. Give the order here and keep the reasons for the blank underneath.",
+      retryRequired: true
+    };
+  }
+  if (ordered.join(" ") !== CONSTRUCTIVE_ORDER) {
+    // One message for every wrong arrangement: naming which way it was wrong would leave one order
+    // standing out of six. The coaching re-runs the lesson's own rule instead.
+    return {
+      complete: false,
+      slot: "the order",
+      coach: "Not that order. Read each contention again and ask what it says it needs: a contention that another one rests on has to come before it, and the order they were drafted in is not evidence of anything.",
+      retryRequired: true
+    };
+  }
+  const source = canonical(slots.feeSource).split(" ")
+    .filter((word) => word && !["the", "a", "an", "contention", "contentions"].includes(word));
+  if (source.length !== 1 || !CONSTRUCTIVE_CONTENTIONS.has(source[0])) {
+    return {
+      complete: false,
+      slot: "the contention the fees are paid out of",
+      coach: "Name one contention here, on its own. The fees UPKEEP counts are paid by somebody, and one of the other two contentions is where the speech argues who they are.",
+      retryRequired: true
+    };
+  }
+  if (source[0] !== "clubs") {
+    return {
+      complete: false,
+      slot: "the contention the fees are paid out of",
+      coach: "Not that one. Follow the money: UPKEEP counts hire fees, so ask which contention argues for the people who would be paying them.",
+      retryRequired: true
+    };
+  }
+  const closeWords = slots.close.trim().split(/\s+/).filter(Boolean);
+  if (closeWords.length < 8) {
+    return {
+      complete: false,
+      slot: "the sentence you would close on",
+      coach: "Write the sentence you would actually say. It states what the three contentions establish between them, so it takes a sentence rather than a phrase.",
+      retryRequired: true
+    };
+  }
+  if (canonical(slots.close).split(" ").filter((word) => word && !CONSTRUCTIVE_FRAME_WORDS.has(word)).length < 2) {
+    return {
+      complete: false,
+      slot: "the sentence you would close on",
+      coach: "Take out the words the frame handed you and almost nothing is left, so nothing here says what this case establishes. Say what the three contentions show about the halls in your own words.",
+      retryRequired: true
+    };
+  }
+  const normalisedClose = canonical(slots.close);
+  if (CONSTRUCTIVE_COMPARISONS.some((phrase) => normalisedClose.includes(phrase))) {
+    return {
+      complete: false,
+      slot: "the sentence you would close on",
+      coach: "That close measures this case against one nobody has made yet. The round has had no comparison in it; say what your own three contentions establish instead of what they beat.",
+      retryRequired: true
+    };
+  }
+  return {
+    complete: true,
+    coach: "",
+    exactCheck: "The order is right: HOURS, then CLUBS, then UPKEEP — though that was one arrangement of three names you were handed, matched against a list of the ways of writing it that this exercise accepts, and nothing here asked you why it is the one the speech can be argued in. Naming CLUBS was the same kind of check, your whole answer matched against the three contention names, so that one could have come out wrong outright too. Your closing sentence was not checked that way. It was checked for shape only: that it is there, that it runs to a sentence, and that something is left of it once the words the frame handed you — \"case\", \"contentions\", \"establish\" and the like — are taken out. It was also screened against a short list of comparison words, \"outweighs\" and \"stronger than\" among them, and that is a word check rather than a judgment: the same comparison in different words would have gone straight through. Nothing read what your sentence says. A close about an entirely different case would have passed here, and so would one claiming this case beats an opponent who has not spoken. And putting three contentions somebody else argued into an order is not composing a speech: nothing here showed that you can develop one, or deliver it.",
+    retryRequired: false
+  };
+}
+
 export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
   "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
   "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context),
@@ -1108,7 +1223,9 @@ export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly stri
   "debate-turn-mechanics": (v) =>
     evaluateTurnMechanicsScaffold({ changes: v[0] ?? "", becomesTrue: v[1] ?? "", move: v[2] ?? "" }, TURN_MECHANICS_EXPECTED),
   "debate-signposting": (v) =>
-    evaluateSignpostingScaffold({ level: v[0] ?? "", signpost: v[1] ?? "" }, SIGNPOSTING_EXPECTED)
+    evaluateSignpostingScaffold({ level: v[0] ?? "", signpost: v[1] ?? "" }, SIGNPOSTING_EXPECTED),
+  "debate-constructive-speeches": (v) =>
+    evaluateConstructiveScaffold({ order: v[0] ?? "", feeSource: v[1] ?? "", close: v[2] ?? "" })
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

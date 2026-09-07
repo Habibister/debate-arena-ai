@@ -506,8 +506,8 @@ function main() {
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
     assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 7,
-      "seven lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, Turn Mechanics' move scenario, and Signposting's level-and-label scenario");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 8,
+      "eight lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, Turn Mechanics' move scenario, Signposting's level-and-label scenario, and Constructive's case-planning scenario");
   });
 
   // ================================================================================================

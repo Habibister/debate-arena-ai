@@ -1291,12 +1291,12 @@
     "area": "weighing",
     "question": "By the final speech your opponents' only impact has been conceded away, and yours still stands. Weighing here:",
     "choices": [
-      "Is not the missing task — with only one surviving impact there is nothing to compare it against",
+      "Is not the missing task, because with only one surviving impact there is nothing to compare it against",
       "Is still required, because a final speech must always contain explicit weighing",
       "Is impossible, so the judge has no way to decide the round",
       "Would be stronger if you named a weighing category out loud"
     ],
-    "correctAnswer": "Is not the missing task — with only one surviving impact there is nothing to compare it against",
+    "correctAnswer": "Is not the missing task, because with only one surviving impact there is nothing to compare it against",
     "explanation": "Weighing compares two surviving impacts. When only one is left the work is showing the judge that it stands, not ranking it against something no longer in the round. That is a fact about this round, not a claim that weighing is generally optional."
   },
   {
@@ -1304,12 +1304,12 @@
     "area": "weighing",
     "question": "Both teams end the round with a real impact standing, and neither team ever says why theirs should matter more. For the judge, this is:",
     "choices": [
-      "Exactly the situation weighing exists to resolve — otherwise the judge supplies the comparison",
+      "Exactly the situation weighing exists to resolve, because otherwise the judge supplies the comparison",
       "A tie the judge has to break alone, and there is nothing either team could have done about it",
       "Resolved by whichever impact was described in more detail, since detail is the judge's only guide here",
       "A sign that neither team made a complete argument, because an impact without a comparison is unfinished"
     ],
-    "correctAnswer": "Exactly the situation weighing exists to resolve — otherwise the judge supplies the comparison",
+    "correctAnswer": "Exactly the situation weighing exists to resolve, because otherwise the judge supplies the comparison",
     "explanation": "Two unweighed impacts pass in the night. When both survive and neither side compares them, the judge picks the comparison — and it may not be the one you wanted. Detail is not comparison, and both arguments here are complete."
   },
   {
@@ -1408,12 +1408,12 @@
     "area": "weighing",
     "question": "Your harm is a modest cost increase next month. Theirs is a severe housing shortage in six years. Arguing \"ours comes first, so ours wins\" is:",
     "choices": [
-      "Incomplete — timeframe alone does not settle it when the later harm is far more severe",
+      "Incomplete, because timeframe alone does not settle it when the later harm is far more severe",
       "Correct, because an impact that arrives sooner always outweighs a later one",
       "Wrong, because later harms always outweigh sooner ones",
       "Correct, because six years is too distant to count"
     ],
-    "correctAnswer": "Incomplete — timeframe alone does not settle it when the later harm is far more severe",
+    "correctAnswer": "Incomplete, because timeframe alone does not settle it when the later harm is far more severe",
     "explanation": "Timeframe is a real comparison, but it is one axis among several. When the delayed harm is much larger, the judge still needs a reason arriving first should control — or the comparison should be made on a dimension that actually separates them."
   },
   {
@@ -1512,12 +1512,12 @@
     "area": "weighing",
     "question": "A speaker says: \"Even if their trade benefit happens exactly as described, it arrives after the shortage we prevent.\" This is:",
     "choices": [
-      "One useful comparative move — granting their impact and then comparing it to yours",
+      "One useful comparative move that grants their impact and then compares it to yours",
       "The required form, since a comparison only lands once you grant their impact",
       "A concession that gives up the argument by accepting their impact",
       "Usable only in the final speech, once both impacts are on the table"
     ],
-    "correctAnswer": "One useful comparative move — granting their impact and then comparing it to yours",
+    "correctAnswer": "One useful comparative move that grants their impact and then compares it to yours",
     "explanation": "Granting the point and comparing anyway is a clean way to weigh, because the comparison holds even on their best case. It is one option among several, not a phrase a speaker is required to use."
   },
   {
@@ -1538,12 +1538,12 @@
     "area": "weighing",
     "question": "Your opponents establish early that the judge should prefer the more probable impact, and no one contests it. When you later compare impacts, you should:",
     "choices": [
-      "Engage that standard — either meet it or explain why a different one fits this clash better",
+      "Engage that standard and either meet it or explain why a different one fits this clash better",
       "Ignore it, because a standard binds only the side that chose to state it",
       "Compare the impacts on whichever dimension favours you and leave theirs alone",
       "Concede the round, because a standard that nobody contested has already decided it"
     ],
-    "correctAnswer": "Engage that standard — either meet it or explain why a different one fits this clash better",
+    "correctAnswer": "Engage that standard and either meet it or explain why a different one fits this clash better",
     "explanation": "An uncontested standard is the one the judge is holding when your comparison arrives. Comparing as though it were never stated leaves the judge to apply it to your impact anyway, usually less favourably than you would have."
   },
   {

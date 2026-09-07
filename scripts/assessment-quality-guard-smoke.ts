@@ -6,7 +6,7 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { computeBankReport, evaluateBank, banksUnderGuard, MCQ_GUARD_WAIVERS, referencesOptionByPosition, type GuardItem } from "./assessment-quality-guard";
+import { computeBankReport, evaluateBank, banksUnderGuard, MCQ_GUARD_WAIVERS, referencesOptionByPosition, corpusIntegrityFindings, guardedCorpus, rationaleLengthOutliers, DUP_RATIONALE_FLOOR, LEN_ANOM_RATIO, type GuardItem, type CorpusItem } from "./assessment-quality-guard";
 import { DRILL_BANK, DEBATE_DRILL_HELD_IDS } from "../lib/debate-drills";
 import { DECA_DRILL_BANK } from "../lib/deca-drills";
 
@@ -278,6 +278,112 @@ async function run() {
     const posRef = evaluateBank(computeBankReport(bank, items), config).filter((v) => v.metric === "POS_REF");
     assert.equal(posRef.length, 0, `W0e. ${bank} has no positional rationale at all — nothing waived, nothing left`);
   }
+  // ---- Block CI: CORPUS INTEGRITY -------------------------------------------------------------
+  // The defect this exists for: a bulk rationale rewrite left a literal `<<<END>>` delimiter plus
+  // the WHOLE of another item's rationale appended to sp-18 and sp-22 — sp-22's borrowed block came
+  // from wg-26, a different bank. Both were served to learners verbatim. The freeze did not cover
+  // them (review debt), the form metrics do not read rationales, and the change passed a byte-count
+  // check that confirmed exactly the expected rationales had changed. Every control below both
+  // demonstrates the failure it catches and pins the narrowness the owner required.
+  {
+    const corpus = guardedCorpus();
+    assert.ok(corpus.length > 400, "CI-0. the corpus loads every bank");
+    assert.deepEqual(corpusIntegrityFindings(corpus), [],
+      "CI-0b. HEAD is clean: no edit delimiter, no foreign id, no contained rationale, held items included");
+    // Held items really are in scope — a contaminated held item would otherwise enter the freeze unseen.
+    assert.ok(corpus.some((q) => DEBATE_DRILL_HELD_IDS.includes(q.id)),
+      "CI-0c. held items are part of the integrity corpus even though the form metrics exclude them");
+
+    const withRationale = (id: string, explanation: string): CorpusItem[] =>
+      corpus.map((q) => (q.id === id ? { ...q, explanation } : q));
+    const kinds = (items: CorpusItem[], id: string) =>
+      corpusIntegrityFindings(items).filter((f) => f.id === id).map((f) => f.kind).sort();
+    const base = (id: string) => corpus.find((q) => q.id === id)!;
+
+    // 1. The delimiter alone.
+    assert.deepEqual(kinds(withRationale("sp-01", `${base("sp-01").explanation} <<<END>> <<<sp-28>>>`), "sp-01"),
+      ["EDIT_ARTIFACT", "FOREIGN_ID"],
+      "CI-1. an edit delimiter plus a foreign id marker are both caught");
+    assert.deepEqual(kinds(withRationale("sp-01", `${base("sp-01").explanation} >>>`), "sp-01"), ["EDIT_ARTIFACT"],
+      "CI-1b. the delimiter alone is enough");
+
+    // 2. The exact historical defect, reconstructed — within a bank and across two banks.
+    const sp18 = withRationale("sp-18", `${base("sp-18").explanation} ${base("sp-28").explanation}`);
+    const f18 = corpusIntegrityFindings(sp18).filter((f) => f.id === "sp-18");
+    assert.deepEqual(f18.map((f) => f.kind), ["DUP_RATIONALE"], "CI-2. sp-18 carrying sp-28's whole rationale is caught");
+    assert.ok(f18[0].detail.includes("sp-28"), "CI-2b. and the finding names the item it was taken from");
+    const sp22 = withRationale("sp-22", `${base("sp-22").explanation} ${base("wg-26").explanation}`);
+    const f22 = corpusIntegrityFindings(sp22).filter((f) => f.id === "sp-22");
+    assert.deepEqual(f22.map((f) => f.kind), ["DUP_RATIONALE"], "CI-3. the CROSS-BANK case is caught too");
+    assert.ok(f22[0].detail.includes("wg-26") && f22[0].detail.includes("debate:weighing"),
+      "CI-3b. and it names the source item and its bank — a per-bank scan would have missed this one");
+
+    // 3. NARROWNESS. The owner's rule: catch authoring artifacts, never ordinary prose.
+    const INNOCENT = "That is how a well-reasoned answer gets lost. In the first round safety is the heading; a one-to-one swap of the K-12 figure changes nothing, and item sp-99 does not exist.";
+    assert.deepEqual(corpusIntegrityFindings(withRationale("sp-01", INNOCENT)).filter((f) => f.id === "sp-01"), [],
+      "CI-4. ordinals, hyphenated phrases and an id-SHAPED token that is not a real id all pass clean");
+    assert.ok(/sp-99/.test(INNOCENT) && !corpus.some((q) => q.id === "sp-99"),
+      "CI-4b. non-vacuity: that control really did contain an id-shaped token, and it really is not an id");
+
+    // 4. The duplicate floor exempts boilerplate and catches a real block.
+    const SHORT = "That is the best answer.";
+    assert.ok(SHORT.length < DUP_RATIONALE_FLOOR, "CI-5. boilerplate sits under the floor");
+    const boiler = corpus.map((q) => (q.id === "sp-01" || q.id === "sp-03" ? { ...q, explanation: SHORT } : q));
+    assert.deepEqual(corpusIntegrityFindings(boiler).filter((f) => f.kind === "DUP_RATIONALE"), [],
+      "CI-5b. two items sharing short boilerplate produce NO duplicate finding");
+    const LONG_SHARED = "A label decides where an answer is recorded, and it decides nothing at all about whether that answer was any good when it got there.";
+    assert.ok(LONG_SHARED.length >= DUP_RATIONALE_FLOOR, "CI-5c. and a real rationale sits above it");
+    const shared = corpus.map((q) => (q.id === "sp-01" || q.id === "sp-03" ? { ...q, explanation: LONG_SHARED } : q));
+    assert.equal(corpusIntegrityFindings(shared).filter((f) => f.kind === "DUP_RATIONALE").length, 2,
+      "CI-5d. while two items sharing a full-length rationale are both flagged");
+
+    // 5. Held items are governed: contamination inside a quarantined item still fails.
+    assert.deepEqual(kinds(withRationale("sp-24", `${base("sp-24").explanation} <<<END>>`), "sp-24"), ["EDIT_ARTIFACT"],
+      "CI-6. a held item's bytes are checked — freezing a contaminated quarantined item is what this prevents");
+  }
+
+  // ---- Block LA: LEN_ANOM is a tripwire, never a verdict ---------------------------------------
+  {
+    const sp = DRILL_BANK.filter((q) => q.area === "signposting") as GuardItem[];
+    assert.deepEqual(rationaleLengthOutliers(sp), [],
+      "LA-1. with the contamination removed, no signposting rationale reaches the anomaly ratio");
+    const contaminated = sp.map((q) => (q.id === "sp-18"
+      ? { ...q, explanation: `${q.explanation} ${sp.find((x) => x.id === "sp-28")!.explanation}` }
+      : q));
+    // LA-2 IS A MEASURED MISS, ASSERTED ON PURPOSE. This reconstructs the exact historical
+    // contamination against the CURRENT bank. The repair that followed the discovery lengthened
+    // several signposting rationales, so the bank median rose and the same paste now lands just
+    // under the line: the tripwire would NOT catch it today. Asserted rather than tuned away,
+    // because the honest claim is that DUP_RATIONALE (Block CI) catches this class deterministically
+    // and LEN_ANOM only ever hinted at it.
+    assert.deepEqual(rationaleLengthOutliers(contaminated).map((f) => f.id), [],
+      "LA-2. the real historical paste no longer reaches the ratio at the repaired bank's median — length is a hint, not a detector");
+    {
+      const corpus = guardedCorpus();
+      const sp28 = corpus.find((x) => x.id === "sp-28")!.explanation;
+      const pasted = corpus.map((q) => (q.id === "sp-18" ? { ...q, explanation: `${q.explanation} ${sp28}` } : q));
+      assert.equal(corpusIntegrityFindings(pasted).filter((f) => f.id === "sp-18" && f.kind === "DUP_RATIONALE").length, 1,
+        "LA-2b. and DUP_RATIONALE catches that same paste with no reference to length — that is the check doing the work");
+    }
+    // NON-VACUITY: a paste large enough relative to the median IS still surfaced, so the metric is live.
+    // Sized FROM the measured median rather than from two named items: rationale lengths move every
+    // time the bank is edited, and a control pinned to one pair goes stale silently — which it did,
+    // twice, during the repair that produced this suite.
+    const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+    const sorted = sp.map((q) => norm(q.explanation ?? "").length).sort((a, b) => a - b);
+    const bankMedian = sorted.length % 2 ? sorted[sorted.length >> 1] : (sorted[(sorted.length >> 1) - 1] + sorted[sorted.length >> 1]) / 2;
+    const shortest = sp.reduce((a, b) => (norm(a.explanation ?? "").length <= norm(b.explanation ?? "").length ? a : b));
+    const filler = ` ${"x".repeat(Math.ceil(bankMedian * 2.2))}`;
+    const bigPaste = sp.map((q) => (q.id === shortest.id ? { ...q, explanation: `${q.explanation}${filler}` } : q));
+    const flagged = rationaleLengthOutliers(bigPaste);
+    assert.deepEqual(flagged.map((f) => f.id), [shortest.id], "LA-2c. a paste sized from the bank's own median is still surfaced");
+    assert.ok(flagged[0].ratio >= LEN_ANOM_RATIO, "LA-2d. at or above the declared ratio");
+    // DIAGNOSTIC ONLY: length never becomes a verdict, because a long rationale is often correct.
+    const verdicts = evaluateBank(computeBankReport("debate:signposting", contaminated), CONFIG);
+    assert.equal(verdicts.filter((v) => v.metric === "LEN_ANOM").length, 0,
+      "LA-3. LEN_ANOM produces no verdict at all — it is printed as a diagnostic and never fails a bank");
+  }
+
   const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts?: Record<string, string> };
   const scripts = pkg.scripts ?? {};
   assert.equal(scripts["assessment:quality"], "tsx scripts/assessment-quality-guard.ts", "W1. manual guard alias exists");
@@ -294,7 +400,13 @@ async function run() {
       "and length-matched semantic jokes (Q8/Q10) produce zero static failures — asserted deliberately, because the guard proves " +
       "a negative about FORM only and the content-review gate (human review or a recorded owner waiver) remains separate and mandatory. " +
       "Every enforced live bank passes at HEAD, both controls remain unexploitable, POS_REF closes the Debate shuffled-rationale class with the six DECA items waived loudly rather than silently, and the only " +
-      "package.json reference is the manual assessment:quality alias with no lifecycle hook."
+      "package.json reference is the manual assessment:quality alias with no lifecycle hook. CORPUS INTEGRITY " +
+      "(Block CI) closes the class a byte-count check blessed: an edit delimiter, a foreign item id, and another item's " +
+      "COMPLETE rationale contained in this one are each caught across every bank at once, held items included, with the " +
+      "real historical defect reconstructed in both its within-bank (sp-18/sp-28) and cross-bank (sp-22/wg-26) forms; " +
+      "narrowness is pinned in both directions, so ordinals, hyphenated phrases, an id-shaped token that is not a real id " +
+      "and short shared boilerplate all stay clean while a full-length shared rationale does not; and LEN_ANOM (Block LA) " +
+      "is measured honestly: the real historical paste no longer reaches the ratio at the repaired bank's median, asserted rather than tuned away, while DUP_RATIONALE catches that same paste regardless and a larger paste still trips the tripwire — and LEN_ANOM is asserted to produce NO verdict either way, because a long rationale is often right."
   );
 }
 

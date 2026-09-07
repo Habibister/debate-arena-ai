@@ -58,6 +58,101 @@ export function referencesOptionByPosition(explanation: string | undefined): boo
   return POSITIONAL_VERB.test(explanation) || POSITIONAL_NOUN.test(explanation);
 }
 
+/**
+ * CORPUS INTEGRITY — authoring-artifact contamination, checked ACROSS banks.
+ *
+ * WHY THIS EXISTS. The Signposting integration repair rewrote 23 rationales in one bulk edit, and
+ * its splitter failed to cut two block boundaries. sp-18 shipped carrying a literal `<<<END>>`
+ * delimiter plus the WHOLE of sp-28's rationale; sp-22 carried the whole of wg-26's — a frozen
+ * WEIGHING item, so the damage crossed banks. Both were learner-facing: the drill session route
+ * snapshots `question.explanation` verbatim (app/api/debate/drills/session/route.ts) and serves it
+ * back after the answer, so a learner answering sp-18 was handed sp-28's key by content, and the
+ * two items co-serve in roughly one focused session in seven.
+ *
+ * NOTHING CAUGHT IT. The content freeze covers only baselined ids and both were review debt. The
+ * per-bank form metrics measure choices, not rationales. And the change was verified by counting
+ * that exactly the expected rationales had changed — which was true, and useless: a byte count
+ * cannot read. Hence three checks that a machine CAN do, over every bank at once.
+ *
+ *   EDIT_ARTIFACT   a delimiter only an editing tool writes (`<<<`, `>>>`)
+ *   FOREIGN_ID      the literal id of another item in this corpus, inside a rationale
+ *   DUP_RATIONALE   another item's COMPLETE rationale contained inside this one
+ *
+ * Deliberately narrow, per the authoring standard. FOREIGN_ID matches only ids that ACTUALLY EXIST
+ * in the loaded corpus, so it cannot fire on an ordinary hyphenated phrase or an ordinal.
+ * DUP_RATIONALE carries a length floor so it cannot fire on short shared boilerplate; containment
+ * rather than equality is the rule, because what actually happened was a whole block APPENDED to a
+ * legitimate rationale. Measured at the floor below: 0 findings across all 487 items, 28 of which
+ * sit under the floor and are exempt.
+ *
+ * HELD items are INCLUDED here, unlike the per-bank form metrics. A held rationale never renders,
+ * so it cannot mislead a learner — but its bytes are still governed, and a contaminated held item
+ * would otherwise enter the content freeze unseen and be released later carrying the artifact.
+ */
+const EDIT_ARTIFACT = /<<<|>>>/;
+const ID_TOKEN = /\b[a-z]{2,3}-\d{1,3}\b/g;
+/** Below this, a shared rationale is boilerplate, not a pasted block. */
+export const DUP_RATIONALE_FLOOR = 80;
+
+export type CorpusItem = GuardItem & { bank: string };
+export type CorpusFinding = { kind: "EDIT_ARTIFACT" | "FOREIGN_ID" | "DUP_RATIONALE"; bank: string; id: string; detail: string };
+
+export function corpusIntegrityFindings(items: ReadonlyArray<CorpusItem>): CorpusFinding[] {
+  const out: CorpusFinding[] = [];
+  const ids = new Set(items.map((q) => q.id));
+  const normalized = items.map((q) => ({ item: q, text: norm(q.explanation ?? "") }));
+  for (const { item, text } of normalized) {
+    if (!text) continue;
+    if (EDIT_ARTIFACT.test(text)) {
+      out.push({ kind: "EDIT_ARTIFACT", bank: item.bank, id: item.id, detail: "rationale contains an edit-block delimiter (<<< or >>>)" });
+    }
+    for (const token of text.match(ID_TOKEN) ?? []) {
+      if (ids.has(token) && token !== item.id) {
+        out.push({ kind: "FOREIGN_ID", bank: item.bank, id: item.id, detail: `rationale names another item's id (${token})` });
+      }
+    }
+    for (const other of normalized) {
+      if (other.item.id === item.id) continue;
+      if (other.text.length >= DUP_RATIONALE_FLOOR && text.includes(other.text)) {
+        out.push({ kind: "DUP_RATIONALE", bank: item.bank, id: item.id, detail: `rationale contains the complete rationale of ${other.item.id} (${other.item.bank})` });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * LEN_ANOM — a cheap tripwire, DIAGNOSTIC ONLY, never a correctness verdict, and WEAK. Read this
+ * before trusting it.
+ *
+ * It exists for the variant DUP_RATIONALE cannot see: a paste of a FRAGMENT rather than a whole
+ * rationale. At the moment of the contamination the two damaged items were their bank's only
+ * rationales at 2.0x the bank median. But the repair that followed lengthened several signposting
+ * rationales, the bank median moved 567 -> 628 characters, and the SAME historical paste now
+ * measures 1.95x — under the line. A ratio against a moving median is not a detector; it is a hint
+ * whose sensitivity depends on the bank it is measured in. The check that actually catches this
+ * class deterministically is DUP_RATIONALE, and the guard smoke asserts both facts, including the
+ * miss, so nobody later mistakes this line for coverage.
+ *
+ * The threshold is deliberately NOT lowered to make the historical case trip: tuning a heuristic
+ * until it passes its own motivating example is how a metric stops measuring anything. A long
+ * rationale is often legitimate — at the time of writing this flags rb-07, ev-19, wg-26, cl-08,
+ * cl-10, cl-11, pi-28, pi-30, br-16 and ph-20, every one of which is long and correct. Do not
+ * repair an item because it appears here; read it.
+ */
+export const LEN_ANOM_RATIO = 2;
+
+export function rationaleLengthOutliers(items: ReadonlyArray<GuardItem>): Array<{ id: string; ratio: number }> {
+  const lens = items.map((q) => norm(q.explanation ?? "").length).filter((l) => l > 0);
+  if (lens.length < 5) return [];
+  const m = median(lens);
+  if (m <= 0) return [];
+  return items
+    .map((q) => ({ id: q.id, ratio: norm(q.explanation ?? "").length / m }))
+    .filter((r) => r.ratio >= LEN_ANOM_RATIO)
+    .sort((a, b) => b.ratio - a.ratio);
+}
+
 export type BankReport = {
   bank: string;
   n: number;
@@ -290,6 +385,19 @@ export function banksUnderGuard(): Array<{ bank: string; items: GuardItem[]; con
   return out;
 }
 
+/**
+ * Every item in every bank, HELD ITEMS INCLUDED, labelled with its bank. This is the input to the
+ * corpus-integrity checks: contamination crosses bank boundaries (sp-22 carried a WEIGHING item's
+ * rationale), so a per-bank scan would have missed half of the defect that motivated it.
+ */
+export function guardedCorpus(): CorpusItem[] {
+  const out: CorpusItem[] = [];
+  for (const a of DRILL_AREAS) for (const q of DRILL_BANK.filter((x) => x.area === a.id)) out.push({ ...q, bank: `debate:${a.id}` });
+  for (const a of DECA_DRILL_AREAS) for (const q of DECA_DRILL_BANK.filter((x) => x.area === a.id)) out.push({ ...q, bank: `deca:${a.id}` });
+  for (const a of MEDTERM_AREAS) for (const q of MEDTERM_BANK.filter((x) => x.area === a.id)) out.push({ ...q, bank: `hosa:${a.id}` });
+  return out;
+}
+
 export function main(): number {
   let hardFails = 0;
   console.log("Assessment-bank quality guard — deterministic answer-form audit (no DB, no env, no provider)");
@@ -310,6 +418,20 @@ export function main(): number {
       console.log(`      ${v.level}${v.waived ? " (waived)" : ""} ${v.metric}: ${v.detail}`);
       if (v.level === "FAIL" && !v.waived && config.enforced) hardFails += 1;
     }
+    const outliers = rationaleLengthOutliers(items);
+    if (outliers.length > 0) {
+      console.log(`      DIAGNOSTIC LEN_ANOM: ${outliers.map((o) => `${o.id} ${o.ratio.toFixed(2)}x`).join(", ")} (long is not wrong — read them, do not repair on this signal)`);
+    }
+  }
+
+  // CORPUS INTEGRITY — authoring artifacts, across every bank at once, held items included.
+  const findings = corpusIntegrityFindings(guardedCorpus());
+  if (findings.length === 0) {
+    console.log("\n  corpus integrity: no edit-block delimiter, no foreign item id, and no item's rationale contained in another (all banks, held items included)");
+  } else {
+    console.error("\n  CORPUS INTEGRITY FAILURES — an authoring artifact reached learner-facing content:");
+    for (const f of findings) console.error(`      FAIL ${f.kind} ${f.bank} / ${f.id}: ${f.detail}`);
+    hardFails += findings.length;
   }
   if (hardFails > 0) {
     console.error(`\n${hardFails} hard failure(s) in enforced banks. This guard proves a negative about FORM only —`);

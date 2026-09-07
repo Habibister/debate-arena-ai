@@ -28,11 +28,35 @@
  * Run manually or in CI:  npm run assessment:quality   (exit 1 on any hard fail in enforced banks)
  */
 
-import { DRILL_BANK, DRILL_AREAS } from "../lib/debate-drills";
+import { DRILL_BANK, DRILL_AREAS, DEBATE_DRILL_HELD_IDS } from "../lib/debate-drills";
 import { DECA_DRILL_BANK, DECA_DRILL_AREAS } from "../lib/deca-drills";
 import { MEDTERM_BANK, MEDTERM_AREAS } from "../lib/hosa-medterm";
 
-export type GuardItem = { id: string; question: string; choices: string[]; correctAnswer: string };
+export type GuardItem = { id: string; question: string; choices: string[]; correctAnswer: string; explanation?: string };
+
+/**
+ * POSITIONAL-OPTION REFERENCE. Every drill session shuffles a question's choices before serving them
+ * (`buildServedChoices`, lib/practice-session.ts), and the authored explanation is snapshotted and
+ * shown after the answer. So a rationale that identifies an option by its AUTHORED position — "the
+ * third labels by position and by speaker" — names something the learner never saw: their third
+ * option is whatever the shuffle put there. Two Signposting items had drifted further still and
+ * described their own KEYED option as a wrong answer.
+ *
+ * Detection is deliberately narrow, because ordinals are also ordinary English in this corpus. What
+ * is flagged is an ordinal STANDING IN for an option: followed by a verb (the option does something)
+ * or by an option noun. What is NOT flagged is a semantic ordinal followed by its own noun — "the
+ * first link", "the second contention", "the first 90 days", "it repairs the first dependency" — all
+ * of which appear in this bank and are correct. "answer" is deliberately NOT an option noun: in a
+ * Debate rationale "the first answer" is usually the speaker's own first answer, not an option. Validated against the whole Debate corpus: it flags
+ * every known positional rationale and none of the semantic ones.
+ */
+const POSITIONAL_VERB = /\b[Tt]he (?:first|second|third|fourth)(?: and (?:second|third|fourth))?\s+(?:also |only |then |simply |actively |correctly |merely |still |never |already )?(?:names|gives|states|labels|treats|invents|lets|overstates|overcorrects|promises|asks|describes|questions|sets|adds|keeps|leaves|points|fails|reaches|makes|does|is|was|are|were|takes|puts|reads|answers|offers|picks|hands|swaps|assumes|predicts|accepts|walks|withdraws|concedes|shifts|blames|trails|announces|summarises|summarizes|numbers|identifies|matches|rescues|breaks|stays|sounds|works|wins|loses|comes|goes|turns|moves|counts|covers|repeats|restates|spends|saves|drops|would|will|can|could|might|may)\b/;
+const POSITIONAL_NOUN = /\b[Tt]he (?:first|second|third|fourth)(?: and (?:second|third|fourth))?\s+(?:option|options|choice|choices|reply|replies|response|responses)\b/;
+
+export function referencesOptionByPosition(explanation: string | undefined): boolean {
+  if (!explanation) return false;
+  return POSITIONAL_VERB.test(explanation) || POSITIONAL_NOUN.test(explanation);
+}
 
 export type BankReport = {
   bank: string;
@@ -48,6 +72,7 @@ export type BankReport = {
   keyCue: number;     // share of keys carrying a key-exclusive repeated word 3-gram
   lenSpread: number;  // median of (max-min)/mean choice length — anti-padding floor
   hElim: number;      // blind strategy: eliminate longest+shortest, pick randomly among the rest
+  posRef: number;     // count of items whose rationale identifies an option by its authored position
 };
 
 export type BankConfig = { enforced: boolean; servedShuffled: boolean };
@@ -56,7 +81,17 @@ export type BankConfig = { enforced: boolean; servedShuffled: boolean };
  * Committed, loud, per-bank per-metric waivers. NEVER a silent skip: every entry names its reason
  * and is printed on every run. Empty today — the repaired banks must stand on their own.
  */
-export const MCQ_GUARD_WAIVERS: ReadonlyArray<{ bank: string; metric: string; reason: string; date: string }> = [];
+export const MCQ_GUARD_WAIVERS: ReadonlyArray<{ bank: string; metric: string; reason: string; date: string }> = [
+  // POS_REF landed with the Signposting integration repair, which closed the whole DEBATE class:
+  // 23 servable Debate rationales were re-anchored to option content in the same commit. The census
+  // that produced the metric also found six DECA rationales with the same defect (br-13, br-17,
+  // cr-17, cr-18, cr-23, cr-26). They are NOT repaired here: DECA is a different curriculum whose
+  // items this milestone did not audit, and rewriting them blind is the kind of expansion the owner
+  // asked to be reported rather than absorbed. Waived LOUDLY — every run prints these — so the debt
+  // is visible and quantified instead of being rediscovered by the next audit.
+  { bank: "deca:business-reasoning", metric: "POS_REF", reason: "2 rationales name an option by authored position (br-13, br-17); DECA rationale repair is a separate, unaudited scope", date: "2026-09-06" },
+  { bank: "deca:customer-relations", metric: "POS_REF", reason: "4 rationales name an option by authored position (cr-17, cr-18, cr-23, cr-26); same scope", date: "2026-09-06" }
+];
 
 const norm = (s: string) => s.replace(/\s+/g, " ").trim();
 const words = (s: string) => norm(s).toLowerCase().split(" ").filter(Boolean);
@@ -151,6 +186,7 @@ export function computeBankReport(bank: string, items: GuardItem[]): BankReport 
     rMed: median(ratios),
     posMax, posPeriod, dupSet, keyCue,
     lenSpread: median(spreads),
+    posRef: items.filter((q) => referencesOptionByPosition(q.explanation)).length,
   };
 }
 
@@ -198,6 +234,15 @@ export function evaluateBank(report: BankReport, config: BankConfig): Verdict[] 
   if (report.keyCue >= 0.5) hard("KEY_CUE", `${(report.keyCue * 100).toFixed(1)}% of keys carry a key-exclusive repeated 3-gram`);
   else if (report.keyCue >= 0.3) add("KEY_CUE", "WARN", `${(report.keyCue * 100).toFixed(1)}% key-exclusive 3-gram share`);
 
+  // POS_REF. A shuffled bank may not identify an option by its authored position: the learner sees a
+  // different order, so the sentence points at whatever landed there. Hard-failing regardless of bank
+  // size, because this is not a statistical signal — it is a sentence that is wrong on sight, and the
+  // small-bank noise argument does not apply. Only enforced where the config says the serving layer
+  // shuffles; a bank served in authored order is unaffected.
+  if (report.posRef > 0 && config.servedShuffled) {
+    add("POS_REF", config.enforced ? "FAIL" : "WARN",
+      `${report.posRef} rationale(s) identify an option by its authored position, but choices are shuffled at serve time`);
+  }
   if (report.lenSpread < 0.12) add("LEN_SPREAD", "WARN", `choice-length spread ${report.lenSpread.toFixed(2)} < 0.12 — mechanical equal-length authoring suspected (blocks unless waived)`);
   else if (report.lenSpread < 0.2) add("LEN_SPREAD", "WARN", `choice-length spread ${report.lenSpread.toFixed(2)} < 0.20`);
 
@@ -207,7 +252,13 @@ export function evaluateBank(report: BankReport, config: BankConfig): Verdict[] 
 export function banksUnderGuard(): Array<{ bank: string; items: GuardItem[]; config: BankConfig }> {
   const out: Array<{ bank: string; items: GuardItem[]; config: BankConfig }> = [];
   for (const a of DRILL_AREAS) {
-    out.push({ bank: `debate:${a.id}`, items: DRILL_BANK.filter((q) => q.area === a.id), config: { enforced: true, servedShuffled: true } });
+    // Held items are excluded: a rationale that never renders cannot mislead a learner, and the
+    // containment record is where a held item's defects belong. This measures what SERVES.
+    out.push({
+      bank: `debate:${a.id}`,
+      items: DRILL_BANK.filter((q) => q.area === a.id && !DEBATE_DRILL_HELD_IDS.includes(q.id)),
+      config: { enforced: true, servedShuffled: true }
+    });
   }
   for (const a of DECA_DRILL_AREAS) {
     out.push({ bank: `deca:${a.id}`, items: DECA_DRILL_BANK.filter((q) => q.area === a.id), config: { enforced: true, servedShuffled: true } });

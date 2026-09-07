@@ -6,7 +6,8 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { computeBankReport, evaluateBank, banksUnderGuard, MCQ_GUARD_WAIVERS, type GuardItem } from "./assessment-quality-guard";
+import { computeBankReport, evaluateBank, banksUnderGuard, MCQ_GUARD_WAIVERS, referencesOptionByPosition, type GuardItem } from "./assessment-quality-guard";
+import { DRILL_BANK, DEBATE_DRILL_HELD_IDS } from "../lib/debate-drills";
 import { DECA_DRILL_BANK } from "../lib/deca-drills";
 
 const CONFIG = { enforced: true, servedShuffled: true };
@@ -137,6 +138,77 @@ async function run() {
   assert.equal(q8Fails.length, 0,
     "Q8/Q10. length-matched semantic jokes produce ZERO static hard-fails — proving the guard does not claim semantic authority; the content-review gate owns this");
 
+  // ---- Q13: POSITIONAL-OPTION RATIONALES in a shuffled bank -> HARD FAIL -------------------------
+  // The defect this metric exists for: choices are shuffled at serve time, so a rationale that names
+  // an option by its authored position points at whatever landed there for that learner. Two items
+  // had drifted onto their own keyed option and called it a wrong answer.
+  const q13 = clone(mk).map((q, i) => (i === 0
+    ? { ...q, explanation: "The correct answer names the mechanism. The third gives a price with no baseline, and the fourth restates the question." }
+    : q));
+  assert.ok(fails(q13, "POS_REF"), "Q13. a rationale identifying an option by position hard-fails POS_REF in a shuffled bank");
+  assert.ok(!fails(clone(mk), "POS_REF"), "Q13b. the healthy control passes — the metric is not firing on everything");
+  // NON-VACUITY IN THE OTHER DIRECTION. Ordinals are ordinary English in these rationales, and the
+  // metric must not ban the word. Each of these is a real sentence pattern from the live banks.
+  const semantic = [
+    "Every arrow in a chain needs its own support. The first link is explained; the next step is only asserted.",
+    "It repairs the first dependency by breaking the second.",
+    "In the first constructive there is often nothing yet to answer.",
+    "Retention inside the first 90 days is what the figure measures."
+  ];
+  for (const explanation of semantic) {
+    const bank = clone(mk).map((q, i) => (i === 0 ? { ...q, explanation } : q));
+    assert.ok(!fails(bank, "POS_REF"), `Q13c. a semantic ordinal is not a positional reference: ${explanation.slice(0, 46)}...`);
+  }
+  // And the metric is scoped to banks the serving layer actually shuffles.
+  const unshuffled = evaluateBank(computeBankReport("mut", q13), { enforced: true, servedShuffled: false });
+  assert.ok(!unshuffled.some((v) => v.metric === "POS_REF"),
+    "Q13d. a bank served in authored order is not judged by this invariant at all");
+
+  // ---- Q14: SHUFFLE INVARIANCE of the repaired rationales ---------------------------------------
+  // The point of content anchoring is that the sentence stays true under the shuffle the learner
+  // actually gets. Serve every servable Debate item repeatedly with a seeded shuffle and assert the
+  // rationale never depends on where an option landed: it is byte-identical (the snapshot the route
+  // stores), and it carries no positional reference under any permutation.
+  {
+    // The shuffle is reproduced here rather than imported: lib/practice-session's transitive closure
+    // loads the Prisma client, which reads .env at import time, and this suite is strict-safe. The
+    // coupling to the real serving path is pinned by source below instead.
+    let seed = 7;
+    const rng = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const shuffle = (choices: string[]) => {
+      const out = [...choices];
+      for (let i = out.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(rng() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    };
+    let served = 0;
+    let reordered = 0;
+    for (const q of DRILL_BANK.filter((item) => !DEBATE_DRILL_HELD_IDS.includes(item.id))) {
+      const explanation = q.explanation;
+      for (let round = 0; round < 5; round += 1) {
+        const order = shuffle(q.choices);
+        assert.equal(new Set(order).size, new Set(q.choices).size, `${q.id}: every choice is still served`);
+        if (order.join("|") !== q.choices.join("|")) reordered += 1;
+        // The learner's order changes; the snapshotted explanation does not, so it may not name a
+        // position — and being content-anchored, it is true under every permutation.
+        assert.equal(q.explanation, explanation, `${q.id}: the rationale is a snapshot, not regenerated per serving`);
+        assert.ok(!referencesOptionByPosition(q.explanation),
+          `${q.id}: its rationale reads the same whichever order the learner is shown`);
+        served += 1;
+      }
+    }
+    assert.ok(served > 700, `control: the invariance sweep actually ran (${served} servings)`);
+    assert.ok(reordered > served * 0.5, `control: the permutations really reorder (${reordered}/${served})`);
+    // The invariant only matters because the SERVING path shuffles. Pinned by source, not imported.
+    const sessionRoute = readFileSync("app/api/debate/drills/session/route.ts", "utf8");
+    assert.ok(/buildServedChoices\(question\.choices, question\.correctAnswer\)/.test(sessionRoute),
+      "control: the Debate drill session really does shuffle each question's choices before serving");
+    assert.ok(/explanationSnapshot: question\.explanation/.test(sessionRoute),
+      "control: and stores the authored explanation verbatim, which is why it cannot describe a position");
+  }
+
   // ---- Live-bank binding: every enforced bank passes at HEAD ------------------------------------
   for (const { bank, items, config } of banksUnderGuard()) {
     if (!config.enforced) continue;
@@ -152,7 +224,24 @@ async function run() {
   }
 
   // ---- Wiring discipline ------------------------------------------------------------------------
-  assert.equal(MCQ_GUARD_WAIVERS.length, 0, "W0. no waivers are active — the repaired banks stand on their own");
+  // W0 asserted ZERO waivers while none existed. The POS_REF metric arrived with two, for the six
+  // DECA rationales the Debate repair deliberately did not touch, so the invariant that matters now
+  // is that a waiver is NARROW, EXPLAINED and DATED — never a silent skip, and never a whole-bank
+  // pass. Removing an entry here is how that debt gets closed.
+  assert.ok(MCQ_GUARD_WAIVERS.length <= 2, "W0. waivers stay exceptional — two, both for the same known DECA defect");
+  for (const waiver of MCQ_GUARD_WAIVERS) {
+    assert.equal(waiver.metric, "POS_REF", "W0a. the only waived metric is the one whose repair is scoped elsewhere");
+    assert.ok(waiver.bank.startsWith("deca:"), "W0b. no Debate bank is waived — that class was repaired, not excused");
+    assert.ok(waiver.reason.length > 60 && /\b[a-z]{2}-\d{2}\b/.test(waiver.reason),
+      "W0c. every waiver names the offending items and says why it is not repaired here");
+    assert.ok(/^2\d{3}-\d{2}-\d{2}$/.test(waiver.date), "W0d. and is dated");
+  }
+  // Non-vacuity: the waiver must not be hiding a Debate failure.
+  for (const { bank, items, config } of banksUnderGuard()) {
+    if (!bank.startsWith("debate:")) continue;
+    const posRef = evaluateBank(computeBankReport(bank, items), config).filter((v) => v.metric === "POS_REF");
+    assert.equal(posRef.length, 0, `W0e. ${bank} has no positional rationale at all — nothing waived, nothing left`);
+  }
   const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts?: Record<string, string> };
   const scripts = pkg.scripts ?? {};
   assert.equal(scripts["assessment:quality"], "tsx scripts/assessment-quality-guard.ts", "W1. manual guard alias exists");
@@ -168,7 +257,7 @@ async function run() {
       "position concentration and exact periods are surfaced as diagnostics while serving shuffles (Q5/Q6) and harden when it does not; " +
       "and length-matched semantic jokes (Q8/Q10) produce zero static failures — asserted deliberately, because the guard proves " +
       "a negative about FORM only and the content-review gate (human review or a recorded owner waiver) remains separate and mandatory. " +
-      "Every enforced live bank passes at HEAD, both controls remain unexploitable, no waivers are active, and the only " +
+      "Every enforced live bank passes at HEAD, both controls remain unexploitable, POS_REF closes the Debate shuffled-rationale class with the six DECA items waived loudly rather than silently, and the only " +
       "package.json reference is the manual assessment:quality alias with no lifecycle hook."
   );
 }

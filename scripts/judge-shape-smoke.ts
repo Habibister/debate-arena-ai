@@ -493,8 +493,17 @@ async function main() {
   // not render the two-sided headline, which previously read "Winner unavailable wins".
   // Bound to the ternary's STRUCTURE — the two-sided copy in the truthy branch, the role-play
   // headline after the `) : (` — rather than to a character distance that reformatting would break.
-  assert.ok(/report\.teamWinner \?[\s\S]{0,600}wins this practice round[\s\S]{0,300}\) : \([\s\S]{0,150}Practice round scored/.test(ballotSrc),
-    "A3b-14. a role-play with no opposing side gets its own headline");
+  // A third branch now sits between them: a Debate round the producer did not score. It cannot use
+  // the role-play headline either, because "Practice round scored" would be false — nothing scored
+  // it. So the chain is two-sided winner -> unscored -> role-play, and each says what happened.
+  assert.ok(/report\.teamWinner \?[\s\S]{0,600}wins this practice round/.test(ballotSrc),
+    "A3b-14. a two-sided round with a winner keeps the two-sided headline");
+  assert.ok(/semanticScoring === "unavailable" \?[\s\S]{0,400}Practice round recorded/.test(ballotSrc),
+    "A3b-14a. an unscored round is recorded, not scored");
+  assert.ok(/No decision was made/.test(ballotSrc),
+    "A3b-14a2. and says no decision was made rather than naming a side or implying a tie");
+  assert.ok(/\) : \([\s\S]{0,200}Practice round scored/.test(ballotSrc),
+    "A3b-14b2. a role-play with no opposing side still gets its own headline");
   assert.ok(!/Winner unavailable wins/.test(ballotSrc),
     "A3b-14b. and never renders 'Winner unavailable wins'");
 

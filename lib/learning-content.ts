@@ -496,7 +496,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
           "The other side argued that the new bus route is unaffordable, and your next answer is aimed at that argument. Which opening tells the judge where the answer belongs?",
           ["Moving on to the next thing I want to say about the buses", "On their affordability argument, the one about the four-year cost figure", "Their affordability argument, the one about the four-year cost, is wrong", "That is enough about affordability, and there is more to come"],
           "On their affordability argument, the one about the four-year cost figure",
-          "A signpost locates the answer. It does not move, close, or argue.",
+          "Your answer is aimed at their affordability argument, so the judge needs to be in that column before your reason arrives. Read each opening and ask where it leaves the judge.",
           "This one names the argument the answer is aimed at, so the judge is in the right column before the reason arrives. Announcing a move names no destination; naming the argument and then ruling on it does the locating and adds a verdict a signpost is not there to give; and closing affordability opens nothing in its place.",
           "Signposting"
         ),

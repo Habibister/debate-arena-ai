@@ -130,7 +130,7 @@ export default async function CoachStudentProgressPage({ params }: { params: { s
                 {/* A3b-3: "Avg judge score" implied a verified result. The number is real — it
                     averages stored ballot scores — but formative, so it carries the same name the
                     ballot itself uses. Value, null handling and query are unchanged. */}
-                <StatChip label="Avg practice ballot score" value={debate.averageScore !== null ? `${debate.averageScore}` : "—"} />
+                <StatChip label="Avg practice ballot score (current scoring)" value={debate.averageScore !== null ? `${debate.averageScore}` : "—"} />
               </div>
 
               {debate.recent.length > 0 ? (

@@ -1,3 +1,4 @@
+import { isCurrentScoringEra } from "@/lib/debate-scoring-era";
 import { HttpError } from "@/lib/api";
 import { INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
@@ -151,7 +152,19 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
   //
   // `wins` itself is still returned: it is a real stored value, it is untouched history, and no
   // UI reads it after this change. Relabelling the remaining historical "Wins" surfaces is A3b.
-  const averageDebateScore = average(judgedDebates.map((d) => d.overallScore).filter((s): s is number => typeof s === "number"));
+  // CURRENT SCORING ERA ONLY, and the SAME boundary the dashboard uses — one shared constant so the
+  // coach and the student can never be shown averages over different populations. The transcript
+  // judge withdrew a false weighing score on 2026-09-07 and renormalised the ballot, so rows either
+  // side of it are not comparable; a mixed average would show a coach a decline the product created.
+  // `judgedDebates` itself is NOT filtered: the round count, the latest round and the history list
+  // still include every stored round. Only the average is scoped, and it stays null when the student
+  // has no rounds yet under the current semantics rather than reporting 0.
+  const averageDebateScore = average(
+    judgedDebates
+      .filter((d) => isCurrentScoringEra(d.completedAt))
+      .map((d) => d.overallScore)
+      .filter((s): s is number => typeof s === "number")
+  );
   const latest = judgedDebates[0] ?? null;
   const latestFeedback = latest
     ? {

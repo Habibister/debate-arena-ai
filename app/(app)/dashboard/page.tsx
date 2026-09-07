@@ -1,3 +1,4 @@
+import { currentScoringEraScope } from "@/lib/debate-scoring-era";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -117,11 +118,26 @@ export default async function DashboardPage() {
     : 0;
   // Real evidence for the dashboard: the average judge score across this student's judged rounds.
   // Null (shown as "—") until at least one round has actually been judged — never a synthetic number.
-  const avgJudgeScoreRaw = session?.user?.id
+  //
+  // CURRENT SCORING ERA ONLY. The transcript judge withdrew a false weighing score on 2026-09-07 and
+  // renormalised the ballot, so rows either side of that boundary do not mean the same thing;
+  // averaging them together would show a scoring correction as if it were the student changing.
+  // Older rounds are untouched and still appear individually — only this average is scoped, and it
+  // reads null rather than 0 when the student has no rounds yet under the current semantics.
+  // FAILS CLOSED: a null fragment means no activation instant is set yet, so no round can be proven
+  // current-era and the average is UNAVAILABLE — it renders "—" rather than averaging mixed eras.
+  const scoringEra = currentScoringEraScope();
+  const avgJudgeScoreRaw = session?.user?.id && scoringEra.eligible
     ? (
         await prisma.debate.aggregate({
           _avg: { overallScore: true },
-          where: { studentId: session.user.id, status: "JUDGED", overallScore: { not: null }, ...INDEPENDENT_ROUND_WHERE }
+          where: {
+            studentId: session.user.id,
+            status: "JUDGED",
+            overallScore: { not: null },
+            ...INDEPENDENT_ROUND_WHERE,
+            ...scoringEra.where
+          }
         })
       )._avg.overallScore
     : null;
@@ -245,7 +261,7 @@ export default async function DashboardPage() {
         <StatCard
           label="Judged rounds"
           value={String(judgedDebateCount)}
-          detail={`Avg practice ballot score ${avgJudgeScore ?? "—"}.${
+          detail={`Avg practice ballot score (current scoring) ${avgJudgeScore ?? "—"}.${
             guidedExerciseCount > 0 ? ` ${guidedExerciseCount} guided ${guidedExerciseCount === 1 ? "exercise" : "exercises"} completed, not counted here.` : ""
           }`}
           icon={Trophy}
@@ -321,7 +337,7 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div className="rounded-md border bg-background px-3 py-2 text-sm font-semibold">
-              {judgedDebateCount} judged {judgedDebateCount === 1 ? "round" : "rounds"} · avg practice ballot score{" "}
+              {judgedDebateCount} judged {judgedDebateCount === 1 ? "round" : "rounds"} · avg practice ballot score (current scoring){" "}
               {avgJudgeScore ?? "—"}
             </div>
           </div>

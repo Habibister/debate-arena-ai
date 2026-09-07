@@ -56,11 +56,15 @@ function judgeEmittedSlugs(): string[] {
   assert.ok(start > 0, "control: the recommendation builder is locatable");
   const body = src.slice(start, src.indexOf("return recommendations"));
   const slugs = [...body.matchAll(/add\("([^"]+)"/g)].map((m) => m[1]);
-  // Was `>= 5`. The signposting branch was withdrawn on 2026-09-06 with the measure that drove it —
-  // it fired on the label of a category scoring at or below 65, and that category was a substring
-  // count — so the route now emits four. The floor tracks that decision rather than blocking it; its
-  // job is to prove the builder is not empty, which four still does.
-  assert.ok(slugs.length >= 4, `control: the judge really emits recommendations — found ${slugs.length}`);
+  // Was `>= 5`, then `>= 4`. Two branches have now been withdrawn with the measures that drove them:
+  // signposting on 2026-09-06 and weighing on 2026-09-07, each a substring count that fired on the
+  // LABEL of a category scoring at or below 65. The weighing branch also fired on "impact" and
+  // "clash", so a provider ballot's genuine Clash category could trigger a weighing diagnosis with no
+  // weighing measurement behind it. Three remain. The floor tracks those decisions rather than
+  // blocking them; its job is to prove the builder is not empty, which three still does.
+  assert.ok(slugs.length >= 3, `control: the judge really emits recommendations — found ${slugs.length}`);
+  assert.ok(!slugs.includes("debate-weighing-lesson"),
+    "and no branch recommends the weighing lesson off the withdrawn measure");
   assert.ok(!slugs.includes("debate-signposting-lesson"),
     "control: and no signposting recommendation survives — nothing measures it from a transcript");
   return [...new Set(slugs)];

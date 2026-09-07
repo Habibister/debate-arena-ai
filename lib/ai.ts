@@ -51,8 +51,14 @@ type SharedSpeakingScores = {
    * must never be read as a low one. Other producers that genuinely measure it still supply it.
    */
   organization?: number;
+  /**
+   * ABSENT when nothing measured it. The Debate transcript judge withdrew this on 2026-09-07: it was
+   * (impact + weighing + warrant) / 3, and `weighing` was a marker count. Recomputing it from the two
+   * survivors was rejected because they are marker counts too and have not earned a persuasion claim,
+   * so the field is omitted rather than redefined. Missing means NOT MEASURED, never a low score.
+   */
+  persuasion?: number;
   vocabulary: number;
-  persuasion: number;
   professionalism: number;
 };
 
@@ -165,7 +171,14 @@ type DebateJudgeResult = {
   weaknesses: string[];
   improvementAdvice: string[];
   recommendedLessons: LessonRecommendation[];
-  readinessForNextLevel: ReadinessForNextLevel;
+  /**
+   * ABSENT when the round cannot establish it. The Debate transcript judge withdrew this on
+   * 2026-09-07: "ready" required overall AND weighing AND refutation gates, and the weighing gate was
+   * a marker count. Answering on the two survivors would have lowered the bar silently, and `false`
+   * would have claimed the learner was measured and found not ready. Producers that genuinely
+   * establish readiness still supply it.
+   */
+  readinessForNextLevel?: ReadinessForNextLevel;
   fallbackNotice?: string;
   aiNotice?: string;
   aiProvider?: ProviderName;
@@ -179,9 +192,11 @@ type TranscriptSideAnalysis = {
   dropped: string[];
   neededMoreWarrant: string;
   neededMoreImpact: string;
-  neededMoreWeighing: string;
+  /** ABSENT since 2026-09-07: derived from the withdrawn weighing marker count. */
+  neededMoreWeighing?: string;
   vagueOrUnsupported: string;
-  persuasiveReframe: string;
+  /** ABSENT since 2026-09-07: derived from the withdrawn weighing marker count. */
+  persuasiveReframe?: string;
   hiddenAssumptionAttack: string;
 };
 
@@ -238,7 +253,7 @@ type PerformanceJudgeResult = {
   recommendedLessons: LessonRecommendation[];
   judgeQuestionFeedback?: string[];
   accuracyFlags?: string[];
-  readinessForNextLevel: ReadinessForNextLevel;
+  readinessForNextLevel?: ReadinessForNextLevel;
   fallbackNotice?: string;
   rubricSource?: RubricSourceTag;
   // Present only when an objection round was judged: prepared pitch vs. unscripted Q&A (0-100 each).

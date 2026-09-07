@@ -102,11 +102,9 @@ assert.equal(governmentWin.teamWinner, "GOVERNMENT", "Government should beat a g
 const vagueStudent = judge([{ role: "AFFIRMATIVE", round: 1, content: "My opponent is wrong." }]);
 assert.ok(category(vagueStudent, "warrant") < 55, "Bare assertion should receive a low warrant score.");
 assert.ok(category(vagueStudent, "refutation") < 55, "Bare assertion should receive a low refutation score.");
-assert.ok(category(vagueStudent, "clash") < 55, "Bare assertion should receive a low weighing/clash score.");
 
 const specificStudent = judge(directRefutationWithWeighing, "GOVERNMENT");
 assert.ok(category(specificStudent, "refutation") >= 65, "Specific answer should reward refutation.");
-assert.ok(category(specificStudent, "clash") >= 65, "Specific comparison should reward weighing.");
 
 const firstRun = judge(vagueGovernmentSpecificOpposition);
 const secondRun = judge(vagueGovernmentSpecificOpposition);
@@ -174,10 +172,6 @@ assert.ok(
   oppositionJargonOnly.judgeFairnessReport.emptyPhraseWarning,
   "Judge must flag the side that leaned on empty weighing language."
 );
-assert.ok(
-  category(oppositionJargonOnly, "clash") < 55,
-  "Unsupported weighing language must score low, not high."
-);
 
 // Test 2: Opposition gives a real argument about optional/private rank and can win.
 const oppositionRealArgument = judgeClassRank(
@@ -229,7 +223,6 @@ const impactNoWeighing = judgeClassRank(
   "GOVERNMENT"
 );
 assert.ok(category(impactNoWeighing, "impact") >= 55, "A developed impact should score on impact.");
-assert.ok(category(impactNoWeighing, "clash") < 60, "An impact with no comparison should score low on weighing.");
 
 // Test 6 (paraphrase): a messy student speech must be paraphrased cleanly, not quoted verbatim.
 const messySpeech = judgeClassRank(
@@ -261,7 +254,9 @@ for (const key of [
   "impact",
   "refutation",
   "contentEvidence",
-  "clash",
+  // "clash" (labelled "Weighing") was WITHDRAWN 2026-09-07 and must NOT come back: it was a marker
+  // count that scored the Weighing lesson's own model answer at the floor and marker stuffing at the
+  // ceiling. Its absence is asserted as a regression control in the W-block below.
   "collapse",
   "motionConnection",
   "emptyJargon",
@@ -505,7 +500,7 @@ async function judgeIsCrashProof() {
     "impact",
     "refutation",
     "contentEvidence",
-    "clash",
+    // "clash"/"Weighing" withdrawn 2026-09-07 — see the W-block regression controls.
     "collapse",
     "motionConnection",
     "emptyJargon",
@@ -855,15 +850,18 @@ function markerStuffingBuysNothing() {
 
   // 4. NOT MEASURED is not MEASURED POORLY: nothing may read a low score, a retry or a readiness
   //    penalty out of the category's absence.
-  assert.ok(neutral.readinessForNextLevel !== undefined, "J-10. control: readiness is still computed");
-  assert.deepEqual(marked.readinessForNextLevel, neutral.readinessForNextLevel,
-    "J-10b. and markers do not move it");
+  // Readiness was WITHDRAWN with the weighing measure it depended on (see the W-block). It is absent
+  // on every transcript ballot now, so markers cannot move it — there is nothing left to move.
+  const readinessOf = (r: unknown) => (r as { readinessForNextLevel?: unknown }).readinessForNextLevel;
+  assert.equal(readinessOf(neutral), undefined, "J-10. readiness is absent, not false");
+  assert.equal(readinessOf(marked), undefined, "J-10b. and absent for the marked pair too");
 
-  // 5. WEIGHTS still sum to 1.00 after the 0.04 redistribution, asserted on the source.
+  // 5. WEIGHTS still sum to 1.00 after BOTH redistributions — organization (0.04, 2026-09-06) and
+  //    weighing (0.12, 2026-09-07) — asserted on the source rather than on a rendered number.
   const src = readFileSync("lib/debate-judge-analysis.ts", "utf8");
-  const weights = [...src.matchAll(/scores\.\w+ \* \((0\.\d+) \/ 0\.96\)/g)].map((m) => Number(m[1]));
-  assert.equal(weights.length, 12, "J-11. twelve categories carry the overall weight");
-  const total = weights.reduce((a, b) => a + b, 0) / 0.96;
+  const weights = [...src.matchAll(/scores\.\w+ \* \((0\.\d+) \/ 0\.84\)/g)].map((m) => Number(m[1]));
+  assert.equal(weights.length, 11, "J-11. eleven categories carry the overall weight");
+  const total = weights.reduce((a, b) => a + b, 0) / 0.84;
   assert.ok(Math.abs(total - 1) < 1e-9, `J-11b. and they sum to exactly 1.00 (${total})`);
   assert.ok(!/scores\.organization/.test(src), "J-11c. no formula reads the withdrawn score");
   assert.ok(!/signpost \* \d/.test(src), "J-12. and the marker count reaches no formula at all");
@@ -880,6 +878,156 @@ function markerStuffingBuysNothing() {
       `J-13b ${organization}. and markers buy nothing there either`);
   }
   console.log("  ok  signposting measure withdrawal: absent, uncontaminated, component-wise");
+}
+
+/**
+ * W. WEIGHING MEASURE WITHDRAWAL (2026-09-07). The transcript judge scored `weighing` as
+ * `24 + markerCount * 18` over WEIGHING_MARKERS. Measured on matched transcripts it gave the
+ * Weighing lesson's OWN model answer 24 — the floor, identical to attempting no weighing at all —
+ * and gave lens words with no comparison 100. The lesson teaches the opposite in as many words:
+ * "the skill is making the comparison clear, not saying the lens words".
+ *
+ * Unlike the signposting proxy this one was load-bearing: 0.12 of the overall, a 1.35 winner
+ * tiebreak term, a third of sharedSpeaking.persuasion, one of three readiness gates, a persisted
+ * rating delta, a second persisted identity as Debate.persuasionScore, and a lesson recommendation.
+ * These controls are REGRESSION controls: each one fails if a piece of that proxy returns.
+ */
+{
+  const base = { organization: "DEBATE" as const, eventType: "PARLIAMENTARY_DEBATE" as const,
+    level: "INTERMEDIATE" as const, topic: "Schools should require AI literacy.", studentSide: "GOVERNMENT" as const };
+  const BODY = "The AI literacy requirement teaches students in schools to check what a machine tells them. The district that ran the training last year reported fewer unattributed submissions afterwards, because students who know what the tool does stop hiding that they used it. Teachers report the lessons fit inside the existing school timetable, so the requirement costs the class time the other side is worried about only once.";
+  const OPP = "The AI literacy requirement in schools takes class time from subjects that already have too little. Teachers in the district said the training displaced two weeks of the timetable, and schools already behind cannot absorb that.";
+  // The lesson's own worked example: a weighing standard, argued for, applied to both sides. It
+  // contains almost none of WEIGHING_MARKERS, which is exactly why the proxy scored it at the floor.
+  const REAL = " Decide this on what cannot be undone, because a mistake an institution can repair later is a smaller thing than one a person carries out the door. Lost class time is recoverable while a student who leaves school unable to check what a system tells them carries that gap into work they do not get to redo. Under that rule, preparedness decides.";
+  // Same length and topic, lens words throughout, no comparison actually made.
+  // A TRUE minimal pair. The first draft of this fixture also added refutation and opponent-reference
+  // vocabulary ("even if", "compared with theirs"), so it moved refutation and responsiveness and
+  // proved nothing about weighing. These two tails have identical clause shapes and word counts, and
+  // differ ONLY in nouns exclusive to the withdrawn WEIGHING_MARKERS list.
+  const NEUTRAL_TAIL = " The programme runs in the school day. The cost sits with the district. The change lands in one year. The record is written down.";
+  const STUFFED = " The magnitude runs in the school day. The probability sits with the district. The timeframe lands in one year. The reversibility is written down.";
+  const run = (tail: string) => buildTranscriptBasedDebateJudge({ ...base, transcript: [
+    { role: "AFFIRMATIVE" as const, round: 1, content: BODY + tail },
+    { role: "NEGATIVE" as const, round: 1, content: OPP },
+    { role: "AFFIRMATIVE" as const, round: 2, content: BODY + tail },
+    { role: "NEGATIVE" as const, round: 2, content: OPP }
+  ] });
+  const none = run(NEUTRAL_TAIL), real = run(REAL), stuffed = run(STUFFED);
+  assert.equal(NEUTRAL_TAIL.trim().split(/\s+/).length, STUFFED.trim().split(/\s+/).length,
+    "W-0. the pair is length-matched, so any difference is the vocabulary and nothing else");
+
+  // 1. BALLOT. No weighing row on any of the three, under either the old key or an honest one.
+  for (const [name, r] of [["none", none], ["real", real], ["stuffed", stuffed]] as const) {
+    assert.equal(r.categoryScores.find((c) => c.key === "clash"), undefined, `W-1 ${name}. no clash-keyed row`);
+    assert.equal(r.categoryScores.find((c) => c.key === "weighing"), undefined, `W-1b ${name}. and none under the honest key`);
+    assert.equal(r.categoryScores.find((c) => c.label === "Weighing"), undefined, `W-1c ${name}. and none under the label`);
+  }
+
+  // 2. OVERALL and 3. WINNER. Marker words buy nothing on either.
+  assert.equal(stuffed.overallScore, none.overallScore, "W-2. marker stuffing does not move the overall");
+  // No category may IMPROVE on the withdrawn vocabulary. One legitimately falls: `emptyJargon` reads
+  // CONDITIONAL_JARGON_MARKERS, a separate and still-valid list that contains "magnitude",
+  // "probability", "timeframe" and "reversibility" precisely because contentless lens words are
+  // jargon. A penalty for saying them without arguing anything is the honest behaviour; what was
+  // withdrawn is the REWARD. So the gate is one-sided by design.
+  const stuffedCats = new Map(stuffed.categoryScores.map((c) => [c.key, c.score]));
+  for (const c of none.categoryScores) {
+    const after = stuffedCats.get(c.key) as number;
+    assert.ok(after <= c.score,
+      `W-2b. ${c.key} must not improve on the withdrawn vocabulary (${c.score} -> ${after})`);
+    if (c.key !== "emptyJargon") {
+      assert.equal(after, c.score,
+        `W-2c. ${c.key} does not move at all — only the jargon penalty may react to contentless lens words`);
+    }
+  }
+  assert.ok(stuffed.overallScore <= none.overallScore,
+    `W-2d. and the overall cannot rise on vocabulary alone (${none.overallScore} -> ${stuffed.overallScore})`);
+  assert.equal(stuffed.teamWinner, none.teamWinner, "W-3. and it cannot flip the winner");
+
+  // 4/5. The two derived fields that depended on it are ABSENT, never zero and never narrowed.
+  for (const [name, r] of [["none", none], ["stuffed", stuffed]] as const) {
+    assert.equal((r as { sharedSpeaking?: { persuasion?: number } }).sharedSpeaking?.persuasion, undefined,
+      `W-4 ${name}. sharedSpeaking.persuasion is absent, not recomputed from the two marker-driven survivors`);
+    assert.equal((r as { readinessForNextLevel?: unknown }).readinessForNextLevel, undefined,
+      `W-5 ${name}. readiness is absent — never false, and never narrowed to the two surviving gates`);
+  }
+
+  // 6. SOURCE-LEVEL REGRESSION CONTROLS. Each fails if a piece of the proxy comes back.
+  const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const judgeSrc = stripComments(readFileSync("lib/debate-judge-analysis.ts", "utf8"));
+  assert.ok(!/scores\.weighing/.test(judgeSrc), "W-6. no formula reads a weighing score");
+  assert.ok(!/weighing: clamp\(/.test(judgeSrc), "W-6b. and none produces one");
+  assert.ok(!/weighing \* 1\.35/.test(judgeSrc), "W-6c. the winner tiebreak term is gone");
+  assert.ok(!/warrant \+ impact \+ weighing/.test(judgeSrc), "W-6d. and the marker count reaches vaguePenalty no more");
+  assert.ok(!/label: "Weighing"/.test(judgeSrc), "W-6e. and no category is labelled Weighing");
+  const guidedSrc = readFileSync("lib/education/guided-judge.ts", "utf8"); // comments kept: W-7b reads the declaration
+  assert.ok(!/clash: "weighing"/.test(guidedSrc), "W-7. the clash -> weighing competency mapping is gone");
+  assert.ok(/weighing: \{[\s\S]*?direct: false/.test(guidedSrc), "W-7b. and the direct claim is withdrawn");
+  const routeSrc = stripComments(readFileSync("app/api/debates/[debateId]/judge/route.ts", "utf8"));
+  assert.ok(!/\["clash", "weighing", "solutionQuality"\]/.test(routeSrc), "W-8. clash is no longer a weighing alias");
+  assert.ok(!/categoryScore\(result, \["clash", "solutionQuality", "taskCompletion"\]\)/.test(routeSrc),
+    "W-8b. and no longer sources the persisted persuasionScore");
+  assert.ok(/weighingDelta === undefined \? \{\}/.test(routeSrc), "W-9. an absent weighing category writes no rating delta");
+  assert.ok(!/weakText\.includes\("weigh"\)/.test(routeSrc), "W-10. and triggers no weighing remediation");
+  // The ballot still carries a STATIC curriculum pointer to the weighing lesson, alongside the same
+  // static claim-warrant-impact pointer. That is generic advice, not a diagnosis: it is identical on
+  // every ballot and conditioned on no score, so it survives the withdrawal by the same rule that
+  // kept the score-free coaching prose. What must not come back is a recommendation that VARIES with
+  // the withdrawn measure — so the control is that the marked and neutral pair recommend identically.
+  assert.deepEqual(stuffed.recommendedLessons, none.recommendedLessons,
+    "W-10b. the withdrawn vocabulary changes no recommendation — the weighing pointer is static, not diagnosed");
+  const priorities = new Set([none, real, stuffed].map((r) =>
+    r.recommendedLessons?.find((l: { lessonSlug: string }) => l.lessonSlug === "debate-weighing")?.priority));
+  assert.equal(priorities.size, 1, "W-10c. and its priority never escalates off a weighing score");
+  console.log("  ok  weighing measure withdrawal: absent, no marker advantage on overall/winner/persuasion/readiness/delta/remediation");
+}
+
+/**
+ * VP. vaguePenalty BOUNDARY. The withdrawn marker count also gated a "did this speech say anything
+ * substantive" test: `warrant + impact + weighing + evidence < 4` cost 10 points on a long speech.
+ * Leaving it there would have let lens words alone dodge that penalty, which is a marker-derived
+ * advantage even though no category was named "weighing". The term is gone and the threshold moved
+ * 4 -> 3 with it. These controls prove the new 3 preserves the intended non-weighing test rather
+ * than merely fitting the fixtures: at 3 signals and at 2, the vocabulary changes nothing at all.
+ */
+{
+  const base = { organization: "DEBATE" as const, eventType: "PARLIAMENTARY_DEBATE" as const,
+    level: "INTERMEDIATE" as const, topic: "Schools should require AI literacy.", studentSide: "GOVERNMENT" as const };
+  const OPP = "The requirement takes class time from subjects that already have too little.";
+  // Pushes the speech past the >220-word length gate the penalty applies to.
+  const PAD = " The school day is already timetabled and the district publishes the calendar each term. Staff plan the year in advance and families receive it before the term starts. ".repeat(3);
+  const THREE = "Students learn to check machine output because the tool misstates sources. The harm is a student who cannot tell. A district study found fewer unattributed submissions.";
+  const TWO = "Students learn to check machine output because the tool misstates sources. The harm is a student who cannot tell.";
+  const NONE_ = "The programme exists and the school runs it.";
+  // Clause-matched tails differing only in the withdrawn vocabulary.
+  const NEUT = " The programme is noted. The schedule is noted. The calendar is noted. The record is noted.";
+  const STUFF = " The magnitude is noted. The probability is noted. The timeframe is noted. The reversibility is noted.";
+  const run = (text: string) => buildTranscriptBasedDebateJudge({ ...base, transcript: [
+    { role: "AFFIRMATIVE" as const, round: 1, content: text }, { role: "NEGATIVE" as const, round: 1, content: OPP }] });
+  const scored = ["argument", "warrant", "mechanism", "impact", "refutation", "contentEvidence"] as const;
+
+  for (const [name, body] of [["A three signals", THREE], ["B two signals", TWO]] as const) {
+    const neutral = run(body + PAD + NEUT);
+    const stuffed = run(body + PAD + STUFF);
+    const map = new Map(stuffed.categoryScores.map((c) => [c.key, c.score]));
+    for (const key of scored) {
+      const before = neutral.categoryScores.find((c) => c.key === key)?.score;
+      assert.equal(map.get(key), before, `VP-1 ${name}: ${key} is unmoved by the withdrawn vocabulary`);
+    }
+    assert.equal(stuffed.overallScore, neutral.overallScore, `VP-1b ${name}: and the overall is identical`);
+  }
+
+  // C. The vocabulary ALONE cannot buy its way past the substantive-content test. It does not merely
+  //    fail to help — it trips the jargon detector, which is the honest reading of a speech that is
+  //    only lens words. Asserted as "no better", so the control survives future jargon tuning.
+  const bareNeutral = run(NONE_ + PAD + NEUT);
+  const bareStuffed = run(NONE_ + PAD + STUFF);
+  assert.ok(bareStuffed.overallScore <= bareNeutral.overallScore,
+    `VP-2. lens words alone cannot cross the content threshold (${bareNeutral.overallScore} -> ${bareStuffed.overallScore})`);
+  const src = readFileSync("lib/debate-judge-analysis.ts", "utf8");
+  assert.ok(/warrant \+ impact \+ evidence < 3/.test(src), "VP-3. the penalty gate counts three surviving signal families, not four");
+  console.log("  ok  vaguePenalty boundary: withdrawn vocabulary moves nothing at 3 or 2 signals, and buys nothing alone");
 }
 
 markerStuffingBuysNothing();

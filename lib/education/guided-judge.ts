@@ -57,7 +57,6 @@ export const JUDGE_CATEGORY_COMPETENCY: Readonly<Record<string, DebateCompetency
   refutation: "refutation",
   responsiveness: "refutation",
   centralClashResponse: "clash",
-  clash: "weighing", // the lexical judge's "clash" category is LABELLED "Weighing" and scores weighing
   // `organization` was withdrawn from the ballot on 2026-09-06, so this maps nothing today. Kept as
   // the declared mapping for a future category that genuinely measures placement — a guided rubric
   // must never silently acquire one by an unmapped key appearing.
@@ -127,7 +126,19 @@ export const COMPETENCY_ROUND_MEASURE: Readonly<Record<DebateCompetency, RoundMe
     direct: false,
     directEvidence: "the Constructive lesson's own case-planning exercise, and the constructive-speech drill"
   },
-  weighing: { label: "weighing", direct: true }
+  // WITHDRAWN 2026-09-07. This declared that a round measures weighing DIRECTLY, and unlike the
+  // signposting and constructive-speech cases it HAD a mapped category: `clash`, labelled "Weighing".
+  // That category was `24 + markerCount * 18` over WEIGHING_MARKERS. Measured on matched transcripts
+  // it scored the Weighing lesson's OWN model answer 24 -- the floor, identical to attempting no
+  // weighing at all -- and scored lens words with no comparison 100, a 76-point advantage for saying
+  // "magnitude, probability, irreversible" without comparing anything. The lesson teaches the exact
+  // opposite: "the skill is making the comparison clear, not saying the lens words". The category is
+  // withdrawn and no replacement proxy is invented, so a round now shows none of this competency.
+  weighing: {
+    label: "weighing",
+    direct: false,
+    directEvidence: "the Weighing lesson's own standard-and-comparison exercise, and the weighing drill"
+  }
 };
 
 export type GuidedFeedback = {

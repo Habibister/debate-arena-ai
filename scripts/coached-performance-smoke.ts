@@ -568,7 +568,13 @@ function main() {
   });
 
   check("JB. Weighing cannot enter the guided rubric — the category, the card, the prose, the delta", () => {
-    assert.equal(JUDGE_CATEGORY_COMPETENCY.clash, "weighing", "control: the lexical 'clash' category IS weighing");
+    // Was: the lexical 'clash' category IS weighing. That MAPPING was withdrawn on 2026-09-07 along
+    // with the category itself — it scored the Weighing lesson's own model answer at the floor and
+    // lens words at the ceiling. So the control inverts: nothing maps to weighing at all now, which
+    // is a stronger guarantee that a locked skill cannot reach a guided ballot through it.
+    assert.equal(JUDGE_CATEGORY_COMPETENCY.clash, undefined, "control: no judge category maps to weighing any more");
+    assert.equal(Object.values(JUDGE_CATEGORY_COMPETENCY).includes("weighing"), false,
+      "and no other key quietly took its place");
     assert.ok(!projected.categoryScores.some((c: { key: string }) => c.key === "clash"), "the weighing category is removed");
     assert.ok(!("judgeFairnessReport" in projected) && !("ratingChange" in projected), "no fairness report, no rating block");
     assert.ok(!/weigh|outweigh/.test(projectedText), "no surviving text names weighing anywhere in the readable ballot");
@@ -773,11 +779,18 @@ function main() {
 
   check("KB. guided rows cannot enter competitive-performance aggregates (average score, same-motion comparison)", () => {
     const dashboard = stripComments(read("app/(app)/dashboard/page.tsx"));
-    assert.ok(/_avg: \{ overallScore: true \},\s*where: \{ studentId: session\.user\.id, status: "JUDGED", overallScore: \{ not: null \}, \.\.\.INDEPENDENT_ROUND_WHERE \}/.test(dashboard), "Dashboard average is independent rounds only");
+    // The where-clause gained the scoring-era scope on 2026-09-07, so this asserts the two conditions
+    // it must carry rather than one exact literal: guided rounds still excluded, AND the era scope
+    // applied. Both are load-bearing and neither may be dropped by a later edit.
+    assert.ok(/_avg: \{ overallScore: true \}/.test(dashboard) && /\.\.\.INDEPENDENT_ROUND_WHERE/.test(dashboard),
+      "Dashboard average is independent rounds only");
+    assert.ok(/\.\.\.scoringEra\.where/.test(dashboard), "and is scoped to the current scoring era");
     const history = stripComments(read("lib/debate-history.ts"));
     assert.ok(/where: \{ studentId: userId, topic, status: "JUDGED", id: \{ not: excludeId \}, \.\.\.INDEPENDENT_ROUND_WHERE \}/.test(history), "same-motion attempt comparison is independent rounds only");
     const coach = stripComments(read("lib/coach-progress.ts"));
-    assert.ok(/const averageDebateScore = average\(judgedDebates\.map/.test(coach), "coach average derives from the filtered list");
+    assert.ok(/const averageDebateScore = average\(\s*judgedDebates/.test(coach), "coach average derives from the filtered list");
+    assert.ok(/isCurrentScoringEra\(d\.completedAt\)/.test(coach),
+      "and is scoped to the same scoring era, matched on the ballot's completedAt rather than createdAt");
   });
 
   check("KC. guided rows REMAIN in learning history — nothing hides them", () => {
@@ -1178,8 +1191,10 @@ function main() {
     // The required retry stays tied to the DIRECT task: the round's retry link reopens the scaffold.
     assert.ok(/#scaffolded-try/.test(arena), "the retry link reopens the constructed attempt");
     assert.ok(/retry the move in the lesson, then come back/.test(arena), "and the copy says the move is retried in the lesson");
-    // Weighing cannot re-enter through the Clash mapping.
-    assert.equal(guidedJudge.JUDGE_CATEGORY_COMPETENCY.clash, "weighing", "control: the lexical 'clash' category is weighing");
+    // Weighing cannot re-enter through the Clash mapping — and as of 2026-09-07 there is no mapping
+    // left to re-enter through: the category it pointed at was a marker count and was withdrawn, so
+    // `clash` maps to nothing. The Clash round still excludes the key, which is what this guards.
+    assert.equal(guidedJudge.JUDGE_CATEGORY_COMPETENCY.clash, undefined, "control: no category maps to weighing");
     assert.ok(!allowedJudgeCategories(clashRubric).includes("clash"), "and it is not allowed in a Clash round");
   });
 

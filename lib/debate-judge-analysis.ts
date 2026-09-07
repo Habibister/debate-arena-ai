@@ -25,7 +25,8 @@ type SharedSpeakingScores = {
   /** ABSENT when nothing measured it. A missing value means NOT MEASURED, never a low score. */
   organization?: number;
   vocabulary: number;
-  persuasion: number;
+  /** ABSENT since 2026-09-07: was (impact + weighing + warrant) / 3, and weighing was a marker count. */
+  persuasion?: number;
   professionalism: number;
 };
 
@@ -49,7 +50,6 @@ type SideMetrics = {
     mechanism: number;
     impact: number;
     refutation: number;
-    weighing: number;
     evidence: number;
     motionConnection: number;
     sideFidelity: number;
@@ -66,7 +66,6 @@ type SideMetrics = {
     impact: number;
     refutation: number;
     opponentReference: number;
-    weighing: number;
     evidence: number;
     signpost: number;
     vague: number;
@@ -172,6 +171,9 @@ const IMPACT_MARKERS = [
   "directly"
 ];
 
+// RETAINED but UNREAD as of 2026-09-07, deliberately, the same way SIGNPOST_MARKERS was kept after
+// its withdrawal: the list is the record of what the discredited proxy counted. Nothing may read it
+// again without a measurement that survives the minimal-pair test in scripts/judge-quality-smoke.ts.
 const WEIGHING_MARKERS = [
   "outweigh",
   "more important",
@@ -512,7 +514,6 @@ function sentenceQuality(sentence: string) {
     countMarkers(lower, WARRANT_MARKERS) * 4 +
     countMarkers(lower, IMPACT_MARKERS) * 3 +
     countMarkers(lower, REFUTATION_MARKERS) * 3 +
-    countMarkers(lower, WEIGHING_MARKERS) * 5 +
     countMarkers(lower, EVIDENCE_MARKERS) * 2 -
     countMarkers(lower, VAGUE_PATTERNS) * 5
   );
@@ -586,7 +587,6 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const impact = countMarkers(combinedText, IMPACT_MARKERS);
   const refutation = countMarkers(combinedText, REFUTATION_MARKERS);
   const opponentReference = countMarkers(combinedText, ["opponent", "they say", "they argue", "their", "opposition", "government", "affirmative", "negative"]);
-  const weighing = countMarkers(combinedText, WEIGHING_MARKERS);
   const evidence = countMarkers(combinedText, EVIDENCE_MARKERS) + (/\d/.test(combinedText) ? 1 : 0);
   const signpost = countMarkers(combinedText, SIGNPOST_MARKERS);
   const vague = countMarkers(combinedText, VAGUE_PATTERNS);
@@ -635,17 +635,16 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   const groundedValue = isMostlyJargon ? 0 : abstract ? 0.35 : 1;
 
   const lengthBonus = Math.min(16, wordCount / 14);
-  const vaguePenalty = vague * 9 + (wordCount > 220 && warrant + impact + weighing + evidence < 4 ? 10 : 0);
+  const vaguePenalty = vague * 9 + (wordCount > 220 && warrant + impact + evidence < 3 ? 10 : 0);
   const finalSpeechText = speeches[speeches.length - 1]?.content ?? "";
   const directAnswerBonus =
     !isMostlyJargon && opponentReference > 0 && refutation > 0
-      ? (realWarrant > 0 ? 7 : 0) + (impact > 0 ? 4 : 0) + (weighing > 0 ? 6 : 0) + (evidence > 0 ? 3 : 0)
+      ? (realWarrant > 0 ? 7 : 0) + (impact > 0 ? 4 : 0) + (evidence > 0 ? 3 : 0)
       : 0;
   const finalSpeechScore = finalSpeechText
     ? clamp(
         42 +
           (isMostlyJargon ? 0 : countMarkers(finalSpeechText, REFUTATION_MARKERS) * 9) +
-          (isMostlyJargon ? 0 : countMarkers(finalSpeechText, WEIGHING_MARKERS) * 14) +
           (isMostlyJargon ? 0 : countMarkers(finalSpeechText, REAL_WARRANT_MARKERS) * 7) +
           (isMostlyJargon ? 0 : countMarkers(finalSpeechText, IMPACT_MARKERS) * 5) -
           finalNewArgument * 14 -
@@ -659,7 +658,6 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     mechanism: clamp(28 + grounded * realWarrant * 16 + (grounded && impact > 0 ? 8 : 0) - vague * 5 - jargonPenalty),
     impact: clamp(30 + groundedValue * impact * 9 + groundedValue * warrant * 2 - vague * 5 - jargonPenalty),
     refutation: clamp(26 + grounded * (refutation * 10 + opponentReference * 7) + directAnswerBonus - vague * 4 - jargonPenalty),
-    weighing: clamp(24 + groundedValue * weighing * 18 + (!isMostlyJargon && !abstract && impact > 1 ? 5 : 0) - vague * 4 - jargonPenalty),
     evidence: clamp(25 + evidence * 14 + Math.min(8, wordCount / 45) - vague * 5 - jargonPenalty),
     motionConnection: clamp(34 + topicEngagement * 16 + (topicEngagement === 0 ? -16 : 0)),
     // Did the side actually argue its own side with real positions, instead of conceding, drifting, or
@@ -684,7 +682,6 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
     scores.mechanism = Math.min(scores.mechanism, 10);
     scores.impact = Math.min(scores.impact, 10);
     scores.refutation = Math.min(scores.refutation, 12);
-    scores.weighing = Math.min(scores.weighing, 10);
     scores.evidence = Math.min(scores.evidence, 10);
     scores.motionConnection = Math.min(scores.motionConnection, 10);
     scores.centralClashResponse = Math.min(scores.centralClashResponse, 10);
@@ -696,19 +693,23 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
   // (each old weight / 0.96) rather than deleted or handed to a chosen favourite. The relative
   // importance of every surviving category is unchanged and the total is still exactly 1.00, so a
   // future ballot stays on the same scale instead of dropping about four points for everyone.
+  //
+  // 2026-09-07: weighing (0.12) is withdrawn for the same reason, leaving 0.84 of truthful weight, so
+  // the divisor moves 0.96 -> 0.84 and every surviving weight is again scaled rather than reassigned.
+  // Measured on matched transcripts: an honest speech gains about 3-4 points and a marker-stuffed one
+  // loses about 5, which is the false input leaving the ballot rather than anyone's debating changing.
   scores.overall = clamp(
-    scores.claimClarity * (0.1 / 0.96) +
-      scores.warrant * (0.11 / 0.96) +
-      scores.mechanism * (0.08 / 0.96) +
-      scores.impact * (0.1 / 0.96) +
-      scores.refutation * (0.12 / 0.96) +
-      scores.weighing * (0.12 / 0.96) +
-      scores.evidence * (0.08 / 0.96) +
-      scores.motionConnection * (0.06 / 0.96) +
-      scores.centralClashResponse * (0.08 / 0.96) +
-      scores.sideFidelity * (0.03 / 0.96) +
-      scores.responsiveness * (0.04 / 0.96) +
-      scores.finalSpeech * (0.04 / 0.96) -
+    scores.claimClarity * (0.1 / 0.84) +
+      scores.warrant * (0.11 / 0.84) +
+      scores.mechanism * (0.08 / 0.84) +
+      scores.impact * (0.1 / 0.84) +
+      scores.refutation * (0.12 / 0.84) +
+      scores.evidence * (0.08 / 0.84) +
+      scores.motionConnection * (0.06 / 0.84) +
+      scores.centralClashResponse * (0.08 / 0.84) +
+      scores.sideFidelity * (0.03 / 0.84) +
+      scores.responsiveness * (0.04 / 0.84) +
+      scores.finalSpeech * (0.04 / 0.84) -
       (isMostlyJargon ? 10 : 0) -
       (sideInverted ? 18 : 0)
   );
@@ -728,7 +729,6 @@ function analyzeSide(side: DebateSide, transcript: DebateTranscriptMessage[], to
       impact,
       refutation,
       opponentReference,
-      weighing,
       evidence,
       signpost,
       vague,
@@ -766,7 +766,6 @@ function sideFeedback(side: SideMetrics, opponent: SideMetrics) {
   const missed = [
     side.scores.warrant < 68 ? `Needed more warrant for: "${excerpt(side.bestClaim)}"` : null,
     side.scores.impact < 68 ? `Needed a clearer impact explaining why "${excerpt(side.bestClaim, 120)}" matters to the ballot.` : null,
-    side.scores.weighing < 68 ? "Needed explicit weighing: magnitude, probability, timeframe, or why this issue matters more." : null,
     dropped[0] ? `Dropped or barely answered: "${dropped[0]}"` : null,
     side.counts.vague > 0 ? `Used vague language that sounded asserted rather than proven, especially around "${excerpt(side.weakestClaim, 120)}."` : null,
     side.counts.finalNewArgument > 0 ? "Final speech appeared to add new material instead of collapsing to existing arguments." : null
@@ -778,9 +777,7 @@ function sideFeedback(side: SideMetrics, opponent: SideMetrics) {
       side.scores.refutation >= 70
         ? `Created direct clash by answering opposing material in the speech.`
         : `Gave at least one position the judge could identify, but clash was limited.`,
-      side.scores.weighing >= 70
-        ? `Used comparative language that helped explain why their impact mattered.`
-        : `Established a baseline position for the side.`
+      `Established a baseline position for the side.`
     ],
     missed: missed.length > 0 ? missed : ["No major collapse, but the side could still make the ballot story more explicit."]
   };
@@ -798,14 +795,6 @@ function recommendationForStudent(student: SideMetrics) {
     return {
       lessonSlug: "debate-refutation",
       reason: "Practice answering the opponent's exact claim before adding new offense.",
-      priority: "high" as const
-    };
-  }
-
-  if (student.scores.weighing < 65) {
-    return {
-      lessonSlug: "debate-weighing",
-      reason: "Practice explaining why your impact matters more than theirs.",
       priority: "high" as const
     };
   }
@@ -845,10 +834,6 @@ function practiceSkillFor(student: SideMetrics): string {
 
   if (student.scores.evidence < 60) {
     return "evidence comparison: support the warrant with a concrete example, not just assertion";
-  }
-
-  if (student.scores.weighing < 65) {
-    return "impact calculus / weighing: compare magnitude, probability, timeframe, scope, and reversibility";
   }
 
   if (student.scores.motionConnection < 60) {
@@ -923,7 +908,14 @@ function buildCategoryScores(student: SideMetrics): CategoryScore[] {
     { key: "mechanism", label: "Mechanism", score: student.scores.mechanism, reason: scoreReason("mechanism", student.scores.mechanism, student) },
     { key: "impact", label: "Impact", score: student.scores.impact, reason: scoreReason("impact", student.scores.impact, student) },
     { key: "refutation", label: "Refutation", score: student.scores.refutation, reason: scoreReason("refutation", student.scores.refutation, student) },
-    { key: "clash", label: "Weighing", score: student.scores.weighing, reason: scoreReason("weighing", student.scores.weighing, student) },
+    // WITHDRAWN 2026-09-07. This row was `scores.weighing`, a count of WEIGHING_MARKERS ("outweigh",
+    // "magnitude", "probability", "irreversible", ...). Measured on matched transcripts it scored the
+    // Weighing lesson's OWN model answer 24 — the floor, identical to attempting no weighing — and
+    // scored lens words with no comparison 100. The lesson teaches the opposite in as many words:
+    // "the skill is making the comparison clear, not saying the lens words". Nothing in a transcript
+    // measures whether a comparison was actually made, so the ballot shows no Weighing row rather than
+    // a number. Note the key was `clash` while the LABEL was "Weighing": the registry rubric and the
+    // provider fallback both use `clash` to mean genuine Clash, and neither is affected.
     { key: "contentEvidence", label: "Evidence", score: student.scores.evidence, reason: scoreReason("evidence/examples", student.scores.evidence, student) },
     {
       key: "collapse",
@@ -993,7 +985,9 @@ function sharedSpeakingFor(student: SideMetrics): SharedSpeakingScores {
     pacing: clamp(70 + Math.min(12, student.counts.words / 35) - student.counts.vague * 4),
     volume: 75,
     vocabulary: clamp(60 + Math.min(20, keywords(student.combinedText).length * 3)),
-    persuasion: clamp((student.scores.impact + student.scores.weighing + student.scores.warrant) / 3),
+    // `persuasion` was (impact + weighing + warrant) / 3 and is WITHDRAWN 2026-09-07 rather than
+    // recomputed: weighing was a marker count, and so are the two survivors, so an average of them
+    // would be a different unsupported score rather than a repair. Omitted, never substituted.
     professionalism: clamp(82 - student.counts.vague * 3)
   };
 }
@@ -1013,7 +1007,6 @@ function confidenceLevel(diff: number) {
 function winnerFromTranscriptScores(government: SideMetrics, opposition: SideMetrics): DebateSide {
   const governmentTieBreak =
     government.scores.refutation * 1.3 +
-    government.scores.weighing * 1.35 +
     government.scores.warrant +
     government.scores.impact +
     government.scores.evidence * 0.8 +
@@ -1025,7 +1018,6 @@ function winnerFromTranscriptScores(government: SideMetrics, opposition: SideMet
     (government.isMostlyJargon ? 30 : 0);
   const oppositionTieBreak =
     opposition.scores.refutation * 1.3 +
-    opposition.scores.weighing * 1.35 +
     opposition.scores.warrant +
     opposition.scores.impact +
     opposition.scores.evidence * 0.8 +
@@ -1054,7 +1046,6 @@ function winnerFromTranscriptScores(government: SideMetrics, opposition: SideMet
 function winnerSelectionReason(winner: SideMetrics, loser: SideMetrics) {
   const winnerAdvantages = [
     winner.scores.refutation > loser.scores.refutation ? "more direct refutation" : null,
-    winner.scores.weighing > loser.scores.weighing ? "better impact comparison" : null,
     winner.scores.warrant > loser.scores.warrant ? "clearer warrants" : null,
     winner.scores.evidence > loser.scores.evidence ? "more concrete examples or support" : null,
     winner.dropped.length < loser.dropped.length ? "fewer dropped claims" : null,
@@ -1069,7 +1060,7 @@ function winnerSelectionReason(winner: SideMetrics, loser: SideMetrics) {
 function betterSentenceFor(student: SideMetrics, opponent: SideMetrics) {
   const opponentClaim = opponent.bestClaim ? cleanClaim(opponent.bestClaim, 120) : "their main argument";
 
-  if (student.scores.weighing < 68) {
+  {
     return `Even if it's true that ${opponentClaim}, my side matters more because the harm I'm describing hits more people, more often, and is harder to undo.`;
   }
 
@@ -1113,9 +1104,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
   const betterSentence = betterSentenceFor(student, opponent);
   const winnerReason = winnerSelectionReason(winnerMetrics, loserMetrics);
   const keyClash = `The debate really turned on whether ${cleanClaim(government.bestClaim, 110)} outweighed ${cleanClaim(opposition.bestClaim, 110)}. ${sideLabel(winner)} won that clash because ${
-    winnerMetrics.scores.weighing > loserMetrics.scores.weighing
-      ? "it made the more substantive comparison between the impacts"
-      : "its reasoning was more complete than the answer it got back"
+    "its reasoning was more complete than the answer it got back"
   }.`;
   const reasonForDecision = `${sideLabel(winner)} wins on this transcript, not by default, scoring ${winnerMetrics.scores.overall} to ${loserMetrics.scores.overall}. ${winnerReason} Its strongest idea was that ${cleanClaim(winnerMetrics.bestClaim)}. ${sideLabel(loser)} ${loserMetrics.dropped[0] ? `left an important point unanswered: ${cleanClaim(loserMetrics.dropped[0])}.` : `had a weakest point — ${cleanClaim(loserMetrics.weakestClaim)} — that still lacked the warrant, impact, or comparison needed to overtake the winning argument.`}`;
 
@@ -1150,10 +1139,10 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
         loserMetrics.isMostlyJargon ? `, while ${sideLabel(loser)} mostly asserted debate vocabulary.` : "."
       }`;
 
-  const weighingCheck =
-    student.scores.weighing >= 70 && !student.isMostlyJargon
-      ? `You compared impacts with real substance (why yours matters more), which is what weighing means.`
-      : `Weighing was missing or only verbal. Don't just say you "outweigh" — compare on magnitude, probability, timeframe, scope, or reversibility and explain why your impact wins.`;
+  // Generic coaching, not a verdict. It used to be gated on `scores.weighing >= 70` and would tell a
+  // learner they had "compared impacts with real substance" on the strength of a marker count. The
+  // advice below claims nothing about what this speech did, so it survives the withdrawal unchanged.
+  const weighingCheck = `Don't just say you "outweigh" — compare on magnitude, probability, timeframe, scope, or reversibility and explain why your impact wins.`;
 
   const droppedArguments = student.dropped[0]
     ? `You did not answer the opponent's point that ${cleanClaim(student.dropped[0])}. An unanswered argument is treated as conceded.`
@@ -1177,9 +1166,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
           ? `${sideLabel(loser)} left "${cleanClaim(loserMetrics.dropped[0], 90)}" unanswered`
           : `${sideLabel(loser)} had the weaker warrant and impact on the central question`
     }, while ${sideLabel(winner)} ${
-      winnerMetrics.scores.weighing > loserMetrics.scores.weighing
-        ? "made the clearer impact comparison"
-        : winnerMetrics.scores.motionConnection > loserMetrics.scores.motionConnection
+      winnerMetrics.scores.motionConnection > loserMetrics.scores.motionConnection
           ? "stayed more tightly connected to the motion"
           : "gave the more complete reasoning"
     }.`
@@ -1196,7 +1183,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     shortReasonForDecision: `${sideLabel(winner)} wins, ${confidence === "high" ? "fairly clearly" : confidence === "medium" ? "but not by a lot" : "but only just"}. The clearer topic-specific argument was that ${cleanClaim(winnerMetrics.bestClaim, 120)}. ${
       loserMetrics.isMostlyJargon
         ? `${sideLabel(loser)} mostly leaned on debate vocabulary without proving the claim behind it.`
-        : `${sideLabel(loser)} needed more ${loserMetrics.scores.warrant < 60 ? "warrant" : loserMetrics.scores.weighing < 60 ? "comparison" : "concrete impact"} to overtake it.`
+        : `${sideLabel(loser)} needed more ${loserMetrics.scores.warrant < 60 ? "warrant" : "concrete impact"} to overtake it.`
     }`,
     longReasonForDecision: reasonForDecision,
     reasonForDecision,
@@ -1213,9 +1200,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
         dropped: government.dropped,
         neededMoreWarrant: government.scores.warrant < 68 ? `Explain why ${cleanClaim(government.bestClaim, 120)} is true, not just that it matters.` : "Warrants were present.",
         neededMoreImpact: government.scores.impact < 68 ? "Add a concrete harm or benefit and explain who experiences it." : "Impacts were present.",
-        neededMoreWeighing: government.scores.weighing < 68 ? "Compare magnitude, probability, timeframe, or reversibility against the opposition." : "Some weighing was present.",
         vagueOrUnsupported: government.counts.vague > 0 || government.scores.evidence < 65 ? `Most unsupported part: ${cleanClaim(government.weakestClaim, 130)}.` : "No major unsupported claim stood out.",
-        persuasiveReframe: government.scores.weighing >= 76 ? "Created a usable ballot frame." : "Did not clearly reframe the round.",
         hiddenAssumptionAttack: government.scores.refutation >= 76 ? "Pressed an assumption in the opposing case." : "Needed to expose the opponent's hidden assumption more directly."
       },
       opposition: {
@@ -1226,9 +1211,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
         dropped: opposition.dropped,
         neededMoreWarrant: opposition.scores.warrant < 68 ? `Explain why ${cleanClaim(opposition.bestClaim, 120)} is true, not just that it matters.` : "Warrants were present.",
         neededMoreImpact: opposition.scores.impact < 68 ? "Add a concrete harm or benefit and explain who experiences it." : "Impacts were present.",
-        neededMoreWeighing: opposition.scores.weighing < 68 ? "Compare magnitude, probability, timeframe, or reversibility against the government." : "Some weighing was present.",
         vagueOrUnsupported: opposition.counts.vague > 0 || opposition.scores.evidence < 65 ? `Most unsupported part: ${cleanClaim(opposition.weakestClaim, 130)}.` : "No major unsupported claim stood out.",
-        persuasiveReframe: opposition.scores.weighing >= 76 ? "Created a usable ballot frame." : "Did not clearly reframe the round.",
         hiddenAssumptionAttack: opposition.scores.refutation >= 76 ? "Pressed an assumption in the opposing case." : "Needed to expose the opponent's hidden assumption more directly."
       }
     },
@@ -1244,9 +1227,7 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       mostMissingPiece:
         student.scores.warrant < 68
           ? "The missing piece was warrant: explain why your claim is true."
-          : student.scores.weighing < 68
-            ? "The missing piece was weighing: explain why your impact matters more."
-            : "The biggest next step is collapsing your best point into a cleaner voter.",
+          : "The biggest next step is collapsing your best point into a cleaner voter.",
       betterSentence,
       modelRewrite: `Your idea — ${cleanClaim(student.bestClaim, 110)} — gets stronger like this: "${betterSentence}"`,
       skillToPractice: studentRecommendation.lessonSlug
@@ -1262,7 +1243,6 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
     weaknesses: [
       student.scores.warrant < 68 ? `Warrant gap: "${excerpt(student.weakestClaim, 130)}" needed a because sentence.` : "Warrants were present but could be sharper.",
       student.scores.impact < 68 ? "Impact gap: explain who is harmed or helped, how much, and why that matters." : "Impacts were present but need stronger comparison.",
-      student.scores.weighing < 68 ? "Weighing gap: compare your impact against the opponent's best impact." : "Weighing was present but can be cleaner.",
       student.dropped[0] ? `Dropped argument: "${student.dropped[0]}."` : "No obvious full drop, but some answers were not extended enough."
     ],
     improvementAdvice: [
@@ -1303,14 +1283,11 @@ export function buildTranscriptBasedDebateJudge(input: TranscriptJudgeInput) {
       whyLoserLost
     },
     roundDecidingClash,
-    readinessForNextLevel: {
-      ready: student.scores.overall >= 82 && student.scores.weighing >= 75 && student.scores.refutation >= 75,
-      rationale:
-        student.scores.overall >= 82
-          ? "The transcript shows a strong foundation, but promotion depends on repeating this with direct clash and clean weighing."
-          : "Keep training before the next level: the speech still needs more warrant, impact comparison, or direct clash.",
-      nextMilestone: "Complete a judged round where your final speech answers the opponent's best argument and weighs your impact in one clear voter."
-    },
+    // READINESS WITHDRAWN 2026-09-07. "Ready for the next level" required overall >= 82 AND
+    // weighing >= 75 AND refutation >= 75. One of its three gates was a marker count, and answering
+    // on the remaining two would quietly redefine readiness and make promotion easier without saying
+    // so. `false` is not available either: it means "we measured you and you are not ready". So the
+    // field is omitted, and the arena renders nothing where it is absent. UNAVAILABLE, not FAILED.
     fallbackNotice: "AI is temporarily unavailable, so we used a backup response.",
     eventType,
     topic: input.topic,

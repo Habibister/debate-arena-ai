@@ -200,7 +200,8 @@ export type JudgeReport = {
     overall: number;
     argument: number;
     refutation: number;
-    weighing: number;
+    /** OMITTED when nothing measured it — the row is skipped, exactly like organization below. */
+    weighing?: number;
     evidence: number;
     /** OMITTED when nothing measured it — the row is skipped rather than shown at a default state. */
     organization?: number;
@@ -216,7 +217,12 @@ export type JudgeReport = {
       deliveryStyle?: string;
     };
   };
-  readinessForNextLevel: {
+  /**
+   * OMITTED when the round cannot establish it. The transcript judge withdrew readiness on
+   * 2026-09-07: one of its three gates was a marker count, and neither narrowing the gate nor
+   * rendering `false` would have been truthful. The block below already guards on presence.
+   */
+  readinessForNextLevel?: {
     ready: boolean;
     rationale: string;
     nextMilestone: string;

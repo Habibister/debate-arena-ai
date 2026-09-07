@@ -77,7 +77,8 @@ type JudgeResult = {
     overall: number;
     argument: number;
     refutation: number;
-    weighing: number;
+    /** ABSENT when nothing measured weighing — never a delta derived from the overall score. */
+    weighing?: number;
     evidence: number;
     /** OMITTED when no category measured it. Absent means not measured, never a low focus state. */
     organization?: number;
@@ -87,7 +88,8 @@ type JudgeResult = {
       overall: string;
       argument: string;
       refutation: string;
-      weighing: string;
+      /** ABSENT when nothing measured weighing. */
+      weighing?: string;
       evidence: string;
       organization?: string;
       deliveryStyle: string;
@@ -142,9 +144,13 @@ function debateSkillRecommendations(result: JudgeResult) {
     add("debate-claim-warrant-impact-lesson", "Improve support by connecting claims, warrants, and impacts.", "medium");
   }
 
-  if (weakText.includes("weigh") || weakText.includes("impact") || weakText.includes("clash")) {
-    add("debate-weighing-lesson", "Practice comparing impacts and explaining why one argument should decide the round.", "medium");
-  }
+  // WITHDRAWN 2026-09-07, in the same commit as the measure that drove it. `weakText` is built from
+  // the LABELS of categories scoring at or below 65, and the only Debate category that reached this
+  // was `clash`/"Weighing" -- a marker count that scored the Weighing lesson's own model answer 24
+  // and marker stuffing 100, so it recommended the lesson to exactly the learners who had done it
+  // right. The "clash" and "impact" terms made it worse: a provider ballot's genuine "Clash" category
+  // could trigger a weighing diagnosis on its own. Nothing measures weighing from a transcript, so
+  // nothing here recommends it, and a replacement keyword list would be the same defect renamed.
 
   if (weakText.includes("structure") || weakText.includes("speech")) {
     add("debate-constructive-speeches-lesson", "Build clearer speech structure for constructive and summary work.", "low");
@@ -417,7 +423,11 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       logic: categoryScore(result, ["argument", "businessReasoning", "healthScienceKnowledge"]),
       evidence: categoryScore(result, ["contentEvidence", "performanceIndicators", "medicalAccuracy"]),
       rebuttal: categoryScore(result, ["refutation", "judgeQuestions", "scenarioResponse"]),
-      persuasion: categoryScore(result, ["clash", "solutionQuality", "taskCompletion"]),
+      // `clash` removed 2026-09-07. On a transcript ballot it was the withdrawn weighing marker
+      // count; on a provider ballot it is genuine Clash. Neither measures persuasion, and this value
+      // is PERSISTED as Debate.persuasionScore and rendered as "Persuasion" in replay. The DECA and
+      // HOSA analogues stay. Absent for Debate now, and the column is nullable.
+      persuasion: categoryScore(result, ["solutionQuality", "taskCompletion"]),
       clarity: result.sharedSpeaking?.clarity ? normalizeScore(result.sharedSpeaking.clarity) : undefined,
       communication: result.sharedSpeaking?.professionalism
         ? normalizeScore(result.sharedSpeaking.professionalism)
@@ -445,7 +455,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     const completedSpeechCount = debate.messages.filter((message) => message.role === "AFFIRMATIVE" || message.role === "NEGATIVE").length;
     const argumentCategory = findCategory(result, ["argument"]);
     const refutationCategory = findCategory(result, ["refutation"]);
-    const weighingCategory = findCategory(result, ["clash", "weighing", "solutionQuality"]);
+    const weighingCategory = findCategory(result, ["weighing"]);
     const evidenceCategory = findCategory(result, ["contentEvidence", "performanceIndicators", "medicalAccuracy"]);
     const organizationCategory = findCategory(result, ["organization", "signposting", "taskCompletion"]);
     const deliveryCategory = findCategory(result, ["delivery", "style", "professionalCommunication"]);
@@ -528,7 +538,11 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       });
       const argumentDelta = skillDelta(scores.logic, overallScore);
       const refutationDelta = skillDelta(scores.rebuttal, overallScore);
-      const weighingDelta = skillDelta(categoryScore(result, ["clash", "weighing", "solutionQuality"]), overallScore);
+      // NOT MEASURED is not MEASURED POORLY. `skillDelta` substitutes the overall score for an
+      // absent category, which would have written a weighing rating movement off the overall ballot
+      // for a competency nothing measured. Same shape as the organization withdrawal below.
+      const weighingCategoryScore = categoryScore(result, ["weighing"]);
+      const weighingDelta = weighingCategoryScore === undefined ? undefined : skillDelta(weighingCategoryScore, overallScore);
       const evidenceDelta = skillDelta(scores.evidence, overallScore);
       // NOT MEASURED is not MEASURED POORLY. `skillDelta` substitutes the overall score for an absent
       // category, which would have rendered an Organization focus row — with a reason naming
@@ -546,7 +560,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
           overall: ratingDelta,
           argument: argumentDelta,
           refutation: refutationDelta,
-          weighing: weighingDelta,
+          ...(weighingDelta === undefined ? {} : { weighing: weighingDelta }),
           evidence: evidenceDelta,
           ...(organizationDelta === undefined ? {} : { organization: organizationDelta }),
           deliveryStyle: deliveryDelta,
@@ -555,7 +569,7 @@ export async function POST(request: Request, { params }: { params: { debateId: s
             overall: `The practice judge gave ${wonDebate ? "this round" : "the other side"} the decision on a ${overallScore} practice ballot score.`,
             argument: focusReason("argument", argumentDelta, argumentCategory, "of how clearly the student stated their claim."),
             refutation: focusReason("refutation", refutationDelta, refutationCategory, "of how specifically the student answered the opponent."),
-            weighing: focusReason("weighing", weighingDelta, weighingCategory, "of how impacts were compared and framed for the ballot."),
+            ...(weighingDelta === undefined ? {} : { weighing: focusReason("weighing", weighingDelta, weighingCategory, "of how impacts were compared and framed for the ballot.") }),
             evidence: focusReason("evidence", evidenceDelta, evidenceCategory, "of the examples, evidence, and support given."),
             ...(organizationDelta === undefined
               ? {}

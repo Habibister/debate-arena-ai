@@ -223,9 +223,31 @@ async function main() {
                       // Debate evidence PICKER there. What this suite actually needs from assignments
                       // is that the education migration did not disturb how a LESSON assignment
                       // accepts evidence; that is asserted directly at 4A below.
-                      "prisma/seed.ts"]) {
+                      // prisma/seed.ts is deliberately absent from the final Debate audit onward, for the
+                      // same HEAD-RELATIVE flaw called out above: the pin only failed while a change was
+                      // uncommitted and passed again the moment HEAD advanced onto it. The audit found the
+                      // seed declaring three fabricated Weighing lessons ("Magnitude vs. probability",
+                      // "Timeframe and reversibility", "Framework before impacts") and a Skill description
+                      // teaching that naming the lens words IS weighing — doctrine the repaired lesson
+                      // explicitly rejects. A byte pin could not have caught that; it would have frozen it.
+                      // What this suite needs from the seed is asserted directly at 4R below.
+                      ]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
   }
+
+  // ---- 4R. what the retired seed pin protected, asserted directly ---------------------------------
+  // The seed declares Skill rows. It must not invent a curriculum: every Debate lesson the learner can
+  // reach comes from the education registry, and a seeded Lesson row with an invented title would be a
+  // second, unreviewed curriculum that no milestone owns.
+  const seedSrc = read("prisma/seed.ts");
+  const debateSkillBlocks = seedSrc.match(/\{\s*organization: "DEBATE",\s*\n\s*track: "DEBATE",[\s\S]*?\n  \}/g) ?? [];
+  assert.ok(debateSkillBlocks.length > 0, "4R. the seed still declares Debate skills");
+  for (const block of debateSkillBlocks) {
+    const slug = /slug: "([^"]+)"/.exec(block)?.[1] ?? "(unknown)";
+    assert.ok(/lessons: \[\]/.test(block), `4R2. ${slug} seeds no fabricated lessons`);
+  }
+  assert.ok(!/magnitude, probability, timeframe, reversibility/i.test(seedSrc),
+    "4R3. and no seeded Skill description teaches that naming the lens words is weighing");
 
   // ---- 4Q. what the retired lesson-route pin protected, asserted directly -------------------------
   // Three lesson kinds, three renderers, chosen by data rather than by slug. That is what the byte

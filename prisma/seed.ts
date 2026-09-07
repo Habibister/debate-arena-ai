@@ -35,7 +35,7 @@ const skillCatalog: Array<{
     name: "Claim Building",
     slug: "debate-claim-building",
     description: "Build clear claims that can survive direct clash and judge scrutiny.",
-    lessons: ["Claim, warrant, impact", "Turning a prompt into a position", "Writing concise contentions"]
+    lessons: []
   },
   {
     organization: "DEBATE",
@@ -43,7 +43,7 @@ const skillCatalog: Array<{
     name: "Evidence",
     slug: "debate-evidence",
     description: "Find, explain, and weigh credible evidence in competitive rounds.",
-    lessons: ["Evidence quality signals", "Citation drills", "Weighing evidence against rebuttals"]
+    lessons: []
   },
   {
     organization: "DEBATE",
@@ -51,15 +51,15 @@ const skillCatalog: Array<{
     name: "Rebuttal",
     slug: "debate-rebuttal",
     description: "Answer opposing arguments with direct, organized, and strategic responses.",
-    lessons: ["Flowing attacks", "Answering turns", "Collapsing to winning issues"]
+    lessons: []
   },
   {
     organization: "DEBATE",
     track: "DEBATE",
     name: "Weighing",
     slug: "debate-weighing",
-    description: "Compare impacts (magnitude, probability, timeframe, reversibility) and tell the judge which should decide the round.",
-    lessons: ["Magnitude vs. probability", "Timeframe and reversibility", "Framework before impacts"]
+    description: "Give the judge a rule for comparing impacts, argue for that rule, and apply it to both sides.",
+    lessons: []
   },
   {
     organization: "MODEL_UN",

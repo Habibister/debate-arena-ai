@@ -505,9 +505,15 @@ function main() {
     // the model is a reviewed decision recorded here, never absorbed silently.
     const withFrames = EDUCATION_REGISTRY.lessons.filter((e: { source?: { lesson?: { content?: { languageFrames?: unknown } } } }) =>
       e.source?.lesson?.content?.languageFrames).map((e: { id: string }) => e.id).sort();
-    assert.deepEqual(withFrames, ["debate-clash", PILOT], "exactly two lessons carry the coached model: Refutation and Clash");
-    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 8,
-      "eight lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, Turn Mechanics' move scenario, Signposting's level-and-label scenario, and Constructive's case-planning scenario");
+    // Weighing joined 2026-09-07. Its frames were authored for one reason only: the round judge that
+    // scored this competency counted comparison vocabulary, and was withdrawn for scoring the
+    // lesson's own model answer at the floor. Frames here expose the SHAPE of a comparison and are
+    // taught as optional, with the lesson stating that filling the blanks does not make what goes in
+    // them true. A fourth lesson adopting the model is a reviewed decision recorded here.
+    assert.deepEqual(withFrames, ["debate-clash", "debate-weighing", PILOT].sort(),
+      "exactly three lessons carry the coached model: Refutation, Clash and Weighing");
+    assert.equal(LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).length, 9,
+      "nine lessons carry a scaffolded try: the Refutation pilot, Clash, Round Orientation's tracking scenario, Evidence Evaluation's bounding scenario, Answer Types' classification scenario, Turn Mechanics' move scenario, Signposting's level-and-label scenario, and Constructive's case-planning scenario");
   });
 
   // ================================================================================================
@@ -969,7 +975,11 @@ function main() {
     assert.ok(/essentiallyTheSame\(clash, slots\.sideA\) \|\| essentiallyTheSame\(clash, slots\.sideB\)/.test(body), "the copy check compares whole text, not word counts");
     // Dispatch: the live component reads the lesson's slot order and its motion through one function.
     assert.equal(evaluateScaffoldFor(CLASH, [good.sideA, good.sideB, good.clash], MOTION).complete, true);
-    assert.equal(evaluateScaffoldFor("debate-weighing", ["a", "b"]), null, "a lesson with no evaluator cannot be checked");
+    // Weighing held this role until 2026-09-07, when its repair gave it a scaffold and an evaluator.
+    // Every lesson that authors a scaffoldedTry now has one, so the negative case uses a lesson that
+    // authors NO scaffold at all — which is the honest form of "nothing here can be checked".
+    assert.equal(evaluateScaffoldFor("debate-claim-warrant-impact", ["a", "b"]), null,
+      "a lesson with no evaluator cannot be checked");
     const withTry = LEARNING_SKILL_CATALOG.filter((e: { lesson: { content: { scaffoldedTry?: unknown } } }) => e.lesson.content.scaffoldedTry).map((e: { slug: string }) => e.slug).sort();
     assert.deepEqual(withTry, Object.keys(SCAFFOLD_EVALUATORS).sort(), "every lesson with a scaffolded try has a registered evaluator, and no evaluator is orphaned");
     const tryComponent = stripComments(read("components/coaching/scaffolded-try.tsx"));

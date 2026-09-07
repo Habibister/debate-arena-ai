@@ -1213,6 +1213,79 @@ export function evaluateConstructiveScaffold(
   };
 }
 
+/**
+ * WEIGHING — case-comparison scaffold. The brief supplies the round, both impacts and five candidate
+ * comparisons. THREE of the five are settled LEVEL by the facts it states, so choosing one of those
+ * is a real failure rather than a guess: a correctly-formed rule that decides nothing is exactly the
+ * defect the lesson's dimension-selection teaching exists to name. Of the two that separate the
+ * cases, one runs the learner's way and one runs against them, so the tradeoff has to be handled.
+ *
+ * WHAT IS PROVEN. The two comparison choices are CLOSED-VOCABULARY, matched against the facts the
+ * brief states, so a wrong pick is wrong outright. The two written slots are FORM ONLY: one checks
+ * that the difference names BOTH harms rather than only the learner's, the other that the closing
+ * statement puts both harms under the rule and ends in something the judge is asked to do. Nothing
+ * reads whether the reason is accurate, whether it is the strongest available, whether the other
+ * side's impact was described fairly, or whether a judge would prefer it to a rule the other side
+ * argued for. The completion copy says all of that, and says outright that choosing among five
+ * differences somebody else established is not finding them in a round.
+ */
+const WEIGHING_SEPARATING_OURS = new Set(["arrange", "arrange around", "work around", "avoid", "avoidable", "unavoidable", "likely", "likelihood", "certain", "certainty", "chance", "probability"]);
+const WEIGHING_SEPARATING_THEIRS = new Set(["how many", "many", "number", "reach", "reaches", "scale", "size", "count", "students"]);
+/** The three the brief settles as level. Choosing one is a real failure, not an unreadable answer. */
+const WEIGHING_LEVEL = new Set(["when", "starts", "start", "first", "sooner", "timeframe", "timing", "who", "whom", "falls", "long", "lasts", "duration", "reversibility", "permanent"]);
+
+const weighingTokens = (text: string) => new Set(canonical(text).split(" ").filter(Boolean));
+const weighingPicks = (text: string, terms: Set<string>) => {
+  const words = weighingTokens(text);
+  return [...terms].some((term) => (term.includes(" ") ? canonical(text).includes(term) : words.has(term)));
+};
+
+export function evaluateWeighingScaffold(
+  slots: { comparison: string; difference: string; theirComparison: string; statement: string }
+): ScaffoldEvaluation {
+  const mine = slots.comparison;
+  if (!mine.trim()) {
+    return { complete: false, slot: "the comparison you are asking the judge to decide on", retryRequired: true,
+      coach: "Name the comparison you want the judge to decide on. It has to be one of the five the brief lists." };
+  }
+  if (weighingPicks(mine, WEIGHING_LEVEL) && !weighingPicks(mine, WEIGHING_SEPARATING_OURS)) {
+    return { complete: false, slot: "the comparison you are asking the judge to decide on", retryRequired: true,
+      coach: "That comparison is one the facts here settle as level: run it over both harms and they come out the same, so the judge applies it and still cannot choose. Look for a comparison the two harms actually come out differently on." };
+  }
+  if (!weighingPicks(mine, WEIGHING_SEPARATING_OURS)) {
+    return { complete: false, slot: "the comparison you are asking the judge to decide on", retryRequired: true,
+      coach: "Two of the five separate these harms. One of them runs your way — read what the brief says is certain and what needs a chain of events before it happens." };
+  }
+  if (!weighingPicks(slots.theirComparison, WEIGHING_SEPARATING_THEIRS)) {
+    return { complete: false, slot: "the comparison they win", retryRequired: true,
+      coach: "One of the five runs against you, and naming it is part of the work: a judge who can see the difference you skipped trusts the ones you made less. Read what the brief says about how many students each harm reaches." };
+  }
+  const difference = slots.difference.trim().split(/\s+/).filter(Boolean);
+  if (difference.length < 6) {
+    return { complete: false, slot: "the difference in these facts", retryRequired: true,
+      coach: "Say what the difference actually is, in a sentence. The comparison names the axis; this says where the two harms fall on it." };
+  }
+  // SHAPE ONLY: both harms named, not just the learner's. It reads no further than that.
+  if (!/our|ours|we|us/i.test(slots.difference) || !/their|theirs|they|them/i.test(slots.difference)) {
+    return { complete: false, slot: "the difference in these facts", retryRequired: true,
+      coach: "A difference has two ends. This names one harm and not the other, so nothing here separates them yet." };
+  }
+  const statement = slots.statement.trim().split(/\s+/).filter(Boolean);
+  if (statement.length < 12) {
+    return { complete: false, slot: "your comparative statement", retryRequired: true,
+      coach: "Write the sentence you would say. It runs both harms through your rule and ends in what the judge should do, so it takes a sentence." };
+  }
+  if (!/our|ours|we|us/i.test(slots.statement) || !/their|theirs|they|them/i.test(slots.statement)) {
+    return { complete: false, slot: "your comparative statement", retryRequired: true,
+      coach: "Only one harm appears here. A rule that is only ever run over your own impact is not a comparison — put both under it." };
+  }
+  if (!/judge|should|decide|vote|prefer|round/i.test(slots.statement)) {
+    return { complete: false, slot: "your comparative statement", retryRequired: true,
+      coach: "The comparison stops short of the decision. Say what the judge should do once the rule has been applied." };
+  }
+  return { complete: true, coach: "", retryRequired: false, exactCheck: "Done. Here is exactly what that checked, and what it did not.\n\nCHECKED EXACTLY — the two comparisons you selected, against facts this brief states. The first was matched against the one comparison here that both separates the two harms and runs your way; the second against the one that separates them and runs theirs. Three of the five were settled as level by the facts you were handed, so those can be marked wrong without any judgment call. Writing \"probability\" earned nothing that \"ours is certain and theirs needs a chain of events\" would not have earned.\n\nCHECKED FOR SHAPE ONLY — your two written answers. We looked for whether your difference refers to both harms rather than only yours, and whether your closing statement puts both harms under your rule and ends in something the judge is asked to do. Nothing here judged whether your reason is accurate, whether it is the strongest one available, whether you were fair to the other side's impact, or whether a judge would accept it over a rule the other side argued for. A well-shaped sentence with a weak reason inside it passed this check.\n\nNOT PROVEN — that you can weigh. This drill handed you the round, both impacts, and the five differences already established, and asked you to choose among them. In a round you find the differences yourself, out of a case nobody has summarised for you, against an opponent arguing for a different rule, and early enough that they still have time to answer it. None of that was tested here. Put what you wrote next to the last rung of the revision ladder, then take it into a practice round or to a coach — that is where the rest of this gets tested." };
+}
+
 export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly string[], context: ScaffoldContext) => ScaffoldEvaluation>> = {
   "debate-refutation": (v) => evaluateRefutationScaffold({ theySay: v[0] ?? "", but: v[1] ?? "", because: v[2] ?? "", therefore: v[3] ?? "" }),
   "debate-clash": (v, context) => evaluateClashScaffold({ sideA: v[0] ?? "", sideB: v[1] ?? "", clash: v[2] ?? "" }, context),
@@ -1225,7 +1298,9 @@ export const SCAFFOLD_EVALUATORS: Readonly<Record<string, (values: readonly stri
   "debate-signposting": (v) =>
     evaluateSignpostingScaffold({ level: v[0] ?? "", signpost: v[1] ?? "" }, SIGNPOSTING_EXPECTED),
   "debate-constructive-speeches": (v) =>
-    evaluateConstructiveScaffold({ order: v[0] ?? "", feeSource: v[1] ?? "", close: v[2] ?? "" })
+    evaluateConstructiveScaffold({ order: v[0] ?? "", feeSource: v[1] ?? "", close: v[2] ?? "" }),
+  "debate-weighing": (v) =>
+    evaluateWeighingScaffold({ comparison: v[0] ?? "", difference: v[1] ?? "", theirComparison: v[2] ?? "", statement: v[3] ?? "" })
 };
 
 export function evaluateScaffoldFor(lessonId: string, values: readonly string[], context: ScaffoldContext = {}): ScaffoldEvaluation | null {

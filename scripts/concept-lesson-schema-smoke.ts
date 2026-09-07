@@ -256,7 +256,11 @@ function main() {
     // explanation sound and adding headings would have been quota, not teaching — and frames were
     // refused because this lesson's productive problem is speech architecture, not sentence openings.
     // It is the first entry to author a ladder without sections.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics"],
+        // Weighing repaired 2026-09-07: a revisionLadder, a small frame set and a case-comparison
+    // scaffoldedTry. It is the first entry to author frames since the coached pilot, and it does so
+    // because the withdrawn round judge had taught the opposite lesson by counting lens words —
+    // these frames carry structure and say so, and the lesson states that filling them proves nothing.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics", "debate-weighing"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.
@@ -271,9 +275,26 @@ function main() {
   });
 
   // ---- B. published lessons still render, and render exactly as before -------------------------
-  const UNPOPULATED_EXEMPLAR = DEBATE_MIGRATED_LESSONS.find((e: { id: string }) => e.id === "debate-weighing") as {
+  // Every migrated Debate lesson now authors at least one of the new structures — Weighing was the
+  // last bare one and was repaired 2026-09-07 — so the exemplar is DERIVED rather than found: a real
+  // published source with the optional fields stripped. That is strictly better than pointing at
+  // whichever lesson happens to be un-repaired next, which is a goalpost that moved four times. What
+  // this control tests is the RENDERER, not which lesson is bare, and the strip is asserted below.
+  const WEIGHING_SOURCE = DEBATE_MIGRATED_LESSONS.find((e: { id: string }) => e.id === "debate-weighing") as {
     source: ConceptEducationLessonSource; practiceDrill?: unknown;
   };
+  const UNPOPULATED_EXEMPLAR = {
+    practiceDrill: WEIGHING_SOURCE.practiceDrill,
+    source: {
+      ...WEIGHING_SOURCE.source,
+      lesson: {
+        ...WEIGHING_SOURCE.source.lesson,
+        content: Object.fromEntries(Object.entries(WEIGHING_SOURCE.source.lesson.content).filter(([k]) =>
+          !["teachingSections", "additionalExamples", "revisionLadder", "misconception",
+            "commonMistakes", "languageFrames", "scaffoldedTry"].includes(k)))
+      }
+    }
+  } as unknown as { source: ConceptEducationLessonSource; practiceDrill?: unknown };
   check("B. a real published lesson still renders through the widened renderer", () => {
     assert.ok(UNPOPULATED_EXEMPLAR, "B0. the exemplar exists");
     const ec = UNPOPULATED_EXEMPLAR.source.lesson.content as Record<string, unknown>;
@@ -282,10 +303,8 @@ function main() {
       assert.equal(ec[field], undefined, `B0b. the exemplar authors no ${field} — otherwise B3 below is vacuous`);
     }
     const real = render(React.createElement(ConceptEducationLessonView, {
-      // The exemplar must be a lesson that authors NONE of the structures, and each repair moves the
-      // goalposts: Evidence Evaluation held this role until 2026-09-05, Turn Mechanics until
-      // 2026-09-06. Weighing is the current one, and it is asserted unpopulated below rather than
-      // assumed, so this control cannot go vacuous when Weighing is repaired in its turn.
+      // The exemplar authors NONE of the structures — derived above by stripping them from a real
+      // published source, and asserted stripped in B0b rather than assumed.
       source: UNPOPULATED_EXEMPLAR.source,
       provenance: MIGRATED_DEBATE_PROVENANCE,
       moduleLabel: "Round strategy",

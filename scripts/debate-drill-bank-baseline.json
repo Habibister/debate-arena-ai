@@ -57,11 +57,11 @@
     "question": "In 'claim, warrant, impact', the impact should ideally be:",
     "choices": [
       "The largest harm the speaker can name, however remote the path from warrant to harm",
-      "Tied to something the judge cares about (harm, magnitude, people affected)",
+      "Tied to something the judge cares about, such as the harm done and who it falls on",
       "A restatement of the claim in more urgent language",
       "The strongest piece of evidence, restated as the argument's closing line"
     ],
-    "correctAnswer": "Tied to something the judge cares about (harm, magnitude, people affected)",
+    "correctAnswer": "Tied to something the judge cares about, such as the harm done and who it falls on",
     "explanation": "Impacts persuade when they connect to what the judge values — scale, severity, who is affected. Restating the claim adds urgency without consequence, a huge harm at the end of a remote chain breaks the link, and evidence supports the argument rather than serving as its impact."
   },
   {
@@ -927,12 +927,12 @@
     "area": "evidence-evaluation",
     "question": "For the claim \"this drug reduces heart attacks\", a trial that measures cholesterol levels is:",
     "choices": [
-      "Indirect support — useful, but weaker than a trial measuring heart attacks",
+      "Indirect support, useful but weaker than a trial measuring heart attacks",
       "Direct support, since cholesterol is what causes heart attacks",
       "Worthless, because indirect evidence proves nothing",
       "Stronger, because cholesterol is easier to measure"
     ],
-    "correctAnswer": "Indirect support — useful, but weaker than a trial measuring heart attacks",
+    "correctAnswer": "Indirect support, useful but weaker than a trial measuring heart attacks",
     "explanation": "Indirect evidence sits one step away from the claim: it supports a marker rather than the outcome. That is real support, just weaker than measuring the outcome itself."
   },
   {
@@ -1785,12 +1785,12 @@
     "area": "clash",
     "question": "Opponent: 'Playground resurfacing can wait a year because injuries are rare.' Which reply engages it?",
     "choices": [
-      "Injuries are rare only because the cracked section is roped off — waiting keeps a third of the playground closed",
+      "Injuries are rare only because the cracked section is roped off, and waiting keeps a third of the playground closed",
       "Poured rubber lasts about fifteen years and needs almost no upkeep once it is down, so the money buys a long stretch of use",
       "The playground is where the younger students get most of their exercise during the day, and that shows in how they settle afterwards",
       "The parent council approved the resurfacing plan last spring"
     ],
-    "correctAnswer": "Injuries are rare only because the cracked section is roped off — waiting keeps a third of the playground closed",
+    "correctAnswer": "Injuries are rare only because the cracked section is roped off, and waiting keeps a third of the playground closed",
     "explanation": "The reply turns the opponent's own evidence: the low injury rate exists because of the closure the plan would end. That directly undercuts the wait-a-year conclusion."
   },
   {
@@ -1824,12 +1824,12 @@
     "area": "clash",
     "question": "The opponent's whole case rests on a factual claim: 'the town budget already funds a teen center.' You know that funding ended last year. What should you do?",
     "choices": [
-      "Answer it directly — correcting the expired-funding claim removes the base of their case",
+      "Answer it directly, since correcting the funding claim removes the base of their case",
       "Add a benefit they cannot match, since a stronger case of your own outweighs a correction",
       "Concede the funding claim and argue the existing centre is too small for the town",
       "Restate your strongest argument so the comparison favours you"
     ],
-    "correctAnswer": "Answer it directly — correcting the expired-funding claim removes the base of their case",
+    "correctAnswer": "Answer it directly, since correcting the funding claim removes the base of their case",
     "explanation": "When one claim carries the opposing case, engaging it is the highest-value move in the round. A correction that removes their foundation outweighs any new parallel point."
   },
   {
@@ -1863,12 +1863,12 @@
     "area": "clash",
     "question": "The opponent listed four objections, but their summary relied only on the claim that the mentoring program shows no measurable results. What does effective clash require now?",
     "choices": [
-      "Engage the no-results claim they collapsed to — it is the argument the judge will decide on",
+      "Engage the no-results claim they collapsed to, because it is the argument the judge will decide on",
       "Answer all four objections, since leaving any of them alone concedes it",
       "Point out that they abandoned three of their four objections and make that the story",
       "Open a new line about the program's cost, where their case is weakest"
     ],
-    "correctAnswer": "Engage the no-results claim they collapsed to — it is the argument the judge will decide on",
+    "correctAnswer": "Engage the no-results claim they collapsed to, because it is the argument the judge will decide on",
     "explanation": "When the opposing side narrows to one argument, the round turns on it. Spreading time evenly across abandoned points leaves the decisive claim under-answered."
   },
   {
@@ -1928,12 +1928,12 @@
     "area": "clash",
     "question": "Your notes show the opponent never answered your cost-shift argument, but answered your two smaller points at length. What is the honest reading?",
     "choices": [
-      "The cost-shift argument stands — thorough answers elsewhere do not cover the drop",
+      "The cost-shift argument stands, because thorough answers elsewhere do not cover the drop",
       "The cost-shift argument is weakened rather than standing, since they answered everything around it",
       "Their detailed answers cover the cost-shift point by implication",
       "The judge can only count arguments both sides addressed"
     ],
-    "correctAnswer": "The cost-shift argument stands — thorough answers elsewhere do not cover the drop",
+    "correctAnswer": "The cost-shift argument stands, because thorough answers elsewhere do not cover the drop",
     "explanation": "Engagement is per-argument, not per-minute. Detailed answers to minor points cannot substitute for the missing answer to the argument that matters."
   },
   {
@@ -2177,10 +2177,10 @@
     "choices": [
       "It strengthens the argument, as structure is part of what persuades a judge",
       "It makes the argument harder for the other side to answer",
-      "Nothing about the argument; it changes only where the judge writes it down",
+      "Nothing about the argument, but it changes only where the judge writes it down",
       "The judge records it under the same argument either way, so the label is decoration"
     ],
-    "correctAnswer": "Nothing about the argument; it changes only where the judge writes it down",
+    "correctAnswer": "Nothing about the argument, but it changes only where the judge writes it down",
     "explanation": "Strip the labels from a well-reasoned speech and the same claims and reasons remain: what changes is where each one lands. Crediting the label with extra persuasive force treats a signpost as persuasion. Saying it makes you harder to answer has it backwards — structure is what lets the other side find and answer you. Calling the label decoration assumes the answer reaches the same column with or without it. It does not: the unlabelled speaker leaves the judge a block of text to sort out from memory after the speech, which is how a well-reasoned answer gets lost."
   },
   {
@@ -2305,12 +2305,12 @@
     "area": "signposting",
     "question": "In one round the other side's safety heading holds two arguments, on crossings and on lighting. In the next round, on a different motion, their fairness heading holds three things, one of them safety, which itself rests on two claims. What do those two rounds show about the word safety?",
     "choices": [
-      "Its level is set by how each side built that round's case — an area in the first, an argument in the second",
+      "Its level is set by how each side built that round's case, so safety is an area in the first and an argument in the second",
       "Safety is an area in each round, and the second side placed it a level lower than it belongs",
       "The first side got it wrong: safety is an argument, and putting two things underneath it does not make it a heading",
       "Its level is set by how the answering side chooses to label it, so the same heading can be treated as an area or as an argument depending on the response"
     ],
-    "correctAnswer": "Its level is set by how each side built that round's case — an area in the first, an argument in the second",
+    "correctAnswer": "Its level is set by how each side built that round's case, so safety is an area in the first and an argument in the second",
     "explanation": "No word carries a level around with it. In the first round safety is the heading and crossings and lighting sit under it; in the second it sits under fairness with claims of its own. Both are correct readings of the case in front of you. The answer that keeps safety an area in both rounds and the one that keeps it an argument in both each pick one level and call one of the two cases wrong, when the case decides it. The answer that puts the level in the responder's labelling hands the decision to the answering side. The level comes from how the other side actually built their case, and your label has to match what they built rather than remake it."
   },
   {

@@ -1,0 +1,1506 @@
+{
+  "marker": "DEBATE-BEGINNER-MANIFEST-V1",
+  "note": "Internal review contract. NOT learner content. Learners never see rule ids, classes, or guard references. A rewrite may fuse several rules into one sentence, example or mistake box; this artifact protects MEANING, never presentation length.",
+  "fullTrackARuleTotal": 59,
+  "censusRulesTriaged": 317,
+  "lessons": [
+    {
+      "lesson": "debate-round-orientation",
+      "censusRules": 33,
+      "adversariallyChallenged": false,
+      "estimatedRequiredWords": 1150,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "A debate round is two sides arguing opposite answers to one statement (the motion) in front of a judge, and the judge picks the side whose reasons held up best based only on what was said in the round, so your job is not just to talk: it is to leave your reasons still standing at the end.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "A round is not a list of speeches; it is a handful of arguments that keep changing - each one gets introduced, then answered or ignored, then defended or dropped - and nothing resets when a new speaker stands up.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Every time a speech ends, ask two separate questions about each argument: was it answered, yes or no - and what state is it in now?",
+          "guarded": false
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "An argument can be in one of three states - still unresolved (it was answered, but the answer did not settle it), weakened (answered and never defended), or sitting exactly where it was made (no response at all) - so after every opposing speech, defend the ones that were answered.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "If the other side never answers one of your arguments they have not beaten it - it is still there in the shape you gave it, it can decide a round you thought you were winning, and pointing that out costs one sentence.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "While the other side is speaking, listen instead of rehearsing: catch each of their claims and the reason under it, and mark which of your own arguments they answered and which they skipped.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-07",
+          "meaning": "Early speeches mostly build your side's case and later ones mostly answer and compare, so the round narrows to a few arguments still in dispute - and the judge decides between those survivors, not between who said more or who sounded surer.",
+          "guarded": false
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "Silence is taught as LESS REASON TO REJECT an argument, never as the judge counting it, treating it as true, or an automatic win. Owner-instructed wording correction.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B02",
+          "meaning": "Format-agnostic lock: the lesson may say only that formats differ in speech names, order and timing. No universal claim about speech order/names/count, team size, timing, prep, side labels, cross-ex/crossfire/POIs, or new-argument rules; Pro/Con and Government/Opposition stay illustrative, never canonical.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B03",
+          "meaning": "An argument is a claim with a reason and a why-it-matters, and Claim/Warrant/Impact is named as the lesson that teaches how to build one. Orientation introduces argument anatomy at beginner level only and never takes that ownership.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B04",
+          "meaning": "Choosing which surviving disagreement matters most is pointed at as a later lesson, never resolved here. Weighing ownership stays with Weighing.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B05",
+          "meaning": "Tracking means a rough one-line-per-argument record with a note on its state - explicitly not a transcript and not a formal flowing system. The honest limit on what a beginner is expected to hold must survive whatever compression happens.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B06",
+          "meaning": "The weak half of the worked example is a round in which nobody answers anything - not a rude or badly delivered round - and its consequence is that the judge holds points with no response and no reason to prefer one side's over the other's.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B07",
+          "meaning": "The application is a short fixed exchange scored as three separate questions - which argument was answered, which issue is still unresolved, which argument got no response - in exactly that vocabulary, not one composite status per argument.",
+          "disposition": "B-EXAMPLE"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R12 - Know your side's position and its two or three strongest reasons, so you know what is worth protecting when the round gets busy.",
+          "klass": "C",
+          "destination": "later lesson - Constructive Speeches owns case planning; optionally one line of prep advice after the main path",
+          "why": "First test: a beginner can score an exchange's argument states correctly without having pre-selected their own two or three strongest reasons. It is round-preparation advice, not orientation content, and its natural home is the lesson that teaches building a case. Removing it from first exposure mak"
+        },
+        {
+          "censusRule": "R25 - Arguments, not sentences, are the unit of a round: listen for the two or three arguments inside their speech rather than replying to every remark.",
+          "klass": "C",
+          "destination": "optional note after the main path - fits the existing commonMistakes[0] slot, which is structurally pinned to remain but",
+          "why": "It refines RULE-02 ('follow each argument, not each speech') by naming a distinct beginner failure - replying to every remark. The census's own read is that a learner reaches the scaffolded scenario without it. Keeping it as a compressed mistake box preserves the failure mode without spending requir"
+        },
+        {
+          "censusRule": "R10 - Without this map beginners list facts, repeat themselves, or treat each speech as a fresh start.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-02",
+          "why": "Its only load-bearing clause, 'treat each speech as a fresh start', is the misconception RULE-02 already owns and the misconception block already states in full ('Nothing resets'). The remaining two clauses are motivation, not judgment. Deleting it removes a telling, not a teaching."
+        },
+        {
+          "censusRule": "R29 - Confidence is not a reason, and the judge's own opinion is not in the round.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-01 (keep the pinned fourth mistake-box slot, but not a third prose telling)",
+          "why": "This is the third statement of the same doctrine: it is already in RULE-01 ('based only on what was said in the round') and RULE-07 ('not who said more or who sounded surer'). The census counted it as one of seven repetitions. Note that MA pins commonMistakes.length === 4, so the SLOT must stay fill"
+        },
+        {
+          "censusRule": "R11 - Once you know the judge is deciding between reasons introduced, answered and defended in front of them, every sentence you say gets a purpose and every sentence the other sid",
+          "klass": "E",
+          "destination": "authoring comment only - the rewrite supplies its own one-line reason-to-care in beginner language",
+          "why": "It is internal explanation of why the lesson exists, written in the current adult register ('something to wait out'). It states no judgment a student applies and it is not pinned or recorded anywhere. A beginner rewrite still needs a hook, but reproducing this sentence is preservation for its own sa"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "scripts/coached-performance-smoke.ts:1339 - `assert.ok(/they have given the judge less reason to reject it/.test(text), ...)`. This EXACT phrase must appear in explanation, a teachingSections body, workedExample.whyItWorks, misconception.whyItFails, or a commonMistakes.whyItFails. It cannot be paraphrased into beginner language.",
+        "scripts/coached-performance-smoke.ts:1340 - `assert.ok(!/judge (will )?counts? it|treats? it as (still )?true|automatically (wins|true)/i.test(text), \"no absolute dropped-argument doctrine\")`. A well-meaning simplification such as 'the judge just counts it as true' fails this pin and reopens the repaired regression.",
+        "scripts/coached-performance-smoke.ts:1341 - `/two separate questions/`, `/Was it answered: yes or no/` and `/what state is it in now/` must all three appear verbatim. RULE-03 must be written using these exact strings.",
+        "scripts/coached-performance-smoke.ts:1342 - `/An argument that was answered can still be very much alive/` must appear verbatim; RULE-04's 'still unresolved' state cannot be reworded away from this sentence.",
+        "scripts/coached-performance-smoke.ts:1343-1344 - the teaching text must contain `/still unresolved/` and `/no response at all/`, and `orient.scaffoldedTry.slots` must deepEqual [\"answered\", \"still unresolved\", \"no response\"]. One vocabulary across teaching, mistakes and scenario is pinned.",
+        "scripts/coached-performance-smoke.ts:1350-1351, 1355 - the worked example must keep `/On concentration:/` and `/On that:/` in strongAnswer, `/Nothing was said about the money/` in strongAnswer, `/nobody answers anything/` in whyItWorks, and a weak version that is really a list (>= 2 'Also,'). No weighing vocabulary and no because/therefore refutation chain may enter it.",
+        "scripts/coached-performance-smoke.ts:1362-1363 - `/Formats differ in speech names, order and timing/` and both `/mostly constructive/` and `/mostly responsive/` must survive in `explanation`. The phase claim must stay hedged with 'mostly'; an earlier unhedged version was BLOCKED on neutrality review (docs/HANDOFF.md).",
+        "scripts/coached-performance-smoke.ts:1367-1368 - `/the Claim, Warrant, Impact lesson teaches how to build one/` in `explanation` and `/a skill with its own lesson later/` in `teachingSections[2].body`. Both ownership deferrals are exact-string pins.",
+        "scripts/coached-performance-smoke.ts:1316-1318 - STRUCTURE is pinned: exactly 3 teachingSections, a misconception object present, exactly 4 commonMistakes, exactly 3 checks total (guided + practice + mastery), a scaffoldedTry with 3 slots, and languageFrames / revisionLadder / additionalExamples all absent. A beginner rewrite may not collapse three sections into two or drop a mistake box without editing MA.",
+        "scripts/coached-performance-smoke.ts:1332-1333 - `assert.ok(prose >= 600 && prose <= 1300, ...)` and `assert.ok(prose + applied <= 1800, ...)`. There is a hard FLOOR of 600 teaching-prose words (objective + explanation + whyMatters + steps + sections). The triage's compression target must stop above 600, or MA must be deliberately relaxed by the owner in the same change.",
+        "scripts/coached-performance-smoke.ts:1386 (MF) - the page must render teach-first, show 'A round is a set of arguments that change' before the first check, show 'Now try the move' and the slot labels '1. answered', '2. still unresolved', '3. no response', and must contain NO frames section and NO guided-round link. Section headings are effectively pinned by the first of these.",
+        "scripts/learning-content-integrity-smoke.ts + scripts/learning-content-baseline.json - a full canonical snapshot of the lesson's runtime text is checked in; the orientation entry is at learning-content-baseline.json:1227ff. ANY rewrite of this prose must update the baseline JSON and the `LEARNING_CONTENT_BASELINE` marker (currently 'WEIGHING-REPAIR-V1', line 56) in the same commit, or the suite fails.",
+        "scripts/education-migration-smoke.ts:687-688 and scripts/coach-evidence-smoke.ts:419-420 - orientation carries NO skillSlug and NO practiceDrill and is invisible to the remediation/Coach evidence path. Formative-only by design; a rewrite must not add a drill CTA or a claimed skill."
+      ]
+    },
+    {
+      "lesson": "claim-warrant-impact",
+      "censusRules": 45,
+      "adversariallyChallenged": false,
+      "estimatedRequiredWords": 800,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "Every argument you make has three parts — a claim (the exact thing you want the judge to agree with, specific enough to argue about), a warrant (why it is true), and an impact (why it matters) — and the judge weighs all three.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "The warrant is a mechanism: name the cause-and-effect step that makes the claim true — how the thing you want actually produces the result you claim.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "A warrant fails in two ways — it repeats the claim in different words, or it names the problem without naming the cause — so finish '...because ___' with a cause-and-effect step, not a synonym, and check your draft: if every sentence could stand on its own as an assertion, the reasoning is still missing.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "The impact answers the judge's silent 'so what?' — say who is affected, how badly, and how many — because 'it helps everyone' gives the judge nothing to weigh, and an argument that is true but has no impact still loses.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "A fact or a source name is not an argument: the judge has to stay neutral and will not connect it for you, and the same fact usually fits both sides — so you say the connecting sentence out loud, 'which means ___, therefore ___.'",
+          "guarded": false
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "Making an argument stronger means improving the warrant and the impact — the claim stays exactly the same — and you get there by revising in passes, not by saying the claim more forcefully.",
+          "guarded": false
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "A warrant is also the bridge from evidence to a claim, and this lesson is where that connecting sentence is taught — the two descriptions of 'warrant' are two angles on one job, not competing rules.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B02",
+          "meaning": "Naming a source is not the same move as explaining the mechanism — but a heavily cited argument is NOT automatically warrantless; what decides it is whether the connecting sentence is there.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B03",
+          "meaning": "The worked strong argument is labeled illustrative on the artifact itself, and the student is told a warrant is only as strong as support they can actually defend.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B04",
+          "meaning": "The statistic in the evidence example is illustrative: copy the shape, not the figure, and cite real current data before using it in a round.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B05",
+          "meaning": "Practice results write real Claim Building mastery through the existing drills pipeline — never a parallel scorekeeper, and never a promise the server did not confirm.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B06",
+          "meaning": "The video slot stays honestly empty — a placeholder is rendered, never a fake embed.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B07",
+          "meaning": "The lesson says plainly that it is teaching material, not official competition rules.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B08",
+          "meaning": "Claim/Warrant/Impact is ONE officially supported beginner formulation, not the only one — compatible four-part presentations (Claim/Data/Warrant/Impact) also appear in official material.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B09",
+          "meaning": "Provenance claims stable-teaching authority naming the NSDA Debate Training Guide, with no version and no verification date, because the record carries neither.",
+          "disposition": "B-GUARD-ONLY"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R12 — preference or popularity ('students don't like it') is not a reason; plenty of good policies are unpopular.",
+          "klass": "C",
+          "destination": "optional note after the main path (mistake-box variant)",
+          "why": "RULE-02's mechanism test already rejects it: a popularity sentence names no cause-and-effect step. A beginner does not need the separate category name to write a correct warrant, and naming it costs a paragraph in the weak-example analysis."
+        },
+        {
+          "censusRule": "R22 — it becomes a warrant when it gives the cause AND pre-answers the obvious rebuttal.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "The cause half is already carried by RULE-02 and RULE-03, so only the pre-answering clause is actually demoted. Anticipating and pre-empting the opponent's reply is a refutation-adjacent upgrade owned by the Refutation / Answer Types lessons, not something a first correct warrant requires."
+        },
+        {
+          "censusRule": "R23 — the same move works on evidence: 'studies show it helps' is not something a judge can weigh.",
+          "klass": "C",
+          "destination": "optional note after the main path — the evidenceUpgrade structure itself must stay populated (smoke-pinned), it simply l",
+          "why": "It opens a second, adjacent skill (writing specific support) layered on top of claim/warrant/impact. First test: a beginner can write a correct claim, warrant and impact without ever touching it."
+        },
+        {
+          "censusRule": "R24 — specific evidence carries a NUMBER the judge can size up.",
+          "klass": "C",
+          "destination": "optional note after the main path (the four criteria stay together as a checklist in the pinned evidenceUpgrade block)",
+          "why": "A checklist a learner returns to when polishing support, not first-exposure material. Removing it from the first pass leaves nothing in the lesson false."
+        },
+        {
+          "censusRule": "R25 — specific evidence carries a built-in COMPARISON or baseline.",
+          "klass": "C",
+          "destination": "optional note after the main path (evidenceUpgrade checklist)",
+          "why": "Same as R24: a support-quality refinement. Nothing in claim/warrant/impact becomes wrong without it on first exposure."
+        },
+        {
+          "censusRule": "R26 — specific evidence carries a TIMEFRAME so it cannot be dismissed as a fluke.",
+          "klass": "C",
+          "destination": "optional note after the main path (evidenceUpgrade checklist)",
+          "why": "Same as R24. It defends evidence against a rebuttal the beginner has not yet learned to fear."
+        },
+        {
+          "censusRule": "R27 — specific evidence names a SPECIFIC OUTCOME so the opponent must engage your data.",
+          "klass": "C",
+          "destination": "optional note after the main path (evidenceUpgrade checklist)",
+          "why": "Same as R24. This is competitive hardening of support, one layer above the skill being taught."
+        },
+        {
+          "censusRule": "R37 — mistake: confusing evidence with a warrant; a stat left 'naked' can support either side.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-05",
+          "why": "The identical educational judgment is already made in the misconception ('the same fact usually fits both sides... it doesn't pick a side'), which renders immediately before it. The census's own repetition list records this pair. One statement, one example."
+        },
+        {
+          "censusRule": "R38 — the harder, prepared-sounding version: claim-then-source repeated ('Smith 2021 finds this'), fluent and researched and still no HOW.",
+          "klass": "C",
+          "destination": "later lesson / optional note after the main path",
+          "why": "It repairs the failure mode of a PREPARED speaker with a card file, not a beginner writing a first argument, and it arrives only after the beginner form of the same mistake is already fixed by RULE-05. Its one irreducible piece — cited does not mean warrantless — is preserved separately as a class-B"
+        },
+        {
+          "censusRule": "R40 — fix: never leave evidence unexplained; with several sources take the load-bearing one and put its mechanism in your own words.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "The first clause is a straight duplicate of RULE-05 ('never leave evidence unexplained' also appears in strong.reasons[1]). The distinctive content — triaging several sources to the load-bearing one — presupposes a speaker who already has several sources, so it pairs with R38 as advanced material."
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "skillSlug stays \"debate-claim-building\" and must still match the drill area's mastery skill — scripts/tracks-smoke.ts:122-123: assert.equal(area?.skillSlug, cwi.skillSlug, ...); assert.equal(cwi.skillSlug, \"debate-claim-building\", \"CWI maps to the seeded debate-claim-building skill\").",
+        "The weak/strong pair must remain a real contrast on the SAME claim, with reason ARRAYS of at least two entries on both sides — scripts/tracks-smoke.ts:125-126: assert.ok(cwi.weak.text.trim() !== cwi.strong.text.trim(), ...); assert.ok(cwi.weak.reasons.length >= 2 && cwi.strong.reasons.length >= 2, \"each example explains why it fails/works\"). A rewrite that compresses the analysis to one bullet per side fails this.",
+        "commonMistakes must hold 2-3 entries and EVERY entry must keep a non-empty fix — scripts/tracks-smoke.ts:127-128: assert.ok(cwi.commonMistakes.length >= 2 && cwi.commonMistakes.length <= 3, \"2-3 real common mistakes\"); assert.ok(cwi.commonMistakes.every((m) => m.fix.trim().length > 0), \"every mistake has a concrete fix\").",
+        "The revision ladder must keep at least THREE rungs, each with both a warrant and a note, with the first and last genuinely different — scripts/tracks-smoke.ts:130-132. This is what protects the intermediate 'names the harm, not the cause' diagnosis absorbed into RULE-03; collapsing the ladder to weak-then-strong breaks the suite.",
+        "The evidenceUpgrade block must stay POPULATED and honest even though its teaching is demoted to class C — scripts/tracks-smoke.ts:134-136: vague !== specific; whatChanged.length >= 3; /illustrat/i.test(honestyNote). Demotion here means 'leaves the required beginner path', never 'delete the field'.",
+        "The misconception must keep a name, a wrong model, and a DIFFERENT right model — scripts/tracks-smoke.ts:138-139. RULE-05 is authored into this structure.",
+        "video.url stays null — scripts/tracks-smoke.ts:141: assert.equal(cwi.video.url, null, \"video slot is an empty placeholder, not a fake embed\").",
+        "provenanceNote must still match /not official/i (scripts/tracks-smoke.ts:143), /one supported formulation rather than the only one/ and /Claim\\/Data\\/Warrant\\/Impact/ (scripts/source-freshness-smoke.ts:220-221).",
+        "The provenance object stays authority \"stable-teaching\", sourceLabel \"NSDA Debate Training Guide\", verifiedLabel null — scripts/source-freshness-smoke.ts:216-219 — and \"NSDA Debate Training Guide\" must appear in the RENDERED lesson's visible text: scripts/nav-a11y-smoke.ts:172.",
+        "The rendered lesson must leak no other track's content — scripts/nav-a11y-smoke.ts:173: assert.ok(!/Medical Terminology|Performance Indicator/.test(debateHtml), \"the Debate lesson leaks no other track's content\").",
+        "The Evidence Evaluation lesson's deferral sentence is pinned at scripts/coached-performance-smoke.ts:1478, so CWI must continue to teach the evidence-to-claim connecting sentence (carried by RULE-05 + the class-B caveat), or the pinned deferral resolves to nothing.",
+        "AUTHORED_LESSONS must remain debate-only — scripts/tracks-smoke.ts:145 — and lesson practice must keep reusing the Debate drill endpoints with no parallel scorekeeper: scripts/tracks-smoke.ts:148, 151-152."
+      ]
+    },
+    {
+      "lesson": "debate-evidence-evaluation",
+      "censusRules": 33,
+      "adversariallyChallenged": true,
+      "estimatedRequiredWords": 720,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "Evidence gives the judge a reason to believe a claim; it does not automatically prove it. You are judging how far that reason reaches.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "Start from the claim, not the evidence: say in one sentence what would have to be shown for the claim to hold.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Say what the evidence actually shows: what was measured or observed, in whom, over what period, compared with what.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "Check the fit: evidence about something nearby is not evidence about the claim. Sign-ups are not results, intentions are not behaviour, liking the gym is not fitness. A real, expert, trustworthy source can still be answering the wrong question.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "Check the size: evidence from one case, one place, or one group supports a claim about that case. A claim about many needs many. Evidence that covers part of a claim leaves the rest still a claim.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "Two things happening together, or one happening after the other, is not one causing the other until the other explanations are dealt with.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-07",
+          "meaning": "Grant and gap: take the evidence as true, say what it does establish, name what is still unproven, and shrink the claim to fit what is left.",
+          "guarded": true
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "B01 — the evidence/claim link is the 'warrant'; name the noun once, never teach how to build one",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B02",
+          "meaning": "B02 — how to SAY the reasoning belongs to the Claim, Warrant, Impact lesson; this lesson only judges support",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B03",
+          "meaning": "B03 — you judge the evidence as described, taking it as true; you need not disprove it and need not look anything up",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B04",
+          "meaning": "B04 — one case supports a claim about that case; it USUALLY cannot, BY ITSELF, justify a broad claim about many cases",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B05",
+          "meaning": "B05 — a comparison group rules out ONLY the explanations both groups share, so it makes the tested cause the likeliest explanation, not a proven one",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B06",
+          "meaning": "B06 — a conflict of interest is a reason for extra scrutiny of how a result was produced, not a reason to throw the result away",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B07",
+          "meaning": "B07 — when the method cannot be examined, that LIMITS confidence next to a result whose method is open; it does not turn the evidence into an assertion and is not grounds for rejection",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B08",
+          "meaning": "B08 — repeating the same underlying source does not create independent corroboration; three articles citing one survey are one survey, though a single source can still contain several distinct findings",
+          "disposition": "B-GUARD-ONLY"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R16 - a result taken from a flattering start or end date shows less than the same measure over the whole period",
+          "klass": "C",
+          "destination": "optional note after the main path (must stay in the lesson somewhere - it is drilled)",
+          "why": "Pattern-spotting, not chain-bearing: none of RULE-02 through RULE-07 depends on it, and a beginner can bound a piece of evidence without ever meeting a cherry-picked window. Not pinned by any smoke assertion and not one of the four recorded owner rulings. It must not be DELETED, though: the durable "
+        },
+        {
+          "censusRule": "R19 - recency matters only relative to the claim; a figure is out of date when the claim is about now and the relevant facts have changed since, and not otherwise",
+          "klass": "C",
+          "destination": "optional note after the main path (must stay in the lesson somewhere - it is drilled)",
+          "why": "Same reasoning as R16: a beginner performs shows / does-not-establish / would-need without it. Not pinned and not among the four owner rulings, so it is C rather than B. One warning for the rewrite: if recency IS mentioned in the beginner pass, the 'relative to the claim' hedge must come with it. Dr"
+        },
+        {
+          "censusRule": "R20 - expertise is specific; an expert speaking outside their field is a citizen with an opinion",
+          "klass": "C",
+          "destination": "later / optional source-check note alongside R21 and R22",
+          "why": "Source credibility is a second axis, and RULE-04 already stops the beginner's actual error (treating an impressive source as support for the claim). Removing it from first exposure makes nothing false, so it fails the class-B test. Not pinned by any smoke assertion (grep for 'Expertise'/'physicist' "
+        },
+        {
+          "censusRule": "R33 - misconception repair: a fact that is entirely true can be about something nearby or far smaller than the claim built on it; the argument is proved as far as the evidence reac",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-01/RULE-04/RULE-05 as new prose - keep the misconception box itself, restating those three r",
+          "why": "'True is not proved' is RULE-01 negated; 'true but about something nearby' is RULE-04 said backwards; 'true but far smaller than the claim' is RULE-05 said backwards. It is a re-presentation of judgments already taught, not a fourth judgment. It is NOT deletable as a slot: scripts/coached-performanc"
+        },
+        {
+          "censusRule": "RULE-08",
+          "klass": "C",
+          "destination": "demoted by adversarial challenge",
+          "why": "Applied literally, the test clears it. RULE-08 introduces no new judgment: it says to do the four checks the learner already has, twice. A beginner who bounds each piece separately and crudely has already compared them correctly, so nothing in the basic objective becomes unperformable without it. Its only novel content is a list of four bad tiebreakers (newer / a number / official-sounding / likea"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "LENGTH FLOOR - the binding collision with this triage. scripts/coached-performance-smoke.ts check NA: assert.ok(prose >= 800 && prose <= 1500, `teaching prose inside the guard: ${prose} words`), measured over objective + explanation + whyMatters + steps + teachingSections (heading + body). Current value 1,166. A beginner rewrite built from this manifest lands at roughly 800 words, i.e. AT the floor. The floor, not the pedagogy, would set the length - the owner must decide whether to lower it before the rewrite, or the rewrite will pad to pass.",
+        "STRUCTURE COUNTS - scripts/coached-performance-smoke.ts check NA: assert.equal(evid.teachingSections.length, 3); assert.ok(evid.misconception); assert.equal(evid.commonMistakes.length, 5); assert.equal(1 + evid.practiceQuestions.length + evid.masteryCheck.length, 4); assert.equal(evid.languageFrames, undefined); assert.equal(evid.revisionLadder, undefined); assert.equal(evid.additionalExamples, undefined); assert.equal(guidedApplicationFor(EVID), null). Collapsing to two sections or four mistakes fails the suite.",
+        "SCAFFOLD SLOTS - scripts/coached-performance-smoke.ts NA: assert.deepEqual(evid.scaffoldedTry.slots, [\"shows\", \"does not yet establish\", \"would need\"]), and NE renders them as \"1. shows\", \"2. does not yet establish\", \"3. would need\". NB also pins assert.equal(evid.scaffoldedTry.motion, undefined) and assert.equal(evid.scaffoldedTry.opponentClaim, undefined) - the claim under evaluation may live only in the prompt.",
+        "SECTION INDEX 1 IS ADDRESSED BY INDEX, NOT BY NAME - scripts/coached-performance-smoke.ts NF: assert.ok(/You are not a researcher, and the round does not need you to be one/.test(evid.teachingSections[1].body)). If the rewrite reorders the three sections, this passes only if the source/method material stays in the middle slot.",
+        "SECTION 0 HEADING IS PINNED VERBATIM THROUGH THE RENDER - scripts/coached-performance-smoke.ts NE: assert.ok(text.includes(\"What evidence proves, and how big a claim it can carry\") && text.includes(\"Now try the move\")) and assertOrder(html, \"What evidence proves, and how big a claim it can carry\", \"What is the problem with this evidence\", \"teaching precedes the first check\"). Renaming section 0 to something friendlier fails two assertions.",
+        "WARRANT WORD BUDGET - scripts/coached-performance-smoke.ts NF: assert.equal((all.match(/\\bwarrant\\b/gi) ?? []).length, 2, ...) over JSON.stringify(evid), i.e. across EVERY field including questions and explanations. A beginner rewrite that reaches for 'warrant' a third time to be clearer fails.",
+        "BANNED VOCABULARY, ANYWHERE IN THE LESSON - scripts/coached-performance-smoke.ts NF: for (const banned of [\"p-value\", \"statistical significance\", \"confidence interval\", \"sample size of\", \"peer review\", \"peer-review\", \"outweigh\", \"impact matters more\", \"fallacy\", \"ad hominem\"]) assert.ok(!all.toLowerCase().includes(banned)). 'sample size of' and 'fallacy' are the two a simplifying rewrite is most likely to reach for.",
+        "WORKED-EXAMPLE BEATS - scripts/coached-performance-smoke.ts NC: strongAnswer must contain the literal beats \"What it shows:\", \"What it does not show:\", \"What is still needed:\" plus /still bigger than its evidence/; weakAnswer must contain /The claim is proved\\./; whyItWorks must contain /fits the topic and not the claim/ (the RULE-08 comparison beat); and assert.ok(!/outweigh|impact matters more|magnitude|probability/i.test(strongAnswer + whyItWorks)).",
+        "OBJECTIVE WORDING - scripts/coached-performance-smoke.ts NC: assert.ok(/what it leaves unproven/.test(evid.objective), \"it headlines bounding\") and assert.ok(!/deserves more weight/.test(evid.objective)). The objective must keep bounding, not weighing, as its headline.",
+        "PAGE SHAPE - scripts/coached-performance-smoke.ts NE: assertOrder(html, 'id=\"scaffolded-try\"', 'id=\"practice-drill\"'); assert.ok(!text.includes(\"Words you can use\")); assert.ok(!text.includes(\"Use it in a guided round\") && !text.includes(\"The guided round opens after\")). And NA: assert.equal(evidEntry.skillSlug, \"debate-evidence\") plus assert.deepEqual(evidEntry.practiceDrill, { track: \"debate\", area: \"evidence-evaluation\" }) - the durable drill wiring is untouchable.",
+        "PROSE SNAPSHOT - scripts/learning-content-integrity-smoke.ts compares every learner-facing value against the full checked-in snapshot scripts/learning-content-baseline.json (2,624 lines) with the review marker const LEARNING_CONTENT_BASELINE = \"WEIGHING-REPAIR-V1\" at line 56. Any rewrite must re-baseline and advance the marker in the same commit; this is a review signal, not a security boundary, and the suite's own header says so.",
+        "UNPINNED BUT RECORDED WORDING RESIDUAL - docs/HANDOFF.md records that the worked example's sized claim is one the evidence \"supports\", not \"carries\" (an applied precision residual from the recheck panel). No assertion holds it; a rewrite that reverts to 'carries' would silently undo a recorded fix."
+      ]
+    },
+    {
+      "lesson": "debate-signposting",
+      "censusRules": 38,
+      "adversariallyChallenged": true,
+      "estimatedRequiredWords": 780,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "A judge is holding several arguments apart at once and writes your answer wherever you point it, so signposting means saying which argument you are on before you argue.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "Before every answer, say the argument it is answering, and say it again each time you move to a new one.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Name the argument itself, in whatever words you like and never by its number or its speaker, then use a recognisable version of that same name every time you come back to it.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "In a speech that answers the other side, open by saying what answers are coming and what each one is on, in the order you will take them.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "What a side says comes in sizes — a broad AREA, the ARGUMENTS inside it, and the INNER CLAIMS each argument rests on, at whatever size the other side actually built them — so name the piece your answer is really about.",
+          "guarded": true
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "B01. A roadmap that gives a count but no argument names is still a roadmap, only a weaker one. The rule must never be stated as requiring both a count and names.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B02",
+          "meaning": "B02. A sentence stating your position or your conclusion is not a roadmap, however confident it sounds — it describes what you intend to prove, not the shape of the speech.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B03",
+          "meaning": "B03. If you end up taking the arguments in a different order than your roadmap promised, say so as you move; an unannounced reordering is worse than never giving one.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B04",
+          "meaning": "B04. If you decide not to give an answer you promised, say so as you pass it, or the judge waits for something that is not coming.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B05",
+          "meaning": "B05. No topic word owns a level — cost can be an area in one round and a single argument in the next. The level comes from how the other side actually built their case, so read their structure before you label it.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B06",
+          "meaning": "B06. Signposting is not analysis and does not substitute for it: a labelled answer with no reason behind it is still a bad answer, and the label does not make it true.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B07",
+          "meaning": "B07. A label locates and nothing more: it carries no reason, no verdict on the argument, and no claim about how much of their case falls.",
+          "disposition": "B-EXAMPLE"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R03 - Signposting uses three tools (roadmap, argument labels, transitions) and mixing them up is what usually goes wrong.",
+          "klass": "E",
+          "destination": "delete as authoring frame; keep only as a section-ordering comment if the rewrite wants one",
+          "why": "It is the lesson's own table of contents, not a rule. RULE-04, RULE-02/RULE-03 and RULE-06 ARE the three tools, so the manifest's structure already carries it. The trailing claim that mixing them up is what usually goes wrong has no record and no pin behind it."
+        },
+        {
+          "censusRule": "R08 - A preview that gives neither a count nor any names is not a roadmap at all.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "Nothing servable depends on it: the retained roadmap check's four options are count-only, names-only, count-plus-names and a conclusion sentence - the neither case is not among them. RULE-04's positive instruction already produces the strong form, so a beginner following it never authors this case. "
+        },
+        {
+          "censusRule": "R23 - A label that names your own case while you are answering theirs sends the answer to the wrong side's column.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-07",
+          "why": "It is one instance of the misdirected-label judgment RULE-07 states in general (a label pointed at an argument the answer does not address). In the current lesson it is a bridge sentence at the end of paragraph 4 previewing both the level section and the wrong-branch section; both destinations are a"
+        },
+        {
+          "censusRule": "R27 - This holds even when knocking out a lower claim happens to undermine everything above it: the signpost says where you struck, not how much fell.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "A relief clause behind RULE-05, not a separate instruction. A beginner told to aim the label at the level the answer actually hits already labels correctly; this only reassures them they need not compute the blast radius. Its failure mode - naming the area because the strike undermined it - is the o"
+        },
+        {
+          "censusRule": "R31 - Neither the overshoot nor the undershoot judgement asks you to work out what your answer brought down with it.",
+          "klass": "D",
+          "destination": "delete as duplicate of R27",
+          "why": "It restates R27 in the negative two sentences later in the same paragraph. Keeping both is the same reassurance twice, and R27 itself is already demoted to an optional note."
+        },
+        {
+          "censusRule": "R36 - If you lose track mid-speech, name where you are going next rather than keep talking and hope the judge follows.",
+          "klass": "C",
+          "destination": "optional note after the main path, or keep only in the steps list where it already lives",
+          "why": "A mid-speech recovery tactic, not part of a first successful attempt - it is RULE-02 applied after losing your place. The census already flagged it as stated twice (explanation paragraph 6 and steps[3]). No smoke assertion pins either statement, and removing it from first exposure makes nothing fals"
+        },
+        {
+          "censusRule": "OPT-A (census optional-depth list, NOT one of the 38) - whyMatters fair-round reason: \"Structure is also what lets the other side answer you... an answer nobody can locate is an an",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "A genuine second reason the skill matters, but RULE-01's reason - a judge who cannot place your answer may not credit it - is what motivates a beginner on a first pass. Two motivations compete; one lands. Logged so it is not dropped silently even though it is outside the 38."
+        },
+        {
+          "censusRule": "OPT-B (census optional-depth list, NOT one of the 38) - the two bad examples plus the full compare pair for label-by-argument (\"on their second point, the plan is cheaper than they",
+          "klass": "C",
+          "destination": "keep exactly one demonstration in required reading - prefer the compare pair, since it shows the answer is word-for-word",
+          "why": "The census found the label-by-argument point made twice back to back, first as a rule with two bad examples and then again as a full compare pair on the same cost example. That is one demonstration of RULE-03 delivered twice. The RULE itself is class A and its exact string is a guarded invariant; on"
+        },
+        {
+          "censusRule": "REP-12 (census repetition list, NOT one of the 38) - \"The rest of this lesson talks in those columns because that is the clearest way to see the problem.\"",
+          "klass": "E",
+          "destination": "delete as authoring scaffolding",
+          "why": "Self-referential explanation of the lesson's own vocabulary choice; it teaches no rule. The hedge it sits between IS load-bearing and is guarded separately under criticalGuardedInvariants, but this connective sentence is not."
+        },
+        {
+          "censusRule": "RULE-06",
+          "klass": "C",
+          "destination": "demoted by adversarial challenge",
+          "why": "A beginner performs the objective correctly without it. The rule's own content concedes the point: argument-to-argument moves need no transition because the next label does it — and argument-to-argument is very nearly every move in a beginner's answering speech. So for the speech this lesson is actually for, RULE-06's operative instruction is \"do nothing extra\". Its two other halves are already co"
+        },
+        {
+          "censusRule": "RULE-07",
+          "klass": "C",
+          "destination": "demoted by adversarial challenge",
+          "why": "It issues no instruction. RULE-02 already says to name the argument the answer IS answering; RULE-07 does not add a step, it dramatises the cost of getting RULE-02 wrong — which is RULE-01's premise (the judge writes it wherever you point it) restated as a consequence. Nothing a beginner DOES changes when this rule is present. It is also not one of the four things this lesson is meant to leave beh"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "THE HEDGED NOTE-TAKING PREMISE, BOTH HALVES. scripts/coached-performance-smoke.ts check SB: assert.ok(!/Judges take notes in columns/.test(spAll), \"the column premise is no longer asserted of all judges\"); assert.ok(/most track them as separate threads/.test(sp.explanation), \"and is stated as what most do\"); assert.ok(/a judge who keeps no such record still has to work out which argument you are answering/.test(sp.explanation)). RULE-01 must keep both halves - the rewrite may not simplify \"most judges\" into \"judges\". Also assert.ok(!/judges often do not/.test(sp.explanation), \"no unsourced claim about how often judges number things\").",
+        "THE ROADMAP IS SCOPED TO ANSWERING SPEECHES, IN PROSE AND IN THE STEPS. Check SB: assert.ok(/In a speech that answers what the other side said, a roadmap normally comes first/.test(sp.explanation), \"the roadmap is scoped by speech function and hedged, not made universal\") and assert.ok(/^In a speech that answers what the other side said, give a roadmap/.test(sp.steps[0]), \"and the step agrees\") - anchored with ^, so that clause must OPEN steps[0].",
+        "LABEL-BY-ARGUMENT, EXACT STRING, PLUS THE CARD. Check SB: assert.ok(/Label by ARGUMENT, not by speaker and not by position/.test(sp.explanation)) and assert.ok(!/\\bnumbers\\b/i.test(spEntry.source.lesson.summary), \"the summary drops the numbers instruction\"). The same rule is mirrored in COMPETENCY_FIX.signposting at lib/education/guided-judge.ts:256 - \"Name the argument each answer is aimed at, in words that identify it rather than its number or its speaker\" - corrected there precisely so the guided fix line does not instruct the thing this lesson marks wrong.",
+        "\"CONTENTION\" APPEARS EXACTLY ONCE, AS A GLOSS. Check SB: assert.equal((spAll.match(/contention/gi) ?? []).length, 1, '\"contention\" appears once, in its gloss') and assert.ok(/often called a contention/.test(sp.explanation), \"and that one is the gloss\"). spAll spans objective, explanation, whyMatters, steps, workedExample, scaffoldedTry, the lesson name/description/title/summary AND all six checks - the whole learner-visible surface gets one use.",
+        "THE TRANSITION EXEMPLAR MUST STAY A LARGER MOVE. Check SC: assert.ok(/that is their case answered; now back to our own access argument/.test(body), \"a real transition is modelled - and on a move the lesson says earns one\"); assert.ok(!/now, on their enforcement argument/.test(body), \"never between two of their arguments, which the lesson says needs no transition\"); assert.ok(/\"moving on\" or \"secondly\"/.test(body), \"and the empty kind is shown, not just named\"). The negative assertion exists because the 2026-09-06 repair itself introduced this exact defect and a review round caught it.",
+        "FOUR EXACT STRINGS FROM THE 2026-09-06 QUIZ-TO-LESSON MIGRATION, all pinned in check SC: /Label the moves, not the sentences/; /No phrasing here is required/; /it is the identity that cannot drift/; /if you decide not to give an answer you promised: say so as you pass it/. These are ideas that previously lived ONLY inside deleted quiz options; the assertions exist to stop them sliding back out of the prose.",
+        "THE THREE-LEVEL STACK IN CAPITALS, because the scaffold grader's closed vocabulary derives from it. Check SF: assert.deepEqual([...SIGNPOST_LEVEL_TERMS], [\"area\", \"argument\", \"inner claim\"], \"the closed vocabulary is the lesson's own stack\") and assert.ok(/At the top is an AREA/.test(sp.explanation) && /INNER CLAIMS/.test(sp.explanation), \"which the lesson defines in capitals\"). RULE-05's wording must keep both markers.",
+        "THE SCAFFOLDED TRY IS AUTHORED AGAINST ONE CASE AND CLAIMS ONLY SHAPE. Check SF pins sp.scaffoldedTry.slots deepEqual [\"the level your answer is aimed at\", \"the label you would say\"], /half of them are broken/ in the prompt, /the ___ level/ in the frame, sp.scaffoldedTry.motion === undefined, and the completion copy strings /Your label was checked only for shape/, /Nothing read whether it names the thing you meant/, /a sentence with nothing to do with the lamps would have passed too/, /nothing here asked why/. A rewrite that changes the authored case breaks the key.",
+        "SHAPE, SIZE AND SUBTRACTION. Check SA: 1 + practiceQuestions.length + masteryCheck.length === 6; sp.scaffoldedTry present; teachingSections, additionalExamples, revisionLadder, misconception, commonMistakes and languageFrames all undefined (\"the repair is subtraction plus one production surface\"); guidedApplicationFor(SP) === null; skillSlug undefined; practiceDrill undefined; quiz words < 900. Check SB: the explanation must render as 4-6 blank-line-separated paragraphs, none over 400 words. The rewrite must not add a padding field back in order to win reading level.",
+        "THE SIX CHECKS AND THEIR KEYS. Check SD: assert.deepEqual(spChecks.map((q) => \"ABCD\"[q.choices.indexOf(q.correctAnswer)]), [\"B\", \"D\", \"C\", \"B\", \"A\", \"C\"], \"keys as authored and reviewed\"), plus the full no-surface-tell battery (length, character, vague/modal/absolute, comma, four distinct options) and the measured exploit control (exploit <= 1). Check SE pins six distinct judgment phrases, one item each, and assert.equal((spAll.match(/\\banyway\\b/g) ?? []).length, 0). The rewritten prose must keep all six answerable, and every new prose word entering spAll is inside the tell battery's blast radius.",
+        "NO SCORING CLAIM AND NO MARKER-WORD INSTRUCTION MAY BE INTRODUCED. The transcript judge's organization measure was WITHDRAWN 2026-09-06 (docs/CURRENT_STATE.md: \"Independent Compete offers NO automatic signposting diagnosis\"). Guarded by scripts/judge-quality-smoke.ts:147-152 (COMPETENCY_ROUND_MEASURE.signposting.direct === false, and directEvidence must not name transcript/ballot/round score) and scripts/learn-compete-smoke.ts:68-69 (assert.ok(!slugs.includes(\"debate-signposting-lesson\"), \"control: and no signposting recommendation survives - nothing measures it from a transcript\")). Beginner-friendly prose must not say a judge scores or rewards signposting, and must not reintroduce \"first/second/third/point\" as things to say.",
+        "THE LESSON CLAIMS NO MASTERY. Check SG: assert.ok(!/mastery|mastered/i.test(spTeaching), \"the lesson claims no durable mastery\"). The words \"mastery\" and \"mastered\" may not appear anywhere in objective, explanation, whyMatters, steps, workedExample or scaffoldedTry.",
+        "THE DRILL CONTAINMENT IS EXACTLY TWO ITEMS. Check SG: assert.deepEqual(drills.DEBATE_DRILL_HELD_IDS.filter((id) => id.startsWith(\"sp-\")).sort(), [\"sp-16\", \"sp-24\"], \"and no other Signposting item was ever held\"). Every other sp- item is servable, so any judgment a servable drill keys - sp-13 transition economy, sp-14 the larger-move transition, sp-15 announced reordering, sp-28 level relativity - must remain reachable in the rewritten lesson, or the rewrite manufactures new untaught-but-servable items: the exact defect currently OPEN as debt for sp-16 and sp-24."
+      ]
+    },
+    {
+      "lesson": "debate-clash",
+      "censusRules": 29,
+      "adversariallyChallenged": true,
+      "estimatedRequiredWords": 620,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "Two arguments clash only if they cannot both be true at once. Run that test on each of the other side's arguments — teams usually make several, and normally only one meets yours.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "Say what each side is trying to prove, in one sentence they would accept.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "Ask what each argument needs to be true in order to work. The thing both need to go opposite ways is the clash — it usually sits one level below what either speaker actually said, and the two sides usually use different words for it.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "State it as a question either side could still win, and narrower than the motion. If your opponent would object to a word in it, that word is doing your arguing for you — take it out.",
+          "guarded": true
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "B01 — degree disputes: most disagreements are about HOW MUCH; put the amount inside the question ('meaningfully, mostly, or enough') and check the sides still split",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B02",
+          "meaning": "B02 — 'is the benefit worth the cost?' is NOT a clash question; it is weighing and belongs to a later lesson",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B03",
+          "meaning": "B03 — the shared question does not have to be about facts; a principle-level disagreement is a legitimate clash",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B04",
+          "meaning": "B04 — sometimes the honest answer is that there is no shared question; say so, and never invent a dependency to manufacture a clash",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B05",
+          "meaning": "B05 — clash, refutation and weighing are three different jobs (what are they disagreeing about / why does their reasoning fail / which counts for more)",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B06",
+          "meaning": "RULE-02b (demoted from A) — restate the other side at the strength they gave it, not a weaker version that is easier to beat",
+          "disposition": "B-EXAMPLE"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R14 - Comparing independent arguments is weighing, taught later; finding out that they are independent is itself part of the clash skill.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-07 and the class-B no-clash caveat (R13)",
+          "why": "The census's own repetition ledger counts this stated four times (steps[3], teachingSections[1], misconception.whyItFails, commonMistakes[1].fix). The judgment - comparison is a later, different job - is exactly RULE-07 plus the R23 boundary caveat, and the reassurance that finding independence is n"
+        },
+        {
+          "censusRule": "R29 - The procedure: state Side A's aim, state Side B's aim, run the both-true test, find the underlying question (or declare independence), state that question neutrally.",
+          "klass": "D",
+          "destination": "the rewrite's step list - it is the ordered assembly of RULE-01 through RULE-07 and carries no judgment of its own",
+          "why": "Not a rule, a container. Step 1-2 are RULE-02, step 3 is RULE-01, step 4 is RULE-03 plus RULE-04 plus the R13 caveat, step 5 is RULE-05. Keeping it as a separate manifest entry would double-count the whole lesson. The ordering does matter and the rewrite's steps array preserves it."
+        },
+        {
+          "censusRule": "R26 - Part of stating the clash is saying plainly which of the opponent's arguments stays OUTSIDE it and can be true whichever way the question goes.",
+          "klass": "C",
+          "destination": "kept where it already lives - the worked example's closing line and its whyItWorks - as an optional note after the main ",
+          "why": "The census marked this do-not-touch, but I could find no smoke assertion pinning it (checked coached-performance, learning-content-integrity, concept-lesson-schema); the only record is a descriptive line in docs/HANDOFF.md summarising the worked example. Applying the second test: removing it from fi"
+        },
+        {
+          "censusRule": "R27 - Judges decide rounds by resolving disagreements, not by counting arguments, so the speaker who names the disputed question tells the judge where to look and stops both sides ",
+          "klass": "C",
+          "destination": "compressed into the rewrite's one-line why-it-matters; not a rule the learner applies",
+          "why": "This is motivation, not an operable rule - there is no way for a beginner to do it right or wrong. The schema keeps a whyMatters field, so the content survives as a hook rather than as manifest weight. Second test: removing it from first exposure would leave the lesson unmotivated, not false."
+        },
+        {
+          "censusRule": "R28 - Judges use the word 'clash' more loosely than this lesson does, writing 'not enough clash' on a ballot to mean the teams never engaged at all; this lesson teaches the specifi",
+          "klass": "C",
+          "destination": "optional one-clause note beside the word 'clash' the first time it appears",
+          "why": "This is the demotion I am least comfortable with, and I am flagging it rather than hiding it. It reads like a safety boundary and the census marked it do-not-touch, but under this brief's own rule it fails the B test: grepping 'loosely' and 'not enough clash' across scripts/, lib/, docs/CURRENT_STAT"
+        },
+        {
+          "censusRule": "CONTENT BLOCK (not one of the 29): additionalExamples[0] - the primary-school homework example, ~230 words",
+          "klass": "C",
+          "destination": "optional 'another example' block after the beginner path - relocate, do NOT delete",
+          "why": "A second full scenario proving a rule RULE-05 already states and the practice check already tests (the biased question). Structurally pinned: scripts/coached-performance-smoke.ts check LC asserts clashContent.additionalExamples.length >= 1, so the block must continue to exist - the triage verdict is"
+        },
+        {
+          "censusRule": "CONTENT BLOCK (not one of the 29): revisionLadder[0] (Saturday library) and revisionLadder[1] (skatepark), ~375 words",
+          "klass": "C",
+          "destination": "'go deeper' depth after the beginner path - both blocks must remain in the file",
+          "why": "Rung 1 re-runs the worked example's exact failure on a new topic, so it is repetition for the first pass. Rung 2 is the only place the fair-restatement failure is SHOWN, so RULE-02's meaning must not be left to depend on it - RULE-02 has to stand as prose plus its own mistake entry in the required p"
+        },
+        {
+          "censusRule": "CONTENT BLOCK (not one of the 29): languageFrames - three purposes, nine sentence starters, ~110 words",
+          "klass": "C",
+          "destination": "surface on demand next to the constructed attempt rather than as required reading - relocate, never delete or rename",
+          "why": "Performance scaffolds, not comprehension: a learner who understands RULE-01 to RULE-07 does not need to read nine starters to pass the checks. Tightly pinned and therefore relocation-only: LC asserts the three purposes exactly ([\"Identify the disagreement\", \"State the clash neutrally\", \"Connect the "
+        },
+        {
+          "censusRule": "CONTENT BLOCK (not one of the 29): commonMistakes[0] (pairing by opposite sides), [1] (both can be true), [4] (clash vs refutation)",
+          "klass": "C",
+          "destination": "keep as checklist depth below the required path",
+          "why": "Each is a checklist restatement of material RULE-01 and RULE-07 already carry in the prose, and the misconception block states [0] more sharply than the mistake entry does. Relocation only, and rewriting-in-place at best: LC asserts clashContent.commonMistakes.length === 7 EXACTLY, so no entry may b"
+        },
+        {
+          "censusRule": "RULE-03",
+          "klass": "D",
+          "destination": "demoted by adversarial challenge",
+          "why": "This is not a second concept; it is RULE-01 applied more than once. A beginner holding the both-true test who is shown two of Side B's arguments will test both — that is what a test is for. The only genuinely new content is the orientation fact 'teams usually make several and usually only one meets yours', which is a clause, not a rule. I have folded that clause into RULE-01's statement so nothing"
+        },
+        {
+          "censusRule": "RULE-02b",
+          "klass": "B",
+          "destination": "demoted by adversarial challenge",
+          "why": "Strawmanning is a failure mode, not a missing capability: a beginner asked to write a sentence the other side would accept cannot strawman them, so the clause is redundant with RULE-02's own wording at first exposure. It is real, it is pinned three ways, and it already has two example carriers (the 'Restating the other side more weakly' mistake and the skatepark ladder rung) that sit below the req"
+        },
+        {
+          "censusRule": "RULE-06a",
+          "klass": "D",
+          "destination": "demoted by adversarial challenge",
+          "why": "Absorbed verbatim into RULE-05 as a trailing clause. It is a constraint on how you word the question, arriving at the same moment as the neutrality constraint, tested by a distractor in the same check, and refused by the same evaluator branch. Charging the learner a separate numbered rule for the second half of one sentence is bookkeeping, not pedagogy."
+        },
+        {
+          "censusRule": "RULE-06b",
+          "klass": "C",
+          "destination": "demoted by adversarial challenge",
+          "why": "A beginner does not spontaneously produce an idle dispute — it is a distractor the lesson invents ('eleven million or nine'), not an error the lesson observed. More decisively, it is ENTAILED by RULE-04: a question found by asking what both arguments NEED to be true cannot be one both sides would answer the same way. It survives where it already lives — as the mastery check's own explanation and a"
+        },
+        {
+          "censusRule": "RULE-07a",
+          "klass": "D",
+          "destination": "demoted by adversarial challenge",
+          "why": "Duplicated by RULE-05 ('a question either side could still win') and enforced mechanically by the sentence frame, which ends 'The real clash is whether ___'. The residual risk — a learner completing 'whether' with an argument, e.g. 'whether their plan fails' — is caught by RULE-05's opponent-reads-it-aloud test, because an opponent objects to 'fails'. No separate rule needed."
+        },
+        {
+          "censusRule": "RULE-07b",
+          "klass": "C",
+          "destination": "demoted by adversarial challenge",
+          "why": "True, non-obvious, and genuinely useful — to someone running a round, not to someone filling three blanks. It is a self-diagnosis skill for later, and it names refutation, which this learner has not met yet (Clash is order 3, Refutation is order 4). Nothing on the required path can go wrong for want of it: the scaffold gives the learner two candidate arguments and asks which one meets Side A, so '"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "NO WEIGHING VOCABULARY IN THE TEACHING. scripts/coached-performance-smoke.ts check LF scans objective + explanation + whyMatters + steps + every teachingSection body + every commonMistake field + every languageFrame starter + scaffoldedTry.prompt and asserts none of these appears, case-insensitive: \"outweigh\", \"compare the impacts\", \"magnitude\", \"probability\", \"bigger harm\", \"matters more than\". A beginner rewrite reaching for plain words about size or likelihood will trip this.",
+        "THE THREE-JOBS BOUNDARY, EXACT STRINGS. check LF: assert.ok(/Refutation answers a different one/.test(teaching) && /Weighing answers a third/.test(teaching), \"the boundary section separates the three jobs\"). Both phrases must survive verbatim somewhere in the teaching text.",
+        "THE DEGREE TEACHING, EXACT STRINGS. check LL requires all three of: /Most real disagreements are about how much/, /meaningfully, mostly, or enough/, and /Keep the amount inside the question the two sides are answering/. Plus the Round-4 exclusion /worth the cost[\\s\\S]{0,120}which is weighing/ - the cost-benefit look-alike must be named as weighing within 120 characters of \"worth the cost\".",
+        "THE HONEST NO-CLASH EXIT, EXACT STRINGS. check LL requires /Sometimes the honest result of digging is that there is no shared question/ and /Do not invent a dependency/.",
+        "FAIR RESTATEMENT, EXACT STRING PLUS TWO CARRIERS. check LL requires /Restate each side at the strength they gave it/ in the teaching, one commonMistake whose mistake field matches /Restating the other side more weakly/, and one revisionLadder rung whose diagnosis matches /a position Side B never took/. The two rungs must repair DIFFERENT failures: rung 1's diagnosis matches /wrong one of|paired the wrong|the wrong one/ or /can be true on the same/, and rung 2's must NOT match /can be true on the same/.",
+        "THE CONSTRUCTED ATTEMPT'S PROMPT. check LL: /Only ONE of Side B's arguments meets Side A/ must stay in scaffoldedTry.prompt - it is what makes the exercise a choice rather than a flat contradiction. check LL also requires the irrelevant-dispute example to be /eleven million or nine/ and forbids /blue or green/.",
+        "STRUCTURE, PINNED EXACTLY. check LC: exactly three checks total (guided + 1 practice + 1 mastery); teachingSections.length >= 4; additionalExamples.length >= 1; revisionLadder.length >= 2; misconception present; commonMistakes.length === 7 EXACTLY; languageFrames purposes deep-equal [\"Identify the disagreement\", \"State the clash neutrally\", \"Connect the two sides\"]; scaffoldedTry has three blanks matching three slots and NO opponentClaim field; /both.true/i and /either side could/i both present; and these four retired strings must stay absent: \"Which response creates clash?\", \"Which is weakest?\", \"ballot color\", \"Our first contention is still true.\" This is why almost every demotion above is RELOCATE, not DELETE - a shorter required path cannot be bought by removing blocks without amending LC by approval.",
+        "THE SCAFFOLD IS EXECUTABLE TEXT. lib/education/coaching.ts evaluateClashScaffold reads scaffoldedTry.motion (\"this school should move to a four-day week\") and the slot order [\"side a\", \"side b\", \"the real clash\"]. check LE pins the evaluator source itself: no /overlap(/ heuristic, no loaded-word list (/obviously|unfairly|we are right/), the motion check must be essentiallyTheSame(clash, context.motion), the copy check must be essentiallyTheSame(clash, slots.sideA) || essentiallyTheSame(clash, slots.sideB). check LH pins the rendered slot labels \"1. side a\", \"2. side b\", \"3. the real clash\". Changing the motion, the slot labels or the slot order breaks live code, not just prose.",
+        "RENDER ORDER AND PARAGRAPHING. check LH: language frames render before the checks; the constructed attempt renders before the drill CTA; teaching renders before the first check; EVERY teachingSection body must contain a blank line (\"\\n\\n\") and the first section must render at least three paragraphs; the page must contain \"The guided round opens after a complete attempt here.\" and must not contain \"Use it in a guided round\" before a complete attempt; no Refutation slots (/because ___|therefore ___/) may leak onto the Clash page.",
+        "MEASUREMENT HONESTY. check LM: COMPETENCY_ROUND_MEASURE.clash.direct === false, label \"central-clash engagement\", directEvidence naming the lesson's constructed attempt. The rewrite must not imply anywhere that a guided round measures clash IDENTIFICATION - the round measures engagement with the central disagreement, and the direct evidence is the scaffolded try.",
+        "REVIEW SIGNAL, NOT A DOCTRINE PIN. Every prose byte is snapshotted in scripts/learning-content-baseline.json and compared by scripts/learning-content-integrity-smoke.ts, with a marker constant currently \"WEIGHING-REPAIR-V1\". That file's own header says it is a review signal and not a security boundary - it is regenerated with each approved rewrite (docs/HANDOFF.md records \"baseline CLASH-REBUILD-V1, one block regenerated, twenty byte-identical\"). It therefore does NOT make every current sentence class B; the assertions quoted above do."
+      ]
+    },
+    {
+      "lesson": "debate-refutation",
+      "censusRules": 37,
+      "adversariallyChallenged": false,
+      "estimatedRequiredWords": 800,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "An argument is a conclusion held up by supports. Refuting means taking one support away and saying what the conclusion has lost — not saying you disagree with it.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "Before you speak, grant your own answer: if the judge accepted everything you are about to say, could the other side still make their argument in the same words and reach the same conclusion? If yes, you have not refuted anything.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Aim at a support that is BOTH necessary (their conclusion cannot be reached without it) and contestable (you can actually give the judge a reason to doubt it). Being right about a detail their argument does not need changes nothing.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "A finished answer has four parts: \"They say ___, but ___ because ___. Therefore ___.\" Most beginners stop after the first two.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "The because has to name something the other side could argue back at — a mechanism, a condition, a mismatch, a step that does not follow. Test it: cover the words after \"because\" and reread; if the answer means the same thing without them, they explained nothing.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "Finish by saying what their argument can no longer establish — and stop there. Do not turn to your own case.",
+          "guarded": false
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "Report the argument you actually damaged, not the case. Taking out one support inside one argument is not the collapse of their case; claiming it is claims ground you did not take.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B02",
+          "meaning": "\"Support\" is Refutation's word for EVERY load-bearing part of an argument, any of which can be answered. It must not be renamed or narrowed.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B03",
+          "meaning": "The productive attempt stays a constructed four-slot answer on the exact frame \"They say ___, but ___ because ___. Therefore ___.\" with slots [\"they say\",\"but\",\"because\",\"therefore\"], set against an authored opponentClaim that is a CLAIM and carries no reasoning.",
+          "disposition": "B-GUARD-ONLY"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R22 — Strength matching: an argument that needs SOME of something is not damaged by proving it does not hold for MOST.",
+          "klass": "C",
+          "destination": "optional note after the main path (or the lesson where quantifier strength is genuinely at stake)",
+          "why": "The census marked this do-not-touch and said it \"must stay in required prose\", but that verdict came from the preserve-everything brief. There is no smoke assertion on it and no doctrine record — I grepped scripts/ and docs/ for \"SOME of something\" and found nothing. Second test: does removing it fr"
+        },
+        {
+          "censusRule": "R23 — An over-strong version of a premise is a tempting target precisely because it is easy to find figures against, and beating it takes nothing down.",
+          "klass": "C",
+          "destination": "optional note after the main path — same note as R22, which it is the explanation of",
+          "why": "R23 is the reason clause of R22; they are one optional idea, not two. It also overlaps heavily with RULE-03's \"being right about a detail changes nothing\", which the beginner path keeps. No pin, no record."
+        },
+        {
+          "censusRule": "R24 — Advice like \"attack their weakest argument\" points you the wrong way: the weakest-sounding part is often a step the argument does not need.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "Census listed it do-not-touch as \"an explicit correction of common coaching advice\", but no smoke assertion and no doctrine record pins it (grep for \"weakest argument\" across scripts/ and docs/ returns nothing). Under the second test, removing it does not make the lesson false — it makes the lesson "
+        },
+        {
+          "censusRule": "R26 — When the support you are attacking is not the obvious one, say out loud which support you are going after and why that is the one that matters.",
+          "klass": "C",
+          "destination": "later lesson / optional note — it is a signposting move, and Signposting is CLOSED and owns level-and-label",
+          "why": "This is a delivery refinement for a student who is already choosing supports well and is now managing a judge's attention. A first successful refutation does not need it: the four-part frame already makes the target explicit in the \"but\". Removing it from first exposure makes nothing false. It is al"
+        },
+        {
+          "censusRule": "R27 — Correcting a detail is not the same as removing a support: if the conclusion still follows once the judge grants your point, the other side can simply concede it and your tim",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-03",
+          "why": "This is R25 restated with the consequence attached, and R25 is already absorbed into RULE-03. Its test (\"assume the judge grants your point and reread their argument\") is the necessity test from RULE-03 with the pronouns changed. Keeping both produces two paragraphs teaching one judgement."
+        },
+        {
+          "censusRule": "R28 — Misconception to repair: \"refutation means saying something against what the other side said, and if you sound confident you have refuted it.\"",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-01 — but keep the misconception FIELD as RULE-01's carrier, rewritten in beginner language",
+          "why": "The wrongModel is RULE-01 stated as its negation; it is not an additional judgement. Note the structural constraint: scripts/concept-lesson-schema-smoke.ts A5 asserts `refutation.misconception && refutation.misconception.betterModel.length > 0`, so the misconception BLOCK must still exist. It should"
+        },
+        {
+          "censusRule": "R29 — Opposing them is a direction, not a reason; confidence changes nothing, because a judge cannot write down that an argument failed unless someone told them why.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-01 (with R05, already absorbed there)",
+          "why": "misconception.whyItFails re-argues the explanation and whyMatters. Three statements of \"a true, confident, opposed answer can leave every support standing\" appear in the current lesson; the beginner path needs one, and it belongs with RULE-01."
+        },
+        {
+          "censusRule": "R31 — Common mistake: objecting with no because at all — an objection with no reason is a preference.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-05; keep the one-line mistake + fix as a MISTAKE-BOX carrier, drop the whyItFails paragraph",
+          "why": "The whyItFails paragraph re-argues teachingSections[2] in full. Structural note: scripts/concept-lesson-schema-smoke.ts A6 and scripts/coached-performance-smoke.ts:498 both require commonMistakes.length >= 3, so three mistake ENTRIES must survive — as compressed carriers for RULE-03/05/06, not as fi"
+        },
+        {
+          "censusRule": "R32 — Common mistake: a because that just restates the but; it sounds complete while doing the work of a denial.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-05 (the delete test); keep as a one-line mistake + fix in the mistake box",
+          "why": "The delete test is stated in teachingSections[2], again in this mistake's fix, again in the worked example's whyItWorks, and again in revisionLadder[0].diagnosis. One statement plus one mistake line is enough; four is the textbook problem this milestone exists to fix."
+        },
+        {
+          "censusRule": "R33 — Common mistake: attacking a part the argument does not need; test it by assuming the judge accepts your objection in full and rereading their argument.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-03; keep the one-line mistake + fix as a mistake-box carrier",
+          "why": "Same judgement as R25/R27, already inside RULE-03. This is the third statement of it in the current lesson (teachingSections[1], additionalExamples[0].explanation, commonMistakes[2])."
+        },
+        {
+          "censusRule": "R34 — Common mistake: stopping before you say what changed; an answer that never states what the argument lost gets recorded as an exchange rather than a response.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-06; keep the one-line mistake + fix",
+          "why": "R19 is already absorbed into RULE-06 and carries the same judge reasoning. The mistake line and its fix (\"end inside their argument with one sentence naming what is now unproven\") are useful; the whyItFails paragraph is teachingSections[3] again."
+        },
+        {
+          "censusRule": "R35 — Common mistake: finishing by restarting your own case; keep the last sentence pointed at their argument.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-06 (drifting home, R20); keep the one-line fix — it is the exact rule the scaffold evaluator",
+          "why": "The drifting-home rule is currently stated four times: steps[4], teachingSections[3], commonMistakes[4] and revisionLadder[1]. One statement in RULE-06 plus one mistake-box fix line. IMPORTANT: it must remain stated SOMEWHERE in the required path, because lib/education/coaching.ts:530-539 fails a th"
+        },
+        {
+          "censusRule": "PASSAGE (not a numbered rule) — additionalExamples[0], the late-night bus route example, ~323 words",
+          "klass": "C",
+          "destination": "optional note after the main path (\"another example\")",
+          "why": "Its rule (true is not load-bearing) is preserved inside RULE-03, so the learner loses no judgement. It is the lesson's only full demonstration of that specific failure, which is why it is C and not deleted. Verified unpinned: no smoke assertion requires debate-refutation to author additionalExamples"
+        },
+        {
+          "censusRule": "PASSAGE (not a numbered rule) — revisionLadder[1], the later-school-start rung (~170 words)",
+          "klass": "C",
+          "destination": "optional note after the main path; keep revisionLadder[0] (the bare stadium denial) in the required path",
+          "why": "Rung 2 demonstrates drifting home, which is already demonstrated by the worked example's weak answer and named in RULE-06. Rung 1 demonstrates an objection with no because at all, which nothing else in the lesson shows end to end. CONSTRAINT: scripts/concept-lesson-schema-smoke.ts A7 and scripts/coa"
+        },
+        {
+          "censusRule": "PASSAGE (not a numbered rule) — the whyItFails paragraph of each of the five commonMistakes (~230 words)",
+          "klass": "C",
+          "destination": "compress to the mistake line + the fix in the required path",
+          "why": "Each whyItFails re-argues the teaching section that already owns the rule (CM1/CM2 re-argue teachingSections[2]; CM3 re-argues teachingSections[1]; CM4/CM5 re-argue teachingSections[3]). The actionable half — the mistake name and the fix — is what a beginner uses. Nothing pins the paragraphs; only `"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "scaffoldedTry.frame and slots, EXACT: scripts/coached-performance-smoke.ts:311-312 — `assert.equal(t.frame, \"They say ___, but ___ because ___. Therefore ___.\")` and `assert.deepEqual([...t.slots], [\"they say\", \"but\", \"because\", \"therefore\"])`. Also index-mapped by SCAFFOLD_EVALUATORS[\"debate-refutation\"] at lib/education/coaching.ts:1290, which passes v[0..3] positionally into evaluateRefutationScaffold. Reordering or renaming a slot silently mis-grades every attempt.",
+        "languageFrames purposes are STRING-MATCHED against STARTER_CATEGORIES: lib/education/coaching.ts:234 (\"Give the reason\"), :236 (\"Answer their argument\"), :237 (\"Say what changed\"), consumed at components/coaching/scaffolded-try.tsx:86 (`languageFrames?.some((frame) => frame.purpose === category.purpose)`) and :113 (`languageFrames?.find((f) => f.purpose === category.purpose)`). Count pinned at scripts/coached-performance-smoke.ts:500 — `assert.equal(content.languageFrames.length, 3, \"three frame purposes\")`. Reword one purpose and the live starter help for that category silently disappears with no error.",
+        "The delete test must stay TAUGHT in the required path, because the evaluator quotes it back at the learner: lib/education/coaching.ts:525 — \"Cover the words after “because” — if the answer means the same thing, the clause explained nothing.\" Pinned by scripts/coached-performance-smoke.ts:174-175 — `assert.equal(echo.slot, \"because\")` / `assert.ok(/repeats the objection/.test(echo.coach))`. If the lesson drops the test, the retry message cites a test the student was never shown.",
+        "The drifting-home rule must stay STATED in the required path: lib/education/coaching.ts:530-539 fails a therefore matching /\\b(our|we|us)\\b.*\\b(case|plan|side|proposal|better|stronger|should win|prefer)\\b/ with no reference to their argument. Pinned by scripts/coached-performance-smoke.ts:178-182 — `assert.equal(drift.slot, \"therefore\")`. Dropping the rule blocks learners on a rule the lesson never taught.",
+        "\"the because is where a refutation is won or lost\" is quoted inside the evaluator's coaching copy (lib/education/coaching.ts:511) and asserted at scripts/coached-performance-smoke.ts:169 — `assert.ok(/because is where a refutation is won or lost/.test(missingBecause.coach))`. The claim must survive in the lesson for the coaching to be a callback rather than a new assertion.",
+        "\"support\" as the name for every load-bearing part of an argument: scripts/coached-performance-smoke.ts:1560 — `assert.ok(/refutation calls every load-bearing part of an argument a support/.test(at.teachingSections[1].body), \"and reconciled with Refutation's broader 'support'\")`. That assertion lives in Answer Types, so renaming the term HERE would leave the sibling assertion green while making its reconciliation false. Recorded at docs/CURRENT_STATE.md:358 and docs/HANDOFF.md:183.",
+        "STRUCTURAL FLOORS the rewrite cannot quietly fall below: scripts/coached-performance-smoke.ts:498 — `assert.ok(content.teachingSections.length >= 4 && content.misconception && content.commonMistakes.length >= 3, \"EXPLAIN\")`; :499 — `content.workedExample && content.revisionLadder.length >= 2`; :500 — three languageFrames; :501-502 — `assert.equal(questions, 3, \"knowledge checks stay secondary: three, not five\")`. Also scripts/concept-lesson-schema-smoke.ts A4 (sections >= 3), A5 (misconception.betterModel non-empty), A6 (commonMistakes >= 3), A7 (revisionLadder >= 2). The triage cuts WORDS, not STRUCTURES: a 4-section, 3-mistake, 2-rung, 3-frame, 3-check lesson at ~800 words is legal; collapsing to 2 sections is a deliberate assertion change and an owner decision.",
+        "scaffoldedTry.opponentClaim must remain a CLAIM carrying no reasoning: scripts/coached-performance-smoke.ts:779 — `assert.ok(!/because|therefore/i.test(t.opponentClaim), \"the authored claim carries no reasoning\")`, with the registry validator refusing one that does (:785, /carries reasoning, not a claim/).",
+        "NOT smoke-pinned but RECORDED, and the rewrite must honour it: the worked example's weak side is deliberately a fluent, correctly-shaped answer (not a null case like \"No it does not.\"), repaired as the SAME attempt — docs/HANDOFF.md:585-587: \"The worked example's weak side is no longer the null case ... it is a fluent, properly shaped answer whose because restates the but and whose therefore drifts into the speaker's own case, then repaired as the SAME attempt.\" Simplifying the weak answer for readability would re-open a repaired regression.",
+        "Any content edit trips the armed integrity gate: scripts/learning-content-baseline.json holds a byte-level snapshot of this lesson (block at :1045) and scripts/learning-content-integrity-smoke.ts fails closed on unclassified keys. Exactly one baseline block may be regenerated and the other twenty must be proven byte-identical (docs/HANDOFF.md:606-608). This is process, not doctrine, but it is how the rewrite must land.",
+        "Cross-lesson containment: scripts/coached-performance-smoke.ts:1364 forbids \"they say ___\", \"because ___. Therefore\" and \"delete test\" from appearing in Round Orientation. These method names are Refutation-owned; the rewrite may rename nothing into a phrase another lesson is forbidden to use, and may not push these phrases outward."
+      ]
+    },
+    {
+      "lesson": "debate-answer-types",
+      "censusRules": 25,
+      "adversariallyChallenged": false,
+      "estimatedRequiredWords": 700,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "Before you judge an answer, ask two questions in this order: if this answer worked perfectly, what would be true in the round? (that gives you the direction) and only then, what did the answer go after? (that gives you the name).",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "Every answer points one of two ways: DEFENSE makes their argument count for less (smaller, shakier, or gone) and adds nothing new for your side, while OFFENSE gives the judge a reason to prefer your side that was not there before.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Each direction holds one named move — an INDICT is defense aimed at the evidence itself (who produced it, what it measured, how the result was reached), a TURN is offense in which their own argument is what supplies your reason — and an answer that is neither simply keeps its direction's name: plain defense, or offense that is a reason of your own standing beside their argument.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "How hard your answer hits and how good your evidence is do not set the direction — you can destroy their argument completely and still have only defense, and the same strong study is defense if it finds their effect is not there but a turn if it finds the effect runs the other way.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "Defense is a real answer and often the right one, but choose it on purpose: judges vote for reasons, so if every answer you make is defense and their argument is still standing, the judge is left holding their reason and none of yours.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "The four names also run backwards: look at the argument in front of you, ask what needs to change about it — does it need to count for less, or does something need to start counting for you — and pick the direction from that answer.",
+          "guarded": false
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "One answer often does more than one thing at once — a reversal usually stops their argument helping them AND gives you a reason — and the two-way sort is a classification by the reason the answer creates, not a claim that an answer has only one effect.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B02",
+          "meaning": "Aiming at their evidence does not by itself make an indict. An indict is the DEFENSIVE evidence-aimed answer; if what you show about their evidence makes their own argument point your way, what you have is a turn.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B03",
+          "meaning": "More than one direction is often available on the same argument — but a direction the argument's own terms do not support is never available: you cannot reverse an argument that never points your way.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B04",
+          "meaning": "Classifying correctly is not refuting. \"This is a turn\" describes what your answer would accomplish and is not a reason for the judge to accept it — the reason and the loss to their argument still have to be said out loud.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B05",
+          "meaning": "Refutation's vocabulary is broader: it calls every load-bearing part of an argument a support, and any of them can be answered. Denying a step in their reasoning is a real answer and often good defense — it is just not an indict.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B06",
+          "meaning": "Classification is success-conditional: you class an answer by what it would establish IF it were accepted, not by whether it lands. Either answer can still fail, and a turn is a turn whether or not the judge ends up believing it.",
+          "disposition": "B-EXAMPLE"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R22 — The refutation structure (they say / but / because / therefore) tells you HOW to state any of these answers; this lesson is about WHAT KIND of answer sits inside that structu",
+          "klass": "D",
+          "destination": "delete as duplicate of safety boundary B-4 (\"Classifying correctly is not refuting\")",
+          "why": "Same educational judgment as R20, stated a second time as curriculum orientation. The census already logged it as repetition spanning explanation, workedExample.whyItWorks and teachingSections[2]. B-4 preserves the operative half (the name is not the reason; the because and therefore belong to Refut"
+        },
+        {
+          "censusRule": "R23 — Turn varieties are the next lesson's subject; here the skill is spotting the reversal.",
+          "klass": "C",
+          "destination": "optional one-line pointer after the main path (or move the promise into Turn Mechanics' own opening)",
+          "why": "A curriculum forward reference, not a step in classifying. Test: removing it from first exposure does not make the lesson false, so it is C, not B. Unpinned — no assertion in scripts/ mentions the promise. CAUTION for whoever does the rewrite: debate-turn-mechanics opens \"You were promised that turn"
+        },
+        {
+          "censusRule": "R25 — Misapplying a name does nothing: calling a defensive evidence attack a turn never puts a reason on your side.",
+          "klass": "E",
+          "destination": "test + comment only; the worked example may carry it as a line, but it is not a separate taught rule",
+          "why": "This exists as student prose because the repair spec required the worked example to display a MISapplied type — repair history, not a distinct beginner idea. As a judgment it restates B-4 (naming is not refuting) applied to the example. It is NOT pinned: I grepped scripts/ for \"misapplication\" and \""
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "PROSE FLOOR — THE BIGGEST CONFLICT WITH THIS MILESTONE. scripts/coached-performance-smoke.ts, check \"PA\": `assert.ok(prose >= 900 && prose <= 1300, \\`teaching prose inside the guard: ${prose} words (was 421)\\`)` over objective + explanation + whyMatters + steps + all three teachingSections. A beginner rewrite that lands at ~700 words FAILS PA. PA also enforces `assert.ok(prose > qWords * 1.5)`. The floor was authored to stop a REGRESSION IN THE OTHER DIRECTION (421 teaching words against 1,099 quiz words); it is not a doctrinal claim that this lesson needs 900 words. It must be renegotiated with the owner before the rewrite lands, not silently broken.",
+        "STRUCTURE, check \"PA\": `assert.equal(at.teachingSections.length, 3)`, `assert.equal(at.commonMistakes.length, 5)`, `assert.equal(1 + at.practiceQuestions.length + at.masteryCheck.length, 4)`, `assert.deepEqual(at.scaffoldedTry.slots, [\"what is now true\", \"which direction that is\", \"the answer type, in one word\"])`, and languageFrames / revisionLadder / additionalExamples must stay `undefined`. Three sections and five mistakes are a fixed shape the rewrite cannot reduce without changing PA.",
+        "FIELD-SCOPED STRINGS, check \"PB\" — these are pinned to `at.explanation` specifically, so paraphrasing them into a simpler opening breaks the assertion: \"an INDICT is a kind of defense, a TURN is a kind of offense\"; \"Every answer is classed one of two ways, by what it creates\"; and the proximity regex `/One answer can do more than one thing at once [\\s\\S]{0,140}classed by the reason it creates/` (max 140 characters between the halves).",
+        "NEGATIVE PIN, check \"PB\": `assert.ok(!/indict is usually|usually a kind of defense|usually defense/i.test(atAll), \"the category is never hedged\")`. A beginner-friendly softening such as \"an indict is usually defense\" fails the suite and recreates the exact category collision the 2026-09-06 repair removed.",
+        "WORKED-INSTANCE LEAD-INS, check \"PB\": teachingSections[0].body must contain all four literals \"That is DEFENSE\", \"That is an INDICT\", \"That is OFFENSE\", \"That is a TURN\", plus verbatim \"That is DEFENSE, and among these four names it has no second one\" and \"That is OFFENSE, and among these four it too has no second name: a reason of your own\". Its heading is pinned too: \"Two directions, and the named move inside each\".",
+        "THE NAMING STEP, check \"PB\", pinned verbatim inside `at.steps` including parentheses: \"defense if only for less (an indict if you went after their evidence), offense if something counts for you (a turn if their own argument is what supplies it)\".",
+        "WITHDRAWN OVERCLAIMS THAT MUST STAY ABSENT, check \"PC\": `!/never reverses/i` and `!/defense explains why they lose an argument/i` across every learner-visible string. Both are simplifications a beginner rewrite would naturally reach for.",
+        "BANNED SPEECH-LEVEL VOCABULARY, check \"PE\", swept over every learner-visible string as case-insensitive SUBSTRINGS: \"four minutes\", \"extend\", \"extended\", \"collapse\", \"collapsing\", \"frontlin\", \"weigh\", \"prioriti\", \"spend time\", \"speech time\", \"time left\", \"dropped argument\", plus \"final speech|last speech|first speech\". Substring matching means \"outweighs\", \"extends\" and \"collapses\" all fail — a serious hazard for plainer prose (\"weigh up your options\", \"their case collapses\").",
+        "CHECK FORM AND KEYS, check \"PF\": options must stay length-matched (max 2 words / 12 characters spread), the key may not be uniquely longest or shortest by words or characters, may not be the only option carrying a comma, and `assert.deepEqual(atChecks.map(...), [\"A\", \"A\", \"A\", \"C\"], \"keys as authored and reviewed\")`. Any rewrite of question wording must re-run this arithmetic.",
+        "SCENARIO AND EVALUATOR, check \"PG\": `at.scaffoldedTry.prompt` must contain \"the market takes more on a Sunday, not less\" (it is the authored response the \"turn\" key in lib/coaching.ts was keyed against), and `motion` / `opponentClaim` must stay `undefined`. Check \"PH\" additionally pins render order (teachingSections[0].heading before teachingSections[2].heading before \"Now try the move\" before \"Practice this skill\"), the three rendered slot labels, and \"Practice this skill in the Rebuttal drill\".",
+        "NO MASTERY CLAIM, check \"PI\": `assert.ok(!/mastery|mastered/i.test(atAll))`. Encouraging beginner copy such as \"once you have mastered this\" breaks the no-fake-progress guard."
+      ]
+    },
+    {
+      "lesson": "debate-turn-mechanics",
+      "censusRules": 34,
+      "adversariallyChallenged": true,
+      "estimatedRequiredWords": 920,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "An argument that predicts something bad has three parts: the ACTION (what we would do), the LINK (what they say that causes), and the IMPACT (why they say that outcome is bad). If it arrives as one clause, split it with three questions.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Four of the choices have names: deny the connection = NO-LINK (defense), reverse the connection = LINK TURN (offense), shrink the endpoint = IMPACT DEFENSE (defense), reverse the endpoint = IMPACT TURN (offense) — four different moves, not four strengths of one move.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "To tell which move you made, ask what would be true if your answer completely succeeded: does that part disappear, get smaller, or point the other way?",
+          "guarded": true
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "A reversal only counts for your side if the reversed result depends on your side winning — if it would happen anyway, you have not turned anything.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-07",
+          "meaning": "Two of your own answers, granted together, can add up to a reason to vote AGAINST your side — that is a DOUBLE TURN, and the problem is what the pair adds up to, never how many reversals you made.",
+          "guarded": true
+        },
+        {
+          "id": "RULE-08",
+          "meaning": "Before you speak, check any pair you plan to run together: say what outcome each answer is about, ask whether that is the same thing, then grant both and ask whether YOUR side is now the thing that removes the good, or delivers the harm, your other answer just named — if it is, keep the reversal you can win and let the other part take plain defense or silence.",
+          "guarded": true
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "B01 — shrinking splits into 'less of the outcome arrives' (a claim about how strongly the connection works) and 'the outcome arrives but matters less', which is the one called IMPACT DEFENSE; none of it is weighing.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B02",
+          "meaning": "B02 — a double turn does NOT require the two claims to be incompatible; they usually can both be true, and that is exactly why the opponent can agree with both and take the ballot.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B03",
+          "meaning": "B03 — 'the same outcome' means the same on FOUR counts, conjunctively: same measure, same who or what in the same place, same stretch of time, same conditions. Never a disjunction, never 'the same people'.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B04",
+          "meaning": "B04 — two reversals about genuinely different outcomes sit together perfectly well; reversals that look like a pair may not be one.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B05",
+          "meaning": "B05 — answers to two DIFFERENT arguments can collide when they meet on one outcome; the collision is not confined to a single chain.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B06",
+          "meaning": "B06 — the offense test is success-conditional: what the answer would establish if accepted, not whether the judge ends up believing it.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B07",
+          "meaning": "B07 — a reversal that fails the depends-on-your-side test has not earned the name at all, so Answer Types' rule that a turn is always offense still holds.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B08",
+          "meaning": "B08 — naming the move says what you are trying to accomplish; building it into a complete answer with the because and the therefore is the REFUTATION lesson's job, not this one's.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B09",
+          "meaning": "B09 — a reason of your own that does not run through their argument is offense but NOT a turn; a turn takes their outcome and makes it yours.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B10",
+          "meaning": "B10 — an answer aimed at their evidence is an indict, which is DEFENSE; it becomes a turn only when what you show makes their own argument point your way.",
+          "disposition": "B-GUARD-ONLY"
+        },
+        {
+          "id": "B11",
+          "meaning": "B11 — the labels travel with the idea, not with every format: Public Forum uses them, many parliamentary judges call all of it refutation, and if the vocabulary draws blank looks you drop the labels and keep the logic.",
+          "disposition": "B-LEARNER"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R03 - If the opponent never said the middle step, that gap is worth naming out loud.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "A tactical bonus on top of the split, not part of it. A beginner who maps the chain and answers a part performs the skill correctly without ever naming a gap aloud, and nothing in the lesson becomes false if it moves. RULE-01 already carries the load-bearing half (the chain is only what they said)."
+        },
+        {
+          "censusRule": "R04 - A chain can have more than one middle step, and the same three questions apply at each of them.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "A real extension of the splitting procedure, but neither of the lesson's own examples has more than one middle step, so it is never exercised in first exposure. The census reached the same verdict. NOTE: the sentence is currently string-pinned in RD ('Some arguments have more steps in the middle tha"
+        },
+        {
+          "censusRule": "R24 - A conditional denial plus a reversal passes the test ('it will not happen - and even if it does, it would be good'); putting a reversal in front of the same words fails.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "A second-order application of RULE-08 - which pairings survive the test - usable only once the test itself is understood. Removing it from first exposure does not make anything false; it just leaves the learner without a licensed safe pairing. NO POSITIVE PIN: the only related assertion is the absen"
+        },
+        {
+          "censusRule": "R33 - Often the honest choice is no turn at all: a clean no-link or a modest impact defense is frequently the stronger, safer play.",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "Applying the brief's own test for B: there is NO smoke pin and NO doctrine record (grep of docs/ and scripts/ finds it only in the lesson body). It sounds careful, and the value of defense is Answer Types' teaching, explicitly cross-referenced ('exactly as the last lesson said about defense generall"
+        },
+        {
+          "censusRule": "R09 - A no-link and a link turn are different moves with different results, not weaker and stronger versions of one answer.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-04 (retain only as the existing one-line commonMistakes[1] entry)",
+          "why": "RULE-04 applied to RULE-03's grid produces this discrimination mechanically: ask what is true if it succeeds - vanished, or pointing the other way. The census records it stated three separate times (teachingSections[0], commonMistakes[1].whyItFails, steps[2], ~50w). The mistake ENTRY must survive be"
+        },
+        {
+          "censusRule": "R11 - Both kinds of shrinking are defense: the outcome stays bad, there is simply less of it or less at stake, and nothing counts for your side.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-03",
+          "why": "RULE-03 assigns defense/offense to all four moves once, in the grid. The census records 'nothing counts for your side' spelled out three times inside teachingSections[0] alone, once per defense move. The two-kinds refinement itself is preserved as safety boundary R10; only the repeated defense verdi"
+        },
+        {
+          "censusRule": "R13 - Impact defense and impact turn are different moves: shrinking leaves the outcome bad but smaller, reversing makes it good.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-04",
+          "why": "The endpoint-side twin of R09, and generated by exactly the same procedure. Practice check 2's hint already states it in six words ('Shrinking leaves the outcome bad. Reversing makes it good.'), which is the whole rule; the prose restatement adds nothing."
+        },
+        {
+          "censusRule": "REPETITION (instance of a class-A/B rule, not a 35th census rule): the four skate-park answers are drafted out twice in near-identical illustrative sentences - workedExample.strong",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-03's single worked example (keep ONE contiguous drafting)",
+          "why": "~170w. teachingSections[0] already defines and illustrates all four moves on the same skate-park chain; the second full drafting adds no rule. Nothing in RA-RF pins workedExample.strongAnswer's text, so this is free. The census's own optional-depth list reached the same verdict."
+        },
+        {
+          "censusRule": "REPETITION (instance): the skate-park pair is run through the collision test three times - workedExample.strongAnswer, workedExample.whyItWorks, teachingSections[1].",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-08 (collapse the two workedExample runs into one)",
+          "why": "~70w. teachingSections[1] is heavily pinned and must carry the canonical run; the two worked-example runs are unpinned restatements of the same procedure on the same pair."
+        },
+        {
+          "censusRule": "REPETITION (instance): 'different outcomes sit together fine' is stated three times with three different illustrations - teachingSections[1] (Saturday market), workedExample.whyItW",
+          "klass": "D",
+          "destination": "delete as duplicate of safety boundary R22 (keep exactly ONE illustration)",
+          "why": "~55w. The RULE is preserved as a class-B boundary and its sentence 'Reversals that look like a pair may not be one' is pinned; only the surplus illustrations are duplicate. Note the acquittal MASTERY CHECK (the drifters/shoppers item) is itself pinned by RE, so it already carries a worked instance f"
+        },
+        {
+          "censusRule": "REPETITION (instance): 'a reversal about something that arrives either way is not offense' is stated twice near-verbatim - teachingSections[2] and commonMistakes[2].whyItFails.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-05 (compress commonMistakes[2].whyItFails; the mistake entry itself must stay)",
+          "why": "~50w. teachingSections[2] carries the pinned statement; the mistake's reason paragraph restates it with a second example. RA pins commonMistakes.length === 5, so the entry stays and only the prose shrinks."
+        },
+        {
+          "censusRule": "REPETITION (instance): 'saying it flips is not enough' is stated twice - teachingSections[2] and commonMistakes[0].whyItFails.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-06 (compress commonMistakes[0].whyItFails; the mistake entry itself must stay)",
+          "why": "~45w. Neither statement is string-pinned, so one of them can carry the whole idea. Keep the teaching-section statement, since RULE-06 needs the WHAT-and-WHY duty stated positively."
+        },
+        {
+          "censusRule": "REPETITION (instance): 'independent offense is not a turn' is stated twice - teachingSections[2] and commonMistakes[4].whyItFails.",
+          "klass": "D",
+          "destination": "delete as duplicate of safety boundary R31 (compress commonMistakes[4].whyItFails; the mistake entry itself must stay)",
+          "why": "~45w. The teachingSections[2] clause 'a turn takes their outcome and makes it yours' is pinned by RC and must survive verbatim; the mistake's reason paragraph is an unpinned restatement."
+        },
+        {
+          "censusRule": "RULE-02",
+          "klass": "D",
+          "destination": "demoted by adversarial challenge",
+          "why": "Duplicate of RULE-03 plus RULE-04. RULE-03's own statement already names each of the four moves BY its place and operation ('deny the connection', 'reverse the endpoint'), so the two axes are taught by reading the name list. RULE-04 restates the operation trio in beginner words ('disappear, get smaller, point the other way') as a procedure the learner actually runs. Teaching the abstract 2x3 grid "
+        },
+        {
+          "censusRule": "RULE-06",
+          "klass": "C",
+          "destination": "demoted by adversarial challenge",
+          "why": "A beginner who never sees this rule still classifies answers correctly (JOB 1) and still runs the pair audit correctly (JOB 2). What they produce is an under-warranted turn — crude, not wrong — which is precisely the standard the owner set. Its two halves are each already owned elsewhere: the 'WHAT reverses' half is RULE-03/RULE-04 restated, and the 'WHY it follows' half is the warrant duty that t"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "OBJECTIVE STRING. scripts/coached-performance-smoke.ts, check RB: assert.ok(/check that answers you run together do not add up to a reason against your own side/.test(tm.objective), \"the objective states the corrected rule, not truth-compatibility\"). The most-read sentence in the lesson is a literal pin.",
+        "CATALOG DESCRIPTION (lib/learning-content.ts:1125, OUTSIDE the lesson body). RB: assert.ok(/test whether two answers, granted together, add up to a reason against your own side/.test(tmEntry.source.description), \"the catalog description states the corrected test\"). A body-only rewrite will miss this field - it already did once, and the miss is recorded in CURRENT_STATE.md.",
+        "HEADING. RB: assert.equal(tm.teachingSections[1].heading, \"When two answers add up against you\"). The heading is treated as learner-facing doctrine and cannot be simplified.",
+        "THE FOUR SAMENESS COUNTS, ENUMERATED IDENTICALLY EXACTLY THREE TIMES. RB: assert.equal((tmAll.match(/same measure, (?:the )?same who or what in the same place, (?:the )?same stretch of time, (?:the )?same conditions/g) ?? []).length, 3). A beginner rewrite that states the four counts once (the natural move) FAILS this. Also pinned: !/people or place/ (no disjunction) and !/same people in the same place/ (a people-shaped count cannot certify the dog-park collision).",
+        "THE THREE COMPRESSED STATEMENTS OF THE PAIR TEST - THIS BLOCKS THE CENSUS'S LARGEST WORD SAVING (~150w). RB loops over [tm.steps[4], tm.misconception.betterModel, tm.commonMistakes[3].fix] and requires EACH to carry /comparable words/ AND /the same on all four counts/ AND /overlap only in part, run the last question on the part they share/ AND /grant (both|them both)/ AND /removes? the good, or delivers? the harm/ - \"every compressed statement of the test carries name, compare, screen, the partial-overlap branch, grant, decide\". Plus the literal steps[4] pin: /check whether those outcomes are the same on all four counts - and if they overlap only in part, run the last question on the part they share - grant them both/. The census flagged this triple statement as class-D repetition; the smoke says it is mandatory. Do not delete it on the census's lead - it needs an owner ruling first.",
+        "PARAPHRASE GUARD AGAINST THE WITHDRAWN CO-TRUTH TEST. RB: !/cannot both be true/i, !/hold together/i, !/both\\s+(?:be\\s+)?right\\b/i anywhere in the lesson; \"can both be true|be true together\" must appear EXACTLY ONCE (in the rejection sentence); and every sentence containing both /\\bstands?\\b/ and /\\bboth\\b/ must also contain /without making your own side/. The smoke comment names the exact beginner-simplification that breaks this: compressing the deciding question to \"can they both stand?\" restores the acquittal in meaning while passing the other pins.",
+        "VOCABULARY QUARANTINES. RD: no /outweigh|magnitude|probability|timeframe|net benefit|more important than/i anywhere (this lesson must not touch weighing). RC: no /uniqueness|non-unique|fiat|solvency|inherency|permutation/i. RD: no /internal link/i. A beginner rewrite reaching for \"how likely\" or \"how big a deal\" must not reach for these words.",
+        "STRUCTURE. RA: tm.teachingSections.length === 3; tm.commonMistakes.length === 5; 1 + practiceQuestions.length + masteryCheck.length === 6; scaffoldedTry.slots deepEqual [\"which part, and what it does to it\", \"what becomes true\", \"the move, in the lesson's words\"]; languageFrames/revisionLadder/additionalExamples all undefined; skillSlug undefined; practiceDrill deepEqual { track: \"debate\", area: \"rebuttal\" }. Consolidating to two teaching sections or three mistake boxes FAILS.",
+        "WORD-COUNT RELATION - THE SINGLE BIGGEST RISK TO A SHRINKING REWRITE. RA: assert.ok(qWords < 1300) AND assert.ok(prose > qWords, \"teaching now outweighs quiz text\"), where prose = objective + explanation + whyMatters + steps + the three teachingSections. Measured at HEAD: prose = 1,755 words, quiz = ~1,139. If the beginner rewrite cuts prose below the quiz layer (my estimate lands near 1,150-1,250 for prose after triage), this assertion FAILS. The quiz layer must shrink in step with the prose, or the owner must re-baseline RA.",
+        "CHECK-LAYER FORM PINS. RE: keys deepEqual [\"B\",\"B\",\"B\",\"C\",\"B\",\"A\"]; no key uniquely longest OR shortest by words or characters; max-min <= 5 words and <= 16 chars per item; four distinct options. Any option rewritten into simpler language must be re-length-balanced or the deliberate anti-cue lattice breaks. Also pinned: the acquittal key must start \"No, because the first answer names the drifters and the second the paying shoppers\"; the repair prompt must contain \"You run the audit before you speak.\"; and !/cheerfully agrees with both|next speech|in your next/i anywhere (no later-speech assumption).",
+        "SCAFFOLD. RF: TURN_MOVE_TERMS deepEqual [\"no-link\", \"link turn\", \"impact defense\", \"impact turn\"] - the closed vocabulary is the lesson's four moves, so RULE-03's names cannot be renamed or reduced; scaffoldedTry.prompt must match /the market takes|families on that pavement|slows the traffic down/i; scaffoldedTry.motion and .opponentClaim must stay undefined.",
+        "MISCONCEPTION SLOT. RA requires tm.misconception to exist and RB requires misconception.betterModel to carry the full compressed test. The census flagged 'counting reversals is not the test' as taught twice (misconception + commonMistakes[3], ~85w) and therefore class-D duplicate; both slots are structurally pinned, so that lead is also blocked pending an owner ruling."
+      ]
+    },
+    {
+      "lesson": "debate-constructive-speeches",
+      "censusRules": 21,
+      "adversariallyChallenged": false,
+      "estimatedRequiredWords": 780,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "Your CASE is everything your side argues in the round. A CONTENTION is one big point inside it, with the arguing underneath. A constructive is a few contentions put together as one case — not a list of every argument you own.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "The first constructive is where you put your OWN side's case up. There is usually nothing to answer yet, so a speech that spends its time answering arguments the other side has not made hands the judge their case first and leaves yours half-built.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "A contention goes first if a later one only works once the judge has accepted it. Choose the order from what depends on what — not from which point feels strongest or which you wrote first.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "Every contention has to do a job none of the others does. Two contentions that establish the same thing look like two parts and are really one.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "A contention counts only when you actually argue it. Announcing the heading, or naming a claim, a warrant and a source somewhere in that stretch, is not the same as having argued it.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "Finish by saying what your contentions show together. Do not say you have already beaten the other side's case — it has not been made yet, so there is nothing there to beat.",
+          "guarded": false
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "Claim/warrant/impact is IMPORTED here in exactly one sentence and is NOT owned by this lesson. Do not expand it, exemplify it, or re-teach it — Constructive owns whole-speech composition.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B02",
+          "meaning": "The converse of dependency ordering must survive: where nothing rests on a contention, nothing forces where it sits. Without it 'order by dependency' over-generalises into 'there is always one right order', which is false.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B03",
+          "meaning": "Evidence must be USED, not cited: say what the study found and why that makes the warrant more believable. Naming a source only tells the judge support exists.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B04",
+          "meaning": "Arguments you never establish in the constructive are hard to revive later.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B05",
+          "meaning": "SCOPE HONESTY: the objective stays in planning verbs. This lesson teaches PLANNING a constructive; it cannot verify whole-speech composition, so it must not claim it. Do not restore \"Compose a whole constructive speech\".",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B06",
+          "meaning": "The lesson's own model answer must pass the lesson's own rules: workedExample.strongAnswer must still end on what the contentions establish TOGETHER.",
+          "disposition": "B-EXAMPLE"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R11 — Each contention must have a place in the case: what it establishes and what the case is using it for; a contention never tied to what the case argues leaves the judge holding",
+          "klass": "C",
+          "destination": "optional note after the main path (or fold into the 'go deeper' block with the ladder)",
+          "why": "The orphan-contention failure is drilled nowhere — no cs- item and no lesson check tests it, unlike its twin R12 (practice-3, ladder rung 2). Removing it does not make the lesson false: RULE-04 still forbids duplication and RULE-06's together-close surfaces an orphan contention automatically, becaus"
+        },
+        {
+          "censusRule": "R14 — Speech attention is finite: spending most of it on one contention does not leave you a shorter second contention, it leaves that second contention unestablished.",
+          "klass": "C",
+          "destination": "optional note / mistake box attached to RULE-05, and it is already argued in revision-ladder rung 2",
+          "why": "This is the REASON behind 'develop each one', not a separate action a beginner performs. With RULE-05 in place a beginner already knows a mentioned contention does not count; R14 only explains why they cannot buy the second one cheaply. cs-04's 'one deep contention beats two thin ones' distractor is"
+        },
+        {
+          "censusRule": "R19 — Fairness/engageability: the other side can only engage with a case they can identify, and an undifferentiated block \"sounds like an advantage and is not\".",
+          "klass": "C",
+          "destination": "later lesson (round fairness / what the other side needs to engage), or one compressed clause if whyMatters survives at ",
+          "why": "Motivation, not performance — a beginner plans a correct constructive without ever hearing it. Checked the doctrine record honestly: NO smoke assertion, NO in-file comment, and no drill rationale rests on it. The census's do-not-touch mark on it reflects the preserve-everything brief, so under this "
+        },
+        {
+          "censusRule": "PASSAGE: revisionLadder[0] — the free-swimming-lessons rung, attempt + diagnosis + revision (~222w)",
+          "klass": "C",
+          "destination": "later / 'go deeper' block after the main path",
+          "why": "A coached application of RULE-03 that is already drilled three times by cs-01, cs-02 and cs-03. Valuable practice, not first-pass reading."
+        },
+        {
+          "censusRule": "PASSAGE: revisionLadder[1] — the duplicate third contention rung (~262w)",
+          "klass": "C",
+          "destination": "later / 'go deeper' block — but LIFT the free-ordering converse clause into the main path FIRST",
+          "why": "Coached application of RULE-04. It is the only teaching carrier of the class-B converse ('where nothing rests on a contention, nothing forces where it sits'), which must be relocated before the rung is moved, or the converse leaves the lesson with practice-3's rationale still assuming it."
+        },
+        {
+          "censusRule": "PASSAGE: revisionLadder[2] — repairing a premature comparative close (~173w)",
+          "klass": "C",
+          "destination": "later / 'go deeper' block",
+          "why": "Fourth statement of the premature-comparison rule, which RULE-06 and the worked example already carry and drill cs-07 already tests. Depth, not required reading."
+        },
+        {
+          "censusRule": "PASSAGE: scaffoldedTry — the sports-halls case-planning exercise (~221w)",
+          "klass": "C",
+          "destination": "kept as practice AFTER the teaching, not counted as teaching prose",
+          "why": "It is productive practice, not prose to read, so it belongs after the required path by nature. If it is trimmed at all, the CLUBS/HOURS/UPKEEP dependency data must survive intact or the exercise stops being solvable."
+        },
+        {
+          "censusRule": "PASSAGE: the imported-vocabulary framing — \"For this lesson, three words carry their usual meanings from earlier in the course\"",
+          "klass": "C",
+          "destination": "optional recap panel for learners arriving out of chain order",
+          "why": "Only the FRAMING is optional. The CASE and CONTENTION definitions inside it are RULE-01 and stay in the main path; the claim/warrant/impact sentence inside it is class-B boundary 1 and stays as exactly one sentence wherever the panel lands."
+        },
+        {
+          "censusRule": "REPETITION: 'distinct job + place in the case' stated abstractly in the explanation's Third sentence, then again as its two failure modes (~55w)",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-04 (its orphan half is R11, now class C)",
+          "why": "One educational judgment stated twice in one paragraph. Keep the failure-mode form, which is the one a beginner can check their own plan against."
+        },
+        {
+          "censusRule": "REPETITION: 'developed rather than mentioned' stated four times — explanation ×2, steps[2], steps[5], worked example; steps[5] near-verbatim restates steps[2] (~28w)",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-05",
+          "why": "Keep it once as the rule and once inside the worked example where it is demonstrated. The step-6 checklist restatement of step 3 adds no judgment."
+        },
+        {
+          "censusRule": "REPETITION: the premature-comparison rule stated four times — explanation, steps[4], whyItWorks, ladder rung 3 (~20w)",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-06",
+          "why": "Once as the rule's second half, once where the worked example shows it. The other two are restatement."
+        },
+        {
+          "censusRule": "REPETITION: 'the look of breadth without a second part to it' appears verbatim in the explanation and in ladder rung 2 (~20w)",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-04",
+          "why": "Same sentence in two teaching fields. Keep it in the required rule; the ladder can point at it rather than restate it."
+        },
+        {
+          "censusRule": "REPETITION: finite speech attention stated in the explanation and re-argued in ladder rung 2 (~25w)",
+          "klass": "D",
+          "destination": "delete one instance; the surviving judgment is R14, now class C",
+          "why": "The ladder already argues it in the place a learner meets the temptation, so the explanation's copy is redundant even before R14 is demoted."
+        },
+        {
+          "censusRule": "REPETITION: whyMatters states the same thing twice in one sentence — arguments never established are hard to revive, and a case the judge could not follow does not get clearer at s",
+          "klass": "D",
+          "destination": "keep one clause — and keep the 'hard to revive' half, which is class-B boundary 4",
+          "why": "The 'clearer at speed in a rebuttal' half restates it. The half with a drill resting on it is the half to keep."
+        },
+        {
+          "censusRule": "REPETITION: ladder rung 1's diagnosis states the strength-versus-dependency judgment three ways in three consecutive sentences (~28w)",
+          "klass": "D",
+          "destination": "compress to one sentence inside the rung, if the rung is kept at all",
+          "why": "Three consecutive restatements of RULE-03's second half. One is enough, and RULE-03 already carries it in the main path."
+        },
+        {
+          "censusRule": "SCAFFOLDING: 'Three things follow from that.' / 'Two more things follow from composing a speech rather than an argument.' / 'composing one is a different skill from writing a singl",
+          "klass": "E",
+          "destination": "delete as student prose — a beginner lesson numbers its ideas in the layout, not in a sentence about the essay's shape",
+          "why": "Enumerative meta-structure inherited from the old textbook paragraph. The usable content of the third clause (a speech is several arguments arranged as one case) is absorbed into RULE-01; the counting sentences carry no judgment at all and are exactly the prose the rewrite exists to remove."
+        },
+        {
+          "censusRule": "SCAFFOLDING: ladder rung 3 narrating its own tidiness — 'The plan is sound and the last sentence is the only thing left to repair' / 'Two faults sit in one sentence, and one replac",
+          "klass": "E",
+          "destination": "authoring commentary — move to a code comment if the rung survives",
+          "why": "It explains the exercise's design to the reader rather than teaching a judgment. The learner already sees that only the last sentence changed by reading the revision."
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "THE HEDGE. \"In the first constructive there is often nothing yet to answer.\" appears as a literal fixture at scripts/assessment-quality-guard-smoke.ts:157 (the Q13c POS_REF non-vacuity list: 'a semantic ordinal is not a positional reference'). HONEST QUALIFICATION: that fixture is a copied string, not a read of the lesson, so editing the lesson would NOT fail that assertion. The real pin is that the same sentence is the opening of drill cs-04's rationale (lib/debate-drills.ts:492), byte-frozen in scripts/debate-drill-bank-baseline.json — all 187 items frozen, scripts/debate-drills-smoke.ts G0-7 series. Hardening 'often' to 'nothing'/'never' in the lesson would put the required teaching in contradiction with a frozen, learner-visible rationale. RULE-02 must keep the hedge.",
+        "NO SIGNPOSTING MECHANICS. The words 'label', 'boundary' and 'signpost' currently appear ZERO times in this lesson's learner-visible strings, and that is a deliberate 2026-09-07 repair: commit 8ee308f, 'SIGNPOSTING BOUNDARY REPAIRED... A scan of every learner-visible string returns zero hits for label, boundary or signpost.' HONEST QUALIFICATION: I grepped scripts/ and found NO smoke assertion enforcing this — it is a commit-recorded repair with no automated guard, so a compression pass that reaches for 'label each contention' will silently recreate it. Adding a guard would be the cheapest protection for the rewrite.",
+        "THE OBJECTIVE STRING is checked in verbatim at scripts/learning-content-baseline.json:574 (\"Plan a constructive that establishes your own side's case rather than answering theirs: order the contentions by what depends on what, give each one a distinct job, and close on what the case establishes.\"). scripts/learning-content-integrity-smoke.ts compares canonicalised RUNTIME values against that snapshot (assertion 7: 'every catalog entry has a canonical baseline block and vice versa'). It is explicitly 'a REVIEW SIGNAL — not a security boundary' (line 47), so the rewrite MAY change it, but only as a deliberate two-file diff in the same commit; it cannot be edited quietly.",
+        "NO MASTERY CLAIM, NO DRILL LINK. scripts/education-migration-smoke.ts:684-686 asserts '25. \"debate-constructive-speeches\" claims no seeded mastery skill' (skillSlug === undefined) and :785-789 asserts '36f2. debate-constructive-speeches names NO drill — a lesson without a matching area must not link to one'. The rewrite must not add skillSlug or practiceDrill, however tempting it is to point the new lesson at the cs- bank. docs/CURRENT_STATE.md:87 records this as an UNRESOLVED CONNECTIVITY GAP, not a defect to fix in passing.",
+        "CHAIN POSITION. scripts/education-migration-smoke.ts:670 pins '21c. constructive speeches now leads into weighing' and :669 pins turn-mechanics as its predecessor, so claim/warrant/impact is guaranteed upstream — which is what licenses the one-sentence CWI import (class-B boundary 1) instead of a re-teach."
+      ]
+    },
+    {
+      "lesson": "debate-weighing",
+      "censusRules": 22,
+      "adversariallyChallenged": false,
+      "estimatedRequiredWords": 700,
+      "mustKnowNow": [
+        {
+          "id": "RULE-01",
+          "meaning": "Weighing means putting both impacts side by side and telling the judge which one should decide the round; saying more about your own harm is not weighing.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-02",
+          "meaning": "Give the judge a rule for choosing — a weighing standard, also called a weighing framework — and word it so it could be used on either side's impact, not just yours.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-03",
+          "meaning": "Build the rule on a difference these two harms really have, and say why that difference should decide — a rule both sides come out the same under settles nothing, and a difference with no reason attached is only a fact.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-04",
+          "meaning": "Say your rule early, while there are still speeches left in which the other side can answer it — and expect them to argue for a different rule.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-05",
+          "meaning": "Run both impacts through your rule and say what it decides — stating the rule is not the same as making the comparison.",
+          "guarded": false
+        },
+        {
+          "id": "RULE-06",
+          "meaning": "When a real difference runs their way, name it, then argue why the difference you are standing on should still control — naming both and stopping is not weighing.",
+          "guarded": false
+        }
+      ],
+      "safetyBoundaries": [
+        {
+          "id": "B01",
+          "meaning": "Magnitude, probability, timeframe and reversibility are names for common comparison moves, never required speech vocabulary — the skill is making the comparison clear, not saying the lens words, and there is no ranking of comparisons to memorise.",
+          "disposition": "B-LEARNER"
+        },
+        {
+          "id": "B02",
+          "meaning": "Do not present the round as though every comparison favours you — a judge who can see the difference you skipped trusts the ones you made less.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B03",
+          "meaning": "Timing is a separate axis from content: the same words are strong or weak depending only on which speech the rule arrives in, and the fix for a late rule is to have given it in an earlier speech, not to reorder the final one.",
+          "disposition": "B-EXAMPLE"
+        },
+        {
+          "id": "B04",
+          "meaning": "Frames and scaffolds are optional structure, never required wording — filling in a blank does not make what you put in it true, and naming a kind of comparison is not the same as making one.",
+          "disposition": "B-LEARNER"
+        }
+      ],
+      "demoted": [
+        {
+          "censusRule": "R07 — the second reason to state the rule early: the comparison that comes later then has something to be measured against.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-04 + RULE-05",
+          "why": "This is the apply-the-rule step viewed from the timing side. A beginner who has been told to state the rule early (RULE-04) and then to run both impacts through it (RULE-05) has already been told this; stating it as a separate \"second reason\" adds a sentence and no judgment. The census's own repetit"
+        },
+        {
+          "censusRule": "R19 — judges often believe both sides have some truth; without a rule for deciding, the judge falls back on whichever rule they personally happen to prefer.",
+          "klass": "C",
+          "destination": "optional note after the main path — keep as the lesson's one-line why, not a manifest rule",
+          "why": "Motivation, not performance. A beginner who never hears that judges fall back on a private preference can still weigh correctly; nothing they do changes. It earns one opening sentence answering \"why bother\", but it is not a rule they apply and it fails the first test outright."
+        },
+        {
+          "censusRule": "R20 — a rule offered early and defended is fair for the judge to use precisely because the other side had time to contest it.",
+          "klass": "D",
+          "destination": "delete as duplicate of RULE-04",
+          "why": "The fairness point is the reason clause already inside RULE-04 (\"while there are still speeches left in which the other side can answer it\"). It restates the same judgment in the whyMatters field. The census independently recorded this exact repetition — \"stated three times across three fields\"."
+        },
+        {
+          "censusRule": "R22 — the revision path a learner must be able to walk: describe -> compare -> state a testable rule with a reason -> run both impacts through -> concede the difference that runs t",
+          "klass": "E",
+          "destination": "test+comment only — it is the revisionLadder's own four-rung design spec, and the ladder already encodes it",
+          "why": "This is not a seventh idea; it is RULE-01 through RULE-06 written out as a sequence, and it exists because the four-rung ladder was authored against it. Keeping it as student prose would mean saying the whole lesson twice. If it needs protecting, protect it with a rung-count/ordering assertion on re"
+        },
+        {
+          "censusRule": "[structure] revisionLadder — the four-rung service-desk / library-hours model (~741 words)",
+          "klass": "C",
+          "destination": "later in the lesson, after the main path — kept whole and unedited, out of the first-pass required reading",
+          "why": "A second full worked model that re-walks the same six ideas on a different topic. Valuable for a second attempt, not needed before a first one. MUST NOT BE DELETED: rung 2's diagnosis is the repaired half of an adjudicator BLOCK (commit a6f1aed) and rung 4's climax depends on the timing difference r"
+        },
+        {
+          "censusRule": "[structure] languageFrames groups 2 and 3 — \"Run both impacts through the rule...\" and \"Concede the difference that genuinely runs the other way...\" (~179 words)",
+          "klass": "C",
+          "destination": "optional note after the main path",
+          "why": "Group 1 carries the lesson's core sentence shape (\"Decide this on ___, because ___\") plus one full statement of the anti-magic caveat, which is all a first pass needs. Groups 2 and 3 are extra shapes for RULE-05 and RULE-06. MUST NOT DROP ALL FRAMES: scripts/coached-performance-smoke.ts:516 asserts "
+        },
+        {
+          "censusRule": "[structure] scaffoldedTry — the campus-housing case packet (~401 words: round, both impacts, six ESTABLISHED bullets, five candidate comparisons, four slots)",
+          "klass": "C",
+          "destination": "productive attempt after the reading path — required practice, not required reading",
+          "why": "Under EXPLAIN -> MODEL -> SCAFFOLDED TRY it follows the prose, so it sits outside the first-pass reading budget while staying in the lesson. MUST NOT BE DELETED: coached-performance-smoke.ts:518 asserts nine lessons carry a scaffoldedTry. Its six ESTABLISHED bullets are load-bearing arithmetic — the"
+        }
+      ],
+      "criticalGuardedInvariants": [
+        "PINNED — scripts/wg08-activation-smoke.ts:51: `assert.ok(!DEBATE_DRILL_HELD_IDS.includes(\"wg-08\"), \"1. wg-08 specifically is not held\")`, with :56 `assert.ok(!DEBATE_DRILL_HELD_IDS.some((id) => id.startsWith(\"wg-\")), \"1b. no weighing item is held\")`. wg-08 is RELEASED IN PRODUCTION because this lesson teaches the early-stated weighing-standard mechanism (docs/CURRENT_STATE.md:40-43: \"the debate-weighing catalog lesson teaches the weighing standard... that it must be stated so either side's impact can be tested against it, that it is argued for and contestable, and why putting it up early leaves speeches in which it can be answered\"). RULE-02, RULE-04 and RULE-05 together ARE that teaching basis; if the rewrite loses any of the three, the release loses its ground.",
+        "PINNED IN THE DRILL, NOT IN A SMOKE ASSERTION — both names must survive. lib/debate-drills.ts:302, item wg-08: \"The purpose of a weighing framework stated early in the round is to: ... Set the standard the judge uses before impacts are compared.\" The lesson is its teaching home and says \"a weighing standard, also called a weighing framework\"; docs/CURRENT_STATE.md:41 records the B2.3 doctrine in the same both-names form. Dropping \"framework\" leaves a served item testing untaught vocabulary — the exact condition under which this repo holds items.",
+        "PINNED — scripts/coached-performance-smoke.ts, check \"JB\": `assert.equal(JUDGE_CATEGORY_COMPETENCY.clash, undefined, \"control: no judge category maps to weighing any more\")` and `assert.equal(Object.values(JUDGE_CATEGORY_COMPETENCY).includes(\"weighing\"), false, \"and no other key quietly took its place\")`. The recorded reason is that the withdrawn measure \"scored the Weighing lesson's own model answer at the floor and lens words at the ceiling\". The rewrite must not drift toward lens-word vocabulary; the four lens nouns stay at exactly one appearance, subordinated in the same breath.",
+        "PINNED — scripts/coached-performance-smoke.ts:516: `assert.deepEqual(withFrames, [\"debate-clash\", \"debate-weighing\", PILOT].sort(), \"exactly three lessons carry the coached model: Refutation, Clash and Weighing\")`. The rewritten lesson must still author `languageFrames` (at least one group survives; groups 2 and 3 are demotable).",
+        "PINNED — scripts/coached-performance-smoke.ts:518: `assert.equal(LEARNING_SKILL_CATALOG.filter(... scaffoldedTry).length, 9, ...)`. The rewritten lesson must still author a `scaffoldedTry`.",
+        "PINNED — scripts/concept-lesson-schema-smoke.ts:263: `assert.deepEqual(populated.map((e) => e.id).sort(), [... \"debate-weighing\"], \"A3. exactly the reviewed lessons author the new teaching structures\")`. Compounding this, lines 283-300 DERIVE the renderer's UNPOPULATED_EXEMPLAR by stripping the seven optional fields off the weighing source, with B0b asserting they are absent after the strip — so the weighing entry must keep authoring at least one optional structure AND stay shaped so the strip still yields a valid bare source.",
+        "PINNED — weighing stays a LOCKED competency with no guided round. scripts/coached-performance-smoke.ts:103 `assert.equal(guidedApplicationFor(\"debate-weighing\"), null)`, :203 `assert.deepEqual(unlockedCompetenciesFor(\"debate-weighing\"), [])`, :249 `assert.deepEqual(starterCategoriesFor(\"debate-weighing\"), [])`, :217 `validateGuidedRequest({lessonId: \"debate-weighing\"}) === { ok: false, reason: \"no-guided-application\" }`. Commit a6f1aed: \"No guided debate — refused while no truthful round-level weighing measure exists.\" The rewrite must not add one.",
+        "REVIEW GATE, NOT A TEXT FREEZE — scripts/learning-content-integrity-smoke.ts:56 `const LEARNING_CONTENT_BASELINE = \"WEIGHING-REPAIR-V1\"` plus assertion 8, a byte-for-byte `assert.deepEqual(entry, reviewed)` of the whole catalog entry. This pins NO individual sentence: it forces any learner-visible change to update scripts/learning-content-baseline.json, bump the label, and record the affected slug in docs/CURRENT_STATE.md, with the other 20 entries left byte-identical. Do not mistake it for a prose lock — nothing in the smoke suites freezes the wording of any class-A or class-B sentence, so all of them may be rewritten into beginner language as long as the meaning survives.",
+        "UNFIXED EXPOSURE, REPORTED NOT SMOKE-PINNED — the impacts-not-evidence boundary (comparing whose evidence is stronger is not weighing) is taught ONLY in question text: guidedQuestion (\"Comparing whose evidence is stronger is a comparison, but of sources rather than of harms\") and practiceQuestions[0]. Commit a6f1aed cut the separate impacts-not-evidence check as redundant, so the boundary now rests on question rationales alone, while served drill item wg-26 measures it (lib/debate-drills.ts:377; the authoring comment at :326 says \"wg-26 keys AGAINST an evidence-quality distractor\"), and scripts/assessment-quality-guard-smoke.ts:318 uses wg-26's explanation as fixture text. If the rewrite drops those two questions, a served item measures a boundary taught nowhere. Carry it into RULE-01 or a mistake box rather than losing it.",
+        "AUTHORING INVARIANT, COMMIT-RECORDED NOT SMOKE-PINNED — revisionLadder[1].diagnosis must never regain a timing claim. Commit a6f1aed: \"An independent adjudicator returned BLOCK on a factual contradiction inside the ladder: rung 2 asserted both harms start at the same time, and rung 4's climax then conceded a timing difference and built its revision on it.\" The surviving clause (\"neither side disputes that either harm will happen, so a rule about which harm is more likely would have left the judge exactly where they started\") is the repaired half and carries the likelihood point."
+      ]
+    }
+  ]
+}

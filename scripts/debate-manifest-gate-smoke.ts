@@ -43,7 +43,7 @@ const MANIFEST_PATH = "scripts/debate-beginner-manifests.json";
  * edit cannot ride in unreviewed. This is a review signal, not a security boundary — a deliberate
  * developer changes both, and that is the point: the decision becomes explicit in one diff.
  */
-const MANIFEST_MARKER = "DEBATE-BEGINNER-MANIFEST-V2";
+const MANIFEST_MARKER = "DEBATE-BEGINNER-MANIFEST-V3";
 
 /** Pinned outcomes of the accepted triage + adversarial challenge. Drift here is never incidental. */
 const FULL_TRACK_A_RULES = 59;

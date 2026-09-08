@@ -1995,6 +1995,124 @@ function main() {
   });
 
   // ================================================================================================
+  // WG. WEIGHING — beginner rewrite (2026-09-08). Until this block the lesson's six frozen A-rules had
+  // no prose guard at all (manifest: guarded=false on every one), and the doctrine most worth guarding
+  // is the one the withdrawn round judge got backwards: it scored this competency by COUNTING lens
+  // words, and scored the lesson's own model answer at the floor. These pins keep the beginner prose
+  // teaching a comparison built on a real difference, compared on both sides, never a vocabulary.
+  // ================================================================================================
+  const WG = "debate-weighing";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wgEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === WG) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wg = wgEntry.source.lesson.content as any;
+  const wgChecks = [wg.guidedQuestion, ...wg.practiceQuestions, ...wg.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
+  const wgSections = (wg.teachingSections as Array<{ heading: string; body: string }>);
+  const wgRequired: string[] = [wg.objective, wg.explanation, ...wgSections.map((x) => x.heading + "\n\n" + x.body), wg.whyMatters, ...wg.steps,
+    ...Object.values(wg.workedExample as Record<string, string>), ...(wg.revisionLadder as Array<Record<string, string>>).flatMap((r) => Object.values(r)),
+    ...(wg.languageFrames as Array<{ purpose: string; starters: string[] }>).flatMap((g) => [g.purpose, ...g.starters])];
+  const wgAll = [...wgRequired, wg.scaffoldedTry.prompt, wg.scaffoldedTry.frame, ...wg.scaffoldedTry.slots,
+    ...wgChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]), wgEntry.source.description, wgEntry.source.lesson.summary].join("\n");
+  const [wg1, wg2, wg3] = wgSections.map((x) => x.body);
+
+  check("WA. weighing is taught as a comparison, never as lens vocabulary (B01, B04)", () => {
+    // No lens word is learner vocabulary anywhere — required path, scaffold, checks, catalog copy.
+    for (const lens of ["magnitude", "probability", "timeframe", "reversib", "impact calculus", "terminal", "\\blens", "comparative framework", "evaluative mechanism"]) {
+      assert.ok(!new RegExp(lens, "i").test(wgAll), `no lens vocabulary: ${lens}`);
+    }
+    assert.ok(/Debaters have names for some; you never need them\. You need a difference the round — the whole debate — actually shows\./.test(wg1), "the names are named as names, once, and dismissed; the round is defined at first use");
+    assert.ok(/What separates the two sides is the fact, not the name for it\./.test(wg1), "the fact makes the comparison, not the name");
+    // The two names the released drill item wg-08 uses survive, defined as a rule for choosing.
+    assert.ok(/Give the judge a rule for choosing\. Debaters call it a WEIGHING STANDARD, or a WEIGHING FRAMEWORK \(two names, one thing\)\./.test(wg2), "standard and framework are defined, plainly, as one thing");
+    // Frames are optional structure (B04): one group, and it says what filling a blank does not do.
+    assert.equal(wg.languageFrames.length, 1, "one frame group; groups 2 and 3 were Class C");
+    assert.ok(/Naming a kind of comparison is not making one; the words after “because” are the whole argument\./.test(wg.languageFrames[0].purpose));
+    assert.ok(/Filling in the blanks does not make what you put in them true/.test(wg.scaffoldedTry.frame), "the other half of B04 lives in the scaffold frame, once");
+    for (const starter of wg.languageFrames[0].starters) assert.ok(/___/.test(starter) && !/(?:more|fewer|larger|likely|sooner|permanent)/i.test(starter), `a starter supplies shape only: ${starter}`);
+  });
+
+  check("WB. a real difference is required (RULE-03), the rule is usable on either side (RULE-02) and given early (RULE-04)", () => {
+    assert.ok(/If both harms are equally likely, “ours is more likely” does not tell them apart; if both start together, neither does “ours comes first”\. The judge applies it and still cannot choose\./.test(wg1),
+      "a level comparison decides nothing — taught by example, once");
+    assert.ok(/A difference with no reason behind it is just a fact; say why it should decide\./.test(wg2), "a difference needs a reason");
+    assert.ok(/Word it so it could be used on their result too: “A harm that cannot be undone should count for more\.” “Our harm is huge” is not a rule; nothing in it measures their result\./.test(wg2),
+      "usable on either side, with the counter-example");
+    assert.ok(/Say it early, while the other side still has speeches to answer it, and expect them to argue for a rule of their own\./.test(wg2), "early, and contestable");
+    assert.ok(/Judges often think both sides have a point; with no rule from you, they use whatever rule they prefer\./.test(wg.whyMatters), "R19 is the one-line why, nothing more");
+  });
+
+  check("WC. both sides are compared out loud (RULE-05); a difference that runs their way is named, then outranked (RULE-06, B02); RULE-01's boundary is in the teaching", () => {
+    assert.ok(/Stating the rule is not the comparison\. Run both results through it and say what it decides: “A minute of delay can be made up\. An injury cannot\. Under that rule, the crossing wins\.”/.test(wg3));
+    assert.ok(/Do not pretend every comparison favours you; a judge who sees the difference you skipped trusts the rest less\./.test(wg3), "B02");
+    assert.ok(/Name what they win \(debaters say you grant it\), then say why yours should still decide, and give the reason\. Naming both and stopping leaves the judge no way to choose\./.test(wg3), "RULE-06, with grant defined where it is first needed");
+    // The evidence-vs-harm boundary used to be taught ONLY in a question (recorded in the manifest as unfixed exposure).
+    assert.ok(/Weighing is not describing your own harm louder, and not comparing whose evidence is better — that compares sources, not results\./.test(wg.explanation), "RULE-01's boundary, in the teaching");
+    // The first COMPLETE comparison (both results, a difference, a reason, a decision) arrives inside the first 60 words.
+    const better = wg.explanation.indexOf("Better: ");
+    assert.ok(better > 0 && wg.explanation.slice(0, better).trim().split(/\s+/).length <= 60, "the learner sees weighing before any definition of it");
+    assert.ok(/because a minute can be made up and an injury cannot/.test(wg.explanation), "and that comparison carries its reason");
+    // The step list is the procedure, in order, short enough to carry into a speech.
+    assert.equal(wg.steps.length, 5);
+    assert.ok(/^Name both results\.$/.test(wg.steps[0]) && /difference the round actually shows/.test(wg.steps[1]) && /rule usable on either side/.test(wg.steps[2]) && /say it early/.test(wg.steps[2])
+      && /Run both results through the rule and say which side wins/.test(wg.steps[3]) && /favours them, name it, then say why yours should still decide/.test(wg.steps[4]), "steps carry name / difference / rule+why+early / both / tradeoff");
+  });
+
+  check("WD. the ladder is WEAK → BETTER → STRONG on one case; no rung asserts a shared start time; the climax concedes the timing difference (B03 lives in the worked example)", () => {
+    const ladder = wg.revisionLadder as Array<{ attempt: string; diagnosis: string; revision: string }>;
+    assert.equal(ladder.length, 2, "two rungs, three states");
+    assert.equal(ladder[1].attempt, "Same line as above.", "the rungs chain without re-printing the line");
+    assert.ok(/^\[A library must cut its help desk or its evening hours\. You defend the desk\.\]/.test(ladder[0].attempt), "the case is stated before the first line");
+    assert.ok(/This describes one result and stops\./.test(ladder[0].diagnosis) && /WHAT THE REVISION ADDS: both results, a rule usable on either side, and a reason\./.test(ladder[0].diagnosis));
+    assert.ok(/not yet applied/.test(ladder[1].diagnosis) && /skips the difference the other side wins/.test(ladder[1].diagnosis));
+    // Commit a6f1aed: an adjudicator BLOCKED a rung diagnosis that asserted both harms start at the same time while the climax conceded a timing difference. No diagnosis may say it again.
+    for (const r of ladder) assert.ok(!/(?:same time|at once|start together|neither arrives before|both begin)/i.test(r.diagnosis), `no shared-start claim in a diagnosis: ${r.diagnosis.slice(0, 60)}`);
+    assert.ok(/On when the harms start they are ahead, and we grant it/.test(ladder[1].revision) && /On that rule the desk stays\./.test(ladder[1].revision), "the climax names the difference that runs their way and still decides");
+    // B03: same words, different speech.
+    assert.ok(/^\[Final speech only\]/.test(wg.workedExample.weakAnswer) && /^\[First speech\]/.test(wg.workedExample.strongAnswer) && /\[Final speech\]/.test(wg.workedExample.strongAnswer), "timing is the only variable");
+    assert.ok(/Same words; what changed is when the rule arrived\./.test(wg.workedExample.whyItWorks) && /Fix: give the rule earlier\./.test(wg.workedExample.whyItWorks), "the fix is an earlier speech, not a reordered one");
+  });
+
+  check("WE. structure, scaffold, checks and the drill alignment are intact; beginner ceilings hold", () => {
+    assert.deepEqual(wgSections.map((x) => x.heading), ["Job 1: Find a real difference", "Job 2: Turn it into a rule, and say why", "Job 3: Compare both sides out loud"], "the three jobs");
+    assert.equal(wg.misconception, undefined); assert.equal(wg.commonMistakes, undefined); assert.equal(wg.additionalExamples, undefined);
+    assert.deepEqual(wg.scaffoldedTry.slots, ["THE COMPARISON I AM ASKING THE JUDGE TO DECIDE ON", "THE DIFFERENCE IN THESE FACTS THAT MAKES THE TWO SIDES COME OUT DIFFERENTLY ON IT", "THE COMPARISON THEY WIN", "MY COMPARATIVE STATEMENT — both harms under my rule, ending in what the judge should do"], "the evaluator's four slots");
+    assert.ok(/THE ROUND: a university is deciding whether to require all first-year students to live on campus\./.test(wg.scaffoldedTry.prompt) && /THE FIVE COMPARISONS AVAILABLE TO YOU/.test(wg.scaffoldedTry.prompt) && /Ours is certain:/.test(wg.scaffoldedTry.prompt) && /there is no exception\./.test(wg.scaffoldedTry.prompt) && /Their harm would reach several hundred students; ours would reach a few dozen\./.test(wg.scaffoldedTry.prompt), "the case packet keeps its six established facts (three words plainer)");
+    assert.equal(wg.scaffoldedTry.motion, undefined); assert.equal(wg.scaffoldedTry.opponentClaim, undefined);
+    assert.equal(1 + wg.practiceQuestions.length + wg.masteryCheck.length, 7, "seven checks");
+    assert.deepEqual(wgChecks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["C", "B", "D", "C", "B", "B", "D"], "keys as authored and reviewed");
+    assert.deepEqual(wgEntry.practiceDrill, { track: "debate", area: "weighing" }); assert.equal(wgEntry.skillSlug, WG);
+    // Length lattice and lone-cue rules, as for Turn Mechanics.
+    const wc = (t: string) => t.trim().split(/\s+/).length;
+    const STOP = new Set(["the", "a", "an", "and", "or", "of", "to", "in", "on", "it", "is", "are", "that", "this", "them", "they", "you", "your", "both", "for", "with", "not", "no", "so", "at", "as", "by", "one", "two", "their", "its", "what", "which", "when", "than", "then", "does", "do", "up"]);
+    const words = (t: string) => (t.toLowerCase().match(/[a-z’'-]+/g) ?? []);
+    const MODALS = /\b(can|could|may|might|would|should|must|whichever|whatever|whoever|any)\b/i;
+    wgChecks.forEach((q, i) => {
+      const lens = q.choices.map(wc), chars = q.choices.map((o) => o.length); const k = q.choices.indexOf(q.correctAnswer);
+      const mw = Math.max(...lens), nw = Math.min(...lens), mc = Math.max(...chars), nc = Math.min(...chars);
+      assert.ok(!(lens.filter((x) => x === mw).length === 1 && lens[k] === mw), `Q${i + 1}: key not uniquely longest by words`);
+      assert.ok(!(lens.filter((x) => x === nw).length === 1 && lens[k] === nw), `Q${i + 1}: nor uniquely shortest by words`);
+      assert.ok(!(chars.filter((x) => x === mc).length === 1 && chars[k] === mc), `Q${i + 1}: nor uniquely longest by characters`);
+      assert.ok(!(chars.filter((x) => x === nc).length === 1 && chars[k] === nc), `Q${i + 1}: nor uniquely shortest by characters`);
+      assert.ok(mw - nw <= 5 && mc - nc <= 16, `Q${i + 1}: options are length-matched (${lens.join("/")} words, ${chars.join("/")} chars)`);
+      assert.equal(new Set(q.choices).size, 4, `Q${i + 1}: four distinct options`);
+      const stem = new Set(words(q.prompt));
+      const echoes = q.choices.map((o) => { const w = words(o); const last = w[w.length - 1]; return Boolean(last) && !STOP.has(last) && stem.has(last); });
+      assert.ok(!(echoes[k] && echoes.filter(Boolean).length === 1), `Q${i + 1}: the key must not be the only option whose final word echoes the stem`);
+      const modal = q.choices.map((o) => MODALS.test(o));
+      assert.ok(!(modal[k] && modal.filter(Boolean).length === 1), `Q${i + 1}: the key must not be the only option carrying a modal`);
+    });
+    // Ceilings (the floors were retired in f0e17f7): the required path is everything rendered before the first check.
+    const required = wgRequired.map(wc).reduce((a, b) => a + b, 0);
+    assert.ok(required <= 950, `required path within the beginner allowance: ${required}`);
+    for (const field of wgRequired) {
+      for (const para of field.split(/\n\n+/)) assert.ok(wc(para) <= 60, `no paragraph above 60 words: ${para.slice(0, 60)}`);
+      for (const sentence of field.replace(/\[(?:First|Final) speech(?: only)?\]/g, "").replace(/\n+/g, " ").split(/(?<=[.?!][)”"]?)\s+(?=[A-Z“"(])/)) assert.ok(wc(sentence) <= 40, `no sentence above 40 words: ${sentence.slice(0, 60)}`);
+    }
+    const qWords = wgChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]).map(wc).reduce((a, b) => a + b, 0);
+    assert.ok(qWords < 1500, `the quiz layer keeps its ceiling (1,591 before the rewrite): ${qWords}`);
+  });
+
+  // ================================================================================================
   // S. SIGNPOSTING — the perfection repair (2026-09-06). The audit found the opposite of Answer
   // Types: teaching already strong (method STRONG, structure-vs-substance PASS, 22 of its own 30
   // drill items answerable from stated sentences), wrapped in an assessment that measured nothing.

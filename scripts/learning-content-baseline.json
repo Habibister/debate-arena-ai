@@ -1624,174 +1624,147 @@
     "track": "DEBATE",
     "category": "Debate responses",
     "name": "Weighing Arguments",
-    "description": "Compare impacts so the judge knows which argument matters more.",
+    "description": "Compare both sides’ results so the judge knows which one should decide, and why.",
     "lesson": {
       "title": "Explain why your impact wins",
       "slug": "debate-weighing-lesson",
-      "summary": "Give the judge a rule for comparing impacts, then apply it to both sides.",
+      "summary": "Three jobs: find a real difference between the two results, say why it matters, and compare both sides out loud.",
       "estimatedMinutes": 11,
       "content": {
-        "objective": "Give the judge a rule for comparing impacts, built on a difference the two sides actually have — argue for that rule, then apply it to both.",
-        "explanation": "Weighing explains why one argument matters more than another. Magnitude, probability, timeframe, and reversibility are useful names for common comparison moves — the skill is making the comparison clear, not saying the lens words. Underneath any comparison sits a weighing standard, also called a weighing framework: a rule for deciding, stated so that it could be applied to either side's impact and not only to your own. \"A harm that is more likely should count for more\" is a standard, because the other side's impact can be tested against it too. \"Our harm is huge\" is not — there is nothing there for the other side to be measured by. A standard is something you argue for, not something you announce and assume, and the other side can argue for a different one; that disagreement is part of the debate. Putting yours on the table early matters for two reasons: the judge hears it while there are still speeches left in which it can be answered, and the comparison that comes later has something to be measured against instead of two sides asserting that their own impact is bigger. Stating the rule is not the comparison — you still have to show what each impact looks like under it.\n\nA rule only does work where the two impacts come out differently under it. \"A harm that is more likely should count for more\" is a perfectly good rule, and between two harms the round has agreed are about equally likely it decides nothing: the judge applies it, both sides come out the same, and the choice is still open. So the first move is not reaching for a comparison you like — it is finding a difference these two cases actually have, then building the rule on that difference and saying why that difference should control the decision. Both halves carry weight. A difference with no reason attached is a fact, not a rule; and a rule built on ground the round has made level hands the judge something to apply and nothing to conclude. There is no ranking to memorise here and no comparison that is always the right one — which difference should decide is itself something you argue for, out of what these two cases look like. The difference that separates your round may not have a familiar name at all.\n\nOften more than one difference is real, and they do not all run your way: theirs is the larger harm while ours is the one that is certain; ours lands first while theirs lasts longer. Do not present the round as though every comparison favours you — a judge who can see the difference you skipped trusts the ones you made less. Name what they win, then argue why the difference you are standing on should outrank it, and give the reason, because \"ours matters more\" is the claim and not yet the argument for it. Naming both differences and stopping is not weighing either: that leaves the judge holding two live comparisons and no basis for choosing between them, which is the position weighing exists to get out of.",
-        "whyMatters": "Judges often believe both sides have some truth. Weighing tells them which truth should decide the round. Without a rule for deciding, the last speeches turn into both sides insisting their own impact is bigger, and the judge falls back on whichever rule they personally happen to prefer. A rule you offered early and defended gives the judge something to apply — and gives the other side time to contest it, which is what makes it fair for the judge to use.",
+        "objective": "Put both sides’ results side by side, find a difference the debate really shows, and tell the judge why it means your side should win.",
+        "explanation": "A town is deciding on a stop sign at the school crossing. One side: it stops children being hit. The other: it adds a minute to every trip.\n\nWeak: “Our impact is bigger.”\n\nBetter: “A minute of delay is annoying; a child hit at a crossing can be hurt for life. Preventing the injury matters more, because a minute can be made up and an injury cannot.”\n\nThat is WEIGHING: explaining why one side’s result should matter more than the other’s. Each argument ends in a result — a harm or a benefit — which debaters call an IMPACT.\n\nWeighing is not describing your own harm louder, and not comparing whose evidence is better — that compares sources, not results.",
+        "whyMatters": "Judges often think both sides have a point; with no rule from you, they use whatever rule they prefer.",
         "steps": [
-          "Find a difference the two impacts actually have — a comparison the two sides come out on differently.",
-          "Say what rule you want the judge to decide by, in a form that could be applied to either side.",
-          "Give a reason that rule fits this debate, and expect the other side to contest it.",
-          "Identify both impacts and show what each one looks like under the rule.",
-          "Where a second real difference runs their way, say so and argue why yours should still control.",
-          "State the comparison the rule produces, and what it decides."
+          "Name both results.",
+          "Find a difference the round actually shows.",
+          "Turn it into a rule usable on either side, say why it fits, and say it early.",
+          "Run both results through the rule and say which side wins.",
+          "If a difference favours them, name it, then say why yours should still decide."
         ],
         "workedExample": {
-          "prompt": "Side A argues an AI-literacy requirement improves student preparedness. Side B argues it costs class time. Here are two ways Side A could run the same comparison across a round.",
-          "weakAnswer": "[Final speech, and nowhere earlier] Decide this on what cannot be undone, because a mistake an institution can repair later is a smaller thing than one a person carries out the door. Lost class time is recoverable — the district adjusts the schedule once — while a student who leaves school unable to check what an AI system tells them carries that gap into work they do not get to redo. Under that rule, preparedness decides.",
-          "strongAnswer": "[First speech] Decide this on what cannot be undone, because a mistake an institution can repair later is a smaller thing than one a person carries out the door. [Final speech] Lost class time is recoverable — the district adjusts the schedule once — while a student who leaves school unable to check what an AI system tells them carries that gap into work they do not get to redo. Under that rule, preparedness decides.",
-          "whyItWorks": "Strip the speech labels and the two versions are word for word the same: the same rule, the same reason for it, and the same comparison. What moves is which speech the rule arrives in. In the strong version it is on the table from the first speech, so the other side still had speeches in which to argue for a different rule, and the judge is applying a rule that was open to challenge. In the weak version the rule appears for the first time beside the conclusion it is meant to justify, when nobody can answer it. The fix for the weak version is not to reorder this speech — it is to have given the rule in an earlier one."
+          "prompt": "Side A: a class on checking what AI tells you leaves students better prepared. Side B: it costs class time. Each side gives several speeches; the last cannot be answered. Two ways to run the same comparison.",
+          "weakAnswer": "[Final speech only] Decide this on what cannot be undone: lost class time can be rescheduled, a student’s missing skill cannot. Under that rule, being prepared wins.",
+          "strongAnswer": "[First speech] Decide this on what cannot be undone, because a fixable mistake is smaller than one a student carries for good. [Final speech] Lost class time can be rescheduled; the student’s missing skill cannot. Under that rule, being prepared wins.",
+          "whyItWorks": "Same words; what changed is when the rule arrived. Given early, the other side could still argue for a rule of its own, so the judge uses a rule that was open to challenge. Given late, nobody can answer it. Fix: give the rule earlier."
         },
         "guidedQuestion": {
-          "prompt": "Which phrase is weighing?",
+          "prompt": "Which line is weighing?",
           "choices": [
             "Our impact is backed by three separate studies, and theirs by a single one",
             "Their impact would be serious for the families involved if it ever happened",
-            "Ours reaches more people than theirs does, so ours is what should decide",
-            "We answered every argument they made today, point by point"
+            "Ours reaches more people than theirs does, so ours is what should decide here",
+            "We answered every single argument they made today, one by one, point by point"
           ],
-          "correctAnswer": "Ours reaches more people than theirs does, so ours is what should decide",
-          "hint": "Weighing puts the two impacts side by side and says which one should settle the round.",
-          "explanation": "Only one of these puts the two impacts next to each other and says which should settle the round. Comparing whose evidence is stronger is a comparison, but of sources rather than of harms. Granting that their harm would be serious concedes without choosing. Reporting that you answered everything says nothing about which harm matters more. A comparison with a decision attached is where weighing starts; the rule behind the comparison, and the reason for that rule, are what the rest of this lesson adds.",
+          "correctAnswer": "Ours reaches more people than theirs does, so ours is what should decide here",
+          "hint": "Describing a harm, comparing evidence, and counting answers are not weighing.",
+          "explanation": "Only one line puts the two results next to each other and says which should settle the round. Comparing whose evidence is stronger compares sources, not harms. Granting that their harm would be serious concedes without choosing. Saying you answered everything says nothing about which harm matters more.",
           "skillTag": "Weighing"
         },
         "practiceQuestions": [
           {
-            "prompt": "A round on a town curfew: it might reduce late-night injuries, but it is unlikely to be enforced. Which sentence gives the judge a rule that could be applied to either side's impact?",
+            "prompt": "A round on a town curfew: it might reduce late-night injuries, but it is unlikely to be enforced. Which sentence gives the judge a rule that could be used on either side’s impact?",
             "choices": [
-              "Late-night injuries are a serious and well-documented harm for teenagers here.",
-              "A harm that only lands if a policy is enforced should count for less than one that does not.",
-              "Our side has produced more evidence on late-night injuries than the other side has managed to produce on enforcement.",
-              "The curfew is going to reduce injuries by a measurable and meaningful amount."
+              "Late-night injuries are a serious harm for any teenager who is out in this town.",
+              "Count a harm for less when it only happens if the policy is being enforced.",
+              "Our side has far more evidence on injuries, and they have nothing on enforcement.",
+              "The curfew only needs enforcing in a few places to cut injuries for real."
             ],
-            "correctAnswer": "A harm that only lands if a policy is enforced should count for less than one that does not.",
-            "hint": "A rule has to be usable on the other side's impact too, not only on yours.",
-            "explanation": "Only one of these could be turned on either side's impact. The others describe a harm, compare how much evidence each side has, or assert a result — none of them tells the judge how to choose once both harms are real.",
+            "correctAnswer": "Count a harm for less when it only happens if the policy is being enforced.",
+            "hint": "A rule has to be usable on the other side’s impact too, not only on yours.",
+            "explanation": "Only one of these is a rule the judge could use on either side’s impact. The others describe a harm, compare how much evidence each side has, or claim a result. None of them tells the judge how to choose once both harms are real.",
             "skillTag": "Weighing"
           },
           {
-            "prompt": "A city is deciding whether to close its late-night bus route. Both sides accept that the two harms are about equally likely and that neither arrives before the other, and nothing in the round establishes which harm is the larger of the two. Where the sides do differ: the people carrying their harm can arrange around it, and the people carrying ours cannot. Which line gives the judge a comparison that can actually separate the two sides?",
+            "prompt": "A city is deciding whether to close its late-night bus route. Both sides accept that the two harms are about equally likely, that neither arrives before the other, and that nothing in the round shows which harm is larger. One thing does differ: the people their harm falls on can find another way; the people ours falls on cannot. Which line gives the judge a comparison that can actually separate the two sides?",
             "choices": [
-              "Decide this on which harm is more likely to actually happen, because a judge should not hand the round to a harm that probably never arrives.",
-              "Decide this on which harm arrives first, because a judge should act on the harm that is landing now rather than one still on its way.",
+              "Decide this on which harm is more likely to actually happen, because a judge should not hand the round to a harm that probably never arrives at all.",
+              "Decide this on which harm arrives first, because a judge should act on the harm that is here right now rather than one still on its way.",
               "Decide this on which harm is larger, because size is what settles a comparison when the other differences between the sides are level.",
-              "Decide this on whether the people carrying a harm can arrange around it, because a harm you can work around is a smaller thing than one you cannot."
+              "Decide this on which harm the people it falls on can get around, because a harm with a way round is a smaller thing than one with none."
             ],
-            "correctAnswer": "Decide this on whether the people carrying a harm can arrange around it, because a harm you can work around is a smaller thing than one you cannot.",
+            "correctAnswer": "Decide this on which harm the people it falls on can get around, because a harm with a way round is a smaller thing than one with none.",
             "hint": "A rule only helps if the two sides come out differently under it.",
-            "explanation": "All four are real rules — either side's impact could be tested against each one, and each comes with a reason — and only one of them decides anything here. This round has already settled that the two harms are about equally likely and that neither arrives before the other, so the likelihood rule and the arrives-first rule leave the judge exactly where they started. The rule about which harm is larger cannot be applied at all, because nothing in this round establishes a difference in size; the failure there is not that size is a poor comparison, since size decides plenty of rounds, but that a ranking held whatever the round shows is a habit rather than an argument. Only the rule about whether the people carrying a harm can arrange around it rests on a difference this round has actually established, and it says why that difference should control. Notice where that difference came from: it has no familiar name, and it does not need one.",
+            "explanation": "All four are real rules with reasons, and only one decides anything here. The round has settled that the harms are equally likely and start together, so the likely rule and the first rule leave the judge where they started. Nothing in the round shows a difference in size, so the larger rule cannot be applied at all. Only the get-around rule rests on a difference this round actually shows, and it says why that difference should decide.",
             "skillTag": "Weighing"
           },
           {
-            "prompt": "Side A asks the judge to decide on which harm is more likely. Side B thinks reversibility is the better rule. What should Side B do?",
+            "prompt": "Side A asks the judge to decide on which harm is more likely. Side B thinks the judge should decide on which harm can be undone. What should Side B do?",
             "choices": [
-              "Accept Side A's rule, since it was stated first and cannot be changed now.",
-              "Ignore rules entirely and simply describe its own impact in more detail.",
-              "Argue for reversibility and say why it fits this debate better than likelihood.",
-              "Wait until the final speech so Side A has no chance to respond to the rule."
+              "Accept Side A’s rule, since it was stated first and a clear reason was given for it.",
+              "Argue that Side A’s rule is wrong because it favours Side A, and rest the case on that reason.",
+              "Argue for the undone rule, and give a reason it suits this debate better than likelihood.",
+              "Hold the undone rule until the final speech, so the likelihood rule cannot be defended."
             ],
-            "correctAnswer": "Argue for reversibility and say why it fits this debate better than likelihood.",
-            "hint": "A standard is argued for, not just announced — and either side can argue for one.",
-            "explanation": "A weighing standard is a claim like any other: the other side can contest it and offer a better one, with a reason. Accepting a rule you disagree with concedes the comparison, ignoring rules leaves the judge to pick their own, and holding a rule back until nobody can answer it makes it weaker, not stronger.",
+            "correctAnswer": "Argue for the undone rule, and give a reason it suits this debate better than likelihood.",
+            "hint": "A rule is a claim like any other.",
+            "explanation": "A weighing rule is a claim like any other: the other side can contest it and offer a better one, with a reason. Accepting a rule you disagree with concedes the comparison; rejecting a rule only because it favours the side that offered it is not a reason, and leaves no rule of your own on the table; holding a rule back until nobody can answer it makes it weaker, not stronger.",
             "skillTag": "Weighing"
           },
           {
-            "prompt": "You established early that harms already happening should count for more than harms that might happen later. The other side's harm is a projected budget shortfall in five years; yours is students going without meals now. Which sentence applies the rule you set?",
+            "prompt": "You said early that harms already happening should count for more than harms that might happen later. The other side’s harm is a budget gap five years from now; yours is students going without meals now. Which sentence applies the rule you set?",
             "choices": [
-              "Our impact is far more emotionally compelling than any budget projection is.",
-              "A shortfall five years out may never arrive; students are missing meals now.",
-              "Their budget projection is the kind that is almost always exaggerated; theirs is no exception.",
-              "We should win because we established a weighing rule and the other side did not."
+              "Our impact is far more emotionally compelling than a budget forecast could ever be.",
+              "A gap five years out may never come at all, and students are missing their meals today.",
+              "Their five-year forecast is nearly always exaggerated, while our students’ hunger is real.",
+              "We should win this because we set a weighing rule and the other side never set one."
             ],
-            "correctAnswer": "A shortfall five years out may never arrive; students are missing meals now.",
-            "hint": "Run both harms through the rule, not only your own.",
-            "explanation": "The correct answer tests both impacts against the standard already established and lets that standard produce the conclusion. The others appeal to emotion, dismiss the other side's harm without using the rule, or treat having a rule as a win by itself — a rule tells the judge how to decide, it does not decide for them.",
+            "correctAnswer": "A gap five years out may never come at all, and students are missing their meals today.",
+            "hint": "The rule you set was about timing.",
+            "explanation": "The correct answer tests both impacts against the rule already set and lets the rule produce the conclusion. The others appeal to emotion, dismiss the other side’s harm on credibility rather than by the rule, or treat having a rule as a win by itself. A rule tells the judge how to decide; it does not decide for them.",
             "skillTag": "Weighing"
           }
         ],
         "masteryCheck": [
           {
-            "prompt": "A state grant will pay either to clear an invasive weed out of a lake or to repair the lake's boat ramps, not both. Two things are settled by the end of the round: the harm the other side runs — boaters who cannot launch — reaches more people than yours does, and the harm you run — the weed spreading — is the one that grows every season it is left alone, while theirs is the same size whenever it is fixed. Which line does the most for a judge who still has to choose?",
+            "prompt": "A state grant will pay either to clear an invasive weed out of a lake or to repair the lake’s boat ramps, not both. Two things are settled by the end of the round. Their harm (boaters who cannot launch) reaches more people than yours. Your harm (the weed spreading) grows every season it is left alone, while theirs stays the same size whenever it is fixed. Which line does the most for a judge who still has to choose?",
             "choices": [
-              "Ours is the harm that grows every season it is left alone, so the comparison goes to us, and the judge should decide this round on the spread of the weed rather than on the condition of the ramps.",
-              "Their harm reaches more people and we grant it. Ours is the one that grows every season it is left alone, and that should decide, because a ramp costs the same to repair next year, and the weed does not.",
-              "Every comparison here runs our way: ours is the harm that grows if it is left alone, ours is the one that reaches more people, and ours is the one that started first, so there is nothing for the judge to trade off.",
-              "One difference favours each side, so the two cancel out and the impacts finish level; with the comparison a wash, the judge should decide this round on which side handled the other's arguments better."
+              "Ours is the harm that grows every season it is left alone, so the comparison goes to us, and the judge should decide this round on the spread of the weed rather than on the state of the boat ramps.",
+              "Their harm reaches more people, and we grant it. Ours grows every season it is left alone, and that comparison should decide, because a ramp costs the same to repair next year and the weed does not.",
+              "Every comparison here runs our way, because ours is the harm that grows if it is left alone, ours reaches more people, and ours is the one that started first, so the judge has nothing left to balance.",
+              "One difference favours each side, and we grant it, so the two cancel out and the impacts finish level; with the comparison tied, the judge should decide on which side handled the other’s arguments better."
             ],
-            "correctAnswer": "Their harm reaches more people and we grant it. Ours is the one that grows every season it is left alone, and that should decide, because a ramp costs the same to repair next year, and the weed does not.",
-            "hint": "Both differences are real. The work is saying which one should control, and why.",
-            "explanation": "Real differences often point in different directions, and the judge still has to choose between them. The line that grants what the other side wins and then gives a reason the remaining difference should control is doing the weighing — that reason is the whole of it. The line that claims every comparison here runs the same way contradicts what this round settled, and a judge who can see the difference you skipped trusts the rest of your comparison less. The line that names its own advantage and stops leaves the judge holding two real differences and no reason to prefer either. The line that calls the split a wash hands the decision to something that is not an impact at all.",
+            "correctAnswer": "Their harm reaches more people, and we grant it. Ours grows every season it is left alone, and that comparison should decide, because a ramp costs the same to repair next year and the weed does not.",
+            "hint": "Both differences are real. The work is saying which one should decide, and why.",
+            "explanation": "Real differences often point in different directions, and the judge still has to choose. The line that grants what the other side wins and then gives a reason the remaining difference should decide is doing the weighing. The line that says every comparison runs one way contradicts what the round settled. The line that names its own advantage and stops leaves the judge holding two real differences and no reason to prefer either. The line that calls it tied hands the decision to something that is not an impact at all.",
             "skillTag": "Weighing"
           },
           {
-            "prompt": "A round on rewilding farmland. Side A's harm is species loss that cannot be reversed; Side B's harm is a temporary drop in local farm income. Early on, Side B asked the judge to decide on which harm affects more people day to day, and gave a reason. You speak for Side A, and from your first speech you asked the judge to decide on what cannot be undone. Which final-speech line is strongest?",
+            "prompt": "A round on turning farmland back into wild land. You are Side A. Your harm: species lost for good. Side B’s harm: a temporary drop in farm income. Early on, Side B asked the judge to decide on which harm touches more people day to day, and gave a reason. From your first speech, you asked the judge to decide on what cannot be undone. Which final-speech line is strongest?",
             "choices": [
-              "The number of species that are at stake here is far larger than the number of farms that would be affected by this policy, so we should simply win this round on sheer scale.",
-              "You should ignore their rule entirely, judge, because any rule that happens to favour the side that proposed it can never be a fair one to use.",
-              "Both harms here are serious ones — so we would ask you to set the standards aside and decide this round on which team has spoken more clearly.",
-              "Under everyday reach their harm wins — but in our first speech we asked for a different rule: a harm that ends leaves the county its choices, a permanent one does not."
+              "The number of species at stake is far larger than the number of farms this policy would touch — a harm that big should simply win this round on numbers alone, whatever rule was set.",
+              "Ignore their rule, judge, because a rule that happens to favour the side proposing it can never be fair; use ours instead, since ours favours nobody and was on the table from our first speech.",
+              "Their rule is fair and it favours them, so we accept it and grant the comparison — and ask you to decide instead on which team argued the people-count more carefully from its first speech.",
+              "On how many people it touches their harm wins — but from our first speech we argued another rule, and it should decide: a harm that ends leaves people options, a permanent harm does not."
             ],
-            "correctAnswer": "Under everyday reach their harm wins — but in our first speech we asked for a different rule: a harm that ends leaves the county its choices, a permanent one does not.",
+            "correctAnswer": "On how many people it touches their harm wins — but from our first speech we argued another rule, and it should decide: a harm that ends leaves people options, a permanent harm does not.",
             "hint": "Ask which line does the most work for a judge who still has to choose between two real harms.",
-            "explanation": "This is the hard case: the other side's rule does not favour you. Simply accepting it loses the comparison, and rejecting it because it is inconvenient is not an argument. The strongest line admits what their rule yields, then holds the judge to the rule you put up in your first speech and gives the reason for preferring it — which is what a weighing standard is, a claim either side can contest. The scale option reaches for a rule neither side ever argued for, the ignore-their-rule option rejects a standard for being convenient rather than for being wrong, and the spoke-more-clearly option abandons weighing altogether.",
+            "explanation": "This is the hard case: the other side’s rule does not favour you. Accepting it loses the comparison, and rejecting it because it is inconvenient is not an argument. The strongest line admits what their rule gives, then holds the judge to the rule you set in your first speech and gives the reason for preferring it. The numbers-alone option reaches for a rule neither side argued for; the ignore-their-rule option rejects a rule for being convenient rather than wrong, and asserts its own without a reason; the accept-it option concedes the comparison and then asks the judge to decide on something that is not an impact.",
             "skillTag": "Weighing"
           }
         ],
         "revisionLadder": [
           {
-            "attempt": "People come to that desk with forms they cannot finish on their own, and a staff member sits with them until it is done.",
-            "diagnosis": "This describes one impact and stops. The other side's harm — people who work days and cannot get through the door before closing — is not in the sentence at all, so a judge who already believes both sides has nothing here to choose with. A description of your own harm can be entirely true and change nothing. WHAT THE REVISION ADDS: both harms in the sentence, with one of them claimed to matter more — a comparison instead of a description.",
-            "revision": "The people who cannot finish those forms matter more in this round than the people who cannot get through the door before closing."
+            "attempt": "[A library must cut its help desk or its evening hours. You defend the desk.] People come to that desk with forms they cannot finish alone, and a staff member sits with them until it is done.",
+            "diagnosis": "This describes one result and stops. The other side’s harm — people who cannot get in before closing — is missing. WHAT THE REVISION ADDS: both results, a rule usable on either side, and a reason.",
+            "revision": "Their harm blocks an evening at the shelves; ours blocks forms people must file. Decide this on whether the harm blocks something required, because a missed duty costs more than a missed wish."
           },
           {
-            "attempt": "The people who cannot finish those forms matter more in this round than the people who cannot get through the door before closing.",
-            "diagnosis": "The two impacts are now side by side, but the comparison is only announced. The other side can say the mirror-image sentence with exactly as much behind it, and there is nothing here that could be run over their harm — only over ours. What the rule gets built on matters too: neither side disputes that either harm will happen, so a rule about which harm is more likely would have left the judge exactly where they started. WHAT THE REVISION ADDS: a rule stated so either side's harm could be tested against it, resting on a difference these two cases actually have, with a reason attached — and offered while speeches remain, so the other side can still argue for a different rule.",
-            "revision": "Decide this on whether the thing the harm blocks is something the person is required to do, because keeping someone from a task they have to complete is a bigger thing than keeping them from one they would have liked to."
-          },
-          {
-            "attempt": "Decide this on whether the thing the harm blocks is something the person is required to do, because keeping someone from a task they have to complete is a bigger thing than keeping them from one they would have liked to.",
-            "diagnosis": "The rule is doing no work yet. The judge has been handed a standard and still has to run it over the two harms unaided, which leaves the comparison exactly where it was. A rule that is never applied is one more thing said. WHAT THE REVISION ADDS: both impacts measured against the rule, so the rule produces the conclusion instead of the speaker asserting it.",
-            "revision": "Decide this on whether the thing the harm blocks is something the person is required to do, because keeping someone from a task they have to complete is a bigger thing than keeping them from one they would have liked to. A renewal form has a date on it and a penalty behind it; an evening hour at the shelves has neither."
-          },
-          {
-            "attempt": "Decide this on whether the thing the harm blocks is something the person is required to do, because keeping someone from a task they have to complete is a bigger thing than keeping them from one they would have liked to. A renewal form has a date on it and a penalty behind it; an evening hour at the shelves has neither.",
-            "diagnosis": "It works, and it goes quiet on the one difference the other side wins. Their harm lands the week the hours shrink; ours shows up months later, as deadlines pass. Skipping a difference the judge can see reads as having no answer for it, and the line also stops before telling the judge what to do with the comparison. WHAT THE REVISION ADDS: the difference that runs the other way is named instead of hidden, the reason one difference should outrank the other is argued rather than assumed, and the comparison ends in a decision.",
-            "revision": "On when the harms land they are ahead, and we will not pretend otherwise: shorter hours bite the week they start, and ours shows up months later as deadlines pass. But the rule we asked you for at the start of this round was whether the thing the harm blocks is something the person is required to do — a renewal form has a date on it and a penalty behind it, and an evening hour at the shelves has neither. On that rule the desk stays, late as our harm arrives."
+            "attempt": "Same line as above.",
+            "diagnosis": "A rule with a reason, not yet applied — and it skips the difference the other side wins: theirs starts the week the hours shrink, ours months later. WHAT THE REVISION ADDS: both harms under the rule, their difference named, why ours still decides.",
+            "revision": "On when the harms start they are ahead, and we grant it: theirs starts the week the hours shrink; ours months later. But our rule was whether the harm blocks something required. A form with a deadline and a fine is required; an evening at the shelves is not. On that rule the desk stays."
           }
         ],
         "languageFrames": [
           {
-            "purpose": "Set aside ground the round has made level, name the difference that actually separates the two harms, and turn it into a rule with a reason attached. This is an optional structure, not required wording — say it any way you like or not this way at all. The blank after \"because\" is the whole argument, and no pattern can fill it for you; nothing becomes true because a blank got filled in, and naming a kind of comparison is not the same as making one.",
+            "purpose": "Naming a kind of comparison is not making one; the words after “because” are the whole argument.",
             "starters": [
-              "Both harms are ___, so that cannot separate them. What does separate them is ___.",
               "Decide this on ___, because ___.",
-              "We are asking you to choose on ___ rather than ___, because on ___ the two sides come out the same."
-            ]
-          },
-          {
-            "purpose": "Run both impacts through the rule so the rule produces the conclusion, and say what it decides. Optional structure only. The pattern is a container: what each impact actually looks like under the rule is work the frame does not do, and a filled-in container is not evidence that the comparison inside it is correct.",
-            "starters": [
-              "Under that rule, their harm ___ while ours ___.",
-              "Theirs ___. Ours ___. That is the difference the rule was asking about.",
-              "If ___ is what decides, then ___."
-            ]
-          },
-          {
-            "purpose": "Concede the difference that genuinely runs the other way, then argue why the one you are standing on should outrank it. Optional again — the concession has to be true and the reason has to be argued, and the frame supplies neither. A filled-in frame with a weak reason inside it loses to a plain sentence with a strong one, whatever words either of them uses.",
-            "starters": [
-              "On ___ they are ahead, and we grant it. It still should not decide, because ___.",
-              "We lose the comparison on ___. We win it on ___, and that is the one that should decide, because ___."
+              "On ___ they are ahead. It still should not decide, because ___."
             ]
           }
         ],
         "scaffoldedTry": {
-          "prompt": "Everything you need is below. Nothing here is yours to invent.\n\nTHE ROUND: a university is deciding whether to require all first-year students to live on campus. You are arguing against the requirement.\n\nOUR IMPACT: students who would have commuted from home cannot pay the housing charge, and do not enrol at all.\n\nTHEIR IMPACT: first-years who commute take part in less of the first year and are likelier to leave before finishing it.\n\nESTABLISHED IN THE ROUND, DISPUTED BY NEITHER SIDE:\n- The requirement either applies or it does not; the two harms cannot both be avoided.\n- Ours is certain: the university's own figures show the charge is more than those students can pay, and there is no waiver. Theirs needs a chain — a commuter has to disengage, then fall behind, then leave — and most commuters do none of that.\n- Both harms begin with the same entering class; neither arrives before the other.\n- Both fall on first-year students.\n- Both stop if the requirement is lifted; neither outlasts the policy.\n- Their harm would reach several hundred students; ours would reach a few dozen.\n\nTHE FIVE COMPARISONS AVAILABLE TO YOU: how likely each harm is / when each harm starts / who each harm falls on / how long each harm lasts / how many students each harm reaches.\n\nYOUR TASK: fill the four slots. Three of those five comparisons are settled as level by the facts above — a judge can apply them and still not know what to do. Of the two that are left, one runs your way and one runs theirs, and you have to handle both.",
+          "prompt": "Everything you need is below. Nothing here is yours to invent.\n\nTHE ROUND: a university is deciding whether to require all first-year students to live on campus. You are arguing against the requirement.\n\nOUR IMPACT: students who would have commuted from home cannot pay the housing charge, and do not sign up at all.\n\nTHEIR IMPACT: first-years who commute take part in less of the first year and are likelier to leave before finishing it.\n\nESTABLISHED IN THE ROUND, DISPUTED BY NEITHER SIDE:\n- The requirement either applies or it does not; the two harms cannot both be avoided.\n- Ours is certain: the university's own figures show the charge is more than those students can pay, and there is no exception. Theirs needs a chain — a commuter has to stop joining in, then fall behind, then leave — and most commuters do none of that.\n- Both harms begin with the same entering class; neither arrives before the other.\n- Both fall on first-year students.\n- Both stop if the requirement is lifted; neither outlasts the policy.\n- Their harm would reach several hundred students; ours would reach a few dozen.\n\nTHE FIVE COMPARISONS AVAILABLE TO YOU: how likely each harm is / when each harm starts / who each harm falls on / how long each harm lasts / how many students each harm reaches.\n\nYOUR TASK: fill the four slots. Three of those five comparisons are settled as level by the facts above — a judge can apply them and still not know what to do. Of the two that are left, one runs your way and one runs theirs, and you have to handle both.",
           "frame": "Decide this on ___, because it is where these two harms come out differently. The difference is ___. On ___ they are ahead, and we grant it. ___ — The frame is optional: a shape, not a script. Say it in your own words, or not in this shape at all. Filling in the blanks does not make what you put in them true, and no pattern can supply the reason — that has to come from the facts of this round.",
           "slots": [
             "THE COMPARISON I AM ASKING THE JUDGE TO DECIDE ON",
@@ -1799,7 +1772,21 @@
             "THE COMPARISON THEY WIN",
             "MY COMPARATIVE STATEMENT — both harms under my rule, ending in what the judge should do"
           ]
-        }
+        },
+        "teachingSections": [
+          {
+            "heading": "Job 1: Find a real difference",
+            "body": "Results can differ in how many people they touch, how bad they are, how likely, how soon, or whether they can be undone. Debaters have names for some; you never need them. You need a difference the round — the whole debate — actually shows.\n\nIf both harms are equally likely, “ours is more likely” does not tell them apart; if both start together, neither does “ours comes first”. The judge applies it and still cannot choose.\n\nSometimes the difference has no name: one harm blocks something people must do, the other something they merely wanted. What separates the two sides is the fact, not the name for it."
+          },
+          {
+            "heading": "Job 2: Turn it into a rule, and say why",
+            "body": "Give the judge a rule for choosing. Debaters call it a WEIGHING STANDARD, or a WEIGHING FRAMEWORK (two names, one thing). Word it so it could be used on their result too: “A harm that cannot be undone should count for more.” “Our harm is huge” is not a rule; nothing in it measures their result.\n\nSay why the rule fits this debate. A difference with no reason behind it is just a fact; say why it should decide.\n\nSay it early, while the other side still has speeches to answer it, and expect them to argue for a rule of their own."
+          },
+          {
+            "heading": "Job 3: Compare both sides out loud",
+            "body": "Stating the rule is not the comparison. Run both results through it and say what it decides: “A minute of delay can be made up. An injury cannot. Under that rule, the crossing wins.”\n\nOften more than one difference is real, and not all favour you: theirs reaches more people, yours is permanent. Do not pretend every comparison favours you; a judge who sees the difference you skipped trusts the rest less.\n\nName what they win (debaters say you grant it), then say why yours should still decide, and give the reason. Naming both and stopping leaves the judge no way to choose."
+          }
+        ]
       }
     }
   },

@@ -571,74 +571,73 @@
       "summary": "Learn what belongs in the first major speech.",
       "estimatedMinutes": 11,
       "content": {
-        "objective": "Plan a constructive that establishes your own side's case rather than answering theirs: order the contentions by what depends on what, give each one a distinct job, and close on what the case establishes.",
-        "explanation": "A constructive is a speech, not a pile of arguments, and composing one is a different skill from writing a single good argument. For this lesson, three words carry their usual meanings from earlier in the course: your CASE is the set of arguments your own side is running, and a CONTENTION is a broad heading inside it — fairness or student wellbeing, say — with separate arguments underneath it. A complete argument has three parts: the claim says what you believe, the warrant explains why it is true, and the impact explains why it matters in the round. Its job is to put your side's case on the table in a form the rest of the round can be run against. Three things follow from that. First, order is a choice with consequences: a contention that other contentions depend on has to come before them, so if your second contention only matters once the judge accepts a definition or a mechanism established in the first, that dependency sets the sequence. Second, a constructive establishes rather than responds. The move that makes a rebuttal good — taking their claim and answering it — is out of place here, because in the first constructive there is often nothing yet to answer, and a speech that spends its time pre-empting arguments nobody has made gives the judge your opponent's case instead of yours. Third, the internal parts do their work in a place. A claim with a warrant and an impact is one argument; a constructive is several of those arranged so the judge can hold them at once, which is why each one needs a job of its own and a place in the case — what it establishes, and what the case is using it for. Evidence follows the same rule: citing a source is not using it. A study named and left there tells the judge you have support without telling them what it supports; saying what it found and why that makes your warrant more believable is what turns it into a reason. Finish by saying what your case establishes, not by claiming you have already beaten a case you have not heard — the comparison belongs in later speeches, and asserting it early does not make it true. Two more things follow from composing a speech rather than an argument. Contentions have to work as one case: two that do substantially the same job give the case the look of breadth without a second part to it, and a contention developed carefully but never tied to what the case is arguing leaves the judge holding something without knowing what it was for. And a contention is not established because its heading was announced or its parts were named — mentioning a claim, a warrant and a source somewhere in that stretch of speech is not the same as developing the reasoning that establishes it. Speech attention is limited, so spending most of it on one contention while another is only named does not leave you with a shorter second contention; it leaves that second contention unestablished.",
-        "whyMatters": "The constructive sets what the rest of the round can be about. Arguments you never establish are hard to revive later, and a case the judge could not follow the first time does not become clearer when it is referenced again at speed in a rebuttal. It also matters for fairness: the other side can only engage with a case they can identify. A constructive that arrives as an undifferentiated block gives them nothing specific to answer, which sounds like an advantage and is not — the judge sees arguments that were never really tested, and any of them can be attacked later without your having pinned it down.",
+        "objective": "Plan your side's first speech: choose your contentions, put them in an order that works, give each one its own job, and close on what they show together.",
+        "explanation": "A constructive is your side's first big speech. It is where you put your own arguments on the table.\n\nUsually there is nothing to answer yet, because the other side has not spoken.\n\nSay your side is arguing that school should start later. You might open like this:\n\n\"We have two reasons. First, students get more sleep. Second, fewer tired teenagers are driving to school in the morning.\"\n\nThat opening tells the judge what is coming before you argue any of it. It is called a ROADMAP.\n\nEach of those two reasons is a CONTENTION: one big point, with your arguing underneath it. Everything your side argues, all together, is your CASE.\n\nBuilding one good argument is a skill you already have from the Claim, Warrant, Impact lesson. Arranging several of them into a case is a different skill, and it is the one this lesson is for.\n\nSo do not spend this speech answering the other side. A speech that argues against points nobody made gives the judge their case instead of yours.\n\nOrder your contentions by what depends on what. One point can depend on another in two ways: the judge has to accept the first before the second means anything, or the first supplies something the second counts on.\n\nHere is the first kind. Say one contention argues that the school bus route is unsafe, and another argues the town should pay for a new one. Paying for a new route only means something once the judge accepts the old one is unsafe, so the safety point goes first.\n\nAnd here is the second. Say one contention argues that a bake sale raises money, and another argues that money pays for the class trip. The trip point spends what the bake sale brings in, so the bake sale goes first.\n\nWhere nothing depends on anything, the order is yours to choose.\n\nGive every contention a job none of the others does. Two contentions that show the same thing look like two points and are really one.\n\nAnd a contention only counts once you argue it. Announcing a heading is not arguing it.",
+        "whyMatters": "The constructive decides what the rest of the debate can be about. The other side can only argue with a case they can identify, and a judge who could not follow it the first time will not follow it faster in a rebuttal.",
         "steps": [
-          "Set out what your case will contain and in what order before you argue any of it.",
-          "Order the contentions so that anything the later ones depend on comes first.",
-          "Give each contention a job the others do not do, and develop it rather than mentioning it.",
-          "Use evidence by saying what it found and why that supports the warrant, not by naming it.",
-          "Close on what your case establishes, without claiming a comparison the round has not had yet.",
-          "Before you finish, check that each contention does a distinct job in the case and has actually been developed rather than named."
+          "Pick the two or three reasons your side is running.",
+          "Put them in order: anything a later point depends on goes first.",
+          "Give each one a job the others do not do.",
+          "Tell the judge what is coming, then argue each point properly.",
+          "Close by saying what your points show together."
         ],
         "workedExample": {
-          "prompt": "A first constructive on a school AI-literacy requirement. Both versions contain the same two contentions and the same supporting material.",
-          "weakAnswer": "The other side is going to say this costs class time, but schools already waste time elsewhere, and they will probably argue teachers are not trained, though districts run professional development every year anyway. Integrity matters, and there is a study on citation habits. Careers matter too.",
-          "strongAnswer": "Two contentions: first that the requirement improves academic integrity, second that it improves career readiness. On integrity: students who are taught what these tools can and cannot do cite them instead of concealing them, and a district that ran the training saw fewer unattributed submissions the following year — which is what you would expect if concealment is driven by not knowing what counts as allowed. On career readiness: the same habits transfer, because entry-level work increasingly involves checking machine-generated output, and a student who has practised verifying a source is doing the thing the job asks for. Together those two show that teaching students what these tools do changes what they declare in school and what they can already do at work.",
-          "whyItWorks": "The weak version is not missing content — it is a rebuttal delivered in a constructive slot. It spends the speech answering arguments the other side has not made yet, so the judge hears the opposition's case first and your two contentions arrive as fragments: integrity gets a study with no finding attached, careers gets a sentence with no warrant. The strong version establishes the same two contentions instead of defending them prematurely, gives each one a job the other does not do, and uses the study by saying what it found and why that supports the warrant. Neither version compares itself to a case that has not been heard yet — that work belongs in later speeches."
+          "prompt": "A first constructive on free school breakfast. Both versions use the same two points and the same study.",
+          "weakAnswer": "The other side will say this costs too much, but schools waste money on plenty of things, and they will probably say parents should do it, though plenty of parents leave for work before their children are up. Anyway, hungry students do worse. There is a study about it.",
+          "strongAnswer": "Two contentions. First, the students who skip breakfast are mostly the ones whose families cannot spare the money, so this is about a group that cannot fix the problem on its own. Second, those same students do worse in morning lessons: a school that started free breakfast saw fewer students sent out of morning lessons, which is what you would expect if hunger is part of why they struggle. The second point only means something once you accept who we are talking about, so it comes second. Together they show that the students who most need the food are the ones the school leaves out now.",
+          "whyItWorks": "The weak version spends the whole speech answering the other side, so its own points arrive as scraps — and it names a study without ever saying what the study found.\n\nThe strong version puts two contentions up, and says why one has to come before the other. Notice how it uses the study: it says what the study found, and why that supports the point. Naming a source only tells the judge that support exists somewhere.\n\nIt closes on what the two points show together, without claiming to have beaten a case it has not heard."
         },
         "guidedQuestion": {
-          "prompt": "Which of these is a job the constructive does that a later speech cannot easily do for it?",
+          "prompt": "Which of these is the constructive's own job, and not something a later speech can do instead?",
           "choices": [
-            "Comparing your impacts against the other side's impacts once both are in the round",
-            "Answering the strongest argument the opposition has actually made",
-            "Deciding which single argument the judge should vote on at the end",
-            "Putting your own contentions on the table so the round can run against them"
+            "Comparing your side's points against the other side's, once both are in the debate",
+            "Answering the strongest argument the other side has actually made so far",
+            "Deciding which single argument the judge should vote on at the end of the debate",
+            "Getting your side's points up early, where everyone else can argue with them"
           ],
-          "correctAnswer": "Putting your own contentions on the table so the round can run against them",
+          "correctAnswer": "Getting your side's points up early, where everyone else can argue with them",
           "hint": "Which of these has to happen first for the others to be possible?",
-          "explanation": "Establishing the case is the constructive's distinctive job — the other three all depend on material that is already in the round. Comparison, refutation and collapsing are later work, and each needs a case that a constructive has already built.",
+          "explanation": "Establishing the case is the constructive's distinctive job — the other three all depend on material that is already in the debate. Comparison, refutation and collapsing are later work, and each needs a case that a constructive has already built.",
           "skillTag": "Constructive"
         },
         "practiceQuestions": [
           {
-            "prompt": "A speaker's constructive spends most of its time answering arguments the other side has not made yet. What is the main cost?",
+            "prompt": "A case for a school cycling club runs two contentions. One argues the school already owns twelve bikes that nobody uses. The other argues the club would cost almost nothing to run, because it would use bikes the school already has. Which contention should come first?",
             "choices": [
-              "The speech will run over time, because pre-empting an argument always takes longer",
-              "The judge is not permitted to consider pre-emptive arguments in a constructive",
-              "The arguments become unusable later because they were raised too early",
-              "The speech introduces the opponent's case while leaving its own underdeveloped"
+              "The bikes contention, because the cost contention counts on the school already having them",
+              "The cost contention, because saving money is the more persuasive of the two",
+              "Either order works, because the two contentions are about different things",
+              "The cost contention, because the bikes only matter once the judge is thinking about money"
             ],
-            "correctAnswer": "The speech introduces the opponent's case while leaving its own underdeveloped",
-            "hint": "Ask what the judge ends up with at the end of the speech.",
-            "explanation": "Pre-empting spends your speech on their case and leaves yours thin. The cost is what the judge has at the end, not a timing problem or a rule against it — nothing forbids pre-empting, it just trades your own development for theirs.",
-            "skillTag": "Constructive"
+            "correctAnswer": "The bikes contention, because the cost contention counts on the school already having them",
+            "hint": "One contention uses something the other one supplies.",
+            "explanation": "The cost contention spends what the bikes contention supplies, so the bikes have to be on the table first. Choosing by which sounds more persuasive ignores what depends on what. The two are not independent either — one rests on the other. And the dependency does not run backwards: the bikes contention stands up on its own, whether or not the judge is thinking about money yet.",
+            "skillTag": "Speech organization"
           },
           {
-            "prompt": "Which use of a source actually supports the contention it sits in?",
+            "prompt": "A point argues that keeping the school library open late helps students who have nowhere quiet to work. Which use of the study actually supports it?",
             "choices": [
-              "A 2024 district study is directly relevant to what this contention argues",
-              "Several published sources point the same way on this question",
-              "A district that ran the training saw fewer unattributed submissions the next year",
-              "This contention is supported by a study, which the other side has not disputed"
+              "The late-opening study is exactly about schools like this one",
+              "Several studies of late opening point the same way",
+              "At the school that tried it, students with no quiet space at home came in most",
+              "This point is backed by a late-opening study that the other side has not argued against"
             ],
-            "correctAnswer": "A district that ran the training saw fewer unattributed submissions the next year",
-            "hint": "One of these tells the judge what the source found.",
-            "explanation": "Only this states a finding the warrant can rest on. The others name a study, assert that evidence exists, or point out that it went unanswered — all of which tell the judge support has been claimed without telling them what it is.",
+            "correctAnswer": "At the school that tried it, students with no quiet space at home came in most",
+            "hint": "One of these tells the judge what the study found.",
+            "explanation": "Only this says what the study found, which is something the reasoning can rest on. The others say a study is relevant, say that studies exist, or say nobody argued with it — all of which tell the judge support has been claimed without saying what it is.",
             "skillTag": "Evidence"
           },
           {
-            "prompt": "A case for keeping the town's library open on Sundays runs two contentions, each argued in full. One argues that Sunday opening is what lets people who work weekdays use the library at all. The other argues that a library closed on Sundays is one that the people whose working week leaves them no other day cannot use. What is the problem with the case?",
+            "prompt": "A case for opening the town library on Sundays runs two contentions, both argued in full. The first says Sunday opening is the only way people who work all week can use the library. The second says people who work all week cannot use a library that closes on Sundays. What is wrong with the case?",
             "choices": [
-              "Nothing is wrong, because a case is stronger when the same thing is established twice",
-              "Both contentions establish the same thing, so the case has the look of two parts and the substance of one",
-              "The two contentions are in the wrong order, because the one about who is shut out has to be argued first",
-              "The case has not told the judge which of its two contentions the round should be decided on"
+              "Nothing is wrong, because a case is stronger when the same thing is argued twice",
+              "The two contentions come to the same thing, so the case has one point dressed as two",
+              "The two contentions are in the wrong order, because the one about who is shut out depends on the other",
+              "The case has not told the judge which of its two contentions should decide the debate"
             ],
-            "correctAnswer": "Both contentions establish the same thing, so the case has the look of two parts and the substance of one",
+            "correctAnswer": "The two contentions come to the same thing, so the case has one point dressed as two",
             "hint": "Suppose the judge accepts both contentions, and ask how many things the case has then established.",
-            "explanation": "Both contentions establish one thing between them — that the people whose working week leaves them no other day can use the library only if it opens on a Sunday — so a judge who accepts either has accepted the other on the way, and the case has the look of breadth without a second part to it. Establishing one thing twice does not make it more established; it spends a stretch of speech that a genuinely different argument would have had. No order is forced here either, because neither contention needs anything the other supplies. And choosing what the round should turn on is later work, not what is missing from a case that has argued one thing twice.",
+            "explanation": "Both contentions establish one thing between them — that the people whose working week leaves them no other day can use the library only if it opens on a Sunday — so a judge who accepts either has accepted the other on the way, and the case has the look of breadth without a second part to it. Establishing one thing twice does not make it more established; it spends a stretch of speech that a genuinely different argument would have had. No order is forced here either, because neither contention needs anything the other supplies. And choosing what the debate should turn on is later work, not what is missing from a case that has argued one thing twice.",
             "skillTag": "Speech organization"
           }
         ],
@@ -646,50 +645,50 @@
           {
             "prompt": "You are writing a first constructive. Which plan best matches what that speech is for?",
             "choices": [
-              "Open by answering the two arguments the other side used in their previous round",
-              "Order the contentions by what depends on what, develop each, then say what they establish",
-              "Present every argument your side has, briefly, so that nothing is left out of the round",
-              "Lead with the comparison you want the judge to make at the very end of the debate"
+              "Open by answering the other side's strongest argument before you argue your own",
+              "Work out which contention has to come first, argue each one properly, then say what they show together",
+              "Pick the two or three reasons your side is running, and then argue whichever one of them feels strongest first",
+              "Start with the comparison you want the judge to make at the end of the debate"
             ],
-            "correctAnswer": "Order the contentions by what depends on what, develop each, then say what they establish",
+            "correctAnswer": "Work out which contention has to come first, argue each one properly, then say what they show together",
             "hint": "Match the plan to the speech's job: establishing your case.",
-            "explanation": "This plan establishes the case, orders it around real dependencies, gives each contention development, and closes on what was shown. Answering last round's arguments responds to nothing in this one, listing everything trades depth for coverage, and leading with the final comparison asserts a conclusion the round has not earned.",
+            "explanation": "This plan puts the case up, orders it around what actually depends on what, argues each contention properly, and closes on what they showed. Answering the other side comes in a later speech, ordering by which reason feels strongest ignores what depends on what, and opening with the final comparison claims a conclusion the debate has not reached yet.",
             "skillTag": "Constructive"
           },
           {
-            "prompt": "A speaker delivers two well-warranted contentions and sits down after the second one's impact. What has the speech left undone?",
+            "prompt": "A speaker argues two contentions in full and sits down straight after the second one. What has the speech left undone?",
             "choices": [
-              "Nothing, because two well-warranted contentions are a complete constructive",
-              "It has not told the judge what the contentions add up to for the case",
-              "It has failed to provide the evidence that both contentions required",
-              "It has not pre-empted the responses the other side is most likely to give"
+              "Nothing, because two contentions argued in full are a complete constructive",
+              "It never said what the two contentions prove side by side",
+              "It did not give any evidence for either contention",
+              "It did not answer the arguments the other side is most likely to make"
             ],
-            "correctAnswer": "It has not told the judge what the contentions add up to for the case",
+            "correctAnswer": "It never said what the two contentions prove side by side",
             "hint": "Two good arguments are not automatically one case.",
-            "explanation": "Contentions support a case, and the speech should say what they establish together — otherwise the judge has two arguments and has to assemble the case themselves. Two well-warranted contentions are not already a complete constructive for exactly that reason. The warrants were fine, evidence is a separate question, and pre-empting is not the constructive's job.",
+            "explanation": "Contentions hold up a case, and the speech has to say what they show together — otherwise the judge is left with two separate points and has to put the case together for you. Two contentions argued in full are not already a complete constructive, for exactly that reason. The arguing itself was fine, evidence is a separate question, and answering the other side is not this speech's job.",
             "skillTag": "Constructive"
           }
         ],
-        "revisionLadder": [
+        "commonMistakes": [
           {
-            "attempt": "My case for free swimming lessons has two contentions. DROWNING: a child who has been taught can get themselves out of trouble in the water, so fewer children drown. ACCESS: the families who cannot afford the pool are the ones whose children never learn, so taking the charge away reaches the children who are missing out now. I will open on drowning, because it is the strongest thing I have.",
-            "diagnosis": "Both contentions are argued, and the plan still cannot be run in this order. The drowning contention is about children who cannot currently swim; access is where the speech argues who those children are and why the charge is what keeps them out of the water. Opening on drowning asks the judge to accept it while the thing it stands on is still to come. Strength is a real consideration, but only where nothing forces the sequence — and here something does. A contention that another one rests on does not become background because it is the less dramatic of the two.",
-            "revision": "Access first: the charge is what keeps particular children out of the pool, and here is who they are. Then drowning: those are the children the drownings fall among, so teaching them is what changes the number. Nothing in the second contention now arrives before the thing it stands on."
+            "mistake": "Arguing against the other side before they have spoken.",
+            "whyItFails": "The judge hears their case from you, and your own points get whatever time is left.",
+            "fix": "Put your own contentions up. Answering comes in a later speech."
           },
           {
-            "attempt": "Access, then drowning. I have room for a third contention and I want to add one: that a child who has been taught is at ease in deep water instead of frightened of it. It can go last — nothing in the case depends on it, so the order still holds.",
-            "diagnosis": "The reasoning about order is right, and the new contention does not disturb it: where nothing rests on a contention, nothing forces where it sits, and it can go wherever the speech has room for it. What it does not have is a job of its own. Being at ease in deep water instead of panicking is part of why a taught child gets out of trouble, which is what the drowning contention already argues — a judge who accepts that one has accepted this on the way. Two contentions doing substantially the same job give the case the look of breadth without a second part to it, and speech attention is finite, so the stretch is not free: it comes out of the two contentions that do stand apart.",
-            "revision": "Keep access and drowning, and let the material about being at ease sit inside the drowning contention, where it does its work. Give the spare stretch to something the case is not yet arguing at all — that the pool sits unused during school hours, so the lessons take time the town is already paying for. That does a job neither of the others does, and since nothing in the case rests on it, it can sit wherever there is room."
+            "mistake": "Announcing a contention instead of arguing it.",
+            "whyItFails": "A heading gives the judge no reason to accept anything, and a point left half-built here is hard to rescue later.",
+            "fix": "For each contention, say what you believe, why it is true, and why it matters."
           },
           {
-            "attempt": "Access, then drowning, then the unused hours, each argued in full. I finish: \"Those are our three contentions, and taken together they are worth more than anything the other side is going to put up against them.\"",
-            "diagnosis": "The plan is sound and the last sentence is the only thing left to repair. It measures this case against one nobody has heard, which the speech has no basis for; and while it is doing that, it never says what the three contentions establish, so the judge is left to assemble the case out of the parts. Two faults sit in one sentence, and one replacement clears both — nothing else in the plan needs touching.",
-            "revision": "…closing instead: \"Together those three show that the charge is what keeps particular children out of the water, that those are the children the drownings fall among, and that the town can teach them in hours it is already paying for.\" That is what the case establishes, and it claims nothing about a case that has not been made."
+            "mistake": "Closing with \"we have beaten their case\".",
+            "whyItFails": "Their case has not been made yet, so there is nothing there to have beaten — and the judge is left to add your points up alone.",
+            "fix": "Say what your own contentions add up to, the way the strong answer above does."
           }
         ],
         "scaffoldedTry": {
-          "prompt": "A case for opening the school sports halls to the public in the evenings has three contentions, and all three are already argued in full — none of the arguing here is yours. They are set out below in the order the speaker happened to draft them, which is not necessarily an order the speech can be argued in.\n\nCLUBS: the five local clubs that currently drive to the next town would move their sessions here, and they would move because the hire fee is low enough to make the move worth it — which it is only if opening the halls costs the school nothing it is not already spending.\n\nHOURS: the halls stand empty after the school day and the caretaking contract already pays for the building into the evening, so the school can open them without spending anything extra.\n\nUPKEEP: the hire fees the evening sessions bring in clear the halls' repair backlog within three years.\n\nPut the three in an order the speech can be argued in, say which contention supplies the fees UPKEEP counts, and write the one sentence you would close on.",
-          "frame": "Order: ___. The fees UPKEEP counts are paid by the people argued for in ___. I would close: ___",
+          "prompt": "A case for opening the school sports halls to the public in the evenings has three contentions. All three are already argued in full — none of the arguing here is yours. They are listed in the order the speaker happened to draft them, which is not necessarily an order the speech can be given in.\n\nCLUBS: the five local clubs that currently drive to the next town would move their sessions here. They would move because the rental fee is low. The fee can only be that low if opening the halls costs the school nothing extra.\n\nHOURS: the halls stand empty after the school day, and the school already pays a caretaker to stay until late, so it can open them without spending anything extra.\n\nUPKEEP: the rental fees from the evening sessions pay off the repairs the halls need within three years.\n\nPut the three in an order the speech can be given in, say which contention supplies the rental fees UPKEEP spends, and write the one sentence you would close on.",
+          "frame": "Order: ___. The rental fees UPKEEP spends come from the people in ___. I would close: ___",
           "slots": [
             "the order",
             "the contention the fees are paid out of",

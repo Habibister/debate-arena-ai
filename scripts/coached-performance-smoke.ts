@@ -1682,7 +1682,11 @@ function main() {
     ...Object.values(tm.misconception as Record<string, string>),
     ...tm.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)),
     tm.scaffoldedTry.prompt, tm.scaffoldedTry.frame, ...tm.scaffoldedTry.slots,
-    ...tmChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation])].join("\n");
+    ...tmChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]),
+    // The summary is learner-visible and was outside every assertion below — the same field-class
+    // miss already recorded once for the catalog description. The Signposting block guards its own
+    // summary; this one now does too, so a paraphrase cannot hide there.
+    tmEntry.source.lesson.summary].join("\n");
 
   check("RA. Turn Mechanics is MIXED: a move scenario, six checks, no guided round, no frames, no ladder", () => {
     assert.equal(guidedApplicationFor(TM), null, "no guided round: no competency and no judge category measures this mechanic");
@@ -1771,6 +1775,31 @@ function main() {
       "and partial overlap has a rule");
     assert.ok(/Reversals that look like a pair may not be one/.test(collision), "compatible reversals are taught");
     assert.ok(/answers to two different arguments can collide/.test(collision), "and cross-argument collisions are taught");
+
+    // PARAPHRASE ROUTE BACK TO THE WITHDRAWN CO-TRUTH TEST.
+    //
+    // Every assertion above is keyed to the word TRUE. Clash does not have one phrase for co-truth,
+    // it has three, and teaches them as synonyms in a single paragraph: "can both be true at the
+    // same time", "cannot both be right", and "two arguments answering the same question in ways
+    // that CANNOT BOTH STAND". So a beginner arrives here with "stand" and "right" already meaning
+    // "cannot both be true" — and this lesson's own deciding question opens with "can both stand".
+    // Its shortest compression is therefore its own head, "can they both stand?", which restores
+    // the acquittal in meaning while passing !/cannot both be true/, the count pin, and !/hold
+    // together/. A beginner-simplification pass is unusually likely to reach for exactly that.
+    //
+    // Guard the DISTINCTION, not a sentence: "stand" may appear alongside "both" only inside the
+    // self-defeat question. Ordinary uses ("the stronger one stands alone") do not pair the two and
+    // are untouched.
+    const standTest = tmAll.split(/(?<=[.?!])\s+|\n/).filter((s) =>
+      /\bstands?\b/i.test(s) && /\bboth\b/i.test(s));
+    assert.ok(standTest.length > 0, "control: the deciding question is present to be checked");
+    for (const s of standTest) {
+      assert.ok(/without making your own side/i.test(s),
+        `"both ... stand" is only ever the self-defeat question, never a bare co-truth test: ${s.trim().slice(0, 110)}`);
+    }
+    // Clash's third synonym has no legitimate use here, so absence is pinned rather than scoped.
+    assert.ok(!/both\s+(?:be\s+)?right\b/i.test(tmAll),
+      "no 'both (be) right' phrasing: it is Clash's co-truth test wearing different words");
   });
 
   check("RC. a reversal counts as offense only when the result depends on the learner's side", () => {

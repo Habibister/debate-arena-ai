@@ -1359,20 +1359,20 @@
       "summary": "Name the argument each answer is aimed at, so the judge records it where it belongs.",
       "estimatedMinutes": 11,
       "content": {
-        "objective": "Tell the judge where each answer belongs before you give it, so every response lands on the argument it is meant to answer.",
-        "explanation": "A judge has to keep several arguments apart at once, and most track them as separate threads — many keep a written record, often called the flow, with each argument running down a column of its own. The rest of this lesson talks in those columns because that is the clearest way to see the problem; a judge who keeps no such record still has to work out which argument you are answering, and everything here is about making that easy. Signposting is anything you say that tells the judge where you are in that record rather than arguing a point. It uses three tools — a roadmap, argument labels, and transitions — and mixing them up is what usually goes wrong. Throughout, your CASE means the set of arguments your own side is running, and their case means theirs. \n\nIn a speech that answers what the other side said, a roadmap normally comes first and says how many answers are coming and in what order, so the judge knows how many places to look and in what sequence. The count is doing real work: a judge told to expect three answers who receives two can see that one is missing, where a judge told nothing has no way to notice the gap. Naming the arguments in order does the same job as stating a number, since a judge can count a list. A preview that gives neither a count nor any names is not a roadmap at all, because it leaves nothing to expect and nothing to check against. A preview that gives a count but no argument names is still a roadmap, only a weak one: the judge learns how many answers to expect but not which column each belongs in, so it warns of a gap without helping place anything. What is not a roadmap at all is a sentence that states your position or your conclusion, however confident it sounds, because it describes what you intend to prove rather than the shape of the speech. A roadmap is therefore a promise about the shape of the speech. If you end up taking the arguments in a different order, say so as you move — an unannounced reordering leaves the judge holding a plan that no longer matches the speech, which is worse than never having given one. The same holds if you decide not to give an answer you promised: say so as you pass it, because a section announced and never delivered leaves the judge waiting for something that is not coming. \n\nAn argument label names the specific thing you are about to answer — an area, an argument, or an inner claim — before you answer it. A transition marks a move so the judge closes one column and opens another. Moving from one of their arguments straight to another of their arguments needs no separate transition: the next argument label already does it. A separate transition earns its place on a LARGER move — leaving their arguments to return to your own case and rebuild it, or crossing from one major section of the speech to another — where the next label alone would not tell the judge that the kind of work you are doing has changed. Rebuilding means answering what they said against your own argument and putting it back in place. Hear the difference a real transition makes on a move that earns one: \"that is their case answered; now back to our own access argument\" closes what you were doing and names what you are starting, while \"moving on\" or \"secondly\" announces that something has changed and leaves the judge holding a move with no destination. Labels also cost time that the reasons need, and one in front of every sentence buries the moves that matter — when everything is announced, nothing stands out as a change of direction. Label the moves, not the sentences. \n\nLabel by ARGUMENT, not by speaker and not by position in their speech: \"on their cost argument\" points at one column, while \"on their second point\" or \"responding to their first speaker\" only points at one if the judge happens to have numbered things the same way you did, which you cannot know. Compare \"on their second point, the plan is cheaper than they claim\" with \"on their cost argument, the plan is cheaper than they claim\": the answer is identical, but only the second tells a judge who numbered their notes differently where to put it. No phrasing here is required: any words do the job if they name the argument rather than its number or its speaker. What has to hold steady is the name. Use a recognisable version of the same one each time you come back to an argument — \"their cost argument\" in the roadmap and \"the budget point\" later are two names for one thread, and the judge is left to work out that they are the same. Shorter or more natural wording later is fine; it is the identity that cannot drift. The same problem shows up with labels that name a whole area when you mean one part of it, or name your own case when you are answering theirs. \n\nWhat a side says is stacked in levels. At the top is an AREA, a broad heading such as fairness or student wellbeing, often called a contention. Inside it sit the separate ARGUMENTS that support it, and inside each of those sit the INNER CLAIMS it rests on. No topic word owns a level: cost can be an area in one round, with several arguments underneath it, and a single argument in the next. The level comes from how the other side actually built their case, not from how big the word sounds — so read their structure before you label it. One rule covers all three: CHOOSE THE LABEL FOR WHERE THE RESPONSE IS AIMED, not for how far it might ultimately reach. Aim at an inner claim, name that claim; aim at an argument, name the argument; aim at the whole area, name the area. This holds even when knocking out a lower claim happens to undermine everything above it — the signpost says where you struck, not how much fell. Naming a level above the one you aimed at sends the judge to a heading you did not speak to. Naming a level below it files a bigger answer in a smaller place than it belongs, and the judge records you as having answered less than you did. So the narrowest label is not automatically the best one: precision that undershoots the response is its own mistake. Match the label to the scope of the response, upward or downward. Neither judgement asks you to work out what your answer brought down with it. \n\nA label can also be perfectly precise and still wrong: naming their staffing argument when your answer is about their funding argument is exact, and exactly misplaced. When several of their arguments are live at once, the failure to watch for is not skipping one but attaching an answer to the wrong one: a response filed against an argument it does not actually address leaves the argument it WAS meant for standing, and the argument it landed on looks answered when it is not. Two answers given back to back with only one label between them are the usual way this happens, so name the argument each time you move. Signposting is not analysis and does not substitute for it: a labelled answer with no reason behind it is still a bad answer, and the label does not make it true. What the label buys you is that a good answer gets recorded in the right place instead of being lost. When you have lost track mid-speech, the repair is to name where you are going next rather than to keep talking and hope the judge follows — \"I am going back to their evidence argument\" costs two seconds and rebuilds the structure.",
-        "whyMatters": "A judge who cannot place your answer may not credit it at all. This is not a judge being unfair; it is what happens when several arguments move at once and the notes have to keep up in real time. Two speakers can give word-for-word identical analysis and have it recorded differently: the one whose answers arrive labelled gets them written under the arguments they refute, and the one whose answers arrive unlabelled gets a block of text the judge has to sort out afterwards from memory. Structure is also what lets the other side answer you, which is part of a fair round — an answer nobody can locate is an answer nobody can respond to.",
+        "objective": "Tell the judge which argument you are on before you answer it, so every answer lands where it belongs.",
+        "explanation": "Signposting means telling the judge where you are in your speech. Before you answer an argument, you say which one.\n\nHere is what it sounds like in a real speech:\n\n\"On their cost argument: the plan uses time that is already in the timetable. On their safety evidence: their study looked at one school in one year. Now back to our own attendance point.\"\n\nEach of those openings does one job. It tells the judge which argument you are about to talk about, before the reason arrives.\n\nWhy does that matter? A judge is holding several arguments in their head at once, and most keep separate notes for each one. The judge writes your answer wherever you point it. A judge who keeps no notes still has to work out which argument you mean.\n\nSo before every answer, say the argument it is answering. Say it again each time you move to a new one.\n\nName the argument itself, not its number and not the speaker. \"On their cost argument\" works. \"On their second point\" only works if the judge numbered things the way you did, and you cannot know that.\n\nAny words will do, as long as they name the argument. Then keep using the same name for it every time you come back.\n\n\"Moving on\" or \"another thing\" tells the judge that something changed, but not where you went.\n\nIn a speech that answers the other side, you usually start with a ROADMAP: a quick opening that tells the judge what is coming and in what order. \"Three answers: on cost, on their safety evidence, and on the timeline.\" Now the judge knows how many places to look.\n\nWhat a side says comes in sizes. At the top is an AREA, a big heading like school safety. In this lesson, an area is what debaters often call a contention. Inside an area sit the ARGUMENTS that hold it up, and inside each argument sit the INNER CLAIMS it rests on.\n\nName the piece your answer is really about. If you are answering one claim inside their lighting argument, say that claim, not the whole area.\n\nNo word owns a size: cost can be a whole area in one debate and a single argument in the next. Look at how the other side built their case before you label it.",
+        "whyMatters": "A judge who cannot place your answer may not count it at all. Two speakers can give the very same reasons, and the one who said where each answer belongs is the one whose answers get written down in the right place.",
         "steps": [
-          "In a speech that answers what the other side said, give a roadmap that names what the answers are on, in the order you will take them; a bare count does a weaker version of the same job.",
-          "Name the specific argument before you answer it, using words that identify it rather than its number or its speaker.",
-          "Moving to another of their arguments needs no separate transition — the next label does it; add one only for a larger move, such as returning to your own case.",
-          "If you lose the thread, say where you are going next instead of pressing on — and if you drop an answer you promised, say so as you pass it."
+          "In a speech that answers the other side, open with a roadmap: say what your answers are on, in the order you will give them.",
+          "Before each answer, name the argument it is on — the argument itself, not its number or its speaker.",
+          "Use the same name for an argument every time you come back to it.",
+          "Name the size you are aiming at: the whole area, one argument inside it, or one claim inside that argument."
         ],
         "workedExample": {
-          "prompt": "You have three answers to make: one on cost, one on the safety evidence, and one on the timeline. Here are two deliveries of exactly the same three answers.",
+          "prompt": "You have three answers to give: one on cost, one on their safety evidence, and one on the timeline. Here is the same speech two ways.",
           "weakAnswer": "The budget impact is small because the plan uses advisory time that is already scheduled. The study they cited surveyed one district in a single year, so it cannot support a general claim. The rollout is staged over three years, so schools are not absorbing all of it at once.",
           "strongAnswer": "Three answers, on cost, on their safety evidence, and on the timeline. On cost: the budget impact is small because the plan uses advisory time that is already scheduled. On their safety evidence: the study they cited surveyed one district in a single year, so it cannot support a general claim. On the timeline: the rollout is staged over three years, so schools are not absorbing all of it at once.",
-          "whyItWorks": "Delete the roadmap and the three labels from the strong version and what is left is the weak version, word for word — the same three claims, the same three reasons behind them, the same quality of analysis. Nothing was added to the argument. What the labels change is where each answer gets written down: the judge hears \"on cost\" and moves to the cost column before the reason arrives. The opening line does a second job the labels cannot: promising three answers gives the judge something to count against, so an answer that never arrives is visible as a gap rather than simply forgotten. Each of those three labels marks a move to a different argument, which is what earns it; a label in front of every sentence would earn nothing. Notice what the labels leave out — no reason, no verdict on the argument, no claim about how much of their case falls. \"On cost\" locates the answer and nothing more; everything that persuades comes after it. In the weak version the judge has to work out, after the fact, which of three unlabelled sentences belonged to which argument — and a sentence assigned to the wrong column is answering nothing. This is also why signposting cannot rescue a weak answer: it decides where the answer lands, not whether it was any good."
+          "whyItWorks": "Take the roadmap and the three labels out of the strong version and you get the weak version, word for word. The reasons did not change at all.\n\nWhat changed is where each answer gets written down. The judge hears \"on cost\" and is already on the cost argument before the reason arrives. The roadmap does one more thing: it tells the judge to expect three answers, so a missing one shows up as a gap.\n\nNotice what the labels do not do. They give no reason, and they do not say whether the answer is right. Signposting is not the argument. It only decides where the answer lands, not whether it was any good."
         },
         "guidedQuestion": {
           "prompt": "The other side argued that the new bus route is unaffordable, and your next answer is aimed at that argument. Which opening tells the judge where the answer belongs?",
@@ -1383,8 +1383,8 @@
             "That is enough about affordability, and there is more to come"
           ],
           "correctAnswer": "On their affordability argument, the one about the four-year cost figure",
-          "hint": "Your answer is aimed at their affordability argument, so the judge needs to be in that column before your reason arrives. Read each opening and ask where it leaves the judge.",
-          "explanation": "This one names the argument the answer is aimed at, so the judge is in the right column before the reason arrives. Announcing a move names no destination; naming the argument and then ruling on it does the locating and adds a verdict a signpost is not there to give; and closing affordability opens nothing in its place.",
+          "hint": "Your answer is aimed at their affordability argument, so the judge needs to know that before your reason arrives. Read each opening and ask where it leaves the judge.",
+          "explanation": "This one names the argument the answer is aimed at, so the judge knows where to put it before the reason arrives. Announcing a move names no destination; naming the argument and then ruling on it does the locating and adds a verdict a signpost is not there to give; and closing affordability opens nothing in its place.",
           "skillTag": "Signposting"
         },
         "practiceQuestions": [
@@ -1393,7 +1393,7 @@
             "choices": [
               "I have three answers before I come back to our own case",
               "I will take their funding argument, then their staffing argument",
-              "Two answers on their evidence, then I rebuild our access argument",
+              "Two answers on their evidence, then back to our own access argument",
               "I am going to show that funding is what decides this round"
             ],
             "correctAnswer": "I am going to show that funding is what decides this round",
@@ -1402,27 +1402,27 @@
             "skillTag": "Signposting"
           },
           {
-            "prompt": "You have been answering their arguments one after another. Which move earns a separate transition rather than just the next label?",
+            "prompt": "You have just finished answering their cost argument. Your next answer is on their parking argument. Which line best tells the judge where you are moving to?",
             "choices": [
-              "Moving from their funding argument to their staffing argument",
-              "Moving from one inner claim to another inside their funding argument",
-              "Moving from answering their case to rebuilding your own access argument",
-              "Moving from your second answer to your third on their evidence argument"
+              "Moving on to my next point, which is a good one",
+              "Now, secondly, there is another thing they said",
+              "Now on their parking argument, about the school car park",
+              "That deals with cost, so now for the rest of what they said"
             ],
-            "correctAnswer": "Moving from answering their case to rebuilding your own access argument",
-            "hint": "A label already closes one column and opens another. What can it not tell the judge?",
-            "explanation": "Leaving their arguments to rebuild your own changes the kind of work you are doing, and the next label alone does not say so. The other three stay inside answering their case, where the label you are already giving does the whole job.",
+            "correctAnswer": "Now on their parking argument, about the school car park",
+            "hint": "The judge needs a name, not just a signal that something changed.",
+            "explanation": "Only this one names the argument you are moving to, so the judge knows where to put what comes next. \"Moving on\" and \"secondly\" say that something changed but not where you went, and closing the cost answer without naming the next one leaves the judge waiting to find out.",
             "skillTag": "Signposting"
           },
           {
             "prompt": "A speaker labels every answer clearly and gives no reason for any of them. What have the labels achieved?",
             "choices": [
               "Each answer is easier to follow, and being easy to follow is part of persuading a judge",
-              "Each answer is recorded against the argument it was aimed at, and left unsupported",
+              "Each answer is written down under the right argument, and it is left unsupported",
               "Each answer is left unsupported, so the labels have achieved nothing at all",
-              "Each answer reaches the judge, who places it once the speech has finished"
+              "Each answer reaches the judge, who writes it down once the speech has finished"
             ],
-            "correctAnswer": "Each answer is recorded against the argument it was aimed at, and left unsupported",
+            "correctAnswer": "Each answer is written down under the right argument, and it is left unsupported",
             "hint": "A label decides where an answer lands, and only that.",
             "explanation": "The labels did their whole job: every answer is in the right place, and every answer is still a bare assertion. Being easy to follow is not what makes an answer good, the labels did achieve the placement, and placing answers after the speech is what happens when the labels are missing.",
             "skillTag": "Signposting"
@@ -1430,29 +1430,29 @@
         ],
         "masteryCheck": [
           {
-            "prompt": "They ran two arguments: that the fee deters families, and that the refund scheme is hard to use. Your answer is that the refund form takes two minutes. You label it \"on their argument that the fee deters families\". What is the result?",
+            "prompt": "They ran two arguments: that the fee puts families off, and that the refund scheme is hard to use. Your answer is that the refund form takes two minutes. You label it \"on their argument that the fee puts families off\". What is the result?",
             "choices": [
-              "The answer is filed under deterrence, which it never touches, so the refund point keeps none",
-              "The answer is filed against the refund scheme, since what it says makes the target obvious",
+              "Your answer goes under the wrong argument, one it never touches, so the refund argument keeps none of it",
+              "The judge works out from what the answer says that it belongs with the refund scheme, and files it there",
               "The label is too broad, because the answer is aimed at one claim rather than a whole argument",
-              "The answer is wasted, because the minutes a refund form takes were never a reason about the fee"
+              "The answer is wasted, because a two-minute form is never a big enough point to count"
             ],
-            "correctAnswer": "The answer is filed under deterrence, which it never touches, so the refund point keeps none",
-            "hint": "The label was exact. Ask what it was exact about.",
-            "explanation": "A label can be perfectly precise and still name the wrong argument. The judge places answers as they arrive rather than reconstructing them afterwards, so the deterrence column now looks answered when it is not, and the refund argument keeps nothing at all. The answer itself was a good one — how long the form takes is exactly a reason the scheme is not hard to use — and the label is what wasted it. The level was right; the branch was wrong.",
+            "correctAnswer": "Your answer goes under the wrong argument, one it never touches, so the refund argument keeps none of it",
+            "hint": "The label was exact. Ask which argument it pointed the judge to.",
+            "explanation": "A label can be exact and still point at the wrong argument. The judge puts your answer where you point, so it lands under the fee argument, where it answers nothing, and the refund argument gets none of it. It is not wasted: the same answer under the right label would have counted. The judge does not re-sort answers for you; the label was not too broad, it was aimed at the wrong argument; and how big the point is has nothing to do with it — a label decides where an answer lands, not whether it counts.",
             "skillTag": "Signposting"
           },
           {
             "prompt": "In your roadmap you called it their enforcement argument. Coming back to it later you say you are now on the policing issue. What follows?",
             "choices": [
-              "The judge hears the second name and files that answer under the first argument",
+              "The judge hears the second name and writes that answer down under the first argument",
               "You lose the seconds it takes to explain that the two names mean the same thing",
               "The judge is left to work out for themselves that both names are one argument",
               "The roadmap you gave was inaccurate, and that is where the mismatch started"
             ],
             "correctAnswer": "The judge is left to work out for themselves that both names are one argument",
-            "hint": "The judge matches what you say against a column that already has a name.",
-            "explanation": "A label works by matching the argument the judge already has, so a second name for one thread hands the judge the matching to do. Nothing in the label itself tells the judge that the two names are one argument, and the cost is not the two seconds of explaining — it is that the matching is now theirs to do. The roadmap was accurate when you gave it; what drifted is the name, which is exactly what a consistent one would have held.",
+            "hint": "The judge matches what you say against the name they already wrote down.",
+            "explanation": "A label works by matching the argument the judge already has, so a second name for one argument hands the judge the matching to do. Nothing in the label itself tells the judge that the two names are one argument, and the cost is not the two seconds of explaining — it is that the matching is now theirs to do. The roadmap was accurate when you gave it; what drifted is the name, which is exactly what a consistent one would have held.",
             "skillTag": "Signposting"
           }
         ],

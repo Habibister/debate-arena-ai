@@ -1991,48 +1991,56 @@ function main() {
     // The renderer splits on blank lines; before the repair this lesson was ONE 1,043-word block.
     const spWords = (t: string) => (t.match(/[A-Za-z’'-]+/g) ?? []).length;
     const paragraphs = sp.explanation.split(/\n{2,}/);
-    assert.ok(paragraphs.length >= 4 && paragraphs.length <= 6, `the explanation is ${paragraphs.length} paragraphs`);
-    assert.ok(paragraphs.every((p: string) => spWords(p) < 400), "no paragraph is a wall of its own");
+    // Beginner standard (740ef26 lineage): many short paragraphs, none over four sentences' worth.
+    assert.ok(paragraphs.length >= 4, `the explanation is ${paragraphs.length} paragraphs`);
+    assert.ok(paragraphs.every((p: string) => spWords(p) < 60), "no paragraph is a wall of its own");
     // (a) note-taking is a convention, not a fact about every judge.
     assert.ok(!/Judges take notes in columns/.test(spAll), "the column premise is no longer asserted of all judges");
-    assert.ok(/most track them as separate threads/.test(sp.explanation), "and is stated as what most do");
+    assert.ok(/most keep separate notes for each one/.test(sp.explanation), "and is stated as what most do");
     // (b) the roadmap is scoped to the speech that HAS answers to count.
-    assert.ok(/In a speech that answers what the other side said, a roadmap normally comes first/.test(sp.explanation),
+    assert.ok(/In a speech that answers the other side, you usually start with a ROADMAP/.test(sp.explanation),
       "the roadmap is scoped by speech function and hedged, not made universal");
     // The column model is a convention the whole lesson leans on, so the dependency is stated once
     // in the mechanics rather than hedged into invisibility sentence by sentence.
-    assert.ok(/a judge who keeps no such record still has to work out which argument you are answering/.test(sp.explanation),
-      "and the lesson says what holds when the judge keeps no columns");
+    assert.ok(/A judge who keeps no notes still has to work out which argument you mean/.test(sp.explanation),
+      "and the lesson says what holds when the judge keeps no notes");
     assert.ok(!/judges often do not/.test(sp.explanation), "no unsourced claim about how often judges number things");
-    assert.ok(/^In a speech that answers what the other side said, give a roadmap/.test(sp.steps[0]), "and the step agrees");
-    // The step used to demand a count AND names while the body says naming does the counting for you.
-    assert.ok(/a bare count does a weaker version of the same job/.test(sp.steps[0]), "the step is no stricter than the principle");
-    assert.ok(/if you drop an answer you promised, say so as you pass it/.test(sp.steps[3]), "and the cut-answer rule reaches the steps");
+    assert.ok(/^In a speech that answers the other side, open with a roadmap/.test(sp.steps[0]), "and the step agrees");
+    // B01 is GUARD-ONLY in the frozen manifest (281f042): the learner never reads the count-only
+    // caveat, but no step may demand a count AND names — that inconsistency is what the guard exists for.
+    assert.ok(!/\b(count|number)\b[^.]{0,40}\band\b[^.]{0,40}\bnames?\b/i.test(sp.steps.join(" ")),
+      "B01 guard-only: no step demands both a count and names");
+    // B03/B04 are GUARD-ONLY: promise management left first-pass prose. The lesson may not license
+    // the contradiction — silently reordering or silently dropping a promised answer.
+    assert.ok(!/\b(skip|drop|leave out|reorder|change the order)\b[^.]{0,60}\b(quietly|silently|without saying|without telling)\b/i.test(spAll),
+      "B03/B04 guard-only: the lesson never licenses silently departing from a roadmap");
     // (c) the card no longer tells the learner to number what the body says never to number.
     assert.ok(!/\bnumbers\b/i.test(spEntry.source.lesson.summary), "the summary drops the numbers instruction");
-    assert.ok(/Label by ARGUMENT, not by speaker and not by position/.test(sp.explanation), "which the body contradicted");
+    assert.ok(/Name the argument itself, not its number and not the speaker/.test(sp.explanation), "which the body contradicted");
     // (d) format-specific vocabulary survives only where the lesson glosses it.
     assert.equal((spAll.match(/contention/gi) ?? []).length, 1, "\"contention\" appears once, in its gloss");
-    assert.ok(/often called a contention/.test(sp.explanation), "and that one is the gloss");
+    assert.ok(/often call a contention/.test(sp.explanation), "and that one is the AREA/CONTENTION bridge");
   });
 
   check("SC. the teaching that used to live only inside deleted questions is in the lesson now", () => {
     const body = sp.explanation + "\n" + Object.values(sp.workedExample as Record<string, string>).join("\n");
     // A spoken transition, and its empty counterpart, both outside the quiz layer.
-    assert.ok(/that is their case answered; now back to our own access argument/.test(body), "a real transition is modelled — and on a move the lesson says earns one");
+    // RULE-06 (transitions) is class C in the frozen manifest: a larger-move transition is still
+    // MODELLED in the opening example, but no longer taught as a rule in first-pass prose.
+    assert.ok(/Now back to our own attendance point/.test(body), "a real transition is modelled on a larger move");
     assert.ok(!/now, on their enforcement argument/.test(body), "never between two of their arguments, which the lesson says needs no transition");
-    assert.ok(/"moving on" or "secondly"/.test(body), "and the empty kind is shown, not just named");
-    // What labelling costs — the lesson pushed only toward MORE labels before.
-    assert.ok(/Label the moves, not the sentences/.test(body), "over-signposting has a stated cost");
+    assert.ok(/"Moving on" or "another thing"/.test(body), "and the empty kind is shown, not just named");
+    // "Label the moves, not the sentences" (over-signposting cost) is class C in the frozen manifest
+    // and left first-pass prose; nothing pins it. The negative below still holds.
     // Placement is not quality, in the teaching rather than in a check.
-    assert.ok(/Signposting is not analysis and does not substitute for it/.test(body), "structure is not substance");
-    assert.ok(/it decides where the answer lands, not whether it was any good/.test(body), "stated twice, once on the example");
+    assert.ok(/Signposting is not the argument/.test(body), "structure is not substance (B06, carried by the worked example)");
+    assert.ok(/where the answer lands, not whether it was any good/.test(body), "B07: a label locates and nothing more");
     // The three verified gaps.
-    assert.ok(/it is the identity that cannot drift/.test(body), "stable argument identity is taught");
-    assert.ok(/No phrasing here is required/.test(body), "the wording is explicitly free");
-    assert.ok(/if you decide not to give an answer you promised: say so as you pass it/.test(body), "a promise you cut is announced");
+    assert.ok(/keep using the same name for it every time/.test(body), "stable argument identity is taught (RULE-03)");
+    assert.ok(/Any words will do/.test(body), "the wording is explicitly free (RULE-03)");
+    // The cut-promise rule (B04) is guard-only; its negative invariant lives in SB.
     // And the worked example now cashes out the roadmap, not only the labels.
-    assert.ok(/Notice what the labels leave out/.test(sp.workedExample.whyItWorks), "the example says what a label omits");
+    assert.ok(/Notice what the labels do not do/.test(sp.workedExample.whyItWorks), "the example says what a label omits");
   });
 
   check("SD. no key is isolated by a surface property, and the measured exploit is dead", () => {
@@ -2072,15 +2080,20 @@ function main() {
   });
 
   check("SE. the six checks test six distinct judgments, and none contradicts the lesson", () => {
-    // The defect the audit found: a check keyed to a transition the lesson says is unnecessary.
-    const transition = spChecks.find((q) => /earns a separate transition/.test(q.prompt));
-    assert.ok(transition, "the transition check now asks which move EARNS one");
-    assert.ok(/rebuilding your own access argument/.test(transition!.correctAnswer), "and keys the larger move");
+    // RULE-06 (separate-transition taxonomy) is class C in the frozen manifest (281f042) and left
+    // first-pass prose, so it may not be assessed. practiceQuestions[1] was repurposed to RULE-02's
+    // second half: when you move, NAME the argument you are moving to.
+    assert.ok(!spChecks.some((q) => /earns a separate transition/.test(q.prompt)), "RULE-06 (class C) is no longer assessed");
+    const moving = spChecks.find((q) => /best tells the judge where you are moving to/.test(q.prompt));
+    assert.ok(moving, "the move check asks which line NAMES the destination");
+    assert.ok(/on their parking argument/.test(moving!.correctAnswer), "and keys the option that names the argument");
+    assert.ok(moving!.choices.filter((o) => /moving on|secondly|another thing|the rest of what/i.test(o)).length >= 3,
+      "against three empty or destination-less transitions");
     assert.ok(!spChecks.some((q) => /closes one argument and opens another\?/.test(q.prompt)),
       "the old check, keyed against the lesson's own rule, is gone");
     // One judgment per item, named by the phrase only that item's stem carries.
     const judgments = ["Which opening tells the judge where the answer belongs", "is not a roadmap at all",
-      "earns a separate transition", "What have the labels achieved", "What is the result", "What follows"];
+      "best tells the judge where you are moving to", "What have the labels achieved", "What is the result", "What follows"];
     for (const j of judgments) {
       assert.equal(spChecks.filter((q) => q.prompt.includes(j)).length, 1, `exactly one check asks: ${j}`);
     }

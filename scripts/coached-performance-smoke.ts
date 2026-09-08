@@ -29,6 +29,9 @@ const { ConceptEducationLessonView } = require("../components/lessons/concept-ed
 const { EDUCATION_REGISTRY } = require("../lib/education/registry");
 const { HELD_DEBATE_CATALOG_SLUGS, MIGRATED_DEBATE_PROVENANCE } = require("../lib/education/tracks/debate");
 const { learnerPathForTrack } = require("../lib/learner-path");
+// The REAL Debate transcript producer, so the guided regression below runs against the shape the
+// route actually passes rather than a hand-built fixture that outlived it.
+const { buildTranscriptBasedDebateJudge } = require("../lib/debate-judge-analysis");
 const { RETIRED_TRACKS } = require("../lib/training-tracks");
 const { debateDiagnosisLesson } = require("../lib/education/diagnosis");
 const { LEARNING_SKILL_CATALOG } = require("../lib/learning-content");
@@ -602,7 +605,67 @@ function main() {
     assert.ok(/\{showFullRubric && !report\.guided \? \(/.test(arena), "the full-rubric section is gated on !guided");
     assert.ok(/\{report\.ratingChange && !report\.guided \? \(/.test(arena), "the rating block is gated on !guided");
     assert.ok(/\{report\.readinessForNextLevel && !report\.guided \? \(/.test(arena), "the readiness card is gated on presence AND !guided");
-    assert.ok(/report\.guided \? \([\s\S]{0,300}Guided exercise completed/.test(arena), "a guided ballot is headed as a guided exercise, not a won round");
+    // The heading is now "Guided practice complete" — it leads with what the learner DID rather than
+    // with what the judge could not do. Guided work was never independent performance evidence, so
+    // the no-score status is explained underneath instead of becoming the headline.
+    assert.ok(/report\.guided \? \([\s\S]{0,300}Guided practice complete/.test(arena),
+      "a guided ballot is headed as guided practice, not a won round");
+    assert.ok(/This coached round was recorded for review\. No performance score or winner was produced\./.test(arena),
+      "and an unscored guided round says so under the heading");
+    assert.ok(!/Guided exercise completed/.test(arena), "the superseded heading is gone rather than duplicated");
+  });
+
+  check("JD2. a guided round consumes the REAL producer shape, which is unscored", () => {
+    // THE FIXTURE GAP THIS CLOSES. Every guided assertion above runs on a hand-built FULL_RESULT that
+    // still carries categoryScores. The Debate transcript producer stopped supplying them on
+    // 2026-09-07, so those assertions were exercising a shape that no longer exists — and both
+    // reachable guided rounds threw a TypeError at judging while the suite stayed green. This check
+    // builds the ballot from the ACTUAL producer and projects it, so the guided path is regressed
+    // against reality rather than against a fiction.
+    const real = buildTranscriptBasedDebateJudge({
+      organization: "DEBATE", eventType: "PARLIAMENTARY_DEBATE", level: "INTERMEDIATE",
+      topic: "Schools should require AI literacy.", studentSide: "GOVERNMENT",
+      transcript: [
+        { role: "AFFIRMATIVE", round: 1, content: "Schools should require AI literacy, because a student taught to check a machine answer against its source stops treating it as settled." },
+        { role: "NEGATIVE", round: 1, content: "It takes class time from subjects that already have too little." }
+      ]
+    }) as Record<string, unknown>;
+    assert.equal(real.semanticScoring, "unavailable", "JD2. the real producer reports semantic scoring unavailable");
+    assert.equal(real.categoryScores, undefined, "JD2b. and supplies no categoryScores — the shape the old fixture faked");
+    assert.equal(real.overallScore, undefined, "JD2c. and no overall");
+
+    for (const app of GUIDED_APPLICATIONS) {
+      const rubric = { primary: app.primary, reinforcement: app.reinforcement ?? [], locked: app.locked ?? [] };
+      // Must not throw. This is the exact call that produced a 500 for every guided learner.
+      const ballot = projectGuidedJudgeResult(real as never, rubric as never, app.lessonId) as Record<string, unknown>;
+      assert.equal(ballot.semanticScoring, "unavailable", `JD2d. ${app.lessonId} projects an unscored guided result`);
+      for (const field of ["overallScore", "categoryScores", "teamWinner", "losingSide", "readinessForNextLevel", "ratingChange"]) {
+        assert.equal(ballot[field], undefined, `JD2e. ${app.lessonId}: ${field} is absent, not synthesised`);
+      }
+      const feedback = ballot.guidedFeedback as { newSkill: string; oneThingToFix: string; retryRequired: boolean };
+      assert.ok(feedback && feedback.newSkill.length > 0, `JD2f. ${app.lessonId} still gives lesson-owned coaching`);
+      assert.equal(feedback.retryRequired, false, `JD2g. ${app.lessonId} demands no retry — a demand would be a verdict`);
+      assert.ok(!/scored \d|ballot score|you (?:failed|did not)/i.test(JSON.stringify(ballot)),
+        `JD2h. ${app.lessonId} claims no score and no failure anywhere on the ballot`);
+    }
+  });
+
+  check("JD3. the unscored guided branch cannot be removed silently", () => {
+    // MUTATION KILL. Each of these fails if someone reintroduces the assumption that a guided round
+    // always has a ballot, or synthesises one to make the crash go away.
+    const guardSrc = stripComments(read("lib/education/guided-judge.ts"));
+    assert.ok(/if \(full\.semanticScoring === "unavailable"\) \{/.test(guardSrc),
+      "JD3. the projection still branches on the unscored discriminant before touching categories");
+    assert.ok(!/full\.categoryScores\s*\n?\s*\.filter/.test(guardSrc.slice(0, guardSrc.indexOf('if (full.semanticScoring === "unavailable")'))),
+      "JD3b. and nothing reads categoryScores before that branch");
+    assert.ok(!/categoryScores:\s*\[\]/.test(guardSrc), "JD3c. no empty scored ballot is synthesised");
+    assert.ok(!/categoryScores \?\? \[\]/.test(guardSrc), "JD3d. and absence is not papered over with a default");
+    assert.ok(/semanticScoring: "unavailable"/.test(guardSrc), "JD3e. the unscored result declares itself");
+    const routeSrc = stripComments(read("app/api/debates/[debateId]/judge/route.ts"));
+    assert.ok(!/\)\) as JudgeResult;/.test(routeSrc),
+      "JD3f. the route no longer asserts the producer into a scored shape");
+    assert.ok(/fullResult\.semanticScoring === "unavailable"/.test(routeSrc),
+      "JD3g. and narrows before projecting");
   });
 
   check("JE. a locked skill cannot create a recommendation", () => {

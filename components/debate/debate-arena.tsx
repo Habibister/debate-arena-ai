@@ -117,7 +117,7 @@ export type JudgeReport = {
   };
   /** "unavailable" when the producer recorded the round but did not semantically score it. */
   semanticScoring?: "unavailable";
-  overallScore: number;
+  overallScore?: number;
   categoryScores: Array<{
     key: string;
     label: string;
@@ -1151,10 +1151,14 @@ function JudgeDecisionModal({
               <>
                 {/* GUIDED: a coached exercise, not a competitive result. No winner, no "round
                     scored", no rating — the heading says what actually happened. */}
-                <h2 className="mt-3 text-3xl font-bold">Guided exercise completed</h2>
+                <h2 className="mt-3 text-3xl font-bold">Guided practice complete</h2>
+                {/* The headline leads with what the learner DID, not with what the judge could not do.
+                    Guided work was never independent performance evidence, so the no-score status is
+                    explained underneath rather than made the story. */}
                 <p className="mt-2 text-sm text-neutral-400">
-                  Feedback below is limited to the skills your lesson has taught. Nothing here changes
-                  your XP, rank, or record.
+                  {report.semanticScoring === "unavailable"
+                    ? "This coached round was recorded for review. No performance score or winner was produced. Feedback below is limited to the skills your lesson has taught, and nothing here changes your XP, rank, or record."
+                    : "Feedback below is limited to the skills your lesson has taught. Nothing here changes your XP, rank, or record."}
                 </p>
               </>
             ) : report.teamWinner ? (
@@ -1205,14 +1209,29 @@ function JudgeDecisionModal({
                   score slot either: a dash in a score position reads as a score that failed to load.
                   The round happened, the transcript is saved, and nothing judged how well it went. */}
               {report.semanticScoring === "unavailable" ? (
-                <>
-                  <p className="text-sm font-semibold text-neutral-400">Round recorded</p>
-                  <p className="mt-3 text-lg font-semibold leading-6">Not scored</p>
-                  <p className="mt-2 text-xs leading-5 text-neutral-500">
-                    Your transcript is saved. The practice judge cannot tell substantive argument from filler, so it does
-                    not score the round or say who won.
-                  </p>
-                </>
+                // Guided and independent both go unscored, but they mean different things to the
+                // learner and are worded apart. Guided practice was never independent performance
+                // evidence, so it leads with the practice being recorded; an independent round leads
+                // with the judge's own limitation, because there the learner reasonably expected one.
+                report.guided ? (
+                  <>
+                    <p className="text-sm font-semibold text-neutral-400">Guided practice</p>
+                    <p className="mt-3 text-lg font-semibold leading-6">Recorded for review</p>
+                    <p className="mt-2 text-xs leading-5 text-neutral-500">
+                      Coached practice is not scored and never was. Your transcript is saved so you can read it back
+                      against what the lesson taught.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-neutral-400">Round recorded</p>
+                    <p className="mt-3 text-lg font-semibold leading-6">Not scored</p>
+                    <p className="mt-2 text-xs leading-5 text-neutral-500">
+                      Your transcript is saved. The practice judge cannot tell substantive argument from filler, so it does
+                      not score the round or say who won.
+                    </p>
+                  </>
+                )
               ) : (
                 <>
                   <p className="text-sm font-semibold text-neutral-400">Practice ballot score</p>
@@ -1250,13 +1269,15 @@ function JudgeDecisionModal({
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Skills checked</p>
                   <SpeakButton
-                    text={`Skills checked: ${report.categoryScores.map((category) => category.label).join(", ")}. ${report.guidedFeedback?.newSkill ?? ""} ${report.guidedFeedback?.oneThingToFix ?? ""}`}
+                    text={`${(report.categoryScores ?? []).length > 0 ? `Skills checked: ${(report.categoryScores ?? []).map((category) => category.label).join(", ")}. ` : ""}${report.guidedFeedback?.newSkill ?? ""} ${report.guidedFeedback?.oneThingToFix ?? ""}`}
                     label="Read feedback aloud"
                     className="border-white/15 bg-white/[0.03] text-neutral-200 hover:bg-white/10"
                   />
                 </div>
                 <p className="mt-2 text-lg font-semibold leading-7">
-                  {report.categoryScores.map((category) => category.label).join(" · ")}
+                  {(report.categoryScores ?? []).length > 0
+                    ? (report.categoryScores ?? []).map((category) => category.label).join(" · ")
+                    : "This round was not scored, so no skill was checked against a ballot. The coaching below comes from your lesson."}
                 </p>
                 <p className="mt-2 text-xs leading-5 text-neutral-500">Only the skills your lesson has taught. Nothing else was scored.</p>
               </div>
@@ -1444,7 +1465,7 @@ function JudgeDecisionModal({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            {report.categoryScores.slice(0, 16).map((category) => (
+            {(report.categoryScores ?? []).slice(0, 16).map((category) => (
               <div key={category.key} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
                 <div className="mb-2 flex items-center justify-between gap-2 text-sm">
                   <span className="font-semibold">{category.label}</span>

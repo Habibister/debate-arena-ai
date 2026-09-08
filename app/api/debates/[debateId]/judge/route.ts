@@ -13,7 +13,12 @@ import { awardXpInTransaction, calculateDebateRating, rewardAmountForCompletion,
 import { parseJson } from "@/lib/api";
 import { guidedJudgeRequestSchema } from "@/lib/validators";
 import { guidedRubricFor, type GuidedRubric } from "@/lib/education/coaching";
-import { projectGuidedJudgeResult } from "@/lib/education/guided-judge";
+import {
+  projectGuidedJudgeResult,
+  type FullJudgeResultLike,
+  type ScoredJudgeResultLike,
+  type UnscoredJudgeResultLike
+} from "@/lib/education/guided-judge";
 import { guidedLessonIdOf } from "@/lib/guided-rounds";
 
 export const runtime = "nodejs";
@@ -30,8 +35,10 @@ type CategoryScore = {
 };
 
 type JudgeResult = {
-  overallScore: number;
-  categoryScores: CategoryScore[];
+  /** Set by a producer that recorded the round without semantically scoring it. */
+  semanticScoring?: "unavailable";
+  overallScore?: number;
+  categoryScores?: CategoryScore[];
   sharedSpeaking?: {
     clarity?: number;
     confidence?: number;
@@ -100,7 +107,9 @@ type JudgeResult = {
 };
 
 function findCategory(result: JudgeResult, keys: string[]) {
-  return result.categoryScores.find((category) => keys.includes(category.key));
+  // An unscored round has no categories at all. Returning undefined here is what makes every caller
+  // omit its row rather than write a zero — the same NOT MEASURED rule the withdrawn categories follow.
+  return result.categoryScores?.find((category) => keys.includes(category.key));
 }
 
 function categoryScore(result: JudgeResult, keys: string[]) {
@@ -115,7 +124,9 @@ function categoryScore(result: JudgeResult, keys: string[]) {
 function debateSkillRecommendations(result: JudgeResult) {
   const weakText = [
     ...result.weaknesses,
-    ...result.categoryScores
+    // No categories means no weak-category evidence, so this contributes nothing rather than
+    // treating absence as weakness.
+    ...(result.categoryScores ?? [])
       .filter((category) => (category.score <= 5 ? category.score <= 3 : category.score <= 65))
       .map((category) => category.label ?? category.key)
   ]
@@ -352,7 +363,12 @@ export async function POST(request: Request, { params }: { params: { debateId: s
       );
     }
 
-    const fullResult = (await runOrganizationJudge(debate, guidedRubric ?? undefined)) as JudgeResult;
+    // The `as JudgeResult` assertion that used to sit here was FALSE after the semantic withdrawal:
+    // JudgeResult declares overallScore and categoryScores, and the Debate producer had stopped
+    // supplying either. The cast silenced tsc, and both reachable guided rounds threw at judging.
+    // The result is now typed as the honest union, so the compiler forces the unscored branch to be
+    // handled before anything score-dependent runs.
+    const fullResult = (await runOrganizationJudge(debate, guidedRubric ?? undefined)) as JudgeResult & Partial<FullJudgeResultLike>;
 
     // ---- GUIDED: curriculum-limited ballot, operational storage only ------------------------------
     // The full result is PROJECTED onto the rubric here and never read again in this branch: locked
@@ -368,7 +384,16 @@ export async function POST(request: Request, { params }: { params: { debateId: s
     // is a coached teaching exercise, not an independent competitive performance, and nothing here
     // can be read later as one: the stored report carries `guided` so every consumer can tell.
     if (guidedRubric && guidedLessonId) {
-      const projected = projectGuidedJudgeResult(fullResult, guidedRubric, guidedLessonId);
+      // Narrow before projecting. `semanticScoring` is the discriminant the producer sets when it
+      // recorded the round without judging it; the projection then takes its unscored path and
+      // synthesises no ballot.
+      const projected = projectGuidedJudgeResult(
+        fullResult.semanticScoring === "unavailable"
+          ? ({ ...fullResult, semanticScoring: "unavailable" } as UnscoredJudgeResultLike)
+          : ({ ...fullResult, semanticScoring: undefined } as ScoredJudgeResultLike),
+        guidedRubric,
+        guidedLessonId
+      );
       const savedGuided = await prisma.$transaction(async (tx) => {
         const claim = await tx.debate.updateMany({
           where: { id: debate.id, status: { notIn: ["JUDGED", "ARCHIVED"] } },

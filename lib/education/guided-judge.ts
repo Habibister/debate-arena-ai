@@ -72,15 +72,40 @@ export function allowedJudgeCategories(rubric: GuidedRubric): readonly string[] 
 }
 
 /** The minimal shape this module needs to read. The route's and lib/ai's result types both satisfy it. */
-export type FullJudgeResultLike = {
-  overallScore: number;
-  categoryScores: Array<{ key: string; label?: string; score: number; reason?: string }>;
-  strengths: string[];
-  weaknesses: string[];
+type JudgeResultCommon = {
+  strengths?: string[];
+  weaknesses?: string[];
   improvementAdvice?: string[];
   recommendedLessons?: Array<{ lessonSlug: string; reason: string; priority: "high" | "medium" | "low" }>;
   [key: string]: unknown;
 };
+
+/** A producer that genuinely evaluated the round: DECA and HOSA role-play judging today. */
+export type ScoredJudgeResultLike = JudgeResultCommon & {
+  semanticScoring?: undefined;
+  overallScore: number;
+  categoryScores: Array<{ key: string; label?: string; score: number; reason?: string }>;
+};
+
+/**
+ * A producer that recorded the round without semantically scoring it — the Debate transcript judge
+ * since the 2026-09-07 withdrawal. There is no ballot to project, so the fields that would carry one
+ * are `undefined` BY TYPE rather than by convention.
+ */
+export type UnscoredJudgeResultLike = JudgeResultCommon & {
+  semanticScoring: "unavailable";
+  overallScore?: undefined;
+  categoryScores?: undefined;
+};
+
+/**
+ * The union exists so the compiler can force the unscored branch to be handled. Before it, the judge
+ * route asserted `as JudgeResult` over a producer that had stopped supplying `categoryScores`, and
+ * `projectGuidedJudgeResult` called `.filter` on `undefined` — both reachable guided rounds threw at
+ * judging time and tsc could not see it. Never widen this back into a single optional-field shape:
+ * the discriminant is what makes the failure a compile error instead of a 500.
+ */
+export type FullJudgeResultLike = ScoredJudgeResultLike | UnscoredJudgeResultLike;
 
 /**
  * What the ROUND'S judge actually measures for each competency, stated exactly. The lexical judge
@@ -176,7 +201,7 @@ export type GuidedFeedback = {
   nextAction: "retry" | "continue";
 };
 
-export type GuidedJudgeResult = {
+type GuidedCommon = {
   /** The marker every consumer branches on. Its presence is the proof the ballot was projected. */
   guided: {
     lessonId: string;
@@ -184,8 +209,6 @@ export type GuidedJudgeResult = {
     reinforcement: readonly DebateCompetency[];
     locked: readonly DebateCompetency[];
   };
-  overallScore: number;
-  categoryScores: Array<{ key: string; label?: string; score: number; reason?: string }>;
   strengths: string[];
   weaknesses: string[];
   improvementAdvice: string[];
@@ -197,6 +220,26 @@ export type GuidedJudgeResult = {
   fallbackNotice?: unknown;
   rubricSource?: unknown;
 };
+
+export type ScoredGuidedJudgeResult = GuidedCommon & {
+  semanticScoring?: undefined;
+  overallScore: number;
+  categoryScores: Array<{ key: string; label?: string; score: number; reason?: string }>;
+};
+
+/**
+ * A guided round whose producer did not score it. No ballot is synthesised: there is no overall, no
+ * categories and no winner, because an empty scored ballot would still present itself as a ballot.
+ * The coaching that survives is lesson-owned — the round measure and the lesson's own fix line —
+ * never a diagnosis read off scores that do not exist.
+ */
+export type UnscoredGuidedJudgeResult = GuidedCommon & {
+  semanticScoring: "unavailable";
+  overallScore?: undefined;
+  categoryScores?: undefined;
+};
+
+export type GuidedJudgeResult = ScoredGuidedJudgeResult | UnscoredGuidedJudgeResult;
 
 /** Below this, the current skill's move is treated as materially incomplete and a retry is asked for. */
 export const GUIDED_RETRY_THRESHOLD = 60;
@@ -247,11 +290,56 @@ function competencyForRecommendation(lessonSlug: string): DebateCompetency | nul
  * Project a FULL judge result onto a guided rubric. The result of this function is what gets
  * persisted and returned; the full result never leaves the route in a guided round.
  */
+/**
+ * Guided coaching for a round nothing scored. Every line here is lesson-owned or structural: the
+ * round measure is a static declaration, and the fix is the lesson's own move from COMPETENCY_FIX.
+ * No line asserts the learner did the skill badly — `retryRequired` is false because a retry demand
+ * would be a verdict, and retry stays AVAILABLE to the learner either way.
+ */
+function unscoredGuidedFeedback(rubric: GuidedRubric): GuidedFeedback {
+  const measure = COMPETENCY_ROUND_MEASURE[rubric.primary];
+  const label = COMPETENCY_LABELS[rubric.primary];
+  return {
+    measure,
+    newSkill: `${label} was not assessed in this round. The practice judge does not score rounds, so nothing here counts for or against you.`,
+    oneThingToFix: COMPETENCY_FIX[rubric.primary],
+    retryRequired: false,
+    nextAction: "continue"
+  };
+}
+
 export function projectGuidedJudgeResult(
   full: FullJudgeResultLike,
   rubric: GuidedRubric,
   lessonId: string
 ): GuidedJudgeResult {
+  // UNSCORED BRANCH. The producer recorded the round without judging it, so there is no ballot to
+  // project. This returns early with no overall, no categories and no winner rather than projecting
+  // an empty one: an empty scored ballot still presents itself as a ballot, and the learner would
+  // read "0 skills checked" as a verdict on their round. The guided coaching that survives is
+  // lesson-owned — the round measure and the lesson's own fix line — and nothing here claims the
+  // learner failed anything, because nothing measured them.
+  if (full.semanticScoring === "unavailable") {
+    return {
+      semanticScoring: "unavailable",
+      guided: { lessonId, primary: rubric.primary, reinforcement: rubric.reinforcement, locked: rubric.locked },
+      strengths: [],
+      weaknesses: [],
+      improvementAdvice: [],
+      recommendedLessons: (full.recommendedLessons ?? []).filter((recommendation) => {
+        const competency = competencyForRecommendation(recommendation.lessonSlug);
+        return competency !== null
+          && new Set<DebateCompetency>([rubric.primary, ...rubric.reinforcement]).has(competency)
+          && !namesLocked(recommendation.reason, rubric.locked);
+      }),
+      guidedFeedback: unscoredGuidedFeedback(rubric),
+      aiProvider: full.aiProvider,
+      aiNotice: full.aiNotice,
+      fallbackNotice: full.fallbackNotice,
+      rubricSource: full.rubricSource
+    };
+  }
+
   const allowed = new Set(allowedJudgeCategories(rubric));
   // A category's own `reason` is learner-facing prose and gets the same treatment as every other
   // line on the ballot: if it names a locked competency the reason is dropped and the score stays.

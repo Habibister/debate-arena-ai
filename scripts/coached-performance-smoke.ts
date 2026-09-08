@@ -1329,7 +1329,12 @@ function main() {
       orient.misconception.wrongModel, orient.misconception.whyItFails, orient.misconception.betterModel,
       ...orient.commonMistakes.flatMap((m: { mistake: string; whyItFails: string; fix: string }) => [m.mistake, m.whyItFails, m.fix]),
       orient.scaffoldedTry.prompt, orient.scaffoldedTry.frame].map(words).reduce((a: number, b: number) => a + b, 0);
-    assert.ok(prose >= 600 && prose <= 1300, `teaching prose is orientation-sized: ${prose} words`);
+    // FLOOR RETIRED (beginner-simplification milestone 1). The lower bound was an anti-thin
+    // proxy — "more words = safer lesson" — and it blocked the beginner standard. Thinness is now
+    // guarded by the reviewed doctrine manifest (scripts/debate-beginner-manifests.json,
+    // debate-manifest-gate-smoke) plus human REMOVE-QUESTIONS / beginner-comprehension review.
+    // The CEILING stays: it protects against the opposite failure, which is still real.
+    assert.ok(prose <= 1300, `teaching prose is orientation-sized: ${prose} words`);
     assert.ok(prose + applied <= 1800, `whole lesson stays far from Clash's size: ${prose + applied} words`);
   });
 
@@ -1415,7 +1420,12 @@ function main() {
     assert.deepEqual(evidEntry.practiceDrill, { track: "debate", area: "evidence-evaluation" }, "and so is its drill");
     const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
     const prose = [evid.objective, evid.explanation, evid.whyMatters, ...evid.steps, ...evid.teachingSections.map((s: { heading: string; body: string }) => s.heading + " " + s.body)].map(words).reduce((a: number, b: number) => a + b, 0);
-    assert.ok(prose >= 800 && prose <= 1500, `teaching prose inside the guard: ${prose} words`);
+    // FLOOR RETIRED (beginner-simplification milestone 1). The lower bound was an anti-thin
+    // proxy — "more words = safer lesson" — and it blocked the beginner standard. Thinness is now
+    // guarded by the reviewed doctrine manifest (scripts/debate-beginner-manifests.json,
+    // debate-manifest-gate-smoke) plus human REMOVE-QUESTIONS / beginner-comprehension review.
+    // The CEILING stays: it protects against the opposite failure, which is still real.
+    assert.ok(prose <= 1500, `teaching prose inside the guard: ${prose} words`);
   });
 
   check("NB. the owner's four precision rulings are taught as written, and the crude versions are not", () => {
@@ -1524,9 +1534,16 @@ function main() {
     assert.deepEqual(atEntry.practiceDrill, { track: "debate", area: "rebuttal" }, "the drill CTA is unchanged");
     const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
     const prose = [at.objective, at.explanation, at.whyMatters, ...at.steps, ...at.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body)].map(words).reduce((a: number, b: number) => a + b, 0);
-    assert.ok(prose >= 900 && prose <= 1300, `teaching prose inside the guard: ${prose} words (was 421)`);
-    const qWords = atChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]).map(words).reduce((a: number, b: number) => a + b, 0);
-    assert.ok(prose > qWords * 1.5, `teaching now outweighs quiz text: ${prose} vs ${qWords}`);
+    // FLOOR RETIRED (beginner-simplification milestone 1). The lower bound was an anti-thin
+    // proxy — "more words = safer lesson" — and it blocked the beginner standard. Thinness is now
+    // guarded by the reviewed doctrine manifest (scripts/debate-beginner-manifests.json,
+    // debate-manifest-gate-smoke) plus human REMOVE-QUESTIONS / beginner-comprehension review.
+    // The CEILING stays: it protects against the opposite failure, which is still real.
+    assert.ok(prose <= 1300, `teaching prose inside the guard: ${prose} words`);
+    // RATIO RETIRED with the floors above: its only purpose was the same anti-thin proxy, and as a
+    // universal rule it is wrong twice over — it is satisfiable by shortening both sides, and a
+    // productive question legitimately needs scenario text. Answer Types has no quiz ceiling; the manifest gate carries the load.
+
   });
 
   check("PB. the taxonomy is stated as two directions with one named move inside each, consistently", () => {
@@ -1699,8 +1716,10 @@ function main() {
     const words = (t: string) => (t.match(/[A-Za-z\u2019'-]+/g) ?? []).length;
     const qWords = tmChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]).map(words).reduce((a: number, b: number) => a + b, 0);
     assert.ok(qWords < 1300, `the quiz layer shrank from 2,450 words: ${qWords}`);
-    const prose = [tm.objective, tm.explanation, tm.whyMatters, ...tm.steps, ...tm.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body)].map(words).reduce((a: number, b: number) => a + b, 0);
-    assert.ok(prose > qWords, `teaching now outweighs quiz text: ${prose} vs ${qWords}`);
+    // RATIO RETIRED with the floors above: its only purpose was the same anti-thin proxy, and as a
+    // universal rule it is wrong twice over — it is satisfiable by shortening both sides, and a
+    // productive question legitimately needs scenario text. The quiz CEILING below stays.
+
   });
 
   check("RB. the double turn is taught as a collision about one outcome, not as a count of reversals", () => {

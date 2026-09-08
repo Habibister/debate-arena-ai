@@ -944,6 +944,7 @@ function main() {
   const clashEntry = EDUCATION_REGISTRY.lessons.find((e: { id: string }) => e.id === CLASH);
   assert.ok(clashEntry, "control: the Clash lesson is registered");
   const clashContent = clashEntry.source.lesson.content;
+  const clashChecks = [clashContent.guidedQuestion, ...clashContent.practiceQuestions, ...clashContent.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
   const clashRubric = guidedRubricFor(CLASH);
   const { evaluateClashScaffold, evaluateScaffoldFor, SCAFFOLD_EVALUATORS } = coaching;
 
@@ -981,8 +982,9 @@ function main() {
   check("LC. the rebuilt Clash lesson has the reference shape and exactly three checks; the old questions are gone", () => {
     assert.equal(clashEntry.source.lesson.title, "Find the real clash");
     assert.equal(1 + clashContent.practiceQuestions.length + clashContent.masteryCheck.length, 3, "three checks: guided + 1 practice + 1 final");
-    assert.ok(clashContent.teachingSections.length >= 4 && clashContent.additionalExamples.length >= 1 && clashContent.revisionLadder.length >= 2);
-    assert.ok(clashContent.misconception && clashContent.commonMistakes.length === 7, "seven owned mistakes, including the strawmanned restatement");
+    // Beginner pass (2026-09-08, owner ruling): the depth structures the frozen manifest classed "after the beginner path" render BEFORE the first check, so their minimums were forcing Class-C material into required reading. Sections and the three frame purposes stay; additionalExamples is no longer required; one ladder rung suffices.
+    assert.ok(clashContent.teachingSections.length >= 4 && clashContent.additionalExamples === undefined && clashContent.revisionLadder.length >= 1);
+    assert.ok(clashContent.misconception && clashContent.commonMistakes.length >= 4, "the manifest's three mistake carriers plus the strawmanned restatement — no box may restate a section");
     assert.deepEqual(clashContent.languageFrames.map((f: { purpose: string }) => f.purpose), ["Identify the disagreement", "State the clash neutrally", "Connect the two sides"]);
     assert.equal(clashContent.scaffoldedTry.frame.split(SLOT).length - 1, clashContent.scaffoldedTry.slots.length, "three blanks, three slots");
     assert.ok(!("opponentClaim" in clashContent.scaffoldedTry), "a two-sided exercise carries no single opponent claim");
@@ -1120,14 +1122,14 @@ function main() {
       next: null, practiceDrill: clashEntry.practiceDrill
     } as never));
     const text = visible(clashHtml);
-    assert.ok(text.includes("Find the real clash") && text.includes("Different is not the same as opposed"), "the rebuilt teaching renders");
+    assert.ok(text.includes("Find the real clash") && text.includes("Job 1: Say what each side is trying to prove"), "the rebuilt teaching renders");
     assert.ok(text.includes("Words you can use") && text.includes("Now try the move"), "frames and the constructed attempt render");
     assertOrder(clashHtml, 'id="language"', 'id="practice"', "frames are teaching and precede the checks");
     assertOrder(clashHtml, 'id="scaffolded-try"', 'id="practice-drill"', "the constructed attempt precedes the drill CTA");
-    assertOrder(clashHtml, "Different is not the same as opposed", "Which of Side B", "teaching precedes the first check");
+    assertOrder(clashHtml, "Job 1: Say what each side is trying to prove", "Which of Side B", "teaching precedes the first check");
     for (const slot of ["1. side a", "2. side b", "3. the real clash"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
-    const firstSection = clashHtml.slice(clashHtml.indexOf("Different is not the same as opposed"), clashHtml.indexOf("Find the question both sides"));
-    assert.ok((firstSection.match(/<p class="mt-2 break-words leading-7/g) ?? []).length >= 3, "a section body with blank-line breaks renders as several paragraphs, not a wall");
+    const firstSection = clashHtml.slice(clashHtml.indexOf("Job 2: Ask whether both can be true at once"), clashHtml.indexOf("Job 3: Find the question both sides depend on"));
+    assert.ok(firstSection.length > 0 && (firstSection.match(/<p class="mt-2 break-words leading-7/g) ?? []).length >= 3, "a section body with blank-line breaks renders as several paragraphs, not a wall");
     assert.ok(clashContent.teachingSections.every((s: { body: string }) => s.body.includes("\n\n")), "every Clash section is paragraphed");
     assert.ok(text.includes("The guided round opens after a complete attempt here."), "the guided round is closed until the move is produced");
     assert.ok(!text.includes("Use it in a guided round"), "no guided link before a complete attempt");
@@ -1227,24 +1229,25 @@ function main() {
       "the both-true test is taught for degree claims, with the threshold words the model answers use");
     // And the degree move stays inside Clash: the cost-benefit look-alike is named as WEIGHING and
     // excluded, rather than modelled as a clash question the way an earlier draft did.
-    assert.ok(/Keep the amount inside the question the two sides are answering/.test(teaching), "the degree move is bounded");
-    assert.ok(/worth the cost[\s\S]{0,120}which is weighing/.test(teaching), "the cost-benefit look-alike is named as weighing and excluded");
+    assert.ok(/Put the amount inside the question/.test(teaching), "the degree move is bounded (B01, one example)");
+    // B02 is GUARD-ONLY in the beginner manifest: the cost-benefit look-alike is never presented as a clash question, and the lesson no longer has to say so.
+    assert.ok(!/worth (?:the cost|it)/i.test(teaching), "no cost-benefit question anywhere in the teaching (B02, guard-only)");
     // NO-CLASH EXIT. Digging that finds nothing is an honest answer, and the alternative is named.
     assert.ok(/Sometimes the honest result of digging is that there is no shared question/.test(teaching), "the exit condition is taught");
-    assert.ok(/Do not invent a dependency/.test(teaching), "and inventing a dependency is named as the failure");
+    assert.ok(/Do not invent a link the other side never made/.test(teaching), "and inventing a link is named as the failure");
     // FAIR RESTATEMENT. Taught, and carried by its own mistake and its own ladder rung.
     assert.ok(/Restate each side at the strength they gave it/.test(teaching), "fairness applies to the positions, not only the question");
     assert.ok(clashContent.commonMistakes.some((m: { mistake: string }) => /Restating the other side more weakly/.test(m.mistake)), "the strawman has its own mistake bullet");
     assert.ok(clashContent.revisionLadder.some((r: { diagnosis: string }) => /a position Side B never took/.test(r.diagnosis)), "and a ladder rung repairs one");
-    // The two ladder rungs repair DIFFERENT failures.
-    const [first, second] = clashContent.revisionLadder;
-    assert.ok(/wrong one of|paired the wrong|the wrong one/.test(first.diagnosis) || /can be true on the same/.test(first.diagnosis), "rung 1 is the both-true failure");
-    assert.ok(!/can be true on the same/.test(second.diagnosis), "rung 2 is a different failure, not the same repair twice");
+    // One rung: the strawman repair, which the worked example does not already teach. The wrong-pairing
+    // rung was the worked example re-skinned and was removed in the beginner pass.
+    assert.equal(clashContent.revisionLadder.length, 1, "one rung that earns its place");
+    assert.ok(!/can be true on the same/.test(clashContent.revisionLadder[0].diagnosis), "the surviving rung is not a second both-true repair");
     // The scaffold makes the learner choose which of two opposing arguments meets Side A.
-    assert.ok(/Only ONE of Side B's arguments meets Side A/.test(clashContent.scaffoldedTry.prompt), "the constructed attempt exercises the choice, not a flat contradiction");
-    // The irrelevant-dispute example is one a debater would actually raise.
+    assert.ok(/Only ONE of Side B's arguments clashes with Side A/.test(clashContent.scaffoldedTry.prompt), "the constructed attempt exercises the choice, not a flat contradiction");
+    // RULE-07b (a real dispute the round does not turn on) is Class C in the frozen manifest: the
+    // irrelevant-dispute teaching left the required path with its example. The throwaway stays banned.
     assert.ok(!/blue or green/.test(teaching), "the throwaway example is gone");
-    assert.ok(/eleven million or nine/.test(teaching), "and is replaced by a dispute a real round would have");
   });
 
   check("LM. the guided round never claims to measure Clash IDENTIFICATION — it measures engagement, and says so", () => {
@@ -1297,6 +1300,64 @@ function main() {
     assert.equal(guidedJudge.JUDGE_CATEGORY_COMPETENCY.clash, undefined, "control: no category maps to weighing");
     assert.ok(!allowedJudgeCategories(clashRubric).includes("clash"), "and it is not allowed in a Clash round");
   });
+
+  check("LN. Clash for beginners: the four frozen A-rules and the charter's regression routes are pinned in the learner's words", () => {
+    const sec = clashContent.teachingSections as Array<{ heading: string; body: string }>;
+    const [j1, j2, j3, j4] = sec.map((s) => s.body);
+    const required: string[] = [clashContent.objective, clashContent.explanation, ...sec.map((s) => s.heading + "\n\n" + s.body), clashContent.whyMatters, ...clashContent.steps,
+      ...Object.values(clashContent.workedExample as Record<string, string>),
+      ...clashContent.revisionLadder.flatMap((r: Record<string, string>) => Object.values(r)), ...Object.values(clashContent.misconception as Record<string, string>),
+      ...clashContent.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)), ...clashContent.languageFrames.flatMap((g: { purpose: string; starters: string[] }) => [g.purpose, ...g.starters])];
+    const all = [...required, clashContent.scaffoldedTry.prompt, clashContent.scaffoldedTry.frame, ...clashChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]), clashEntry.source.description, clashEntry.source.lesson.summary].join("\n");
+    assert.deepEqual(sec.map((s) => s.heading), ["Job 1: Say what each side is trying to prove", "Job 2: Ask whether both can be true at once", "Job 3: Find the question both sides depend on", "What clash is not"], "three jobs and the boundary");
+    // RULE-01 — the both-true test, on OPPOSITE-side arguments, with the paradigm pair and the reversal.
+    assert.ok(/Sounding opposed is not the test; the test is whether both can be true at the same time\./.test(j2), "RULE-01 stated");
+    assert.ok(/Both can be true, so no clash yet\./.test(j2) && /Now both cannot be true\. That is a clash\./.test(j2), "and shown on one pair, both ways");
+    assert.ok(/Opposite sides tell you where to look for a clash\. They do not make one\./.test(clashContent.commonMistakes[0].whyItFails) && /can both be true at once/.test(clashContent.misconception.whyItFails), "opposite-side scope is where you look, never the test; the misconception card carries the both-true reason once");
+    // RULE-02 + B06.
+    assert.ok(/One sentence per side, in words they would accept\./.test(j1) && /Restate each side at the strength they gave it\./.test(j1), "RULE-02 and fair restatement");
+    // RULE-04 — one level down, opposite ways, different words.
+    assert.ok(/Ask what each argument needs to be true to work\./.test(j3) && /The thing both need, going opposite ways, is the clash\./.test(j3), "RULE-04 stated");
+    assert.ok(/if this were false, would the argument still stand\? What would break it is what it needs\./.test(j3), "and the needs move is explained as a how-to, not only shown");
+    assert.ok(/It usually sits one level below what either speaker said, in different words on each side\./.test(j3));
+    // RULE-05 — a question either side could still win, narrower than the motion, no loaded word.
+    assert.ok(/State it as a question either side could still win, narrower than the motion\./.test(j3) && /that word is doing your arguing for you\. Take it out\./.test(j3), "RULE-05 stated");
+    // Motion ≠ clash, taught once in the boundary section.
+    assert.ok(/Not the motion\. “The clash is whether the cafeteria should go meat-free” tells the judge nothing; every argument fits under it\./.test(j4), "motion is not the clash");
+    // The first complete clash (pair → both true → what each needs → the question) lands inside the explanation's first 100 words.
+    const expl = clashContent.explanation; const at = (re: RegExp) => expl.slice(0, expl.search(re)).trim().split(/\s+/).length;
+    assert.ok(expl.search(/That is the real disagreement: will students actually eat/) > 0 && at(/That is the real disagreement/) <= 100, "a real clash is shown before any definition");
+    // REGRESSION ROUTES the charter names. Each is a sentence a simplifier could write; none may appear.
+    for (const route of [/automatically (?:clash|disagree|in clash)/i, /opposite sides?,? (?:so|therefore|which means) they clash/i, /both (?:can|could) be true,? (?:so|then) one (?:of them )?(?:must be|is) wrong/i, /(?:if|when) both (?:can|could) be true,? there (?:can never be|is never|cannot be) a clash/i, /the motion is the clash/i, /agree(?:ing)? (?:on|about) (?:the )?direction[^.]{0,40}no clash/i, /(?:weighing|refutation) (?:is|and clash are) the same/i, /worth (?:the cost|it)/i]) {
+      assert.ok(!route.test(all), `regression route absent: ${route}`);
+    }
+    // Frames give shape only: no starter names a winner or a verdict.
+    for (const g of clashContent.languageFrames) for (const st of g.starters) assert.ok(/___/.test(st) && !/\b(wins?|right|wrong|should win|fails?|better)\b/i.test(st), `starter supplies shape only: ${st}`);
+    assert.ok(/^Side A argues ___\. Side B argues ___\. The real clash is whether ___\.$/.test(clashContent.scaffoldedTry.frame), "the one-sentence clash frame");
+    // Beginner ceilings (floors retired in f0e17f7). The required path here is dominated by 52 pinned depth fields.
+    const wc = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    for (const field of required) {
+      for (const para of field.split(/\n\n+/)) assert.ok(wc(para) <= 65, `no paragraph above 65 words: ${para.slice(0, 60)}`);
+      for (const sentence of field.replace(/\n+/g, " ").split(/(?<=[.?!][)”"]?)\s+(?=[A-Z“"(])/)) assert.ok(wc(sentence) <= 40, `no sentence above 40 words: ${sentence.slice(0, 60)}`);
+    }
+    assert.ok(required.map(wc).reduce((a, b) => a + b, 0) <= 1100, `required path ceiling: ${required.map(wc).reduce((a, b) => a + b, 0)}`);
+    // Length lattice and lone-cue rules on the three checks, as for the other beginner lessons.
+    const STOP = new Set(["the", "a", "an", "and", "or", "of", "to", "in", "on", "it", "is", "are", "that", "this", "them", "they", "you", "your", "both", "for", "with", "not", "no", "so", "at", "as", "by", "one", "two", "their", "its", "what", "which", "when", "than", "then", "does", "do", "up"]);
+    const words = (t: string) => (t.toLowerCase().match(/[a-z’'-]+/g) ?? []);
+    const MODALS = /\b(can|could|may|might|would|should|must|whichever|whatever|whoever|any)\b/i;
+    clashChecks.forEach((q, i) => {
+      const lens = q.choices.map(wc), chars = q.choices.map((o) => o.length); const k = q.choices.indexOf(q.correctAnswer);
+      const mw = Math.max(...lens), nw = Math.min(...lens), mc = Math.max(...chars), nc = Math.min(...chars);
+      assert.ok(!(lens.filter((x) => x === mw).length === 1 && lens[k] === mw) && !(lens.filter((x) => x === nw).length === 1 && lens[k] === nw), `Q${i + 1}: key not uniquely longest or shortest by words`);
+      assert.ok(!(chars.filter((x) => x === mc).length === 1 && chars[k] === mc) && !(chars.filter((x) => x === nc).length === 1 && chars[k] === nc), `Q${i + 1}: nor by characters`);
+      assert.ok(mw - nw <= 5 && mc - nc <= 16, `Q${i + 1}: options are length-matched (${lens.join("/")} words, ${chars.join("/")} chars)`);
+      const stem = new Set(words(q.prompt)); const echoes = q.choices.map((o) => { const w = words(o); const last = w[w.length - 1]; return Boolean(last) && !STOP.has(last) && stem.has(last); });
+      assert.ok(!(echoes[k] && echoes.filter(Boolean).length === 1), `Q${i + 1}: the key is not the only option whose final word echoes the stem`);
+      const modal = q.choices.map((o) => MODALS.test(o)); assert.ok(!(modal[k] && modal.filter(Boolean).length === 1), `Q${i + 1}: the key is not the only option with a modal`);
+    });
+    assert.deepEqual(clashChecks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["C", "B", "D"], "keys as authored and reviewed");
+  });
+
 
   // ================================================================================================
   // ROUND ORIENTATION — a CONCEPTUAL lesson repaired after an audit, not rebuilt. It proves the

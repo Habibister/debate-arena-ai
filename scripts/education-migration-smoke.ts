@@ -594,7 +594,8 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   // not parliamentary-format curriculum. The tripwire's purpose (the held parliamentary-roles /
   // case-topic-definitions lessons and any parliamentary PROCEDURE teaching stay out) is preserved
   // by allowing the word ONLY inside that exact accepted sentence; any other occurrence still fails.
-  const ALLOWED_PARLIAMENTARY_SENTENCE = "in many parliamentary rounds the judge will just call all of this refutation";
+  // Re-keyed for the beginner rewrite of turn-mechanics (same sentence, plainer words).
+  const ALLOWED_PARLIAMENTARY_SENTENCE = "many parliamentary judges call all of it refutation";
   const scrubbed = registryText.split(ALLOWED_PARLIAMENTARY_SENTENCE).join("");
   assert.ok(registryText.includes(ALLOWED_PARLIAMENTARY_SENTENCE),
     "12a. control: the accepted B2.2 format-honesty sentence really is the occurrence being allowed");

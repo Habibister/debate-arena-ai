@@ -1454,29 +1454,29 @@
     "track": "DEBATE",
     "category": "Debate responses",
     "name": "Turn Mechanics",
-    "description": "Split a causal argument into action, link, and impact, choose the answer each part supports, and test whether two answers, granted together, add up to a reason against your own side.",
+    "description": "Split an argument into action, link, and impact; say what an answer does to it; and check that two answers, taken together, do not add up to a reason against your own side.",
     "lesson": {
       "title": "Turn the right part of the argument",
       "slug": "debate-turn-mechanics-lesson",
-      "summary": "Split a causal argument into action, link, and impact; tell denials from reversals at each part; and test two answers against the outcome they are about.",
+      "summary": "Two jobs: name what your answer does to their argument, and check that two answers you use together do not add up against your own side.",
       "estimatedMinutes": 10,
       "content": {
-        "objective": "Split a causal argument into action, link, and impact; choose whether to deny, shrink, or reverse a part; and check that answers you run together do not add up to a reason against your own side.",
-        "explanation": "In the answer-types lesson you learned to sort answers by what they accomplish, and you met the turn — the reversal that makes an opponent’s own argument count for your side. You were promised that turns come in named varieties. This is that lesson, and the names depend on WHERE in the argument the reversal happens.\n\nStart with the argument. Your side proposes a skate park in Miller Park; the opponent answers that it will bring more teenagers into the neighborhood, and that more teenagers around is bad for residents. That is a chain with three parts. An ACTION: build the park. A LINK: the causal claim that the action produces an outcome, more teenagers around. An IMPACT: the value claim that the outcome is bad, noise and trouble. Almost every argument that predicts a consequence has that shape.\n\nArguments do not always arrive in three neat parts. “A skate park will ruin this neighborhood” is one clause doing all three jobs. Split it with three questions: what do they say we would do, what do they say it causes, and why is that supposed to be bad? If they never said the middle step, that gap is worth naming out loud. Some arguments have more steps in the middle than one, and the same questions apply at each of them.\n\nYou can answer the connection or the endpoint, and at either you can deny, shrink, or reverse. Four of those get names in this lesson, and they are not four strengths of one answer: they do different things.",
-        "whyMatters": "Often the honest choice is no turn at all: a clean no-link or a modest impact defense is frequently the stronger, safer play, exactly as the last lesson said about defense generally. One note on the words themselves. These labels travel with the idea, not the other way around. Public Forum opponents and judges use them; in many parliamentary rounds the judge will just call all of this refutation. If the vocabulary ever draws blank looks, drop the labels and keep the logic — what disappears, what shrinks, and what reverses is the same in every format.",
+        "objective": "Split an argument into action, link, and impact; name what an answer does to a part; and check that answers you use together do not add up to a reason against your own side.",
+        "explanation": "Your side wants a skate park in Miller Park. The other side says: “A skate park will bring more teenagers into the neighborhood, and more teenagers around means noise and trouble.”\n\nThat argument is a chain with three parts. ACTION: build the park. LINK: the park brings more teenagers around (the outcome). IMPACT: more teenagers around is bad.\n\nOne sentence can hide all three. Split it with three questions: what would we do, what does it cause, and why is that bad?\n\nTwo jobs follow: name the move; check the pair.",
+        "whyMatters": "Public Forum judges use these names; many parliamentary judges call all of it refutation. If the words draw blank looks, drop the labels and keep the logic. Building a full answer around the move is the Refutation lesson’s job.",
         "steps": [
-          "Map their chain: what action, causing what outcome, and why is that outcome supposed to matter?",
-          "Pick your target: the connection between action and outcome, or the endpoint where the outcome is called bad.",
-          "Ask what is true if your answer fully succeeds: does that part disappear (a no-link), shrink (impact defense), or reverse (a link turn at the connection, an impact turn at the endpoint)?",
-          "For a reversal, say what reverses and why the reversed result follows — and check that the result depends on your side rather than arriving either way.",
-          "If you are making more than one answer, name the outcome each one is about, put them in comparable words, check whether those outcomes are the same on all four counts — and if they overlap only in part, run the last question on the part they share — grant them both, and ask whether both can stand without making your own side the thing that removes the good, or delivers the harm, that the other answer just named.",
-          "If they cannot, keep the reversal you can win and let the other part take plain defense or silence."
+          "Map their chain: what action, causing what outcome, and why is that bad?",
+          "Pick the part you are answering: the link or the impact.",
+          "Ask what is true if it fully succeeds: gone (no-link), smaller (impact defense), or the other way (a turn)?",
+          "Count a reversal as a turn only if the result happens because of your side.",
+          "Two answers together? Name each outcome and check it is the same in all four ways, or on the part they share.",
+          "Grant both. If your side now removes the good, or causes the harm, your other answer named, keep the reversal you can win; the other part gets plain defense or silence."
         ],
         "workedExample": {
-          "prompt": "Topic: the town should build a skate park in Miller Park. The opponent’s one argument: “The skate park will bring more teenagers into the neighborhood, and more teenagers around is bad for residents — noise and trouble.” Answer this single argument four ways — deny the connection, reverse the connection, shrink the endpoint, reverse the endpoint — then decide which of your answers may be run together.",
-          "weakAnswer": "Run all four at once: the park will not bring more teenagers; even if it does, it is a handful of skaters; actually the park pulls teens off the surrounding streets; and honestly, more teenagers around would be good for the neighborhood anyway. Four answers beat one — we win this argument four different ways.",
-          "strongAnswer": "Label each answer by what it does to the chain before running any of them. “The regional skate park two towns over already absorbs the skaters — this park will not add teenagers to the neighborhood” denies the action-outcome connection: a no-link, defense. “Teens already hang around the pharmacy and the bank steps; a park gathers them into one supervised corner, so the streets see fewer roaming teens” reverses the connection: a link turn, offense. “Even if the park draws a few more teens, a dozen kids on a Saturday is not the noise and trouble they describe” shrinks the endpoint: impact defense. “More teenagers around would be a benefit, not a harm — young people out in the open, known to their neighbors, make a street feel alive” reverses the value of the very outcome they forecast: an impact turn, offense. Now test the pair of reversals. Both are about the same outcome — teenagers around this neighborhood, now, on these streets — and granted together they say the park removes something we have just called good. They collide, so choose one story: run the link turn and leave the more-teens-is-good thought unsaid, or run the impact turn and drop the claim that the park thins the streets.",
-          "whyItWorks": "Two things happen here that the weak answer skips. Each response is classified by which part it touches and what happens to that part — disappear, shrink, or reverse — which is what makes the no-link defense, the shrink defense, and the two reversals offense. Then the reversals are tested against each other on the outcome itself. It is the same outcome in both, so the test applies at all; what convicts them is that granting both makes our own park the thing that removes the good we have just named. Had the link turn been about teenagers on the surrounding streets and the impact turn about teenagers inside a fenced park, they would have been two different outcomes and both could have stood. Counting reversals would never have told you either way."
+          "prompt": "Same skate park, same argument. Your two drafted reversals: the park pulls teens off the surrounding streets, and teens inside a fenced park are safer. What may you say?",
+          "weakAnswer": "Two reversals against one argument is a double turn. Drop one.",
+          "strongAnswer": "Check the pair. Answer one: teens on the surrounding streets, fewer. Answer two: teens inside the park, safer. Different thing, different place — not the same outcome, so they cannot collide. Say both.",
+          "whyItWorks": "Counting reversals said drop one; the check said keep both. Only a pair about the same outcome can add up against you."
         },
         "guidedQuestion": {
           "prompt": "Your team proposes moving the school start time to 9 a.m. The opponent answers: “A later start will push practices into the evening, and evening practices keep athletes out past dark.” Which part of what they said is the link?",
@@ -1487,8 +1487,8 @@
             "The school day would end an hour later than the families are all used to"
           ],
           "correctAnswer": "A later start will push the school’s sports practices into the evening",
-          "hint": "The link is the causal claim that the action produces an outcome.",
-          "explanation": "The action is moving the start time; the impact is the harm of being out past dark. The link is the middle claim that the action produces the outcome — a later start pushing practices into the evening. The fourth is a real consequence of the action, but they never said it, so it is no part of their chain.",
+          "hint": "The link is the claim that the action causes an outcome.",
+          "explanation": "The action is moving the start time; the impact is the harm of being out past dark. The link is the middle claim that the action causes the outcome — a later start pushing practices into the evening. The fourth is a real result of the action, but they never said it, so it is no part of their chain.",
           "skillTag": "Turn Mechanics"
         },
         "practiceQuestions": [
@@ -1496,26 +1496,26 @@
             "prompt": "Your school proposes compost bins in the cafeteria. The opponent argues: “Compost bins will attract pests, and pests in a cafeteria are a health hazard.” You answer: “These are sealed bins emptied daily — schools running this exact system report no change in pest sightings.” If your answer succeeds, what has it done?",
             "choices": [
               "A link turn: the pest problem they raised now gives the judge a reason to want bins",
-              "A no-link: the outcome they predicted never arrives at all, so nothing counts for you",
+              "A no-link: the outcome they predicted never arrives at all, so nothing new is gained",
               "An impact turn: the pests arrive, and their presence is defended as good for the school",
-              "Impact defense: the pests still arrive but matter far less to a cafeteria than claimed"
+              "Impact defense: the pests still arrive, but they never matter as much as was claimed"
             ],
-            "correctAnswer": "A no-link: the outcome they predicted never arrives at all, so nothing counts for you",
+            "correctAnswer": "A no-link: the outcome they predicted never arrives at all, so nothing new is gained",
             "hint": "Ask what is true if it succeeds: has the outcome vanished, or moved the other way?",
-            "explanation": "The answer says the outcome does not arrive at all. That is a no-link, and it is defense: their argument goes, and nothing new counts for your side. A link turn would have to claim the bins lower pest numbers below what the cafeteria has now, which is not what was said, and neither impact answer applies to an outcome the answer denies.",
+            "explanation": "The answer says the outcome does not arrive at all. That is a no-link, and it is defense: their argument goes, and nothing new counts for your side. A link turn would have to claim the bins lower pest numbers below what the cafeteria has now, which is not what was said. Neither impact answer fits an outcome the answer denies.",
             "skillTag": "Turn Mechanics"
           },
           {
             "prompt": "The town proposes lighting the river trail at night. The opponent argues: “Lighting will draw crowds of evening visitors, and nightly crowds are the last thing this quiet neighborhood needs.” You answer: “They are right that the visitors will come, and that is the good news — a trail with people on it every evening is a trail residents feel safe walking.” Which move is that?",
             "choices": [
               "An impact defense: the crowds still arrive, and the answer cuts how much that presence would cost",
-              "An impact turn: the crowds still arrive, and the answer makes their arrival the case for the plan",
+              "An impact turn: the crowds still arrive, and the answer makes their arrival a reason for the plan",
               "A link turn: fewer crowds arrive, and the answer says the unlit trail draws more of them now",
               "A no-link: the crowds do not arrive, and the answer says lighting is not what brings them out"
             ],
-            "correctAnswer": "An impact turn: the crowds still arrive, and the answer makes their arrival the case for the plan",
+            "correctAnswer": "An impact turn: the crowds still arrive, and the answer makes their arrival a reason for the plan",
             "hint": "Shrinking leaves the outcome bad. Reversing makes it good.",
-            "explanation": "The answer never says the crowds will be smaller or quieter. It grants that they arrive and argues their arrival is a benefit, which reverses the value of the endpoint: an impact turn, and offense. Impact defense would leave the crowds a nuisance and shrink it; the two link answers describe things this answer never claims.",
+            "explanation": "The answer never says the crowds will be smaller or quieter. It grants that they arrive and argues their arrival is a benefit, which reverses the impact: an impact turn, and offense. Impact defense would leave the crowds a nuisance and shrink it; the two link answers describe things this answer never claims.",
             "skillTag": "Turn Mechanics"
           },
           {
@@ -1528,86 +1528,86 @@
             ],
             "correctAnswer": "Those extra class reviews are how knowledge sticks, so the learning would end up deeper",
             "hint": "An impact turn grants the outcome and reverses what it is worth.",
-            "explanation": "Their endpoint is the reteaching, called a cost. The reteaching answer grants it happens and argues it is a benefit: an impact turn. The remembering answer reverses the connection instead, so it is a link turn. The warm-up answer shrinks the cost and stays defense, and the summer-holiday answer goes after their evidence, which is an indict and also defense.",
+            "explanation": "Their impact is the reteaching, called a cost. The reteaching answer grants that it happens and argues it is a benefit: an impact turn. The remembering answer reverses the link instead, so it is a link turn. The warm-up answer shrinks the cost and stays defense. The summer-holiday answer attacks their reason to expect any forgetting: nothing granted, nothing reversed, so defense.",
             "skillTag": "Turn Mechanics"
           }
         ],
         "masteryCheck": [
           {
-            "prompt": "Your side proposes a Saturday farmers market in the school lot. The opponent argues: “A market draws outsiders onto campus, and outsiders on school grounds are a safety risk.” You give two answers: a staffed market means fewer unsupervised strangers drifting through the lot than it gets on an empty Saturday now; and the stallholders and shoppers a market brings are good for the school, because they buy from student fundraisers. Do these two answers collide?",
+            "prompt": "Your side proposes a Saturday farmers market in the school lot. The opponent argues: “A market draws outsiders onto campus, and outsiders on school grounds are a safety risk.” You give two answers: a staffed market means fewer unsupervised strangers drifting through the lot than it gets on an empty Saturday now; and the shoppers a market brings are good for the school, because they buy from student fundraisers. Do these two answers add up against your side?",
             "choices": [
-              "Yes, because two reversals aimed at one opposing argument compose into a double turn",
-              "No, because the first answer names the drifters and the second the paying shoppers",
-              "Yes, because granting both would mean the market removes the very shoppers we called good",
-              "No, because a debater may give the judge as many answers as the speech time allows"
+              "Yes, because the drifters and the shoppers are the same outsiders on the same lot",
+              "No, because the first answer names drifters, the second the shoppers a market brings",
+              "Yes, because granting both means the market removes the very shoppers we called good",
+              "No, because a debater may give the judge as many answers as the time allows"
             ],
-            "correctAnswer": "No, because the first answer names the drifters and the second the paying shoppers",
+            "correctAnswer": "No, because the first answer names drifters, the second the shoppers a market brings",
             "hint": "Name the outcome each answer is about before you count anything.",
-            "explanation": "Run the test. The first answer is about unsupervised strangers drifting through the lot; the second is about stallholders and shoppers. Different people, so granting both leaves the opponent nothing: the market removes the drifters and brings the shoppers, and nothing we said takes away the good we named. Two reversals do not collide by being two, and the number of answers you may give is a separate question from whether granting both would hand the opponent a reason against you.",
+            "explanation": "Run the check. The first answer is about strangers drifting through the lot; the second is about shoppers at the stalls. Different people, so the outcomes are not the same. Grant both: the market removes the drifters and brings the shoppers, and nothing we said takes away the good we named. Two reversals do not add up against you just by being two, and how many answers you may give is a separate question.",
             "skillTag": "Turn Mechanics"
           },
           {
-            "prompt": "You are defending a fenced dog park. The opponent argues: “a dog park brings more dogs into the neighborhood, and more dogs mean more noise.” You have drafted two responses: the fenced park pulls the neighborhood’s dogs off the sidewalks into one enclosure, and anyway more dogs about the place would be good, because dog walkers make streets feel watched. You run the audit before you speak. What should you do?",
+            "prompt": "You are defending a fenced dog park. The opponent argues: “A dog park brings more dogs into the neighborhood, and more dogs mean more noise.” You have drafted two responses: the fenced park pulls the neighborhood’s dogs off the sidewalks into one enclosure, and anyway more dogs around would be good, because dog walkers make streets feel watched. You check the pair before you speak. What should you do?",
             "choices": [
-              "Keep the reversal you can win and give the other part ordinary defense, so one story stands",
+              "Keep the reversal you can still win, and give the other part plain defense instead of a turn",
               "Say the two responses answer two different arguments of theirs, so the pair can still stand",
-              "Add a third answer that shrinks the noise and keep both reversals, so defense can outnumber them",
-              "Withdraw the weaker response and grant that the park adds noise, so the stronger one stands alone"
+              "Add a third answer of plain defense that shrinks the noise, and keep both reversals too",
+              "Withdraw the weaker response and admit the park adds noise, so the reversal you can win stands alone"
             ],
-            "correctAnswer": "Keep the reversal you can win and give the other part ordinary defense, so one story stands",
-            "hint": "One story, not two. Which reversal can you still win?",
-            "explanation": "Both answers are about the same outcome, dogs about the neighborhood, and granted together they say your own park removes something you have just called good — which the opponent can simply agree with. The audit says choose: keep one reversal and let the other part take ordinary defense or silence. Keeping both reversals leaves the collision in place, and piling more defense on top does not remove it — counting answers is not the test; answers to two different arguments can collide anyway when they meet on one outcome, and these plainly answer the same one; and granting that your own park adds the noise takes back the reversal you just kept.",
+            "correctAnswer": "Keep the reversal you can still win, and give the other part plain defense instead of a turn",
+            "hint": "Two reversals about the same dogs. The check says choose.",
+            "explanation": "Both answers are about the same outcome — dogs around the neighborhood — and granted together they say your own park removes something you just called good. The check says choose: keep one reversal and let the other part take plain defense or silence. Keeping both reversals leaves the problem in place, and more defense on top does not remove it. The two responses plainly answer the same argument. And admitting that your park adds noise hands them the harm for free — the other part needs defense, not surrender.",
             "skillTag": "Turn Mechanics"
           }
         ],
         "teachingSections": [
           {
-            "heading": "Four answers to one chain",
-            "body": "Take the skate-park chain and answer it four ways.\n\n“The park will not bring more teenagers — the big regional skate park is two towns over, and small local parks like this sit half empty.” This denies that the action causes the outcome; the chain never starts. That is a NO-LINK. If it succeeds their argument disappears and nothing counts for your side — in the last lesson’s language, defense.\n\n“Teenagers already hang around this neighborhood, skating outside the pharmacy and sitting on the bank steps. A park gathers them into one supervised corner, so the streets see fewer roaming teens, not more.” This does not deny the connection; it reverses the direction — the action lowers the very thing they said it raises. That is a LINK TURN, and it is offense: their own concern now argues for the park. A no-link says the arrow from action to outcome does not exist; a link turn says it points the other way. Different moves with different results, not weaker and stronger versions of one answer.\n\nNow the endpoint, where shrinking comes in two kinds. You can say less of the outcome arrives — “even if the park draws a few more teenagers, it is a dozen skaters on weekend afternoons” — which is really a claim about how strongly the connection works. Or you can say the outcome arrives and matters less than they say: “a dozen skaters on a Saturday afternoon is not the noise and trouble they are describing.” Debaters call the second IMPACT DEFENSE. Both are defense: the outcome stays bad, there is simply less of it or less at stake, and nothing counts for your side.\n\nThe endpoint can be reversed too: “more teenagers around is exactly what this neighborhood should want — young people out in the open, visible and known to their neighbors, make a street feel alive instead of empty.” This grants that the outcome happens and reverses its value. That is an IMPACT TURN, offense again, because their predicted outcome is now a reason to vote your way. Shrinking and reversing are different moves: impact defense leaves the outcome bad but smaller; an impact turn makes it good."
+            "heading": "What one answer is doing",
+            "body": "Answer the link or the impact: deny it, shrink it, or reverse it (a TURN). Two parts, three moves each: six. Four have names below; the other two are plain defense, meaning defense with no turn in it.\n\nNO-LINK denies the link: “The regional park already has the skaters; this one will not bring more.” Their argument disappears and nothing new counts for your side: that is defense.\n\nLINK TURN reverses the link: “Teens already roam these streets; a park gathers them in one supervised corner, so the streets see fewer.” Their own worry now argues for the park: that is offense — something now counts for you.\n\nIMPACT DEFENSE shrinks the impact: “A dozen skaters on a Saturday is not noise and trouble.” The outcome arrives but matters less than they say. Defense. (Saying “fewer teenagers will come” shrinks the link instead. Defense too.)\n\nIMPACT TURN reverses the impact: “Teenagers out in the open, known to their neighbors, make a street feel alive.” The outcome arrives, and it is good. Offense.\n\nTo tell which move you made, ask: if my answer completely succeeds, what is true? Gone, smaller, or the other way?\n\nA reversal only counts if the result happens because of your side. Teenagers who would be there with or without the park win you nothing — you have not turned anything."
           },
           {
             "heading": "When two answers add up against you",
-            "body": "Answers can be strong one at a time and still not survive being said together. Run both reversals above and listen to the pair: the park means fewer teenagers around, and more teenagers around would be good. Granted together they say your own plan prevents something you call good, and the opponent can agree with both and take that as the reason to vote against the park. That is the DOUBLE TURN. It is a collision between two claims, not a rule about how many reversals you are allowed.\n\nSo the test is about the outcome, not about the labels. Two answers collide when both of them, granted about the SAME outcome — the same measure, the same who or what in the same place, the same stretch of time, the same conditions — add up to a reason against your own side. Note what that does not require: the two claims usually can both be true, and that is exactly why the opponent can agree with both. Run the test in five moves. Name the exact outcome each answer is about. Put both in comparable words. Check whether they are about the same outcome, on all four counts. If they share none of it, they are not candidates for a collision. If they overlap only in part, they are candidates for that part alone: name the part they share and run the last question on it. Then grant them both for the length of the test and ask the question that decides it: granting both, can both stand without making your own side the thing that removes the good, or delivers the harm, that your other answer just named? Matching measures make two claims comparable; only that last question makes the pair self-defeating.\n\nTwo things follow, and both matter. Reversals that look like a pair may not be one: “the Saturday market brings fewer weekend loiterers onto the lot than the empty lot draws now” and “the visitors who come to buy from student stalls are good for the school” are about different people, so granting both leaves the opponent nothing. And answers to two different arguments can collide, if they meet on one outcome: thinning teen presence on their noise argument while defending teen presence on their loitering argument is the same self-defeating pair, spread across two flows.\n\nOne pairing passes this test rather than dodging it: “it will not happen — and even if it does, it would be good.” The first half is a denial, not a reversal, so it never claims your side removes anything; granting both, your side is not the thing that takes away the good the second half names. Put a reversal in front of the same words and it fails: “the park thins the streets — and even if more teens come, that is good” does claim your side removes the very thing the second half calls good."
+            "body": "Now say both reversals together: fewer teenagers around, and more teenagers around would be good.\n\nBoth can even be true at the same time — and that does not make them safe together.\n\nTo grant an answer means to treat it as true for a moment, so you can see what follows. Grant both. Together they say our park removes something we just called good. The other side can agree with both — and use that against the park.\n\nThat pair is a DOUBLE TURN. The problem is what the two answers add up to, not how many reversals you made. Two answers collide when, granted together about the same outcome, they add up to a reason against your own side."
           },
           {
-            "heading": "What makes a reversal count for you",
-            "body": "A reversal counts as offense only when the result it creates would give the judge a reason to prefer your side. The test is what the answer would establish if it were accepted, not whether the judge ends up believing it. Suppose you argue that more teenagers around is good, and the same teenagers would be there whether or not the park is built: you have changed how the outcome is judged and given nobody a reason to choose you. The same holds at the connection — if the teens were never going to roam the streets, proving your park keeps them away wins nothing extra. Ask of any reversal whether the result depends on your side. A reversal that fails that test has not earned the name: it is a claim about something that happens either way, not a turn.\n\nThe second duty is this lesson’s own, and it is the same for both reversals. Saying “it flips” is not a reversal: you have to say WHAT reverses, the connection or the endpoint, and WHY the reversed result follows — teens already gather on these streets and a park concentrates them; an evening street with people on it is safer than an empty one. Naming the move tells you what you are trying to accomplish; the reason is what makes it land. Building that into a complete answer, with the because and the therefore, is the refutation lesson’s job.\n\nTwo boundaries to keep straight. A reason of your own that does not run through their argument is offense, but it is not a turn: a turn takes their outcome and makes it yours. And an answer aimed at their evidence is an indict from the last lesson, which is defense — going after the evidence becomes a turn only when what you show makes their own argument point your way. The outcome question settles the direction first, every time."
+            "heading": "Check your answers before you speak",
+            "body": "Name each outcome so the two can be compared: fewer teenagers around; more teenagers around.\n\nIs that the same outcome in all four ways? (1) the same thing being measured; (2) the same who or what, in the same place; (3) the same stretch of time; (4) the same conditions, such as with the park built.\n\nShare none of them? They cannot collide. Share only part — one answer about all teenagers, the other only about skaters? Run the grant question below on the part they share: the skaters.\n\nTake the good thing, or the harm, that one answer names. Grant both. Does your other answer now make your own side the thing that removes that good, or causes that harm? Same outcome only means the two answers can be compared. This question is what decides it.\n\nIf yes, keep the reversal you can win — the one you have the better reason for. The other part gets plain defense, or silence (say nothing about it)."
           }
         ],
         "misconception": {
           "wrongModel": "Two reversals against the same argument are a double turn.",
-          "whyItFails": "The number of reversals is not what makes a pair defective. What makes it defective is that the two answers, both granted about the same outcome, add up to a reason against your own side: your plan removes the very thing you have just called good. Two reversals whose outcomes are genuinely different sit together perfectly well, and two answers to two different arguments can collide when they meet on one outcome.",
-          "betterModel": "Name the outcome each answer is about, put them in comparable words, check whether those outcomes are the same on all four counts — same measure, same who or what in the same place, same stretch of time, same conditions — and if they overlap only in part, run the last question on the part they share — then grant both and ask whether both can stand without making your own side the thing that removes the good, or delivers the harm, that the other answer just named."
+          "whyItFails": "Counting is not the test.",
+          "betterModel": "Name each outcome. If it is the same in all four ways, grant both and ask whether your own side now removes the good, or causes the harm, the other answer named."
         },
         "commonMistakes": [
           {
-            "mistake": "Calling an answer a turn without saying why the reversed result follows.",
-            "whyItFails": "“It actually flips” names a move and gives the judge nothing to believe. A reversal that is only asserted is one the other side can simply deny.",
-            "fix": "Say which part reverses, and give the reason it reverses, in one sentence."
+            "mistake": "Answering the whole argument at once.",
+            "whyItFails": "No part disappears, shrinks, or reverses.",
+            "fix": "Split it into action, link, and impact. Answer one part."
           },
           {
-            "mistake": "Denying the connection and calling it a link turn.",
-            "whyItFails": "A no-link says the outcome never arrives; a link turn says your side lowers the very thing they said it raises. The first leaves nothing counting for you.",
-            "fix": "Ask what is true if the answer succeeds: has the outcome vanished, or has it moved the other way?"
+            "mistake": "Denying the link and calling it a link turn.",
+            "whyItFails": "A no-link makes the outcome vanish; a link turn makes your side lower it.",
+            "fix": "Ask what is true if the answer succeeds: gone, or the other way?"
           },
           {
             "mistake": "Reversing an outcome that would arrive either way.",
-            "whyItFails": "If the good thing you are now defending happens whether or not your side wins, you have changed how it is judged without giving the judge a reason to choose you.",
-            "fix": "Check that the reversed result depends on your side before counting it as offense."
+            "whyItFails": "The judge gets no reason to pick you.",
+            "fix": "Ask: would it happen without us? If yes, it is not a turn."
           },
           {
-            "mistake": "Judging a pair of answers by counting reversals.",
-            "whyItFails": "Two reversals about genuinely different outcomes sit together perfectly well, and two answers to separate arguments can still collide. Counting is not the test.",
-            "fix": "Name the outcome each answer is about, put both in comparable words, and check whether those outcomes are the same on all four counts — same measure, same who or what in the same place, same stretch of time, same conditions — and if they overlap only in part, run the last question on the part they share — then grant both and ask whether they can stand without making your own side remove the good, or deliver the harm, the other just named."
+            "mistake": "Fixing a double turn by admitting their harm.",
+            "whyItFails": "That hands them the harm for free.",
+            "fix": "Keep the reversal you can win; the rest gets plain defense or silence — never surrender the point."
           },
           {
-            "mistake": "Offering a reason of your own and calling it a turn.",
-            "whyItFails": "A separate benefit is offense and worth having, but their argument is untouched by it — nothing of theirs has been made to work for you.",
-            "fix": "A turn runs through their own outcome. If yours does not, call it what it is."
+            "mistake": "Calling a reason of your own a turn.",
+            "whyItFails": "Their argument is untouched by it.",
+            "fix": "A turn takes their outcome and makes it yours. If yours does not, it is not a turn."
           }
         ],
         "scaffoldedTry": {
-          "prompt": "The opponent argues: “Moving the library’s story hour to Saturday will bring families onto a street that is already busy with weekend traffic, and more people on foot on a busy street is a hazard.” Your answer: “Families on that pavement on a Saturday morning are what slows the traffic down — drivers go slower on a street where people are walking, and the crossing outside the library is where that matters most.”",
+          "prompt": "The opponent argues: “Moving the library’s story hour to Saturday will bring families onto a street that is already busy with weekend traffic, and more people on foot on a busy street is a hazard.” Your answer: “Families on that sidewalk on a Saturday morning are what slows the traffic down — drivers go slower where people are walking, and the crossing outside the library is where that matters most.”",
           "frame": "Your answer works on ___. If it succeeds, ___. The move is ___.",
           "slots": [
             "which part, and what it does to it",

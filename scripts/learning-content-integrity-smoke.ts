@@ -53,7 +53,7 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "REFUTATION-BEGINNER-V1";
+const LEARNING_CONTENT_BASELINE = "TURN-MECHANICS-BEGINNER-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 

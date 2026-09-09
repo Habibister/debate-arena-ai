@@ -1,5 +1,5 @@
 {
-  "marker": "DEBATE-BEGINNER-MANIFEST-V5",
+  "marker": "DEBATE-BEGINNER-MANIFEST-V6",
   "note": "Internal review contract. NOT learner content. Learners never see rule ids, classes, or guard references. A rewrite may fuse several rules into one sentence, example or mistake box; this artifact protects MEANING, never presentation length.",
   "fullTrackARuleTotal": 59,
   "censusRulesTriaged": 317,
@@ -899,32 +899,32 @@
         {
           "id": "RULE-01",
           "meaning": "Before you judge an answer, ask two questions in this order: if this answer worked perfectly, what would be true in the round? (that gives you the direction) and only then, what did the answer go after? (that gives you the name).",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-02",
           "meaning": "Every answer points one of two ways: DEFENSE makes their argument count for less (smaller, shakier, or gone) and adds nothing new for your side, while OFFENSE gives the judge a reason to prefer your side that was not there before.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-03",
           "meaning": "Each direction holds one named move — an INDICT is defense aimed at the evidence itself (who produced it, what it measured, how the result was reached), a TURN is offense in which their own argument is what supplies your reason — and an answer that is neither simply keeps its direction's name: plain defense, or offense that is a reason of your own standing beside their argument.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-04",
           "meaning": "How hard your answer hits and how good your evidence is do not set the direction — you can destroy their argument completely and still have only defense, and the same strong study is defense if it finds their effect is not there but a turn if it finds the effect runs the other way.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-05",
           "meaning": "Defense is a real answer and often the right one, but choose it on purpose: judges vote for reasons, so if every answer you make is defense and their argument is still standing, the judge is left holding their reason and none of yours.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-06",
           "meaning": "The four names also run backwards: look at the argument in front of you, ask what needs to change about it — does it need to count for less, or does something need to start counting for you — and pick the direction from that answer.",
-          "guarded": false
+          "guarded": true
         }
       ],
       "safetyBoundaries": [
@@ -963,34 +963,34 @@
         {
           "censusRule": "R22 — The refutation structure (they say / but / because / therefore) tells you HOW to state any of these answers; this lesson is about WHAT KIND of answer sits inside that structu",
           "klass": "D",
-          "destination": "delete as duplicate of safety boundary B-4 (\"Classifying correctly is not refuting\")",
+          "destination": "DELETED as duplicate of safety boundary B04 (2026-09-08). B04 is carried in section 3 (\"Naming the answer is not making it.\") and pinned by PJ.",
           "why": "Same educational judgment as R20, stated a second time as curriculum orientation. The census already logged it as repetition spanning explanation, workedExample.whyItWorks and teachingSections[2]. B-4 preserves the operative half (the name is not the reason; the because and therefore belong to Refut"
         },
         {
           "censusRule": "R23 — Turn varieties are the next lesson's subject; here the skill is spotting the reversal.",
           "klass": "C",
-          "destination": "optional one-line pointer after the main path (or move the promise into Turn Mechanics' own opening)",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (2026-09-08); the renderer shows every optional block before Practice, so there is no 'after the main path'. Turn Mechanics opens on its own terms and no longer relies on the promise.",
           "why": "A curriculum forward reference, not a step in classifying. Test: removing it from first exposure does not make the lesson false, so it is C, not B. Unpinned — no assertion in scripts/ mentions the promise. CAUTION for whoever does the rewrite: debate-turn-mechanics opens \"You were promised that turn"
         },
         {
           "censusRule": "R25 — Misapplying a name does nothing: calling a defensive evidence attack a turn never puts a reason on your side.",
           "klass": "E",
-          "destination": "test + comment only; the worked example may carry it as a line, but it is not a separate taught rule",
+          "destination": "test + comment only: carried as one worked-example line (\"A is not a turn: doubting a survey puts no reason on our side\"), pinned there by PJ and asserted absent from the teaching sections.",
           "why": "This exists as student prose because the repair spec required the worked example to display a MISapplied type — repair history, not a distinct beginner idea. As a judgment it restates B-4 (naming is not refuting) applied to the example. It is NOT pinned: I grepped scripts/ for \"misapplication\" and \""
         }
       ],
       "criticalGuardedInvariants": [
-        "PROSE FLOOR — THE BIGGEST CONFLICT WITH THIS MILESTONE. scripts/coached-performance-smoke.ts, check \"PA\": `assert.ok(prose >= 900 && prose <= 1300, \\`teaching prose inside the guard: ${prose} words (was 421)\\`)` over objective + explanation + whyMatters + steps + all three teachingSections. A beginner rewrite that lands at ~700 words FAILS PA. PA also enforces `assert.ok(prose > qWords * 1.5)`. The floor was authored to stop a REGRESSION IN THE OTHER DIRECTION (421 teaching words against 1,099 quiz words); it is not a doctrinal claim that this lesson needs 900 words. It must be renegotiated with the owner before the rewrite lands, not silently broken.",
-        "STRUCTURE, check \"PA\": `assert.equal(at.teachingSections.length, 3)`, `assert.equal(at.commonMistakes.length, 5)`, `assert.equal(1 + at.practiceQuestions.length + at.masteryCheck.length, 4)`, `assert.deepEqual(at.scaffoldedTry.slots, [\"what is now true\", \"which direction that is\", \"the answer type, in one word\"])`, and languageFrames / revisionLadder / additionalExamples must stay `undefined`. Three sections and five mistakes are a fixed shape the rewrite cannot reduce without changing PA.",
-        "FIELD-SCOPED STRINGS, check \"PB\" — these are pinned to `at.explanation` specifically, so paraphrasing them into a simpler opening breaks the assertion: \"an INDICT is a kind of defense, a TURN is a kind of offense\"; \"Every answer is classed one of two ways, by what it creates\"; and the proximity regex `/One answer can do more than one thing at once [\\s\\S]{0,140}classed by the reason it creates/` (max 140 characters between the halves).",
-        "NEGATIVE PIN, check \"PB\": `assert.ok(!/indict is usually|usually a kind of defense|usually defense/i.test(atAll), \"the category is never hedged\")`. A beginner-friendly softening such as \"an indict is usually defense\" fails the suite and recreates the exact category collision the 2026-09-06 repair removed.",
-        "WORKED-INSTANCE LEAD-INS, check \"PB\": teachingSections[0].body must contain all four literals \"That is DEFENSE\", \"That is an INDICT\", \"That is OFFENSE\", \"That is a TURN\", plus verbatim \"That is DEFENSE, and among these four names it has no second one\" and \"That is OFFENSE, and among these four it too has no second name: a reason of your own\". Its heading is pinned too: \"Two directions, and the named move inside each\".",
-        "THE NAMING STEP, check \"PB\", pinned verbatim inside `at.steps` including parentheses: \"defense if only for less (an indict if you went after their evidence), offense if something counts for you (a turn if their own argument is what supplies it)\".",
-        "WITHDRAWN OVERCLAIMS THAT MUST STAY ABSENT, check \"PC\": `!/never reverses/i` and `!/defense explains why they lose an argument/i` across every learner-visible string. Both are simplifications a beginner rewrite would naturally reach for.",
-        "BANNED SPEECH-LEVEL VOCABULARY, check \"PE\", swept over every learner-visible string as case-insensitive SUBSTRINGS: \"four minutes\", \"extend\", \"extended\", \"collapse\", \"collapsing\", \"frontlin\", \"weigh\", \"prioriti\", \"spend time\", \"speech time\", \"time left\", \"dropped argument\", plus \"final speech|last speech|first speech\". Substring matching means \"outweighs\", \"extends\" and \"collapses\" all fail — a serious hazard for plainer prose (\"weigh up your options\", \"their case collapses\").",
-        "CHECK FORM AND KEYS, check \"PF\": options must stay length-matched (max 2 words / 12 characters spread), the key may not be uniquely longest or shortest by words or characters, may not be the only option carrying a comma, and `assert.deepEqual(atChecks.map(...), [\"A\", \"A\", \"A\", \"C\"], \"keys as authored and reviewed\")`. Any rewrite of question wording must re-run this arithmetic.",
-        "SCENARIO AND EVALUATOR, check \"PG\": `at.scaffoldedTry.prompt` must contain \"the market takes more on a Sunday, not less\" (it is the authored response the \"turn\" key in lib/coaching.ts was keyed against), and `motion` / `opponentClaim` must stay `undefined`. Check \"PH\" additionally pins render order (teachingSections[0].heading before teachingSections[2].heading before \"Now try the move\" before \"Practice this skill\"), the three rendered slot labels, and \"Practice this skill in the Rebuttal drill\".",
-        "NO MASTERY CLAIM, check \"PI\": `assert.ok(!/mastery|mastered/i.test(atAll))`. Encouraging beginner copy such as \"once you have mastered this\" breaks the no-fake-progress guard."
+        "PROSE FLOOR AND RATIO: RETIRED. The 900-word floor and the prose > 1.5 x question-words ratio were removed at f0e17f7 (test(education): replace debate lesson word-floor guards); PA keeps only the 1,300-word ceiling. Thinness is guarded by this manifest (M3 six A-rules), PJ's A/B pins, and human REMOVE-QUESTIONS / beginner review. The earlier text of this entry described the floor as live; that was stale from f0e17f7 until 2026-09-08.",
+        "STRUCTURE, check \"PA\": teachingSections === 3, commonMistakes >= 3 (owner ruling 2026-09-08: the exact-five delivery pin forced the body to be restated a third time; two duplicate boxes, RULE-05 and B03, were removed and their carriers whyMatters / section 3 are pinned by PJ), misconception present, 1 + practice + mastery === 4, scaffoldedTry.slots deepEqual [\"what is now true\", \"which direction that is\", \"the answer type, in one word\"], languageFrames / revisionLadder / additionalExamples undefined, no guided round, no skillSlug, practiceDrill {debate, rebuttal}. The three remaining mistake boxes carry RULE-01 (topic vs effect), B02 (the reversing evidence attack) and B06 (success-conditional), each pinned by purpose in PJ; the misconception carries RULE-04 applied to the library case.",
+        "A-RULE GUARDS, check \"PJ\" (2026-09-08): RULE-01 (First question / Second question, in order, plus the direction wording shared with the scaffold evaluator's coach copy), RULE-02 (the DEFENSE and OFFENSE definitions in the explanation), RULE-03 (the indict and turn worked instances in section 1, with PB carrying the hierarchy sentence, the four lead-ins and the two residuals), RULE-04 (force / evidence-quality sentences in section 2 and the misconception), RULE-05 (whyMatters opens with it), RULE-06 (section 3 opening and steps[4]).",
+        "B-RULE CARRIERS: B01 in section 1, in the sentence right after the TURN instance (PB proximity re-keyed there; review 1 found it abstract in the opener), B02 as the parenthetical example in section 2 (PC), B03 and B04 in section 3 (PJ), B05 in section 2 (PC), B06 as a worked-example sentence (PJ) and as a mistake box in the learner's words (PJ, by purpose). R25 survives only as a worked-example line and is asserted absent from the sections.",
+        "NEGATIVE PINS: PB hedge ban (indict is usually ...) kept; PC withdrawn overclaims kept; PJ adds the beginner regression routes — strength ladder / type = strength, defense must destroy, evidence attack is automatically a turn, offense = aggression, turn = disagreeing, merged categories, hedged category assignment, category by buzzword, rebuild-era vocabulary (load-bearing, classed, residual, taxonomy, genus, misapplication), R23 forward promise, R22 structure restatement.",
+        "BEGINNER CEILINGS, check \"PJ\": required path (objective + explanation + sections + whyMatters + steps + worked example + misconception + mistakes) <= 1,200 words, paragraphs <= 65 words, sentences <= 32 words, question layer (stems + options + rationales) <= 700 words. The first label appears after the they-say / you-answer opener and within the first hundred words; \"ask what it does\" precedes any label.",
+        "FIELD-SCOPED STRINGS, check \"PB\" (re-keyed 2026-09-08): explanation carries \"an INDICT is a kind of defense, a TURN is a kind of offense\" and \"Every answer does one of two jobs.\"; section 1 heading is \"Four answers to one argument\" and its body carries \"That is DEFENSE\", \"That is an INDICT\", \"That is OFFENSE\", \"That is a TURN\" plus the two residual sentences; steps carry the naming step \"Name it: defense if only for less, offense if something counts for you. Indict if you went after their evidence, turn if their own argument supplied it.\"; section 2 carries \"That is a turn, not an indict.\"",
+        "BANNED SPEECH-LEVEL VOCABULARY, check \"PE\": unchanged substring sweep (four minutes, extend, extended, collapse, collapsing, frontlin, weigh, prioriti, spend time, speech time, time left, dropped argument, final/last/first speech). The beginner bytes trip none of them, so the substring implementation was left as is.",
+        "CHECK FORM AND KEYS, check \"PF\": length-matched options (<= 2 words / 12 characters spread), the key never uniquely longest or shortest, never the only comma-carrier, keys deepEqual [\"A\", \"A\", \"A\", \"C\"]. PJ adds label distribution: Q1 and Q2 carry all four labels once each, Q3 is a 2/2 yes-no split, Q4 carries no label and is classified from effects; hints echo at most one key word not shared by all options.",
+        "SCENARIO AND EVALUATOR, check \"PG\": scaffoldedTry.prompt contains \"the market takes more on a Sunday, not less\" (the response lib/education/coaching.ts keys as \"turn\"), motion / opponentClaim undefined, slot contract unchanged. Check \"PH\": render order (title \"Know what your answer does\", section 1 heading, section 3 heading, \"Now try the move\", \"Practice this skill\"), the three slot labels, the rebuttal drill CTA.",
+        "NO MASTERY CLAIM, check \"PI\": !/mastery|mastered/ across every learner-visible string; drill hold untouched."
       ]
     },
     {

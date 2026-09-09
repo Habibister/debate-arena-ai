@@ -1639,7 +1639,11 @@ function main() {
     assert.equal(guidedApplicationFor(AT), null, "no guided round is declared: no competency and no judge category measures answer-type classification");
     assert.equal(at.languageFrames, undefined, "no language frames: this lesson classifies, it does not teach phrasing");
     assert.equal(at.revisionLadder, undefined); assert.equal(at.additionalExamples, undefined);
-    assert.equal(at.teachingSections.length, 3); assert.ok(at.misconception); assert.equal(at.commonMistakes.length, 5);
+    assert.equal(at.teachingSections.length, 3); assert.ok(at.misconception);
+    // MISTAKE COUNT RELAXED (owner ruling, 2026-09-08): five boxes restated the body a third time — both blind
+    // beginner readers named the same repetition. The pin was delivery, not doctrine; PJ now protects the
+    // remaining boxes by PURPOSE (one distinct accepted confusion each) and the removed rules by their carriers.
+    assert.ok(at.commonMistakes.length >= 3, `at least three mistake boxes: ${at.commonMistakes.length}`);
     assert.equal(1 + at.practiceQuestions.length + at.masteryCheck.length, 4, "seven checks became four distinct judgments");
     assert.deepEqual(at.scaffoldedTry.slots, ["what is now true", "which direction that is", "the answer type, in one word"]);
     assert.equal(atEntry.skillSlug, undefined, "still no skill claim: Refutation remains the module's teaching home for debate-rebuttal");
@@ -1662,19 +1666,21 @@ function main() {
     assert.ok(/an INDICT is a kind of defense, a TURN is a kind of offense/.test(at.explanation), "the hierarchy is stated in the explanation");
     // The binary is a CLASSIFICATION rule, not a claim that an answer has one effect: a reversal
     // usually neutralises their argument as well as creating a reason, and is classed by the reason.
-    assert.ok(/Every answer is classed one of two ways, by what it creates/.test(at.explanation), "the binary is framed as classification");
-    assert.ok(/One answer can do more than one thing at once [\s\S]{0,140}classed by the reason it creates/.test(at.explanation), "and multiple effects are acknowledged");
-    assert.ok(/Two directions, and the named move inside each/.test(at.teachingSections[0].heading), "and in the heading of the section that exemplifies it");
-    assert.ok(/defense if only for less \(an indict if you went after their evidence\), offense if something counts for you \(a turn if their own argument is what supplies it\)/.test(at.steps.join(" ")),
+    // Beginner wording (2026-09-08): "jobs" for the two directions, and B01 carried on the turn itself.
+    assert.ok(/Every answer does one of two jobs\./.test(at.explanation), "the binary is framed as classification");
+    // B01 sits right after the turn it describes (section 1), not in the opener: the review found it abstract before any example.
+    assert.ok(/That is a TURN: offense where their own argument supplies your reason\. You turned their point around\.\s+A turn usually does two things at once: it stops their argument helping them, and it gives you a reason\. It is sorted by the reason it gives you\./.test(at.teachingSections[0].body), "and multiple effects are acknowledged");
+    assert.equal(at.teachingSections[0].heading, "Four answers to one argument", "and in the heading of the section that exemplifies it");
+    assert.ok(/Name it: defense if only for less, offense if something counts for you\. Indict if you went after their evidence, turn if their own argument supplied it\./.test(at.steps.join(" ")),
       "and in the naming step, which pairs each direction with the move inside it");
     // Membership is ABSOLUTE. A hedge ("an indict is usually defense") turns indict back into a
     // fourth peer, which is the collision this repair exists to remove; the reversing evidence
     // attack is a turn, and the lesson says so rather than leaving the case unnamed.
     assert.ok(!/indict is usually|usually a kind of defense|usually defense/i.test(atAll), "the category is never hedged");
-    assert.ok(/what you have is a turn, not an indict/.test(at.teachingSections[1].body), "and the reversing evidence attack is named");
+    assert.ok(/That is a turn, not an indict\./.test(at.teachingSections[1].body), "and the reversing evidence attack is named");
     // The residuals are named as themselves rather than left unnamed — the audited genus/species collision.
-    assert.ok(/That is DEFENSE, and among these four names it has no second one/.test(at.teachingSections[0].body), "plain defense is shown and named");
-    assert.ok(/That is OFFENSE, and among these four it too has no second name: a reason of your own/.test(at.teachingSections[0].body), "independent offense is shown and named");
+    assert.ok(/That is DEFENSE\. It has no second name\./.test(at.teachingSections[0].body), "plain defense is shown and named");
+    assert.ok(/That is OFFENSE\. No second name either: a reason of your own, beside their argument\./.test(at.teachingSections[0].body), "independent offense is shown and named");
     for (const type of ["DEFENSE", "INDICT", "OFFENSE", "TURN"]) {
       assert.ok(at.teachingSections[0].body.includes(`That is ${type === "INDICT" ? "an INDICT" : type === "TURN" ? "a TURN" : type}`), `${type} has a worked instance in the teaching, not only in a check`);
     }
@@ -1683,21 +1689,21 @@ function main() {
   check("PC. the two audited factual overstatements are gone and the indict boundary is settled", () => {
     assert.ok(!/never reverses/i.test(atAll), "the false absolute 'an indict weakens; it never reverses' is gone");
     assert.ok(!/defense explains why they lose an argument/i.test(atAll), "and so is 'defense explains why they lose an argument'");
-    assert.ok(/if what you show about it makes their own argument point your way/.test(at.teachingSections[1].body), "an evidence attack that reverses is taught");
-    assert.ok(/Indict is narrower \u2014 the defensive answer aimed at the evidence itself/.test(at.teachingSections[1].body),
+    assert.ok(/if what you show about their study makes their own argument point your way \(their study actually found the opposite\), something now counts for you/.test(at.teachingSections[1].body), "an evidence attack that reverses is taught, with the example");
+    assert.ok(/Only an attack on the evidence itself is an indict\./.test(at.teachingSections[1].body),
       "indict is settled as the DEFENSIVE evidence-aimed answer: aim alone is not sufficient, since the reversing evidence attack is a turn");
-    assert.ok(/refutation calls every load-bearing part of an argument a support/.test(at.teachingSections[1].body), "and reconciled with Refutation's broader 'support'");
+    assert.ok(/The Refutation lesson lets you answer any part an argument leans on, including a step in its reasoning\. That is real defense\./.test(at.teachingSections[1].body), "and reconciled with Refutation's broader 'support'");
   });
 
   check("PD. the ideas that used to live only in quiz explanations are now taught", () => {
     const teaching = [at.objective, at.explanation, at.whyMatters, ...at.steps, ...at.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body),
       at.workedExample.strongAnswer, at.workedExample.whyItWorks, at.misconception.whyItFails, at.misconception.betterModel].join("\n");
-    assert.ok(/an answer can work completely[\s\S]{0,120}still be defense/.test(teaching), "success is not direction");
-    assert.ok(/direction is set by what the finding does, not by how good it is/.test(teaching), "evidence quality is not direction");
-    assert.ok(/a reason of your own, standing beside their argument/.test(teaching), "independent offense exists and is illustrated");
-    assert.ok(/More than one direction is often available on the same argument/.test(teaching), "several directions may be available");
-    assert.ok(/Classifying correctly is not refuting/.test(teaching), "naming is not refuting");
-    assert.ok(/ask what needs to change about it/.test(teaching), "the model is taught in reverse, as a direction choice");
+    assert.ok(/You can destroy their argument completely and still have only defense/.test(teaching), "success is not direction");
+    assert.ok(/The same strong study is defense if it finds the result they claim is not there, and a turn if it finds the result runs the other way\./.test(teaching), "evidence quality is not direction");
+    assert.ok(/a reason of your own, beside their argument/.test(teaching), "independent offense exists and is illustrated");
+    assert.ok(/More than one direction is often open on the same argument\. But you cannot reverse an argument that never points your way\./.test(teaching), "several directions may be available, but not every direction");
+    assert.ok(/Naming the answer is not making it\./.test(teaching), "naming is not refuting");
+    assert.ok(/Ask what their argument needs to change\./.test(teaching), "the model is taught in reverse, as a direction choice");
   });
 
   check("PE. no speech-level strategy is taught or tested: the owner's forbidden vocabulary is absent", () => {
@@ -1788,6 +1794,102 @@ function main() {
       assert.ok(!drills.DEBATE_DRILL_HELD_IDS.includes(id), `${id} was already servable and stays so`);
     }
     assert.ok(!/mastery|mastered/i.test(atAll), "the lesson claims no durable mastery");
+  });
+
+  check("PJ. Answer Types beginner rewrite (2026-09-08): effect before label, the six A-rules and six B-rules in plain English, and the regressions that cannot return", () => {
+    const sec = (i: number) => at.teachingSections[i].body as string;
+    const wc = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    // SHAPE. A concrete they-say / you-answer pair opens the lesson, and the learner is told to ask what
+    // the answer DOES before any of the four labels appears. The three sections are the three moves.
+    assert.ok(/^They say: .{0,160}You answer: /.test(at.explanation), "a concrete answer pair opens the lesson");
+    const firstLabel = at.explanation.search(/\b(DEFENSE|OFFENSE|INDICT|TURN)\b/); const firstAsk = at.explanation.indexOf("ask what it does");
+    assert.ok(firstAsk > 0 && firstAsk < firstLabel, "ask what it does comes before any label");
+    assert.ok(wc(at.explanation.slice(0, firstLabel)) <= 100, "the first label arrives after the example, inside the first hundred words");
+    assert.deepEqual(at.teachingSections.map((x: { heading: string }) => x.heading), ["Four answers to one argument", "How to tell which one you made", "Choosing a direction"]);
+    // RULE-01: two questions, in this order — direction first, name second.
+    assert.ok(/First question: if this answer worked perfectly, what would be true in the debate\? That gives you the direction/.test(sec(1)), "RULE-01 first question");
+    assert.ok(/Second question: what did the answer go after\? That gives you the name\./.test(sec(1)), "RULE-01 second question");
+    assert.ok(sec(1).indexOf("First question") < sec(1).indexOf("Second question"), "RULE-01 order");
+    // The direction wording is the one the scaffold evaluator's coach copy uses (lib/education/coaching.ts), so the page and the coach agree.
+    assert.ok(/their argument only counts for less, or something now counts for your side/.test(sec(1)), "direction wording matches the evaluator's coach copy");
+    // RULE-02: the two jobs, defined by what they do.
+    assert.ok(/DEFENSE makes their argument count for less: smaller, shakier, or gone, and adds nothing new for your side\./.test(at.explanation), "RULE-02 defense");
+    assert.ok(/OFFENSE gives the judge a reason to prefer your side that was not there before\./.test(at.explanation), "RULE-02 offense");
+    // RULE-03: one named move inside each job, and the residuals named as themselves (PB carries the hierarchy and the lead-ins).
+    assert.ok(/through the evidence: who made it, what it measured, how it was reached\. That is an INDICT, a kind of defense\./.test(sec(0)), "RULE-03 indict is the evidence-aimed defense");
+    assert.ok(/That is a TURN: offense where their own argument supplies your reason\./.test(sec(0)), "RULE-03 turn is offense their argument supplies");
+    // RULE-04: force and evidence quality do not set the direction.
+    assert.ok(/Force does not set the direction\. You can destroy their argument completely and still have only defense, because taking their reason away is not giving the judge yours\./.test(sec(1)), "RULE-04 force");
+    assert.ok(/Evidence quality does not set it either\./.test(sec(1)), "RULE-04 evidence quality");
+    assert.equal(at.misconception.wrongModel, "The strongest answer is automatically offense.", "RULE-04 is the misconception");
+    assert.ok(/Strong is how well it worked\. Offense is where it points\./.test(at.misconception.whyItFails), "and the repair is two different questions");
+    // RULE-05: defense is real, chosen on purpose, because judges vote for reasons.
+    assert.ok(/^Judges vote for reasons\. Defense is a real answer and often the right one, but choose it on purpose\./.test(at.whyMatters), "RULE-05");
+    assert.ok(/the judge holds their reason and none of yours/.test(at.whyMatters), "RULE-05 consequence");
+    // RULE-06: the names run backwards.
+    assert.ok(/The names also work before you have an answer\. Ask what their argument needs to change\. To count for less\? That is defense, and an indict if the weak point is the evidence\. To start counting for you, through their own argument\? That is a turn\./.test(sec(2)), "RULE-06");
+    assert.ok(/Run it backwards: does their argument need to count for less, or to start counting for you\?/.test(at.steps[4]), "RULE-06 in the steps");
+    // B03 / B04 in prose; B06 as an example in the worked example; R25 only as a worked-example line.
+    assert.ok(/But you cannot reverse an argument that never points your way\./.test(sec(2)), "B03");
+    assert.ok(/gives the judge no reason to accept it\. The reason, and what their argument loses, still have to be said out loud\./.test(sec(2)), "B04");
+    assert.ok(/Either can still fail: B is a turn whether or not the judge ends up believing the comparison\./.test(at.workedExample.whyItWorks), "B06 example");
+    // MISTAKE BOXES BY PURPOSE (owner ruling, 2026-09-08). Each remaining box carries one distinct accepted beginner
+    // confusion, no two share one, and the two rules whose boxes were removed keep their prose carriers above.
+    const purposes = at.commonMistakes.map((m: Record<string, string>) => {
+      const t = Object.values(m).join(" ");
+      if (/topic|what the answer is about/i.test(m.mistake) && /opposite ways|point opposite/i.test(t)) return "RULE-01 topic-vs-effect";
+      if (/indict/i.test(m.mistake) && /turn/i.test(t)) return "B02 reversing evidence attack";
+      if (/judge (buys|believes|accepts)|before naming/i.test(m.mistake) && /accepted|lands/i.test(t)) return "B06 success-conditional";
+      return "UNCLASSIFIED: " + m.mistake;
+    });
+    assert.deepEqual([...purposes].sort(), ["B02 reversing evidence attack", "B06 success-conditional", "RULE-01 topic-vs-effect"], `each box carries one distinct confusion (${purposes.join(" | ")})`);
+    assert.ok(!/defense every time|every answer you make is defense/i.test(at.commonMistakes.map((m: Record<string, string>) => Object.values(m).join(" ")).join(" ")), "RULE-05 lives in whyMatters, not a duplicate box");
+    assert.ok(!/one answer type|more than one direction/i.test(at.commonMistakes.map((m: Record<string, string>) => Object.values(m).join(" ")).join(" ")), "B03 lives in section 3, not a duplicate box");
+    // The misconception applies RULE-04 to the library case instead of restating section 2's paragraph.
+    assert.ok(/still defense: later hours have not gained a reason\./.test(at.misconception.whyItFails), "misconception applies RULE-04 to the worked case");
+    assert.equal(at.misconception.betterModel, "Judge direction by where the answer points, not by how hard it hit.");
+    assert.ok(/A is not a turn: doubting a survey puts no reason on our side\./.test(at.workedExample.strongAnswer), "R25 stays a worked-example line");
+    assert.ok(!/is not a turn: doubting|a turn does nothing/.test(at.teachingSections.map((x: { body: string }) => x.body).join(" ")), "and is not a taught rule");
+    // Class C/D stay out of the required path: no forward promise (R23), no restatement of the refutation structure (R22).
+    assert.ok(!/next lesson|later lesson|the next lesson\u2019s subject/i.test(atAll), "R23 pointer is gone");
+    assert.ok(!/they say, but, because, therefore|HOW to state/i.test(atAll), "R22 is gone");
+    // TYPE != STRENGTH and the other beginner regressions, as routes rather than exact sentences.
+    const teachAll = atAll;
+    assert.ok(!/from weak(est)? to strong(est)?|four levels|(a|the) (weakest|strongest|weaker|stronger) (kind|type|sort) of answer/i.test(teachAll), "the four names are not a strength ladder");
+    assert.ok(!/answer type (means|is|tells you|shows) (its|the|your) strength|type (is|means) (the )?strength/i.test(teachAll), "type is not strength");
+    assert.ok(!/defense (must|has to|needs to|always) (completely |fully )?(destroy|remove|kill|end)/i.test(teachAll), "defense need not destroy the argument");
+    assert.ok(!/(attack|attacking|aimed at|going after|doubting|questioning) (their|the) (evidence|study|report|survey) (is|makes|counts as|gives you) (automatically |always |usually )?a turn/i.test(teachAll), "an evidence attack is not automatically a turn");
+    assert.ok(!/offense (means|is) (being )?(aggressive|forceful|loud|harsh|strong)|(aggressive|forceful|loud) (wording|answers?) (is|are|counts as) offense/i.test(teachAll), "offense is not aggression");
+    assert.ok(!/a turn (just|simply|only|merely) means disagreeing|turn (means|is) (just |simply )?disagreeing/i.test(teachAll), "a turn is not disagreement");
+    assert.ok(!/(indict|turn|defense|offense)s? (and|or) (indict|turn|defense|offense)s? are the same|all (attacks|reversals|answers) are the same (category|type|kind)/i.test(teachAll), "the categories are not merged");
+    assert.ok(!/\b(is|are) (usually|probably|mostly|often|sometimes|normally) (defense|offense|an indict|a turn)\b/i.test(teachAll), "no category is assigned by hedge");
+    assert.ok(!/(is|counts as|makes it) (a turn|an indict|offense|defense) because (it|you|the answer) (said|says|used|uses|sounds|mentions)/i.test(teachAll), "no category is assigned by buzzword");
+    assert.ok(!/load-bearing|classed|residual|taxonomy|genus|misapplication/i.test(teachAll), "no rebuild-era vocabulary");
+    // BEGINNER CEILINGS over the required path (everything rendered before Practice), the same formula as the other beginner lessons.
+    const required = [at.objective, at.explanation, ...at.teachingSections.map((x: { heading: string; body: string }) => x.heading + "\n\n" + x.body), at.whyMatters, at.steps.join("\n\n"),
+      Object.values(at.workedExample as Record<string, string>).join("\n\n"), Object.values(at.misconception as Record<string, string>).join("\n\n"),
+      at.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)).join("\n\n")];
+    const requiredWords = required.map(wc).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(requiredWords <= 1200, `required path stays a beginner read: ${requiredWords} words`);
+    for (const para of required.flatMap((t) => t.split(/\n\n+/))) assert.ok(wc(para) <= 65, `no paragraph above 65 words: ${para.slice(0, 50)}`);
+    for (const sentence of required.join(" ").replace(/\n+/g, " ").split(/(?<=[.?!][)\u201d"]?)\s+(?=[A-Z\u201c"(])/)) assert.ok(wc(sentence) <= 32, `no sentence above 32 words: ${sentence.slice(0, 60)}`);
+    const qWords = atChecks.map((q) => [q.prompt, ...q.choices, q.explanation].map(wc).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
+    assert.ok(qWords <= 700, `the question layer stays small: ${qWords} words`);
+    // LABEL DISTRIBUTION. Where options carry a category label, every option carries one and the four are distinct, so the key is
+    // never the only option naming the taught category; the mastery item carries no label at all and is classified from effects.
+    for (const i of [0, 1]) {
+      const labels = atChecks[i].choices.map((o) => (o.match(/^(Defense|Offense|Turn|Indict):/) ?? [])[1]);
+      assert.ok(labels.every(Boolean) && new Set(labels).size === 4, `Q${i + 1}: all four labels present, one each`);
+    }
+    assert.deepEqual(atChecks[2].choices.map((o) => o.split(":")[0]).sort(), ["No", "No", "Yes", "Yes"], "Q3: a balanced yes/no split");
+    assert.ok(atChecks[3].choices.every((o) => !/\b(defense|offense|turn|indict)\b/i.test(o)), "Q4: options carry no label; the learner classifies from effects");
+    // Hints name what to ask, never the key's words (the hint->key echo that review 1 found on Weighing and Evidence).
+    for (const [i, q] of atChecks.entries()) {
+      const hint = (q as unknown as { hint: string }).hint ?? "";
+      const keyWords = new Set(q.correctAnswer.toLowerCase().match(/[a-z]{5,}/g) ?? []);
+      const overlap = (hint.toLowerCase().match(/[a-z]{5,}/g) ?? []).filter((w) => keyWords.has(w) && !q.choices.every((o) => o.toLowerCase().includes(w)));
+      assert.ok(overlap.length <= 1, `Q${i + 1}: the hint does not echo the key (${overlap.join(",")})`);
+    }
   });
 
 

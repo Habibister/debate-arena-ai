@@ -261,8 +261,13 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
               }
             />
           ) : null}
+          {/* DECA's drills are NOT at /skills. That page renders "Mastery paths" for non-Debate
+              tracks, and its DECA branch is a single tile linking to the role-play setup — no drill
+              anywhere on it. The four DECA concept drills live on the Study Arcade track surface.
+              Debate's /skills branch does carry its drill tile, so its destination is unchanged.
+              The label is the promise; the href is what was wrong. */}
           <DestinationRow
-            href={`/skills?track=${track.slug}` as Route}
+            href={(track.id === "DECA" ? `/study-arcade?track=${track.slug}` : `/skills?track=${track.slug}`) as Route}
             icon={BookOpenCheck}
             label="Skill drills"
             // The old detail described a five-stage mastery path that does not exist. Debate states

@@ -104,11 +104,26 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   // tracks keep their own role-play setup, unchanged.
   const isDebateTrack = activeTrack?.id === "GENERAL_DEBATE";
   const practiceHref = isDebateTrack ? `/study-arcade?track=${trackSlug}` : `/training/${trackSlug}/practice`;
+  // NO FIXED DURATION. This said "Practice 10 minutes" for every track. The destination does not run
+  // for ten minutes and cannot promise to: a DECA role-play estimates 5 / 8 / 12 by difficulty
+  // (roleplayEstimatedMinutes) and the room itself renders "~5 min" at the default level, so the
+  // product contradicted its own label two clicks later. It was also the only unqualified duration
+  // number on the surface — everything else already hedges — and for DECA it collided with a real
+  // sourced quantity, the ten-minute Individual Series prep window, which means something else.
+  //
+  // Naming the ACTIVITY instead of a clock is truthful for all three destinations, which are three
+  // different things: Debate lands on a scored skill drill, DECA on the role-play setup, HOSA on its
+  // Event Preparation Room. One label could not have been true for all of them.
+  const practiceLabel = isDebateTrack
+    ? "Practice a skill drill"
+    : activeTrack?.id === "DECA"
+      ? "Practice a role-play"
+      : "Practice your event";
   const quickActions = [
     { href: `/debate?track=${trackSlug}`, label: "Debate Now", detail: "A full round with an AI opponent and judge", icon: Gavel },
     {
       href: practiceHref,
-      label: "Practice 10 minutes",
+      label: practiceLabel,
       detail: isDebateTrack ? "A short scored drill on one skill" : "One focused rep in your track",
       icon: Timer
     },

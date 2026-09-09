@@ -86,7 +86,13 @@ const DEBATE_PATH: readonly LearnerPathStage[] = [
 ] as const;
 
 const DECA_PATH: readonly LearnerPathStage[] = [
-  { id: "learn", label: "Learn", state: "available", href: "/lessons/how-deca-roleplay-works" },
+  // LEARN opens the DECA lesson CATALOG, for the reason recorded above for Debate. This pointed at
+  // `how-deca-roleplay-works`, which was the whole DECA Learn product when it was the only DECA
+  // lesson. Twelve are published now, and a stage that opens one of them makes the other eleven
+  // reachable only by knowing they exist — the same defect, on the other track, arriving later
+  // because the catalog grew after the stage was written. That lesson remains published in the
+  // catalog this now opens, and is still the first thing in it.
+  { id: "learn", label: "Learn", state: "available", href: "/lessons?track=deca" },
   { id: "practice", label: "Practice", state: "available", href: "/training/deca/practice" },
   { id: "apply", label: "Apply", state: "available", href: "/training/deca/events" },
   {

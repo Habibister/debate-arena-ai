@@ -13,7 +13,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { rubricLineNamesNoScoredBehaviour } from "../lib/rubrics";
 import { DECA_SIMULATION_CORE_PREP, DECA_SIMULATION_ENTRY, DECA_SIMULATION_SKILL_PREP, decaCourseEndAction, decaSimulationPrep, decaSimulationPrepAll } from "../lib/education/deca-simulation-prep";
-import { EDUCATION_LESSONS } from "../lib/education/registry";
+import { EDUCATION_LESSONS, educationLessonsForTrack } from "../lib/education/registry";
+import { learnerPathForTrack } from "../lib/learner-path";
 import {
   DECA_DRILL_AREAS,
   DECA_DRILL_BANK,
@@ -506,6 +507,65 @@ function main() {
       "D8d. and the action's copy claims no assessment and no readiness");
     assert.ok(/nothing you do there is recorded/i.test(DECA_SIMULATION_ENTRY.detail),
       "D8e. it says plainly that the role-play records nothing, which is currently true");
+  });
+
+  // ---- D9/D10. NAVIGATION TRUTH (P1 freeze repair) ---------------------------------------------
+  // The freeze audit's lesson: "the route resolves" is not enough. Every important edge needs three
+  // things checked — what the LABEL promises, what the DESTINATION actually is, and whether the
+  // CONTENT the label named is reachable there. Both defects below passed a link check.
+  check("D9. no learner-facing DECA action promises a fixed practice duration", () => {
+    const home = stripComments(read("app/(app)/home/page.tsx"));
+    // `(?!-)` so a Tailwind class like "mt-3 min-h-11" is not read as "3 min" — the check is for a
+    // duration a learner reads, not for every digit that happens to precede the letters m-i-n.
+    for (const banned of [/Practice \d+ minutes?/i, /\d+-minute practice/i, /\b\d+\s*min(?:ute)?s?\b(?!-)/i]) {
+      assert.ok(!banned.test(home), `D9. the home quick actions promise no fixed duration (${banned})`);
+    }
+    // The label must name the ACTIVITY, and it must differ by track because the three destinations
+    // are three different things — a Debate drill, a DECA role-play, a HOSA preparation room.
+    assert.ok(/Practice a role-play/.test(home), "D9b. DECA's practice action names the role-play");
+    assert.ok(/Practice a skill drill/.test(home), "D9c. Debate's names its drill");
+    assert.ok(/Practice your event/.test(home), "D9d. and HOSA's names its event preparation");
+    assert.ok(/activeTrack\?\.id === "DECA"/.test(home), "D9e. the label is chosen from the active track, not hardcoded");
+  });
+
+  check("D10. every DECA navigation label reaches what it names", () => {
+    const hub = stripComments(read("app/(app)/training/[track]/page.tsx"));
+    // "Skill drills" pointed at /skills, whose DECA branch renders "Mastery paths" and a single tile
+    // linking to the role-play setup — no drill on the page at all. The label was the promise; the
+    // href was what was wrong.
+    assert.ok(/track\.id === "DECA" \? `\/study-arcade\?track=\$\{track\.slug\}`/.test(hub),
+      "D10. the Skill drills row sends a DECA learner to the surface that has the DECA drills");
+    assert.ok(/`\/skills\?track=\$\{track\.slug\}`/.test(hub),
+      "D10b. and every other track keeps its existing destination — Debate's /skills branch does carry its drill tile");
+    // CONTENT REACHABLE: the destination really serves the four DECA drill areas.
+    const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
+    assert.ok(/ConceptDrills/.test(arcade), "D10c. control: the destination renders the concept drills");
+    // And the surface it no longer points at really has no drill for DECA, which is why it moved.
+    const skillPath = stripComments(read("components/skills/skill-path.tsx"));
+    const decaBranch = skillPath.slice(skillPath.indexOf('canonical === "DECA"'), skillPath.indexOf('canonical === "HOSA"'));
+    assert.ok(decaBranch.length > 50, "control: the DECA branch was located");
+    assert.ok(!/study-arcade\?track=deca/.test(decaBranch),
+      "D10d. control: /skills' DECA branch still offers no drill, which is the reason for D10");
+  });
+
+  check("D11. the DECA Learn stage opens the DECA lesson catalog, not one lesson", () => {
+    const deca = learnerPathForTrack("DECA");
+    const learn = deca.find((stage: { id: string }) => stage.id === "learn");
+    assert.equal(learn?.href, "/lessons?track=deca", "D11. Learn opens the catalog");
+    assert.ok(!/^\/lessons\/[a-z]/.test(learn?.href ?? ""), "D11b. and not a single-lesson route");
+    // CONTENT REACHABLE: every published DECA lesson is in what that catalog lists, and no held one is.
+    const visible = educationLessonsForTrack("DECA").filter((e: { visibility: string }) => e.visibility === "learner");
+    assert.equal(visible.length, 12, `D11c. the catalog exposes all twelve published DECA lessons (${visible.length})`);
+    assert.ok(visible.some((e: { id: string }) => e.id === "how-deca-roleplay-works"),
+      "D11d. including the lesson the stage used to open on its own");
+    assert.ok(!visible.some((e: { id: string }) => e.id === "deca-professional-communication"),
+      "D11e. and no held lesson is reached");
+    // NON-REGRESSION: the other two tracks' Learn stages are untouched by this repair.
+    assert.equal(learnerPathForTrack("GENERAL_DEBATE").find((s: { id: string }) => s.id === "learn")?.href,
+      "/lessons?track=debate", "D11f. Debate's Learn stage is unchanged");
+    assert.equal(learnerPathForTrack("HOSA").find((s: { id: string }) => s.id === "learn")?.href,
+      "/lessons/how-hosa-scenario-interaction-works",
+      "D11g. and HOSA's is unchanged — it has one published lesson, so the single-lesson form is still truthful there");
   });
 
   console.log(

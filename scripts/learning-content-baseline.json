@@ -1735,6 +1735,110 @@
     }
   },
   {
+    "slug": "deca-getting-it-to-the-customer",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA business content",
+    "name": "Marketing",
+    "description": "Explain place and distribution, and work out what the buyer needs from the channel.",
+    "lesson": {
+      "title": "Getting It to the Customer",
+      "slug": "deca-getting-it-to-the-customer-lesson",
+      "summary": "Work out what this buyer needs at the point of purchase, and whether the channel can supply it.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Explain what place and distribution mean, and work out what a buyer needs from the channel before choosing one.",
+        "explanation": "Place is how and where the customer gets what you sell. It covers the whole path from you to them, including any businesses in between. That path is called the channel, and distribution is the work of moving things along it.\n\nThose in-between businesses are called intermediaries. They earn their place by doing something useful — storing stock, sorting it, breaking a big delivery into small ones a shop can take.\n\nBuyers of hearing aids say they need the devices fitted in person, and re-moulded later as comfort changes. Those are the two things they told us the buying has to include. Both of those need someone in the room, which rules out any channel that can only describe the product.",
+        "whyMatters": "A channel that cannot do what the buyer needs at the moment of buying loses the sale, however good the product is.",
+        "steps": [
+          "Say what the buyer needs at the point of purchase.",
+          "Ask whether the channel can supply that.",
+          "Check the channel actually reaches the group you chose."
+        ],
+        "workedExample": {
+          "prompt": "Parents buying school shoes say they need to compare several styles side by side and take a pair home the same day. One option is to sell from shelf stock in the shop. The other is to order each pair in for collection later that week. (Our scenario, not an official one.)",
+          "weakAnswer": "Order them in. Holding less stock is tidier, and the parents can come back later in the week to collect.",
+          "strongAnswer": "Sell from the shelf stock. The parents told us two things they need: several styles in front of them, and shoes to take home today. Ordering in fails both — there is nothing to compare, and the shoes arrive days later.",
+          "whyItWorks": "It reads the requirement off what the buyers said, then checks each option against it. The weak answer optimises for the shop and loses the two things the buyer came for."
+        },
+        "guidedQuestion": {
+          "prompt": "A coffee roaster’s café customers say their biggest problem is running out of beans mid-week. Which change answers that?",
+          "choices": [
+            "Send the cafés a monthly newsletter about the roastery",
+            "Deliver twice a week instead of once a week",
+            "Print the roast date on every bag of beans",
+            "Add two new blends to the range on offer"
+          ],
+          "correctAnswer": "Deliver twice a week instead of once a week",
+          "hint": "What did the buyer say goes wrong, and when?",
+          "explanation": "The problem is running out partway through the week, which is about how often stock arrives. A newsletter, a date on the bag and a wider range all leave the same gap between deliveries.",
+          "skillTag": "Channel fit"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What do intermediaries do in a channel?",
+            "choices": [
+              "They set the price the final customer will be asked to pay",
+              "They help move products along, by storing, sorting and splitting them",
+              "They advertise the product on the producer’s behalf",
+              "They manufacture the product under the producer’s name"
+            ],
+            "correctAnswer": "They help move products along, by storing, sorting and splitting them",
+            "hint": "They earn their place by doing something to the goods.",
+            "explanation": "Storing, sorting and breaking a bulk delivery into shop-sized ones is the work that gets a product from a producer to a buyer. Pricing, advertising and manufacturing are different jobs.",
+            "skillTag": "How it reaches them"
+          },
+          {
+            "prompt": "A bakery’s target is night-shift nurses at the hospital opposite, who finish at half past seven in the morning and shop on the way home. The bakery opens at nine. What should change?",
+            "choices": [
+              "Start counter service at seven in the morning",
+              "Add a night-shift discount to the usual range",
+              "Advertise the bakery inside the hospital building",
+              "Extend opening later into the evening instead"
+            ],
+            "correctAnswer": "Start counter service at seven in the morning",
+            "hint": "Can the chosen group reach you when they are there?",
+            "explanation": "The nurses pass at half past seven and the doors are shut. A discount, an advert and a later closing time all leave them walking past a closed shop.",
+            "skillTag": "Reaching the target"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A specialty tool needs to be demonstrated before people will buy it. Which channel is the poor fit?",
+            "choices": [
+              "A shop counter with staff who can show it working",
+              "A stand at an event, with the tool set up to try",
+              "An online listing with photographs and a written description of it",
+              "A supplier’s display room with a bench to try it on"
+            ],
+            "correctAnswer": "An online listing with photographs and a written description of it",
+            "hint": "What does the buyer need at the moment of buying?",
+            "explanation": "The buyers need to see it work before they commit. Three of these can show them; one can only describe it, so the requirement goes unmet.",
+            "skillTag": "Channel fit"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "Ask what the buyer needs at the counter",
+            "body": "Different purchases need different things at the point of sale. Some need information — a demonstration, an explanation, a chance to ask. Some need convenience, or the choice of several options side by side. Some need help afterwards: fitting, adjusting, servicing.\n\nStart there. Once you know what this buyer needs, most channels rule themselves out. And check the channel reaches the group you actually chose: a shop the nurses walk past at half past seven is no use if it opens at nine."
+          }
+        ],
+        "commonMistakes": [
+          {
+            "mistake": "Treating distribution as just shipping.",
+            "whyItFails": "Place covers where and how the customer gets it, including whether they can try it, compare it, or have it fitted.",
+            "fix": "Ask what has to happen at the point of purchase, not only how the box travels."
+          },
+          {
+            "mistake": "Choosing a channel on what it costs the business.",
+            "whyItFails": "Cost is a real question, and it is a different one. It cannot tell you whether the buyer can get what they need.",
+            "fix": "Settle the fit first, on what the buyer requires."
+          }
+        ]
+      }
+    }
+  },
+  {
     "slug": "deca-handling-customer-situations",
     "organization": "DECA",
     "track": "DECA",
@@ -1865,6 +1969,110 @@
             "mistake": "Following up on everything.",
             "whyItFails": "Follow-up earns its place when someone else still has to act, or the fix is unfinished.",
             "fix": "Follow up while something is still open, not out of habit."
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "deca-how-you-are-understood",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA business content",
+    "name": "Marketing",
+    "description": "Define positioning and keep it apart from a difference and a value proposition.",
+    "lesson": {
+      "title": "How You Want to Be Understood",
+      "slug": "deca-how-you-are-understood-lesson",
+      "summary": "Decide how you want your market to think of you, and check your own choices are saying it.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Say what positioning is, and keep it apart from a real difference and from a value proposition.",
+        "explanation": "Positioning is how you want your market to think of you, next to the alternatives. It is a decision about being understood.\n\nThree words sit close together here. A difference is what is actually different about your offer. Positioning is how you mean to be understood. A value proposition is why the customer you chose should care.\n\nA café priced above its neighbours, with better beans and table service, is positioned as somewhere a bit special — what people often call premium. The price is part of the message, not only a number on the till.",
+        "whyMatters": "You do not get to decide what customers think by saying it. They read it off what you charge, what you sell, and where you sell it.",
+        "steps": [
+          "Say how you want the market to think of you.",
+          "List the choices a customer can actually see.",
+          "Check those choices say the same thing."
+        ],
+        "workedExample": {
+          "prompt": "A tea brand means to sit above Brand X in both price and how good people think it is. Today both sell at $4.50. The tea brand uses leaf from one estate; Brand X blends several. (Our scenario, not an official one.)",
+          "weakAnswer": "We should say in our advertising that we are the premium option and that our tea is better quality.",
+          "strongAnswer": "I’d raise the price above Brand X. Sitting at the same price says we are the same kind of thing, whatever the advertising claims. The leaf from one estate gives us something the higher price can stand on.",
+          "whyItWorks": "It changes a signal the customer can see rather than only the wording. And the change is backed by a difference the situation already gives us."
+        },
+        "guidedQuestion": {
+          "prompt": "A hotel says it is positioned as the quiet, restful option in town. Which of its choices contradicts that?",
+          "choices": [
+            "The late-night bar it advertises on the front of the building",
+            "The blackout blinds fitted in every one of the bedrooms",
+            "The library lounge it keeps free of phones and screens",
+            "The garden it maintains at the back, away from the road"
+          ],
+          "correctAnswer": "The late-night bar it advertises on the front of the building",
+          "hint": "Which choice tells the customer something different?",
+          "explanation": "A late-night bar advertised on the front of the building is the loudest thing about the place, which is not what a quiet, restful hotel is claiming to be. Blackout blinds, a screen-free lounge and a garden away from the road all point the same way as the claim.",
+          "skillTag": "Signals that agree"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "Positioning is best described as:",
+            "choices": [
+              "The list of features that make an offering different from the rest",
+              "How a business means its market to think of it against rivals",
+              "The benefit statement that a chosen customer is given to read",
+              "The amount a business charges when set against its nearest rivals"
+            ],
+            "correctAnswer": "How a business means its market to think of it against rivals",
+            "hint": "Three close words: different, understood, why care.",
+            "explanation": "Features are the difference. The benefit statement is the value proposition. Price is one signal of a position, not the position itself.",
+            "skillTag": "Three close words"
+          },
+          {
+            "prompt": "A furniture maker means to sit below Northgate on price while staying the durable, repairable choice. Its chair is $220 and Northgate’s is $260. What should it do?",
+            "choices": [
+              "Match Northgate at $260, so quality is not doubted",
+              "Cut to $150, to be clearly the cheaper option",
+              "Hold the chair at $220 where it already sits",
+              "Raise to $270, to sit just above Northgate"
+            ],
+            "correctAnswer": "Hold the chair at $220 where it already sits",
+            "hint": "Does the current signal already say what you mean?",
+            "explanation": "It is already below Northgate and not so far below that durability stops being believable. Matching at $260 loses the gap it wants, $270 puts it above Northgate when the intention was to stay below, and $150 says budget rather than durable.",
+            "skillTag": "Price as a signal"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A business claims a premium position and advertises weekly discount coupons. What is the problem?",
+            "choices": [
+              "Coupons are more expensive to run than other promotions",
+              "The signals contradict each other, so the claim is doubted",
+              "Premium businesses are not allowed to discount at all",
+              "Coupons reach the wrong age group for a premium product"
+            ],
+            "correctAnswer": "The signals contradict each other, so the claim is doubted",
+            "hint": "Customers read the choices, not the claim.",
+            "explanation": "Nothing here says what coupons cost or who picks them up, and there is no rule against discounting. The problem is that the weekly discount says one thing while the claim says another.",
+            "skillTag": "Signals that agree"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "Your choices are the message",
+            "body": "Customers work out your position from what they can see: what you charge, what you stock, where you sell, how you look. Where a situation supports it, price is one of the clearest of those signals.\n\nSo a position has to be backed by choices that agree with it. A range — everything a business sells — can call itself clinical and top of its category. Run a permanent three-for-two on it (pay for two, take three) and you have told the customer two different things. The one they believe is usually the one with a price on it."
+          }
+        ],
+        "commonMistakes": [
+          {
+            "mistake": "Collapsing difference, positioning and value into “branding”.",
+            "whyItFails": "They answer three different questions, and a scenario is usually asking only one of them.",
+            "fix": "Ask which is wanted: what is different, how you mean to be understood, or why this customer should care."
+          },
+          {
+            "mistake": "Treating positioning as a slogan.",
+            "whyItFails": "A sentence in an advert cannot outvote the price on the shelf.",
+            "fix": "Change something the customer can see, then say it."
           }
         ]
       }
@@ -2305,6 +2513,214 @@
     }
   },
   {
+    "slug": "deca-telling-them-about-it",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA business content",
+    "name": "Marketing",
+    "description": "Explain what promotion is for, and judge whether audience, message and channel fit.",
+    "lesson": {
+      "title": "Telling Them About It",
+      "slug": "deca-telling-them-about-it-lesson",
+      "summary": "Match the message to the people you chose, and use something that can actually reach them.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Explain what promotion is for, and judge whether the audience, the message and the channel fit each other.",
+        "explanation": "Promotion is everything a business does to tell customers about an offer. It comes in several forms: advertising, short-term offers, selling in person, public relations, direct contact, and anything online.\n\nAdvertising is paid, and meant to reach a lot of people at once. A sales promotion is a short-term nudge to act now, like a two-week trial offer.\n\nA community choir rehearses on Tuesday evenings in the town hall and wants new members who can get there. An advert in the local weekly paper reaches that area. A national campaign would reach far more people, almost none of whom could come on a Tuesday.",
+        "whyMatters": "A message can be true, well written and completely wasted. Whether it works depends on who sees it and whether it says anything they wanted.",
+        "steps": [
+          "Say who the message is for.",
+          "Ask what that group would actually want to hear.",
+          "Choose something that reaches them, not something popular."
+        ],
+        "workedExample": {
+          "prompt": "A garden centre wants its 8,000 existing loyalty-card customers to try a new houseplant range. Their email addresses are on the loyalty file. There is no paid-advertising budget this quarter, and the range launches in two weeks. (Our scenario, not an official one.)",
+          "weakAnswer": "Run a broad advertising campaign so that far more people in the area get to hear about the garden centre.",
+          "strongAnswer": "Email the loyalty list with a two-week in-store trial offer on the new range. We already have their addresses, so it costs nothing we do not have. These are people who know the centre. They only need a reason to come in for the new plants.",
+          "whyItWorks": "The audience is the one named, the channel already reaches them, and the message gives them something to do inside the launch window. The weak answer builds awareness among people who were not the target."
+        },
+        "guidedQuestion": {
+          "prompt": "A Saturday football club for under-twelves needs players who live close enough to come every week. Which channel best fits?",
+          "choices": [
+            "A post on a nationwide youth-sport discussion forum",
+            "A notice in the newsletters of nearby primary schools",
+            "A national radio advertisement broadcast on weekend mornings",
+            "A stall at a large sports expo in another region"
+          ],
+          "correctAnswer": "A notice in the newsletters of nearby primary schools",
+          "hint": "Which one reaches these people, in this place?",
+          "explanation": "All four reach people interested in sport. Only one is limited to families living near enough to come every Saturday, which is what the club said it needs.",
+          "skillTag": "Audience and channel"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "What is the difference between advertising and a sales promotion?",
+            "choices": [
+              "Advertising is done online, and a sales promotion is done in a shop",
+              "Advertising is paid and reaches many; a promotion is a short-term nudge",
+              "Advertising is used by the large businesses, and promotions by smaller ones",
+              "Advertising is honest, while a sales promotion is really a marketing trick"
+            ],
+            "correctAnswer": "Advertising is paid and reaches many; a promotion is a short-term nudge",
+            "hint": "One informs widely; the other asks for something now.",
+            "explanation": "Both can be online or offline and both are used by businesses of any size. What separates them is that a sales promotion is short-term and built around something to do now.",
+            "skillTag": "Kinds of promotion"
+          },
+          {
+            "prompt": "A pet shop’s target is owners of large dogs, who its records show buy one twelve-kilogram sack of food about every six weeks. It offers a loyalty stamp giving a free sack after twelve purchases. Why is that a weak promotion for this group?",
+            "choices": [
+              "The reward is too far away for how often these owners buy",
+              "Loyalty schemes of this kind do not work well for pet shops",
+              "Twelve-kilogram sacks are the wrong size for the shop to sell",
+              "The shop should be advertising to new customers instead of these"
+            ],
+            "correctAnswer": "The reward is too far away for how often these owners buy",
+            "hint": "Work the offer against how often they actually buy.",
+            "explanation": "Buying every six weeks, twelve purchases is well over a year away. The offer asks for a wait these buyers will not feel. Nothing here says loyalty schemes or that sack size are wrong in general.",
+            "skillTag": "Message fit"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "Which promotion says something the customer would care about?",
+            "choices": [
+              "Our new range is now available in all of our branches",
+              "We have been trading in this town for over forty years",
+              "Try the new range free for two weeks, in store",
+              "Our new range uses a redesigned packaging format"
+            ],
+            "correctAnswer": "Try the new range free for two weeks, in store",
+            "hint": "Does it give them something they wanted, and something to do?",
+            "explanation": "Three of these are facts about the business. One offers the customer something and says how to take it up, which is the part they can act on.",
+            "skillTag": "Message fit"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "Audience, message, channel",
+            "body": "A promotion has three parts and they all have to agree. Who is it for. What does it say. Where does it appear.\n\nPick the audience first, because it decides the other two. A message that means nothing to them is wasted, however well it is written. A channel they do not use cannot deliver it, however popular it is.\n\nKeep it consistent, too. If the same customer meets three different versions of what you are, none of them lands."
+          }
+        ],
+        "commonMistakes": [
+          {
+            "mistake": "Choosing a channel because it is popular.",
+            "whyItFails": "Reaching many people is not the same as reaching yours, and the ones you chose may not be there at all.",
+            "fix": "Start from where your group already is."
+          },
+          {
+            "mistake": "Writing a promotion that just restates the product.",
+            "whyItFails": "The customer already has to work out why any of it matters to them, which is the part you were meant to do.",
+            "fix": "Say what they get, and what to do about it."
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "deca-the-offering-and-its-price",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA business content",
+    "name": "Marketing",
+    "description": "Name which marketing lever a decision belongs to, and tell price as a signal from price as arithmetic.",
+    "lesson": {
+      "title": "The Offering and Its Price",
+      "slug": "deca-the-offering-and-its-price-lesson",
+      "summary": "Work out which of the four levers a decision is really about, and what a price is saying.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Name which of the four marketing levers a decision belongs to, and tell a price question about meaning from a price question about money.",
+        "explanation": "Businesses have four controllable levers, usually called the four Ps: product, price, place and promotion. Product is what you provide. Price is what the customer pays. Place is how they get it. Promotion is how you tell them.\n\nA sandwich shop sells only full-size baguettes, and customers say they want something smaller at lunch. Adding a half-size option changes the product — what the shop sells is now a different thing. Charging less for the same baguette would be a price decision, and neither is about how people get hold of it.\n\nSome decisions touch two levers at once, so say which one the customer’s problem is about. And naming the lever is the easy half: choosing well inside it is the work, and the four Ps do not do that for you.",
+        "whyMatters": "Getting the lever wrong sends the whole answer somewhere else. A queue problem answered with an advert is a promotion fix for a product fault.",
+        "steps": [
+          "Say what the customer’s problem actually is.",
+          "Name which lever changes it: product, price, place or promotion.",
+          "Choose inside that lever, using what the situation gives you."
+        ],
+        "workedExample": {
+          "prompt": "A gym’s members say they want to train before work, and its records show most of them start work at nine. The gym opens at seven, when its first instructor arrives, though the building is accessible from six. It has an equipment area that needs no instructor. (Our scenario, not an official one.)",
+          "weakAnswer": "We should advertise our early classes harder so more members know that we open at seven.",
+          "strongAnswer": "I’d let members use the equipment area unstaffed from six. What we sell does not include the hour they most want. That area needs no instructor, so the offering can change without waiting for staff.",
+          "whyItWorks": "It fixes the thing members named. The weak answer promotes an opening time that is still too late, which is a promotion answer to a product problem."
+        },
+        "guidedQuestion": {
+          "prompt": "Which of these is a promotion decision?",
+          "choices": [
+            "Choosing to run a paid social-media advertising campaign",
+            "Choosing which shops will stock the new range",
+            "Choosing to add a smaller size to the product line",
+            "Choosing to sit ten percent above the nearest rival"
+          ],
+          "correctAnswer": "Choosing to run a paid social-media advertising campaign",
+          "hint": "Which lever is being pulled: product, price, place or promotion?",
+          "explanation": "Stocking is place, a new size is product, and sitting above a rival is price. Only one of these is about telling customers something.",
+          "skillTag": "Naming the lever"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "“Place” in the four Ps means:",
+            "choices": [
+              "The town or region a business decides to operate in",
+              "How and where the customer obtains the product",
+              "The shelf position a product is given in a shop",
+              "The country where the product is manufactured"
+            ],
+            "correctAnswer": "How and where the customer obtains the product",
+            "hint": "Place is about how it reaches the customer.",
+            "explanation": "Place covers the path from seller to buyer — where they get it and how it gets there. A head-office location, a shelf position and a factory are all real things, and none of them is what place means here.",
+            "skillTag": "Naming the lever"
+          },
+          {
+            "prompt": "A judge asks what your price says about the product. Which answer is about price as a marketing decision?",
+            "choices": [
+              "We sell it for $40 and it costs us $22, so a discount still pays",
+              "Sitting above the nearest rival tells buyers we mean to be the better one",
+              "A ten percent cut would need us to sell a lot more to make it back",
+              "Our costs went up this year, so the price had to follow them"
+            ],
+            "correctAnswer": "Sitting above the nearest rival tells buyers we mean to be the better one",
+            "hint": "What does the price say, not what does it earn?",
+            "explanation": "Two of these work out whether the price pays for itself, and one says where the price came from. Only one answers what the price communicates, which is the marketing question that was asked.",
+            "skillTag": "Price as a signal"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A gym sells only twelve-month memberships. Customers say they want to try it for a shorter period first. Which lever should change?",
+            "choices": [
+              "Promotion — advertise the twelve-month membership harder",
+              "Price — reduce the cost of the twelve-month membership",
+              "Product — add a one-month membership to what is sold",
+              "Place — open a second branch on the other side of town"
+            ],
+            "correctAnswer": "Product — add a one-month membership to what is sold",
+            "hint": "What did the customers actually say was wrong?",
+            "explanation": "They did not say they had not heard of the gym, that it cost too much, or that it was hard to reach. They said the only thing on sale is the wrong length, so what is sold has to change.",
+            "skillTag": "Naming the lever"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "Two different price questions",
+            "body": "Price gets asked about in two ways, and they want different answers.\n\nOne is what the price says. Sitting above the nearest rival tells a customer you mean to be the better choice; sitting well below says something else. That is a marketing question.\n\nThe other is whether the price works — what it costs to make, what margin is left, whether a discount pays for itself. That is a money question, and it is not this lesson. Answering a “what does this price say” question with arithmetic misses what was asked."
+          }
+        ],
+        "commonMistakes": [
+          {
+            "mistake": "Answering a pricing question with margin arithmetic.",
+            "whyItFails": "It is a good answer to a question nobody asked, and it leaves the marketing question open.",
+            "fix": "Check whether you were asked what the price says or whether it pays."
+          },
+          {
+            "mistake": "Treating the four Ps as a checklist that solves the problem.",
+            "whyItFails": "Naming the category is not the same as choosing well inside it, and the four levers are not a complete answer to every situation.",
+            "fix": "Name the lever, then say what you would actually do with it."
+          }
+        ]
+      }
+    }
+  },
+  {
     "slug": "deca-understanding-performance-indicators",
     "organization": "DECA",
     "track": "DECA",
@@ -2431,6 +2847,208 @@
             "mistake": "Doing brilliant work on something that was not listed.",
             "whyItFails": "Extra strength makes the meeting better. It still cannot stand in for a listed skill.",
             "fix": "Reach every listed indicator first. Then give your remaining time to the weakest one."
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "deca-who-the-customer-is",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA business content",
+    "name": "Marketing",
+    "description": "Tell a customer need, a market segment and a target market apart.",
+    "lesson": {
+      "title": "Who the Customer Is",
+      "slug": "deca-who-the-customer-is-lesson",
+      "summary": "Work out what the customer is trying to get done, group the people trying to do it, and choose the group you can serve.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Tell a customer need, a market segment and a target market apart, and say which one a situation is describing.",
+        "explanation": "Marketing starts with one question: who is this for? Three words get used for that, and they do not mean the same thing. A need is what the customer is trying to get done. A segment is a group of people trying to get the same thing done. A target market is the group the business chooses to build around.\n\nA bike shop looks at who buys from it and finds three groups: commuters, weekend riders, and racers. That is segmenting — describing how the market divides. Choosing to build the shop around commuters is targeting. It is a decision, and it is why a commuter service package becomes the sensible next move.\n\nDescribing the groups is not a plan. “Our target market is anyone who might buy a bike” names the market and chooses nothing. A target you cannot be outside of is not a target.",
+        "whyMatters": "Every later marketing decision points back at this one. Until you have chosen who you are for, you cannot tell whether an offer, a price or a channel fits.",
+        "steps": [
+          "Say what the customer is trying to get done.",
+          "Group the people trying to get the same thing done.",
+          "Choose the group the business can actually serve.",
+          "Check the next decision follows from that choice."
+        ],
+        "workedExample": {
+          "prompt": "A bookshop wants one group to build its weekday campaign around. Its own records show most weekday sales are parents buying children’s books between two and four in the afternoon. Students come in mainly at weekends. (Our scenario, not an official one.)",
+          "weakAnswer": "We should target readers. Everybody reads, so the campaign should go out to as many people as we can reach.",
+          "strongAnswer": "The records already point at one group: parents buying children’s books on weekday afternoons. I’d build the weekday campaign around them and time it before school pickup, because that is when the records say they are here. Students come at weekends, so they are a different campaign, not this one.",
+          "whyItWorks": "It picks a group the shop’s own records describe, rather than one it hopes exists. And the choice then decides the timing, instead of the timing being added afterwards."
+        },
+        "guidedQuestion": {
+          "prompt": "A garden centre sorts its customers into weekend planters, allotment growers and landscapers. What has it done so far?",
+          "choices": [
+            "Chosen a target market to build the season around",
+            "Described how its own market divides into different groups",
+            "Written a value proposition aimed at each of them",
+            "Decided which of the groups is the most profitable"
+          ],
+          "correctAnswer": "Described how its own market divides into different groups",
+          "hint": "Describing the market and choosing inside it are different steps.",
+          "explanation": "Sorting customers into groups is segmenting, and it describes the market. Choosing one to build around would be targeting, and nothing here says a choice has been made. What each group is worth is a different question again.",
+          "skillTag": "Segment or target"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "A gym’s members keep asking for more parking spaces. Asked why, they say they are trying to get in and out inside their lunch hour. What are they actually asking for?",
+            "choices": [
+              "More parking spaces, added as soon as they can be built",
+              "A way to fit a workout into a lunch hour",
+              "A cheaper membership than the one they have now",
+              "Longer opening hours in the middle of the day"
+            ],
+            "correctAnswer": "A way to fit a workout into a lunch hour",
+            "hint": "The request is not always the need.",
+            "explanation": "The words name parking; the reason names the need. Once the need is a workout inside an hour, a quicker way through the changing rooms might answer it and more spaces might not. Nobody said price or opening hours was the problem.",
+            "skillTag": "Finding the need"
+          },
+          {
+            "prompt": "A tutoring service has found four groups: 400 students wanting daytime courses, 150 adults wanting evening classes, 90 hobby learners wanting to drop in, and 60 candidates wanting weekend intensives. Its tutors work weekday evenings only. Which group is the sensible target?",
+            "choices": [
+              "The 400 students who want intensive daytime courses",
+              "The 90 hobby learners who want to drop in any time",
+              "The 150 adult learners who want evening classes",
+              "The 60 candidates who want weekend intensives"
+            ],
+            "correctAnswer": "The 150 adult learners who want evening classes",
+            "hint": "The biggest group is not automatically the reachable one.",
+            "explanation": "Only one group wants the service in the hours the tutors already work. Group size does not help when there is nobody there to teach them.",
+            "skillTag": "Choosing a target"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "Which of these is a target market?",
+            "choices": [
+              "Anyone who might want to buy from us this year",
+              "People who like good service and fair prices",
+              "Office workers within a ten-minute walk, at lunchtime",
+              "Customers who are interested in what we sell"
+            ],
+            "correctAnswer": "Office workers within a ten-minute walk, at lunchtime",
+            "hint": "A target you cannot be outside of is not a target.",
+            "explanation": "Only one of these leaves anybody out. The others describe almost every possible customer, so they cannot help you decide what to offer or where to say it.",
+            "skillTag": "Choosing a target"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "Start from the need, not the product",
+            "body": "Ask what the customer is trying to get done. Meal-kit customers asking for a “quick mode” button are not really asking for a button. They are trying to get dinner made on a weeknight, and the useful answer is a set of fifteen-minute recipes.\n\nA group is worth targeting when the business can actually serve it. The biggest group is not automatically the right one. If the tutors only work weekday evenings, four hundred students who want daytime courses cannot be reached, whatever the number says."
+          }
+        ],
+        "misconception": {
+          "wrongModel": "The target market is everyone who might possibly buy.",
+          "whyItFails": "A target that excludes nobody gives you nothing to decide with. Every offer fits, every channel fits, and no plan is better than any other.",
+          "betterModel": "A target market is a choice about where to concentrate. If nothing is left out, no choice has been made."
+        }
+      }
+    }
+  },
+  {
+    "slug": "deca-why-they-choose-you",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA business content",
+    "name": "Marketing",
+    "description": "Tell a difference from a value proposition, and test whether the difference matters.",
+    "lesson": {
+      "title": "Why They Would Choose You",
+      "slug": "deca-why-they-choose-you-lesson",
+      "summary": "Turn a fact about your offer into the promise it makes to the customer you chose.",
+      "estimatedMinutes": 6,
+      "content": {
+        "objective": "Tell a difference from a value proposition, and test whether a difference actually matters to the customer you chose.",
+        "explanation": "A difference is something about your offer that is not true of the alternatives. A value proposition is the promise that difference makes to the customer you chose. They are not the same thing.\n\nA bike repair shop returns every bike the same day. That is the difference. The value proposition is what it means to a commuter: your bike back the same day, ready for the ride to work tomorrow. One is a fact about the shop. The other is a reason to choose it.\n\nDifferent is not the same as better. A shop could be the only one using purple boxes. True, checkable, and no reason for anyone to buy anything.",
+        "whyMatters": "A feature on its own gives a customer nothing to decide with. What decides it is what the feature does for them, and whether that was something they were already trying to get.",
+        "steps": [
+          "Name the difference.",
+          "Say what it gets the customer you chose.",
+          "Check that a competitor could not say the same sentence."
+        ],
+        "workedExample": {
+          "prompt": "A payroll software company sells to owners of businesses with fewer than five staff. Those owners say their worry is making a mistake on a tax filing. The software checks filings before they are submitted. (Our scenario, not an official one.)",
+          "weakAnswer": "Our software includes an automatic pre-submission validation layer built into the filing workflow.",
+          "strongAnswer": "Your filings are checked before they are submitted, so mistakes get caught first. That is the thing these owners told us they were worried about, and it is what the check actually does for them.",
+          "whyItWorks": "It states the same fact in the customer’s terms. The weak version describes the software; the strong one answers the worry the owners named."
+        },
+        "guidedQuestion": {
+          "prompt": "A window company’s frames are guaranteed for twenty-five years. Which is the value proposition?",
+          "choices": [
+            "Our frames are guaranteed for a full twenty-five years",
+            "We use a reinforced core that resists warping over time",
+            "You will not be replacing these windows again for decades",
+            "Our frames are tested against a twenty-five year standard"
+          ],
+          "correctAnswer": "You will not be replacing these windows again for decades",
+          "hint": "Say what the difference gets the customer.",
+          "explanation": "The others state a fact about the frames or about the guarantee. Only one says what that means for the person who has to live with them, which is the part they can decide with.",
+          "skillTag": "Feature or promise"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "A bike shop lists four things no other local shop does. Which difference is useless to the customer?",
+            "choices": [
+              "We are the only local shop with a green front door",
+              "We are the only local shop that opens before seven",
+              "We are the only local shop that repairs older frames",
+              "We are the only local shop that returns bikes the same day"
+            ],
+            "correctAnswer": "We are the only local shop with a green front door",
+            "hint": "A difference has to be one somebody would choose on.",
+            "explanation": "All four are differences. Three of them change what the customer gets — earlier access, a repair nobody else does, a shorter wait. The colour of the door changes nothing they were trying to do.",
+            "skillTag": "Difference that matters"
+          },
+          {
+            "prompt": "Two versions of the same printer cartridge cost the same. One can be collected today from a store twenty-five minutes away; the other arrives by post in four days. A customer whose printer is out of ink now would take:",
+            "choices": [
+              "The posted version, since waiting avoids the trip",
+              "Either one, because the price is the same either way",
+              "The store version, collected today rather than posted",
+              "Neither, until a cheaper option can be found"
+            ],
+            "correctAnswer": "The store version, collected today rather than posted",
+            "hint": "Value is the benefit set against what it costs to get it.",
+            "explanation": "The price is identical, so price cannot decide it. What differs is the wait, and this customer needs ink now — so the trip buys something they actually want.",
+            "skillTag": "Customer value"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "A mobile dog groomer comes to the owner’s door, so an anxious dog never travels. Which sentence is the value proposition?",
+            "choices": [
+              "We operate a fully equipped grooming van with onboard water",
+              "No car, no waiting room. We groom at your door.",
+              "We are a mobile grooming service covering the whole county",
+              "Our groomers are trained to work with nervous animals"
+            ],
+            "correctAnswer": "No car, no waiting room. We groom at your door.",
+            "hint": "Which one names what the owner gets?",
+            "explanation": "The others describe the van, the coverage and the training. Only one says what changes for the owner and the dog, which is the reason to choose it.",
+            "skillTag": "Feature or promise"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "Turn the feature into the promise",
+            "body": "Say the difference, then say what it gets the customer. Paper that does not bleed through is a feature. Both sides of every page stay usable is the promise.\n\nA value proposition that would fit any competitor is not one. If a rival could put their name on your sentence and it would still be true, you have described the category rather than your own offer."
+          }
+        ],
+        "commonMistakes": [
+          {
+            "mistake": "Listing features and calling it value.",
+            "whyItFails": "A feature is a fact about the product. It becomes value only when someone says what it does for the customer.",
+            "fix": "After each feature, say “which means…” and finish the sentence."
+          },
+          {
+            "mistake": "Claiming a difference the situation does not support.",
+            "whyItFails": "If nothing in front of you says you are the only one, saying so is a guess the customer can check.",
+            "fix": "Point at the difference the situation actually gives you."
           }
         ]
       }

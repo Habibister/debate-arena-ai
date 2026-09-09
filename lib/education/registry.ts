@@ -93,7 +93,7 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     id: "deca-business-content",
     track: "DECA",
     label: "DECA Business-Content Course",
-    moduleIds: ["deca-customer-service"]
+    moduleIds: ["deca-customer-service", "deca-marketing-basics"]
   },
   {
     id: "hosa-clinical-skill-communication",
@@ -161,6 +161,16 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     track: "DECA",
     label: "Customer service",
     outcome: "Decide what to say to a customer from the facts, the policy, the real options, and the authority the role carries.",
+    prerequisiteId: null
+  },
+  {
+    // P1-B4. The second module of the business-content course. Separate from customer service because
+    // the approved curriculum treats them as two content areas with their own six-lesson sequences.
+    id: "deca-marketing-basics",
+    courseId: "deca-business-content",
+    track: "DECA",
+    label: "Marketing basics",
+    outcome: "Connect what a business offers to the customers it means to serve — who they are, what they value, and how it reaches them.",
     prerequisiteId: null
   },
   {

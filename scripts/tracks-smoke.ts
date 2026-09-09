@@ -1172,6 +1172,12 @@ async function main() {
     "P1-B3. and the cluster-knowledge lesson, even though it lives in a different DECA course");
   assert.ok(m11r5IndexDeca.includes("Customer service"),
     "P1-B3b. labelled with its own module, so the two DECA courses stay distinguishable on one list");
+  for (const mk of ["Who the Customer Is", "Why They Would Choose You", "How You Want to Be Understood",
+                    "The Offering and Its Price", "Getting It to the Customer", "Telling Them About It"]) {
+    assert.ok(m11r5IndexDeca.includes(mk), `P1-B4. the DECA index lists the marketing lesson "${mk}"`);
+  }
+  assert.ok(m11r5IndexDeca.includes("Marketing basics"),
+    "P1-B4b. under its own module, so the marketing sequence is distinguishable from customer service");
   assert.ok(m11r5IndexDeca.includes("Role-play skills"),
     "P1-B1b. labelled with its own module, not another track's name");
   // TRACK ISOLATION on the index: a DECA learner's list never names another track.

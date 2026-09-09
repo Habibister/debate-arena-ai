@@ -62,7 +62,8 @@ export const STABLE_TEACHING_DECA_PROVENANCE: SourceFreshnessMetadata = Object.f
 });
 
 /** The DECA catalog slugs this file publishes, in teaching order. */
-const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation", "deca-handling-customer-situations"] as const;
+const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation",
+  "deca-handling-customer-situations", "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"] as const;
 
 /** The DECA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
 export const HELD_DECA_CATALOG_SLUGS: readonly string[] = [
@@ -115,9 +116,18 @@ function selectDecaCatalogLesson(slug: PublishedDecaSlug): ConceptEducationLesso
 const understandingPerformanceIndicators = selectDecaCatalogLesson("deca-understanding-performance-indicators");
 const justifyingYourRecommendation = selectDecaCatalogLesson("deca-justifying-your-recommendation");
 const handlingCustomerSituations = selectDecaCatalogLesson("deca-handling-customer-situations");
+const whoTheCustomerIs = selectDecaCatalogLesson("deca-who-the-customer-is");
+const whyTheyChooseYou = selectDecaCatalogLesson("deca-why-they-choose-you");
+const howYouAreUnderstood = selectDecaCatalogLesson("deca-how-you-are-understood");
+const theOfferingAndItsPrice = selectDecaCatalogLesson("deca-the-offering-and-its-price");
+const gettingItToTheCustomer = selectDecaCatalogLesson("deca-getting-it-to-the-customer");
+const tellingThemAboutIt = selectDecaCatalogLesson("deca-telling-them-about-it");
 
 /** Exported for the smoke suite's strict-identity proof against the catalog. */
-export const PUBLISHED_DECA_SOURCES = { understandingPerformanceIndicators, justifyingYourRecommendation, handlingCustomerSituations } as const;
+export const PUBLISHED_DECA_SOURCES = {
+  understandingPerformanceIndicators, justifyingYourRecommendation, handlingCustomerSituations,
+  whoTheCustomerIs, whyTheyChooseYou, howYouAreUnderstood, theOfferingAndItsPrice, gettingItToTheCustomer, tellingThemAboutIt
+} as const;
 
 /**
  * P1-B1 — the teaching owner for the `deca-performance-indicators` drill area.
@@ -227,8 +237,136 @@ export const DECA_CUSTOMER_RELATIONS_LESSON: EducationRegistryEntry = {
   provenance: STABLE_TEACHING_DECA_PROVENANCE
 };
 
+/**
+ * P1-B4 — the MARKETING FUNDAMENTALS units, MK1 to MK6.
+ *
+ * SIX LESSONS, ONE CLAIM. The approved curriculum defines MK1-MK6 as six lessons written to stand
+ * alone, and the 30-item drill spreads across all six, so one page could not teach the area without
+ * overclaiming. But an area needs exactly ONE remediation destination, so only MK1 carries
+ * `skillSlug` and MK2-MK6 carry the practice CTA alone — the same shape the Debate answer-types and
+ * turn-mechanics lessons use, and the shape the review-ladder controls already validate.
+ *
+ * They chain MK1 -> MK2 -> ... -> MK6, so a learner who starts at the gateway is walked through the
+ * area in the curriculum's own order rather than left to find five more lessons on an index.
+ */
+
+export const DECA_MK1_LESSON: EducationRegistryEntry = {
+  id: "deca-who-the-customer-is",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-marketing-basics",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: whoTheCustomerIs,
+  sourceKind: "concept-education-lesson",
+  // MK1 is the gateway: the ONE marketing entry that claims the skill, so remediation for a
+  // failed marketing drill has a single destination.
+  skillSlug: "deca-marketing",
+  practiceDrill: { track: "deca", area: "marketing-fundamentals" },
+  legacySlugs: [],
+  nextLessonId: "deca-why-they-choose-you",
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
+export const DECA_MK2_LESSON: EducationRegistryEntry = {
+  id: "deca-why-they-choose-you",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-marketing-basics",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: whyTheyChooseYou,
+  sourceKind: "concept-education-lesson",
+  // CTA-only: practice destination without a skill claim, so MK1 stays the single claimed
+  // teaching home for `deca-marketing` and reverse remediation cannot split.
+  practiceDrill: { track: "deca", area: "marketing-fundamentals" },
+  legacySlugs: [],
+  nextLessonId: "deca-how-you-are-understood",
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
+export const DECA_MK3_LESSON: EducationRegistryEntry = {
+  id: "deca-how-you-are-understood",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-marketing-basics",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: howYouAreUnderstood,
+  sourceKind: "concept-education-lesson",
+  // CTA-only: practice destination without a skill claim, so MK1 stays the single claimed
+  // teaching home for `deca-marketing` and reverse remediation cannot split.
+  practiceDrill: { track: "deca", area: "marketing-fundamentals" },
+  legacySlugs: [],
+  nextLessonId: "deca-the-offering-and-its-price",
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
+export const DECA_MK4_LESSON: EducationRegistryEntry = {
+  id: "deca-the-offering-and-its-price",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-marketing-basics",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: theOfferingAndItsPrice,
+  sourceKind: "concept-education-lesson",
+  // CTA-only: practice destination without a skill claim, so MK1 stays the single claimed
+  // teaching home for `deca-marketing` and reverse remediation cannot split.
+  practiceDrill: { track: "deca", area: "marketing-fundamentals" },
+  legacySlugs: [],
+  nextLessonId: "deca-getting-it-to-the-customer",
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
+export const DECA_MK5_LESSON: EducationRegistryEntry = {
+  id: "deca-getting-it-to-the-customer",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-marketing-basics",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: gettingItToTheCustomer,
+  sourceKind: "concept-education-lesson",
+  // CTA-only: practice destination without a skill claim, so MK1 stays the single claimed
+  // teaching home for `deca-marketing` and reverse remediation cannot split.
+  practiceDrill: { track: "deca", area: "marketing-fundamentals" },
+  legacySlugs: [],
+  nextLessonId: "deca-telling-them-about-it",
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
+export const DECA_MK6_LESSON: EducationRegistryEntry = {
+  id: "deca-telling-them-about-it",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-marketing-basics",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: tellingThemAboutIt,
+  sourceKind: "concept-education-lesson",
+  // CTA-only: practice destination without a skill claim, so MK1 stays the single claimed
+  // teaching home for `deca-marketing` and reverse remediation cannot split.
+  practiceDrill: { track: "deca", area: "marketing-fundamentals" },
+  legacySlugs: [],
+  nextLessonId: null,
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
 export const DECA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
   DECA_PERFORMANCE_INDICATORS_LESSON,
   DECA_BUSINESS_REASONING_LESSON,
-  DECA_CUSTOMER_RELATIONS_LESSON
+  DECA_CUSTOMER_RELATIONS_LESSON,
+  DECA_MK1_LESSON,
+  DECA_MK2_LESSON,
+  DECA_MK3_LESSON,
+  DECA_MK4_LESSON,
+  DECA_MK5_LESSON,
+  DECA_MK6_LESSON
 ];

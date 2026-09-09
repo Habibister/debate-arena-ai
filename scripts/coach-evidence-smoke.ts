@@ -149,7 +149,15 @@ async function main() {
     assert.ok(!("lesson" in a) && !("drill" in a), `S3-4c. ${slug} gets no fabricated lesson or drill`);
     paritySlugs += 1;
   }
-  assert.ok(paritySlugs >= 9, "S3-4d. control: the parity sweep really covered the seeded inventory");
+  // P1-B4 SUPERSEDES the ">= 9" floor. That number was calibrated when most skills had no teaching
+  // owner, so it decayed every time one gained a remediation — and once all four DECA skills resolved
+  // it failed while the sweep was working exactly as intended. The control's real job is that the loop
+  // is not vacuous and that it covered precisely the unmapped skills, so it is derived from the same
+  // source the loop filters on and cannot go stale again.
+  const unmapped = [...INTENDED_SKILL_SLUGS].filter((slug) => !practiceRemediationForSkill(slug));
+  assert.ok(unmapped.length > 0, "S3-4d. control: there are still unmapped skills for the sweep to cover");
+  assert.equal(paritySlugs, unmapped.length,
+    "S3-4e. and the sweep covered every one of them — exactly the skills with no remediation");
   assert.ok([...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("deca-")) && [...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("hosa-")),
     "S3-4e. control: DECA and HOSA slugs were among them — cross-track safety was actually exercised");
 

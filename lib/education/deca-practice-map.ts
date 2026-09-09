@@ -17,12 +17,16 @@ import type { DecaPracticeDrill } from "@/lib/education/types";
  * fundamentals are CLUSTER KNOWLEDGE that the exam tests. Practice can group by this without a new
  * top-level surface.
  *
- * P1-A invented no teaching owner: every `publishedTeachingOwner` was null. P1-B1 closed
- * performance-indicators, P1-B2 closed business-reasoning, and P1-B3 closed customer-relations — the
- * first CLUSTER-KNOWLEDGE area to get an owner, and the first whose owner sits in a different course
- * (`deca-business-content`) because the role-play course teaches performing a round and names no
- * content area. Three of four areas resolve; marketing-fundamentals is untouched and still ownerless.
- * One honest null, never a fourth plausible-looking owner.
+ * P1-A invented no teaching owner: every `publishedTeachingOwner` was null. P1-B1 through P1-B4 gave
+ * each of the four areas a real one. The two ROLE-PLAY areas are taught from the role-play course;
+ * the two CLUSTER-KNOWLEDGE areas the exam tests are taught from `deca-business-content`, because the
+ * role-play course teaches performing a round and names no content area. All four now resolve, so
+ * every DECA drill a learner can fail has somewhere truthful to send them back to.
+ *
+ * `publishedTeachingOwner` names ONE lesson per area even where the approved curriculum defines
+ * several. Marketing is taught across six lessons (MK1-MK6); MK1 is the gateway and the only one that
+ * claims the skill, so remediation has a single destination while the other five stay reachable
+ * through the chain. The field is a remediation target, not a claim that one page teaches everything.
  */
 
 /** Which half of the DECA competition a drill area serves. */
@@ -109,9 +113,17 @@ export const DECA_PRACTICE_MAP: readonly DecaPracticeMapping[] = [
     area: "marketing-fundamentals",
     skillSlug: "deca-marketing",
     component: "exam",
-    publishedTeachingOwner: null,
-    coverage: "none",
-    note: "Cluster knowledge the exam tests. No published lesson addresses it."
+    publishedTeachingOwner: "deca-who-the-customer-is",
+    coverage: "owned",
+    note:
+      "P1-B4 published SIX lessons, MK1-MK6, following the approved curriculum rather than compressing " +
+      "it: who the customer is, why they would choose you, how you want to be understood, the offering " +
+      "and its price, getting it to the customer, and telling them about it. The 30 drill items spread " +
+      "across all six units, so one page could not have taught the area honestly. MK1 is named here " +
+      "because an area needs one remediation destination; it is the gateway of a chain, not a claim " +
+      "that it teaches all six. STILL DRILL-ONLY: nothing, on the constructs the drill tests. BANK " +
+      "DEBT, recorded not repaired: mk-08 keys cost per acquisition as a promotion metric, which the " +
+      "curriculum assigns to Business Reasoning; MK6 routes campaign measurement away instead."
   }
 ];
 

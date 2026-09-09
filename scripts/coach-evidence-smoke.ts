@@ -654,7 +654,7 @@ async function main() {
   }
   for (const line of changed) {
     if (PRE_EXISTING_COPY_DRIFT.some((drifted) => line.includes(drifted))) continue;
-    assert.ok(/remediation|practiceDrill(Href|AreaLabel)|drillAreaLabel|debate-drills|education\/practice-drill|getActiveTrack|activeTrack|getDueReviews|searchParams|ReviewSessionPage|masteryPercent/.test(line),
+    assert.ok(/remediation|practiceDrill(Href|AreaLabel)|drillAreaLabel|debate-drills|education\/practice-drill|getActiveTrack|activeTrack|getDueReviews|searchParams|ReviewSessionPage|masteryPercent|emptyStatePractice|\/skills|the DECA skill drills|Nothing due right now|record your practice|^\s*Skills\s*$/.test(line),
       `S3-15d. the review page changed outside its accepted scope: ${line.trim()}`);
   }
   // ...and the page still WRITES nothing. It legitimately READS the mastery record — that is what a
@@ -672,6 +672,11 @@ async function main() {
     "S3-15d1d. an absent mastery record is shown as what it is, not as a percentage");
   assert.ok(/review\.masteryPercent !== null && review\.masteryPercent < PRACTICING_MASTERY_MIN/.test(reviewSrc),
     "S3-15d1e. and absence never counts as below the floor");
+  // Owner QA #4 widened the scope by one edge: the empty-state practice link is track-derived, so a
+  // DECA learner is sent to the surface that holds DECA drills. It is still a link, still writes
+  // nothing, and it is the only thing that changed.
+  assert.ok(/emptyStatePractice = activeTrack\?\.id === "DECA"/.test(reviewSrc),
+    "S3-15d1f. the empty-state practice destination is derived from the active track");
   for (const banned of ["recordDrillMastery", "recordPracticeOutcome", "prisma", "XPLog", "awardXp", ".update(", ".create(", ".upsert("]) {
     assert.ok(!reviewCode.includes(banned), `S3-15d2. the review page writes no durable evidence (${banned})`);
   }

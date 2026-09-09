@@ -11,6 +11,7 @@
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { rubricLineNamesNoScoredBehaviour } from "../lib/rubrics";
 import { DECA_SIMULATION_CORE_PREP, DECA_SIMULATION_ENTRY, DECA_SIMULATION_SKILL_PREP, decaCourseEndAction, decaSimulationPrep, decaSimulationPrepAll } from "../lib/education/deca-simulation-prep";
 import { EDUCATION_LESSONS, educationLessonsForTrack } from "../lib/education/registry";
@@ -566,6 +567,74 @@ function main() {
     assert.equal(learnerPathForTrack("HOSA").find((s: { id: string }) => s.id === "learn")?.href,
       "/lessons/how-hosa-scenario-interaction-works",
       "D11g. and HOSA's is unchanged — it has one published lesson, so the single-lesson form is still truthful there");
+  });
+
+  // ---- D12/D13. OWNER-QA REPAIR 1 ---------------------------------------------------------------
+  // Found by using the product, not by reading it: a DECA-scoped page attributing another track's
+  // recorded results to DECA, a continuation claim with no continuation state behind it, and an empty
+  // review list pointing away from the only surface that could fill it.
+  check("D12. the record tiles count only the active track, and claim no history they cannot prove", () => {
+    const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
+    // TRACK TRUTH: the count is scoped through the Skill's own organization, not fetched globally.
+    assert.ok(/skill: \{ organization: activeTrack\.organization \}/.test(arcade),
+      "D12. the recorded-skill count is scoped by Skill.organization");
+    assert.ok(!/masteryProgress\.count\(\{ where: \{ userId: session\.user\.id, lastPracticedAt: \{ not: null \} \} \}\)/.test(arcade),
+      "D12b. and the unscoped global count is gone");
+    // FAIL CLOSED: no resolved track means no count, matching the due-review contract.
+    assert.ok(/if \(session\?\.user\?\.id && activeTrack\) \{/.test(arcade),
+      "D12c. an unresolved track yields no count rather than every track's");
+    // CONTINUATION TRUTH: nothing may claim prior activity, because nothing records it.
+    for (const banned of [/Pick up where you left off/i, /where you left off/i, /Continue \$\{activeTrack\.label\}/]) {
+      assert.ok(!banned.test(arcade), `D12d. no continuation claim without continuation state (${banned})`);
+    }
+    assert.ok(/Practise \$\{activeTrack\.label\}/.test(arcade), "D12e. the tile names the practice instead");
+    assert.ok(/are available below/.test(arcade), "D12f. and describes what exists rather than what the learner did");
+    // Non-vacuity: the tile still renders something, and still reads a real count.
+    assert.ok(/practicedSkills > 0/.test(arcade), "D12g. control: the record tile still branches on a real count");
+  });
+
+  check("D13. an empty DECA review list points at the surface that holds DECA drills", () => {
+    const review = stripComments(read("app/(app)/study-arcade/review/page.tsx"));
+    // LABEL -> DESTINATION -> CONTENT, the standing learner-graph contract.
+    assert.ok(/activeTrack\?\.id === "DECA"/.test(review), "D13. the empty-state destination is track-derived");
+    assert.ok(/`\/study-arcade\?track=\$\{activeTrack\.slug\}`/.test(review),
+      "D13b. DECA goes to the Study Arcade track surface, with the track preserved");
+    assert.ok(/the DECA skill drills/.test(review), "D13c. and the label names drills, which is what is there");
+    // The destination really renders them.
+    assert.ok(/ConceptDrills/.test(stripComments(read("app/(app)/study-arcade/page.tsx"))),
+      "D13d. control: that destination renders the concept drills");
+    // The surface it no longer points DECA at genuinely has no DECA drill — the reason for the move.
+    const skillPath = stripComments(read("components/skills/skill-path.tsx"));
+    const decaBranch = skillPath.slice(skillPath.indexOf('canonical === "DECA"'), skillPath.indexOf('canonical === "HOSA"'));
+    assert.ok(decaBranch.length > 50 && !/study-arcade/.test(decaBranch),
+      "D13e. control: /skills' DECA branch still offers no drill");
+    // Debate and HOSA keep their existing destination — Debate's /skills branch does carry its drill.
+    assert.ok(/\{ href: "\/skills", label: "Skills" \}/.test(review),
+      "D13f. every other track is unchanged");
+    assert.ok(/debate-drills|study-arcade\?track=debate/.test(skillPath),
+      "D13g. control: Debate's /skills branch really does carry a drill tile, which is why it is unchanged");
+  });
+
+  // ---- D14. PRACTICE-SOURCE TRUTH (owner QA #6 adjudication) --------------------------------------
+  check("D14. no practice-source option promises past material without disclosing that none exists", () => {
+    const controls = stripComments(read("components/training/track-controls.tsx"));
+    const sources = stripComments(read("lib/training-tracks.ts"));
+    // Two options name past material in their note; both must trigger the disclosure. Asserted as the
+    // condition itself: anything that is not the AI option discloses.
+    assert.ok(/source !== "AI" \? \(/.test(controls), "D14. every non-AI option renders the no-past-material disclosure");
+    assert.ok(/No verified public past prompts are available for this event yet/.test(controls),
+      "D14b. and the disclosure says plainly that none exists");
+    assert.ok(!/Try AI Practice or Mixed/.test(controls),
+      "D14c. and no longer steers the learner toward Mixed, which carried the same absence undisclosed");
+    // The reason: the control is inert. Nothing outside its own file reads the selection, so no option
+    // can deliver anything but AI practice. Proven by scan rather than assumed.
+    const readers = execSync('grep -rl "PracticeSource\\|PRACTICE_SOURCES\\|practiceSource" app components lib || true', { encoding: "utf8" })
+      .trim().split("\n").filter(Boolean)
+      .filter((f) => !/track-controls\.tsx|track-practice-setup\.tsx|training-tracks\.ts$/.test(f));
+    assert.deepEqual(readers, [], `D14d. no consumer outside the control reads the selection (${readers.join(", ")})`);
+    // Non-vacuity: the notes really do name past material, which is what makes the disclosure load-bearing.
+    assert.ok(/verified past material/i.test(sources) && /verified public past/i.test(sources),
+      "D14e. control: the PAST and MIXED notes still describe past material, so the disclosure is not decorative");
   });
 
   console.log(

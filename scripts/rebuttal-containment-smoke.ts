@@ -475,7 +475,11 @@ check("L6. the replacement copy conditions the record on the SKILL, not on the a
     ["app/(app)/study-arcade/page.tsx", /practised skills that record come up for review/],
     ["app/(app)/study-arcade/page.tsx", /Practise a skill that records, and its review schedule starts from there/],
     ["app/(app)/study-arcade/page.tsx", /with a recorded result so far/],
-    ["app/(app)/study-arcade/review/page.tsx", /that record your practice; their review schedule starts from there/],
+    // OWNER QA #4 reworded this empty state: for DECA it now points at the DECA drill surface instead
+    // of /skills, which holds no DECA drill. The PROPERTY the pin protects is unchanged and is what is
+    // asserted — the empty state ties a due review to practice that RECORDS, so decks and games are
+    // never implied to produce one. Either wording satisfies it.
+    ["app/(app)/study-arcade/review/page.tsx", /record your practice[^.]*review|that record your practice; their review schedule starts from there/],
     ["app/(app)/home/page.tsx", /reviews appear as skills record your practice/],
     ["lib/dashboard-actions.ts", /a check on what you learned/],
     ["lib/dashboard-actions.ts", /anything currently due for review/]

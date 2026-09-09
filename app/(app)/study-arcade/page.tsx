@@ -64,14 +64,19 @@ export default async function StudyArcadePage({
   let practicedSkills = 0;
   let skillsInProgress = 0;
   let reviewsDue = 0;
-  if (session?.user?.id) {
+  // OWNER QA #2: these counted every MasteryProgress row the learner had, on a page that says
+  // "Training in: DECA" and sits beside a review tile that IS track-scoped. A DECA learner whose only
+  // recorded skills were Debate ones read "4 skills with a recorded result so far" on the DECA page.
+  // The count is scoped through the Skill's own organization — the authoritative relationship, the
+  // same one getDueReviews uses — rather than fetched globally and relabelled. No resolved track
+  // means no count, matching the review contract: an unresolved track is never "show everything".
+  if (session?.user?.id && activeTrack) {
     try {
+      const trackScope = { userId: session.user.id, lastPracticedAt: { not: null }, skill: { organization: activeTrack.organization } };
       [practicedSkills, skillsInProgress, reviewsDue] = await Promise.all([
-        prisma.masteryProgress.count({ where: { userId: session.user.id, lastPracticedAt: { not: null } } }),
-        prisma.masteryProgress.count({
-          where: { userId: session.user.id, lastPracticedAt: { not: null }, NOT: { masteryLevel: "MASTERED" } }
-        }),
-        countDueReviews(session.user.id, activeTrack?.organization)
+        prisma.masteryProgress.count({ where: trackScope }),
+        prisma.masteryProgress.count({ where: { ...trackScope, NOT: { masteryLevel: "MASTERED" } } }),
+        countDueReviews(session.user.id, activeTrack.organization)
       ]);
     } catch {
       // reviews tiles degrade to zero-state rather than breaking the page
@@ -123,12 +128,17 @@ export default async function StudyArcadePage({
           <div className="rounded-md border bg-background p-3">
             <div className="flex items-center gap-2 font-semibold">
               <Sparkles className="h-4 w-4 text-accent" aria-hidden />
-              {activeTrack ? `Continue ${activeTrack.label}` : "Choose a track"}
+              {/* OWNER QA #3: this said "Continue <track>" over "Pick up where you left off", but the
+                  only thing it consults is whether the TRACK HAS DECKS — a catalog fact, not the
+                  learner's history. No DECA continuation state exists to consult, and none is being
+                  invented for a heading, so the copy says what is actually true: here is the practice
+                  available. */}
+              {activeTrack ? `Practise ${activeTrack.label}` : "Choose a track"}
             </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {activeTrack
                 ? hasDecks
-                  ? `Pick up where you left off: ${decks.length} ${decks.length === 1 ? "deck" : "decks"} and review games below.`
+                  ? `${decks.length} ${decks.length === 1 ? "deck" : "decks"} and review games are available below.`
                   : `${activeTrack.label} does not use flashcard decks — that practice happens in ${activeTrack.label} sessions and lessons. Head to Training to continue.`
                 : "Select a training track to get track-specific decks and games."}
             </p>

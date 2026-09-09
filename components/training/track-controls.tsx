@@ -50,9 +50,15 @@ export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
         ))}
       </div>
       <p className="text-xs text-muted-foreground">{PRACTICE_SOURCES.find((s) => s.id === source)?.note}</p>
-      {source === "PAST" ? (
+      {/* OWNER QA #6 adjudication: "Past Competition" was already honest — selecting it disclosed that no
+          verified past material exists. "Mixed" was not: its note promised "both verified past material
+          and AI practice", the same absent material, with no disclosure at all, and the PAST notice even
+          pointed learners at it. Nothing reads this selection anywhere (it is local state, unpersisted,
+          never sent), so every option delivers AI practice today. Any option whose note names past
+          material therefore carries the same disclosure, and it no longer recommends Mixed. */}
+      {source !== "AI" ? (
         <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs font-medium text-amber-700">
-          No verified public past prompts are available for this event yet. Try AI Practice or Mixed.
+          No verified public past prompts are available for this event yet — AI Practice is what runs today.
         </p>
       ) : null}
     </div>

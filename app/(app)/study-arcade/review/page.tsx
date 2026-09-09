@@ -23,6 +23,15 @@ export default async function ReviewSessionPage({ searchParams }: { searchParams
   const session = await getServerSession(authOptions);
   const activeTrack = await getActiveTrack(searchParams.track);
   const due = session?.user?.id ? await getDueReviews(session.user.id, activeTrack?.organization) : [];
+  // OWNER QA #4: the empty state always sent the learner to /skills. For DECA that page is titled
+  // "Mastery paths" and its DECA branch holds one role-play tile and no drill at all, so a DECA
+  // learner with an empty review list was pointed away from the only surface that could fill it.
+  // The DECA drills live on the track's Study Arcade surface. Debate's /skills branch does carry its
+  // drill tile, so Debate and HOSA are unchanged. Track-derived, because the surface that holds a
+  // track's drills is not the same page for every track.
+  const emptyStatePractice = activeTrack?.id === "DECA"
+    ? { href: `/study-arcade?track=${activeTrack.slug}`, label: "the DECA skill drills" }
+    : { href: "/skills", label: "Skills" };
 
   return (
     <div className="space-y-6">
@@ -46,11 +55,11 @@ export default async function ReviewSessionPage({ searchParams }: { searchParams
           <CardContent className="flex items-center gap-3 py-6">
             <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden />
             <p className="text-sm text-muted-foreground">
-              Nothing due right now. Practice skills in{" "}
-              <Link href={"/skills" as Route} className="font-semibold text-primary hover:underline">
-                Skills
+              Nothing due right now. Practise in{" "}
+              <Link href={emptyStatePractice.href as Route} className="font-semibold text-primary hover:underline">
+                {emptyStatePractice.label}
               </Link>{" "}
-              that record your practice; their review schedule starts from there, and they surface here when due.
+              — those record your practice, and a skill surfaces here when its review comes due.
             </p>
           </CardContent>
         </Card>

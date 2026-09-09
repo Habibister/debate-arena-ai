@@ -288,8 +288,8 @@
         "STRUCTURE, scripts/tracks-smoke.ts:119-145 (unchanged unless noted): skillSlug debate-claim-building matching the drill area; weak.text != strong.text with >= 2 reasons each; commonMistakes 2-3 with fixes (now 2, pinned BY PURPOSE in CW: RULE-04 missing impact, RULE-05/B02 evidence is not the warrant); revisionLadder >= 3 rungs with warrant + note, first != last; misconception name / wrong / different right model; video.url null; provenanceNote /not official/. evidenceUpgrade pins now apply ONLY WHEN THE FIELD IS PRESENT (tracks-smoke:134-139) and the field is absent.",
         "RENDER, components/lessons/lesson-view.tsx and app/(app)/lessons/[slug]/page.tsx: the evidence section renders only when evidenceUpgrade is set and its 'evidence' section-nav entry is gone; intro, closer, right model and mistake explanations render paragraph breaks (whitespace-pre-line). scripts/education-migration-smoke.ts no longer byte-freezes lesson-view.tsx against HEAD (the HEAD-relative flaw its own comments record); 4V asserts directly that LessonView is exported, renders what-it-is / contrast / revise / misconception / mistakes, and imports nothing from lib/education. rebuttal-containment:388-393 and skills-compat:568 still pin the section-nav call and the Practice entry.",
         "EVIDENCE DEFERRAL, scripts/coached-performance-smoke.ts:1550-1555: the Evidence lesson points 'building one' at this lesson, which CW satisfies through RULE-05's connecting sentence and the B01 bridge.",
-        "QUESTION LAYER is the drill bank (30 cw- items, six served per session, choices shuffled server-side, none held); NO drill-bank change was made in this pass. A read-only mechanical audit (2026-09-08) flagged 14 of 30 for option form (key-only 'because' on cw-04 and cw-17, key-only label word on cw-02 and cw-20, length isolation elsewhere); those belong to the final Debate audit debt alongside the known cw-02 item.",
-        "INTEGRITY: no snapshot covers lib/lessons.ts; the CW block and a 22-mutant replacement harness (control survives) are the byte protection for this lesson's doctrine."
+        "INTEGRITY: no snapshot covers lib/lessons.ts; the CW block and a 22-mutant replacement harness (control survives) are the byte protection for this lesson's doctrine.",
+        "QUESTION LAYER is the drill bank (30 cw- items, six served per session, choices shuffled server-side, none held); NO drill-bank change was made in the beginner pass. FINAL-AUDIT DRILL DEBT INVENTORY (recorded 2026-09-08/09, not adjudicated, not repaired): cw-02 known ALL-CAPS/label item (pre-existing debt); cw-04 because-only cue (the key is the only option containing 'because') and the undefined/advanced learner word 'debatable'; cw-17 because-only cue and the undefined/advanced learner word 'assertion'; cw-06 because asymmetry (the key is the only option without 'because') and an arguable bare-statistic semantic overlap (a claim plus an unexplained statistic is also 'no warrant' under the lesson's own rule; only the stem's 'ONLY' rescues the key); cw-19 copied lesson scenario (the later-school-start Draft 1 reused as an item); cw-24 copied impact-formula wording (the key reuses 'who is affected / what happens'); MECHANICAL AUDIT: 14 of 30 cw- items carry recorded option-form flags (key-only 'because' cw-04/cw-17, key-only label word cw-02/cw-20, key-only 'so' cw-01, length isolation on the rest); REVIEWER-NOTED DRILL-ONLY VOCABULARY (inventory of recorded findings, not a repair ruling): congestion pricing, marginal drivers, transit, per-trip charge, congested corridor, budget cycle, algorithmic feeds, containment designs, passively shut down, death rate per unit of energy, outweighs, rural."
       ]
     },
     {
@@ -1488,5 +1488,59 @@
         "STILL PINNED ELSEWHERE (unchanged). scripts/wg08-activation-smoke.ts: wg-08 released, no weighing item held. coached-performance JB: no judge category maps to weighing. coached-performance :516 exactly three lessons carry languageFrames (Refutation, Clash, Weighing) and :518 nine carry a scaffoldedTry. concept-lesson-schema A3 lists debate-weighing among the populated lessons and derives the renderer's UNPOPULATED_EXEMPLAR by stripping its optional fields. Weighing stays a LOCKED competency with no guided round (guidedApplicationFor/unlockedCompetenciesFor/starterCategoriesFor/guidedRubricFor all empty). learning-content-integrity baseline marker WEIGHING-BEGINNER-V1."
       ]
     }
-  ]
+  ],
+  "debtLedger": {
+    "note": "Governance metadata only - NOT learner content. Debt established during the Debate beginner simplification pass (closed 2026-09-09 at 640f16c) and separated from completion: Debate is frozen; these are separate tasks.",
+    "cwiDrillDebt": {
+      "items": [
+        "cw-02",
+        "cw-04",
+        "cw-06",
+        "cw-17",
+        "cw-19",
+        "cw-24"
+      ],
+      "formFlags": "14 of 30 cw- items",
+      "vocabulary": [
+        "debatable",
+        "assertion",
+        "congestion pricing",
+        "marginal drivers",
+        "transit",
+        "per-trip charge",
+        "congested corridor",
+        "budget cycle",
+        "algorithmic feeds",
+        "containment designs",
+        "passively shut down",
+        "death rate per unit of energy",
+        "outweighs",
+        "rural"
+      ],
+      "detail": "see claim-warrant-impact.criticalGuardedInvariants (QUESTION LAYER entry)"
+    },
+    "preExistingSuiteFailures": [
+      {
+        "suite": "skills-compat-smoke",
+        "assertion": "2. the manifest's lesson slugs are exactly prisma/seed.ts's",
+        "reproducesAt": "HEAD and f0e17f7 (pre-pass)",
+        "causedByBeginnerPass": false,
+        "inStrictSafeBattery": false
+      },
+      {
+        "suite": "coach-evidence-smoke",
+        "assertion": "S3-15. lib/spaced-review.ts is byte-identical to the immutable pre-Slice-3 baseline",
+        "reproducesAt": "HEAD and f0e17f7 (pre-pass)",
+        "causedByBeginnerPass": false,
+        "inStrictSafeBattery": false
+      },
+      {
+        "suite": "debate-mastery-smoke",
+        "assertion": "24. area constructive-speech has exactly 30 distinct questions (actual 7)",
+        "reproducesAt": "f0e17f7 and every beginner-pass commit through 640f16c",
+        "causedByBeginnerPass": false,
+        "inStrictSafeBattery": false
+      }
+    ]
+  }
 }

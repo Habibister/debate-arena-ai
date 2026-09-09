@@ -1,5 +1,5 @@
 {
-  "marker": "DEBATE-BEGINNER-MANIFEST-V6",
+  "marker": "DEBATE-BEGINNER-MANIFEST-V7",
   "note": "Internal review contract. NOT learner content. Learners never see rule ids, classes, or guard references. A rewrite may fuse several rules into one sentence, example or mistake box; this artifact protects MEANING, never presentation length.",
   "fullTrackARuleTotal": 59,
   "censusRulesTriaged": 317,
@@ -140,32 +140,32 @@
         {
           "id": "RULE-01",
           "meaning": "Every argument you make has three parts — a claim (the exact thing you want the judge to agree with, specific enough to argue about), a warrant (why it is true), and an impact (why it matters) — and the judge weighs all three.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-02",
           "meaning": "The warrant is a mechanism: name the cause-and-effect step that makes the claim true — how the thing you want actually produces the result you claim.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-03",
           "meaning": "A warrant fails in two ways — it repeats the claim in different words, or it names the problem without naming the cause — so finish '...because ___' with a cause-and-effect step, not a synonym, and check your draft: if every sentence could stand on its own as an assertion, the reasoning is still missing.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-04",
           "meaning": "The impact answers the judge's silent 'so what?' — say who is affected, how badly, and how many — because 'it helps everyone' gives the judge nothing to weigh, and an argument that is true but has no impact still loses.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-05",
           "meaning": "A fact or a source name is not an argument: the judge has to stay neutral and will not connect it for you, and the same fact usually fits both sides — so you say the connecting sentence out loud, 'which means ___, therefore ___.'",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-06",
           "meaning": "Making an argument stronger means improving the warrant and the impact — the claim stays exactly the same — and you get there by revising in passes, not by saying the claim more forcefully.",
-          "guarded": false
+          "guarded": true
         }
       ],
       "safetyBoundaries": [
@@ -187,7 +187,8 @@
         {
           "id": "B04",
           "meaning": "The statistic in the evidence example is illustrative: copy the shape, not the figure, and cite real current data before using it in a round.",
-          "disposition": "B-LEARNER"
+          "disposition": "B-LEARNER",
+          "disposition_note": "No illustrative statistic remains on the beginner path after 2026-09-08 (the evidence-specificity block left it), so B04 is satisfied vacuously; it re-activates the moment a figure returns to the lesson."
         },
         {
           "id": "B05",
@@ -219,77 +220,75 @@
         {
           "censusRule": "R12 — preference or popularity ('students don't like it') is not a reason; plenty of good policies are unpopular.",
           "klass": "C",
-          "destination": "optional note after the main path (mistake-box variant)",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (2026-09-08); the renderer shows every lesson block before Practice, so there is no 'after the main path'. Candidate for a future progressive-disclosure UI.",
           "why": "RULE-02's mechanism test already rejects it: a popularity sentence names no cause-and-effect step. A beginner does not need the separate category name to write a correct warrant, and naming it costs a paragraph in the weak-example analysis."
         },
         {
           "censusRule": "R22 — it becomes a warrant when it gives the cause AND pre-answers the obvious rebuttal.",
           "klass": "C",
-          "destination": "optional note after the main path",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (2026-09-08); the renderer shows every lesson block before Practice, so there is no 'after the main path'. Candidate for a future progressive-disclosure UI.",
           "why": "The cause half is already carried by RULE-02 and RULE-03, so only the pre-answering clause is actually demoted. Anticipating and pre-empting the opponent's reply is a refutation-adjacent upgrade owned by the Refutation / Answer Types lessons, not something a first correct warrant requires."
         },
         {
           "censusRule": "R23 — the same move works on evidence: 'studies show it helps' is not something a judge can weigh.",
           "klass": "C",
-          "destination": "optional note after the main path — the evidenceUpgrade structure itself must stay populated (smoke-pinned), it simply l",
+          "destination": "ADVANCED/LATER — the evidenceUpgrade block left the required beginner path (2026-09-08): the AuthoredLesson field is optional, the view skips it when absent, and the tracks-smoke pins apply only when it is present. Evidence quality is the Evidence Evaluation lesson's job.",
           "why": "It opens a second, adjacent skill (writing specific support) layered on top of claim/warrant/impact. First test: a beginner can write a correct claim, warrant and impact without ever touching it."
         },
         {
           "censusRule": "R24 — specific evidence carries a NUMBER the judge can size up.",
           "klass": "C",
-          "destination": "optional note after the main path (the four criteria stay together as a checklist in the pinned evidenceUpgrade block)",
+          "destination": "ADVANCED/LATER — the evidenceUpgrade block left the required beginner path (2026-09-08): the AuthoredLesson field is optional, the view skips it when absent, and the tracks-smoke pins apply only when it is present. Evidence quality is the Evidence Evaluation lesson's job.",
           "why": "A checklist a learner returns to when polishing support, not first-exposure material. Removing it from the first pass leaves nothing in the lesson false."
         },
         {
           "censusRule": "R25 — specific evidence carries a built-in COMPARISON or baseline.",
           "klass": "C",
-          "destination": "optional note after the main path (evidenceUpgrade checklist)",
+          "destination": "ADVANCED/LATER — the evidenceUpgrade block left the required beginner path (2026-09-08): the AuthoredLesson field is optional, the view skips it when absent, and the tracks-smoke pins apply only when it is present. Evidence quality is the Evidence Evaluation lesson's job.",
           "why": "Same as R24: a support-quality refinement. Nothing in claim/warrant/impact becomes wrong without it on first exposure."
         },
         {
           "censusRule": "R26 — specific evidence carries a TIMEFRAME so it cannot be dismissed as a fluke.",
           "klass": "C",
-          "destination": "optional note after the main path (evidenceUpgrade checklist)",
+          "destination": "ADVANCED/LATER — the evidenceUpgrade block left the required beginner path (2026-09-08): the AuthoredLesson field is optional, the view skips it when absent, and the tracks-smoke pins apply only when it is present. Evidence quality is the Evidence Evaluation lesson's job.",
           "why": "Same as R24. It defends evidence against a rebuttal the beginner has not yet learned to fear."
         },
         {
           "censusRule": "R27 — specific evidence names a SPECIFIC OUTCOME so the opponent must engage your data.",
           "klass": "C",
-          "destination": "optional note after the main path (evidenceUpgrade checklist)",
+          "destination": "ADVANCED/LATER — the evidenceUpgrade block left the required beginner path (2026-09-08): the AuthoredLesson field is optional, the view skips it when absent, and the tracks-smoke pins apply only when it is present. Evidence quality is the Evidence Evaluation lesson's job.",
           "why": "Same as R24. This is competitive hardening of support, one layer above the skill being taught."
         },
         {
           "censusRule": "R37 — mistake: confusing evidence with a warrant; a stat left 'naked' can support either side.",
           "klass": "D",
-          "destination": "delete as duplicate of RULE-05",
+          "destination": "DELETED as duplicate of RULE-05 (2026-09-08): the restating-the-claim mistake box is gone as well; RULE-03 is carried by the Warrant part, the closer's self-check, the weak reasons and ladder rungs 1-2, all pinned by CW.",
           "why": "The identical educational judgment is already made in the misconception ('the same fact usually fits both sides... it doesn't pick a side'), which renders immediately before it. The census's own repetition list records this pair. One statement, one example."
         },
         {
           "censusRule": "R38 — the harder, prepared-sounding version: claim-then-source repeated ('Smith 2021 finds this'), fluent and researched and still no HOW.",
           "klass": "C",
-          "destination": "later lesson / optional note after the main path",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (2026-09-08); the renderer shows every lesson block before Practice, so there is no 'after the main path'. Candidate for a future progressive-disclosure UI.",
           "why": "It repairs the failure mode of a PREPARED speaker with a card file, not a beginner writing a first argument, and it arrives only after the beginner form of the same mistake is already fixed by RULE-05. Its one irreducible piece — cited does not mean warrantless — is preserved separately as a class-B"
         },
         {
           "censusRule": "R40 — fix: never leave evidence unexplained; with several sources take the load-bearing one and put its mechanism in your own words.",
           "klass": "C",
-          "destination": "optional note after the main path",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (2026-09-08); the renderer shows every lesson block before Practice, so there is no 'after the main path'. Candidate for a future progressive-disclosure UI.",
           "why": "The first clause is a straight duplicate of RULE-05 ('never leave evidence unexplained' also appears in strong.reasons[1]). The distinctive content — triaging several sources to the load-bearing one — presupposes a speaker who already has several sources, so it pairs with R38 as advanced material."
         }
       ],
       "criticalGuardedInvariants": [
-        "skillSlug stays \"debate-claim-building\" and must still match the drill area's mastery skill — scripts/tracks-smoke.ts:122-123: assert.equal(area?.skillSlug, cwi.skillSlug, ...); assert.equal(cwi.skillSlug, \"debate-claim-building\", \"CWI maps to the seeded debate-claim-building skill\").",
-        "The weak/strong pair must remain a real contrast on the SAME claim, with reason ARRAYS of at least two entries on both sides — scripts/tracks-smoke.ts:125-126: assert.ok(cwi.weak.text.trim() !== cwi.strong.text.trim(), ...); assert.ok(cwi.weak.reasons.length >= 2 && cwi.strong.reasons.length >= 2, \"each example explains why it fails/works\"). A rewrite that compresses the analysis to one bullet per side fails this.",
-        "commonMistakes must hold 2-3 entries and EVERY entry must keep a non-empty fix — scripts/tracks-smoke.ts:127-128: assert.ok(cwi.commonMistakes.length >= 2 && cwi.commonMistakes.length <= 3, \"2-3 real common mistakes\"); assert.ok(cwi.commonMistakes.every((m) => m.fix.trim().length > 0), \"every mistake has a concrete fix\").",
-        "The revision ladder must keep at least THREE rungs, each with both a warrant and a note, with the first and last genuinely different — scripts/tracks-smoke.ts:130-132. This is what protects the intermediate 'names the harm, not the cause' diagnosis absorbed into RULE-03; collapsing the ladder to weak-then-strong breaks the suite.",
-        "The evidenceUpgrade block must stay POPULATED and honest even though its teaching is demoted to class C — scripts/tracks-smoke.ts:134-136: vague !== specific; whatChanged.length >= 3; /illustrat/i.test(honestyNote). Demotion here means 'leaves the required beginner path', never 'delete the field'.",
-        "The misconception must keep a name, a wrong model, and a DIFFERENT right model — scripts/tracks-smoke.ts:138-139. RULE-05 is authored into this structure.",
-        "video.url stays null — scripts/tracks-smoke.ts:141: assert.equal(cwi.video.url, null, \"video slot is an empty placeholder, not a fake embed\").",
-        "provenanceNote must still match /not official/i (scripts/tracks-smoke.ts:143), /one supported formulation rather than the only one/ and /Claim\\/Data\\/Warrant\\/Impact/ (scripts/source-freshness-smoke.ts:220-221).",
-        "The provenance object stays authority \"stable-teaching\", sourceLabel \"NSDA Debate Training Guide\", verifiedLabel null — scripts/source-freshness-smoke.ts:216-219 — and \"NSDA Debate Training Guide\" must appear in the RENDERED lesson's visible text: scripts/nav-a11y-smoke.ts:172.",
-        "The rendered lesson must leak no other track's content — scripts/nav-a11y-smoke.ts:173: assert.ok(!/Medical Terminology|Performance Indicator/.test(debateHtml), \"the Debate lesson leaks no other track's content\").",
-        "The Evidence Evaluation lesson's deferral sentence is pinned at scripts/coached-performance-smoke.ts:1478, so CWI must continue to teach the evidence-to-claim connecting sentence (carried by RULE-05 + the class-B caveat), or the pinned deferral resolves to nothing.",
-        "AUTHORED_LESSONS must remain debate-only — scripts/tracks-smoke.ts:145 — and lesson practice must keep reusing the Debate drill endpoints with no parallel scorekeeper: scripts/tracks-smoke.ts:148, 151-152."
+        "A-RULE GUARDS, check \"CW\" in scripts/coached-performance-smoke.ts (2026-09-08): RULE-01 (claim definition, 'Judges vote on all three', claim != topic by contrast), RULE-02 (the because as the cause-and-effect step), RULE-03 (a second claim is not a warrant + the fake 'because it is important', the three ladder rung labels, the closer's self-check), RULE-04 (the so-what definition, 'help everyone' weighs nothing, true-but-no-impact, the fake 'this matters a lot'), RULE-05 (neutral judge, the fact fits both sides, 'which means ___, therefore ___'), RULE-06 (same claim / only warrant and impact improved, 'You do not jump from weak to strong. You revise.', the shared claim on both versions).",
+        "B CARRIERS, check \"CW\": B01 (the bridge sentence in the right model), B02 (citing a lot does not mean the reasoning is missing), B03 (honestyNote opens 'Illustrative argument.' and ends on defensible evidence), B05 (practice copy names Claim Building mastery, questionCount 6), B07/B08 (provenanceNote, also pinned by tracks-smoke:143 and source-freshness:220-221). B06 (video.url null) and B09 (provenance object, rendered Guide name) stay guard-only in tracks-smoke:141, source-freshness:216-219 and nav-a11y:172.",
+        "SHAPE, check \"CW\": the intro opens 'They say: … Why? … So what?' as one complete argument; the first label appears after it inside the first hundred words; the three parts are Claim, Warrant, Impact in that order; the build procedure is three plain steps; the impact terminology bridge is exactly one sentence; 'support' never appears in teaching text; no logic-theory, weighing, speech or policy vocabulary.",
+        "REGRESSION ROUTES, check \"CW\": claim = topic, warrant = evidence/citation, any 'because' sentence = warrant, impact = last sentence, impact = drama, impact = only size, fake warrant/impact endorsed, evidence merged with warrant, impact = weighing, order defines the parts, hedged part assignment.",
+        "BEGINNER CEILINGS, check \"CW\": required path (everything LessonView renders before Practice) <= 1,000 words, paragraphs <= 65, sentences <= 32, estimatedMinutes <= 8. No prose floor or ratio exists for this lesson and none was added.",
+        "STRUCTURE, scripts/tracks-smoke.ts:119-145 (unchanged unless noted): skillSlug debate-claim-building matching the drill area; weak.text != strong.text with >= 2 reasons each; commonMistakes 2-3 with fixes (now 2, pinned BY PURPOSE in CW: RULE-04 missing impact, RULE-05/B02 evidence is not the warrant); revisionLadder >= 3 rungs with warrant + note, first != last; misconception name / wrong / different right model; video.url null; provenanceNote /not official/. evidenceUpgrade pins now apply ONLY WHEN THE FIELD IS PRESENT (tracks-smoke:134-139) and the field is absent.",
+        "RENDER, components/lessons/lesson-view.tsx and app/(app)/lessons/[slug]/page.tsx: the evidence section renders only when evidenceUpgrade is set and its 'evidence' section-nav entry is gone; intro, closer, right model and mistake explanations render paragraph breaks (whitespace-pre-line). scripts/education-migration-smoke.ts no longer byte-freezes lesson-view.tsx against HEAD (the HEAD-relative flaw its own comments record); 4V asserts directly that LessonView is exported, renders what-it-is / contrast / revise / misconception / mistakes, and imports nothing from lib/education. rebuttal-containment:388-393 and skills-compat:568 still pin the section-nav call and the Practice entry.",
+        "EVIDENCE DEFERRAL, scripts/coached-performance-smoke.ts:1550-1555: the Evidence lesson points 'building one' at this lesson, which CW satisfies through RULE-05's connecting sentence and the B01 bridge.",
+        "QUESTION LAYER is the drill bank (30 cw- items, six served per session, choices shuffled server-side, none held); NO drill-bank change was made in this pass. A read-only mechanical audit (2026-09-08) flagged 14 of 30 for option form (key-only 'because' on cw-04 and cw-17, key-only label word on cw-02 and cw-20, length isolation elsewhere); those belong to the final Debate audit debt alongside the known cw-02 item.",
+        "INTEGRITY: no snapshot covers lib/lessons.ts; the CW block and a 22-mutant replacement harness (control survives) are the byte protection for this lesson's doctrine."
       ]
     },
     {

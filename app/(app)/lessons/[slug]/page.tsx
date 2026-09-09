@@ -91,7 +91,6 @@ const DEBATE_SECTIONS: LessonSection[] = [
   { id: "video-slot", label: "Video walkthrough" },
   { id: "contrast", label: "See the difference on one claim" },
   { id: "revise", label: "Revise it, one pass at a time" },
-  { id: "evidence", label: "Make your evidence specific" },
   { id: "misconception", label: "The mental model to fix" },
   { id: "mistakes", label: "Common mistakes" },
   { id: "practice", label: "Practice" }

@@ -40,7 +40,7 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
           <Lightbulb className="h-5 w-5 text-primary" aria-hidden />
           <h2 id="what-it-is" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">What it is</h2>
         </div>
-        <p className="mt-3 leading-7 text-muted-foreground">{lesson.whatItIs.intro}</p>
+        <p className="mt-3 whitespace-pre-line leading-7 text-muted-foreground">{lesson.whatItIs.intro}</p>
         <div className="mt-5 grid gap-3">
           {lesson.whatItIs.parts.map((part, i) => (
             <div key={part.term} className="rounded-lg border bg-background p-4">
@@ -55,7 +55,7 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
             </div>
           ))}
         </div>
-        <p className="mt-4 leading-7 text-muted-foreground">{lesson.whatItIs.closer}</p>
+        <p className="mt-4 whitespace-pre-line leading-7 text-muted-foreground">{lesson.whatItIs.closer}</p>
       </section>
 
       {/* Optional video slot — empty placeholder, never a fake embed */}
@@ -160,7 +160,8 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
         </ol>
       </section>
 
-      {/* Show, don't tell: evidence quality */}
+      {/* Show, don't tell: evidence quality — optional since the beginner rewrite; absent for CWI */}
+      {lesson.evidenceUpgrade ? (
       <section aria-labelledby="evidence" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" aria-hidden />
@@ -194,6 +195,7 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
         </ul>
         <p className="mt-4 rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">{lesson.evidenceUpgrade.honestyNote}</p>
       </section>
+      ) : null}
 
       {/* Misconception repair — name the wrong mental model, then correct it */}
       <section aria-labelledby="misconception" className="rounded-lg border bg-card p-6">
@@ -212,7 +214,7 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
         </div>
         <div className="mt-3 rounded-md border border-success/50 bg-success/[0.06] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-success">The right model</p>
-          <p className="mt-2 leading-7 text-foreground">{lesson.misconception.rightModel}</p>
+          <p className="mt-2 whitespace-pre-line leading-7 text-foreground">{lesson.misconception.rightModel}</p>
         </div>
       </section>
 
@@ -222,7 +224,7 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
           <AlertTriangle className="h-5 w-5 text-warning" aria-hidden />
           <h2 id="mistakes" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Common mistakes</h2>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">The three things debaters actually get wrong on this skill.</p>
+        <p className="mt-2 text-sm text-muted-foreground">The things debaters actually get wrong on this skill.</p>
         <ol className="mt-4 space-y-4">
           {lesson.commonMistakes.map((mistake, i) => (
             <li key={mistake.title} className="rounded-lg border bg-background p-4">
@@ -230,7 +232,7 @@ export function LessonView({ lesson, nav }: { lesson: AuthoredLesson; nav?: Reac
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold">{i + 1}</span>
                 <div className="min-w-0">
                   <h3 className="font-bold">{mistake.title}</h3>
-                  <p className="mt-1 break-words leading-7 text-muted-foreground">{mistake.explanation}</p>
+                  <p className="mt-1 whitespace-pre-line break-words leading-7 text-muted-foreground">{mistake.explanation}</p>
                   <p className="mt-2 flex gap-2 text-sm leading-6">
                     <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span><span className="font-semibold text-foreground">Fix:</span> <span className="text-muted-foreground">{mistake.fix}</span></span>

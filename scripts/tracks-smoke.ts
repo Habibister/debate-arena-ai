@@ -131,9 +131,14 @@ async function main() {
     assert.ok(cwi.revisionLadder.steps.every((s) => s.warrant.trim().length > 0 && s.note.trim().length > 0), "each revision step has a warrant and a note");
     assert.ok(cwi.revisionLadder.steps[0].warrant.trim() !== cwi.revisionLadder.steps[cwi.revisionLadder.steps.length - 1].warrant.trim(), "the first and last drafts genuinely differ");
     // Show, don't tell: a vague stat becomes a specific one, with what changed + an honesty note.
-    assert.ok(cwi.evidenceUpgrade.vague.trim() !== cwi.evidenceUpgrade.specific.trim(), "evidence upgrade shows vague vs specific, not the same line twice");
-    assert.ok(cwi.evidenceUpgrade.whatChanged.length >= 3, "evidence upgrade explains what made it specific");
-    assert.ok(/illustrat/i.test(cwi.evidenceUpgrade.honestyNote), "illustrative figures are labeled honestly, not presented as verified");
+    // OPTIONAL since the beginner rewrite (2026-09-08): evidence specificity is class C for a first-time
+    // learner (scripts/debate-beginner-manifests.json, R23-R27) and belongs to Evidence Evaluation, so
+    // the block may be absent; when present it must still be a real, honestly labeled contrast.
+    if (cwi.evidenceUpgrade) {
+      assert.ok(cwi.evidenceUpgrade.vague.trim() !== cwi.evidenceUpgrade.specific.trim(), "evidence upgrade shows vague vs specific, not the same line twice");
+      assert.ok(cwi.evidenceUpgrade.whatChanged.length >= 3, "evidence upgrade explains what made it specific");
+      assert.ok(/illustrat/i.test(cwi.evidenceUpgrade.honestyNote), "illustrative figures are labeled honestly, not presented as verified");
+    }
     // Misconception repair: names the wrong model and corrects it (not just a restated tip).
     assert.ok(cwi.misconception.name.trim().length > 0 && cwi.misconception.wrongModel.trim().length > 0, "misconception is named with its wrong mental model");
     assert.ok(cwi.misconception.rightModel.trim().length > 0 && cwi.misconception.wrongModel.trim() !== cwi.misconception.rightModel.trim(), "misconception is corrected with a different, right model");

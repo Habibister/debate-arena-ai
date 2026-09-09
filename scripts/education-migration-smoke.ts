@@ -175,7 +175,12 @@ async function main() {
   // and a diverging retry field — on BOTH a published and a held entry — while passing comments,
   // formatting, helper renames and declaration-order changes. Unlike the hash it never derives its
   // expectation from HEAD, so committing cannot make it green.
-  for (const file of ["components/lessons/lesson-view.tsx",
+  for (const file of [// components/lessons/lesson-view.tsx is deliberately absent from the CWI beginner rewrite
+                      // (2026-09-08) onward, for the same HEAD-RELATIVE flaw called out below: the pin only
+                      // failed while a change was uncommitted and passed again the moment HEAD advanced onto
+                      // it. What this suite needs from the legacy view — that CWI still renders through it
+                      // with its teaching sections, and that it imports nothing from lib/education — is
+                      // asserted directly at 4V below.
                       "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
                       // components/lessons/concept-education-lesson-view.tsx is deliberately absent
                       // from the rebuttal containment onward — the same HEAD-RELATIVE flaw called out
@@ -233,6 +238,16 @@ async function main() {
                       // What this suite needs from the seed is asserted directly at 4R below.
                       ]) {
     assert.equal(shaNow(file), sha(file), `4. ${file} is byte-identical to HEAD`);
+  }
+
+  // ---- 4V. what the retired lesson-view pin protected, asserted directly --------------------------
+  {
+    const view = read("components/lessons/lesson-view.tsx");
+    assert.ok(/export function LessonView\b/.test(view), "4V1. the legacy CWI view is still exported under its name");
+    for (const id of ["what-it-is", "contrast", "revise", "misconception", "mistakes"]) {
+      assert.ok(view.includes(`id="${id}"`), `4V2. the legacy view still renders its ${id} teaching section`);
+    }
+    assert.ok(!/@\/lib\/education/.test(view), "4V3. the legacy view imports nothing from lib/education (dependency flow stays one-way)");
   }
 
   // ---- 4R. what the retired seed pin protected, asserted directly ---------------------------------

@@ -1842,6 +1842,95 @@ function main() {
       if (/judge (buys|believes|accepts)|before naming/i.test(m.mistake) && /accepted|lands/i.test(t)) return "B06 success-conditional";
       return "UNCLASSIFIED: " + m.mistake;
     });
+
+  // ================================================================================================
+  // CW. CLAIM / WARRANT / IMPACT — beginner rewrite (2026-09-08). The canonical lesson is the
+  // AuthoredLesson `claim-warrant-impact` in lib/lessons.ts, rendered by components/lessons/
+  // lesson-view.tsx and practised from the drill bank. No integrity snapshot covers that file, so
+  // this block plus the mutation harness that proved it are its byte protection. Doctrine:
+  // scripts/debate-beginner-manifests.json (six A-rules, all guarded here).
+  // ================================================================================================
+  check("CW. Claim/Warrant/Impact teaches three jobs before three labels, carries its six A-rules and B-rules in plain English, and the beginner regressions cannot return", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cw = require("../lib/lessons").getLesson("claim-warrant-impact") as any;
+    const wc = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    const parts = cw.whatItIs.parts as Array<{ term: string; plain: string; example: string }>;
+    const mistakes = (cw.commonMistakes as Array<Record<string, string>>).map((m) => Object.values(m).join(" ")).join(" ");
+    // SHAPE: one complete they-say / why / so-what argument opens the lesson, before any label.
+    assert.ok(/^They say: .{0,120}Why\? .{0,160}So what\? /.test(cw.whatItIs.intro), "the opener is one complete argument asked as three questions");
+    const firstLabel = cw.whatItIs.intro.search(/\b(CLAIM|WARRANT|IMPACT)\b/);
+    assert.ok(firstLabel > 0 && wc(cw.whatItIs.intro.slice(0, firstLabel)) <= 100, "the labels arrive after the example, inside the first hundred words");
+    assert.ok(/That is one complete argument: what you want me to believe, why, and so what\./.test(cw.whatItIs.intro), "the three jobs are named as questions");
+    assert.ok(/To build one: say your point\. Explain why\. Say what happens and why it matters\./.test(cw.whatItIs.intro), "the build procedure is three plain steps");
+    assert.deepEqual(parts.map((p) => p.term), ["Claim", "Warrant", "Impact"], "three parts, in the beginner default order");
+    // RULE-01
+    assert.ok(/^The point you want the judge to accept\. It must say something you could argue about\./.test(parts[0].plain), "RULE-01 the claim");
+    assert.ok(/Judges vote on all three\./.test(cw.whatItIs.intro), "RULE-01 the judge weighs all three");
+    assert.ok(/A topic is not a claim: school lunches is a topic; free school lunches mean fewer missed meals is a claim\./.test(parts[0].plain), "claim != topic, shown by contrast");
+    // RULE-02
+    assert.ok(/the because, the cause-and-effect step that shows how the claim comes true\./.test(parts[1].plain), "RULE-02 the warrant is the cause-and-effect step");
+    // RULE-03: both failure modes, the fake warrant, the self-check
+    assert.ok(/A second claim is not a warrant, and “because it is important” names no cause at all\./.test(parts[1].plain), "RULE-03 restatement and the fake warrant");
+    assert.equal(cw.revisionLadder.steps.map((s: { label: string }) => s.label).join(" | "), "Draft 1: repeats the claim | Draft 2: names the harm, not the cause | Draft 3: gives the cause", "RULE-03 both failure modes are the ladder's rungs");
+    assert.ok(/Quick check: is every sentence a claim, or did you explain why one leads to the next\?/.test(cw.whatItIs.closer), "RULE-03 self-check");
+    // RULE-04
+    assert.ok(/^So what\? What happens, who is affected, and why it matters\./.test(parts[2].plain), "RULE-04 the impact is the so-what");
+    assert.ok(/The impact is empty\. “Help everyone” says nothing about who is helped or how much\./.test(cw.weak.reasons.join(" ")), "RULE-04 'helps everyone' weighs nothing");
+    assert.ok(/A claim and warrant with no impact may be true, but gives the judge no reason to care\./.test(cw.whatItIs.closer), "RULE-04 true but no impact");
+    assert.ok(/“This matters a lot” is not an impact: it names no one and nothing\./.test(mistakes), "the fake impact is named");
+    // RULE-05, including the connecting sentence the Evidence lesson defers to
+    assert.ok(/The judge has to stay neutral and will not fill in the reasoning for you\./.test(cw.misconception.whyWrong), "RULE-05 the judge stays neutral");
+    assert.ok(/the same fact usually fits both sides/.test(cw.misconception.whyWrong), "RULE-05 the same fact fits both sides");
+    assert.ok(/“which means ___, therefore ___\.”/.test(cw.misconception.rightModel), "RULE-05 the connecting sentence");
+    // RULE-06
+    assert.ok(/And the claim is the same as the weak version\. Only the warrant and the impact got better\./.test(cw.strong.reasons.join(" ")), "RULE-06 same claim, better warrant and impact");
+    assert.ok(/You do not jump from weak to strong\. You revise\./.test(cw.revisionLadder.intro), "RULE-06 revise in passes");
+    assert.equal(cw.sharedClaim, "Schools should start the day after 8:30 a.m.");
+    assert.ok(cw.weak.text.startsWith("Schools should start") && cw.strong.text.startsWith("Schools should start"), "both versions argue the shared claim");
+    // B carriers (B06 and B09 stay guard-only in tracks / source-freshness)
+    assert.ok(/You may hear the warrant called the bridge from your evidence to your claim\. Same job, seen from the other end\./.test(cw.misconception.rightModel), "B01");
+    assert.ok(/Citing a lot does not mean the reasoning is missing; leaving out the connecting sentence does\./.test(mistakes), "B02");
+    // B03 as two semantic invariants, not one opaque literal: the model argument is an EXAMPLE the learner
+    // must not cite as evidence, and warrant quality depends on evidence the learner can actually defend.
+    assert.ok(/\bexample\b/i.test(cw.strong.honestyNote) && /not evidence (to|you can) (quote|cite)/i.test(cw.strong.honestyNote), "B03: the strong argument is an example, not evidence to quote");
+    assert.ok(/a warrant is only as strong as the evidence you can actually defend/i.test(cw.strong.honestyNote), "B03: warrant quality depends on evidence the learner can defend");
+    assert.ok(!/\billustrat/i.test(cw.strong.honestyNote), "B03 is said in beginner words");
+    assert.ok(/your results update your Claim Building mastery/.test(cw.practice.intro) && cw.practice.questionCount === 6, "B05 honest practice copy, six served items");
+    assert.ok(/not official competition rules/.test(cw.provenanceNote) && /one supported formulation rather than the only one/.test(cw.provenanceNote), "B07 / B08");
+    // BOUNDARIES: Evidence Evaluation is named as another lesson's job; the impact bridge is one sentence; the class-C block is gone.
+    assert.ok(/Whether the evidence itself is any good is the Evidence Evaluation lesson’s job\./.test(mistakes), "evidence quality is deferred");
+    assert.ok(/Later lessons ask how big an outcome is; here, impact simply means the consequence that makes the argument matter\./.test(parts[2].plain), "the impact terminology bridge is one sentence");
+    assert.equal(cw.evidenceUpgrade, undefined, "the class-C evidence-specificity block is off the beginner path");
+    // TERMINOLOGY: plain English; 'support' never appears in teaching text (evidence / reasoning / warrant are named instead).
+    const teaching = [cw.subtitle, cw.whatItIs.intro, ...parts.flatMap((p) => [p.plain, p.example]), cw.whatItIs.closer, cw.weak.text, ...cw.weak.reasons, cw.strong.text, ...cw.strong.reasons, cw.strong.honestyNote,
+      cw.revisionLadder.intro, ...cw.revisionLadder.steps.flatMap((s: Record<string, string>) => [s.label, s.warrant, s.note]), ...Object.values(cw.misconception as Record<string, string>), mistakes, cw.practice.intro].join("\n");
+    assert.ok(!/inferential|nexus|analytic|mechanistic|warrantless|load-bearing|circular|assertion|proposition|premise|terminal impact|internal link/i.test(teaching), "no logic-theory vocabulary");
+    assert.ok(!/\bsupport(s|ed|ing)?\b/i.test(teaching), "'support' is not used in teaching text");
+    assert.ok(!/\b(uniqueness|solvency|fiat|inherency|outweigh|magnitude|probability|timeframe|lens|frontline|extend)\b/i.test(teaching), "no weighing, speech or policy jargon");
+    // REGRESSION ROUTES the mutation harness drives
+    assert.ok(!/\b(the )?(claim|topic) (is|are|means) (the |a )?(topic|claim)\b/i.test(teaching), "claim is not the topic");
+    assert.ok(!/warrant (is|means) (the |a |your )?(source|citation|evidence|statistic|study)\b/i.test(teaching), "warrant is not the evidence");
+    assert.ok(!/(any|every|a) sentence (with|containing|that has) (the word )?["“]?because["”]? (is|counts as|makes) a warrant/i.test(teaching), "'because' alone is not a warrant");
+    assert.ok(!/impact (is|means) (the )?(last|final|closing) (sentence|line)/i.test(teaching), "impact is not a position");
+    assert.ok(!/impact (is|means|should be) (the )?(biggest|largest|most dramatic|scariest|worst)/i.test(teaching), "impact is not drama");
+    assert.ok(!/impact (just |only |simply )?means (just |only )?how big|impact (is|means) (just |only )?(size|magnitude)/i.test(teaching), "impact is not only size");
+    assert.ok(!/(is|counts as|makes) a (good|fine|real|valid|strong) (warrant|impact) (because|if) (it|you) (sounds?|feels?|is|say)/i.test(teaching), "no fake warrant or impact is endorsed");
+    assert.ok(!/(evidence|a fact|a source|a study|a statistic|statistics) (is|are|counts as|equals) (the |a |your )?(reasoning|warrant)\b/i.test(teaching), "evidence and warrant are not merged");
+    assert.ok(!/(weighing|weigh) (is|means) (the )?impact|impact (is|means) weighing/i.test(teaching), "impact is not weighing");
+    assert.ok(!/(must|has to|always) (come|comes|be|is|go|goes) (first|second|last|in that order)|order (decides|determines|tells you)/i.test(teaching), "order does not define the parts");
+    assert.ok(!/(usually|probably|sometimes|often) (a|the) (claim|warrant|impact)\b/i.test(teaching), "no part is assigned by hedge");
+    // BEGINNER CEILINGS over everything rendered before Practice (the LessonView page order).
+    const required = [cw.title, cw.subtitle, cw.whatItIs.intro, ...parts.flatMap((p) => [p.term, p.plain, p.example]), cw.whatItIs.closer, cw.video.caption, cw.sharedClaim, cw.weak.text, ...cw.weak.reasons, cw.strong.text, ...cw.strong.reasons, cw.strong.honestyNote,
+      cw.revisionLadder.intro, ...cw.revisionLadder.steps.flatMap((s: Record<string, string>) => [s.label, s.warrant, s.note]), ...Object.values(cw.misconception as Record<string, string>), ...(cw.commonMistakes as Array<Record<string, string>>).flatMap((m) => Object.values(m)), cw.practice.intro] as string[];
+    const requiredWords = required.map(wc).reduce((a, b) => a + b, 0);
+    assert.ok(requiredWords <= 1000, `required path stays a beginner read: ${requiredWords} words`);
+    for (const para of required.flatMap((t) => t.split(/\n\n+/))) assert.ok(wc(para) <= 65, `no paragraph above 65 words: ${para.slice(0, 50)}`);
+    for (const sentence of required.join(" ").replace(/\n+/g, " ").split(/(?<=[.?!][)\u201d"]?)\s+(?=[A-Z\u201c"(])/)) assert.ok(wc(sentence) <= 32, `no sentence above 32 words: ${sentence.slice(0, 60)}`);
+    assert.ok(cw.estimatedMinutes <= 8, "the learner-visible estimate matches a short read");
+    // STRUCTURE by purpose: each mistake box carries one distinct confusion; the removed RULE-03 box has its carriers above.
+    const purposes = (cw.commonMistakes as Array<{ title: string }>).map((m) => /Stopping at the warrant/.test(m.title) ? "RULE-04 missing impact" : /Naming a source/.test(m.title) ? "RULE-05/B02 evidence is not the warrant" : "UNCLASSIFIED: " + m.title);
+    assert.deepEqual([...purposes].sort(), ["RULE-04 missing impact", "RULE-05/B02 evidence is not the warrant"], `mistake boxes by purpose (${purposes.join(" | ")})`);
+  });
     assert.deepEqual([...purposes].sort(), ["B02 reversing evidence attack", "B06 success-conditional", "RULE-01 topic-vs-effect"], `each box carries one distinct confusion (${purposes.join(" | ")})`);
     assert.ok(!/defense every time|every answer you make is defense/i.test(at.commonMistakes.map((m: Record<string, string>) => Object.values(m).join(" ")).join(" ")), "RULE-05 lives in whyMatters, not a duplicate box");
     assert.ok(!/one answer type|more than one direction/i.test(at.commonMistakes.map((m: Record<string, string>) => Object.values(m).join(" ")).join(" ")), "B03 lives in section 3, not a duplicate box");

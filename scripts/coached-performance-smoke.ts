@@ -1491,15 +1491,15 @@ function main() {
 
   check("NB. the owner's four precision rulings are taught as written, and the crude versions are not", () => {
     const text = [evid.explanation, ...evid.teachingSections.map((s: { body: string }) => s.body), ...evid.commonMistakes.flatMap((m: { whyItFails: string; fix: string }) => [m.whyItFails, m.fix])].join("\n");
-    assert.ok(/usually cannot, by itself, justify a broad claim about many cases/.test(text), "generalisation: one case supports a claim about that case; not by itself a broad claim");
+    assert.ok(/supports a claim about that case\. On its own it usually cannot prove a claim about many\./.test(text), "generalisation: one case supports a claim about that case; not by itself a broad claim");
     assert.ok(!/one case proves one case/.test(text), "the crude 'one case proves one case' is not taught");
-    assert.ok(/does not create independent corroboration/.test(text), "repeated sources: no independent corroboration");
-    assert.ok(/can still contain several distinct findings/.test(text), "a single source may still carry several findings");
+    // B08 (repeated source ≠ corroboration) is GUARD-ONLY in the beginner manifest: no learner prose; the crude form stays banned below.
+    // B08 is GUARD-ONLY in the beginner manifest: the several-findings nuance leaves the prose; the crude form stays banned below.
     assert.ok(!/counts once|count once|counts as one\b/.test(text), "the crude 'counts once' is not taught");
-    assert.ok(/limits how much confidence the evidence deserves/.test(text), "undescribed method: limited confidence");
+    assert.ok(/it earns less confidence than a result you can check/.test(text), "undescribed method: limited confidence, never rejection");
     assert.ok(!/counts as (an )?assertion|= assertion|becomes an assertion/.test(text), "no 'undisclosed method = assertion'");
     assert.ok(/not a reason to throw the result away/.test(text), "conflict of interest: scrutiny, not rejection");
-    assert.ok(/taking it as true, and you show how far it reaches/.test(evid.explanation), "in-round: take it as true, show how far it reaches");
+    assert.ok(/Take the evidence as true\. You do not have to disprove it, or look anything up\./.test(evid.explanation), "in-round: take it as true, show how far it reaches (B03)");
     assert.equal(evid.scaffoldedTry.motion, undefined, "the claim under evaluation is NOT smuggled into the motion field");
     assert.equal(evid.scaffoldedTry.opponentClaim, undefined, "nor into opponentClaim — no field is made to lie");
   });
@@ -1509,7 +1509,8 @@ function main() {
     for (const beat of ["What it shows:", "What it does not show:", "What is still needed:"]) assert.ok(strongAnswer.includes(beat), `beat present: ${beat}`);
     assert.ok(/still bigger than its evidence/.test(strongAnswer), "the claim as stated is sized against the evidence");
     assert.ok(/The claim is proved\./.test(weakAnswer), "the first impression stops at 'real data with a comparison'");
-    assert.ok(/fits the topic and not the claim/.test(whyItWorks), "the comparison beat uses the same questions");
+    // RULE-08 (comparing competing evidence) is Class C in the beginner manifest: the comparison beat left the worked example.
+    assert.ok(/grants that; and names what is left\./.test(whyItWorks), "the evaluation grants, then names the gap");
     assert.ok(!/outweigh|impact matters more|magnitude|probability/i.test(strongAnswer + whyItWorks), "no weighing vocabulary");
     assert.ok(!/deserves more weight/.test(evid.objective), "the objective no longer headlines 'deserves more weight'");
     assert.ok(/what it leaves unproven/.test(evid.objective), "it headlines bounding");
@@ -1536,8 +1537,8 @@ function main() {
       source: evidEntry.source, provenance: MIGRATED_DEBATE_PROVENANCE, moduleLabel: "Argument construction", next: null, practiceDrill: evidEntry.practiceDrill
     } as never));
     const text = visible(html);
-    assert.ok(text.includes("What evidence proves, and how big a claim it can carry") && text.includes("Now try the move"), "sections and the scenario render");
-    assertOrder(html, "What evidence proves, and how big a claim it can carry", "What is the problem with this evidence", "teaching precedes the first check");
+    assert.ok(text.includes("Job 1: Say what the evidence actually shows") && text.includes("Now try the move"), "sections and the scenario render");
+    assertOrder(html, "Job 1: Say what the evidence actually shows", "What is the problem with this evidence", "teaching precedes the first check");
     assertOrder(html, 'id="scaffolded-try"', 'id="practice-drill"', "the constructed attempt precedes the drill CTA");
     assert.ok(!text.includes("Words you can use"), "no frames section");
     assert.ok(!text.includes("Use it in a guided round") && !text.includes("The guided round opens after"), "no guided-round link or promise");
@@ -1546,16 +1547,66 @@ function main() {
 
   check("NF. ownership: the warrant is pointed at, not retaught; no research-method or weighing teaching", () => {
     const all = JSON.stringify(evid);
-    assert.ok(/Claim, Warrant, Impact lesson's job/.test(evid.explanation), "the reasoning link is deferred to CWI");
+    assert.ok(/Claim, Warrant, Impact lesson[’']s job/.test(evid.explanation), "the reasoning link is deferred to CWI");
     // Exactly twice: once naming the connection ("That connection is the warrant, the reasoning that
     // says why…") so evidence and reasoning stay distinct, once in the pointer to CWI. Never a third
     // time — a third use would be teaching how to build one, which is CWI's job.
     assert.equal((all.match(/\bwarrant\b/gi) ?? []).length, 2, "the noun 'warrant' appears twice: the one-line distinction and the CWI pointer (the verb 'warrants caution' is ordinary English)");
-    assert.ok(/That connection is the warrant, the reasoning that says why this evidence supports this claim; the evidence itself never states it\./.test(all), "the evidence/reasoning distinction is stated once, in plain words");
-    for (const banned of ["p-value", "statistical significance", "confidence interval", "sample size of", "peer review", "peer-review", "outweigh", "impact matters more", "fallacy", "ad hominem"]) {
+    assert.ok(/Debaters call the link between evidence and claim the warrant; building one is the Claim, Warrant, Impact lesson[’']s job\./.test(all), "the noun is named once and pointed at CWI, never built");
+    for (const banned of ["p-value", "statistical significance", "confidence interval", "sample size of", "peer review", "peer-review", "outweigh", "impact matters more", "fallacy", "ad hominem", "indict", "corroborat", "external validity", "correlation"]) {
       assert.ok(!all.toLowerCase().includes(banned), `no out-of-scope teaching: ${banned}`);
     }
-    assert.ok(/You are not a researcher, and the round does not need you to be one/.test(evid.teachingSections[1].body), "the in-round scope is stated");
+    assert.ok(/You do not have to disprove it, or look anything up\./.test(evid.explanation), "the in-round scope is stated");
+  });
+
+  check("NG. Evidence for beginners: the seven frozen A-rules in the learner's words, the charter's regression routes banned, ceilings and check lattice", () => {
+    const sec = evid.teachingSections as Array<{ heading: string; body: string }>;
+    const [e1, e2, e3] = sec.map((x) => x.body);
+    const required: string[] = [evid.objective, evid.explanation, ...sec.map((x) => x.heading + "\n\n" + x.body), evid.whyMatters, ...evid.steps,
+      ...Object.values(evid.workedExample as Record<string, string>), ...Object.values(evid.misconception as Record<string, string>),
+      ...evid.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m))];
+    const evidChecks = [evid.guidedQuestion, ...evid.practiceQuestions, ...evid.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
+    const all = [...required, evid.scaffoldedTry.prompt, evid.scaffoldedTry.frame, ...evidChecks.flatMap((q) => [q.prompt, ...q.choices, q.explanation]), evidEntry.source.description, evidEntry.source.lesson.summary].join("\n");
+    assert.deepEqual(sec.map((x) => x.heading), ["Job 1: Say what the evidence actually shows", "Job 2: Does it match the claim?", "Job 3: Name the gap, and the problem"], "three jobs");
+    // RULE-01 / RULE-02 / RULE-03.
+    assert.ok(/Evidence gives the judge a reason to believe a claim; it does not prove the claim by itself\./.test(evid.explanation), "RULE-01");
+    assert.ok(/Start from the claim: say in one sentence what would have to be shown for it to hold\./.test(e1), "RULE-02");
+    assert.ok(/what was measured or observed, in whom, over what period, compared with what/.test(e1), "RULE-03");
+    // RULE-04 fit, RULE-05 size (+ B04), RULE-06 cause (+ B05), RULE-07 grant and gap.
+    assert.ok(/Fit: evidence about something nearby is not evidence about the claim\./.test(e2) && /A real, expert, trustworthy source can still be answering the wrong question\./.test(e2), "RULE-04");
+    assert.ok(/Size: evidence from one case, one place, or one group supports a claim about that case\./.test(e2) && /leaves the rest still a claim/.test(e2), "RULE-05");
+    assert.ok(/is not one causing the other until the other explanations are dealt with\./.test(e2) && /rules out only the explanations both groups share\./.test(e2), "RULE-06 + B05");
+    assert.ok(/Take the evidence as true, say what it does establish, name what is still unproven, and shrink the claim to fit what is left\./.test(e3), "RULE-07");
+    assert.ok(/which the evidence supports\./.test(e3) && !/carries/.test(evid.workedExample.strongAnswer), "the sized claim is one the evidence SUPPORTS (recorded residual), never carries");
+    // Plain-English evidence attack: a specific problem and its consequence, never source trash-talk or the word indict.
+    assert.ok(/“That source is bad” tells the judge nothing\./.test(e3) && /names the problem and what follows from it\./.test(e3), "specific problem → consequence");
+    // The mismatch is shown before any definition: inside the explanation's first 60 words.
+    const at = evid.explanation.search(/The claim goes further than the evidence\./); assert.ok(at > 0 && evid.explanation.slice(0, at).trim().split(/\s+/).length <= 60, "the learner sees the gap first");
+    // Regression routes the charter names.
+    for (const route of [/naming (?:a|the) (?:study|source) is enough/i, /(?:a )?real source (?:automatically )?(?:proves|is enough)/i, /(?:credible|trustworthy|expert) (?:source|study)[^.]{0,30}(?:so|therefore) the (?:claim|argument) (?:is|stands|holds)/i, /(?:proves|supports) the (?:larger|bigger|whole|full) claim/i, /so throw (?:it|the result) (?:out|away)/i, /(?:are|is) the same question/i, /(?:the )?(?:study|source) (?:is|was) (?:from|by) (?:harvard|oxford|a university)[^.]{0,20},? so/i]) {
+      assert.ok(!route.test(all), `regression route absent: ${route}`);
+    }
+    // Ceilings (floors retired in f0e17f7).
+    const wc = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    for (const field of required) {
+      for (const para of field.split(/\n\n+/)) assert.ok(wc(para) <= 65, `no paragraph above 65 words: ${para.slice(0, 60)}`);
+      for (const sentence of field.replace(/\n+/g, " ").split(/(?<=[.?!][)”"]?)\s+(?=[A-Z“"(])/)) assert.ok(wc(sentence) <= 40, `no sentence above 40 words: ${sentence.slice(0, 60)}`);
+    }
+    assert.ok(required.map(wc).reduce((a, b) => a + b, 0) <= 1000, `required path ceiling: ${required.map(wc).reduce((a, b) => a + b, 0)}`);
+    // Check lattice and lone-cue rules.
+    const STOP = new Set(["the", "a", "an", "and", "or", "of", "to", "in", "on", "it", "is", "are", "that", "this", "them", "they", "you", "your", "both", "for", "with", "not", "no", "so", "at", "as", "by", "one", "two", "their", "its", "what", "which", "when", "than", "then", "does", "do", "up"]);
+    const words = (t: string) => (t.toLowerCase().match(/[a-z’'-]+/g) ?? []); const MODALS = /\b(can|could|may|might|would|should|must|whichever|whatever|whoever|any)\b/i;
+    evidChecks.forEach((q, i) => {
+      const lens = q.choices.map(wc), chars = q.choices.map((o) => o.length); const k = q.choices.indexOf(q.correctAnswer);
+      const mw = Math.max(...lens), nw = Math.min(...lens), mc = Math.max(...chars), nc = Math.min(...chars);
+      assert.ok(!(lens.filter((x) => x === mw).length === 1 && lens[k] === mw) && !(lens.filter((x) => x === nw).length === 1 && lens[k] === nw), `Q${i + 1}: key not uniquely longest or shortest by words`);
+      assert.ok(!(chars.filter((x) => x === mc).length === 1 && chars[k] === mc) && !(chars.filter((x) => x === nc).length === 1 && chars[k] === nc), `Q${i + 1}: nor by characters`);
+      assert.ok(mw - nw <= 5 && mc - nc <= 16, `Q${i + 1}: options are length-matched (${lens.join("/")} words, ${chars.join("/")} chars)`);
+      const stem = new Set(words(q.prompt)); const echoes = q.choices.map((o) => { const w = words(o); const last = w[w.length - 1]; return Boolean(last) && !STOP.has(last) && stem.has(last); });
+      assert.ok(!(echoes[k] && echoes.filter(Boolean).length === 1), `Q${i + 1}: the key is not the only option whose final word echoes the stem`);
+      const modal = q.choices.map((o) => MODALS.test(o)); assert.ok(!(modal[k] && modal.filter(Boolean).length === 1), `Q${i + 1}: the key is not the only option with a modal`);
+    });
+    assert.deepEqual(evidChecks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["D", "A", "C", "B"], "keys as authored and reviewed");
   });
 
 

@@ -1,5 +1,5 @@
 {
-  "marker": "DEBATE-BEGINNER-MANIFEST-V4",
+  "marker": "DEBATE-BEGINNER-MANIFEST-V5",
   "note": "Internal review contract. NOT learner content. Learners never see rule ids, classes, or guard references. A rewrite may fuse several rules into one sentence, example or mistake box; this artifact protects MEANING, never presentation length.",
   "fullTrackARuleTotal": 59,
   "censusRulesTriaged": 317,
@@ -306,7 +306,7 @@
         {
           "id": "RULE-02",
           "meaning": "Start from the claim, not the evidence: say in one sentence what would have to be shown for the claim to hold.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-03",
@@ -326,7 +326,7 @@
         {
           "id": "RULE-06",
           "meaning": "Two things happening together, or one happening after the other, is not one causing the other until the other explanations are dealt with.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-07",
@@ -380,19 +380,19 @@
         {
           "censusRule": "R16 - a result taken from a flattering start or end date shows less than the same measure over the whole period",
           "klass": "C",
-          "destination": "optional note after the main path (must stay in the lesson somewhere - it is drilled)",
+          "destination": "KEPT as one clause of a two-sentence 'know by sight' note at the end of Job 1 (drilled; rendered before Practice because the renderer shows no optional-after block)",
           "why": "Pattern-spotting, not chain-bearing: none of RULE-02 through RULE-07 depends on it, and a beginner can bound a piece of evidence without ever meeting a cherry-picked window. Not pinned by any smoke assertion and not one of the four recorded owner rulings. It must not be DELETED, though: the durable "
         },
         {
           "censusRule": "R19 - recency matters only relative to the claim; a figure is out of date when the claim is about now and the relevant facts have changed since, and not otherwise",
           "klass": "C",
-          "destination": "optional note after the main path (must stay in the lesson somewhere - it is drilled)",
+          "destination": "KEPT as one clause of the same two-sentence note at the end of Job 1 (drilled)",
           "why": "Same reasoning as R16: a beginner performs shows / does-not-establish / would-need without it. Not pinned and not among the four owner rulings, so it is C rather than B. One warning for the rewrite: if recency IS mentioned in the beginner pass, the 'relative to the claim' hedge must come with it. Dr"
         },
         {
           "censusRule": "R20 - expertise is specific; an expert speaking outside their field is a citizen with an opinion",
           "klass": "C",
-          "destination": "later / optional source-check note alongside R21 and R22",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (the renderer shows no 'after the main path' block); candidate for future progressive-disclosure UI",
           "why": "Source credibility is a second axis, and RULE-04 already stops the beginner's actual error (treating an impressive source as support for the claim). Removing it from first exposure makes nothing false, so it fails the class-B test. Not pinned by any smoke assertion (grep for 'Expertise'/'physicist' "
         },
         {
@@ -404,23 +404,17 @@
         {
           "censusRule": "RULE-08",
           "klass": "C",
-          "destination": "demoted by adversarial challenge",
+          "destination": "ADVANCED/LATER — removed from the required beginner path: the objective/summary clause, the section-3 comparison paragraph and the worked example's comparison beat are gone; the comparative stem of practice item 2 stays because its key and distractors turn on RULE-05 and B07",
           "why": "Applied literally, the test clears it. RULE-08 introduces no new judgment: it says to do the four checks the learner already has, twice. A beginner who bounds each piece separately and crudely has already compared them correctly, so nothing in the basic objective becomes unperformable without it. Its only novel content is a list of four bad tiebreakers (newer / a number / official-sounding / likea"
         }
       ],
       "criticalGuardedInvariants": [
-        "LENGTH FLOOR - the binding collision with this triage. scripts/coached-performance-smoke.ts check NA: assert.ok(prose >= 800 && prose <= 1500, `teaching prose inside the guard: ${prose} words`), measured over objective + explanation + whyMatters + steps + teachingSections (heading + body). Current value 1,166. A beginner rewrite built from this manifest lands at roughly 800 words, i.e. AT the floor. The floor, not the pedagogy, would set the length - the owner must decide whether to lower it before the rewrite, or the rewrite will pad to pass.",
-        "STRUCTURE COUNTS - scripts/coached-performance-smoke.ts check NA: assert.equal(evid.teachingSections.length, 3); assert.ok(evid.misconception); assert.equal(evid.commonMistakes.length, 5); assert.equal(1 + evid.practiceQuestions.length + evid.masteryCheck.length, 4); assert.equal(evid.languageFrames, undefined); assert.equal(evid.revisionLadder, undefined); assert.equal(evid.additionalExamples, undefined); assert.equal(guidedApplicationFor(EVID), null). Collapsing to two sections or four mistakes fails the suite.",
-        "SCAFFOLD SLOTS - scripts/coached-performance-smoke.ts NA: assert.deepEqual(evid.scaffoldedTry.slots, [\"shows\", \"does not yet establish\", \"would need\"]), and NE renders them as \"1. shows\", \"2. does not yet establish\", \"3. would need\". NB also pins assert.equal(evid.scaffoldedTry.motion, undefined) and assert.equal(evid.scaffoldedTry.opponentClaim, undefined) - the claim under evaluation may live only in the prompt.",
-        "SECTION INDEX 1 IS ADDRESSED BY INDEX, NOT BY NAME - scripts/coached-performance-smoke.ts NF: assert.ok(/You are not a researcher, and the round does not need you to be one/.test(evid.teachingSections[1].body)). If the rewrite reorders the three sections, this passes only if the source/method material stays in the middle slot.",
-        "SECTION 0 HEADING IS PINNED VERBATIM THROUGH THE RENDER - scripts/coached-performance-smoke.ts NE: assert.ok(text.includes(\"What evidence proves, and how big a claim it can carry\") && text.includes(\"Now try the move\")) and assertOrder(html, \"What evidence proves, and how big a claim it can carry\", \"What is the problem with this evidence\", \"teaching precedes the first check\"). Renaming section 0 to something friendlier fails two assertions.",
-        "WARRANT WORD BUDGET - scripts/coached-performance-smoke.ts NF: assert.equal((all.match(/\\bwarrant\\b/gi) ?? []).length, 2, ...) over JSON.stringify(evid), i.e. across EVERY field including questions and explanations. A beginner rewrite that reaches for 'warrant' a third time to be clearer fails.",
-        "BANNED VOCABULARY, ANYWHERE IN THE LESSON - scripts/coached-performance-smoke.ts NF: for (const banned of [\"p-value\", \"statistical significance\", \"confidence interval\", \"sample size of\", \"peer review\", \"peer-review\", \"outweigh\", \"impact matters more\", \"fallacy\", \"ad hominem\"]) assert.ok(!all.toLowerCase().includes(banned)). 'sample size of' and 'fallacy' are the two a simplifying rewrite is most likely to reach for.",
-        "WORKED-EXAMPLE BEATS - scripts/coached-performance-smoke.ts NC: strongAnswer must contain the literal beats \"What it shows:\", \"What it does not show:\", \"What is still needed:\" plus /still bigger than its evidence/; weakAnswer must contain /The claim is proved\\./; whyItWorks must contain /fits the topic and not the claim/ (the RULE-08 comparison beat); and assert.ok(!/outweigh|impact matters more|magnitude|probability/i.test(strongAnswer + whyItWorks)).",
-        "OBJECTIVE WORDING - scripts/coached-performance-smoke.ts NC: assert.ok(/what it leaves unproven/.test(evid.objective), \"it headlines bounding\") and assert.ok(!/deserves more weight/.test(evid.objective)). The objective must keep bounding, not weighing, as its headline.",
-        "PAGE SHAPE - scripts/coached-performance-smoke.ts NE: assertOrder(html, 'id=\"scaffolded-try\"', 'id=\"practice-drill\"'); assert.ok(!text.includes(\"Words you can use\")); assert.ok(!text.includes(\"Use it in a guided round\") && !text.includes(\"The guided round opens after\")). And NA: assert.equal(evidEntry.skillSlug, \"debate-evidence\") plus assert.deepEqual(evidEntry.practiceDrill, { track: \"debate\", area: \"evidence-evaluation\" }) - the durable drill wiring is untouchable.",
-        "PROSE SNAPSHOT - scripts/learning-content-integrity-smoke.ts compares every learner-facing value against the full checked-in snapshot scripts/learning-content-baseline.json (2,624 lines) with the review marker const LEARNING_CONTENT_BASELINE = \"WEIGHING-REPAIR-V1\" at line 56. Any rewrite must re-baseline and advance the marker in the same commit; this is a review signal, not a security boundary, and the suite's own header says so.",
-        "UNPINNED BUT RECORDED WORDING RESIDUAL - docs/HANDOFF.md records that the worked example's sized claim is one the evidence \"supports\", not \"carries\" (an applied precision residual from the recheck panel). No assertion holds it; a rewrite that reverts to 'carries' would silently undo a recorded fix."
+        "GUARD METADATA (synced with the beginner rewrite, 2026-09-08). Classifications unchanged. RULE-02 and RULE-06 were guarded=false; check NG now pins all seven A-rules in the learner's words alongside the surviving NA–NF block.",
+        "NG — A-RULES. Section headings deepEqual ['Job 1: Say what the evidence actually shows', 'Job 2: Does it match the claim?', 'Job 3: Name the gap, and the problem']. RULE-01 'Evidence gives the judge a reason to believe a claim; it does not prove the claim by itself.' RULE-02 'Start from the claim: say in one sentence what would have to be shown for it to hold.' RULE-03 'what was measured or observed, in whom, over what period, compared with what'. RULE-04 'Fit: evidence about something nearby is not evidence about the claim.' + 'A real, expert, trustworthy source can still be answering the wrong question.' RULE-05 'Size: evidence from one case, one place, or one group supports a claim about that case.' + 'leaves the rest still a claim'. RULE-06 'is not one causing the other until the other explanations are dealt with.' + B05 'rules out only the explanations both groups share.' RULE-07 'Take the evidence as true, say what it does establish, name what is still unproven, and shrink the claim to fit what is left.' The sized claim is one the evidence SUPPORTS ('which the evidence supports.'; strongAnswer never 'carries'). Plain-English attack: '“That source is bad” tells the judge nothing.' + 'names the problem and what follows from it.' The claim/evidence gap is shown inside the explanation's first 60 words.",
+        "NG — REGRESSION ROUTES BANNED everywhere learner-visible: 'naming a study/source is enough', 'a real source proves', 'credible/expert source … so the claim holds', 'proves/supports the larger/whole claim', 'so throw it out', '… are the same question', 'the study is from Harvard … so'. Vocabulary bans (NF) extended with indict, corroborat*, external validity, correlation.",
+        "NG — CEILINGS AND CHECKS. Required path ≤ 1,000 words, no paragraph > 65, no sentence > 40; four checks keyed D,A,C,B with the length lattice and lone-cue rules.",
+        "NA–NF — UNCHANGED PROTECTIONS, RE-KEYED WHERE WORDING MOVED. NA: no guided round; no frames/ladder/addEx; sections === 3; misconception; commonMistakes === 5; four checks; slots ['shows','does not yet establish','would need']; skillSlug debate-evidence; drill evidence-evaluation; prose ≤ 1,500. NB: B04 re-keyed to 'supports a claim about that case. On its own it usually cannot prove a claim about many.'; B07 re-keyed to 'it earns less confidence than a result you can check'; B06 'not a reason to throw the result away' kept; B03 re-keyed to 'Take the evidence as true. You do not have to disprove it, or look anything up.'; B08's positive retired (guard-only) with its crude-form bans kept; no motion/opponentClaim. NC: beats 'What it shows:' / 'What it does not show:' / 'What is still needed:', 'still bigger than its evidence', 'The claim is proved.', 'grants that; and names what is left.' (the RULE-08 comparison beat retired); objective 'what it leaves unproven', never 'deserves more weight'. ND: evaluator unchanged. NE: render anchor re-keyed to 'Job 1: Say what the evidence actually shows' → 'What is the problem with this evidence'; scaffold before drill CTA; no frames; no guided copy; slots rendered. NF: 'warrant' exactly twice, in 'Debaters call the link between evidence and claim the warrant; building one is the Claim, Warrant, Impact lesson’s job.'; banned vocabulary; in-round scope in the explanation.",
+        "STRUCTURE PINS RELAXED: none — no Evidence structure pin forces Class-C material (the Class-C items are prose: R16/R19 kept as one note because drilled; R20 and RULE-08 cut). Baseline marker EVIDENCE-BEGINNER-V1."
       ]
     },
     {

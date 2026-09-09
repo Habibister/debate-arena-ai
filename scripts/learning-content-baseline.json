@@ -669,134 +669,133 @@
     "track": "DEBATE",
     "category": "Debate foundations",
     "name": "Evidence Evaluation",
-    "description": "Judge what a piece of evidence actually supports, and what it leaves unproven.",
+    "description": "Judge what a piece of evidence actually shows, and what it leaves unproven.",
     "lesson": {
       "title": "Judge the evidence",
       "slug": "debate-evidence-evaluation-lesson",
-      "summary": "Say exactly what a piece of evidence establishes, what it does not, and use the same questions when two pieces conflict.",
+      "summary": "Say exactly what a piece of evidence shows, and exactly where the claim goes beyond it.",
       "estimatedMinutes": 11,
       "content": {
-        "objective": "Evaluate what a piece of evidence actually supports, identify what it leaves unproven, and use the same questions to compare competing evidence.",
-        "explanation": "In a round, evidence is anything offered in support of a claim that is not simply the claim said again: a number, a study, an expert's statement, an example, an event. A claim with evidence behind it is not automatically proved. What evidence does is give the judge a reason, and the size of that reason is what you are judging.\n\nThe judgment has one shape, and it starts from the claim rather than from the evidence. Ask what would have to be shown for the claim to hold. Then say what the evidence actually shows: what was measured or observed, in whom, over what period, compared with what. Then ask whether that connects to what the claim needed, and how much of the claim it covers. That connection is the warrant, the reasoning that says why this evidence supports this claim; the evidence itself never states it. Whatever is left over is unproven, and saying so, in plain words, is the move.\n\nYou judge evidence as it is described in the round, taking it as true, and you show how far it reaches: you do not have to prove it false, and you do not have to look anything up. How to say the reasoning that connects evidence to a claim is the Claim, Warrant, Impact lesson's job; this lesson is about judging how much support the evidence actually gives.",
-        "whyMatters": "Rounds are full of confident citations, from both sides. The debater who can say exactly what a piece of evidence establishes, and exactly what it does not, is the one the judge can follow. When the other side's conclusion goes further than their evidence, you can name the gap; when your own evidence is smaller than your claim, you can size the claim to fit before anyone else does it for you.",
+        "objective": "Say what a piece of evidence actually shows, check whether it supports the claim made on it, and name what it leaves unproven.",
+        "explanation": "Claim: students learn more when school starts later. Evidence: a survey found that students said they felt less tired.\n\nWhat did the evidence actually show? That students SAID they felt less tired. It did not show that anyone learned more. The claim goes further than the evidence.\n\nEvidence gives the judge a reason to believe a claim; it does not prove the claim by itself. Your job is to say how far the reason reaches.\n\nTake the evidence as true. You do not have to disprove it, or look anything up. Debaters call the link between evidence and claim the warrant; building one is the Claim, Warrant, Impact lesson’s job.",
+        "whyMatters": "Rounds are full of confident citations. The judge follows the debater who can say what each one actually shows.",
         "steps": [
-          "Restate the claim in one sentence, and say what would have to be shown for it to hold.",
-          "Say what the evidence actually shows: what was measured or observed, in whom, over what period, compared with what.",
-          "Check the connection: is it about what the claim needed, or about something nearby?",
-          "Check the size: how much of the claim does it cover, and is the claim broader than the evidence?",
-          "Say what remains unproven: grant what the evidence establishes, name the gap, and say what would close it."
+          "Say what is claimed, and what would have to be shown for it to hold.",
+          "Say what the evidence found: what was measured, in whom, over what period, compared with what.",
+          "Compare: does the evidence fit the claim, and is it big enough?",
+          "Name the gap: grant what it shows, say what is unproven, and shrink the claim to fit."
         ],
         "workedExample": {
-          "prompt": "Claim: removing library late fees gets more books returned on time. Evidence offered: return rates were tracked for a year at two similar libraries; the one that removed its fees saw on-time returns rise from 71 to 78 percent, while the other, which kept fees, stayed at 72. Evaluate the evidence.",
+          "prompt": "Claim: removing library late fees gets more books returned on time. Evidence: two similar libraries were tracked for a year; the one that removed fees saw on-time returns rise from 71 to 78 percent, the other stayed at 72. Evaluate the evidence.",
           "weakAnswer": "This is strong evidence. It is real data, not opinion, it has a comparison, and returns went up. The claim is proved.",
-          "strongAnswer": "What it shows: at one library, over one year, on-time returns rose seven points after fees were removed, while a similar library that kept its fees did not move. The comparison rules out a year in which everyone happened to return books more promptly; it does not rule out something else changing at that library in the same year, so the fee change is the likeliest explanation, not a proven one. What it does not show: that the same would happen at other libraries, because this is one pair; whether the rise lasts beyond a year; anything about libraries unlike these two. What is still needed: a reason to think the libraries in the claim are like this one. So the evidence supports the claim for libraries like this one, and the claim as stated, about libraries in general, is still bigger than its evidence.",
-          "whyItWorks": "The first impression stops at real data with a comparison, which is the right first thing to notice and the wrong place to stop. The evaluation says what was measured, in whom, over what period, against what; grants exactly that; and names what is left. The same questions settle a comparison. Set this evidence beside a survey in which members say they would return books on time without fees: that survey is about intentions, not returns, so it fits the topic and not the claim, and the tracked returns deserve more confidence for a reason you can state."
+          "strongAnswer": "What it shows: at one library, over one year, on-time returns rose seven points after fees were removed, while a similar library that kept fees did not move. That comparison rules out a year when everyone returned more books — but not something else changing at that library, so the fee change is the likeliest explanation, not a proven one.\n\nWhat it does not show: that the same would happen at other libraries, or that the rise lasts.\n\nWhat is still needed: a reason to think other libraries are like this one. So the evidence supports the claim for libraries like this one; the claim as stated is still bigger than its evidence.",
+          "whyItWorks": "The first impression stops at “real data with a comparison”: the right thing to notice, the wrong place to stop. The evaluation says exactly what was measured and compared; grants that; and names what is left."
         },
         "guidedQuestion": {
           "prompt": "Claim: the gym renovation improved student fitness. Evidence: a survey shows students like the new gym. What is the problem with this evidence?",
           "choices": [
-            "It was taken after the renovation, not before it, so the fitness baseline is missing",
-            "It asks students who disliked the old gym, not neutral ones, and they praise any change",
-            "It surveyed the students who use the gym most, not everyone, so the sample is skewed",
-            "It measures enjoyment of the facility, not fitness itself, so the wrong thing is measured"
+            "It was taken after the renovation, not before, so there is no before measure of fitness",
+            "It asks students who disliked the old gym, not neutral ones, and they like any change",
+            "It surveyed the students who use the gym most, not the least fit ones, so it is one-sided",
+            "It counts how much students enjoy the new gym, so it tells us nothing about being fitter"
           ],
-          "correctAnswer": "It measures enjoyment of the facility, not fitness itself, so the wrong thing is measured",
-          "hint": "Compare what was measured with what is claimed.",
-          "explanation": "Credible evidence can still fail to support the specific claim. Liking the gym is real information about enjoyment, and adding a baseline, correcting for warmer answers, or choosing the sample better would not turn it into information about fitness. The mismatch is in what was measured, not in how well it was measured.",
+          "correctAnswer": "It counts how much students enjoy the new gym, so it tells us nothing about being fitter",
+          "hint": "Ask what the survey actually found.",
+          "explanation": "A real survey can still fail to support the specific claim. Liking the gym is real information about enjoyment, and adding a before measure, allowing for warmer answers, or asking a fairer group would not turn it into information about fitness. The mismatch is in what was counted, not in how well it was counted.",
           "skillTag": "Evidence"
         },
         "practiceQuestions": [
           {
             "prompt": "Neighbourhoods with more streetlights have less litter. A speaker concludes that streetlights prevent litter. What should a careful debater say?",
             "choices": [
-              "Well-kept areas may get both lights and low litter, so the cause is not yet shown",
+              "Well-kept areas may get both the lights and low litter, so the cause is not yet shown",
               "The same pattern holds across many neighbourhoods at once, so the conclusion is well supported",
-              "Litter counts may move with the season, so the figures are not yet conclusive either way",
+              "Litter counts may wobble week to week, so the figures do not settle it either way",
               "The link is probably a real cause, provided litter was counted the same way in each neighbourhood"
             ],
-            "correctAnswer": "Well-kept areas may get both lights and low litter, so the cause is not yet shown",
-            "hint": "Two things appearing together is not yet one causing the other.",
-            "explanation": "The association is real evidence, but well-kept neighbourhoods may get both the lights and the lower litter. Breadth does not fix that: a pattern repeated across many places is still a pattern, not a cause. Neither does a longer window, and consistent counting would only confirm the pattern, not explain it. A comparison that separates upkeep from lighting would deal with that explanation; nothing else offered here does.",
+            "correctAnswer": "Well-kept areas may get both the lights and low litter, so the cause is not yet shown",
+            "hint": "The pattern is real. What does it prove?",
+            "explanation": "The pattern is real evidence, but well-kept neighbourhoods may get both the lights and the lower litter — something else that makes the two go together. Breadth does not fix that: a pattern repeated across many places is still a pattern, not a cause. Rough counts would make the pattern less certain, not explain it, and consistent counting would only confirm it. A comparison that separates upkeep from lighting would deal with that explanation; nothing else offered here does.",
             "skillTag": "Evidence"
           },
           {
-            "prompt": "Two reports on a teen curfew disagree. A group campaigning for curfews describes one town where things improved. A body with no stake in the outcome looked at forty towns, set out how it counted, and found mixed results. Which deserves more confidence, and why?",
+            "prompt": "Two reports on a teen curfew disagree. A group campaigning for curfews describes one town that improved. A review by a group that gains nothing either way looked at forty towns, set out its method, and found mixed results. Which deserves more confidence, and why?",
             "choices": [
               "The review, because a mixed finding sounds honest and a confident one sounds like selling",
-              "The campaign report, because one documented success is more concrete than an averaged review",
-              "The review, because its method is on record and the campaign report’s is not",
+              "The campaign report, because one real success is more solid than an average that proves nothing",
+              "The review, because it explained how it counted and the campaign report never explained how",
               "Neither on its own, because that town is probably among the forty, which came out mixed"
             ],
-            "correctAnswer": "The review, because its method is on record and the campaign report’s is not",
-            "hint": "Ask the same questions of both, rather than picking a side or a tone.",
-            "explanation": "Disagreement is where evaluation starts. A method that is set out can be examined; the campaign report gave no method, so from what was said its case cannot be, and one case is one case however concrete it feels, so concreteness is not the answer to an averaged review. Preferring the review because a mixed finding sounds honest is choosing by tone, not by method. Whether the improved town is among the forty is a guess the stem gives no basis for, and it would not change which report can be examined.",
+            "correctAnswer": "The review, because it explained how it counted and the campaign report never explained how",
+            "hint": "Ask the same questions of both reports.",
+            "explanation": "Disagreement is where evaluation starts. A method that is explained can be checked; the campaign report gave none, so from what was said it cannot be, and one town is one town however solid it feels. An average across forty towns is not nothing: it is forty towns. Preferring the review because a mixed finding sounds honest is choosing by tone, not by method. Whether the improved town is among the forty is a guess the stem gives no basis for, and it would not change which report can be checked.",
             "skillTag": "Evidence"
           }
         ],
         "masteryCheck": [
           {
-            "prompt": "Claim: a reading app doubled students' reading skill. Evidence: the app company surveyed volunteer users, who reported big improvement. What is the strongest evaluation?",
+            "prompt": "Claim: a reading app doubled students’ reading skill. Evidence: the app company surveyed volunteer users, who reported big improvement. What is the strongest evaluation?",
             "choices": [
               "It is not worth much, because the app company is judging its very own product",
-              "It only shows that some volunteers felt better, not that their skill has truly doubled",
-              "It is weak mainly because far too few users were surveyed to say very much",
-              "It would prove the doubling rather than felt gains if outsiders repeated the same survey"
+              "It shows some volunteers felt better, which is not the same as a measured doubling",
+              "It is weak only because far too few users were surveyed to say very much",
+              "It shows real gains, which outsiders repeating the same survey would confirm as doubling"
             ],
-            "correctAnswer": "It only shows that some volunteers felt better, not that their skill has truly doubled",
-            "hint": "Grant what it establishes, then name what it does not reach.",
-            "explanation": "Take the evidence as true: some volunteers told the seller they felt they improved. That establishes something, so throwing it out because of who gathered it is rejection by source rather than evaluation. Nothing in the stem gives a sample size, so smallness is a guess. An independent group running the same survey would still be collecting self-report from volunteers. The gap is between felt improvement and a measured doubling, and naming that gap is the evaluation.",
+            "correctAnswer": "It shows some volunteers felt better, which is not the same as a measured doubling",
+            "hint": "What did the survey actually ask?",
+            "explanation": "Take the evidence as true: some volunteers told the seller they felt they improved. That establishes something, so throwing it out because of who gathered it is rejection by source rather than evaluation. Nothing in the stem says how many were asked, so smallness is a guess. Outsiders running the same survey would still be asking volunteers how they feel, so it would confirm nothing about skill. The gap is between felt improvement and a measured doubling, and naming that gap is the evaluation.",
             "skillTag": "Evidence"
           }
         ],
         "teachingSections": [
           {
-            "heading": "What evidence proves, and how big a claim it can carry",
-            "body": "A piece of evidence proves what it observed, about the people or things it observed, over the period it observed them, compared with whatever it compared them to, and nothing broader. That one rule does most of the work. A study that measured how many people signed up for a programme tells you about sign-ups, not about whether the programme worked. A survey that asked people what they would do tells you about intentions, and intentions and behaviour often part company.\n\nThe second question is size. Evidence from one case can support a claim about that case; it usually cannot, by itself, justify a broad claim about many cases. One town that improved after a curfew is evidence about that town. A claim about curfews in general needs many towns, or a group of towns chosen to stand for the rest, and a vivid story about one place is not many places however memorable it is. The same applies to who was asked: fifty thousand people recruited at one university are a great deal of information about one university.\n\nA few patterns recur often enough to know by sight. A result taken from a flattering start or end date shows less than the same measure over the whole period. Two things moving together is not one causing the other until the other explanations are dealt with; a comparison group is the usual tool, and it rules out only the explanations both groups share. Recency matters only relative to the claim: a figure is out of date when the claim is about now and the relevant facts have changed since, and not otherwise."
+            "heading": "Job 1: Say what the evidence actually shows",
+            "body": "Start from the claim: say in one sentence what would have to be shown for it to hold. Then say what the evidence shows — what was measured or observed, in whom, over what period, compared with what.\n\nA count of sign-ups shows sign-ups, not whether the programme worked. A survey that asked what people would do shows intentions, not behaviour.\n\nTwo things to know by sight. A start or end date chosen to make the change look bigger shows less than the whole period. A figure is out of date only if the claim is about now and the facts have changed."
           },
           {
-            "heading": "Where it came from, and how far you can check it",
-            "body": "You are not a researcher, and the round does not need you to be one. You judge the evidence as it is described, from the speaker's own account of it and from what you can ask them. Three questions are enough. Does the person quoted know about this? Expertise is specific: a physicist on the minimum wage is a citizen with an opinion. Does anyone involved have a reason to want this result? An interest is a reason for extra scrutiny of how the result was produced, not a reason to throw the result away; industry-funded studies are sometimes right. And can the method be examined? When the speaker cannot say who was studied or how the result was reached, you cannot evaluate how it was produced, and that limits how much confidence the evidence deserves next to a result whose method is open. The commonest case is the barest: “studies show” with nothing behind it. That is a claim still waiting for its evidence, and the right move is to ask what the studies measured, in whom, and compared with what.\n\nOne more thing to know by sight: repeating the same underlying source does not create independent corroboration. Three articles that all cite one survey are one survey, reported three times. A single source can still contain several distinct findings relevant to different claims; what it cannot do is agree with itself."
+            "heading": "Job 2: Does it match the claim?",
+            "body": "Fit: evidence about something nearby is not evidence about the claim. Feeling less tired is not learning more. A real, expert, trustworthy source can still be answering the wrong question.\n\nSize: evidence from one case, one place, or one group supports a claim about that case. On its own it usually cannot prove a claim about many. One improved town is evidence about that town, not about curfews everywhere. Evidence that covers part of a claim leaves the rest still a claim.\n\nCause: two things happening together, or one after the other, is not one causing the other until the other explanations are dealt with. That means anything else that could make the two go together. A comparison group (people like the first group who did not get the change) rules out only the explanations both groups share."
           },
           {
-            "heading": "What it does not prove, and how to say so",
-            "body": "Most evidence in a round is partly good. The useful verdict is rarely accept or reject; it is how far this reaches. Keep the source's finding and the debater's claim separate: what the study found is one sentence, what the debater claims is another, and the gap between them is the evaluation.\n\nSo the move is grant and gap. Take the evidence as true. Say what it establishes, and concede that much out loud. Then name what remains unproven: even if that is right, it shows this, not that. And size the claim to fit: a claim that outruns its evidence is rescued by shrinking it, so “removing fees gets more books returned on time” becomes “libraries like this one can expect more on-time returns after removing fees”, which the evidence supports.\n\nThe same questions settle a comparison between two pieces of evidence that disagree. Ask each what it measured, in whom, over what period, against what, and how it was reached; do not decide by which is newer, by which is a number and which a story, by which sounds more official, or by whose finding you like. Evidence can be relevant and weak, strong-looking and about the wrong thing, or good as far as it goes and not far enough. Say which, and why."
+            "heading": "Job 3: Name the gap, and the problem",
+            "body": "Grant and gap (to grant is to accept something as true for now). Take the evidence as true, say what it does establish, name what is still unproven, and shrink the claim to fit what is left. “Students learn more when school starts later” becomes “students say they feel less tired”, which the evidence supports.\n\nBe specific. “That source is bad” tells the judge nothing. “That survey asked twenty students at one school, so it does not show what all students would do” names the problem and what follows from it.\n\nWho produced it, and do they want a particular result? That is a reason for extra care, not a reason to throw the result away. Can the method be checked? If not, it earns less confidence than a result you can check."
           }
         ],
         "misconception": {
           "wrongModel": "If the evidence is true, the argument is proved.",
-          "whyItFails": "True and supports-this-claim are two different questions. A true fact about something nearby proves nothing about the claim in front of you, and a true fact about the right thing can be far smaller than the claim built on it. Evidence that is entirely true can still leave most of a claim unproven.",
-          "betterModel": "Take the evidence as true and ask how far it reaches. The argument is proved as far as the evidence reaches, and no further; the rest is still a claim."
+          "whyItFails": "True and supports-this-claim are different questions. A true fact can be about something nearby, or far smaller than the claim.",
+          "betterModel": "Ask how far the evidence reaches. The argument is proved that far, and no further."
         },
         "commonMistakes": [
           {
-            "mistake": "Citing evidence that is about the topic but not about the claim.",
-            "whyItFails": "A survey about how safe people feel, offered for a claim about the crime rate, is true, relevant to the subject, and proves nothing about the claim. Nearby is not on target.",
-            "fix": "Before you use or accept evidence, say in one sentence what the claim needs shown, and check the evidence against that sentence."
+            "mistake": "Using evidence about the topic but not about the claim.",
+            "whyItFails": "Nearby is not on target.",
+            "fix": "Say what the claim needs shown; check the evidence against that."
           },
           {
-            "mistake": "Treating evidence that supports part of a claim as if it supported all of it.",
-            "whyItFails": "Some improvement is not doubled, and one street is not the network. The unsupported part is still a claim.",
-            "fix": "Grant the part the evidence establishes, and name the part it does not reach."
+            "mistake": "Treating evidence for part of a claim as evidence for all of it.",
+            "whyItFails": "Some improvement is not doubled.",
+            "fix": "Grant the part it shows; name the part it does not reach."
           },
           {
             "mistake": "Treating one example as proof of a general claim.",
-            "whyItFails": "A single case can support a claim about that case. A vivid story feels like proof of a pattern and is evidence of one instance.",
-            "fix": "Match the evidence to the size of the claim: a claim about many needs many, or a group chosen to stand for the rest."
+            "whyItFails": "A vivid story is evidence of one case.",
+            "fix": "A claim about many needs many."
           },
           {
-            "mistake": "Using a strong-sounding number without saying what it measured.",
-            "whyItFails": "A figure carries only what was counted. Sign-ups are not results, intentions are not behaviour, and a percentage of volunteers is a percentage of volunteers.",
-            "fix": "Say what the number counts, in whom, over what period, before saying what it proves."
+            "mistake": "Using a strong-sounding number without saying what it counted.",
+            "whyItFails": "A figure carries only what was counted.",
+            "fix": "Say what the number counts before saying what it proves."
           },
           {
-            "mistake": "Confusing an impressive source with support for the claim.",
-            "whyItFails": "A credible, independent, expert source can still be quoted on the wrong question, or for a conclusion its finding does not reach. Who said it and whether it supports the claim are separate questions.",
-            "fix": "Ask the source questions and the fit questions separately, and give the evidence credit on each for its own reasons."
+            "mistake": "Trusting an impressive source instead of checking the fit.",
+            "whyItFails": "Who said it and whether it fits are separate questions.",
+            "fix": "Check the source and the fit separately."
           }
         ],
         "scaffoldedTry": {
-          "prompt": "Claim: this city's free bus fares have cut car traffic. Evidence offered: on the first Saturday of free fares, traffic on the main shopping street was about a third lighter than on the Saturday before. Evaluate the evidence. Say what it shows, what it does not yet establish, and what would be needed to carry the claim as stated. Take it as true; you are judging how far it reaches.",
-          "frame": "The evidence shows ___. It does not yet establish ___. To carry the claim we would need ___.",
+          "prompt": "Claim: this city’s free bus fares have cut car traffic. Evidence offered: on the first Saturday of free fares, traffic on the main shopping street was about a third lighter than on the Saturday before. Say what it shows, what it does not yet establish (prove), and what would be needed to support the claim as stated. Take it as true; you are judging how far it reaches.",
+          "frame": "The evidence shows ___. It does not yet establish ___. To support the claim as stated we would need ___.",
           "slots": [
             "shows",
             "does not yet establish",

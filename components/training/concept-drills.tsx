@@ -146,13 +146,21 @@ type AnswerState = { optionId: string; correct: boolean; correctAnswer: string; 
 // answer to a question is final. On finish, the per-skill EVIDENCE score — each distinct question
 // counted once — is what may be recorded. Parameterized by endpoints so a track can mount it
 // without new UI code; the check endpoint is passed explicitly rather than derived from another.
+/**
+ * `initialArea` sets ONLY the first render's filter, mirroring `DebateDrills`. It exists so a lesson
+ * whose registry metadata names an exact drill can hand the learner THAT drill rather than the
+ * mixed front door — a mixed session spreads its questions across every area, so it usually cannot
+ * reach the per-area unique-question floor that a record depends on. The caller narrows untrusted
+ * input first (`isDecaDrillArea`); an unknown value must arrive here as undefined, not as a string.
+ */
 export function ConceptDrills({
   sessionEndpoint,
   checkEndpoint,
   submitEndpoint,
   areas,
   title,
-  blurb
+  blurb,
+  initialArea
 }: {
   sessionEndpoint: string;
   checkEndpoint: string;
@@ -160,8 +168,9 @@ export function ConceptDrills({
   areas: AreaMeta[];
   title: string;
   blurb: string;
+  initialArea?: string;
 }) {
-  const [areaFilter, setAreaFilter] = useState<string>("mixed");
+  const [areaFilter, setAreaFilter] = useState<string>(initialArea ?? "mixed");
   const [count, setCount] = useState(8);
   const [session, setSession] = useState<SessionStart | null>(null);
   const [slot, setSlot] = useState(0);

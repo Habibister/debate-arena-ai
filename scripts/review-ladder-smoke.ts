@@ -530,6 +530,7 @@ async function main() {
   const { EDUCATION_LESSONS, educationLessonsForPracticeSkill, getEducationLesson } =
     await import("../lib/education/registry");
   const { DRILL_AREAS: S2_AREAS, isDrillArea } = await import("../lib/debate-drills");
+  const { DECA_DRILL_AREAS: S2_DECA_AREAS } = await import("../lib/deca-drills");
   const { PRACTICING_MASTERY_MIN } = await import("../lib/spaced-review");
 
   // S2-1. The one mapped skill resolves to the exact lesson AND the exact drill — not a front door.
@@ -540,19 +541,32 @@ async function main() {
     "S2-1. a due debate-rebuttal routes to the refutation lesson and the rebuttal drill");
 
   // S2-2. Everything else fails CLOSED. A skill with no authored mapping gets no substitute lesson.
+  // P1-B1 added the fifth, and the first outside Debate: deca-performance-indicators now has a real
+  // published teaching owner, so it stops failing closed. The list is still exhaustive — a skill with
+  // no authored mapping still gets no substitute lesson.
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((s) => practiceRemediationForSkill(s) !== null),
-    ["debate-evidence", "debate-rebuttal", "debate-weighing", "debate-clash"],
-    "S2-2. exactly the four lesson-connected intended skills have a remediation today (clash is activation-pending, listed last)");
+    ["debate-evidence", "debate-rebuttal", "debate-weighing", "deca-performance-indicators", "debate-clash"],
+    "S2-2. exactly the five lesson-connected intended skills have a remediation today (clash is activation-pending, listed last)");
 
   // S2-3. Untrusted-looking input is not an error and not a near match.
   for (const s of ["", "unknown", "debate-rebuttal-1", "DEBATE-REBUTTAL", "debate-rebuttal "]) {
     assert.equal(practiceRemediationForSkill(s), null, `S2-3. "${s}" gets no remediation`);
   }
 
-  // S2-4. Track isolation: a DECA or HOSA due review can never reach Debate teaching or a Debate drill.
+  // S2-4. Track isolation. P1-B1 SUPERSEDES the older form, which asserted that no non-Debate skill
+  // resolved AT ALL. That was a proxy for isolation which held only while Debate alone had teaching
+  // owners, and it forbids the correct behaviour now that a DECA skill has one. The rule the control
+  // actually exists for is stated directly instead: a non-Debate skill may resolve, but never to
+  // Debate teaching and never to a Debate drill.
+  const s2DebateLessonIds = new Set(EDUCATION_LESSONS.filter((e) => e.track === "GENERAL_DEBATE").map((e) => e.id));
   for (const s of [...INTENDED_SKILL_SLUGS].filter((x) => !x.startsWith("debate-"))) {
-    assert.equal(practiceRemediationForSkill(s), null, `S2-4. ${s} is never routed to Debate content`);
+    const target = practiceRemediationForSkill(s);
+    if (target === null) continue;
+    assert.ok(!s2DebateLessonIds.has(target.lessonId), `S2-4. ${s} is never routed to a Debate lesson (${target.lessonId})`);
+    assert.notEqual(target.drill.track, "debate", `S2-4a. ${s} is never routed to a Debate drill`);
   }
+  assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((x) => !x.startsWith("debate-")).filter((s) => practiceRemediationForSkill(s) !== null),
+    ["deca-performance-indicators"], "S2-4c. and exactly one non-Debate skill resolves today");
   assert.ok([...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("deca-"))
          && [...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("hosa-")),
     "S2-4b. control: the isolation scan really covered DECA and HOSA slugs");
@@ -571,8 +585,13 @@ async function main() {
   // exactly one claimed teaching home elsewhere (so remediation never routes through the CTA-only
   // lesson — educationLessonsForPracticeSkill filters on skillSlug, proven at S2-5d).
   for (const e of drilled) {
-    const area = S2_AREAS.find((a) => a.id === e.practiceDrill!.area);
-    assert.ok(area, `S2-5b. ${e.id} names a real drill area`);
+    // P1-B1: resolve the area against the drill's OWN track. Looking every entry up in the Debate
+    // bank threw on the first DECA mapping, and the skill/area agreement this control protects is a
+    // per-track fact — DECA's bank maps performance-indicators to deca-performance-indicators.
+    const s2Areas: Array<{ id: string; skillSlug: string }> =
+      e.practiceDrill!.track === "deca" ? [...S2_DECA_AREAS] : [...S2_AREAS];
+    const area = s2Areas.find((a) => a.id === e.practiceDrill!.area);
+    assert.ok(area, `S2-5b. ${e.id} names a real drill area in its own track's bank`);
     if (e.skillSlug !== undefined) {
       assert.equal(area!.skillSlug, e.skillSlug,
         `S2-5. ${e.id}'s drill area is scored against the same skill the lesson names`);

@@ -418,6 +418,21 @@ export const DECA_DRILL_HELD_IDS: ReadonlyArray<string> = [
   "pi-26", // requires: the area-level exam-weighting rule taught learner-visibly
 ];
 
+/**
+ * DECA skills whose durable evidence model is suspended — EMPTY, and deliberately so.
+ *
+ * The Debate mirror (`DEBATE_MASTERY_HELD_SKILLS`) exists because one Debate skill really is held.
+ * No DECA skill is: all four areas record normally. This list exists anyway so the learner-facing
+ * "this drill starts your record" claim is DERIVED from a named DECA fact instead of falling
+ * through the Debate lookup, where an unknown slug reads as "not held" and the claim comes out true
+ * by accident. If a DECA skill is ever suspended, adding it here is what makes the copy follow.
+ */
+export const DECA_MASTERY_HELD_SKILLS: ReadonlyArray<string> = [];
+
+export function decaMasteryHeld(skillSlug: string | null | undefined): boolean {
+  return Boolean(skillSlug) && DECA_MASTERY_HELD_SKILLS.includes(skillSlug as string);
+}
+
 export function buildDecaDrillSession(count: number, areas?: DecaDrillArea[]): DecaDrillQuestion[] {
   const served = DECA_DRILL_BANK.filter((q) => !DECA_DRILL_HELD_IDS.includes(q.id));
   const pool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;

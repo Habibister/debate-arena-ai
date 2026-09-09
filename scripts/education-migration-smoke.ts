@@ -464,6 +464,9 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
                       "components/lessons/concept-education-lesson-view.tsx",
                       "components/lessons/concept-education-lesson-practice.tsx",
                       "lib/education/registry.ts", "lib/education/tracks/debate.ts",
+                      // P1-B1 added a second track module. Without it here, a new education module
+                      // could reach the mastery writer while this scan still reported a clean result.
+                      "lib/education/tracks/deca.ts", "lib/education/deca-practice-map.ts",
                       "lib/education/skills-compat.ts"]) {
     const code = stripComments(read(file));
     for (const banned of ["@/lib/spaced-review", "recordDrillMastery", "recordDrillMasteryDetailed",
@@ -578,15 +581,21 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   // ---- 5-8. registry and discovery inventory -----------------------------------------------------
   // B2.1 raised this 10 -> 11; B2.2 (2026-08-25) raised it 11 -> 12: the newly authored
   // debate-turn-mechanics lesson.
-  assert.equal(EDUCATION_LESSONS.length, 12, "5. twelve canonical registry entries");
+  // P1-B1 raised this 12 -> 13: the first DECA concept lesson.
+  assert.equal(EDUCATION_LESSONS.length, 13, "5. thirteen canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 12, "6a. all twelve are learner-visible (B2.2 added turn-mechanics)");
+  assert.equal(learnerVisible.length, 13, "6a. all thirteen are learner-visible (P1-B1 added the DECA performance-indicators lesson)");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
   assert.equal(debate.length, 10, "7. exactly ten Debate lessons (B2.2 added turn-mechanics)");
   assert.deepEqual(debate.map((e) => e.id),
     ["debate-round-orientation", "claim-warrant-impact", "debate-evidence-evaluation", "debate-answer-types", "debate-turn-mechanics", ...MIGRATED],
     "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the B2.1 answer-types lesson, then the B2.2 turn-mechanics lesson, then the migrated five");
-  assert.equal(educationLessonsForTrack("DECA").length, 1, "6b. one DECA lesson");
+  // P1-B1: the DECA orientation role-play lesson plus its first concept lesson. Debate's own count
+  // (7/7b above) is deliberately asserted separately and is unchanged by this milestone.
+  assert.equal(educationLessonsForTrack("DECA").length, 2, "6b. two DECA lessons");
+  assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id),
+    ["how-deca-roleplay-works", "deca-understanding-performance-indicators"],
+    "6b2. orientation first, then the performance-indicators teaching owner");
   assert.equal(educationLessonsForTrack("HOSA").length, 1, "6c. one HOSA lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
 
@@ -758,9 +767,10 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     const mapped = conceptEntries.filter((e) => e.practiceDrill);
     // B2.1/B2.2 EVOLUTION: answer-types and turn-mechanics are practice CTAs to the rebuttal
     // drill WITHOUT a skillSlug claim (refutation keeps the module's single claimed teaching home).
+    // P1-B1 added the seventh, and the first outside Debate: the DECA performance-indicators owner.
     assert.deepEqual(mapped.map((e) => e.id),
-      ["debate-evidence-evaluation", "debate-answer-types", "debate-turn-mechanics", "debate-clash", "debate-refutation", "debate-weighing"],
-      `36. exactly six authored lessons name a drill destination — evidence, answer-types (CTA-only), turn-mechanics (CTA-only), clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
+      ["debate-evidence-evaluation", "debate-answer-types", "debate-turn-mechanics", "deca-understanding-performance-indicators", "debate-clash", "debate-refutation", "debate-weighing"],
+      `36. exactly seven authored lessons name a drill destination — evidence, answer-types (CTA-only), turn-mechanics (CTA-only), the DECA performance-indicators owner, clash, refutation and weighing  [${mapped.map((e) => e.id).join(", ")}]`);
 
     const refutation = conceptEntries.find((e) => e.id === "debate-refutation");
     assert.deepEqual(refutation?.practiceDrill, { track: "debate", area: "rebuttal" },
@@ -804,13 +814,25 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
       assert.equal(entry?.practiceDrill, undefined,
         `36f2. ${id} names NO drill — a lesson without a matching area must not link to one`);
     }
-    // No cross-track destination may appear anywhere in the registry.
+    // No CROSS-track destination may appear anywhere in the registry.
+    //
+    // P1-B1 SUPERSEDES the older form of 36g/36g2, which asserted every drill was a DEBATE drill on a
+    // GENERAL_DEBATE lesson. That held only while Debate was the sole track with a drilled lesson, so
+    // it pinned the data rather than the property: it would have passed a DECA lesson pointed at a
+    // Debate drill out of the registry entirely simply by refusing to allow DECA lessons at all, and
+    // it now forbids the correct DECA mapping. The rule below is the one that was actually meant —
+    // a drill belongs to its own lesson's track — and it fails in BOTH directions.
     for (const entry of EDUCATION_REGISTRY.lessons) {
       if (!entry.practiceDrill) continue;
-      assert.equal(entry.practiceDrill.track, "debate",
-        `36g. ${entry.id} names a Debate drill — no cross-track practice destination exists`);
-      assert.equal(entry.track, "GENERAL_DEBATE",
-        `36g2. and only a General Debate lesson carries one`);
+      const expected = entry.track === "GENERAL_DEBATE" ? "debate" : entry.track === "DECA" ? "deca" : null;
+      assert.ok(expected !== null, `36g0. ${entry.id} is ${entry.track} and may not carry a practice drill`);
+      assert.equal(entry.practiceDrill.track, expected,
+        `36g. ${entry.id} names a ${expected} drill — no cross-track practice destination exists`);
+    }
+    // Debate's mappings specifically are unchanged: every Debate drill still sits on a Debate lesson.
+    for (const entry of EDUCATION_REGISTRY.lessons) {
+      if (entry.practiceDrill?.track !== "debate") continue;
+      assert.equal(entry.track, "GENERAL_DEBATE", `36g2. only a General Debate lesson carries a Debate drill`);
     }
   }
 
@@ -1009,7 +1031,7 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   assert.ok(trackFile.includes("throw new Error"), "selector: it fails loudly rather than degrading");
 
   console.log(
-    `Education-migration smoke passed: six learner-visible authored Debate concept lessons — the Wave 1A Debate Round Orientation (newly authored, Taught-only, no skillSlug and no drill mapping) plus the five migrated lessons: Guide the judge through your speech, Create direct clash, Answer with refutation, Build a constructive speech, and Explain why your impact wins (published by Wave 1B after its recorded weighing correction), and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. lib/learning-content.ts and every legacy lesson module, renderer, drill bank, assignment file and Prisma file are byte-identical to HEAD, while the /lessons and /skills INDEX pages — which M14 Phase 1a converted to async track resolution and the Learn/Practice boundary milestone then edited by approval — are held to the invariants that pin protected: each is an async server component that awaits the resolver on the REQUEST's track and never hardcodes one. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that now runs through weighing and ends honestly at null. Only debate-refutation and debate-weighing name seeded skills, as association alone — each mapped to the exact drill area whose canonical skill it names: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. All four still-held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
+    `Education-migration smoke passed: six learner-visible authored Debate concept lessons, unchanged by P1-B1, plus the first DECA concept lesson (Understanding Performance Indicators, registered through lib/education/tracks/deca.ts by the same by-reference mechanism) — the Wave 1A Debate Round Orientation (newly authored, Taught-only, no skillSlug and no drill mapping) plus the five migrated lessons: Guide the judge through your speech, Create direct clash, Answer with refutation, Build a constructive speech, and Explain why your impact wins (published by Wave 1B after its recorded weighing correction), and each registry entry holds the ORIGINAL LEARNING_SKILL_CATALOG object by strict identity, proven against clones, one-character mutations and removed fields that all fail the same checks. every legacy lesson module, renderer, drill bank, assignment file and Prisma file on the pin list is byte-identical to HEAD (lib/learning-content.ts is NOT on that list — its authored text is governed by the learning-content-integrity baseline snapshot instead, which is what a HEAD-relative pin could never do), while the /lessons and /skills INDEX pages — which M14 Phase 1a converted to async track resolution and the Learn/Practice boundary milestone then edited by approval — are held to the invariants that pin protected: each is an async server component that awaits the resolver on the REQUEST's track and never hardcodes one. The Debate course now runs argument construction -> round strategy -> speech structure with resolving prerequisites and a next-lesson chain that now runs through weighing and ends honestly at null. Only debate-refutation and debate-weighing name seeded skills, as association alone — each mapped to the exact drill area whose canonical skill it names: the checks component contains no mastery, XP, progress, storage, API, server-action or AI reference at all, states before the first question that nothing is saved, and introduces no percentage anywhere. A practice drill belongs to its own lesson's track, checked in both directions rather than by assuming every drill is a Debate one, and exactly one DECA lesson carries one. All four still-held Debate entries — including both parliamentary ones — are absent from the registry by id and by title. Every question has at least two choices and exactly one stored answer present among them, feedback is icon plus word with aria-live, targets carry the 44px minimum and a visible focus ring, and the source-freshness note renders on every new page. lib/spaced-review.ts is no longer blanket-hashed — the canonical lesson routes are pinned instead, no education module reaches the mastery writer at all, recordDrillMastery keeps its boolean export beside the added detailed result, the Debate submit route is byte-identical and still calls the boolean form, and no second lesson or mastery renderer was introduced.`
   );
 }
 

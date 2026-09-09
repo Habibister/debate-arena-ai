@@ -53,7 +53,7 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "ROUND-ORIENTATION-BEGINNER-V1";
+const LEARNING_CONTENT_BASELINE = "DECA-PERFORMANCE-INDICATORS-OWNER-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 
@@ -314,12 +314,17 @@ async function main(): Promise<void> {
   }
 
   // ---- 4. `order` is runtime-inert -------------------------------------------------------------
-  // Excluded from the snapshot because nothing reads it: the catalog's only production consumer is
-  // `lib/education/tracks/debate.ts`, where the sole occurrence of the word "order" is a comment.
-  // It stays in SEED_KEYS so the exclusion is a recorded decision, not a forgotten field.
-  const debateTrack = readFileSync("lib/education/tracks/debate.ts", "utf8");
-  const orderReads = debateTrack
-    .split("\n")
+  // Excluded from the snapshot because nothing reads it. P1-B1 added a SECOND production consumer of
+  // the catalog, `lib/education/tracks/deca.ts`, so the scan covers both track files — a single-file
+  // scan would have left the new one's `.order` usage unchecked while still reporting a clean result.
+  // `order` stays in SEED_KEYS so the exclusion is a recorded decision, not a forgotten field.
+  const CATALOG_CONSUMERS = ["lib/education/tracks/debate.ts", "lib/education/tracks/deca.ts"];
+  for (const consumer of CATALOG_CONSUMERS) {
+    assert.ok(readFileSync(consumer, "utf8").includes("LEARNING_SKILL_CATALOG"),
+      `4a. control: ${consumer} really is a catalog consumer, so scanning it is not vacuous`);
+  }
+  const orderReads = CATALOG_CONSUMERS
+    .flatMap((consumer) => readFileSync(consumer, "utf8").split("\n"))
     .filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//") && !line.trim().startsWith("/*"))
     .filter((line) => /\.order\b/.test(line));
   assert.deepEqual(orderReads, [],
@@ -427,7 +432,8 @@ async function main(): Promise<void> {
 
   console.log(
     `Learning-content integrity smoke passed (${LEARNING_CONTENT_BASELINE}): all ${current.length} authored ` +
-    `catalog entries — 9 published through the education registry and 12 held — are byte-for-byte identical to the ` +
+    `catalog entries — ${current.filter((e) => getEducationLesson(e.slug)).length} published through the ` +
+    `education registry and ${current.filter((e) => !getEducationLesson(e.slug)).length} held — are byte-for-byte identical to the ` +
     `reviewed canonical snapshot in ${BASELINE_PATH}, across ${questionCount} questions. Identity, track association, ` +
     `every authored string, learner-visible estimatedMinutes and the ORDER of steps, choices, practice and mastery ` +
     `sequences are all frozen; the id sets match exactly in both directions, so a new entry cannot land unprotected ` +

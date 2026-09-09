@@ -2033,6 +2033,138 @@
     }
   },
   {
+    "slug": "deca-understanding-performance-indicators",
+    "organization": "DECA",
+    "track": "DECA",
+    "category": "DECA roleplay",
+    "name": "Performance Indicators",
+    "description": "Work out what a listed performance indicator asks, then demonstrate it in the scenario.",
+    "lesson": {
+      "title": "Understanding Performance Indicators",
+      "slug": "deca-understanding-performance-indicators-lesson",
+      "summary": "Work out what an indicator asks for, show the business idea, and use it on your own scenario.",
+      "estimatedMinutes": 8,
+      "content": {
+        "objective": "Work out what a listed performance indicator is asking for, then show that business idea inside your own scenario.",
+        "explanation": "A performance indicator is a business skill the judge expects to see you use. They are listed on your scenario card — the sheet you are handed before a role-play, which sets the situation and says who you are. The wording is formal and textbook.\n\nHere is one. Explain how businesses build customer loyalty. A weak answer: “Customer loyalty is really important for us.” A better answer: “Let’s give a free coffee on every sixth visit. Regulars get a reason to come back here instead of the shop over the road. And keeping a regular costs less than finding someone new.”\n\nThe second answer shows the idea working. The first only mentions it.\n\nThat gap is the whole skill. Saying the indicator’s words does not cover it. You cover it when the judge can hear you understand the idea, and see you use it here.\n\nThe indicators in this lesson are examples we wrote. Real ones come from your own card, worded differently.",
+        "whyMatters": "Role-play events are commonly scored on how well you show each listed indicator. So a perfect answer to one cannot make up for two you never reached.",
+        "steps": [
+          "Say the indicator back as a plain question.",
+          "Name its subject, and what it says about that subject.",
+          "Let the first word set the job.",
+          "Explain the idea, then use it on this scenario.",
+          "Say what you would watch to know it worked."
+        ],
+        "workedExample": {
+          "prompt": "You are the assistant manager of a small gym. Membership has fallen over the last three months. The judge plays the owner. A listed indicator reads: Explain the nature of customer retention. (Our example, not an official one.)",
+          "weakAnswer": "Customer retention is really important for a gym. We should focus on keeping our members happy.",
+          "strongAnswer": "Retention is keeping the members we already have, and it costs less than replacing them. Ours go quiet around month three. I’d have a trainer ring anyone who misses two weeks and offer a free session. Then I’d watch how many of them are still training three months later.",
+          "whyItWorks": "It says what retention is and why it saves money. Then it acts, in this gym. The check is about members staying — what the indicator names."
+        },
+        "guidedQuestion": {
+          "prompt": "A listed indicator reads “Explain the nature of inventory control in a small shop.” What is the most useful first move?",
+          "choices": [
+            "Say the indicator’s title out loud so the judge hears you cover it",
+            "Put it in your own words, as a question you could answer",
+            "Write out the textbook definition of inventory control from memory",
+            "Pick whichever business idea you already know best and use that one"
+          ],
+          "correctAnswer": "Put it in your own words, as a question you could answer",
+          "hint": "You cannot show something you have not pinned down.",
+          "explanation": "In plain words it becomes: what is stock costing this shop, and what should be on the shelf? Now there is something to answer. The other three start building before the indicator is understood.",
+          "skillTag": "Decoding an indicator"
+        },
+        "practiceQuestions": [
+          {
+            "prompt": "A listed indicator begins with the word “Demonstrate.” What does that first word change?",
+            "choices": [
+              "You should define the term carefully before using it anywhere else",
+              "You should name the indicator first, so the judge knows it is coming",
+              "You have to do the thing in the meeting, rather than describe it",
+              "You should leave it until last, once the rest of your plan is explained"
+            ],
+            "correctAnswer": "You have to do the thing in the meeting, rather than describe it",
+            "hint": "Some indicators ask for an action, not an idea.",
+            "explanation": "“Demonstrate” asks for the thing itself, live. A perfect account of the procedure never lets the judge see it happen. Plan the moment instead: what will you actually do?",
+            "skillTag": "Indicator verbs"
+          },
+          {
+            "prompt": "A listed indicator reads “Explain the nature of word-of-mouth promotion.” Which response does both halves of the job?",
+            "choices": [
+              "What word of mouth does for a business, and what it does here",
+              "A careful definition of word of mouth, and of how it spreads between people",
+              "A decision to run a referral offer next month, stated clearly and confidently",
+              "A promise to think about word of mouth and report back after the meeting"
+            ],
+            "correctAnswer": "What word of mouth does for a business, and what it does here",
+            "hint": "The idea, and then this business.",
+            "explanation": "A definition on its own is knowledge with nowhere to go. A decision on its own leaves the reasoning unsaid. Carrying the idea into this business does both jobs at once.",
+            "skillTag": "Explain and apply"
+          },
+          {
+            "prompt": "A listed indicator is about employee motivation. A student clearly explains what motivates the shop’s customers instead. Against that indicator, the response has:",
+            "choices": [
+              "covered it, because the explanation was clear and well organised",
+              "covered it, because customers and staff both respond to motivation",
+              "explained the right subject, but at the wrong point in the meeting",
+              "explained the wrong subject, so the listed skill went unshown"
+            ],
+            "correctAnswer": "explained the wrong subject, so the listed skill went unshown",
+            "hint": "An indicator names a subject as well as a job.",
+            "explanation": "The explanation is good, and it is about the wrong people. Adjacent topics are different skills, and only the unlisted one got shown.",
+            "skillTag": "Reading the whole indicator"
+          }
+        ],
+        "masteryCheck": [
+          {
+            "prompt": "You move a café to smaller, more frequent milk deliveries. The listed indicator is about controlling stock costs. Which result best shows the judge it worked?",
+            "choices": [
+              "How quickly the new supplier confirmed the change to smaller orders",
+              "Whether the staff found the new delivery routine easier to manage",
+              "How many deliveries the café ended up receiving in an average week",
+              "What the café spent on milk it threw away, before and after"
+            ],
+            "correctAnswer": "What the café spent on milk it threw away, before and after",
+            "hint": "Measure the thing the indicator names.",
+            "explanation": "The indicator is about stock costs, so the check has to be about money spent on stock. Supplier speed, staff comfort and delivery counts all describe the change instead.",
+            "skillTag": "Checking the result"
+          }
+        ],
+        "teachingSections": [
+          {
+            "heading": "What is it really asking?",
+            "body": "First, say it back as a plain question. Take “Explain the nature of staff morale in a shop.” In plain words: what makes staff here feel good or bad, and why does that matter? Now you can answer it. Many indicators start with “Explain the nature of…”, which just means: say what it is, and why it matters here.\n\nRead the whole line, not just the topic. An indicator names a subject, and says something about it. One about employee motivation is not covered by explaining what motivates customers.\n\nThe first word sets the job. Explain and describe ask you to make the idea clear. Analyse asks you to break the situation up: which parts it affects, and how they knock into each other. Evaluate asks for a choice and the reasons behind it. Demonstrate asks you to do the thing, live."
+          },
+          {
+            "heading": "Show the idea, then use it here",
+            "body": "A full answer has two halves. First the idea: what the concept is, and why it matters. Then the use: what it means for this business, this problem, these limits. The same indicator asks for different things in different scenarios, so a general definition is not enough.\n\nThen finish it. Say what you would watch to know it worked. Keep that check on the thing the indicator names. If the scenario gives you nothing to measure, say so rather than invent a number."
+          },
+          {
+            "heading": "Cover the whole list",
+            "body": "The judge is looking for every indicator on the list, whether or not their own questions reach it. If the conversation never reaches one, steer your answer there and show the idea working. While you plan, get one workable line on each before you make any of them longer.\n\nTwo indicators on one topic are still two jobs. “Describe the refund policy” and “Apply it to this customer’s request” ask for different things.\n\nA budget or a staffing limit shapes how you show an indicator. A limit like that is not itself an indicator."
+          }
+        ],
+        "misconception": {
+          "wrongModel": "If I say the indicator out loud, or mention its topic, I have covered it.",
+          "whyItFails": "Repeating the wording shows you can read. An answer that names every indicator and shows none has shown none.",
+          "betterModel": "It is covered when someone who never saw your card could hear your answer and tell you understood the idea and used it."
+        },
+        "commonMistakes": [
+          {
+            "mistake": "Stopping at a definition when the indicator says demonstrate.",
+            "whyItFails": "Describing how you would calm an unhappy customer is not calming the one the judge is playing.",
+            "fix": "When the verb asks for an action, plan the moment the judge watches."
+          },
+          {
+            "mistake": "Doing brilliant work on something that was not listed.",
+            "whyItFails": "Extra strength makes the meeting better. It still cannot stand in for a listed skill.",
+            "fix": "Reach every listed indicator first. Then give your remaining time to the weakest one."
+          }
+        ]
+      }
+    }
+  },
+  {
     "slug": "hosa-healthcare-ethics",
     "organization": "HOSA",
     "track": "HOSA",

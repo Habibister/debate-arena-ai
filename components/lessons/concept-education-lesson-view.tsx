@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 import { cn } from "@/lib/utils";
 import { debateMasteryHeld as skillRecordSuspended, DRILL_AREAS } from "@/lib/debate-drills";
+import { decaMasteryHeld as decaRecordSuspended, DECA_DRILL_AREAS } from "@/lib/deca-drills";
 import type { ConceptEducationLessonSource, DebatePracticeDrill, DecaPracticeDrill, EducationPracticeDrill } from "@/lib/education/types";
 import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
 import {
@@ -71,6 +72,24 @@ function drillAreaLabel(drill: EducationPracticeDrill): string {
   return drill.track === "deca" ? DECA_DRILL_AREA_LABELS[drill.area] : DRILL_AREA_LABELS[drill.area];
 }
 
+/**
+ * The learner-facing name of the track a lesson belongs to.
+ *
+ * Read from the lesson's OWN catalog entry, never hardcoded. The badge used to be the literal
+ * "General Debate", which was invisible while Debate was the only track with concept lessons and
+ * became another track's branding on a DECA page the moment one shipped. Fails open to the
+ * organization's own string rather than to a track name the lesson never claimed.
+ */
+const ORGANIZATION_LABELS: Record<string, string> = {
+  DEBATE: "General Debate",
+  DECA: "DECA",
+  HOSA: "HOSA"
+};
+
+function organizationLabel(organization: string): string {
+  return ORGANIZATION_LABELS[organization] ?? organization;
+}
+
 export function ConceptEducationLessonView({
   source,
   provenance,
@@ -95,10 +114,17 @@ export function ConceptEducationLessonView({
   // own skill rather than from the lesson, because several lessons can share one area and only the
   // area names the skill that records. Undefined area or unheld skill both mean "records", which is
   // the pre-existing behaviour; only an explicitly held skill loses the claim.
-  const drillSkillSlug = practiceDrill
+  const drillSkillSlug = practiceDrill && practiceDrill.track === "debate"
     ? DRILL_AREAS.find((area) => area.id === practiceDrill.area)?.skillSlug
     : undefined;
-  const drillKeepsARecord = !skillRecordSuspended(drillSkillSlug);
+  // DECA is resolved SEPARATELY, against its own bank and its own hold list. Letting a DECA area
+  // fall through the Debate lookup returns undefined for every one of them, and the hold predicate
+  // reads undefined as "not held" — so the strongest record claim on the page would have been true
+  // only by coincidence, asserted by code that cannot see any DECA state at all.
+  const decaDrillSkillSlug = practiceDrill && practiceDrill.track === "deca"
+    ? DECA_DRILL_AREAS.find((area) => area.id === practiceDrill.area)?.skillSlug
+    : undefined;
+  const drillKeepsARecord = !skillRecordSuspended(drillSkillSlug) && !decaRecordSuspended(decaDrillSkillSlug);
   const content = lesson.content;
 
   // Presented in teaching order. `masteryCheck` is the catalog's field name; the learner sees
@@ -113,7 +139,7 @@ export function ConceptEducationLessonView({
     <div className="space-y-6">
       <header className="rounded-lg border bg-card p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">General Debate</Badge>
+          <Badge variant="secondary">{organizationLabel(source.organization)}</Badge>
           <Badge variant="outline">{moduleLabel}</Badge>
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
             <Clock className="h-3.5 w-3.5" aria-hidden />
@@ -429,7 +455,7 @@ export function ConceptEducationLessonView({
 
       <section aria-labelledby="next" className="rounded-lg border bg-card p-6">
         <h2 id="next" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">
-          {next ? "Next lesson" : "You&apos;ve reached the end of this course so far"}
+          {next ? "Next lesson" : "You’ve reached the end of this course so far"}
         </h2>
         {next ? (
           <>
@@ -444,8 +470,8 @@ export function ConceptEducationLessonView({
           </>
         ) : (
           <p className="mt-2 leading-7 text-muted-foreground">
-            This is the last Debate lesson written so far. More are being authored — nothing is being
-            hidden from you, and nothing here has been marked complete on your behalf.
+            This is the last lesson written for this course so far. More are being authored — nothing is
+            being hidden from you, and nothing here has been marked complete on your behalf.
           </p>
         )}
       </section>

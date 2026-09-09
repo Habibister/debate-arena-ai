@@ -27,6 +27,7 @@ import { getLesson, type AuthoredLesson } from "@/lib/lessons";
 import { getRoleplayLesson, type RoleplayLesson } from "@/lib/roleplay-lessons";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
 import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_ANSWER_TYPES_LESSON, DEBATE_TURN_MECHANICS_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
+import { DECA_PUBLISHED_LESSONS } from "@/lib/education/tracks/deca";
 import type {
   EducationCourse,
   EducationModule,
@@ -79,7 +80,9 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     id: "deca-roleplay-core",
     track: "DECA",
     label: "DECA Role-Play Core",
-    moduleIds: ["deca-event-orientation"]
+    // P1-B1 added the skills module. Orientation teaches the event; the skills module is where the
+    // constructs the DECA drills actually measure get their teaching owners, one at a time.
+    moduleIds: ["deca-event-orientation", "deca-roleplay-skills"]
   },
   {
     id: "hosa-clinical-skill-communication",
@@ -127,6 +130,17 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     label: "Event orientation",
     outcome: "Know the role-play event end to end before training any single part of it.",
     prerequisiteId: null
+  },
+  {
+    // P1-B1. Deliberately NOT folded into "deca-event-orientation": that module's outcome is knowing
+    // the event end to end, and a lesson that trains one scored construct is a different claim. The
+    // separation is also what stops a DECA index card from being labelled "Event orientation".
+    id: "deca-roleplay-skills",
+    courseId: "deca-roleplay-core",
+    track: "DECA",
+    label: "Role-play skills",
+    outcome: "Turn a listed performance indicator into a response that shows the idea inside the scenario.",
+    prerequisiteId: "deca-event-orientation"
   },
   {
     id: "hosa-communication-layer",
@@ -196,6 +210,10 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
     nextLessonId: null,
     provenance: decaRoleplay.provenance
   },
+  // P1-B1 — the first DECA CONCEPT lesson: the teaching owner for the performance-indicators drill
+  // area. Held by reference from the catalog through lib/education/tracks/deca.ts, the same
+  // mechanism the Debate concept lessons use. The three held DECA catalog entries stay absent.
+  ...DECA_PUBLISHED_LESSONS,
   {
     id: "how-hosa-scenario-interaction-works",
     track: "HOSA",

@@ -1161,6 +1161,17 @@ async function main() {
     (await (LessonsIndexPage as never as (p: unknown) => Promise<never>)({ searchParams: { track: "deca" } })) as never));
   assert.equal(getRoleplayLesson("how-deca-roleplay-works")!.practiceStatus, "available", "the DECA lesson is available");
   assert.ok(!m11r5IndexDeca.includes("temporarily unavailable"), "so its card shows no unavailable note");
+  // P1-B1 REACHABILITY. The app shell deliberately hides /lessons for non-Debate tracks, so the ONLY
+  // way a DECA learner reaches this lesson is the DECA hub's /lessons?track=deca link. That makes the
+  // index card the single entry point, and an unlisted lesson would be published but unreachable.
+  assert.ok(m11r5IndexDeca.includes("Understanding Performance Indicators"),
+    "P1-B1. the DECA index lists the published performance-indicators lesson — its only entry point");
+  assert.ok(m11r5IndexDeca.includes("Role-play skills"),
+    "P1-B1b. labelled with its own module, not another track's name");
+  // TRACK ISOLATION on the index: a DECA learner's list never names another track.
+  for (const foreign of ["General Debate", "HOSA", "Patient Communication"]) {
+    assert.ok(!m11r5IndexDeca.includes(foreign), `P1-B1c. the DECA lesson index never shows "${foreign}"`);
+  }
   assert.ok(m11r5IndexHosa.includes(m11r5IndexLesson.slug === "how-hosa-scenario-interaction-works" ? "Patient Communication" : ""),
     "the HOSA card itself is still listed");
 

@@ -126,11 +126,13 @@ function main() {
   // ---- 1-2. exact lesson inventory, each id present exactly once --------------------------------
   // B2.1 raised this 10 -> 11; B2.2 (2026-08-25) raised it 11 -> 12: the newly authored
   // debate-turn-mechanics lesson.
-  assert.equal(EDUCATION_LESSONS.length, 12, "1. the registry contains exactly twelve lessons");
+  // P1-B1 raised this 12 -> 13: the first DECA concept lesson, Understanding Performance Indicators.
+  assert.equal(EDUCATION_LESSONS.length, 13, "1. the registry contains exactly thirteen lessons");
   const expectedIds = ["claim-warrant-impact", "how-deca-roleplay-works", "how-hosa-scenario-interaction-works",
                        "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches",
                        "debate-weighing", "debate-round-orientation", "debate-evidence-evaluation",
-                       "debate-answer-types", "debate-turn-mechanics"];
+                       "debate-answer-types", "debate-turn-mechanics",
+                       "deca-understanding-performance-indicators"];
   for (const id of expectedIds) {
     assert.equal(EDUCATION_LESSONS.filter((entry) => entry.id === id).length, 1, `2. "${id}" is registered exactly once`);
   }
@@ -219,7 +221,9 @@ function main() {
      "debate-turn-mechanics", "debate-signposting", "debate-clash", "debate-refutation",
      "debate-constructive-speeches", "debate-weighing"],
     "10a. Debate filter, in teaching order (B2.1 added answer-types; B2.2 added turn-mechanics)");
-  assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id), ["how-deca-roleplay-works"], "10b. DECA filter");
+  // P1-B1: DECA now has an orientation lesson AND its first concept lesson, in registry order.
+  assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id),
+    ["how-deca-roleplay-works", "deca-understanding-performance-indicators"], "10b. DECA filter");
   assert.deepEqual(educationLessonsForTrack("HOSA").map((e) => e.id), ["how-hosa-scenario-interaction-works"], "10c. HOSA filter");
 
   // ---- 11. unknown lookups fail closed ----------------------------------------------------------
@@ -230,7 +234,9 @@ function main() {
 
   // ---- 12. courses and modules resolve ----------------------------------------------------------
   assert.equal(EDUCATION_COURSES.length, 3, "12a. one course per active track");
-  assert.equal(EDUCATION_MODULES.length, 5, "12b. five modules (Debate now has three)");
+  // P1-B1 added "deca-roleplay-skills": event orientation and skill teaching are different claims,
+  // and folding the new lesson into the orientation module would have labelled its card that way.
+  assert.equal(EDUCATION_MODULES.length, 6, "12b. six modules (Debate three, DECA two, HOSA one)");
   for (const entry of EDUCATION_LESSONS) {
     const course = getEducationCourse(entry.courseId);
     const moduleEntry = getEducationModule(entry.moduleId);
@@ -254,8 +260,14 @@ function main() {
       assert.ok(lessonIds.has(entry.nextLessonId), `14. lesson "${entry.id}" next lesson resolves`);
     }
   }
-  assert.equal(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).length, 3,
-    "14b. exactly three lessons end a chain (DECA, HOSA, and the last Debate lesson)");
+  // P1-B1 raised this 3 -> 4. The new DECA concept lesson deliberately ends its own chain: the only
+  // candidates to chain into are the three HELD DECA lessons, and pointing a learner at unpublished
+  // teaching to keep a count at three would be exactly the fiction these controls exist to stop.
+  assert.equal(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).length, 4,
+    "14b. exactly four lessons end a chain (both DECA lessons, HOSA, and the last Debate lesson)");
+  assert.deepEqual(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).map((e) => e.id).sort(),
+    ["debate-weighing", "deca-understanding-performance-indicators", "how-deca-roleplay-works", "how-hosa-scenario-interaction-works"],
+    "14c. and they are exactly those four");
 
   // ---- 15. no generic seed-template filler anywhere in the registry ------------------------------
   const registryText = JSON.stringify(EDUCATION_LESSONS);
@@ -582,7 +594,7 @@ function main() {
   assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [], "the real registry is untouched by the controls");
 
   console.log(
-    `Education-registry smoke passed: the canonical registry holds exactly twelve lessons — the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: every file under app/ or components/ that imports lib/education is on the recorded allowlist — the lessons surface, the legacy /skills compatibility surface, and, from M15 S4, the post-round debate arena, which resolves a judge diagnosis to the canonical lesson through one pure fail-closed resolver. lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the five historical judge-recommendation slugs, all five active — Wave 1B published the corrected weighing lesson, and M15 S4 added the constructive-speeches alias that previously resolved nowhere. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
+    `Education-registry smoke passed: the canonical registry holds exactly thirteen lessons — the P1-B1 DECA Understanding Performance Indicators lesson (DECA, concept, the teaching owner for the deca-performance-indicators skill: skillSlug plus the exact DECA performance-indicators drill mapping, its own checks still formative, chain-terminating because the only DECA lessons left are held), the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: every file under app/ or components/ that imports lib/education is on the recorded allowlist — the lessons surface, the legacy /skills compatibility surface, and, from M15 S4, the post-round debate arena, which resolves a judge diagnosis to the canonical lesson through one pure fail-closed resolver. lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the five historical judge-recommendation slugs, all five active — Wave 1B published the corrected weighing lesson, and M15 S4 added the constructive-speeches alias that previously resolved nowhere. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }
 

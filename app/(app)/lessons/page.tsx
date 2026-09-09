@@ -118,7 +118,9 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
             title: entry.source.lesson.title,
             subtitle: entry.source.lesson.content.objective,
             minutes: entry.source.lesson.estimatedMinutes,
-            label: getEducationModule(entry.moduleId)?.label ?? "General Debate",
+            // Fails CLOSED to a neutral word. The old fallback was the literal "General Debate", so a
+            // metadata slip on a DECA or HOSA entry would have printed another track's name on its card.
+            label: getEducationModule(entry.moduleId)?.label ?? "Lesson",
             kind: "Concept lesson" as const,
             // Reading and checks, and nothing saved. Stated as words first, exactly like every other
             // card here, so the meaning survives with all styling removed.

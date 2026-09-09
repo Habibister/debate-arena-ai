@@ -213,8 +213,9 @@ function main() {
     const published = EDUCATION_REGISTRY.lessons
       .filter((e: unknown) => isConceptEducationLessonEntry(e as never))
       .filter((e: { visibility: string }) => e.visibility === "learner");
-    assert.equal(published.length, 9,
-      `control: exactly nine published concept lessons — found ${published.length}. If a lesson was ` +
+    // P1-B1 raised this 9 -> 10: the first DECA concept lesson joins the nine Debate ones.
+    assert.equal(published.length, 10,
+      `control: exactly ten published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -260,7 +261,14 @@ function main() {
     // scaffoldedTry. It is the first entry to author frames since the coached pilot, and it does so
     // because the withdrawn round judge had taught the opposite lesson by counting lens words —
     // these frames carry structure and say so, and the lesson states that filling them proves nothing.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics", "debate-weighing"],
+    // P1-B1 (2026-09-09) added the first NON-DEBATE entry: the DECA performance-indicators teaching
+    // owner authors teachingSections, a misconception and commonMistakes, and nothing else. A ladder
+    // was refused (the skill is decode-then-apply, not successive redrafts of one sentence), frames
+    // were refused (a phrase bank for an indicator response would teach recitation, which is the exact
+    // failure the lesson exists to correct), and a scaffoldedTry was refused because every scaffold
+    // evaluator, starter set and guided application is Debate-keyed — an authored exercise would have
+    // rendered as permanently UNCHECKABLE. If a later change gives it any of those, record it here.
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics", "debate-weighing", "deca-understanding-performance-indicators"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.
@@ -660,7 +668,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 9, "O7. control: all nine published lessons were rendered");
+    assert.equal(publishedAll.length, 10, "O7. control: all ten published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

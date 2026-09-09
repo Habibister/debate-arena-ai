@@ -7,7 +7,7 @@ import { ConceptDrills } from "@/components/training/concept-drills";
 import { DebateDrills } from "@/components/training/debate-drills";
 import { DRILL_AREAS, drillAreaFromQuery, progressTrackingForAreas } from "@/lib/debate-drills";
 import { DecaRoleplaySetup } from "@/components/training/deca-roleplay-setup";
-import { DECA_DRILL_AREAS } from "@/lib/deca-drills";
+import { DECA_DRILL_AREAS, isDecaDrillArea } from "@/lib/deca-drills";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
@@ -30,6 +30,10 @@ export default async function StudyArcadePage({
   // the drill on its existing "mixed" default. It is applied ONLY to the Debate component, so a
   // Debate area on a DECA or HOSA URL changes nothing about those tracks.
   const debateArea = drillAreaFromQuery(searchParams.area);
+  // The same narrowing for DECA. Without it the DECA branch dropped `?area=` entirely, so the
+  // concept lesson's "Practice this skill in the Performance indicators drill" link landed on the
+  // mixed picker — a link whose visible label named one drill and whose destination was another.
+  const decaArea = isDecaDrillArea(searchParams.area) ? searchParams.area : undefined;
   const allDecks = deckSummaries();
   const decks = activeTrack ? allDecks.filter((d) => d.organization === activeTrack.organization) : allDecks;
   const cardCount = decks.reduce((total, deck) => total + deck.count, 0);
@@ -162,6 +166,7 @@ export default async function StudyArcadePage({
           checkEndpoint="/api/deca/drills/check"
           submitEndpoint="/api/deca/drills/submit"
           areas={DECA_DRILL_AREAS.map((a) => ({ id: a.id, label: a.label }))}
+          initialArea={decaArea}
           title="DECA concept drills"
           blurb="Original multiple-choice reps on core DECA concepts — performance indicators, business reasoning, customer relations, and marketing. Every answer gets an explanation, and your real scores feed mastery + spaced review."
         />

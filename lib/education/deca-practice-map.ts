@@ -17,10 +17,11 @@ import type { DecaPracticeDrill } from "@/lib/education/types";
  * fundamentals are CLUSTER KNOWLEDGE that the exam tests. Practice can group by this without a new
  * top-level surface.
  *
- * What this module deliberately does NOT do: invent a teaching owner. Every `publishedTeachingOwner`
- * is null today, and remediation therefore resolves to nothing for every DECA skill. That is the
- * honest state — "no adequate published teaching owner yet", not "the type system cannot express
- * DECA". The distinction is the whole point of P1-A.
+ * P1-A invented no teaching owner: every `publishedTeachingOwner` was null, and remediation resolved
+ * to nothing for every DECA skill. P1-B1 (2026-09-09) closed the FIRST of the four by authoring and
+ * publishing `deca-understanding-performance-indicators`, so performance-indicators is now "owned"
+ * and its remediation resolves. The other three are untouched and still ownerless — a map with one
+ * real owner and three honest nulls, never four plausible-looking ones.
  */
 
 /** Which half of the DECA competition a drill area serves. */
@@ -52,11 +53,17 @@ export const DECA_PRACTICE_MAP: readonly DecaPracticeMapping[] = [
     area: "performance-indicators",
     skillSlug: "deca-performance-indicators",
     component: "roleplay",
-    publishedTeachingOwner: null,
-    coverage: "orientation-only",
+    publishedTeachingOwner: "deca-understanding-performance-indicators",
+    coverage: "owned",
     note:
-      "how-deca-roleplay-works explains what an indicator is and how naming differs from weaving one in, " +
-      "but it is an orientation lesson and does not own the skill the 30 drill items test."
+      "P1-B1 published the teaching owner. It owns decoding an indicator into a plain question, reading " +
+      "its subject and full predicate, letting the verb set the job, explaining the idea and using it on " +
+      "the scenario, covering every listed indicator, and checking the result the indicator names. " +
+      "STILL DRILL-ONLY, recorded so the gap is not mistaken for coverage: the instructional-area rules " +
+      "(pi-09, pi-24), how far an assigned role's authority extends (pi-17), and separating the scored " +
+      "list from problem, constraint and roles on the card (pi-20). pi-26 stays HELD regardless — its " +
+      "weighting claim needs a primary official source that does not exist yet. how-deca-roleplay-works " +
+      "remains the ORIENTATION owner and is not the remediation destination."
   },
   {
     area: "business-reasoning",

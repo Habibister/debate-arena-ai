@@ -25,6 +25,8 @@ import {
   type DecaPracticeMapping
 } from "../lib/education/deca-practice-map";
 import { practiceRemediationForSkill } from "../lib/education/skills-compat";
+import { HELD_DECA_CATALOG_SLUGS, PUBLISHED_DECA_SLUGS } from "../lib/education/tracks/deca";
+import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
 import { PRACTICE_DRILL_AREAS_COVERED, practiceDrillAreaLabel, practiceDrillHref } from "../lib/education/practice-drill";
 import type { DebatePracticeDrill, DecaPracticeDrill } from "../lib/education/types";
 import { EDUCATION_LESSONS, getEducationModule } from "../lib/education/registry";
@@ -182,7 +184,10 @@ function main() {
   });
 
   check("D2. a HELD lesson is never treated as a published teaching owner", () => {
-    const heldSlugs = ["deca-reading-scenarios", "deca-identifying-problem", "deca-professional-communication"];
+    // P1-B5 published deca-reading-scenarios, so it left this list. The control is unchanged in what it
+    // protects: a HELD lesson is never an owner and never learner-visible. The published one is checked
+    // separately below — it must be visible AND still own nothing.
+    const heldSlugs = ["deca-identifying-problem", "deca-professional-communication"];
     const owners = DECA_PRACTICE_MAP.map((m) => m.publishedTeachingOwner).filter((o): o is string => o !== null);
     for (const held of heldSlugs) {
       assert.ok(!owners.includes(held), `${held}: not used as an owner`);
@@ -361,7 +366,7 @@ function main() {
     } as never));
 
   check("G1. every published DECA lesson renders with no other track's name anywhere in its visible text", () => {
-    assert.equal(decaConceptEntries.length, 9, "control: all nine DECA concept lessons are registered");
+    assert.equal(decaConceptEntries.length, 10, "control: all ten DECA concept lessons are registered");
     for (const entry of decaConceptEntries) {
       const visible = renderDecaLesson(entry)
         .replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ");
@@ -381,7 +386,13 @@ function main() {
   });
 
   check("G2. every DECA lesson's practice CTA points at its own exact drill, and the destination honours it", () => {
-    for (const entry of decaConceptEntries) {
+    // P1-B5: not every DECA concept lesson carries a drill any more. `deca-reading-scenarios` is a
+    // simulation PREREQUISITE — it teaches reading the card, which no drill area measures — so it has
+    // no `practiceDrill` and therefore no CTA to check. That is asserted directly in G2e rather than
+    // assumed here, and the entries that DO carry one are still held to the exact-drill rule.
+    const drilled = decaConceptEntries.filter((e) => e.practiceDrill);
+    assert.ok(drilled.length >= 9, `control: the drilled DECA lessons are still here (${drilled.length})`);
+    for (const entry of drilled) {
       const area = entry.practiceDrill!.area;
       assert.equal(entry.practiceDrill!.track, "deca", `G2. ${entry.id}: DECA drill`);
       assert.equal(isDecaDrillArea(area), true, `G2b. ${entry.id}: ${area} is a real DECA area`);
@@ -389,12 +400,12 @@ function main() {
         `G2c. ${entry.id}: the CTA deep-links to the ${area} drill, not the DECA drill front door`);
     }
     // Each owned area is reached by exactly one lesson — no two lessons compete for one drill.
-    const areas = decaConceptEntries.map((e) => e.practiceDrill!.area).sort();
+    const areas = drilled.map((e) => e.practiceDrill!.area).sort();
     assert.deepEqual([...new Set(areas)].sort(), ["business-reasoning", "customer-relations", "marketing-fundamentals", "performance-indicators"],
       "G2d. every owned area is reached by at least one lesson");
     // One CLAIMED home per area, even where the curriculum defines several lessons for it.
     for (const area of ["performance-indicators", "business-reasoning", "customer-relations", "marketing-fundamentals"]) {
-      const claimed = decaConceptEntries.filter((e) => e.practiceDrill!.area === area && e.skillSlug);
+      const claimed = drilled.filter((e) => e.practiceDrill!.area === area && e.skillSlug);
       assert.equal(claimed.length, 1, `G2e. ${area} has exactly one claimed teaching home`);
     }
     assert.equal(isDecaDrillArea("clash"), false, "G2e. and the narrowing rejects another track's area");
@@ -634,6 +645,104 @@ function main() {
     ] as Array<[string, RegExp]>) {
       assert.ok(!banned.test(mkText), `H8. marketing teaching does not cross into ${area} (${banned})`);
     }
+  });
+
+  check("H8b. the published and held slug lists PARTITION the DECA catalog", () => {
+    // Found by a P1-B5 mutation: removing a slug from PUBLISHED_DECA_SLUGS un-published a lesson and
+    // NOTHING failed, because no control tied the two lists to the catalog they describe. A DECA entry
+    // must be exactly one of published or held — never both, and never neither, which is how a lesson
+    // goes missing quietly.
+    const decaCatalog = LEARNING_SKILL_CATALOG.filter((e) => e.track === "DECA").map((e) => e.slug);
+    assert.ok(decaCatalog.length >= 12, `control: the DECA catalog is real (${decaCatalog.length} entries)`);
+    const published = [...PUBLISHED_DECA_SLUGS];
+    const held = [...HELD_DECA_CATALOG_SLUGS];
+    for (const slug of decaCatalog) {
+      const inPublished = published.includes(slug as never);
+      const inHeld = held.includes(slug);
+      assert.ok(inPublished !== inHeld, `${slug}: is exactly one of published or held (published=${inPublished}, held=${inHeld})`);
+    }
+    assert.deepEqual([...published, ...held].sort(), [...decaCatalog].sort(),
+      "H8b2. and the two lists together name every DECA catalog entry, with nothing invented");
+    // Each side keeps its registry consequence.
+    for (const slug of published) {
+      const entry = EDUCATION_LESSONS.find((e) => e.id === slug);
+      assert.ok(entry && entry.visibility === "learner", `${slug}: published means registered and learner-visible`);
+    }
+    for (const slug of held) {
+      assert.deepEqual(EDUCATION_LESSONS.filter((e) => e.id === slug), [], `${slug}: held means absent from the registry`);
+    }
+  });
+
+  // ---- H9. THE SIMULATION PREREQUISITE (P1-B5) -------------------------------------------------
+  check("H9. the scenario-reading lesson is a prerequisite, and owns no mastery area", () => {
+    const entry = EDUCATION_LESSONS.find((e) => e.id === "deca-reading-scenarios");
+    assert.ok(entry, "H9. the lesson is registered");
+    assert.equal(entry!.visibility, "learner", "H9a. and is learner-visible — no longer held");
+    assert.equal(entry!.track, "DECA", "H9b. on the DECA track");
+    assert.equal(entry!.courseId, "deca-roleplay-core", "H9c. in the ROLE-PLAY course, not the business-content one");
+    // The whole point of the phase: a prerequisite is not a drill owner.
+    assert.equal((entry as never as { skillSlug?: string }).skillSlug, undefined,
+      "H9d. it claims NO skill slug, so it cannot become a fifth mastery area or steal an existing one");
+    assert.equal(entry!.practiceDrill, undefined,
+      "H9e. and NO practice drill, so no CTA sends a learner at questions measuring a different construct");
+    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.publishedTeachingOwner === "deca-reading-scenarios").length, 0,
+      "H9f. and it is the teaching owner of nothing");
+    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.publishedTeachingOwner).length, 4,
+      "H9g. the four owners are still exactly four");
+    // A lesson id must never equal a skill slug (the rule that would 404 a learner with a due review).
+    assert.ok(!DECA_DRILL_SKILL_SLUGS.includes("deca-reading-scenarios" as never),
+      "H9h. and its id is not a skill slug");
+  });
+
+  check("H10. reading the scenario is taught as EXTRACTION, not as solving it", () => {
+    const entry = EDUCATION_LESSONS.find((e) => e.id === "deca-reading-scenarios")!;
+    assert.ok(isConceptEducationLessonEntry(entry), "control: it is a concept lesson");
+    const c = (entry as never as { source: { lesson: { content: Record<string, unknown> } } }).source.lesson.content;
+    const we = c.workedExample as { prompt: string; weakAnswer: string; strongAnswer: string; whyItWorks: string };
+    const teaching = [String(c.objective), String(c.explanation), String(c.whyMatters), (c.steps as string[]).join(" "),
+      ...((c.teachingSections as Array<{ heading: string; body: string }> | undefined) ?? []).map((t) => t.heading + " " + t.body),
+      ...((c.commonMistakes as Array<{ mistake: string; whyItFails: string; fix: string }> | undefined) ?? [])
+        .map((m) => m.mistake + " " + m.whyItFails + " " + m.fix)].join("\n");
+    assert.ok(teaching.length > 2000, "H10a. control: there is teaching text to scan");
+
+    // The five extracts the approved curriculum names, at extraction depth.
+    for (const [what, re] of [
+      ["role", /\brole\b/i], ["audience", /\baudience\b/i], ["situation", /\bsituation\b/i],
+      ["task", /\btask\b/i], ["constraint", /\bconstraint\b/i]
+    ] as Array<[string, RegExp]>) {
+      assert.ok(re.test(teaching), `H10b. the lesson names the ${what}`);
+    }
+    // SITUATION and TASK are taught as DIFFERENT things — the distinction a learner most often loses.
+    assert.ok(/situation is[^.]*\. The task is/i.test(teaching),
+      "H10c. and states plainly that the situation and the task are not the same");
+    // FACT vs ASSUMPTION is the core invariant.
+    assert.ok(/(invent|made up|guess)/i.test(teaching), "H10d. it separates what the card states from what the learner supplies");
+    // BOUNDED AUTHORITY, carried forward from the approved curriculum.
+    assert.ok(/cannot promise|nothing beyond it|inside it/i.test(teaching),
+      "H10e. and keeps the role's authority bounded by what the scenario gave");
+
+    // BOUNDARIES. Reading is not solving, not PI interpretation, and not business reasoning. Each of
+    // these belongs to a lesson that already exists or is still to be written; teaching them here
+    // would make two lessons claim one construct.
+    for (const [owner, banned] of [
+      ["root-cause analysis (deca-identifying-problem)", /\broot cause\b|\bunderlying (?:business )?problem\b|\bwhy it is happening\b/i],
+      ["PI interpretation (deca-understanding-performance-indicators)", /\bplain meaning\b|\bin-character action\b|\bdemonstrate the indicator\b/i],
+      ["business reasoning (deca-justifying-your-recommendation)", /\bROI\b|\breturn on investment\b|\bbreak-even\b|\bcost per\b/i]
+    ] as Array<[string, RegExp]>) {
+      assert.ok(!banned.test(teaching), `H10f. reading does not take over ${owner}`);
+    }
+    // It may RECOGNISE that indicators exist — that is the curriculum's fifth extract — and it must
+    // hand the depth to the lesson that owns it.
+    assert.ok(/performance indicator/i.test(teaching), "H10g. it does recognise that the card lists indicators");
+    assert.ok(/separate lesson/i.test(teaching), "H10h. and routes what to do with them to the lesson that owns it");
+
+    // The worked example is EXTRACTION: the strong answer names what the card says and stops.
+    assert.ok(/My task is/i.test(we.strongAnswer), "H10i. the strong answer names the task");
+    assert.ok(/Nobody has told me/i.test(we.strongAnswer), "H10j. and names what it was NOT told rather than filling it in");
+    assert.ok(/(not the proven cause|something to check)/i.test(we.strongAnswer),
+      "H10k. and refuses to promote a correlation into a cause");
+    assert.ok(/killed|would recover/i.test(we.weakAnswer),
+      "H10l. control: the weak answer really does invent a cause and predict a result");
   });
 
   console.log(

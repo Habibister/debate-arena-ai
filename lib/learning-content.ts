@@ -1276,34 +1276,134 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
     track: "DECA",
     name: "Reading Scenarios",
     slug: "deca-reading-scenarios",
-    description: "Quickly identify role, task, audience, and constraints in a DECA prompt.",
+    description: "Pull the role, audience, situation, task and limits out of a role-play scenario.",
     category: "DECA roleplay",
     order: 1,
     lesson: {
-      title: "Read a business scenario",
+      title: "Reading the Scenario",
       slug: "deca-reading-scenarios-lesson",
-      summary: "Find the job to be done before building your recommendation.",
-      estimatedMinutes: 7,
+      summary: "Work out who you are, who is listening, what happened, what you were asked to do, and which facts you actually have.",
+      estimatedMinutes: 6,
       content: lesson(
-        "Extract the role, problem, audience, and constraints from a scenario.",
-        "Before solving, pause and mark four things: who you are, who you are speaking to, what problem matters most, and what limits your solution.",
-        "DECA roleplays reward relevant solutions. If you miss the real scenario, even a polished presentation can score low.",
-        ["Identify your role.", "Identify the decision-maker.", "Name the business problem.", "List constraints such as budget, time, staff, or brand."],
-        {
-          prompt: "You are a marketing assistant speaking to a store owner about low repeat visits.",
-          weakAnswer: "I would make more ads.",
-          strongAnswer: "My role is marketing assistant, the audience is the owner, the problem is low repeat visits, and the solution must improve loyalty without assuming a huge budget.",
-          whyItWorks: "The strong answer reads the situation before solving it."
-        },
-        q("Which detail is the business problem?", ["Low repeat visits", "Marketing assistant", "Store owner", "The speech room"], "Low repeat visits", "The problem is what needs to improve.", "Low repeat visits is the challenge the recommendation must solve.", "Scenario reading"),
+        "Read a role-play scenario and name your role, audience, situation, task, and the facts and limits you were given.",
+        "A scenario is the short business situation you are handed before a role-play. It tells you who you are, what is going on, and what you were asked to do. Here is one:\n\n“You are the assistant manager of a coffee shop. Your store manager has asked to meet you. For the last three weeks the morning line has moved slowly, and some customers have left without ordering. Four staff work weekday mornings. The manager wants you to recommend what the shop should do.” (Our scenario, not an official one.)\n\nRead it twice: once for what happened, once for what you were asked to do. Those are not the same thing.",
+        "Everything you say is built on this reading. A polished answer to the wrong task is still the wrong task, and an invented fact can be checked against the scenario.",
         [
-          q("What should you identify first?", ["Role and audience", "Random slogan", "A price discount only", "Judge score"], "Role and audience", "Know who you are and who hears the answer.", "Role and audience shape tone and recommendation.", "Scenario reading"),
-          q("Why list constraints?", ["To keep the solution realistic", "To avoid solving", "To make the answer longer", "To skip performance indicators"], "To keep the solution realistic", "Constraints test feasibility.", "Constraints help you recommend something the business can actually do.", "Feasibility"),
-          q("Which is a constraint?", ["Limited staff", "The word roleplay", "A trophy", "A speaker rank"], "Limited staff", "Constraints limit implementation.", "Limited staff affects what solution is realistic.", "Scenario reading")
+          "Who am I? — my role.",
+          "Who am I talking to? — my audience.",
+          "What happened? — the situation.",
+          "What am I asked to do? — the task.",
+          "What facts and limits do I have?"
+        ],
+        {
+          prompt: "You are a sales associate at a garden centre. The owner has asked to meet you. Since the plant display moved to the back last month, staff have noticed fewer people buying plants. The owner wants your recommendation about the display. (Our scenario, not an official one.)",
+          weakAnswer: "Moving the display to the back killed plant sales, so I would put it back at the front and sales would recover.",
+          strongAnswer: "I am a sales associate speaking to the owner. The situation is that staff have noticed fewer people buying plants since the display moved to the back last month. My task is to recommend what to do about the display. Nobody has told me why, or what the centre can spend, so I would treat the new position as something to check, not the proven cause.",
+          whyItWorks: "It names what the scenario states and stops there. It keeps the move as something to check: the scenario says what staff noticed after it, never that it caused it."
+        },
+        q(
+          "A scenario reads: “You are a shift supervisor at a cinema. Your manager has asked to meet you. Since the new online booking system launched, the ticket-desk queue has been longer on Friday nights. Your manager wants you to recommend how to shorten it.” What is the task?",
+          [
+            "The ticket-desk queue is longer on Friday nights",
+            "Recommend a way to shorten the Friday-night queue",
+            "Explain why the online booking system was launched",
+            "Decide whether the booking system should be kept"
+          ],
+          "Recommend a way to shorten the Friday-night queue",
+          "The situation is what is happening. The task is what you were asked to do about it.",
+          "The longer queue is the situation — it is what is going on. The one thing the manager actually asks for is a recommendation about shortening it. Nothing in the scenario asks you to explain why the system was launched or to decide its future.",
+          "Situation or task"
+        ),
+        [
+          q(
+            "A scenario says the ticket-desk queue has been longer on Friday nights since a new online booking system launched. Which of these can you state as a fact?",
+            [
+              "The booking system is what made the queue longer",
+              "The queue has been longer since the system launched",
+              "Most customers now book online instead of queueing",
+              "The ticket desk is short-staffed on Friday nights"
+            ],
+            "The queue has been longer since the system launched",
+            "Since is not because.",
+            "The scenario says when the queue got longer, not what caused it. The other three each add something it never says — a cause, a booking habit, and a staffing level.",
+            "Fact or assumption"
+          ),
+          q(
+            "You are a sales assistant. Your scenario says nothing about a budget and nothing about hiring. Which recommendation stays inside the role you were given?",
+            [
+              "I would hire two more assistants for Saturday mornings",
+              "I would approve a discount for everyone who waited",
+              "I would suggest we look at how shifts run",
+              "I would raise the store’s advertising budget this month"
+            ],
+            "I would suggest we look at how shifts run",
+            "Take the job you were given and nothing beyond it.",
+            "Three of these hire someone or spend money, and nothing in the scenario says a sales assistant can do either. Suggesting the shop look at how its shifts run is something the role can offer.",
+            "Role and authority"
+          )
         ],
         [
-          q("If the judge is a store owner, how should your tone sound?", ["Professional and practical", "Random and casual", "Medical", "Courtroom-like"], "Professional and practical", "Match the audience.", "A business owner expects concise, useful recommendations.", "Professional communication")
-        ]
+          q(
+            "A scenario reads: “You are a receptionist at a dental practice. The practice has two treatment rooms. The manager has asked you to recommend how to fit in more appointments.” Which of these is a constraint on your answer?",
+            [
+              "Two treatment rooms are available in the practice",
+              "You are the receptionist at the practice",
+              "The manager asked you for a recommendation",
+              "More appointments should be fitted in each day"
+            ],
+            "Two treatment rooms are available in the practice",
+            "A constraint is a limit your answer has to work within.",
+            "Two rooms is the limit any plan has to fit inside. The other three name your role, your audience, and the thing you were asked to do — none of them limits what you can propose.",
+            "Constraints"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Who you are, and who is listening",
+              body: "Your role is the job the scenario hands you. In the coffee shop you are the assistant manager, talking to your store manager.\n\nThe role decides what you can offer. An assistant manager can recommend a change to the morning shift. They cannot promise to hire, unless the scenario says so.\n\nThe audience decides what is worth saying. A manager wants to know what to do and what it costs. How to speak to them is a separate lesson."
+            },
+            {
+              heading: "What happened, and what you were asked to do",
+              body: "The situation is what is going on. The task is what you were asked to do about it. Most scenarios contain both, and it is easy to miss one.\n\nIn the coffee shop, the situation is the slow morning line. The task is to recommend what the shop should do.\n\nYou can understand a situation perfectly and still answer the wrong question. Before planning, say the task back in your own words."
+            },
+            {
+              heading: "The facts you were given, and the limits on your answer",
+              body: "Facts are the details the scenario states: three weeks, four staff on weekday mornings, customers leaving without ordering.\n\nA constraint is a limit your answer has to work within — a budget, a deadline, the staff available, a company policy. A fact becomes a constraint when your answer has to fit inside it, so four staff on weekday mornings is both.\n\nThe scenario says nothing about money, so you do not know what you can spend. Not knowing is different from knowing there is none.\n\nNot every scenario carries every limit. A real scenario also lists performance indicators, the things the person scoring you is looking for. A separate lesson teaches what to do with them."
+            },
+            {
+              heading: "A fact on the page is not a guess in your head",
+              body: "This one costs the most marks. You may propose an action. You may not treat a guess as though it were already true.\n\nThe scenario never says why the line slowed, or whether you can hire. Say “we are losing customers because we are understaffed” and you have invented a cause. Say “I would check whether the morning shift is understaffed” and you have proposed a step.\n\nIs claims a fact. Would proposes an action."
+            }
+          ],
+          misconception: {
+            wrongModel: "The scenario is background. The real work is the recommendation.",
+            whyItFails: "Guess the task and a strong answer answers a question nobody asked.",
+            betterModel: "The scenario is the brief. The rest of the round is built on reading it accurately."
+          },
+          commonMistakes: [
+            {
+              mistake: "Answering the situation instead of the task.",
+              whyItFails: "The scenario describes a problem, so it feels like the question.",
+              fix: "Find the sentence that asks you for something, and mark it first."
+            },
+            {
+              mistake: "Filling a gap with a number the scenario never gave.",
+              whyItFails: "It is easy to catch, and it makes your other numbers look invented too.",
+              fix: "Say what you would find out, instead of naming a figure."
+            },
+            {
+              mistake: "Taking authority the role does not come with.",
+              whyItFails: "A recommendation the role cannot make is not one the business can use.",
+              fix: "Check the job title, then stay inside it."
+            },
+            {
+              mistake: "Starting to solve while you are still reading.",
+              whyItFails: "The first idea arrives before the facts, and you then read looking for agreement.",
+              fix: "Finish the five questions first. The problem underneath is the next lesson."
+            }
+          ]
+        }
       )
     }
   },

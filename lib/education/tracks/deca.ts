@@ -14,15 +14,16 @@
 // cluster owner deliberately does not, because that course teaches performing a round and names no
 // content area. Only `marketing-fundamentals` is still ownerless, and it is not dressed up here.
 //
-// THREE DECA CATALOG ENTRIES STAY HELD and are deliberately absent below:
+// TWO DECA CATALOG ENTRIES STAY HELD and are deliberately absent below:
 //
-//   deca-reading-scenarios          teaches scenario decoding, not indicator handling. Publishing it
-//                                   is P1-B's own slice and has not been audited or simplified.
-//   deca-identifying-problem        same: a different construct, on the same unaudited footing.
-//   deca-professional-communication owner has not yet ruled whether it is core or optional support.
+//   deca-identifying-problem        a different construct, still unaudited. P1-B6's slice.
+//   deca-professional-communication owner has ruled it OPTIONAL support, and it does not gate
+//                                   simulation entry, so it stays held until it is audited on its own.
 //
-// None of the three is a substitute owner for any drill area — B5 proved that directly — so none is
-// promoted here to make a remediation target resolve.
+// P1-B5 published `deca-reading-scenarios`. It is a SIMULATION PREREQUISITE, not a drill owner: it
+// carries no `skillSlug` and no `practiceDrill`, so it claims no mastery area and is not a substitute
+// owner for one. Neither held entry is a substitute owner either — B5 proved that directly — so
+// neither is promoted here to make a remediation target resolve.
 //
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
@@ -61,13 +62,19 @@ export const STABLE_TEACHING_DECA_PROVENANCE: SourceFreshnessMetadata = Object.f
   sourceLabel: "CompeteReady authored lesson — mainstream business-education concepts"
 });
 
-/** The DECA catalog slugs this file publishes, in teaching order. */
-const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation",
+/**
+ * The DECA catalog slugs this file publishes, in teaching order.
+ *
+ * Exported so a suite can prove that this list and `HELD_DECA_CATALOG_SLUGS` PARTITION the DECA
+ * catalog: every authored DECA entry is in exactly one of them. Without that, dropping a slug from
+ * here silently un-publishes a lesson while every other control keeps passing — which is exactly
+ * what a P1-B5 mutation found.
+ */
+export const PUBLISHED_DECA_SLUGS = ["deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-justifying-your-recommendation",
   "deca-handling-customer-situations", "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"] as const;
 
 /** The DECA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
 export const HELD_DECA_CATALOG_SLUGS: readonly string[] = [
-  "deca-reading-scenarios",
   "deca-identifying-problem",
   "deca-professional-communication"
 ];
@@ -113,6 +120,7 @@ function selectDecaCatalogLesson(slug: PublishedDecaSlug): ConceptEducationLesso
   return entry;
 }
 
+const readingScenarios = selectDecaCatalogLesson("deca-reading-scenarios");
 const understandingPerformanceIndicators = selectDecaCatalogLesson("deca-understanding-performance-indicators");
 const justifyingYourRecommendation = selectDecaCatalogLesson("deca-justifying-your-recommendation");
 const handlingCustomerSituations = selectDecaCatalogLesson("deca-handling-customer-situations");
@@ -148,6 +156,39 @@ export const PUBLISHED_DECA_SOURCES = {
  * "This is the last lesson written for this course so far" — false the moment a second one shipped.
  * The lesson's authored bytes are untouched; only this metadata changed.
  */
+/**
+ * P1-B5 — READING AND DECODING THE SCENARIO. A simulation PREREQUISITE, not a drill owner.
+ *
+ * WHY IT CARRIES NO `skillSlug` AND NO `practiceDrill`. The four DECA mastery areas each have exactly
+ * one teaching owner already, and this lesson teaches none of them: it teaches what the card SAYS,
+ * which is the step before deciding what the problem is or what to recommend. Giving it a skill slug
+ * would either invent a fifth mastery area or steal an existing one's single remediation destination.
+ * Giving it a `practiceDrill` would point a learner at questions that measure a different construct.
+ * So it has neither, and `deca-practice-map` still reports 4/4 owners rather than 5.
+ *
+ * COURSE AND MODULE. The approved curriculum (docs/curriculum/02-deca-course.md) puts "Reading and
+ * Decoding the Scenario" in Module 1 — Reading the Situation, inside the role-play performance
+ * course. `deca-roleplay-core` is that course. It shares `deca-roleplay-skills` with the
+ * performance-indicators lesson, which the same curriculum module also contains.
+ *
+ * ORDER. The curriculum runs role → scenario → indicators → prep, so this lesson comes BEFORE the
+ * PI owner and `nextLessonId` points at it. The PI entry's own chain is unchanged.
+ */
+export const DECA_READING_SCENARIOS_LESSON: EducationRegistryEntry = {
+  id: "deca-reading-scenarios",
+  track: "DECA",
+  courseId: "deca-roleplay-core",
+  moduleId: "deca-roleplay-skills",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: readingScenarios,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "deca-understanding-performance-indicators",
+  provenance: AUTHORED_DECA_PROVENANCE
+};
+
 export const DECA_PERFORMANCE_INDICATORS_LESSON: EducationRegistryEntry = {
   id: "deca-understanding-performance-indicators",
   track: "DECA",
@@ -360,6 +401,7 @@ export const DECA_MK6_LESSON: EducationRegistryEntry = {
 };
 
 export const DECA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
+  DECA_READING_SCENARIOS_LESSON,
   DECA_PERFORMANCE_INDICATORS_LESSON,
   DECA_BUSINESS_REASONING_LESSON,
   DECA_CUSTOMER_RELATIONS_LESSON,

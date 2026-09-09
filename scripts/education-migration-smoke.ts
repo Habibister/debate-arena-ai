@@ -583,9 +583,9 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   // B2.1 raised this 10 -> 11; B2.2 (2026-08-25) raised it 11 -> 12: the newly authored
   // debate-turn-mechanics lesson.
   // P1-B1 raised this 12 -> 13; P1-B2 raised it 13 -> 14 (the business-reasoning owner).
-  assert.equal(EDUCATION_LESSONS.length, 22, "5. twenty-two canonical registry entries");
+  assert.equal(EDUCATION_LESSONS.length, 23, "5. twenty-three canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 22, "6a. all twenty-two are learner-visible (P1-B5 added the scenario-reading prerequisite)");
+  assert.equal(learnerVisible.length, 23, "6a. all twenty-three are learner-visible (P1-B6 added the problem-identification prerequisite)");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
   assert.equal(debate.length, 10, "7. exactly ten Debate lessons (B2.2 added turn-mechanics)");
   assert.deepEqual(debate.map((e) => e.id),
@@ -593,11 +593,11 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     "7b. orientation first, then CWI, then the Wave 1C evidence lesson, then the B2.1 answer-types lesson, then the B2.2 turn-mechanics lesson, then the migrated five");
   // P1-B1: the DECA orientation role-play lesson plus its first concept lesson. Debate's own count
   // (7/7b above) is deliberately asserted separately and is unchanged by this milestone.
-  assert.equal(educationLessonsForTrack("DECA").length, 11, "6b. eleven DECA lessons across two courses");
+  assert.equal(educationLessonsForTrack("DECA").length, 12, "6b. twelve DECA lessons across two courses");
   assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id),
-    ["how-deca-roleplay-works", "deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-justifying-your-recommendation", "deca-handling-customer-situations",
+    ["how-deca-roleplay-works", "deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-identifying-problem", "deca-justifying-your-recommendation", "deca-handling-customer-situations",
      "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"],
-    "6b2. orientation, the P1-B5 scenario-reading prerequisite, the two role-play owners, the customer-relations owner, then MK1-MK6");
+    "6b2. orientation, the two P1-B5/B6 prerequisites around the indicators lesson, the business-reasoning owner, the customer-relations owner, then MK1-MK6");
   assert.equal(educationLessonsForTrack("HOSA").length, 1, "6c. one HOSA lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
 

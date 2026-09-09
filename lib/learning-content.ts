@@ -1412,34 +1412,129 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
     track: "DECA",
     name: "Identifying the Problem",
     slug: "deca-identifying-problem",
-    description: "Separate symptoms from the real business issue.",
+    description: "Say what needs to change, using only the causes the scenario supplies.",
     category: "DECA roleplay",
     order: 2,
     lesson: {
-      title: "Find the root business problem",
+      title: "Identifying the Problem",
       slug: "deca-identifying-problem-lesson",
-      summary: "Choose a recommendation that solves the real issue.",
-      estimatedMinutes: 7,
+      summary: "Move from what the scenario says to what actually needs to change — without inventing a reason it never gave.",
+      estimatedMinutes: 6,
       content: lesson(
-        "State the root problem before proposing a solution.",
-        "A symptom is what you notice. The root problem is why it is happening. Strong DECA answers solve the root problem.",
-        "Judges want business reasoning, not just activity. Identifying the real problem makes your solution more strategic.",
-        ["Name the symptom.", "Ask what causes it.", "Choose the problem your solution can affect."],
-        {
-          prompt: "A cafe has many first-time customers but few return.",
-          weakAnswer: "The problem is not enough customers.",
-          strongAnswer: "The problem is weak customer retention, not awareness. The solution should focus on loyalty and post-visit engagement.",
-          whyItWorks: "The strong answer separates awareness from retention."
-        },
-        q("A cafe has many first visits but few repeat visits. What is the root problem?", ["Customer retention", "No awareness", "Too many employees", "Medical accuracy"], "Customer retention", "Repeat visits are about coming back.", "The issue is retaining customers after the first visit.", "Problem identification"),
+        "Say what needs to change in one sentence, separate from the task, from what you can see, and from any solution.",
+        "The problem is the thing that needs to change. It is not the task you were given, and not always the first thing you notice. Here is a scenario:\n\n“You are an assistant manager at a bakery. The owner has asked to meet you. Customers have been picking up the wrong orders. The order slips are handwritten, and staff say orders get mixed up because the slips are hard to read. The owner wants you to recommend what the bakery should do.” (Our scenario, not an official one.)\n\nWhat you notice is that customers get the wrong orders. What needs to change is that orders keep getting mixed up — and here the scenario gives a reason, because staff say the slips are hard to read.",
+        "A recommendation is only as good as the problem it answers. Aim at the wrong thing and everything after is wasted. Saying what needs to change is where this lesson stops; what to do about it comes next.",
         [
-          q("What is a symptom?", ["An observable sign of a deeper issue", "The final solution", "A judge question", "A performance score"], "An observable sign of a deeper issue", "Symptoms are clues.", "Symptoms help you infer the root problem.", "Problem identification"),
-          q("Why state the problem first?", ["It makes the solution relevant", "It replaces the solution", "It hides constraints", "It lowers confidence"], "It makes the solution relevant", "Problem before solution.", "A clear problem frames the recommendation.", "Problem identification"),
-          q("Which solution fits retention?", ["Loyalty program", "Random billboard only", "Ignore customers", "Cut all products"], "Loyalty program", "Retention means repeat behavior.", "A loyalty program directly targets repeat visits.", "Choosing response")
+          "What is going wrong? — the visible issue.",
+          "Who or what is affected?",
+          "What facts show it?",
+          "Does the scenario say why, or is the reason unknown?",
+          "What needs to change? — one sentence."
+        ],
+        {
+          prompt: "You are an assistant at a gym. The manager has asked to meet you. Over the past two months fewer members have renewed their memberships. The gym has not changed its prices or its opening hours. The manager wants you to recommend what the gym should do. (Our scenario, not an official one.)",
+          weakAnswer: "The problem is that members are bored of the equipment, so we should buy new machines.",
+          strongAnswer: "The task is to recommend what the gym should do. The scenario tells me fewer members renewed over the past two months, so it is renewals that are affected. The scenario does not say why, and it tells me price and opening hours have not changed, so I cannot point at either. My problem sentence: fewer members are renewing than two months ago. I would want to know why before saying what to change.",
+          whyItWorks: "It says what needs to change without naming a reason the scenario never gave. It also uses what the scenario does rule out."
+        },
+        q(
+          "A scenario reads: “You are a supervisor at a cinema. Your manager has asked to meet you. Since a new snack counter opened, people waiting for snacks have been blocking the ticket queue. Your manager wants you to recommend how to fix the queue.” Which of these is the problem?",
+          [
+            "You were asked to recommend a fix for the queue",
+            "People waiting for snacks are blocking the ticket queue",
+            "The cinema should move its snack counter elsewhere",
+            "The new snack counter is popular with customers"
+          ],
+          "People waiting for snacks are blocking the ticket queue",
+          "The task is what you were asked for. The problem is what needs to change.",
+          "The blocked queue is what needs to change. Being asked for a recommendation is the task, and moving the counter is something you could do about it. Nothing on the page says the counter is popular.",
+          "Task or problem"
+        ),
+        [
+          q(
+            "A scenario says only that a shop’s sales have fallen over the last three months. It gives no other information. Which problem statement does it support?",
+            [
+              "Sales have fallen over the last three months",
+              "Sales fell because the prices are too high",
+              "Sales fell because a competitor opened nearby",
+              "Sales fell because the shop stopped advertising"
+            ],
+            "Sales have fallen over the last three months",
+            "A scenario that says nothing about the cause has not given you one.",
+            "Only one of these says what the scenario actually says. The others each add a reason the page never mentions, and any of them could be wrong without the scenario contradicting itself.",
+            "Supported cause"
+          ),
+          q(
+            "A scenario says a library’s evening study room is often full while its morning room sits empty. Which of these is a problem rather than a solution?",
+            [
+              "The library should open another evening study room",
+              "The library should move chairs into the morning room",
+              "Evening study space runs out while mornings sit empty",
+              "The library should let students book a room ahead"
+            ],
+            "Evening study space runs out while mornings sit empty",
+            "A solution is something to do. A problem is something that needs to change.",
+            "Three of these start with something the library should do, which makes them answers. Only one says what is actually going wrong.",
+            "Problem or solution"
+          )
         ],
         [
-          q("If sales are down because checkout is slow, what should you target?", ["Operations speed", "Only brand awareness", "Medical terms", "Definitions"], "Operations speed", "Find the cause.", "Slow checkout points to operations, not only promotion.", "Problem identification")
-        ]
+          q(
+            "A scenario reads: “You are a receptionist at a vet clinic. The manager has asked to meet you. Appointments have been running late all week. The clinic books one appointment every ten minutes, and staff say most check-ups take longer than that.” Which problem statement does it support?",
+            [
+              "Appointments have been running late all week",
+              "The clinic should book fewer appointments each day",
+              "The staff at the clinic are working too slowly",
+              "Appointments are booked closer together than check-ups take"
+            ],
+            "Appointments are booked closer together than check-ups take",
+            "This scenario does give you a reason — so you may use it.",
+            "Ten-minute slots against check-ups that take longer is on the page, so it belongs in the problem. Running late is what you notice, booking fewer is something you could do, and nothing says anyone is working too slowly.",
+            "Supported cause"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "The task is not the problem",
+              body: "The task is what you were asked to produce. The problem is what needs to change. Two different sentences.\n\nAt the bakery the task is to recommend what the bakery should do. The problem is that orders are being mixed up.\n\n“The problem is that I need to make a recommendation” names nothing that is wrong. It is the task wearing the word problem."
+            },
+            {
+              heading: "What you notice is not always what needs changing",
+              body: "The thing you can see is the symptom: complaints went up, orders are late, sales fell. It is real, it is where you start, and sometimes it is the whole story.\n\nBut it is not automatically the thing to fix. Not every scenario has something underneath: sometimes the visible issue is the issue. Look for what the facts support, not a hidden layer that has to be there.\n\nSometimes there is more. Customers getting the wrong orders is what happens; the handwritten slips are what staff say produces it."
+            },
+            {
+              heading: "Only a cause the scenario gives you",
+              body: "Sometimes the scenario tells you why. The bakery one does, because staff say the slips are hard to read. That is on the page, so you may use it.\n\nOften it does not. If a scenario says only that sales fell, you do not know why. It might be price, a competitor, or the weather — possibilities, not facts.\n\nSome facts are neither a reason nor ruled out. The scenario states them and never connects them to what is going wrong; leave those where they are.\n\nA scenario silent about the cause has not given you one, and silence is not permission to pick whichever reason sounds best. “Sales have fallen over the last three months” beats a reason you made up."
+            },
+            {
+              heading: "A solution is not a problem, and one sentence is enough",
+              body: "“We should start a loyalty card” is something to do. “Customers rarely come back after a first visit” is something that needs to change. Only the second is a problem.\n\nWrite the problem as one sentence. Where the scenario gives a cause you may include it: staff say orders get mixed up because the handwritten slips are hard to read."
+            }
+          ],
+          misconception: {
+            wrongModel: "Every scenario hides a deeper cause, and my job is to dig it out.",
+            whyItFails: "It pushes you into inventing one when the scenario supplies none, and an invented cause is easier to knock down than none.",
+            betterModel: "Use the cause the scenario gives you. Where it gives none, say what needs to change and leave why open."
+          },
+          commonMistakes: [
+            {
+              mistake: "Restating the task as the problem.",
+              whyItFails: "The task is what you were asked for, so it feels like the subject.",
+              fix: "Check your sentence says what is wrong, not what you were asked to do."
+            },
+            {
+              mistake: "Naming a cause the scenario never gave.",
+              whyItFails: "It is the easiest thing to challenge, and it takes your recommendation down with it.",
+              fix: "If the scenario is silent, say what needs to change and stop."
+            },
+            {
+              mistake: "Writing a solution and calling it the problem.",
+              whyItFails: "A solution answers a question you have not asked yet.",
+              fix: "If your sentence contains “we should”, it is not the problem."
+            }
+          ]
+        }
       )
     }
   },

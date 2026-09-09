@@ -187,7 +187,7 @@ function main() {
     // P1-B5 published deca-reading-scenarios, so it left this list. The control is unchanged in what it
     // protects: a HELD lesson is never an owner and never learner-visible. The published one is checked
     // separately below — it must be visible AND still own nothing.
-    const heldSlugs = ["deca-identifying-problem", "deca-professional-communication"];
+    const heldSlugs = ["deca-professional-communication"];
     const owners = DECA_PRACTICE_MAP.map((m) => m.publishedTeachingOwner).filter((o): o is string => o !== null);
     for (const held of heldSlugs) {
       assert.ok(!owners.includes(held), `${held}: not used as an owner`);
@@ -366,7 +366,7 @@ function main() {
     } as never));
 
   check("G1. every published DECA lesson renders with no other track's name anywhere in its visible text", () => {
-    assert.equal(decaConceptEntries.length, 10, "control: all ten DECA concept lessons are registered");
+    assert.equal(decaConceptEntries.length, 11, "control: all eleven DECA concept lessons are registered");
     for (const entry of decaConceptEntries) {
       const visible = renderDecaLesson(entry)
         .replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ");
@@ -743,6 +743,96 @@ function main() {
       "H10k. and refuses to promote a correlation into a cause");
     assert.ok(/killed|would recover/i.test(we.weakAnswer),
       "H10l. control: the weak answer really does invent a cause and predict a result");
+  });
+
+  // ---- H11/H12. THE SECOND SIMULATION PREREQUISITE (P1-B6) -------------------------------------
+  check("H11. the problem-identification lesson is a prerequisite, and owns no mastery area", () => {
+    const entry = EDUCATION_LESSONS.find((e) => e.id === "deca-identifying-problem");
+    assert.ok(entry, "H11. the lesson is registered");
+    assert.equal(entry!.visibility, "learner", "H11a. and is learner-visible — no longer held");
+    assert.equal(entry!.courseId, "deca-roleplay-core", "H11b. in the ROLE-PLAY course, not the business-content one");
+    assert.equal((entry as never as { skillSlug?: string }).skillSlug, undefined, "H11c. it claims NO skill slug");
+    assert.equal(entry!.practiceDrill, undefined, "H11d. and NO practice drill");
+    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.publishedTeachingOwner === "deca-identifying-problem").length, 0,
+      "H11e. and is the teaching owner of nothing");
+    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.publishedTeachingOwner).length, 4, "H11f. the four owners are still four");
+    // Both prerequisites together own nothing, so the DECA drill areas keep exactly four owners.
+    const prerequisites = ["deca-reading-scenarios", "deca-identifying-problem"];
+    for (const id of prerequisites) {
+      const e = EDUCATION_LESSONS.find((x) => x.id === id)!;
+      assert.equal(e.practiceDrill, undefined, `H11g. ${id} carries no drill`);
+      assert.ok(!DECA_DRILL_SKILL_SLUGS.includes(id as never), `H11h. ${id}'s id is not a skill slug`);
+    }
+  });
+
+  check("H12. identifying the problem stays between reading and reasoning", () => {
+    const entry = EDUCATION_LESSONS.find((e) => e.id === "deca-identifying-problem")!;
+    assert.ok(isConceptEducationLessonEntry(entry), "control: it is a concept lesson");
+    const c = (entry as never as { source: { lesson: { content: Record<string, unknown> } } }).source.lesson.content;
+    const we = c.workedExample as { prompt: string; weakAnswer: string; strongAnswer: string; whyItWorks: string };
+    const teaching = [String(c.objective), String(c.explanation), String(c.whyMatters), (c.steps as string[]).join(" "),
+      ...((c.teachingSections as Array<{ heading: string; body: string }> | undefined) ?? []).map((t) => t.heading + " " + t.body),
+      ...((c.commonMistakes as Array<{ mistake: string; whyItFails: string; fix: string }> | undefined) ?? [])
+        .map((m) => m.mistake + " " + m.whyItFails + " " + m.fix),
+      String((c.misconception as { wrongModel: string; whyItFails: string; betterModel: string }).wrongModel),
+      String((c.misconception as { betterModel: string }).betterModel)].join("\n");
+    assert.ok(teaching.length > 2000, "H12a. control: there is teaching text to scan");
+
+    // THE FOUR DISTINCTIONS THIS LESSON EXISTS TO HOLD.
+    assert.ok(/The task is what you were asked to produce\. The problem is what needs to change/i.test(teaching),
+      "H12b. task and problem are stated as different things");
+    assert.ok(/the symptom/i.test(teaching) && /not automatically the thing to fix/i.test(teaching),
+      "H12c. and so are the visible symptom and the thing to fix");
+    assert.ok(/silence is not permission/i.test(teaching),
+      "H12d. an unstated cause stays unstated — absence is never promoted into a fact");
+    assert.ok(/is something to do/i.test(teaching) && /is a problem/i.test(teaching),
+      "H12e. and a proposed solution is not a problem");
+
+    // NO ROOT-CAUSE DOCTRINE. The held draft taught "the root problem is why it is happening"; the
+    // approved scope is the opposite — dig only as far as the facts reach.
+    assert.ok(!/\broot cause\b|\broot problem\b/i.test(teaching), "H12f. no root-cause doctrine survives");
+    assert.ok(/Not every scenario has something underneath/i.test(teaching),
+      "H12g. and the lesson says outright that sometimes the visible issue is the issue");
+
+    // BOUNDARIES on both sides.
+    for (const [owner, banned] of [
+      ["business reasoning (deca-justifying-your-recommendation)", /\bROI\b|return on investment|break-even|cost per|revenue impact/i],
+      ["PI interpretation (deca-understanding-performance-indicators)", /\bplain meaning\b|\bin-character action\b|performance indicator/i]
+    ] as Array<[string, RegExp]>) {
+      assert.ok(!banned.test(teaching), `H12h. problem identification does not take over ${owner}`);
+    }
+    // It stops before recommendation-building, and says so.
+    assert.ok(/where this lesson stops/i.test(teaching), "H12i. and it tells the learner where it stops");
+
+    // THE WORKED EXAMPLE MUST NOT COMMIT THE LESSON'S OWN HEADLINE ERROR. Its gym scenario supplies
+    // no cause, so the strong answer must name none — and must not smuggle one in as a solution.
+    assert.ok(/does not say why/i.test(we.strongAnswer), "H12j. the strong answer says the cause is not given");
+    assert.ok(!/\bbecause\b/i.test(we.strongAnswer), "H12k. and offers no because of its own");
+    assert.ok(!/we should/i.test(we.strongAnswer), "H12l. and proposes no solution");
+    assert.ok(/because/i.test(we.weakAnswer) || /bored/i.test(we.weakAnswer),
+      "H12m. control: the weak answer really does invent a reason");
+    // Where the lesson DOES use a cause, it is the one its own scenario states, with the attribution
+    // the scenario carries. An earlier draft dropped "staff say" and asserted the readability itself.
+    const bakery = String(c.explanation);
+    assert.ok(/staff say orders get mixed up because the slips are hard to read/i.test(bakery),
+      "H12n. the bakery scenario states the causal link itself, rather than leaving the lesson to supply it");
+    // matchAll, NOT match+indexOf: indexOf returns the FIRST occurrence every time, so a version of
+    // this control written that way passed while later, unattributed mentions went unchecked. The
+    // mutation that dropped the attribution from the second mention is what exposed it.
+    let readabilityMentions = 0;
+    for (const m of teaching.matchAll(/hard[- ]to[- ]read|hard to read/gi)) {
+      const at = m.index ?? 0;
+      readabilityMentions += 1;
+      assert.ok(/staff say/i.test(teaching.slice(Math.max(0, at - 90), at)),
+        `H12o. every mention of the slips' readability keeps its attribution (near "${teaching.slice(Math.max(0, at - 50), at + 20).replace(/\n/g, " ")}")`);
+    }
+    assert.ok(readabilityMentions >= 3, `H12o2. control: the readability claim really is made repeatedly (${readabilityMentions})`);
+    // And the model problem sentence must not manufacture a causal link of its own.
+    for (const m of teaching.matchAll(/orders get mixed up because|mixes up orders because/gi)) {
+      const at = m.index ?? 0;
+      assert.ok(/staff say/i.test(teaching.slice(Math.max(0, at - 60), at)),
+        `H12p. the bakery cause is only ever asserted as what staff say (near "${teaching.slice(Math.max(0, at - 50), at + 24).replace(/\n/g, " ")}")`);
+    }
   });
 
   console.log(

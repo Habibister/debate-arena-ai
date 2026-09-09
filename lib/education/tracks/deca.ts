@@ -14,16 +14,15 @@
 // cluster owner deliberately does not, because that course teaches performing a round and names no
 // content area. Only `marketing-fundamentals` is still ownerless, and it is not dressed up here.
 //
-// TWO DECA CATALOG ENTRIES STAY HELD and are deliberately absent below:
+// ONE DECA CATALOG ENTRY STAYS HELD and is deliberately absent below:
 //
-//   deca-identifying-problem        a different construct, still unaudited. P1-B6's slice.
 //   deca-professional-communication owner has ruled it OPTIONAL support, and it does not gate
 //                                   simulation entry, so it stays held until it is audited on its own.
 //
-// P1-B5 published `deca-reading-scenarios`. It is a SIMULATION PREREQUISITE, not a drill owner: it
-// carries no `skillSlug` and no `practiceDrill`, so it claims no mastery area and is not a substitute
-// owner for one. Neither held entry is a substitute owner either — B5 proved that directly — so
-// neither is promoted here to make a remediation target resolve.
+// P1-B5 published `deca-reading-scenarios` and P1-B6 published `deca-identifying-problem`. Both are
+// SIMULATION PREREQUISITES, not drill owners: neither carries a `skillSlug` or a `practiceDrill`, so
+// neither claims a mastery area nor is a substitute owner for one. The held entry is not a substitute
+// owner either — B5 proved that directly — so it is not promoted here to make a target resolve.
 //
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
@@ -70,12 +69,11 @@ export const STABLE_TEACHING_DECA_PROVENANCE: SourceFreshnessMetadata = Object.f
  * here silently un-publishes a lesson while every other control keeps passing — which is exactly
  * what a P1-B5 mutation found.
  */
-export const PUBLISHED_DECA_SLUGS = ["deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-justifying-your-recommendation",
+export const PUBLISHED_DECA_SLUGS = ["deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-identifying-problem", "deca-justifying-your-recommendation",
   "deca-handling-customer-situations", "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"] as const;
 
 /** The DECA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
 export const HELD_DECA_CATALOG_SLUGS: readonly string[] = [
-  "deca-identifying-problem",
   "deca-professional-communication"
 ];
 
@@ -121,6 +119,7 @@ function selectDecaCatalogLesson(slug: PublishedDecaSlug): ConceptEducationLesso
 }
 
 const readingScenarios = selectDecaCatalogLesson("deca-reading-scenarios");
+const identifyingProblem = selectDecaCatalogLesson("deca-identifying-problem");
 const understandingPerformanceIndicators = selectDecaCatalogLesson("deca-understanding-performance-indicators");
 const justifyingYourRecommendation = selectDecaCatalogLesson("deca-justifying-your-recommendation");
 const handlingCustomerSituations = selectDecaCatalogLesson("deca-handling-customer-situations");
@@ -201,6 +200,36 @@ export const DECA_PERFORMANCE_INDICATORS_LESSON: EducationRegistryEntry = {
   sourceKind: "concept-education-lesson",
   skillSlug: "deca-performance-indicators",
   practiceDrill: { track: "deca", area: "performance-indicators" },
+  legacySlugs: [],
+  nextLessonId: "deca-identifying-problem",
+  provenance: AUTHORED_DECA_PROVENANCE
+};
+
+/**
+ * P1-B6 — IDENTIFYING THE PROBLEM. The second and final simulation prerequisite, and a prerequisite
+ * for the same reason the scenario-reading lesson is one: no `skillSlug`, no `practiceDrill`.
+ *
+ * WHERE IT SITS. The approved curriculum places "Identifying the Business Problem" in Module 2 —
+ * Performing the Meeting, one step before Building Specific Recommendations and two before Business
+ * Reasoning. So the chain runs scenario -> indicators -> problem -> business reasoning, which is the
+ * order the curriculum itself teaches and the order the work actually happens in: read the card,
+ * know what is being scored, work out what needs changing, then say why your answer makes sense.
+ *
+ * WHAT IT DELIBERATELY DOES NOT DO. It stops before recommendation-building. The held draft did not:
+ * it asked which solution "fits retention" and told the learner the root problem is "why it is
+ * happening", which is both a different lesson's job and a doctrine the scenario often cannot
+ * support. Neither survives.
+ */
+export const DECA_IDENTIFYING_PROBLEM_LESSON: EducationRegistryEntry = {
+  id: "deca-identifying-problem",
+  track: "DECA",
+  courseId: "deca-roleplay-core",
+  moduleId: "deca-roleplay-skills",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: identifyingProblem,
+  sourceKind: "concept-education-lesson",
   legacySlugs: [],
   nextLessonId: "deca-justifying-your-recommendation",
   provenance: AUTHORED_DECA_PROVENANCE
@@ -403,6 +432,7 @@ export const DECA_MK6_LESSON: EducationRegistryEntry = {
 export const DECA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
   DECA_READING_SCENARIOS_LESSON,
   DECA_PERFORMANCE_INDICATORS_LESSON,
+  DECA_IDENTIFYING_PROBLEM_LESSON,
   DECA_BUSINESS_REASONING_LESSON,
   DECA_CUSTOMER_RELATIONS_LESSON,
   DECA_MK1_LESSON,

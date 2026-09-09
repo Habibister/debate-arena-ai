@@ -216,10 +216,10 @@ function main() {
     // P1-B1 raised this 9 -> 10; P1-B2 raised it 10 -> 11. Nine Debate, two DECA.
     // P1-B3 raised it 11 -> 12. Nine Debate, three DECA.
     // P1-B4 raised it 12 -> 18. Nine Debate, nine DECA.
-    // P1-B5 raised it 18 -> 19. Nine Debate, ten DECA — the tenth is the Reading the Scenario
-    // prerequisite, which is a concept lesson like the rest but owns no mastery area.
-    assert.equal(published.length, 19,
-      `control: exactly nineteen published concept lessons — found ${published.length}. If a lesson was ` +
+    // P1-B5 raised it 18 -> 19; P1-B6 raised it 19 -> 20. Nine Debate, eleven DECA — two of the
+    // eleven are the simulation prerequisites, concept lessons like the rest but owning no area.
+    assert.equal(published.length, 20,
+      `control: exactly twenty published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -290,6 +290,7 @@ function main() {
       "deca-getting-it-to-the-customer",
       "deca-handling-customer-situations",
       "deca-how-you-are-understood",
+      "deca-identifying-problem",
       "deca-justifying-your-recommendation",
       "deca-reading-scenarios",
       "deca-telling-them-about-it",
@@ -697,7 +698,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 19, "O7. control: all nineteen published lessons were rendered");
+    assert.equal(publishedAll.length, 20, "O7. control: all twenty published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

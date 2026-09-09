@@ -1374,7 +1374,11 @@ function main() {
     assert.equal(orient.languageFrames, undefined, "no language frames: there is no speaking move to scaffold");
     assert.equal(orient.revisionLadder, undefined, "no revision ladder: no authored performance is rewritten");
     assert.equal(orient.additionalExamples, undefined, "the scenario is the second example");
-    assert.equal(orient.teachingSections.length, 3); assert.ok(orient.misconception); assert.equal(orient.commonMistakes.length, 4);
+    assert.equal(orient.teachingSections.length, 3); assert.ok(orient.misconception);
+    // MISTAKE COUNT RELAXED (beginner rewrite, 2026-09-09): the exact-four pin forced two boxes whose only
+    // content was class C (R25) and class D (R29) before Practice. Delivery, not doctrine; MG pins the
+    // remaining boxes by purpose and the retired boxes' rules by their prose carriers.
+    assert.ok(orient.commonMistakes.length >= 2, `at least two mistake boxes: ${orient.commonMistakes.length}`);
     assert.equal(1 + orient.practiceQuestions.length + orient.masteryCheck.length, 3, "five checks became three");
     assert.ok(orient.scaffoldedTry && orient.scaffoldedTry.slots.length === 3, "one small round-tracking scenario");
     assert.ok(!("skillSlug" in orientEntry) || !orientEntry.skillSlug, "still no skillSlug (formative only, by design)");
@@ -1460,6 +1464,84 @@ function main() {
     assert.ok(!text.includes("Use it in a guided round") && !text.includes("The guided round opens after"), "no guided-round link or promise of one");
     for (const slot of ["1. answered", "2. still unresolved", "3. no response"]) assert.ok(text.includes(slot), `slot rendered: ${slot}`);
     assert.ok(!/practice-drill/.test(html) || !text.includes("Practice this skill"), "no drill CTA for a lesson with no drill");
+  });
+
+  check("MG. Round Orientation beginner rewrite (2026-09-09): the round is shown before it is named, the seven A-rules and the B carriers are in plain English, and the beginner regressions cannot return", () => {
+    const wc = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    const sec = (i: number) => orient.teachingSections[i].body as string;
+    const ex = orient.explanation as string;
+    // SHAPE: a tiny concrete round opens the page (motion, two sides taking turns, the judge deciding) before any term is defined;
+    // "round" is then defined inside the first hundred words, and the page never opens as a glossary.
+    assert.ok(/^Motion: [\s\S]{0,220}Side A [\s\S]{0,200}Side B [\s\S]{0,200}the judge decides which side’s reasons held up best, using only what was said\./.test(ex), "the opener is one tiny round ending in the judge's decision");
+    const roundDef = ex.indexOf("That is a round: one whole debate, from the first speech to the judge’s decision.");
+    assert.ok(roundDef > 0 && wc(ex.slice(0, roundDef)) <= 100, "'round' is defined right after the example, inside the first hundred words");
+    assert.ok(!/^(A |The )?(Round|Judge|Speech|Argument|Motion) (=|is|means)\b/i.test(ex), "no glossary opener: the page shows a round before it defines one");
+    // RULE-01: two sides, one motion, a judge who decides only on what was said; your job is to leave reasons standing.
+    assert.ok(/The motion is the statement the two sides disagree about\./.test(ex) && /There are always two sides\./.test(ex), "RULE-01 motion and two sides");
+    assert.ok(/So your job is not just to talk\. It is to leave your reasons still standing at the end\./.test(ex), "RULE-01 the job");
+    // ROUND != SPEECH != ARGUMENT, in one place, in plain words.
+    assert.ok(/The round is the whole debate\. A speech is one person’s turn to talk\. An argument is one reason inside a speech: a claim, a reason, and a why-it-matters/.test(ex), "round, speech and argument are told apart");
+    // RULE-02 (with the misconception), RULE-05 consequence, RULE-06, RULE-07 (RULE-03/04 and B01 are pinned exactly in MB).
+    assert.ok(/the round is not a list of speeches\. It is a handful of arguments, and each one has a story: introduced, then answered or left alone, then defended by its maker or not\. Nothing resets when a new speaker stands up\./.test(sec(0)), "RULE-02");
+    assert.ok(/starts over every time a new speaker stands up/.test(orient.misconception.wrongModel) && /^Nothing resets\./.test(orient.misconception.whyItFails), "RULE-02 misconception");
+    assert.ok(/It can decide a round you thought you were winning, and saying so costs one sentence\./.test(sec(0)), "RULE-05 consequence");
+    assert.ok(/listening while the other side speaks, instead of rehearsing what to say next/.test(sec(1)) && /For each argument they make: the claim, and the reason under it\. For each argument you made: answered, or skipped\?/.test(sec(1)), "RULE-06");
+    assert.ok(/^While the other side speaks, note each claim and the reason under it\./.test(orient.steps[0]) && /^Mark which of your arguments they answered and which they skipped\./.test(orient.steps[1]), "RULE-06 in the steps");
+    assert.ok(/The round shrinks to the few disagreements still standing\./.test(sec(2)) && /Not which side said more\. Not which side sounded surer\. Not what they themselves believe about the motion\. Only which of the surviving arguments should decide this round\./.test(sec(2)), "RULE-07 the judge decides on the remainder");
+    // B05 honest tracking limit; B02 two sides without a canonical name (Pro/Con etc. may appear only as illustration, never as a rule).
+    assert.ok(/It is not a transcript: you do not write everything down\./.test(sec(1)), "B05");
+    // PRODUCT PROCEDURE (owner ruling, 2026-09-09): the page says what the CompeteReady room will show — a side and a format
+    // are chosen, the room lists that format's speeches, whose turn it is and the turn timing, the opponent has turns, the
+    // judge decides from what was said — and it is labelled as this product, never as how all debate works.
+    assert.ok(/In a CompeteReady practice round, you pick a side and a format\./.test(ex), "product procedure: side and format are chosen");
+    assert.ok(/The room shows the speeches for that format, whose turn it is, and how long each turn lasts/.test(ex), "product procedure: the room shows speeches, turn and timing");
+    assert.ok(/You speak on your turns, your opponent speaks on theirs, and the judge decides from what was said\./.test(ex), "product procedure: turns and the judge");
+    assert.ok(ex.indexOf("Formats differ in speech names, order and timing") < ex.indexOf("In a CompeteReady practice round"), "the format disclaimer precedes the product paragraph");
+    assert.ok(!/\b(pro|con|affirmative|negative|government|opposition|proposition) (side )?(always|must|speaks? first|goes first)/i.test(JSON.stringify(orient)), "B02 no side-order rule");
+    // REGRESSION ROUTES the mutation harness drives.
+    const all = [ex, ...orient.teachingSections.map((x: { heading: string; body: string }) => x.heading + " " + x.body), orient.whyMatters, ...orient.steps, ...Object.values(orient.workedExample as Record<string, string>),
+      ...Object.values(orient.misconception as Record<string, string>), ...orient.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)), orient.scaffoldedTry.prompt].join("\n");
+    assert.ok(!/\b(all|every) (debate|debates|format|formats|round|rounds) (use|uses|have|has|follow|follows|share|shares) (the same|one) (speech )?(order|sequence|number|count|names?|timing|length)/i.test(all), "product procedure never becomes universal law (order / count / names / timing)");
+    assert.ok(!/(one|a) (side|team) (always|must) (speak|speaks|go|goes) first|\b(for|against|pro|con|side a|side b) (always|must) (speak|speaks|go|goes) first/i.test(all), "no universal first-speaker rule");
+    assert.ok(!/(all|every) speech(es)? (last|lasts|are|is) (the same|\d)/i.test(all), "no universal speech-length rule");
+    assert.ok(!/a round is (one|a single) speech|the round is (one|a) speech/i.test(all), "round is not one speech");
+    assert.ok(!/a speech is the (whole|entire) (debate|round)/i.test(all), "speech is not the whole debate");
+    assert.ok(!/an argument is (a|the) (whole|entire) speech/i.test(all), "argument is not the whole speech");
+    assert.ok(!/motion is (whatever|any topic|the topic someone)/i.test(all), "motion is not any topic mentioned");
+    assert.ok(!/judge (will |can |may )?(fill|fills|supply|supplies|add|adds|complete|completes) (in )?(the |any |your )?(missing )?(reason|reasoning|warrant|connection)/i.test(all), "the judge supplies no missing reasoning");
+    assert.ok(!/judge decides (based )?on (their|his|her) own (view|opinion|belief)|what (the judge|they) (themselves )?believes? (decides|wins|settles)/i.test(all), "the judge does not decide from their own view");
+    assert.ok(!/(longer|the longest) speech(es)? (win|wins|are better|is better)|(talk|speak)(ing)? (more|longer) (wins|is better)/i.test(all), "longer does not win");
+    assert.ok(!/more (evidence|facts|reasons|sources) (automatically |always )?(wins?|is better|are better)/i.test(all), "more evidence does not win by itself");
+    assert.ok(!/(last|final) (word|speaker|speech) (wins|decides|always)/i.test(all), "the last speaker does not win by position");
+    assert.ok(!/(do not|don’t|don't|no) need to listen|ignore (the other side|them) and/i.test(all), "listening is required");
+    assert.ok(!/every (debate|format|round) (has|uses|follows) the same (speech )?(order|names?|number)|all debates? (work|works|run|runs) (this|that|the same) way|always (has|have) (exactly )?\d+ speeches/i.test(all), "no universal format law");
+    assert.ok(!/(sounds?|sounded) (more )?(confident|sure) (wins|is|means)|confidence (wins|decides)/i.test(all), "confidence is not a reason");
+    assert.ok(!/(usually|probably|sometimes|often) (the )?(round|speech|argument) (is|means)/i.test(all), "no term is defined by hedge");
+    // BEGINNER CEILINGS over the required path (everything rendered before Practice), the same formula as the other beginner lessons.
+    const required = [orient.objective, ex, ...orient.teachingSections.map((x: { heading: string; body: string }) => x.heading + "\n\n" + x.body), orient.whyMatters, orient.steps.join("\n\n"),
+      Object.values(orient.workedExample as Record<string, string>).join("\n\n"), Object.values(orient.misconception as Record<string, string>).join("\n\n"),
+      orient.commonMistakes.flatMap((m: Record<string, string>) => Object.values(m)).join("\n\n")];
+    const requiredWords = required.map(wc).reduce((a: number, b: number) => a + b, 0);
+    assert.ok(requiredWords <= 1000, `required path stays a beginner read: ${requiredWords} words`);
+    for (const para of required.flatMap((t) => t.split(/\n\n+/))) assert.ok(wc(para) <= 70, `no paragraph above 70 words: ${para.slice(0, 50)}`);
+    for (const sentence of required.join(" ").replace(/\n+/g, " ").split(/(?<=[.?!][)\u201d"]?)\s+(?=[A-Z\u201c"(])/)) assert.ok(wc(sentence) <= 30, `no sentence above 30 words: ${sentence.slice(0, 60)}`);
+    const checks = [orient.guidedQuestion, ...orient.practiceQuestions, ...orient.masteryCheck] as Array<{ prompt: string; choices: string[]; correctAnswer: string; explanation: string }>;
+    const qWords = checks.map((q) => [q.prompt, ...q.choices, q.explanation].map(wc).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
+    assert.ok(qWords <= 450, `the question layer stays small: ${qWords} words`);
+    // STRUCTURE by purpose: the two remaining boxes carry RULE-06 and RULE-04; the retired R25 / R29 boxes have no prose successor.
+    const purposes = orient.commonMistakes.map((m: { mistake: string }) => /own arguments while the other side speaks/.test(m.mistake) ? "RULE-06 listen" : /stays as strong as when you made it/.test(m.mistake) ? "RULE-04 defend the answered" : "UNCLASSIFIED: " + m.mistake);
+    assert.deepEqual([...purposes].sort(), ["RULE-04 defend the answered", "RULE-06 listen"], `mistake boxes by purpose (${purposes.join(" | ")})`);
+    assert.ok(!/every sentence the other side said|respond to every sentence/i.test(all), "R25 (class C) stays off the path");
+    // CHECKS: keys as authored, no key isolated by form, and the judge item's distractors are the taught beginner mistakes rather than cartoons.
+    assert.deepEqual(checks.map((q) => "ABCD"[q.choices.indexOf(q.correctAnswer)]), ["C", "B", "D"], "keys as authored and reviewed");
+    checks.forEach((q, i) => {
+      const lens = q.choices.map(wc); const chars = q.choices.map((o) => o.length); const k = q.choices.indexOf(q.correctAnswer);
+      const uniq = (xs: number[], v: number) => xs.filter((x) => x === v).length === 1;
+      assert.ok(!(uniq(lens, Math.max(...lens)) && lens[k] === Math.max(...lens)) && !(uniq(lens, Math.min(...lens)) && lens[k] === Math.min(...lens)), `Q${i + 1}: key not uniquely longest/shortest by words`);
+      assert.ok(!(uniq(chars, Math.max(...chars)) && chars[k] === Math.max(...chars)) && !(uniq(chars, Math.min(...chars)) && chars[k] === Math.min(...chars)), `Q${i + 1}: key not uniquely longest/shortest by characters`);
+      assert.ok(Math.max(...lens) - Math.min(...lens) <= 4 && Math.max(...chars) - Math.min(...chars) <= 16, `Q${i + 1}: options are length-matched`);
+    });
+    assert.ok(checks[0].choices.some((o) => /sure of itself|confiden/i.test(o)) && checks[0].choices.some((o) => /most to say|more reasons|most reasons/i.test(o)) && checks[0].choices.some((o) => /judge (thinks|believes|agrees)/i.test(o)), "the judge item's distractors are the lesson's own named non-reasons (delivery, quantity, the judge's own view), not cartoons");
   });
 
   // ================================================================================================

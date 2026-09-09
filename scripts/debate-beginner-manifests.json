@@ -1,5 +1,5 @@
 {
-  "marker": "DEBATE-BEGINNER-MANIFEST-V7",
+  "marker": "DEBATE-BEGINNER-MANIFEST-V8",
   "note": "Internal review contract. NOT learner content. Learners never see rule ids, classes, or guard references. A rewrite may fuse several rules into one sentence, example or mistake box; this artifact protects MEANING, never presentation length.",
   "fullTrackARuleTotal": 59,
   "censusRulesTriaged": 317,
@@ -13,37 +13,37 @@
         {
           "id": "RULE-01",
           "meaning": "A debate round is two sides arguing opposite answers to one statement (the motion) in front of a judge, and the judge picks the side whose reasons held up best based only on what was said in the round, so your job is not just to talk: it is to leave your reasons still standing at the end.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-02",
           "meaning": "A round is not a list of speeches; it is a handful of arguments that keep changing - each one gets introduced, then answered or ignored, then defended or dropped - and nothing resets when a new speaker stands up.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-03",
           "meaning": "Every time a speech ends, ask two separate questions about each argument: was it answered, yes or no - and what state is it in now?",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-04",
           "meaning": "An argument can be in one of three states - still unresolved (it was answered, but the answer did not settle it), weakened (answered and never defended), or sitting exactly where it was made (no response at all) - so after every opposing speech, defend the ones that were answered.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-05",
           "meaning": "If the other side never answers one of your arguments they have not beaten it - it is still there in the shape you gave it, it can decide a round you thought you were winning, and pointing that out costs one sentence.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-06",
           "meaning": "While the other side is speaking, listen instead of rehearsing: catch each of their claims and the reason under it, and mark which of your own arguments they answered and which they skipped.",
-          "guarded": false
+          "guarded": true
         },
         {
           "id": "RULE-07",
           "meaning": "Early speeches mostly build your side's case and later ones mostly answer and compare, so the round narrows to a few arguments still in dispute - and the judge decides between those survivors, not between who said more or who sounded surer.",
-          "guarded": false
+          "guarded": true
         }
       ],
       "safetyBoundaries": [
@@ -87,48 +87,49 @@
         {
           "censusRule": "R12 - Know your side's position and its two or three strongest reasons, so you know what is worth protecting when the round gets busy.",
           "klass": "C",
-          "destination": "later lesson - Constructive Speeches owns case planning; optionally one line of prep advice after the main path",
+          "destination": "ADVANCED/LATER — removed from the required beginner path (2026-09-09): the prep-advice step is gone; Constructive Speeches owns case planning. The renderer shows every block before Practice, so there is no 'after the main path'.",
           "why": "First test: a beginner can score an exchange's argument states correctly without having pre-selected their own two or three strongest reasons. It is round-preparation advice, not orientation content, and its natural home is the lesson that teaches building a case. Removing it from first exposure mak"
         },
         {
           "censusRule": "R25 - Arguments, not sentences, are the unit of a round: listen for the two or three arguments inside their speech rather than replying to every remark.",
           "klass": "C",
-          "destination": "optional note after the main path - fits the existing commonMistakes[0] slot, which is structurally pinned to remain but",
+          "destination": "ADVANCED/LATER — its mistake box left the required beginner path (2026-09-09) when the exact-four mistake pin was relaxed to >= 2 (owner ruling: structure pins are not doctrine); MG asserts the route stays absent.",
           "why": "It refines RULE-02 ('follow each argument, not each speech') by naming a distinct beginner failure - replying to every remark. The census's own read is that a learner reaches the scaffolded scenario without it. Keeping it as a compressed mistake box preserves the failure mode without spending requir"
         },
         {
           "censusRule": "R10 - Without this map beginners list facts, repeat themselves, or treat each speech as a fresh start.",
           "klass": "D",
-          "destination": "delete as duplicate of RULE-02",
+          "destination": "DELETED as duplicate (2026-09-09): R10's motivation is replaced by a one-line reason to care; R29's box is gone and RULE-01/RULE-07 carry 'not who said more, not who sounded surer' in section 3 (MG).",
           "why": "Its only load-bearing clause, 'treat each speech as a fresh start', is the misconception RULE-02 already owns and the misconception block already states in full ('Nothing resets'). The remaining two clauses are motivation, not judgment. Deleting it removes a telling, not a teaching."
         },
         {
           "censusRule": "R29 - Confidence is not a reason, and the judge's own opinion is not in the round.",
           "klass": "D",
-          "destination": "delete as duplicate of RULE-01 (keep the pinned fourth mistake-box slot, but not a third prose telling)",
+          "destination": "DELETED as duplicate (2026-09-09): R10's motivation is replaced by a one-line reason to care; R29's box is gone and RULE-01/RULE-07 carry 'not who said more, not who sounded surer' in section 3 (MG).",
           "why": "This is the third statement of the same doctrine: it is already in RULE-01 ('based only on what was said in the round') and RULE-07 ('not who said more or who sounded surer'). The census counted it as one of seven repetitions. Note that MA pins commonMistakes.length === 4, so the SLOT must stay fill"
         },
         {
           "censusRule": "R11 - Once you know the judge is deciding between reasons introduced, answered and defended in front of them, every sentence you say gets a purpose and every sentence the other sid",
           "klass": "E",
-          "destination": "authoring comment only - the rewrite supplies its own one-line reason-to-care in beginner language",
+          "destination": "authoring comment only — the rewrite's whyMatters is one sentence in beginner language (2026-09-09).",
           "why": "It is internal explanation of why the lesson exists, written in the current adult register ('something to wait out'). It states no judgment a student applies and it is not pinned or recorded anywhere. A beginner rewrite still needs a hook, but reproducing this sentence is preservation for its own sa"
         }
       ],
       "criticalGuardedInvariants": [
-        "scripts/coached-performance-smoke.ts:1339 - `assert.ok(/they have given the judge less reason to reject it/.test(text), ...)`. This EXACT phrase must appear in explanation, a teachingSections body, workedExample.whyItWorks, misconception.whyItFails, or a commonMistakes.whyItFails. It cannot be paraphrased into beginner language.",
-        "scripts/coached-performance-smoke.ts:1340 - `assert.ok(!/judge (will )?counts? it|treats? it as (still )?true|automatically (wins|true)/i.test(text), \"no absolute dropped-argument doctrine\")`. A well-meaning simplification such as 'the judge just counts it as true' fails this pin and reopens the repaired regression.",
-        "scripts/coached-performance-smoke.ts:1341 - `/two separate questions/`, `/Was it answered: yes or no/` and `/what state is it in now/` must all three appear verbatim. RULE-03 must be written using these exact strings.",
-        "scripts/coached-performance-smoke.ts:1342 - `/An argument that was answered can still be very much alive/` must appear verbatim; RULE-04's 'still unresolved' state cannot be reworded away from this sentence.",
-        "scripts/coached-performance-smoke.ts:1343-1344 - the teaching text must contain `/still unresolved/` and `/no response at all/`, and `orient.scaffoldedTry.slots` must deepEqual [\"answered\", \"still unresolved\", \"no response\"]. One vocabulary across teaching, mistakes and scenario is pinned.",
-        "scripts/coached-performance-smoke.ts:1350-1351, 1355 - the worked example must keep `/On concentration:/` and `/On that:/` in strongAnswer, `/Nothing was said about the money/` in strongAnswer, `/nobody answers anything/` in whyItWorks, and a weak version that is really a list (>= 2 'Also,'). No weighing vocabulary and no because/therefore refutation chain may enter it.",
-        "scripts/coached-performance-smoke.ts:1362-1363 - `/Formats differ in speech names, order and timing/` and both `/mostly constructive/` and `/mostly responsive/` must survive in `explanation`. The phase claim must stay hedged with 'mostly'; an earlier unhedged version was BLOCKED on neutrality review (docs/HANDOFF.md).",
-        "scripts/coached-performance-smoke.ts:1367-1368 - `/the Claim, Warrant, Impact lesson teaches how to build one/` in `explanation` and `/a skill with its own lesson later/` in `teachingSections[2].body`. Both ownership deferrals are exact-string pins.",
-        "scripts/coached-performance-smoke.ts:1316-1318 - STRUCTURE is pinned: exactly 3 teachingSections, a misconception object present, exactly 4 commonMistakes, exactly 3 checks total (guided + practice + mastery), a scaffoldedTry with 3 slots, and languageFrames / revisionLadder / additionalExamples all absent. A beginner rewrite may not collapse three sections into two or drop a mistake box without editing MA.",
-        "scripts/coached-performance-smoke.ts:1332-1333 - `assert.ok(prose >= 600 && prose <= 1300, ...)` and `assert.ok(prose + applied <= 1800, ...)`. There is a hard FLOOR of 600 teaching-prose words (objective + explanation + whyMatters + steps + sections). The triage's compression target must stop above 600, or MA must be deliberately relaxed by the owner in the same change.",
-        "scripts/coached-performance-smoke.ts:1386 (MF) - the page must render teach-first, show 'A round is a set of arguments that change' before the first check, show 'Now try the move' and the slot labels '1. answered', '2. still unresolved', '3. no response', and must contain NO frames section and NO guided-round link. Section headings are effectively pinned by the first of these.",
-        "scripts/learning-content-integrity-smoke.ts + scripts/learning-content-baseline.json - a full canonical snapshot of the lesson's runtime text is checked in; the orientation entry is at learning-content-baseline.json:1227ff. ANY rewrite of this prose must update the baseline JSON and the `LEARNING_CONTENT_BASELINE` marker (currently 'WEIGHING-REPAIR-V1', line 56) in the same commit, or the suite fails.",
-        "scripts/education-migration-smoke.ts:687-688 and scripts/coach-evidence-smoke.ts:419-420 - orientation carries NO skillSlug and NO practiceDrill and is invisible to the remediation/Coach evidence path. Formative-only by design; a rewrite must not add a drill CTA or a claimed skill."
+        "PROSE FLOOR: RETIRED at f0e17f7 (2026-09-07); MA keeps only the 1,300 prose ceiling and the 1,800 whole-lesson ceiling. The earlier text of this entry described a 600-word floor as live; that was stale from f0e17f7 until 2026-09-09.",
+        "STRUCTURE, check \"MA\": no guided round or rubric, no frames / ladder / additionalExamples, exactly 3 teachingSections, a misconception, commonMistakes >= 2 (relaxed from === 4 on 2026-09-09: the R25 and R29 boxes were class C / D before Practice; the two remaining boxes are pinned BY PURPOSE in MG as RULE-06 and RULE-04), exactly 3 checks, a 3-slot scaffoldedTry, no skillSlug, no practiceDrill.",
+        "EXACT DOCTRINE STRINGS, check \"MB\" (unchanged, plain enough for a beginner): 'they have given the judge less reason to reject it' (B01), the negative absolute-doctrine pin, 'two separate questions' / 'Was it answered: yes or no' / 'what state is it in now' (RULE-03), 'An argument that was answered can still be very much alive' (RULE-04), 'still unresolved' / 'no response at all' and the slot names (B07).",
+        "WORKED EXAMPLE, check \"MC\" (unchanged): 'On concentration:' / 'On that:' / 'Nothing was said about the money' in strongAnswer, 'nobody answers anything' in whyItWorks, the weak version a list (>= 2 'Also,'), no weighing words, no because/therefore chain. Texts were compressed around these strings.",
+        "NEUTRALITY AND OWNERSHIP, check \"MD\" (unchanged): the procedural-term ban list (B02), 'Formats differ in speech names, order and timing' and the hedged 'mostly constructive' / 'mostly responsive' in explanation (RULE-07, neutrality review), no later-skill method, 'the Claim, Warrant, Impact lesson teaches how to build one' (B03) in explanation and 'a skill with its own lesson later' (B04) in section 3.",
+        "A-RULE GUARDS, check \"MG\" (2026-09-09): RULE-01 (motion definition, 'There are always two sides.', the judge deciding on what was said, the job of leaving reasons standing), RULE-02 (section 1 opening + the misconception), RULE-05 consequence ('It can decide a round you thought you were winning, and saying so costs one sentence.'), RULE-06 (section 2 listening sentences + steps 1-2), RULE-07 ('The round shrinks to the few disagreements still standing.' + 'Not which side said more. Not which side sounded surer…'); RULE-03 / RULE-04 remain exact in MB. B05 'It is not a transcript.'; B02 no side-order rule for any side name.",
+        "SHAPE, check \"MG\": the explanation opens 'Motion: …' with Side A / Side B taking turns and ends its first paragraph on the judge deciding 'using only what was said'; 'That is a round: one whole debate, from the first speech to the judge’s decision.' follows inside the first hundred words; 'The round is the whole debate. A speech is one person’s turn to talk. An argument is one reason inside a speech…' tells the three words apart; no glossary opener.",
+        "PRODUCT PROCEDURE, check \"MG\" (owner ruling 2026-09-09): the explanation says what the CompeteReady room shows (a side and a format are chosen; the room lists that format's speeches, whose turn it is and the turn timing; the opponent has turns; the judge decides from what was said), placed after 'Formats differ in speech names, order and timing'; negative guards forbid any 'all/every formats use the same order / count / names / timing', any universal first-speaker rule and any universal speech-length rule, so product procedure can never read as debate law (B02).",
+        "REGRESSION ROUTES, check \"MG\": round = one speech, speech = whole debate, argument = whole speech, motion = any topic, judge supplies missing reasoning, judge decides from their own view, longer wins, more evidence wins, last speaker wins, no need to listen, universal format law, confidence as a reason, hedged term definitions, R25 route.",
+        "BEGINNER CEILINGS, check \"MG\": required path (objective + explanation + sections + whyMatters + steps + worked example + misconception + mistakes) <= 1,000 words (raised from 950 on 2026-09-09 for the owner-authorised CompeteReady procedure paragraph), paragraphs <= 70, sentences <= 30, question layer <= 450 words.",
+        "CHECKS, check \"MG\": keys deepEqual ['C', 'B', 'D']; no key uniquely longest or shortest by words or characters; options length-matched; the judge item's distractors are the lesson's own named non-reasons (sounded surer / said more / what they themselves believe), not cartoons.",
+        "RENDER, check \"MF\" (unchanged): 'A round is a set of arguments that change' before 'What are they choosing between', 'Now try the move', the three slot labels, no frames, no guided-round link, no drill CTA.",
+        "RUNTIME, check \"ME\" (unchanged): evaluateRoundTrackingScaffold is shape-only, dispatched by lesson id; scripts/education-migration-smoke.ts:703 and scripts/coach-evidence-smoke.ts:419 keep the lesson formative-only (no practiceDrill, invisible to Coach evidence); scripts/tracks-smoke.ts:597-600 keeps the dashboard's first Debate action pointing at /lessons/debate-round-orientation.",
+        "INTEGRITY: scripts/learning-content-baseline.json holds the snapshot; the marker in scripts/learning-content-integrity-smoke.ts is ROUND-ORIENTATION-BEGINNER-V1 from 2026-09-09 (the earlier text of this entry named WEIGHING-REPAIR-V1, long superseded)."
       ]
     },
     {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "@prisma/client";
+import type { Organization, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { debateMasteryHeld, DEBATE_MASTERY_HELD_SKILLS } from "@/lib/debate-drills";
 
@@ -271,11 +271,48 @@ async function heldReviewSkillIds(): Promise<string[] | null> {
  * learner saw "1 skill is due", clicked through, and read "Nothing due right now" — the same
  * unresolvable dead end, one step further along.
  */
-async function dueReviewRowsWithSkills(userId: string, take?: number) {
-  const held = await heldReviewSkillIds();
-  if (held === null) return null;
+/**
+ * Skill ids belonging to ONE organization — the track scope for every due-review surface (P1-C.2).
+ *
+ * WHY THIS EXISTS. A due review is an ASSIGNMENT: "this is your training right now". The schedule
+ * table is keyed by user and skill and knows nothing about tracks, so before this the surfaces
+ * listed every row a user had. `Skill.organization` was selected, but only to print a badge. A
+ * learner who practised Debate and later switched to DECA — or who simply opened
+ * `/study-arcade?track=debate` once, which outranks their own organization in `pickActiveTrack` —
+ * was handed the other track's lesson and drill as their assigned work. Track isolation is
+ * end-to-end in this product, and an assignment surface is squarely inside it.
+ *
+ * SCOPING HAPPENS IN THE SCHEDULE QUERY, NOT AFTER IT. Resolving the organization's skill ids first
+ * costs one more query and buys correctness the cheaper shape cannot have: `take` is then applied to
+ * rows that are already in-track. Filtering after a `take` would let 50 out-of-track rows crowd out
+ * every in-track one and report "nothing due" to a learner who has work waiting.
+ *
+ * `Skill.organization` is the authoritative relationship and the only thing consulted here. Nothing
+ * infers a track from a lesson slug, a drill area or a skill-slug prefix.
+ */
+async function skillIdsForOrganization(organization: Organization): Promise<string[] | null> {
+  try {
+    const rows = await prisma.skill.findMany({ where: { organization }, select: { id: true } });
+    return rows.map((row) => row.id);
+  } catch {
+    return null; // fail closed, exactly as heldReviewSkillIds does
+  }
+}
+
+async function dueReviewRowsWithSkills(userId: string, organization: Organization | null | undefined, take?: number) {
+  // NO RESOLVED TRACK MEANS NO ASSIGNMENT. The active-track resolver's own contract says an
+  // unresolved track must fail CLOSED and "NEVER means show every track" (lib/track-server.ts). For
+  // an assignment surface that means showing nothing rather than showing everything: we cannot say
+  // whose training a row is without knowing which track the learner is in.
+  if (!organization) return null;
+  const [held, inTrack] = await Promise.all([heldReviewSkillIds(), skillIdsForOrganization(organization)]);
+  if (held === null || inTrack === null) return null;
+  if (inTrack.length === 0) return { rows: [], skillById: new Map<string, { id: string; name: string; slug: string; organization: string }>() };
+  const heldInTrack = new Set(held);
+  const eligibleIds = inTrack.filter((id) => !heldInTrack.has(id));
+  if (eligibleIds.length === 0) return { rows: [], skillById: new Map<string, { id: string; name: string; slug: string; organization: string }>() };
   const rows = await prisma.skillReviewSchedule.findMany({
-    where: { userId, nextReviewAt: { lte: new Date() }, ...(held.length > 0 ? { skillId: { notIn: held } } : {}) },
+    where: { userId, nextReviewAt: { lte: new Date() }, skillId: { in: eligibleIds } },
     orderBy: { nextReviewAt: "asc" },
     ...(take === undefined ? {} : { take })
   });
@@ -286,16 +323,18 @@ async function dueReviewRowsWithSkills(userId: string, take?: number) {
   });
   const skillById = new Map(skills.map((skill) => [skill.id, skill]));
   // The same slug gate the list applies, applied here so the count sees exactly what the list will.
+  // The organization gate is repeated for the same reason the slug gate is: the id set above is the
+  // cheap filter, and this one cannot be defeated by a stale or re-pointed Skill row.
   const resolved = rows.filter((row) => {
     const skill = skillById.get(row.skillId);
-    return Boolean(skill) && !debateMasteryHeld(skill!.slug);
+    return Boolean(skill) && skill!.organization === organization && !debateMasteryHeld(skill!.slug);
   });
   return { rows: resolved, skillById };
 }
 
-export async function countDueReviews(userId: string): Promise<number> {
+export async function countDueReviews(userId: string, organization: Organization | null | undefined): Promise<number> {
   try {
-    const due = await dueReviewRowsWithSkills(userId);
+    const due = await dueReviewRowsWithSkills(userId, organization);
     return due === null ? 0 : due.rows.length;
   } catch {
     return 0;
@@ -309,14 +348,28 @@ export type DueReview = {
   organization: string;
   nextReviewAt: Date;
   reviewCount: number;
-  masteryPercent: number;
-  masteryLevel: string;
+  /**
+   * The learner's recorded mastery, or NULL when no MasteryProgress row exists (P1-C.2).
+   *
+   * ABSENCE IS NOT ZERO. This used to be `progress?.masteryPercent ?? 0`, which turned "we have no
+   * mastery record for this skill" into the claim "your mastery is 0%". That is not a rounding
+   * choice, it is a fabricated measurement, and the HOSA Medical Terminology path makes it routine:
+   * that submit route is deliberately review-only — it writes the schedule row and NEVER a
+   * MasteryProgress row — and it only writes at all when the learner PASSED its floors. So the
+   * learner most likely to be told "0% mastery" was the one who just answered nearly everything
+   * correctly. `masteryLevel` already carried the distinction as "NOT_STARTED", but no consumer read
+   * it, so nothing could tell an absent record apart from a demonstrated zero.
+   *
+   * A real persisted 0 stays 0: that is evidence, and it is displayed. Only absence is null.
+   */
+  masteryPercent: number | null;
+  masteryLevel: string | null;
 };
 
 // Due reviews joined with skill + current mastery, for the review session page.
-export async function getDueReviews(userId: string): Promise<DueReview[]> {
+export async function getDueReviews(userId: string, organization: Organization | null | undefined): Promise<DueReview[]> {
   try {
-    const due = await dueReviewRowsWithSkills(userId, 50);
+    const due = await dueReviewRowsWithSkills(userId, organization, 50);
     if (due === null) return [];
     const { rows, skillById } = due;
     if (rows.length === 0) return [];
@@ -343,8 +396,9 @@ export async function getDueReviews(userId: string): Promise<DueReview[]> {
           organization: skill.organization,
           nextReviewAt: row.nextReviewAt,
           reviewCount: row.reviewCount,
-          masteryPercent: progress?.masteryPercent ?? 0,
-          masteryLevel: progress?.masteryLevel ?? "NOT_STARTED"
+          // `?? null`, never `?? 0` — see the DueReview.masteryPercent contract above.
+          masteryPercent: progress?.masteryPercent ?? null,
+          masteryLevel: progress?.masteryLevel ?? null
         }
       ];
     });

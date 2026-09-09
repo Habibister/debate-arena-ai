@@ -71,7 +71,7 @@ export default async function StudyArcadePage({
         prisma.masteryProgress.count({
           where: { userId: session.user.id, lastPracticedAt: { not: null }, NOT: { masteryLevel: "MASTERED" } }
         }),
-        countDueReviews(session.user.id)
+        countDueReviews(session.user.id, activeTrack?.organization)
       ]);
     } catch {
       // reviews tiles degrade to zero-state rather than breaking the page

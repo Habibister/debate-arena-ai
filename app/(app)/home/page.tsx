@@ -55,7 +55,7 @@ export default async function HomePage({ searchParams }: { searchParams: { track
     ? await Promise.all([
         prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE } }),
         prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON" } }),
-        countDueReviews(session.user.id).catch(() => 0)
+        countDueReviews(session.user.id, activeTrack?.organization).catch(() => 0)
       ])
     : [0, 0, 0];
 

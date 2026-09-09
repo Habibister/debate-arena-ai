@@ -8,13 +8,21 @@ import { authOptions } from "@/lib/auth";
 import { practiceDrillAreaLabel, practiceDrillHref } from "@/lib/education/practice-drill";
 import { COMPAT_TRACK_DESTINATION, compatTrackForSlug, debateWritingPracticeSupported, practiceRemediationForSkill } from "@/lib/education/skills-compat";
 import { getDueReviews, PRACTICING_MASTERY_MIN } from "@/lib/spaced-review";
+import { getActiveTrack } from "@/lib/track-server";
 
 // Review session: the skills whose spaced review is due, each linking into the EXISTING skill
 // practice flow (no new drill types). Passing a due review advances its interval; failing knocks
 // mastery down and reschedules it for tomorrow — handled in the practice grading route.
-export default async function ReviewSessionPage() {
+// P1-C.2: this page resolves the ACTIVE TRACK and asks only for that track's due reviews. It
+// previously passed a userId alone, so it listed every schedule row a learner had and rendered the
+// owning track's badge, lesson and drill as their assigned training. `getActiveTrack` is the same
+// canonical resolver the home page and the Study Arcade index already use, with the same `?track=`
+// precedence — so an intentional switch through the track selector still moves the learner's review
+// list, which is the point. What is gone is seeing another track's work without asking for it.
+export default async function ReviewSessionPage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
-  const due = session?.user?.id ? await getDueReviews(session.user.id) : [];
+  const activeTrack = await getActiveTrack(searchParams.track);
+  const due = session?.user?.id ? await getDueReviews(session.user.id, activeTrack?.organization) : [];
 
   return (
     <div className="space-y-6">
@@ -74,7 +82,17 @@ export default async function ReviewSessionPage() {
               // `masteryPercent` is a high-water mark (it only falls on a failed due review), so this
               // reads the record that exists rather than claiming a fresh diagnosis.
               const remediation = practiceRemediationForSkill(review.skillSlug);
-              const belowPracticing = review.masteryPercent < PRACTICING_MASTERY_MIN;
+              // MASTERY IS SHOWN ONLY WHEN IT WAS RECORDED (P1-C.2). A real persisted 0 is evidence and
+              // still reads "0% mastery"; an ABSENT record reads "Review due", because `?? 0` turned "we
+              // have no mastery row" into the claim "your mastery is 0%". The HOSA Medical Terminology
+              // path makes that the ordinary case rather than an edge case: it schedules a review and
+              // never writes mastery, and it only schedules at all when the learner PASSED its floors.
+              //
+              // Below the floor is likewise a claim about a RECORD. With no mastery row there is no
+              // record to be below, so this is false rather than true-by-default — otherwise every
+              // review-only skill would carry weakness wording and a remedial lesson link it has no
+              // evidence for.
+              const belowPracticing = review.masteryPercent !== null && review.masteryPercent < PRACTICING_MASTERY_MIN;
               const summary = (
                 <>
                   <div className="flex items-start justify-between gap-3">
@@ -83,7 +101,7 @@ export default async function ReviewSessionPage() {
                       <h3 className="mt-2 font-semibold">{review.skillName}</h3>
                     </div>
                     <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-                      {review.masteryPercent}% mastery
+                      {review.masteryPercent === null ? "Review due" : `${review.masteryPercent}% mastery`}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">

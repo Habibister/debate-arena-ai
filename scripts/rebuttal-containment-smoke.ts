@@ -337,8 +337,19 @@ check("J. due-review eligibility excludes a held skill, without touching its dat
   const gateAt = sr.indexOf("async function dueReviewRowsWithSkills(");
   const gate = sr.slice(gateAt, sr.indexOf("export async function countDueReviews"));
   assert.ok(/heldReviewSkillIds\(\)/.test(gate), "the gate consults the held set");
-  assert.ok(/if \(held === null\) return null;/.test(gate), "and propagates the fail-closed signal");
-  assert.ok(/skillId: \{ notIn: held \}/.test(gate), "the gate excludes held skills from the query");
+  assert.ok(/if \(held === null(?: \|\| [A-Za-z]+ === null)* \) return null;|if \(held === null(?: \|\| [A-Za-z]+ === null)*\) return null;/.test(gate),
+    "and propagates the fail-closed signal");
+  // P1-C.2 changed the MECHANISM, not the property. The gate used to exclude held skills with
+  // `skillId: { notIn: held }`; now that the query is also scoped to one track, the held ids are
+  // subtracted from that track's eligible ids and the query filters `skillId: { in: eligibleIds }`.
+  // What must stay true is that the exclusion happens IN THE QUERY — a held row must never be
+  // fetched and then hidden — and that the subtraction really consults the held set.
+  assert.ok(/skillId: \{ notIn: held \}/.test(gate) ||
+            (/const eligibleIds = inTrack\.filter\(\(id\) => !heldInTrack\.has\(id\)\);/.test(gate) &&
+             /skillId: \{ in: eligibleIds \}/.test(gate)),
+    "the gate excludes held skills from the query itself, not after it");
+  assert.ok(/new Set\(held\)/.test(gate) || /notIn: held/.test(gate),
+    "and the exclusion is built from the canonical held set");
   for (const fn of ["countDueReviews", "getDueReviews"]) {
     const at = sr.indexOf(`export async function ${fn}`);
     assert.ok(at > 0, `control: ${fn} exists`);
@@ -349,8 +360,13 @@ check("J. due-review eligibility excludes a held skill, without touching its dat
   }
   // Second gate by slug, applied inside the shared gate AND again in the list path, so a stale or
   // missing Skill row cannot let one through. `SkillReviewSchedule.skillId` has no foreign key.
-  assert.ok(/return Boolean\(skill\) && !debateMasteryHeld\(skill!\.slug\);/.test(gate),
+  // P1-C.2 added a third condition to the same defensive filter (the row's Skill must belong to the
+  // active track). The property is unchanged: whatever the cheap id-level query does, this pass drops
+  // any row the list would refuse, so the count can never promise a card the list will not render.
+  assert.ok(/return Boolean\(skill\) && .*!debateMasteryHeld\(skill!\.slug\);/.test(gate),
     "the shared gate drops any row whose Skill is missing or held, so the count sees what the list will show");
+  assert.ok(/skill!\.organization === organization/.test(gate),
+    "and drops any row whose Skill belongs to another track, compared on Skill.organization itself");
   assert.ok(/if \(debateMasteryHeld\(skill\.slug\)\) return \[\];/.test(sr),
     "the list path also drops a held skill after resolving its slug");
   // The READ path is a filter, not a mutation: withdrawing actionability must never edit the row.

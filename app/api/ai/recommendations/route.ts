@@ -4,6 +4,7 @@ import { clientIp, requireUser } from "@/lib/api-auth";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { explainNextAction } from "@/lib/ai";
 import { coachActionExplanationTemplate, getEvidenceBackedNextAction } from "@/lib/coach-evidence";
+import { resolveActiveTrack } from "@/lib/track-server";
 import { coachNextActionRequestSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -21,7 +22,11 @@ export async function POST(request: Request) {
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     await parseJson(request, coachNextActionRequestSchema);
 
-    const action = await getEvidenceBackedNextAction(user.id);
+    // P1-C.2: the Coach answers for the learner's ACTIVE TRACK. Same canonical resolver the
+    // learner-facing surfaces use; no route slug exists on this endpoint, so it falls through to the
+    // learner's persisted organization and then the switcher cookie, exactly as elsewhere.
+    const active = await resolveActiveTrack();
+    const action = await getEvidenceBackedNextAction(user.id, active.track?.organization);
     const template = coachActionExplanationTemplate(action);
     if (action.type === "NO_DUE_ACTION") {
       return NextResponse.json({ action, explanation: template });

@@ -153,12 +153,30 @@ function main() {
   const LUMPED = /(decks?|games?)[^.]*?\b(feeds?|updates?)\b[^.]*?\b(mastery|progress)\b/i;
   assert.ok(!LUMPED.test(arcade), "G19-3. no sentence claims decks or games feed/update mastery or progress");
   // G19-4: the truthful scoped copy is present — drills record; decks and games are labeled unrecorded.
-  assert.ok(/drills that feed your real mastery record/.test(arcade),
-    "G19-4. the recording claim is scoped to drills");
-  assert.ok((arcade.match(/aren't recorded/g) ?? []).length >= 2,
-    "G19-4b. decks and games are labeled as not recorded, in the header and the record tile");
-  assert.ok(/recorded from real drill sessions/.test(arcade),
+  //
+  // SUPERSEDED (P1-C.2): these three pinned EXACT PROSE — "drills that feed your real mastery record",
+  // two literal occurrences of "aren't recorded", and "recorded from real drill sessions". The copy was
+  // rewritten by b1e1a26 "fix(education): make debate drill progress copy truthful", a commit whose
+  // whole purpose was making this page MORE precise, and the pins then failed on an improvement. Worse,
+  // the old literal contains the very lumping construction G19-2 forbids elsewhere. The prohibitions
+  // above (G19-1/2/3) are untouched and still do the load-bearing work; what these three now assert is
+  // the POSITIVE semantic claim rather than one accepted wording of it, so honest rewording is free and
+  // dropping the attribution is not. Learner copy was NOT changed to satisfy any of this.
+  assert.ok(/drills?[^.]*\brecords?\b|\brecord(?:ed)?[^.]*\bdrill/i.test(arcade),
+    "G19-4. the recording claim is attributed to drills");
+  assert.ok(/(decks?|games?)[^.]*\b(aren't|are not|never)\b[^.]*\brecord/i.test(arcade),
+    "G19-4b. decks and games are labeled as not recorded, in the same breath as the claim");
+  assert.ok(/recorded result[^.]*\bdrill|from real drill sessions/i.test(arcade),
     "G19-4c. the practiced-skills tile attributes its count to drill sessions");
+  // G19-4d. Non-vacuity: each of the three regexes above must actually discriminate. A page that
+  // dropped the attribution entirely has to fail them, so they are proven against a stripped fixture.
+  const noAttribution = "Flashcard decks, review games, and drills. Your record fills in over time.";
+  assert.ok(!/drills?[^.]*\brecords?\b|\brecord(?:ed)?[^.]*\bdrill/i.test(noAttribution),
+    "G19-4d. control: prose with no drill/record attribution fails G19-4");
+  assert.ok(!/(decks?|games?)[^.]*\b(aren't|are not|never)\b[^.]*\brecord/i.test(noAttribution),
+    "G19-4d2. control: prose that never says decks and games are unrecorded fails G19-4b");
+  assert.ok(!/recorded result[^.]*\bdrill|from real drill sessions/i.test(noAttribution),
+    "G19-4d3. control: prose that does not source the count from drills fails G19-4c");
   // G19-5: the copy matches reality in BOTH directions — the study components still make no server
   // write. If decks or games ever start recording, update the arcade copy AND this pairing together.
   const studyFiles: string[] = [];

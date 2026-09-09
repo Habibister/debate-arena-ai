@@ -6,6 +6,7 @@ import {
   debateWritingPracticeSupported,
   practiceRemediationForSkill
 } from "@/lib/education/skills-compat";
+import type { Organization } from "@prisma/client";
 import { getDueReviews, PRACTICING_MASTERY_MIN } from "@/lib/spaced-review";
 
 // M15 Learning Architecture Slice 3 — the DETERMINISTIC half of the AI Coach.
@@ -72,14 +73,25 @@ export type CoachNextAction =
  * most overdue skill. Deliberately NOT weakest-first or remediation-first: the repository already
  * defines due ordering, and this module must not quietly invent a competing priority.
  */
-export async function getEvidenceBackedNextAction(userId: string): Promise<CoachNextAction> {
-  const due = await getDueReviews(userId);
+export async function getEvidenceBackedNextAction(
+  userId: string,
+  organization: Organization | null | undefined
+): Promise<CoachNextAction> {
+  // P1-C.2: the SELECTION POLICY below is unchanged — still the first row of getDueReviews' own
+  // `nextReviewAt asc` ordering, still compared against the same floor. What changed is the INPUT:
+  // the due list is now scoped to the learner's active track, so the Coach can no longer name a
+  // skill from a track the learner is not training in. An unresolved track yields no due rows and
+  // therefore NO_DUE_ACTION, which is the resolver's own fail-closed contract.
+  const due = await getDueReviews(userId, organization);
   const first = due[0];
   if (!first) return { type: "NO_DUE_ACTION" };
 
   const skill: CoachSkill = { slug: first.skillSlug, name: first.skillName, organization: first.organization };
   const dueSinceDate = first.nextReviewAt.toISOString().slice(0, 10);
-  const belowPracticing = first.masteryPercent < PRACTICING_MASTERY_MIN;
+  // No mastery row means no record to be below the floor, so this is false rather than
+  // true-by-default. Previously an absent record arrived here as 0 and made every review-only skill
+  // look like a demonstrated weakness, which then chose the lesson-first action on no evidence.
+  const belowPracticing = first.masteryPercent !== null && first.masteryPercent < PRACTICING_MASTERY_MIN;
 
   const remediation = practiceRemediationForSkill(first.skillSlug);
   // P1-C (2026-09-09): the Debate-only gate is gone. Nothing here coerces a track — the drill is

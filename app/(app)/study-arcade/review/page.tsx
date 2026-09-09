@@ -103,7 +103,10 @@ export default async function ReviewSessionPage() {
               // review-ladder:smoke requires every such displacement to be explicitly listed — a mapped
               // skill can still never lose a working destination silently, and a listing today does not
               // make future displacements automatically acceptable.
-              if (remediation) {
+              // P1-A (2026-09-09): remediation is representable for any track now, but this card's copy
+              // and destination are Debate-only. A non-Debate remediation falls through to the generic
+              // reassess path rather than being rendered as a Debate drill — never a cross-track target.
+              if (remediation && remediation.drill.track === "debate") {
                 return (
                   <div key={review.skillId} className="rounded-lg border bg-background p-4">
                     {summary}

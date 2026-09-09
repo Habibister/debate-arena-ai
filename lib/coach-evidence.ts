@@ -76,7 +76,11 @@ export async function getEvidenceBackedNextAction(userId: string): Promise<Coach
   const belowPracticing = first.masteryPercent < PRACTICING_MASTERY_MIN;
 
   const remediation = practiceRemediationForSkill(first.skillSlug);
-  if (remediation) {
+  // P1-A (2026-09-09): remediation is now representable for any track, but this card's destination
+  // shape and copy are still Debate-only. A non-Debate remediation is deliberately NOT surfaced here
+  // rather than coerced into a Debate drill — routing DECA remediation is P1-C's job, and inventing a
+  // Debate destination for a DECA skill is exactly the cross-track fallback the architecture forbids.
+  if (remediation && remediation.drill.track === "debate") {
     const drill: CoachDrill = {
       track: remediation.drill.track,
       area: remediation.drill.area,

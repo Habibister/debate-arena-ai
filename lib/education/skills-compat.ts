@@ -394,5 +394,12 @@ export function practiceRemediationForSkill(slug: string): PracticeRemediation |
   if (!entry || !entry.practiceDrill) return null;
   if (entry.visibility !== "learner" || entry.practiceState !== "available") return null;
   if (!isConceptEducationLessonEntry(entry)) return null;
+  // CROSS-TRACK GUARD (P1-A, 2026-09-09). Now that a practice drill can name a track other than
+  // Debate, a remediation must never hand a learner a destination belonging to a different track. The
+  // drill's track has to match the track of the lesson that owns it, or there is no target at all —
+  // silence is correct, a plausible-looking Debate drill for a DECA skill is not.
+  const expectedDrillTrack =
+    entry.track === "GENERAL_DEBATE" ? "debate" : entry.track === "DECA" ? "deca" : null;
+  if (expectedDrillTrack === null || entry.practiceDrill.track !== expectedDrillTrack) return null;
   return { lessonId: entry.id, lessonTitle: entry.source.lesson.title, drill: entry.practiceDrill };
 }

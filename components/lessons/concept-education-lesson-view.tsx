@@ -10,7 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
 import { cn } from "@/lib/utils";
 import { debateMasteryHeld as skillRecordSuspended, DRILL_AREAS } from "@/lib/debate-drills";
-import type { ConceptEducationLessonSource, EducationPracticeDrill } from "@/lib/education/types";
+import type { ConceptEducationLessonSource, DebatePracticeDrill, DecaPracticeDrill, EducationPracticeDrill } from "@/lib/education/types";
 import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
 import {
   ConceptEducationLessonPractice,
@@ -48,7 +48,7 @@ import {
  * Server-rendered apart from the checks, which need ephemeral selection state.
  */
 /** Learner-facing drill names. Keyed by the typed area union so a new area cannot be forgotten. */
-const DRILL_AREA_LABELS: Record<EducationPracticeDrill["area"], string> = {
+const DRILL_AREA_LABELS: Record<DebatePracticeDrill["area"], string> = {
   "claim-warrant-impact": "Claim / Warrant / Impact",
   rebuttal: "Rebuttal",
   "evidence-evaluation": "Evidence evaluation",
@@ -57,6 +57,19 @@ const DRILL_AREA_LABELS: Record<EducationPracticeDrill["area"], string> = {
   signposting: "Signposting",
   "constructive-speech": "Constructive speech"
 };
+
+/** The same, for DECA. Separate map so each track's exhaustiveness is checked against its own bank. */
+const DECA_DRILL_AREA_LABELS: Record<DecaPracticeDrill["area"], string> = {
+  "performance-indicators": "Performance indicators",
+  "business-reasoning": "Business reasoning",
+  "customer-relations": "Customer relations",
+  "marketing-fundamentals": "Marketing fundamentals"
+};
+
+/** Resolves a drill's learner-facing name from whichever track owns it. */
+function drillAreaLabel(drill: EducationPracticeDrill): string {
+  return drill.track === "deca" ? DECA_DRILL_AREA_LABELS[drill.area] : DRILL_AREA_LABELS[drill.area];
+}
 
 export function ConceptEducationLessonView({
   source,
@@ -394,12 +407,12 @@ export function ConceptEducationLessonView({
             The check above is for practice and records nothing.{" "}
             {drillKeepsARecord ? (
               <>
-                The {DRILL_AREA_LABELS[practiceDrill.area]} drill is scored on the server — that is where your
+                The {drillAreaLabel(practiceDrill)} drill is scored on the server — that is where your
                 record of this skill starts.
               </>
             ) : (
               <>
-                The {DRILL_AREA_LABELS[practiceDrill.area]} drill does not add to your record either right now —
+                The {drillAreaLabel(practiceDrill)} drill does not add to your record either right now —
                 use it for extra scored practice, with feedback on every answer.
               </>
             )}
@@ -408,7 +421,7 @@ export function ConceptEducationLessonView({
             href={`/study-arcade?track=${practiceDrill.track}&area=${practiceDrill.area}` as Route}
             className={cn(buttonVariants({ size: "sm" }), "mt-4 h-auto min-h-11 min-w-11 whitespace-normal px-4 text-center")}
           >
-            Practice this skill in the {DRILL_AREA_LABELS[practiceDrill.area]} drill
+            Practice this skill in the {drillAreaLabel(practiceDrill)} drill
             <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
           </Link>
         </section>

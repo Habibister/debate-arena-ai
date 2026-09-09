@@ -20,6 +20,7 @@
 
 import type { SourceFreshnessMetadata } from "@/lib/source-freshness";
 import type { DrillArea } from "@/lib/debate-drills";
+import type { DecaDrillArea } from "@/lib/deca-drills";
 
 
 /**
@@ -299,10 +300,23 @@ export type ConceptEducationLessonSource = {
  * now breaks the build here rather than silently leaving a dead deep link that falls back to "mixed".
  * `import type` is erased at compile time, so no runtime dependency on the drill bank is created.
  */
-export type EducationPracticeDrill = {
+export type DebatePracticeDrill = {
   track: "debate";
   area: DrillArea;
 };
+
+/**
+ * P1-A (2026-09-09). DECA concept practice was previously UNREPRESENTABLE: this type hardcoded
+ * `track: "debate"`, so no DECA lesson could own a drill and DECA remediation could not resolve for
+ * structural reasons rather than curricular ones. Each track keeps its OWN canonical area union, so
+ * a DECA area can never be written where a Debate area belongs, or the reverse.
+ */
+export type DecaPracticeDrill = {
+  track: "deca";
+  area: DecaDrillArea;
+};
+
+export type EducationPracticeDrill = DebatePracticeDrill | DecaPracticeDrill;
 
 /** Everything an entry carries regardless of which source shape it wraps. */
 type EducationRegistryEntryBase = {

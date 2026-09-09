@@ -75,8 +75,8 @@ function main() {
     // published — one per ROLE-PLAY area. Neither cluster-knowledge area has one.
     assert.deepEqual(
       EDUCATION_LESSONS.filter((e) => e.track === "DECA" && e.practiceDrill).map((e) => e.id),
-      ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation"],
-      "exactly two DECA lessons carry a drill — the two role-play teaching owners"
+      ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation", "deca-handling-customer-situations"],
+      "exactly three DECA lessons carry a drill — two role-play owners and one cluster-knowledge owner"
     );
   });
 
@@ -142,15 +142,32 @@ function main() {
     // EXACTLY TWO areas are owned after P1-B2, and they are precisely the two ROLE-PLAY areas. The
     // two CLUSTER-KNOWLEDGE areas the exam tests remain ownerless and are not dressed up.
     const owned = DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").map((m) => m.area);
-    assert.deepEqual(owned, ["performance-indicators", "business-reasoning"], "two of four areas are owned");
-    assert.deepEqual(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").map((m) => m.component), ["roleplay", "roleplay"],
-      "and both owned areas are role-play skills — no cluster-knowledge area has an owner yet");
+    assert.deepEqual(owned, ["performance-indicators", "business-reasoning", "customer-relations"], "three of four areas are owned");
+    // P1-B3 SUPERSEDES the "both owned areas are role-play" assertion. That was true only while no
+    // cluster-knowledge area had an owner, and it pinned the state rather than the property. The
+    // property worth holding is that an owner's COURSE matches its area's component: a role-play area
+    // is owned from the role-play course, and a cluster-knowledge area is not. Forcing the cluster
+    // lesson into deca-roleplay-core would now fail here, which the old form could never catch.
+    const ROLEPLAY_COURSE = "deca-roleplay-core";
+    for (const mapping of DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned")) {
+      const owner = EDUCATION_LESSONS.find((e) => e.id === mapping.publishedTeachingOwner)!;
+      if (mapping.component === "roleplay") {
+        assert.equal(owner.courseId, ROLEPLAY_COURSE, `${mapping.area}: a role-play area is taught from the role-play course`);
+      } else {
+        assert.notEqual(owner.courseId, ROLEPLAY_COURSE,
+          `${mapping.area}: cluster knowledge is NOT taught from the role-play course, whose outcomes are about performing a round`);
+      }
+    }
+    assert.deepEqual(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").map((m) => m.component), ["roleplay", "roleplay", "exam"],
+      "and the owned set now spans both components rather than one");
     const ownerless = DECA_PRACTICE_MAP.filter((m) => m.publishedTeachingOwner === null).map((m) => m.area);
-    assert.deepEqual(ownerless.sort(), ["customer-relations", "marketing-fundamentals"], "the other two still have no owner");
+    assert.deepEqual(ownerless, ["marketing-fundamentals"], "only marketing-fundamentals still has no owner");
     const pi = decaPracticeMappingForSkill("deca-performance-indicators");
     assert.equal(pi?.publishedTeachingOwner, "deca-understanding-performance-indicators", "and the owner is the lesson P1-B1 authored");
     const br = decaPracticeMappingForSkill("deca-business-reasoning");
     assert.equal(br?.publishedTeachingOwner, "deca-justifying-your-recommendation", "and the business-reasoning owner is the lesson P1-B2 authored");
+    const cr = decaPracticeMappingForSkill("deca-customer-relations");
+    assert.equal(cr?.publishedTeachingOwner, "deca-handling-customer-situations", "and the customer-relations owner is the lesson P1-B3 authored");
   });
 
   check("D2. a HELD lesson is never treated as a published teaching owner", () => {
@@ -181,6 +198,11 @@ function main() {
       decaRemediationTargetForSkill("deca-business-reasoning", alwaysPublished),
       { skillSlug: "deca-business-reasoning", lessonId: "deca-justifying-your-recommendation", drill: { track: "deca", area: "business-reasoning" } },
       "and so does the second owned skill, to its own lesson and its own drill"
+    );
+    assert.deepEqual(
+      decaRemediationTargetForSkill("deca-customer-relations", alwaysPublished),
+      { skillSlug: "deca-customer-relations", lessonId: "deca-handling-customer-situations", drill: { track: "deca", area: "customer-relations" } },
+      "and the cluster-knowledge skill resolves to its own lesson and its own drill"
     );
     const genericBr = practiceRemediationForSkill("deca-business-reasoning");
     assert.ok(genericBr, "the generic resolver finds the business-reasoning target too");
@@ -239,7 +261,7 @@ function main() {
     // All four have a drill; only ONE is taught. Teaching is a separate, authored fact — which is
     // still the point of this control, now demonstrated by a 1-of-4 split rather than 0-of-4.
     assert.equal(DECA_PRACTICE_MAP.length, 4, "four areas, all drilled");
-    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").length, 2, "exactly two of them are taught");
+    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").length, 3, "exactly three of them are taught");
     for (const mapping of DECA_PRACTICE_MAP.filter((m) => m.coverage !== "owned")) {
       assert.ok(DECA_DRILL_AREAS.some((area) => area.id === mapping.area), `${mapping.area}: drilled`);
       assert.equal(mapping.publishedTeachingOwner, null, `${mapping.area}: drilled and still untaught`);
@@ -269,7 +291,7 @@ function main() {
     } as never));
 
   check("G1. every published DECA lesson renders with no other track's name anywhere in its visible text", () => {
-    assert.equal(decaConceptEntries.length, 2, "control: both DECA concept lessons are registered");
+    assert.equal(decaConceptEntries.length, 3, "control: all three DECA concept lessons are registered");
     for (const entry of decaConceptEntries) {
       const visible = renderDecaLesson(entry)
         .replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ");
@@ -298,7 +320,7 @@ function main() {
     }
     // Each owned area is reached by exactly one lesson — no two lessons compete for one drill.
     const areas = decaConceptEntries.map((e) => e.practiceDrill!.area).sort();
-    assert.deepEqual(areas, ["business-reasoning", "performance-indicators"], "G2d. one lesson per owned area");
+    assert.deepEqual(areas, ["business-reasoning", "customer-relations", "performance-indicators"], "G2d. one lesson per owned area");
     assert.equal(isDecaDrillArea("clash"), false, "G2e. and the narrowing rejects another track's area");
     // And the destination must actually READ that parameter. Before P1-B1 the DECA branch dropped
     // `?area=` entirely, so a link whose visible label named one drill opened the mixed picker — and
@@ -435,20 +457,66 @@ function main() {
     assert.notEqual(pi?.area, br?.area, "H4c. on different drill areas");
   });
 
+  check("H5. the customer-relations teaching keeps its own invariants, in the lesson's own voice", () => {
+    const voice = decaTeachingVoice();
+    // POSITIVE: the four inputs the approved curriculum names as the spine of this area.
+    for (const [label, re] of [
+      ["the four inputs are stated", /the facts you have, the policy that applies, the options you really have/],
+      ["policy is a ceiling in both directions", /cannot offer more than it allows, or describe it as broader than it is/],
+      ["a true sentence naming no option is not an answer", /A true sentence is not automatically an answer/],
+      ["authority runs both ways", /do not call it impossible/],
+      ["active listening is named, not just described", /That is active listening/],
+      // ...and it is named on the RIGHT behaviour. Asserting only the term lets a mutant redefine it
+      // as staying silent while the phrase survives, which is the failure this pair exists to catch.
+      ["active listening is paraphrase, not silence", /Say the concern back in your own words/],
+      ["the cause is left until it is checked", /Leave the cause until someone has checked/],
+      ["service recovery is named", /is called service recovery/]
+    ] as Array<[string, RegExp]>) {
+      assert.ok(re.test(voice), `H5. ${label}`);
+    }
+    // NEGATIVE: the four doctrines the approved curriculum forbids as universal rules.
+    const FORBIDDEN_UNIVERSALS = [
+      /the customer is always right/i,
+      /always (?:refund|replace|compensate|escalate)/i,
+      /(?:set aside|ignore|override)[^.]{0,40}policy/i,
+      /most generous/i,
+      /compensation straight away/i
+    ];
+    for (const banned of FORBIDDEN_UNIVERSALS) {
+      assert.ok(!banned.test(voice), `H5b. no universal customer-service rule is taught (${banned})`);
+    }
+    // CONTROL: the scan is not vacuous.
+    assert.ok(FORBIDDEN_UNIVERSALS.some((r) => r.test("Remember that the customer is always right.")),
+      "H5c. control: a planted universal really would be caught");
+  });
+
+  check("H6. no DECA teaching claims a drill is scored in the role-play, or that mastery means competition readiness", () => {
+    const voice = decaTeachingVoice();
+    for (const banned of [/judges? scores? this skill/i, /mastery here means you are ready/i,
+                          /ready to compete/i, /official(?:ly)? scored category/i,
+                          /rubric contains? a customer/i]) {
+      assert.ok(!banned.test(voice), `H6. no role-play scoring claim (${banned})`);
+    }
+    // The cluster-knowledge owner in particular must not borrow the role-play frame.
+    const cr = EDUCATION_LESSONS.find((e) => e.id === "deca-handling-customer-situations");
+    assert.ok(cr && isConceptEducationLessonEntry(cr), "H6b. control: the cluster lesson is registered");
+    const crText = JSON.stringify((cr as never as { source: unknown }).source);
+    for (const banned of [/role-play/i, /judge/i]) {
+      assert.ok(!banned.test(crText), `H6c. the cluster-knowledge lesson never frames itself as role-play work (${banned})`);
+    }
+  });
+
   console.log(
-    `\nDECA practice-map smoke passed: ${checks} controls. DECA practice is REPRESENTABLE and now ` +
-    `RESOLVABLE FOR BOTH ROLE-PLAY SKILLS. The drill type admits a DECA track with its own area union, ` +
-    `all four areas map to their exact existing skill slugs, and the role-play/cluster-knowledge split ` +
-    `is explicit. P1-B1 published the performance-indicators owner and P1-B2 the business-reasoning ` +
-    `owner, so both role-play skills resolve to their own lesson and their own DECA drill — proven ` +
-    `through the generic resolver as well as the map, and each area reached by exactly one lesson. The ` +
-    `two cluster-knowledge areas the exam tests are drilled and still ownerless, and resolve to ` +
-    `nothing: a 2-of-4 split, not four plausible destinations, and both owned areas are role-play ones. ` +
-    `A claimed owner must be a registered, learner-visible DECA lesson naming that area's exact skill ` +
+    `\nDECA practice-map smoke passed: ${checks} controls. Three of the four DECA areas now resolve. ` +
+    `P1-B1 and P1-B2 published the two ROLE-PLAY owners and P1-B3 the first CLUSTER-KNOWLEDGE owner, ` +
+    `which sits in its own DECA Business-Content course — an owner's course must match its area's ` +
+    `component, so a cluster lesson forced into the role-play course now fails here, which the old ` +
+    `"both owned areas are role-play" form could never catch. marketing-fundamentals is drilled and ` +
+    `still ownerless and resolves to nothing: a 3-of-4 split, not four plausible destinations. A ` +
+    `claimed owner must be a registered, learner-visible DECA lesson naming that area's exact skill ` +
     `slug; publication stays load-bearing; held lessons are never treated as published; every practice ` +
-    `drill belongs to its own lesson's track; and EVERY published DECA lesson is rendered and scanned ` +
-    `for another track's name rather than one hardcoded id, so a second lesson cannot ship with Debate ` +
-    `branding and leave this suite green.`
+    `drill belongs to its own lesson's track; each owned area is reached by exactly one lesson; and ` +
+    `EVERY published DECA lesson is rendered and scanned for another track's name.`
   );
 }
 

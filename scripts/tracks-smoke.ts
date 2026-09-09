@@ -1168,6 +1168,10 @@ async function main() {
     "P1-B1. the DECA index lists the published performance-indicators lesson — its only entry point");
   assert.ok(m11r5IndexDeca.includes("Justifying Your Recommendation"),
     "P1-B2. and the business-reasoning lesson, which has the same single entry point");
+  assert.ok(m11r5IndexDeca.includes("Handling Customer Situations"),
+    "P1-B3. and the cluster-knowledge lesson, even though it lives in a different DECA course");
+  assert.ok(m11r5IndexDeca.includes("Customer service"),
+    "P1-B3b. labelled with its own module, so the two DECA courses stay distinguishable on one list");
   assert.ok(m11r5IndexDeca.includes("Role-play skills"),
     "P1-B1b. labelled with its own module, not another track's name");
   // TRACK ISOLATION on the index: a DECA learner's list never names another track.

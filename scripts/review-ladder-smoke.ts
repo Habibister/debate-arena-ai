@@ -546,8 +546,8 @@ async function main() {
   // they stop failing closed. The list is still exhaustive — a skill with no authored mapping still
   // gets no substitute lesson, and DECA's two CLUSTER-KNOWLEDGE skills are deliberately absent.
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((s) => practiceRemediationForSkill(s) !== null),
-    ["debate-evidence", "debate-rebuttal", "debate-weighing", "deca-performance-indicators", "deca-business-reasoning", "debate-clash"],
-    "S2-2. exactly the six lesson-connected intended skills have a remediation today (clash is activation-pending, listed last)");
+    ["debate-evidence", "debate-rebuttal", "debate-weighing", "deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations", "debate-clash"],
+    "S2-2. exactly the seven lesson-connected intended skills have a remediation today (clash is activation-pending, listed last)");
 
   // S2-3. Untrusted-looking input is not an error and not a near match.
   for (const s of ["", "unknown", "debate-rebuttal-1", "DEBATE-REBUTTAL", "debate-rebuttal "]) {
@@ -567,7 +567,7 @@ async function main() {
     assert.notEqual(target.drill.track, "debate", `S2-4a. ${s} is never routed to a Debate drill`);
   }
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((x) => !x.startsWith("debate-")).filter((s) => practiceRemediationForSkill(s) !== null),
-    ["deca-performance-indicators", "deca-business-reasoning"], "S2-4c. and exactly the two owned DECA role-play skills resolve today");
+    ["deca-performance-indicators", "deca-business-reasoning", "deca-customer-relations"], "S2-4c. and exactly the three owned DECA skills resolve today — two role-play, one cluster knowledge");
   assert.ok([...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("deca-"))
          && [...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("hosa-")),
     "S2-4b. control: the isolation scan really covered DECA and HOSA slugs");

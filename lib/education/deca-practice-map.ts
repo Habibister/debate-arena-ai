@@ -17,12 +17,12 @@ import type { DecaPracticeDrill } from "@/lib/education/types";
  * fundamentals are CLUSTER KNOWLEDGE that the exam tests. Practice can group by this without a new
  * top-level surface.
  *
- * P1-A invented no teaching owner: every `publishedTeachingOwner` was null, and remediation resolved
- * to nothing for every DECA skill. P1-B1 closed the first by publishing
- * `deca-understanding-performance-indicators`; P1-B2 closed the second with
- * `deca-justifying-your-recommendation`. Both ROLE-PLAY areas are now owned and resolve. The two
- * CLUSTER-KNOWLEDGE areas the exam tests are untouched and still ownerless — a map with two real
- * owners and two honest nulls, never four plausible-looking ones.
+ * P1-A invented no teaching owner: every `publishedTeachingOwner` was null. P1-B1 closed
+ * performance-indicators, P1-B2 closed business-reasoning, and P1-B3 closed customer-relations — the
+ * first CLUSTER-KNOWLEDGE area to get an owner, and the first whose owner sits in a different course
+ * (`deca-business-content`) because the role-play course teaches performing a round and names no
+ * content area. Three of four areas resolve; marketing-fundamentals is untouched and still ownerless.
+ * One honest null, never a fourth plausible-looking owner.
  */
 
 /** Which half of the DECA competition a drill area serves. */
@@ -89,9 +89,21 @@ export const DECA_PRACTICE_MAP: readonly DecaPracticeMapping[] = [
     area: "customer-relations",
     skillSlug: "deca-customer-relations",
     component: "exam",
-    publishedTeachingOwner: null,
-    coverage: "none",
-    note: "Cluster knowledge the exam tests. No published lesson addresses it."
+    publishedTeachingOwner: "deca-handling-customer-situations",
+    coverage: "owned",
+    note:
+      "P1-B3 published the teaching owner, in the separate DECA Business-Content course rather than the " +
+      "role-play course. It owns the approved four-input spine — facts, policy, options, authority — and " +
+      "with it: paraphrase-to-confirm, asking only when the answer changes the remedy, separating what is " +
+      "established from what is not, refusing a remedy before its precondition is confirmed, the stated " +
+      "policy as a ceiling in both the offer and the description direction, that a true sentence naming " +
+      "no option is not an answer, letting the customer's stated constraint choose between two allowed " +
+      "remedies, and acting inside authority while escalating only what exceeds it. STILL DRILL-ONLY: " +
+      "proportionate response as its own construct (cr-14, cr-19, cr-28, cr-30), plain-language register " +
+      "versus internal jargon (cr-08, cr-23 — reserved for the held professional-communication entry), " +
+      "and CR2-CR6 at full curriculum depth. BANK DEBT, recorded not repaired: cr-07 frames follow-up as " +
+      "universally good while cr-29 keys the opposite, and cr-09 teaches an 'exceeding expectations' " +
+      "concept the approved curriculum rejects. cr-17 and cr-18 stay byte-identical under the waiver."
   },
   {
     area: "marketing-fundamentals",

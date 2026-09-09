@@ -214,8 +214,9 @@ function main() {
       .filter((e: unknown) => isConceptEducationLessonEntry(e as never))
       .filter((e: { visibility: string }) => e.visibility === "learner");
     // P1-B1 raised this 9 -> 10; P1-B2 raised it 10 -> 11. Nine Debate, two DECA.
-    assert.equal(published.length, 11,
-      `control: exactly eleven published concept lessons — found ${published.length}. If a lesson was ` +
+    // P1-B3 raised it 11 -> 12. Nine Debate, three DECA.
+    assert.equal(published.length, 12,
+      `control: exactly twelve published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -268,7 +269,7 @@ function main() {
     // failure the lesson exists to correct), and a scaffoldedTry was refused because every scaffold
     // evaluator, starter set and guided application is Debate-keyed — an authored exercise would have
     // rendered as permanently UNCHECKABLE. If a later change gives it any of those, record it here.
-    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics", "debate-weighing", "deca-justifying-your-recommendation", "deca-understanding-performance-indicators"],
+    assert.deepEqual(populated.map((e) => e.id).sort(), ["debate-answer-types", "debate-clash", "debate-constructive-speeches", "debate-evidence-evaluation", "debate-refutation", "debate-round-orientation", "debate-signposting", "debate-turn-mechanics", "debate-weighing", "deca-handling-customer-situations", "deca-justifying-your-recommendation", "deca-understanding-performance-indicators"],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
     // this records what was actually reviewed rather than merely that something is present.
@@ -668,7 +669,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 11, "O7. control: all eleven published lessons were rendered");
+    assert.equal(publishedAll.length, 12, "O7. control: all twelve published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

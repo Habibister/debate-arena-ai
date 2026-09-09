@@ -8,10 +8,11 @@
 // WHY DECA GETS A CONCEPT TRACK AT ALL. The B5 architecture audit established that DECA's four drill
 // areas and its three held lessons are ORTHOGONAL: every area writes real mastery to a real Skill
 // row, and no published lesson taught any of the constructs those drills measure. P1-A made that
-// state representable (`lib/education/deca-practice-map.ts`); P1-B1 closed the first of the four by
-// publishing a teaching owner for `performance-indicators`, and P1-B2 closes the second with an
-// owner for `business-reasoning`. Both are ROLE-PLAY skills in the practice map's own split; the two
-// cluster-knowledge areas the exam tests are still ownerless and are not dressed up here.
+// state representable (`lib/education/deca-practice-map.ts`); P1-B1 closed `performance-indicators`,
+// P1-B2 closed `business-reasoning`, and P1-B3 closes `customer-relations` — the first of the two
+// CLUSTER-KNOWLEDGE areas the exam tests. The two role-play owners sit in the role-play course; the
+// cluster owner deliberately does not, because that course teaches performing a round and names no
+// content area. Only `marketing-fundamentals` is still ownerless, and it is not dressed up here.
 //
 // THREE DECA CATALOG ENTRIES STAY HELD and are deliberately absent below:
 //
@@ -44,8 +45,24 @@ export const AUTHORED_DECA_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
   sourceLabel: "CompeteReady authored lesson"
 });
 
+/**
+ * Provenance for the DECA BUSINESS-CONTENT section.
+ *
+ * The approved curriculum (docs/curriculum/02-deca-course.md, BC-2) tags every lesson in that section
+ * STABLE-TEACHING: the concepts are mainstream business-education definitions, and the tier is
+ * explicitly "never a rules source". That is a truer description than the tier-2 authored-lesson
+ * label the role-play lessons carry, and it survives the production decision layer undegraded.
+ * Nothing in the section states a DECA rule, a scoring criterion, or a current-season fact.
+ */
+export const STABLE_TEACHING_DECA_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
+  authority: "stable-teaching",
+  freshness: "stable",
+  organization: "CompeteReady",
+  sourceLabel: "CompeteReady authored lesson — mainstream business-education concepts"
+});
+
 /** The DECA catalog slugs this file publishes, in teaching order. */
-const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation"] as const;
+const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation", "deca-handling-customer-situations"] as const;
 
 /** The DECA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
 export const HELD_DECA_CATALOG_SLUGS: readonly string[] = [
@@ -97,9 +114,10 @@ function selectDecaCatalogLesson(slug: PublishedDecaSlug): ConceptEducationLesso
 
 const understandingPerformanceIndicators = selectDecaCatalogLesson("deca-understanding-performance-indicators");
 const justifyingYourRecommendation = selectDecaCatalogLesson("deca-justifying-your-recommendation");
+const handlingCustomerSituations = selectDecaCatalogLesson("deca-handling-customer-situations");
 
 /** Exported for the smoke suite's strict-identity proof against the catalog. */
-export const PUBLISHED_DECA_SOURCES = { understandingPerformanceIndicators, justifyingYourRecommendation } as const;
+export const PUBLISHED_DECA_SOURCES = { understandingPerformanceIndicators, justifyingYourRecommendation, handlingCustomerSituations } as const;
 
 /**
  * P1-B1 — the teaching owner for the `deca-performance-indicators` drill area.
@@ -174,7 +192,43 @@ export const DECA_BUSINESS_REASONING_LESSON: EducationRegistryEntry = {
   provenance: AUTHORED_DECA_PROVENANCE
 };
 
+/**
+ * P1-B3 — the teaching owner for the `deca-customer-relations` drill area, and the FIRST
+ * cluster-knowledge lesson.
+ *
+ * IT DOES NOT LIVE IN THE ROLE-PLAY COURSE, and that is the point. `deca-roleplay-core`'s two module
+ * outcomes are about knowing the event and answering the card; its published course map is eleven
+ * performance steps naming no content area. Putting a customer-relations lesson there would make
+ * both outcomes false. The approved curriculum says the same thing directly (BC-1): these are
+ * "content areas the performance course never covers, so they are taught here, in their own
+ * section". Hence a second DECA course, created no larger than this one lesson needs.
+ *
+ * Same two hard rules as the role-play owners: `skillSlug` names the EXISTING Skill row, and the
+ * lesson id is deliberately not that slug, so `/skills/deca-customer-relations/practice` keeps
+ * resolving to its honest DECA compatibility page instead of 404ing a learner with a due review.
+ *
+ * `nextLessonId` is null: it is the only lesson in its course so far, and the remaining DECA entries
+ * are the three held ones.
+ */
+export const DECA_CUSTOMER_RELATIONS_LESSON: EducationRegistryEntry = {
+  id: "deca-handling-customer-situations",
+  track: "DECA",
+  courseId: "deca-business-content",
+  moduleId: "deca-customer-service",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: handlingCustomerSituations,
+  sourceKind: "concept-education-lesson",
+  skillSlug: "deca-customer-relations",
+  practiceDrill: { track: "deca", area: "customer-relations" },
+  legacySlugs: [],
+  nextLessonId: null,
+  provenance: STABLE_TEACHING_DECA_PROVENANCE
+};
+
 export const DECA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
   DECA_PERFORMANCE_INDICATORS_LESSON,
-  DECA_BUSINESS_REASONING_LESSON
+  DECA_BUSINESS_REASONING_LESSON,
+  DECA_CUSTOMER_RELATIONS_LESSON
 ];

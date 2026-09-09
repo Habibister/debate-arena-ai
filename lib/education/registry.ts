@@ -85,6 +85,17 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     moduleIds: ["deca-event-orientation", "deca-roleplay-skills"]
   },
   {
+    // P1-B3. DELIBERATELY SEPARATE from deca-roleplay-core. That course teaches performing a round —
+    // its module outcomes are about knowing the event and answering the card, and its published
+    // course map is eleven performance steps naming no content area. Cluster knowledge is what the
+    // exam half of the event tests, and the approved curriculum keeps it in its own section for
+    // exactly that reason. Created no larger than the one published lesson needs.
+    id: "deca-business-content",
+    track: "DECA",
+    label: "DECA Business-Content Course",
+    moduleIds: ["deca-customer-service"]
+  },
+  {
     id: "hosa-clinical-skill-communication",
     track: "HOSA",
     label: "HOSA Clinical-Skill Communication (Branch B)",
@@ -141,6 +152,16 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     label: "Role-play skills",
     outcome: "Turn what the role-play card asks for into a response a judge can actually score.",
     prerequisiteId: "deca-event-orientation"
+  },
+  {
+    // P1-B3. Its outcome is the approved curriculum's own core definition for this area, not a
+    // restatement of the role-play modules' goal: this module is about deciding what to say.
+    id: "deca-customer-service",
+    courseId: "deca-business-content",
+    track: "DECA",
+    label: "Customer service",
+    outcome: "Decide what to say to a customer from the facts, the policy, the real options, and the authority the role carries.",
+    prerequisiteId: null
   },
   {
     id: "hosa-communication-layer",

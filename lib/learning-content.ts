@@ -1716,6 +1716,184 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       )
     }
   },
+  // P1-B3 (2026-09-09) — the teaching owner for the DECA `customer-relations` drill area, and the
+  // FIRST cluster-knowledge lesson. It does NOT belong in the role-play course: the published DECA
+  // course map is eleven performance steps and names no content area, and the approved curriculum
+  // (docs/curriculum/02-deca-course.md, BC-1) states outright that Customer Relations and Marketing
+  // Fundamentals "are content areas the performance course never covers, so they are taught here, in
+  // their own section". Hence the separate DECA Business-Content course in the registry.
+  //
+  // THE SPINE IS THE APPROVED CORE DEFINITION, not one invented here. docs/curriculum/02-deca-course.md:
+  // "Customer Relations is deciding what to say and do in a customer interaction, using the facts you
+  // actually have, the policy that applies, the options genuinely available, and the authority your
+  // role carries." Those four inputs — facts, policy, options, authority — organise the whole lesson,
+  // and they are the four the 30-item bank actually turns on.
+  //
+  // WHAT THIS LESSON OWNS: paraphrase-to-confirm; asking a question only when the answer changes the
+  // remedy; separating what is established from what is not; not committing to a remedy before its
+  // precondition is confirmed; the stated policy as a ceiling in BOTH the offer and the description
+  // direction; that a true sentence naming no option is not an answer; letting the customer's stated
+  // constraint choose between two allowed remedies; acting inside your authority and escalating only
+  // what exceeds it; and warmth as no substitute for a promise the business can keep.
+  //
+  // WHAT IT DOES NOT TEACH, recorded so the gap is not mistaken for coverage:
+  //   - CR2-CR6 at their full curriculum depth. This is one lesson for one drill area, not six.
+  //   - proportionate response as its own construct (cr-14, cr-19, cr-28, cr-30 also test it).
+  //   - plain-language register versus internal jargon (cr-08, cr-23) — the held
+  //     deca-professional-communication entry is reserved for speaking structure and tone.
+  //   - retention economics beyond a clause: the PI lesson already owns it.
+  //   - cost, feasibility, tradeoff and measurement: the business-reasoning lesson owns those, and the
+  //     bank's own scope note holds the same boundary.
+  //
+  // BANK DEBT, recorded and NOT repaired: cr-07 frames follow-up as universally good while cr-29 keys
+  // the opposite and rejects "following up is always good service"; this lesson teaches cr-29's rule.
+  // cr-09 teaches "exceeding expectations", which the approved curriculum rejects as a concept. cr-17
+  // and cr-18 carry positional-rationale debt under the six-item waiver and are untouched.
+  //
+  // NO ROLE-PLAY SCORING CLAIM: nothing below says this drill is judged, that mastery here means
+  // role-play readiness, or that any official rubric contains a customer-relations category.
+  {
+    organization: "DECA",
+    track: "DECA",
+    name: "Customer Relations",
+    // The lesson's own id, NOT the `deca-customer-relations` Skill slug — the rule P1-B1 established
+    // and P1-B2 carried: `resolveSkillsSlug` rule 1 redirects any slug that is a registry lesson id,
+    // which would 404 `/skills/deca-customer-relations/practice` for a learner with a due review.
+    slug: "deca-handling-customer-situations",
+    description: "Decide what to say to a customer using the facts, the policy, the real options, and your authority.",
+    category: "DECA business content",
+    order: 6,
+    lesson: {
+      title: "Handling Customer Situations",
+      slug: "deca-handling-customer-situations-lesson",
+      summary: "Work out what the customer needs, what the policy allows, which options are real, and what your job lets you decide.",
+      estimatedMinutes: 8,
+      content: lesson(
+        "Decide what to say in a customer situation using the facts you have, the policy that applies, the options that are real, and the authority your job carries.",
+        "Customer relations is deciding what to say and do when a customer needs something. Four things decide it: the facts you have, the policy that applies, the options you really have, and what your job lets you decide.\n\nA customer ordered a chocolate cake and the bakery made vanilla. A weak reply: “Sorry, that’s our policy.” A better one: “Let me check I have this right — you ordered chocolate and we made vanilla. I can remake it this afternoon, or refund it now. Which suits you better?”\n\nThe second reply is not warmer. It is more useful. It checks the facts, names what the bakery can do, and lets the customer choose. Warmth alone fixes nothing, and nor does reading out a rule.\n\nThe scenarios here are ours. A real one states its own policy and limits, and those are what your answer must fit.",
+        "A customer remembers whether they were dealt with straight. The replies that hold up are the ones the business can keep.",
+        [
+          "Say the concern back, and check you have it right.",
+          "Separate what is established from what is not.",
+          "Say what the policy allows, and which options are real.",
+          "Do what you can decide, and pass on what you cannot."
+        ],
+        {
+          prompt: "You work at a repair desk. A customer paid for a delivery that never arrived, and the delivery company has not reported back. You may re-send it at no charge. Refunds need a manager, and one is on shift. (Our scenario, not an official one.)",
+          weakAnswer: "I’m so sorry, that is completely our fault. I’ll refund you right now and make sure it never happens again.",
+          strongAnswer: "I’m sorry you have been left without your order. I don’t know yet what happened, so I’d rather find out than guess. What I can do is send a replacement at no charge. If you would rather have the money back, that is a manager’s call, and one is here, so I can ask now.",
+          whyItWorks: "It acknowledges the part that is certain and leaves the cause open. It offers what this job allows, and is honest that the refund belongs to someone else rather than calling it impossible."
+        },
+        q(
+          "A customer says: “I paid extra for next-day delivery, waited in all Saturday, and it turned up on Monday.” Which reply best shows you understood?",
+          [
+            "That sounds frustrating, and I am very sorry for all the trouble",
+            "Let me look into what went wrong with that delivery for you",
+            "So you paid extra for next-day, waited in all Saturday, and it came Monday",
+            "So you paid for Saturday delivery, waited in, and lost the day"
+          ],
+          "So you paid for Saturday delivery, waited in, and lost the day",
+          "Show you followed it, without simply repeating it.",
+          "Saying it back in your own words shows you followed it, including what it cost them — a lost Saturday. Giving the sentence back unchanged proves only that you heard the words, sympathy on its own skips the checking, and going off to investigate moves on before anything is confirmed.",
+          "Checking you understood"
+        ),
+        [
+          q(
+            "A gym freezes a membership for up to three months a year, with two weeks’ notice. A colleague tells a member “you can freeze it whenever you like.” What is wrong with that?",
+            [
+              "It is too informal for a conversation about membership terms",
+              "It describes a wider policy than the gym actually has",
+              "It should have come from a manager rather than a colleague",
+              "It gives away detail the member did not need to hear"
+            ],
+            "It describes a wider policy than the gym actually has",
+            "Compare the promise with the stated rule.",
+            "The rule has two limits and the sentence has none. A member who acts on it gets told something different later, which is worse than hearing the real rule now. How formal it sounded and who said it are not the problem.",
+            "Describing policy accurately"
+          ),
+          q(
+            "A salon redoes a cut free within seven days. A customer comes back on day ten. You are able to offer 20% off their next visit. Which reply is weakest?",
+            [
+              "Our free redo period runs for the first seven days after the appointment",
+              "It is past seven days, but I can take 20% off your next visit",
+              "I can’t redo it free now, though I can discount your next visit",
+              "That is outside the redo window — shall I apply 20% next time?"
+            ],
+            "Our free redo period runs for the first seven days after the appointment",
+            "Correct is not the same as helpful.",
+            "It is true, and it leaves the customer with nothing. Something is still available and it is yours to offer, so a reply that stops at the rule answers the rule instead of the person.",
+            "Naming the real option"
+          ),
+          q(
+            "A customer’s coffee was made with the wrong milk. You are allowed to remake it free. Your supervisor is standing nearby. What should you do?",
+            [
+              "Ask the supervisor to approve it, so the customer feels looked after",
+              "Explain the remake policy in full before deciding what to do",
+              "Remake it now, since it is something you are allowed to do",
+              "Check with the supervisor first, in case the rule has changed"
+            ],
+            "Remake it now, since it is something you are allowed to do",
+            "Escalation is for what you cannot decide.",
+            "It is inside the policy and inside your job, so it is yours to do. Fetching a supervisor for it costs the customer time, and reading out the policy answers a question nobody asked.",
+            "Working inside your authority"
+          )
+        ],
+        [
+          q(
+            "A parent says nobody joined their child’s online lesson yesterday. You have not checked the session log yet. Which reply is best?",
+            [
+              "I’m sorry, our tutor clearly missed it — I’ll credit the lesson now",
+              "I’m sorry the lesson did not happen. Let me check the log first",
+              "The tutor says they were online, so the problem was probably your end",
+              "I can’t comment at all until I have looked at the session log"
+            ],
+            "I’m sorry the lesson did not happen. Let me check the log first",
+            "Acknowledge what is certain; check what is not.",
+            "The missed lesson is certain and can be acknowledged now. Whose fault it was is not, so blaming the tutor, blaming the parent, and refusing to say anything at all each go past what is known.",
+            "Acknowledge, then check"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Start with the facts you have",
+              body: "Say the concern back in your own words before you solve it. That is active listening. Say what it cost them, not only what happened. Repeating their sentence back proves you heard it and nothing more.\n\nAsk a question only when the answer would change what you do. If an order “isn’t right”, one question settles it: is something missing, wrong, or damaged? If it is in front of you and covered, more questions only delay the fix.\n\nSome things are established and some are not. You can say a customer lost their afternoon. You cannot say whose fault it was, or promise the fix that depends on it, until someone has checked. Fixing a service problem afterwards is called service recovery."
+            },
+            {
+              heading: "Say what the policy allows, and what is real",
+              body: "The stated policy is the ceiling. You cannot offer more than it allows, or describe it as broader than it is. A generous-sounding promise just sets the customer up for a no later.\n\nA true sentence is not automatically an answer. “Our returns run 30 days” is accurate and leaves the customer with nothing. If store credit — money to spend there later — is available, say so.\n\nWhen two options are both allowed, the customer’s own deadline decides. If they need it Thursday, the five-day option is not the one."
+            },
+            {
+              heading: "Know what you can decide",
+              body: "In a job, different people can approve different things. Some decisions are yours, some are your manager’s, and some the business does not offer at all.\n\nIf it is yours, do it. Fetching a manager for something you are allowed to do just costs the customer time.\n\nIf it is above you, do not call it impossible. Say what you can do, and bring in the person who decides the rest.\n\nIf nothing covers it, say so and name what you can still offer. And do not turn your own limit into a company rule. “We only refund up to $150” is a different claim from “that is as far as I can go.”"
+            }
+          ],
+          misconception: {
+            wrongModel: "Good service means saying yes, and the kindest reply is the most generous one.",
+            whyItFails: "A yes the business cannot keep becomes a no from someone else later. That is worse than a clear answer now. Warmth is not the problem; the promise is.",
+            betterModel: "The best reply is the most useful one the facts, the policy and your job actually allow."
+          },
+          commonMistakes: [
+            {
+              mistake: "Apologising for a fault nobody has established yet.",
+              whyItFails: "It commits the business to a story that may turn out wrong, and invites a fix to match.",
+              fix: "Say what the customer has lost. Leave the cause until someone has checked."
+            },
+            {
+              mistake: "Reading out the rule and stopping there.",
+              whyItFails: "The customer already knows they have a problem. A correct sentence naming no option leaves them holding it.",
+              fix: "Say the rule, then say what is still possible."
+            },
+            {
+              mistake: "Following up on everything.",
+              whyItFails: "Follow-up earns its place when someone else still has to act, or the fix is unfinished.",
+              fix: "Follow up while something is still open, not out of habit."
+            }
+          ]
+        }
+      )
+    }
+  },
   {
     organization: "HOSA",
     track: "HOSA",

@@ -53,7 +53,7 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "DECA-BUSINESS-REASONING-OWNER-V1";
+const LEARNING_CONTENT_BASELINE = "DECA-CUSTOMER-RELATIONS-OWNER-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 

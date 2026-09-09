@@ -37,7 +37,10 @@ export async function RubricBreakdown({ organization, eventType }: { organizatio
                 ) : (
                   <span className="text-xs text-muted-foreground">holistic</span>
                 )}
-                {category.provenance === "placeholder" ? (
+                {/* FAIL-CLOSED: the badge is driven by the ABSENCE of positive sourcing, not by the
+                    presence of the word "placeholder". A category whose provenance we cannot
+                    establish ("unknown") must not render as clean/official. */}
+                {category.provenance !== "sourced" ? (
                   <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-600">
                     needs verification
                   </span>

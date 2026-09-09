@@ -45,7 +45,10 @@ export type RubricBreakdownCategory = {
   points: number | null;
   description: string | null;
   descriptors: RubricDescriptorItem[];
-  provenance: "sourced" | "placeholder";
+  // FAIL-CLOSED (2026-09-09): "sourced" is claimed only on POSITIVE evidence. "unknown" is the
+  // honest third state for a category whose artifact carries no provenance field at all — it must
+  // never be treated as sourced, and never presented as official.
+  provenance: "sourced" | "placeholder" | "unknown";
 };
 
 export type RubricBreakdown = {
@@ -93,7 +96,11 @@ export async function getSpecRubricBreakdown(spec: CompetitionSpec): Promise<Rub
       points: typeof category.points === "number" ? category.points : null,
       description: category.description ?? null,
       descriptors: [],
-      provenance: /placeholder/i.test(`${category.description ?? ""}`) ? "placeholder" : "sourced"
+      // The rubric Json shape has NO provenance field, so this path cannot positively prove a
+      // category is sourced. Previously anything whose description merely failed to contain the
+      // word "placeholder" — including an empty description — was labelled "sourced", so unknown
+      // provenance silently became official. It now fails closed to "unknown".
+      provenance: /placeholder/i.test(`${category.description ?? ""}`) ? "placeholder" : "unknown"
     }))
   };
 
@@ -112,7 +119,11 @@ export async function getSpecRubricBreakdown(spec: CompetitionSpec): Promise<Rub
           points: row.points,
           description: row.description,
           descriptors: normalizeDescriptors(row.descriptors),
-          provenance: row.provenance === "sourced" ? "sourced" : "placeholder"
+          // Structured rows carry an explicit provenance column: honour "sourced" and "placeholder"
+          // exactly, and treat every other value (null, empty, a typo, a future enum member) as
+          // "unknown" rather than quietly collapsing it into one of the two known states.
+          provenance:
+            row.provenance === "sourced" ? "sourced" : row.provenance === "placeholder" ? "placeholder" : "unknown"
         }))
       };
     }
@@ -238,8 +249,9 @@ export async function getWeightedScoringRubric(organization: Organization, event
     if (!spec) return null;
     const breakdown = await getSpecRubricBreakdown(spec);
     if (breakdown.categories.length === 0) return null;
-    // Every category must have a positive point value, and all must be sourced (never weight a
-    // score with placeholder numbers).
+    // Every category must have a positive point value, and every one must be POSITIVELY sourced —
+    // never weight a real score with placeholder numbers, and never with numbers whose provenance
+    // the repository cannot establish ("unknown"). Unknown is not a weak yes; it is a no.
     const allPointed = breakdown.categories.every((c) => typeof c.points === "number" && c.points > 0 && c.provenance === "sourced");
     if (!allPointed) return null;
     const categories = breakdown.categories.map((c) => ({ name: c.name, points: c.points as number }));

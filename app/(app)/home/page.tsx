@@ -60,7 +60,10 @@ export default async function HomePage({ searchParams }: { searchParams: { track
     : [0, 0, 0];
 
   const completedScores = practiceTests.map((t) => t.score).filter((s): s is number => typeof s === "number");
-  const mastery = completedScores.length > 0 ? Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length) : 0;
+  // P0-4 (2026-09-09): this is the MEAN OF PRACTICE-TEST SCORES. It reads no MasteryProgress row and
+  // does not survive spaced reassessment, so it may not be labelled "Mastery" — that would be fake
+  // progress. Named for what it actually is; the real mastery model is untouched.
+  const practiceAverage = completedScores.length > 0 ? Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length) : 0;
   const weakAreas = weakAreasForTrack(practiceTests, activeOrg);
   const sessions = user?.streak ?? 0;
 
@@ -210,7 +213,7 @@ export default async function HomePage({ searchParams }: { searchParams: { track
           <Fact label="Practice sessions" value={sessions} />
           <Fact label="Judged rounds" value={judgedDebateCount} />
           {guidedExerciseCount > 0 ? <Fact label="Guided exercises" value={guidedExerciseCount} /> : null}
-          <Fact label="Mastery" value={`${mastery}%`} />
+          <Fact label="Practice average" value={`${practiceAverage}%`} />
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
           Full stats and history live in{" "}

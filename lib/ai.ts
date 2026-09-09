@@ -232,6 +232,14 @@ async function registryRubricForJudge(
     if (!spec) return null;
     const breakdown = await getSpecRubricBreakdown(spec);
     if (breakdown.categories.length === 0) return null;
+    // FAIL-CLOSED (2026-09-09): this block is the ONLY place the product tells a model — and, via
+    // `tag`, the learner — that these categories are "official". Claim that only when EVERY category
+    // is positively sourced. A placeholder category, or one whose provenance the repository cannot
+    // establish, previously travelled through here and was announced as coming from the official
+    // specification. When the rubric is not positively sourced we return null: the judge falls back
+    // to its CompeteReady-authored seed rubric and no official attribution tag is produced.
+    const allSourced = breakdown.categories.every((category) => category.provenance === "sourced");
+    if (!allSourced) return null;
     const names = breakdown.categories.map((category) => category.name);
     const promptBlock = `Official rubric categories from the ${spec.eventName} ${spec.season} specification (${spec.verificationStatus}): ${names.join(
       "; "
@@ -1750,7 +1758,16 @@ export async function generateDecaRoleplayScenario(input: {
   // so it must degrade to generic rather than borrow HLM's event name and categories.
   const clusterMatchesSpec = /hospitality|tourism|lodging|hotel/i.test(input.cluster);
   const spec = clusterMatchesSpec ? await findSpecForEvent("DECA", "ROLEPLAY") : null;
-  const registryPis = spec ? (await getSpecRubricBreakdown(spec)).categories.map((category) => category.name) : [];
+  // FAIL-CLOSED (2026-09-09), same contract as registryRubricForJudge: these names are handed to the
+  // model as "official rubric categories from the <spec> specification" and are stamped onto the
+  // scenario as piSource "registry", so they may come only from categories that are POSITIVELY
+  // sourced. A placeholder or unknown-provenance category degrades the whole scenario to generic.
+  const registryBreakdown = spec ? await getSpecRubricBreakdown(spec) : null;
+  const registrySourced =
+    registryBreakdown !== null &&
+    registryBreakdown.categories.length > 0 &&
+    registryBreakdown.categories.every((category) => category.provenance === "sourced");
+  const registryPis = registrySourced ? registryBreakdown.categories.map((category) => category.name) : [];
   const hasRegistry = registryPis.length > 0;
 
   // Variety seed: a random setting + pressure per generation so identical inputs still produce
@@ -1854,6 +1871,16 @@ Return a single JSON object with EXACTLY these fields:
   );
 }
 
+/**
+ * Whether a DECA round of this practice eventType has a non-empty rubric to be judged against.
+ * Pure and provider-free, so the serving route can refuse BEFORE spending a provider call. Mirrors
+ * exactly the resolution `judgeDecaRoleplay` performs: the event's own seed, else the authored
+ * DECA role-play seed. (P0-6, 2026-09-09.)
+ */
+export function decaJudgeRubricAvailable(eventType: string): boolean {
+  return rubricFor("DECA", eventType).length > 0 || rubricFor("DECA", "ROLEPLAY").length > 0;
+}
+
 export async function judgeDecaRoleplay(input: {
   level: Level;
   eventType: string;
@@ -1863,7 +1890,18 @@ export async function judgeDecaRoleplay(input: {
   // the opening pitch, so the judge scores prepared vs. unscripted performance separately.
   hasObjectionRound?: boolean;
 }) {
-  const rubric = rubricFor("DECA", input.eventType);
+  // P0-6 (2026-09-09): the generic practice path used to send `Rubric JSON: []` and still take a
+  // 0-100 overall plus per-category scores back from the model — a scored ballot built on no rubric
+  // at all. A judged round must rest on a non-empty rubric contract. Practice eventTypes that carry
+  // no seed of their own fall back to the CompeteReady-authored DECA role-play seed (authored, never
+  // announced as official); if even that is unavailable the round is refused rather than scored.
+  const seededRubric = rubricFor("DECA", input.eventType);
+  const rubric = seededRubric.length > 0 ? seededRubric : rubricFor("DECA", "ROLEPLAY");
+  if (rubric.length === 0) {
+    // Internal backstop. The serving route refuses first, with a truthful status, via
+    // `decaJudgeRubricAvailable`; this keeps any other caller from reaching the model with no rubric.
+    throw new Error("No scoring rubric is available for this DECA event, so this round cannot be judged.");
+  }
   const registry = await registryRubricForJudge("DECA", input.eventType);
   // Rubric Engine stage 2: when the registry has a fully-sourced point split for this event, the AI
   // scores each official category 0-100 and we compute the overall as a genuine weighted sum in code.

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, HttpError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
-import { buildDecaDrillSession, DECA_DRILL_AREAS, type DecaDrillArea } from "@/lib/deca-drills";
+import { buildDecaDrillSession, DECA_DRILL_AREAS, isDecaDrillArea, type DecaDrillArea } from "@/lib/deca-drills";
 import {
   buildServedChoices,
   cleanupExpiredSessions,
@@ -29,6 +29,14 @@ export async function POST(request: Request) {
     const user = await requireUser();
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     const input = await parseJson(request, practiceSessionStartRequestSchema);
+    // The shared start schema accepts any short string for `areas` (the Debate route uses it too),
+    // so narrow to the real DECA enum HERE rather than casting. An unknown area must fail finitely
+    // and truthfully: never silently dropped, never silently broadened to every area, and never
+    // passed through to empty the builder's pool.
+    const requestedAreas = input.areas?.filter(isDecaDrillArea);
+    if (input.areas && requestedAreas && requestedAreas.length !== input.areas.length) {
+      throw new HttpError("Unknown DECA drill area requested", 400);
+    }
     const now = new Date();
 
     const payload = await prisma.$transaction(async (tx) => {
@@ -45,7 +53,7 @@ export async function POST(request: Request) {
         return serializeStart(active, active.items, snapshot.kind === "DRILL" ? snapshot.order : [], true);
       }
 
-      const served = buildDecaDrillSession(input.count, input.areas as DecaDrillArea[] | undefined);
+      const served = buildDecaDrillSession(input.count, requestedAreas as DecaDrillArea[] | undefined);
       const distinct = [...new Map(served.map((q) => [q.id, q])).values()];
       const { expiresAt, purgeAfter } = expiryFor(now);
 

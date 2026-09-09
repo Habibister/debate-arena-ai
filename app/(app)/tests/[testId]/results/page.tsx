@@ -105,7 +105,10 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
   const lessonRecommendations = normalizeLessonRecommendations(recommendations.lessons);
   const score = test.score ?? 0;
   const correctCount = test.questions.filter((question) => question.answers[0]?.isCorrect).length;
-  const readinessLabel = score >= 85 ? "Ready to level up" : score >= 70 ? "Close to ready" : "Focused review";
+  // P0-5 (2026-09-09): one practice-test score is not readiness evidence — there is no validated
+  // readiness model behind it and no semantic evaluation. The band still describes the RESULT, which
+  // a single score can honestly support; it no longer asserts that the learner is ready.
+  const resultLabel = score >= 85 ? "Strong practice result" : score >= 70 ? "Solid practice result" : "Focused review";
   const studyOrganization = test.organization === "DECA" || test.organization === "HOSA" ? test.organization : undefined;
   const recommendedDeck = studyOrganization ? studyDeckForSkill(test.weakAreas[0] ?? test.eventCluster ?? test.eventType, studyOrganization) : undefined;
 
@@ -130,7 +133,7 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
             <p className="text-sm font-semibold text-muted-foreground">Score</p>
             <p className="mt-3 text-6xl font-bold">{score}%</p>
             <p className="mt-3 text-sm text-muted-foreground">
-              {correctCount} of {test.questions.length} correct · {readinessLabel}
+              {correctCount} of {test.questions.length} correct · {resultLabel}
             </p>
             <Progress value={score} className="mt-5" />
           </div>

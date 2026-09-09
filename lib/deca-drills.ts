@@ -37,6 +37,15 @@ export const DECA_DRILL_AREAS: Array<{ id: DecaDrillArea; label: string; skillSl
 
 export const DECA_DRILL_SKILL_SLUGS = DECA_DRILL_AREAS.map((a) => a.skillSlug);
 
+/**
+ * Narrows an untrusted value to a real DECA drill area. The request validator accepts any short
+ * string for `areas` (it is shared with the Debate route), so the DECA serving route must narrow
+ * here rather than cast — an unrecognised area would otherwise reach the builder and empty its pool.
+ */
+export function isDecaDrillArea(value: unknown): value is DecaDrillArea {
+  return typeof value === "string" && DECA_DRILL_AREAS.some((a) => a.id === value);
+}
+
 export type DecaDrillQuestion = {
   id: string;
   area: DecaDrillArea;
@@ -412,6 +421,15 @@ export const DECA_DRILL_HELD_IDS: ReadonlyArray<string> = [
 export function buildDecaDrillSession(count: number, areas?: DecaDrillArea[]): DecaDrillQuestion[] {
   const served = DECA_DRILL_BANK.filter((q) => !DECA_DRILL_HELD_IDS.includes(q.id));
   const pool = areas && areas.length > 0 ? served.filter((q) => areas.includes(q.area)) : served;
+  // An empty pool can never satisfy count >= 1, and the padding loop below pushes from `pool` — so
+  // with an empty pool it never advances `result.length` and spins forever, synchronously, inside
+  // the serving route's open transaction. An unrecognised area string, or a hold that empties an
+  // area, must fail loudly here rather than hang a worker or persist a zero-item active session.
+  // This guard is independent of route validation on purpose: it protects internal callers too.
+  // (Same protection the Debate builder has carried since the drill-exclusion boundary work.)
+  if (pool.length === 0) {
+    throw new Error(`DECA drill pool is empty for areas [${areas?.join(", ") ?? ""}] — cannot build a session`);
+  }
   const shuffled = shuffle(pool);
   if (count <= shuffled.length) return shuffled.slice(0, count);
   const result = [...shuffled];

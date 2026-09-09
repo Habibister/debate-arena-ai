@@ -43,7 +43,17 @@ type JudgeResult = {
   rubricSource?: { eventName: string; season: string; verificationStatus: string };
 };
 
-const DECA_EVENT_NAME = "Hotel and Lodging Management Series";
+// P0-7 (2026-09-09): this name is the seeded Hospitality & Tourism spec's event. It used to be sent
+// as the event identity for EVERY cluster, so a Finance or Marketing round was authored and framed
+// as a Hotel and Lodging Management Series round. The event label must now be truthful for the
+// cluster actually chosen: the specific event only where the cluster is the one it covers, and an
+// honest generic label otherwise. No event mapping is invented here.
+const DECA_HOSPITALITY_EVENT_NAME = "Hotel and Lodging Management Series";
+const DECA_GENERIC_EVENT_NAME = "DECA role-play";
+
+function decaEventNameForCluster(cluster: string): string {
+  return /hospitality|tourism|lodging|hotel/i.test(cluster) ? DECA_HOSPITALITY_EVENT_NAME : DECA_GENERIC_EVENT_NAME;
+}
 
 async function call<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -145,7 +155,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
     try {
       const data =
         cfg.track === "deca"
-          ? await call<Scenario>("/api/ai/deca-scenario", { level: cfg.level, eventType: DECA_EVENT_NAME, cluster: cfg.cluster, studentRole: cfg.studentRole, judgeRole: cfg.judgeRole })
+          ? await call<Scenario>("/api/ai/deca-scenario", { level: cfg.level, eventType: decaEventNameForCluster(cfg.cluster), cluster: cfg.cluster, studentRole: cfg.studentRole, judgeRole: cfg.judgeRole })
           : await call<Scenario>("/api/ai/hosa-scenario", { level: cfg.level, category: cfg.category, studentRole: cfg.studentRole, characterRole: cfg.characterRole });
       setScenario(data);
     } catch (e) {
@@ -264,7 +274,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
     authorId: t.speaker === "student" ? "student" : null,
     content: t.content
   }));
-  const coachEventType = isDeca ? DECA_EVENT_NAME : (config as HosaRoomConfig).category;
+  const coachEventType = isDeca ? decaEventNameForCluster((config as DecaRoomConfig).cluster) : (config as HosaRoomConfig).category;
 
   const eventTitle = isDeca ? "DECA Role-Play" : "HOSA Health-Science Role-Play";
   const officialPill =

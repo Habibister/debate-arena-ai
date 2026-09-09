@@ -66,11 +66,13 @@ const demoSampleMastery: MasteryPoint[] = [
   { skill: "Clarity", mastery: 91, trend: "up" }
 ];
 
-function masteryFromTests(tests: Array<{ score: number | null }>) {
+// P0-4 (2026-09-09): the MEAN OF PRACTICE-TEST SCORES. It reads no MasteryProgress row and does not
+// survive spaced reassessment, so it is not mastery and is no longer labelled as such.
+function practiceAverageFromTests(tests: Array<{ score: number | null }>) {
   const completedScores = tests.map((test) => test.score).filter((score): score is number => typeof score === "number");
 
   if (completedScores.length === 0) {
-    // A brand-new user has no real mastery yet — never fake it.
+    // A brand-new user has no practice results yet — never fake a number.
     return 0;
   }
 
@@ -153,7 +155,7 @@ export default async function DashboardPage() {
   const streak = user?.streak ?? 0;
   const wins = user?.wins ?? 0;
   const rank = user?.rank ?? "BRONZE";
-  const mastery = masteryFromTests(recentTests);
+  const practiceAverage = practiceAverageFromTests(recentTests);
   const weakAreas = weakAreasForTrack(recentTests, activeOrg);
   const masteryData: MasteryPoint[] = demo ? demoSampleMastery : [];
   // Weak areas are real (from graded tests); we show their NAMES only — no invented percentages.
@@ -273,7 +275,7 @@ export default async function DashboardPage() {
             honest umbrella: it covers a judged round and a graded set, and promises neither. */}
         <StatCard label="XP" value={String(xp)} detail="Earn XP from scored training in your track." icon={Medal} />
         <StatCard label="Practice sessions" value={String(streak)} detail="Scored training in your track, counted as it happens." icon={Flame} />
-        <StatCard label="Mastery" value={`${mastery}%`} detail="Based on recent training outcomes." icon={Target} />
+        <StatCard label="Practice average" value={`${practiceAverage}%`} detail="Mean score across your recent practice tests." icon={Target} />
       </div>
 
       <LearningPath weakAreas={weakAreas} hasActivity={hasActivity} pendingAssignment={pendingAssignment} />

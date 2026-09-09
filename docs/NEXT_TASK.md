@@ -13,7 +13,25 @@ they win over this file whenever they disagree with it.
 4. If a later revision of either canonical file names a different next milestone, **that file wins**
    and this pointer is stale by definition.
 
-## Current education milestone: Debate connectivity — `debate-signposting` and `debate-constructive-speeches`
+## Current task: OWNER BEGINNER QA — not an agent task
+
+**DECA P1 is FROZEN at `77a8fab`** (freeze result P0 = 0, P1 = 0). Agent-driven DECA feature
+development stops there. The next step belongs to the owner, not to an agent: use the site as an
+actual beginner — click through Learn, take drills, trigger a due review, run a simulation,
+deliberately make mistakes — and record anything confusing, misleading, broken or annoying.
+
+Only deterministic issues the owner finds become repair tasks, and each stays narrow. Do not start
+new DECA authoring, do not publish `deca-professional-communication`, and do not schedule design or
+polish work ahead of the QA pass.
+
+Roadmap: 1. DECA P1 frozen. 2. canonical docs synced. 3. **owner beginner QA (here)**. 4. focused
+repairs for deterministic findings. 5. design. 6. website polish. 7. external review. 8. fixes for
+legitimate criticism. 9. final freeze / launch.
+
+## Deferred education milestone: Debate connectivity — `debate-signposting` and `debate-constructive-speeches`
+
+**Deferred, not next.** It stays recorded here so it is not lost, and becomes actionable only when
+the canonical files say so.
 
 **B2.3 / `wg-08` is CLOSED.** Its accepted stack was owner-pushed and exact-source Production-verified
 at `7d2aa83c7420cf654676964ab57ba5b46970b597`, deployment `6170342196`. No B2.3 acceptance, push or

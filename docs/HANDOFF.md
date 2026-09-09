@@ -1,6 +1,6 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-06._
+_Last updated: 2026-09-09._
 
 **This region is the only operational part of this file.** Everything below the
 `PREVIOUS HANDOFF ARCHIVE` boundary is preserved historical handoff material: non-normative,
@@ -9,6 +9,14 @@ below the boundary.
 
 ## What is complete
 
+- **DECA P1 — FROZEN at `77a8fab`, LOCAL ONLY. Freeze result P0 = 0, P1 = 0.** Twelve DECA lessons
+  published, one held. Four mastery loops complete end to end. Track-scoped due review, DECA-only
+  coaching, simulation connected in both directions with truthful feedback, review-prep and retry.
+  **Nothing in this milestone is pushed or Production-verified** — every commit from `ef94638`
+  through `77a8fab` is local, and no deployment claim attaches to any of them.
+  **Agent-driven DECA feature development stops here.** The next step is OWNER BEGINNER QA.
+  **Do not publish `deca-professional-communication`**; it is held as optional support by owner
+  ruling and no part of the DECA learner path depends on it.
 - **B2.2 — FULLY CLOSED and Production-verified.** Three commits, and the ORDER is the point:
   `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b` (teach) → `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`
   (protect the measurement) → `65c4e6f442d00296fe0a8f8e7902cfd627c02080` (release). Production
@@ -635,7 +643,10 @@ below the boundary.
   raised from four to five deliberately. The resolver fails closed: an unmapped, unregistered or held
   slug yields no destination, and an unresolvable recommendation card is not rendered.
   Also repaired: Home's "Practice 10 minutes" and "Debate Now" resolved to the SAME full-round href
-  for Debate, so a "focused rep" opened a judged round; the focused action is now a scored drill. The
+  for Debate, so a "focused rep" opened a judged round; the focused action is now a scored drill.
+  (That label no longer exists: `77a8fab` removed the duration entirely, because the destination runs
+  5, 8 or 12 minutes by level and the room renders "~5 min". The action now names the activity, per
+  track. This sentence records the earlier repair, not the current copy.) The
   Debate branch of the shared `/training/[track]/practice` route rendered a second copy of the Compete
   setup under the heading "Debate practice" and now redirects to `/debate?track=debate`; that route is
   kept because DECA and HOSA still render their own surfaces there — Model UN is a RETIRED track whose
@@ -707,7 +718,8 @@ below the boundary.
   is removed — it was the one lesson practice that writes durable mastery, and a promoted control
   above every teaching section invited the exact bypass the teach-first rule exists to prevent;
   section navigation still reaches Practice. **Not committed, not pushed, not deployed.**
-- **DECA empty-pool twin.** `buildDecaDrillSession` has no zero-eligible guard; the Debate half
+- **DECA empty-pool twin — CLOSED** (`lib/deca-drills.ts:445` throws on an empty pool). The line
+  below is retained only to record what it used to say; the Debate half
   shipped in `a66d46cb`. Do not record the empty-pool issue as closed — only the Debate half is.
 - **Signposting and Constructive Speeches** drill-and-evidence connectivity — the only two unresolved
   Debate connectivity gaps.
@@ -855,7 +867,18 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 36** — every `*:smoke` script in `package.json`.
+- **REGISTERED = 45** — every `*:smoke` script in `package.json`, re-derived 2026-09-09. **The three
+  derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
+  not subtract from 45 to guess.**
+- **What was executed and passing at the DECA P1 freeze (`77a8fab`)** — the honest verification
+  statement for that milestone, and NOT a repository-defined set: **STRICT-SAFE = 29** at ENV 0 /
+  NET 0 under the fail-closed runtime guard, and **ENV-TAINTED = 2** (`coach-evidence`,
+  `review-ladder`) run separately, 2 `.env` reads each, NET 0. **Never merge the buckets. Never name
+  a verification set by a count alone** — "the 20-suite battery" and "the 26-suite set" both drifted
+  silently and hid failing suites. Name the suites you ran.
+- **`deca-practice-map` and `deca-p0-hardening` are NOT registered in `package.json`.** Both pass and
+  both must be named explicitly to run. Test-discovery debt.
+- **(stale)** **REGISTERED = 36** — every `*:smoke` script in `package.json`.
 - **PROJECT RELEASE-SAFE BATTERY = 32** — registered minus `auth`, `team`, `assignment`
   (shared-Production database writers) and `judge-shape` (env reader + live provider). This is the
   long-standing release gate. **It is NOT credential-free: 15 of its members read `<repo>/.env`.**
@@ -1009,6 +1032,28 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
+**OWNER BEGINNER QA.** DECA P1 is frozen at `77a8fab`. Stop agent-driven feature development. The
+owner now uses the site as a beginner — Learn, drills, review, simulation, deliberate mistakes — and
+records what is confusing, misleading, broken or annoying. Only deterministic issues the owner finds
+become repair tasks, and each stays narrow.
+
+**Remaining DECA debt, recorded and NOT scheduled.** P2: nine of ten authored feedback categories
+have no exact learning owner, so there are zero automatic diagnosis mappings; `weaknesses[]` is
+computed by the judge and rendered nowhere. P3: the exact six positional-rationale bank items
+(`br-13`, `br-17`, `cr-17`, `cr-18`, `cr-23`, `cr-26`); `pi-26` held pending its own source gate.
+P4: the two unregistered DECA guards; two event-page rows sharing one href under different names;
+the simulation card sitting third on `/study-arcade` behind the drills; the orphaned
+`app/api/ai/deca-objections/route.ts` and `components/training/track-practice-setup.tsx`; primary-nav
+`Lessons` visibility for DECA, which is a navigation-consistency question now that both the Learn
+stage and the track hub open the catalog. Scoring-fidelity debt, unchanged: the official
+Novice/Developing/Proficient/Exemplary band criteria are not sent to the provider and nothing claims
+they were, and the prepared-vs-unscripted split is asserted to the model without a repository source.
+
+**DEBATE DEBT — record only, do not reopen.** `constructive-speech` supplies four distinct
+secure-evidence keys against a floor of five, so its mastery is currently unreachable; the
+learner-facing message blames the learner's answer count for a bank-side ceiling; and
+`orderPoolForEvidence`, the module's own documented mitigation, has no runtime caller.
+
 **No B2.3 action remains.** The next Debate education work is the two unresolved Debate connectivity
 gaps listed under *What remains open*: **`debate-signposting`** and **`debate-constructive-speeches`**,
 which carry neither `skillSlug` nor `practiceDrill` and so cannot mint mastery.
@@ -1023,6 +1068,9 @@ next education milestone, those files win over any task pointer that disagrees.
 
 ## STOP conditions
 
+- **Do not begin new DECA feature work.** DECA P1 is frozen; the next input is owner QA findings.
+- **Do not publish `deca-professional-communication`** or treat it as a prerequisite, a coach
+  destination, a remediation target or a simulation gate.
 - **Push, deploy and every database operation remain owner-only.** B2.3 is closed and its stack is
   pushed and verified; that closure authorizes no future push.
 - **Do not reopen B2.3 over the alias-binding disclosure.** Exact-source Production deployment is

@@ -1,6 +1,6 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-08-30._
+_Last updated: 2026-09-09._
 
 **This region is the only part of this file that describes current reality.** Everything below the
 `HISTORICAL ARCHIVE` boundary is preserved historical evidence and is explicitly non-normative and
@@ -34,6 +34,64 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Education state
 
+- **DECA P1 — FROZEN at `77a8fab`, 2026-09-09. Freeze result P0 = 0, P1 = 0.** The DECA learning
+  architecture is coherent end to end for its supported scope: LEARN → PRACTICE → MASTERY →
+  REVIEW/REMEDIATE → SIMULATE → PRACTICE FEEDBACK → REVIEW PREP → RETRY. **12 DECA lessons published,
+  1 held** (`deca-professional-communication`, optional support by owner ruling — not a prerequisite,
+  not a coach destination, not a remediation target, not a simulation gate). **Four mastery loops
+  complete**: `performance-indicators`, `business-reasoning`, `customer-relations` and
+  `marketing-fundamentals` each have a published teaching owner, an exact drill, a real skill row,
+  due-review support and an exact remediation destination. **Component separation holds**: PI and
+  Business Reasoning are ROLE-PLAY (`deca-roleplay-core`); Customer Relations and Marketing
+  Fundamentals are CLUSTER/EXAM (`deca-business-content`) and are **not** universal role-play
+  prerequisites. Mastery semantics are unchanged — 5 distinct answered items at the 70% floor — and
+  mean PRACTICE MASTERY, never competition readiness. The milestone commits, in order: `ef94638`
+  (mapping layer) → `0908ec2` → `3579108` → `5628c57` → `0128b45` (four teaching owners) → `9af333c`
+  (remediation reaches learners) → `012f089` (verification governance) → `454ac7b` (track-scoped
+  reviews, nullable mastery) → `f004d05` → `956b9a9` (the two simulation prerequisites) → `d37a533`
+  (simulation connected) → `77a8fab` (navigation truth).
+- **Lesson counts — never collapse DECA into the global figure.** **DECA published = 12.**
+  **Global published (all tracks, learner-visible registry entries) = 23**: 12 DECA, 10 General
+  Debate, 1 HOSA. Writing the global number where the DECA number belongs was a real reporting error
+  during P1-B4 and is the reason this line exists. **DECA held = 1.**
+  ROLE-PLAY CORE carries the published prerequisite and skill path: `how-deca-roleplay-works`,
+  `deca-reading-scenarios`, `deca-identifying-problem`, `deca-understanding-performance-indicators`,
+  `deca-justifying-your-recommendation`. BUSINESS CONTENT carries Customer Relations
+  (`deca-handling-customer-situations`) and Marketing MK1–MK6: `deca-who-the-customer-is`,
+  `deca-why-they-choose-you`, `deca-how-you-are-understood`, `deca-the-offering-and-its-price`,
+  `deca-getting-it-to-the-customer`, `deca-telling-them-about-it`.
+- **DECA SUPPORTED SCOPE — the exact statement.**
+  **SUPPORTED:** the DECA beginner learning architecture; Individual-Series-oriented role-play
+  preparation; role-play orientation; reading and decoding scenarios; identifying the business
+  problem; Performance Indicators and Business Reasoning teaching each with drill, mastery and
+  remediation; Customer Relations and Marketing Fundamentals (MK1–MK6) cluster/exam teaching each
+  with drill, mastery and remediation; track-scoped due review; DECA-only remediation and coaching
+  destinations; an AI-generated generic role-play simulation; CompeteReady-authored semantic practice
+  feedback; and a truthful review-prep and retry path.
+  **NOT FULLY SUPPORTED — intentionally, not as defects:** official scenario-specific PI semantic
+  judging; official weighted scoring while actual PI semantics are absent; official
+  Novice/Developing/Proficient/Exemplary provider-band evaluation; complete support for Principles,
+  Personal Financial Literacy, Professional Selling, prepared events, written events and online
+  events; and automatic feedback-category-to-lesson diagnosis.
+- **DECA scoring truth — two instruments, never merged.** The **semantic scorer is REAL and
+  provider-dependent**; a provider failure yields **no ballot**, never a fabricated one. The
+  **official 2026–27 Individual Series rubric is SOURCED**: 5 PI × 10 = 50, Solution 3 × 8 = 24,
+  Career Competencies 3 × 6 = 18, Overall Impression 8 — **total 100**. **But actual
+  scenario-specific PI semantics do not reach the judge request**, so official weighted scoring stays
+  **FAIL-CLOSED** whenever those semantics are absent: a rubric line that names no scored behaviour
+  (a bare or numbered "Performance Indicators" slot) cannot enable weighting. The instrument the
+  learner's practice ballot actually comes from is the **CompeteReady-authored 10-category
+  instrument**. It is not the official rubric, it is never labelled official, and the two must not be
+  collapsed in prose, totals or source tags.
+- **DECA simulation truth.** The scenario is **AI-generated CompeteReady practice, never an official
+  DECA case**, and the room says so (`generic practice — not official`). Feedback is **real** semantic
+  provider output scored against a **CompeteReady-authored 10-category instrument** — *not* the
+  official rubric, and the two are never merged. Retry is **a new scenario through setup**; the
+  runtime cannot reproduce a case and the copy does not promise one. **Simulation writes 0 mastery,
+  0 readiness, 0 rating and 0 competition results.** There is **no official PI-by-PI diagnosis** and
+  **0 automatic diagnosis mappings** — of ten authored feedback categories exactly one has a lesson
+  teaching the same construct, and routing one in ten would read as a diagnosis of all ten, so the
+  learner is offered manual review-prep links instead.
 - **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
   `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
   that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
@@ -88,7 +146,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   - `debate-round-orientation` — carries neither `skillSlug` nor `practiceDrill` **BY DESIGN**, so it
     can never mint mastery. It is **INTENTIONALLY UNMAPPED and NOT a connectivity gap.**
   Never write "only Signposting and Constructive have neither" — orientation has neither too.
-- DECA and HOSA have no concept-drill mapping.
+- **DECA has a complete concept-drill mapping** (`lib/education/deca-practice-map.ts`): 4 of 4 areas
+  carry a published teaching owner and resolve to their exact drill. **HOSA still has none.** (This
+  line read "DECA and HOSA have no concept-drill mapping" until DECA P1; it was true when written.)
 - Thresholds: `PRACTICING_MASTERY_MIN` **70** and `DRILL_PASS_THRESHOLD` **70** — equal numbers,
   distinct product concepts. DUE ≠ WEAK.
 
@@ -203,10 +263,13 @@ non-executable. Rewrite this region after each milestone; append history below t
   the first time since the rebuttal containment.
 - **DECA SHUFFLED-RATIONALE REVIEW DEBT: OPEN — exactly six items** (`br-13`, `br-17`, `cr-17`,
   `cr-18`, `cr-23`, `cr-26`). The `POS_REF` guard that closed the Debate class flags these too. They
-  are NOT repaired: DECA is a different curriculum this milestone did not audit. Waived by exact bank
+  are NOT repaired. (This was written when DECA was an unaudited curriculum. DECA P1 has since
+  audited and rebuilt the DECA TEACHING layer; the six items are BANK debt and were deliberately left
+  untouched throughout — every DECA phase since has proved the bank byte-identical.) Waived by exact bank
   and metric in `MCQ_GUARD_WAIVERS`, named and dated, printed on every run — temporary review debt,
-  not an accepted exception to the authoring standard. **DECA cannot be called end-to-end complete
-  while it stands, and closing it belongs at the front of the DECA audit.**
+  not an accepted exception to the authoring standard. **DECA P1 is frozen with this debt open**: the
+  freeze covers the learner architecture, not bank-item authoring quality, and this is recorded as P3
+  bank debt rather than closed. Closing it belongs to a DECA bank pass, which has not been scheduled.
 - **SIGNPOSTING — PERFECTION-AUDITED, THEN REPAIRED (working tree, uncommitted, 2026-09-06).**
   The third diagnosis in the series, and a new one: teaching STRONG, assessment measuring NOTHING.
   The audit rated the method strong, the structure-versus-substance proof a pass, and found 22 of the
@@ -574,9 +637,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   ENV 0 / NET 0. **Not committed, not pushed, not deployed.** `skills-compat:smoke` and
   `coach-evidence:smoke` were repaired statically for expectations this change invalidates and were
   **NOT EXECUTED — no pass is claimed for either.**
-- **DECA empty-pool twin — OPEN.** The Debate zero-eligible guard shipped in `a66d46cb`;
-  `buildDecaDrillSession` still has no such guard. Do not record the empty-pool issue as closed —
-  only the Debate half is.
+- **DECA empty-pool twin — CLOSED.** `buildDecaDrillSession` throws on an empty pool at
+  `lib/deca-drills.ts:445` rather than spinning inside the serving route's open transaction. Both
+  halves of the empty-pool issue are now closed; the Debate guard shipped in `a66d46cb`.
 - **Signposting and Constructive Speeches** drill-and-evidence connectivity (the only two unresolved
   Debate connectivity gaps).
 - Later speeches, flowing, round strategy, crystallization, delivery, questioning/cross-ex.
@@ -652,7 +715,20 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **Four counts, never collapsed.** **REGISTERED = 36** (`*:smoke` scripts in `package.json`).
+- **REGISTERED = 45** (`*:smoke` scripts in `package.json`, re-derived 2026-09-09). **The four
+  counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
+  any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
+  suite's transitive closure.
+- **What was actually executed and passing at the DECA P1 freeze (`77a8fab`)**, which is the honest
+  verification statement for that milestone and is not a repository-defined set: **STRICT-SAFE = 29**
+  suites at ENV 0 / NET 0 under a fail-closed runtime guard, plus **ENV-TAINTED = 2**
+  (`coach-evidence`, `review-ladder`) reported separately at 2 `.env` reads each and NET 0, because
+  `@prisma/client` dotenv-reads `<repo>/.env` at module scope. **Never merge those two buckets, and
+  never name a verification set by a count alone** — "the 20-suite battery", "the 26-suite set" and
+  similar nicknames drifted silently and hid failing suites. Name the suites.
+- **Two DECA guards are not registered in `package.json`** and therefore run only when named
+  explicitly: `deca-practice-map` and `deca-p0-hardening`. Both pass. Recorded as test-discovery debt.
+- **(stale, retained for re-derivation)** **REGISTERED = 36** (`*:smoke` scripts in `package.json`).
   **PROJECT RELEASE-SAFE BATTERY = 32** — registered minus `auth`, `team`, `assignment`
   (shared-Production database writers) and `judge-shape` (env reader + live provider); the release
   gate, and **NOT credential-free — 15 of its members read `<repo>/.env`.**
@@ -666,7 +742,7 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `.env.local` reads. That is a statement about the toolchain as it stands today, not a claim that no
   isolated future build arrangement could avoid env files; any such path would need fresh proof.
   Production build is RELEASE validation.
-- **Only 36 and 32 are derivable from `package.json`.** The 17 and the 19 are properties of each
+- **(stale)** **Only 36 and 32 are derivable from `package.json`.** The 17 and the 19 are properties of each
   suite's transitive closure and were established by static analysis plus a fail-closed runtime guard;
   re-derive them that way, never by name or by subtraction. A passing run proves nothing — Prisma
   swallows a blocked read, so all 14 transitively tainted suites pass while reading `.env`.
@@ -712,6 +788,19 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
      release validation — see fact 1, which this does not retract.
 
 ## Current next action
+
+**OWNER BEGINNER QA.** DECA P1 is frozen at `77a8fab` and agent-driven DECA feature development
+stops here. The next step is the owner using the site as an actual beginner — clicking through Learn,
+taking drills, triggering review, running simulations, deliberately making mistakes — and recording
+anything confusing, misleading, broken or annoying. That QA is worth doing now precisely because the
+architecture is stable enough that it tests the product rather than a moving target.
+
+**The roadmap after this docs sync:** 1. DECA P1 frozen. 2. canonical docs synced (this). 3. owner
+beginner QA. 4. focused repairs only for deterministic issues the owner finds. 5. design.
+6. website polish. 7. external review. 8. fixes for legitimate criticism. 9. final freeze / launch.
+
+**Do not schedule `deca-professional-communication` publishing.** It is held as optional support by
+owner ruling, and nothing in the DECA learner path depends on it.
 
 **No B2.3 action remains.** The next Debate education work is the two unresolved Debate connectivity
 gaps named under *Current open gaps*: **`debate-signposting`** and **`debate-constructive-speeches`**,

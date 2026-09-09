@@ -14,6 +14,7 @@ import {
 import { getAiPersona } from "@/lib/ai-personas";
 import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
 import { findSpecForEvent, getSpecRubricBreakdown, getWeightedScoringRubric } from "@/lib/competition-specs";
+import { rubricLineNamesNoScoredBehaviour } from "@/lib/rubrics";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
 import {
@@ -240,6 +241,11 @@ async function registryRubricForJudge(
     // to its CompeteReady-authored seed rubric and no official attribution tag is produced.
     const allSourced = breakdown.categories.every((category) => category.provenance === "sourced");
     if (!allSourced) return null;
+    // SEMANTIC COMPLETENESS (B4.1, 2026-09-09). Positive sourcing proves the POINT SPLIT is real; it
+    // does not prove the model can tell what each line measures. A rubric carrying a bare numbered
+    // performance-indicator slot names no behaviour, so it may not be announced to the model — or to
+    // the learner through `tag` — as the official scoring categories.
+    if (breakdown.categories.some((category) => rubricLineNamesNoScoredBehaviour(category.name))) return null;
     const names = breakdown.categories.map((category) => category.name);
     const promptBlock = `Official rubric categories from the ${spec.eventName} ${spec.season} specification (${spec.verificationStatus}): ${names.join(
       "; "
@@ -1906,7 +1912,18 @@ export async function judgeDecaRoleplay(input: {
   const registry = await registryRubricForJudge("DECA", input.eventType);
   // Rubric Engine stage 2: when the registry has a fully-sourced point split for this event, the AI
   // scores each official category 0-100 and we compute the overall as a genuine weighted sum in code.
-  const weighted = await getWeightedScoringRubric("DECA", input.eventType);
+  const weightedCandidate = await getWeightedScoringRubric("DECA", input.eventType);
+  // SEMANTIC COMPLETENESS GATE (B4.1, 2026-09-09). The sourced 2026-27 form stores its five
+  // performance-indicator maxima as numbered slots, because the indicator TEXT is scenario-specific
+  // and published separately. Nothing in the judge request carries that text today — the request
+  // schema has no field for it — so scoring those five 10-point lines would be arithmetic without
+  // meaning, on half the ballot, while the result claimed an official rubric. Weighted mode is
+  // therefore refused until the rubric's own lines name what they measure; the round still scores
+  // against the CompeteReady-authored seed rubric, unweighted and never labelled official.
+  const weighted =
+    weightedCandidate && weightedCandidate.categories.every((category) => !rubricLineNamesNoScoredBehaviour(category.name))
+      ? weightedCandidate
+      : null;
 
   const splitInstruction = input.hasObjectionRound
     ? `

@@ -11,6 +11,7 @@
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { rubricLineNamesNoScoredBehaviour } from "../lib/rubrics";
 import {
   DECA_DRILL_AREAS,
   DECA_DRILL_BANK,
@@ -277,7 +278,7 @@ function main() {
     );
     assert.ok(/const registryPis: string\[\] = \[\];\s*\n\s*const hasRegistry = false;/.test(ai), "so the registry-PI path cannot fire");
     // The judge still consumes the rubric — that is the whole point of sourcing it.
-    assert.ok(/const weighted = await getWeightedScoringRubric\("DECA", input\.eventType\);/.test(ai), "the JUDGE still resolves the weighted rubric");
+    assert.ok(/const weightedCandidate = await getWeightedScoringRubric\("DECA", input\.eventType\);/.test(ai), "the JUDGE still resolves the weighted rubric (subject to the B4.1 semantic gate)");
     assert.ok(/result\.overallScore = computeWeightedOverall\(items\);/.test(ai), "and still computes the overall from the sourced point weights");
   });
 
@@ -287,6 +288,50 @@ function main() {
       /const allPointed = breakdown\.categories\.every\(\(c\) => typeof c\.points === "number" && c\.points > 0 && c\.provenance === "sourced"\);/.test(specs),
       "B1's gate is intact — seeding data did not weaken it"
     );
+  });
+
+  // ============================================================================================
+  // B4.1 — a sourced point split is not the same as a scoreable rubric. The five performance
+  // indicator lines are point CONTAINERS; their text is scenario-specific and published separately.
+  // ============================================================================================
+  check("F1. a bare numbered performance-indicator slot is recognised as naming no scored behaviour", () => {
+    for (const slot of ["Performance indicator 1", "Performance Indicator 5", "performance indicators", "Performance indicator", "  Performance Indicator 3  "]) {
+      assert.equal(rubricLineNamesNoScoredBehaviour(slot), true, `point container: ${JSON.stringify(slot)}`);
+    }
+  });
+
+  check("F2. real behaviour-naming rubric lines are NOT blocked — including HOSA's, so no cross-track regression", () => {
+    for (const real of ["Test score", "Solution: Unique", "Solution: Practical", "Solution: Effective",
+      "Career Competencies: Critical Thinking", "Career Competencies: Communication", "Career Competencies: Decision Making",
+      "Overall Impression", "Use of Performance Indicators", "Performance indicators: handle guest concerns"]) {
+      assert.equal(rubricLineNamesNoScoredBehaviour(real), false, `names a behaviour: ${JSON.stringify(real)}`);
+    }
+  });
+
+  check("F3. the gate is applied at BOTH places that claim an official rubric", () => {
+    const ai = read("lib/ai.ts");
+    assert.ok(
+      /if \(breakdown\.categories\.some\(\(category\) => rubricLineNamesNoScoredBehaviour\(category\.name\)\)\) return null;/.test(ai),
+      "official attribution refuses a rubric with an unscoreable line"
+    );
+    assert.ok(
+      /weightedCandidate && weightedCandidate\.categories\.every\(\(category\) => !rubricLineNamesNoScoredBehaviour\(category\.name\)\)/.test(ai),
+      "weighted scoring refuses the same rubric"
+    );
+    // Scope the ordering check to the judge function: `const weighted =` also appears in the pure
+    // weighting helper far earlier in the file.
+    const judge = ai.slice(ai.indexOf("export async function judgeDecaRoleplay"));
+    assert.ok(judge.indexOf("const weightedCandidate") < judge.indexOf("const weighted ="), "the candidate is gated before it becomes the weighted rubric");
+    assert.ok(!/const weighted = await getWeightedScoringRubric/.test(judge), "the ungated assignment is gone");
+  });
+
+  check("F4. the judge request genuinely cannot carry performance-indicator text today", () => {
+    const validators = read("lib/validators.ts");
+    const schema = validators.slice(validators.indexOf("roleplayJudgeRequestSchema"), validators.indexOf("roleplayJudgeRequestSchema") + 400);
+    assert.ok(!/performanceIndicator/i.test(schema), "the roleplay judge schema has no indicator field — the gap is structural, not a missed argument");
+    const room = read("components/rooms/roleplay-room.tsx");
+    const judgeCall = room.slice(room.indexOf("/api/ai/judge-deca"), room.indexOf("/api/ai/judge-deca") + 420);
+    assert.ok(!/performanceIndicators/.test(judgeCall), "and the room does not send the indicators it renders to the learner");
   });
 
   console.log(

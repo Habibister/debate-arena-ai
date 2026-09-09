@@ -418,6 +418,25 @@ export function getDefaultEventType(organization: Organization) {
   return EVENT_OPTIONS[organization][0].value;
 }
 
+/**
+ * True when a rubric line names a POINT CONTAINER rather than a scored behaviour.
+ *
+ * DECA's official Individual Series evaluation form scores five performance indicators whose text is
+ * event- and scenario-specific: the indicators themselves live in a separate published cluster
+ * indicator list, not on the form. The registry therefore stores their MAXIMA as numbered slots
+ * ("Performance indicator 1" ... "5"). A semantic judge handed "Performance indicator 3" and a
+ * 10-point maximum cannot know what behaviour to score, so half of a 100-point ballot would be
+ * points without meaning.
+ *
+ * A rubric containing such a slot is not semantically complete for a judge, however correct its
+ * arithmetic. Callers use this to refuse weighted scoring and official attribution until real
+ * indicator text is supplied. This gate lifts on its own the day the registry carries indicator
+ * statements instead of numbered placeholders.
+ */
+export function rubricLineNamesNoScoredBehaviour(categoryName: string): boolean {
+  return /^performance indicators?\s*\d*$/i.test(categoryName.trim());
+}
+
 export function getRubricSeed(organization: Organization, eventType: string) {
   return RUBRIC_SEEDS.find((rubric) => rubric.organization === organization && rubric.eventType === eventType);
 }

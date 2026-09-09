@@ -11,6 +11,7 @@ import { AccessibilityPanel } from "@/components/debate/accessibility/accessibil
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
 import { SpeechInput } from "@/components/debate/accessibility/speech-input";
 import { SideCoachPanel, type OfficialMessage } from "@/components/debate/side-coach-panel";
+import { DecaSimulationPrepPanel } from "@/components/training/deca-simulation-prep-panel";
 import { cn } from "@/lib/utils";
 import { readRoleplayConfig, roleplayEstimatedMinutes, roleplayTurnCap, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
 import { RoomChrome, StageRail } from "./room-chrome";
@@ -326,7 +327,26 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         <div className="mt-4"><StageRail stages={stages} activeIndex={stageIndex} /></div>
         <p className="mt-2 text-xs text-muted-foreground">This session isn&apos;t saved yet — finish it in one sitting. (Saved history is coming.)</p>
 
-      {error ? <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p> : null}
+      {error ? (
+        <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3">
+          <p className="text-sm font-semibold text-destructive">{error}</p>
+          {/* P1-D: scenario generation had no way back. `generatedRef` is set BEFORE the call and
+              generateScenario has no other caller, so a failure left the room with no scenario, no
+              brief, no input and no button — the learner's only escape was to leave. Retrying is the
+              one thing they would want, so it is offered. Clearing the ref is what lets the attempt
+              happen at all; it is a client-side render guard and nothing is written either way. */}
+          {!scenario && config && busy !== "scenario" ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3"
+              onClick={() => { generatedRef.current = true; void generateScenario(config); }}
+            >
+              Try generating the scenario again
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       {busy === "scenario" && !scenario ? (
         <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Generating your scenario...</div>
@@ -496,9 +516,17 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           {result.improvementAdvice.length > 0 ? (
             <div className="mt-3"><p className="text-xs font-semibold">Do next</p><ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-muted-foreground">{result.improvementAdvice.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
           ) : null}
+          {/* P1-D: the ballot used to end here, with one button back to setup and no route to any of
+              the teaching a learner had just been scored against. RETRY is the same button renamed to
+              what it actually does: the room holds no scenario across a reset, so it returns to setup
+              where a new one is configured. It does NOT promise the same case again, because the
+              runtime cannot reproduce it. */}
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push(`/training/${track}/practice` as Route)}>Back to setup</Button>
+            <Button type="button" onClick={() => router.push(`/training/${track}/practice` as Route)}>
+              Run another role-play
+            </Button>
           </div>
+          {isDeca ? <DecaSimulationPrepPanel variant="after" /> : null}
         </section>
       ) : null}
       </div>

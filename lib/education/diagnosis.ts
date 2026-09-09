@@ -43,8 +43,15 @@ function titleFor(entry: (typeof EDUCATION_LESSONS)[number]): string | null {
   return null;
 }
 
-/** A registered, learner-visible lesson by id — or null. Held and unregistered ids never resolve. */
-function learnerVisibleLesson(lessonId: string): DiagnosisDestination | null {
+/**
+ * A registered, learner-visible lesson by id — or null. Held and unregistered ids never resolve.
+ *
+ * EXPORTED (P1-D) because the DECA simulation prep path needs exactly this rule and must not clone
+ * it. Both surfaces answer the same question — "may I send a learner here?" — and both must fail
+ * closed on the same three cases: not registered, not learner-visible, no title. A second copy would
+ * be a second place for that rule to drift.
+ */
+export function learnerVisibleLesson(lessonId: string): DiagnosisDestination | null {
   const entry = getEducationLesson(lessonId);
   if (!entry || entry.visibility !== "learner") return null;
   const title = titleFor(entry);

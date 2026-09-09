@@ -63,7 +63,11 @@ function tilesForTrack(track: TrainingTrack | undefined): Tile[] {
       {
         key: "deca-practice",
         title: "DECA role-play practice",
-        detail: "Work a scenario end to end with a coach available. Nothing is scored or recorded.",
+        // P1-D: this said "Nothing is scored or recorded". The second half is true — no DECA role-play
+        // writes anything. The first half was false: the room ends in a judged ballot and renders an
+        // overall score. Under-claiming is still claiming wrongly, and a learner told nothing is scored
+        // then handed a number learns that the product does not know what it does.
+        detail: "Work a scenario end to end with a coach available. You get a practice score — nothing is recorded.",
         href: "/training/deca/practice" as Route,
         icon: MessageSquareText,
         cta: "Open practice"

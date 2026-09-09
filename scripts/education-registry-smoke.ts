@@ -350,6 +350,14 @@ function main() {
     "app/api/debates/route.ts",
     // The SIDE-COACH route resolves the same row marker against the same declarations, so a lesson
     // round is coached under its lesson's constraint even if the request does not say it is one.
+    // P1-D (DECA simulation integration): the Learn -> Simulate connection. All three consume ONLY
+    // lib/education/deca-simulation-prep, which is pure registry data resolved through the same
+    // fail-closed helper the post-round diagnosis uses — a held or unregistered lesson is dropped,
+    // never rendered as a link. None of them writes anything, and none reads mastery or progress:
+    // the simulator's own state-write surface is unchanged by this phase.
+    // ONE consumer, not three: the setup surface and the ballot render this panel rather than
+    // importing the registry themselves, so the dependency stays a single edge.
+    "components/training/deca-simulation-prep-panel.tsx",
     "app/api/ai/side-coach/route.ts",
   ]);
   const consumers: string[] = [];

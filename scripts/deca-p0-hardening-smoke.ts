@@ -12,6 +12,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { rubricLineNamesNoScoredBehaviour } from "../lib/rubrics";
+import { DECA_SIMULATION_CORE_PREP, DECA_SIMULATION_ENTRY, DECA_SIMULATION_SKILL_PREP, decaCourseEndAction, decaSimulationPrep, decaSimulationPrepAll } from "../lib/education/deca-simulation-prep";
+import { EDUCATION_LESSONS } from "../lib/education/registry";
 import {
   DECA_DRILL_AREAS,
   DECA_DRILL_BANK,
@@ -22,6 +24,8 @@ import {
 } from "../lib/deca-drills";
 
 const read = (p: string) => readFileSync(p, "utf8");
+const stripComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/(^|\s)\/\/.*$/, "")).join("\n");
 let checks = 0;
 function check(name: string, fn: () => void) {
   fn();
@@ -334,12 +338,190 @@ function main() {
     assert.ok(!/performanceIndicators/.test(judgeCall), "and the room does not send the indicators it renders to the learner");
   });
 
+  // ---- P1-D. LEARN <-> SIMULATE, WITHOUT INVENTING PROGRESS -----------------------------------
+  check("D1. the simulation prep path resolves to exactly the published role-play lessons", () => {
+    const { core, skills } = decaSimulationPrep();
+    // AUTHORED, NOT JUST RESOLVED. The resolver drops anything it cannot vouch for, which is right at
+    // runtime and blind in a test: a mutation that added the HELD professional-communication lesson,
+    // and two that added exam-side lessons, all passed a check that only counted what came out. So
+    // the authored lists are asserted directly, and then every authored id must survive resolution —
+    // a dropped entry is now a failure instead of a silence.
+    assert.equal(DECA_SIMULATION_CORE_PREP.length, 3, "D1-a. exactly three lessons are AUTHORED as core prep");
+    assert.equal(DECA_SIMULATION_SKILL_PREP.length, 2, "D1-b. exactly two are AUTHORED as supporting skills");
+    assert.equal(core.length, DECA_SIMULATION_CORE_PREP.length,
+      `D1-c. every authored core lesson resolves — none silently dropped (${core.length} of ${DECA_SIMULATION_CORE_PREP.length})`);
+    assert.equal(skills.length, DECA_SIMULATION_SKILL_PREP.length,
+      `D1-d. every authored skill lesson resolves — none silently dropped (${skills.length} of ${DECA_SIMULATION_SKILL_PREP.length})`);
+    for (const authored of [...DECA_SIMULATION_CORE_PREP, ...DECA_SIMULATION_SKILL_PREP]) {
+      const entry = EDUCATION_LESSONS.find((e) => e.id === authored.lessonId);
+      assert.ok(entry, `D1-e. authored prep id ${authored.lessonId} is registered at all`);
+      assert.equal(entry!.visibility, "learner", `D1-f. authored prep id ${authored.lessonId} is not held`);
+      assert.equal(entry!.courseId, "deca-roleplay-core", `D1-g. authored prep id ${authored.lessonId} is role-play course content`);
+    }
+    assert.equal(core.length, 3, `D1. three core prep lessons resolve (${core.map((c) => c.lessonId).join(", ")})`);
+    assert.equal(skills.length, 2, `D1b. two supporting skill lessons resolve (${skills.map((c) => c.lessonId).join(", ")})`);
+    assert.deepEqual(core.map((c) => c.lessonId),
+      ["how-deca-roleplay-works", "deca-reading-scenarios", "deca-identifying-problem"],
+      "D1c. and they are orientation, then reading the scenario, then identifying the problem");
+    for (const step of [...core, ...skills]) {
+      const entry = EDUCATION_LESSONS.find((e) => e.id === step.lessonId);
+      assert.ok(entry, `D1d. ${step.lessonId} is registered`);
+      assert.equal(entry!.visibility, "learner", `D1e. ${step.lessonId} is learner-visible — a held lesson can never be prep`);
+      assert.equal(entry!.track, "DECA", `D1f. ${step.lessonId} is DECA — no other track's lesson is DECA prep`);
+      assert.equal(entry!.courseId, "deca-roleplay-core", `D1g. ${step.lessonId} is role-play course content`);
+      assert.equal(step.href, `/lessons/${step.lessonId}`, `D1h. ${step.lessonId} links to its exact lesson, not a course page`);
+      assert.ok(step.title.trim().length > 0, `D1i. ${step.lessonId} carries a real title`);
+    }
+  });
+
+  check("D2. held and exam-side content is never simulation preparation", () => {
+    // Authored ids, not resolved ones — for the same reason as D1-a: a bad entry must fail, not vanish.
+    const ids = [...DECA_SIMULATION_CORE_PREP, ...DECA_SIMULATION_SKILL_PREP].map((p) => p.lessonId);
+    assert.deepEqual(decaSimulationPrepAll().map((s) => s.lessonId), ids,
+      "D2-a. and what renders is exactly what is authored, in order");
+    // The held lesson stays held AND stays out of the path. Both, because either alone is not enough:
+    // listing it would render nothing (the resolver drops it), which hides the mistake rather than
+    // failing on it.
+    assert.ok(!ids.includes("deca-professional-communication"), "D2. the held professional-communication lesson is not prep");
+    assert.deepEqual(EDUCATION_LESSONS.filter((e) => e.id === "deca-professional-communication"), [],
+      "D2b. and it is still absent from the learner registry entirely");
+    // Cluster knowledge is exam-side. It transfers to some scenarios; it is not universal prep.
+    for (const examLesson of ["deca-handling-customer-situations", "deca-who-the-customer-is", "deca-why-they-choose-you",
+                              "deca-how-you-are-understood", "deca-the-offering-and-its-price",
+                              "deca-getting-it-to-the-customer", "deca-telling-them-about-it"]) {
+      assert.ok(!ids.includes(examLesson), `D2c. ${examLesson} is exam-side content, not a simulation prerequisite`);
+    }
+    // Proven structurally too: every prep id is role-play course, and none is business-content.
+    const courses = new Set(ids.map((id) => EDUCATION_LESSONS.find((e) => e.id === id)?.courseId));
+    assert.deepEqual([...courses], ["deca-roleplay-core"], "D2d. every prep lesson is role-play course content");
+  });
+
+  check("D3. the prep path recommends and never gates", () => {
+    // COMMENT-STRIPPED, for the reason PA7 was repaired in P1-C.1: a comment explaining that the copy
+    // must not say "you are not ready" is not the copy saying it. Scan what renders.
+    const panel = stripComments(read("components/training/deca-simulation-prep-panel.tsx"));
+    const setup = stripComments(read("components/training/deca-roleplay-setup.tsx"));
+    // No readiness vocabulary anywhere on the path. Readiness is not measured, so it is not claimed.
+    for (const banned of [/you are not ready/i, /not yet ready/i, /competition[- ]ready/i, /must complete/i,
+                          /required before/i, /unlock/i, /locked/i]) {
+      assert.ok(!banned.test(panel), `D3. the prep panel makes no readiness or gating claim (${banned})`);
+      assert.ok(!banned.test(setup), `D3b. nor does the setup surface (${banned})`);
+    }
+    assert.ok(/Recommended before you simulate/.test(panel), "D3c. the panel says recommended, in those words");
+    // NO HARD LOCK: the entry button is never disabled by prep state, and the setup reads no lesson
+    // progress at all — there is no completion state in this product to read.
+    assert.ok(/<Button type="button" onClick={enterRoom}>/.test(setup),
+      "D3d. the enter-the-room button carries no disabled condition");
+    for (const progressish of ["completed", "isComplete", "progress", "checkmark", "masteryPercent"]) {
+      assert.ok(!setup.includes(progressish), `D3e. the setup surface reads no completion state (${progressish})`);
+      assert.ok(!panel.includes(progressish), `D3f. nor does the panel (${progressish})`);
+    }
+  });
+
+  check("D4. the ballot routes back to preparation and forward to another round", () => {
+    const room = read("components/rooms/roleplay-room.tsx");
+    const ballotAt = room.indexOf("{/* Ballot / Feedback. */}");
+    assert.ok(ballotAt > 0, "control: the ballot section exists");
+    const ballot = stripComments(room.slice(ballotAt));
+    assert.ok(/DecaSimulationPrepPanel variant="after"/.test(ballot),
+      "D4. the ballot offers the preparation lessons as review");
+    assert.ok(/Run another role-play/.test(ballot), "D4b. and an action to run another one");
+    // RETRY TRUTH: the runtime cannot reproduce a scenario, so the copy must not promise the same
+    // case again. It routes to setup, where a new one is configured.
+    assert.ok(!/same (case|scenario) again|retry this scenario/i.test(ballot),
+      "D4c. and never promises the same scenario back, which the runtime cannot do");
+    assert.ok(/router\.push\(`\/training\/\$\{track\}\/practice`/.test(ballot),
+      "D4d. the retry action goes to the setup surface that starts a new one");
+    // The review list must not be dressed as a diagnosis of this round.
+    const panel = read("components/training/deca-simulation-prep-panel.tsx");
+    assert.ok(/Nothing here says you got any of them wrong/.test(panel),
+      "D4e. and says outright that the list diagnoses nothing");
+  });
+
+  check("D5. a scenario that fails to generate is not a dead end", () => {
+    const room = read("components/rooms/roleplay-room.tsx");
+    assert.ok(/Try generating the scenario again/.test(room),
+      "D5. a generation failure offers a retry rather than stranding the learner");
+    assert.ok(/generatedRef\.current = true; void generateScenario\(config\)/.test(room),
+      "D5b. and the retry actually re-runs generation");
+  });
+
+  check("D6. simulation writes nothing, and cannot reach mastery", () => {
+    // The four routes the room calls. None writes; none imports a mastery, XP or review helper. This
+    // is the property that keeps a semantic practice result from standing in for drill evidence.
+    for (const route of ["app/api/ai/deca-scenario/route.ts", "app/api/ai/roleplay-turn/route.ts",
+                         "app/api/ai/judge-deca/route.ts", "app/api/ai/deca-objections/route.ts"]) {
+      const src = stripComments(read(route));
+      for (const writer of ["prisma.", "recordDrillMastery", "recordPracticeOutcome", "masteryProgress",
+                            "skillReviewSchedule", "awardXp", "XPLog", "readiness"]) {
+        assert.ok(!src.includes(writer), `D6. ${route} does not reach ${writer}`);
+      }
+    }
+    // And the room itself writes nothing.
+    const room = stripComments(read("components/rooms/roleplay-room.tsx"));
+    for (const writer of ["recordDrillMastery", "recordPracticeOutcome", "masteryProgress", "/api/deca/drills/submit"]) {
+      assert.ok(!room.includes(writer), `D6b. the room does not reach ${writer}`);
+    }
+    // Specifically the exam-side skills: a role-play must never move cluster mastery.
+    for (const examSkill of ["deca-customer-relations", "deca-marketing"]) {
+      assert.ok(!room.includes(examSkill), `D6c. the room names no exam mastery skill (${examSkill})`);
+      for (const route of ["app/api/ai/judge-deca/route.ts"]) {
+        assert.ok(!stripComments(read(route)).includes(examSkill), `D6d. nor does the judge (${examSkill})`);
+      }
+    }
+  });
+
+  check("D7. the ballot stays practice feedback, never an official score", () => {
+    const room = read("components/rooms/roleplay-room.tsx");
+    const ballot = stripComments(room.slice(room.indexOf("{/* Ballot / Feedback. */}")));
+    // The authored instrument is never labelled with official DECA authority.
+    for (const banned of [/official DECA (score|rubric|ballot)/i, /judge'?s official/i, /competition score/i,
+                          /you are ready/i, /competition[- ]ready/i, /mastered/i]) {
+      assert.ok(!banned.test(ballot), `D7. the ballot makes no official or readiness claim (${banned})`);
+    }
+    // The provenance pill sits WITH the scores, so the numbers are never read without it.
+    assert.ok(/officialPill/.test(ballot), "D7b. the provenance pill is rendered on the ballot itself");
+    assert.ok(/generic practice — not official/.test(room),
+      "D7c. and its unsourced state says so in the learner's own words");
+    // The PI completeness gate is untouched: a rubric line that names no behaviour cannot enable
+    // weighted official scoring. Asserted against the predicate itself, executed.
+    assert.equal(rubricLineNamesNoScoredBehaviour("Performance Indicators"), true,
+      "D7d. a bare performance-indicator line still names no scored behaviour");
+    assert.equal(rubricLineNamesNoScoredBehaviour("Explains the nature of business ethics"), false,
+      "D7e. control: a line that names a behaviour still passes the gate");
+  });
+
+  check("D8. the DECA course ends at the role-play, and only the DECA course does", () => {
+    // Derived from the chain, so it moves with the terminus instead of pinning one lesson id.
+    assert.equal(decaCourseEndAction("deca-justifying-your-recommendation")?.href, "/training/deca/practice",
+      "D8. the role-play course's last lesson offers the role-play");
+    for (const notTerminal of ["deca-reading-scenarios", "deca-identifying-problem", "deca-understanding-performance-indicators"]) {
+      assert.equal(decaCourseEndAction(notTerminal), null, `D8b. ${notTerminal} is mid-chain and offers nothing`);
+    }
+    // Other courses are untouched: Debate's terminus and the exam course's termini render as before.
+    for (const otherCourse of ["debate-weighing", "deca-telling-them-about-it", "deca-handling-customer-situations"]) {
+      assert.equal(decaCourseEndAction(otherCourse), null, `D8c. ${otherCourse} is not given a DECA role-play action`);
+    }
+    assert.ok(!/official|assessment|final test|ready/i.test(DECA_SIMULATION_ENTRY.label + " " + DECA_SIMULATION_ENTRY.detail),
+      "D8d. and the action's copy claims no assessment and no readiness");
+    assert.ok(/nothing you do there is recorded/i.test(DECA_SIMULATION_ENTRY.detail),
+      "D8e. it says plainly that the role-play records nothing, which is currently true");
+  });
+
   console.log(
     `\nDECA P0 hardening smoke passed: ${checks} controls. Unknown areas are refused at the route and the ` +
       `builder fails fast instead of hanging; rubric provenance fails closed with an explicit unknown state and ` +
       `"official" is claimed only on positive proof; a DECA round without a rubric is refused before the provider ` +
       `call while provider failure still writes no ballot; the event label follows the chosen cluster; and the ` +
-      `practice-test mean and single-score result band no longer claim mastery or readiness.`
+      `practice-test mean and single-score result band no longer claim mastery or readiness. P1-D connected ` +
+      `Learn to Simulate in both directions: the three core prep lessons and two role-play skills resolve to ` +
+      `their exact published lessons through the same fail-closed resolver the post-round diagnosis uses, the ` +
+      `held professional-communication lesson and every exam-side cluster lesson are excluded structurally ` +
+      `rather than by list, the path recommends without gating and reads no completion state because none ` +
+      `exists, the ballot routes back to that preparation and forward to another round without promising a ` +
+      `scenario the runtime cannot reproduce, a failed generation offers a retry instead of stranding the ` +
+      `learner, and the four role-play routes still write nothing at all — so a semantic practice result ` +
+      `cannot stand in for drill evidence, least of all for the two exam mastery areas.`
   );
 }
 

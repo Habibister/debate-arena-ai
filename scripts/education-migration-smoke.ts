@@ -977,6 +977,10 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     // The SIDE-COACH route resolves the same row marker against the same declarations, so a lesson
     // round is coached under its lesson's constraint even if the request does not say it is one.
     "app/api/ai/side-coach/route.ts",
+    // P1-D: the three DECA simulation surfaces, consuming only lib/education/deca-simulation-prep —
+    // pure registry data through the same fail-closed resolver the diagnosis uses. No writes, no
+    // mastery reads, no progress reads.
+    "components/training/deca-simulation-prep-panel.tsx",
   ]);
   const found: string[] = [];
   for (const file of [...walkTree("app"), ...walkTree("components")]) {

@@ -81,7 +81,8 @@ export function ConceptEducationLessonView({
   provenance,
   moduleLabel,
   next,
-  practiceDrill
+  practiceDrill,
+  courseEndAction
 }: {
   source: ConceptEducationLessonSource;
   provenance: SourceFreshnessMetadata;
@@ -94,6 +95,11 @@ export function ConceptEducationLessonView({
    * would be its own small dishonesty.
    */
   practiceDrill?: EducationPracticeDrill;
+  /**
+   * Where to go when this lesson ENDS its course chain (P1-D). Absent for every lesson that has a
+   * next one, and absent for courses that name no onward action — those keep the unchanged prose.
+   */
+  courseEndAction?: { href: string; label: string; detail: string };
 }) {
   const { lesson } = source;
   // Does the drill this lesson points at currently write a durable record? Read from the drill AREA's
@@ -455,10 +461,24 @@ export function ConceptEducationLessonView({
             </Link>
           </>
         ) : (
-          <p className="mt-2 leading-7 text-muted-foreground">
-            This is the last lesson written for this course so far. More are being authored — nothing is
-            being hidden from you, and nothing here has been marked complete on your behalf.
-          </p>
+          <>
+            <p className="mt-2 leading-7 text-muted-foreground">
+              This is the last lesson written for this course so far. More are being authored — nothing is
+              being hidden from you, and nothing here has been marked complete on your behalf.
+            </p>
+            {courseEndAction ? (
+              <>
+                <p className="mt-4 leading-7 text-muted-foreground">{courseEndAction.detail}</p>
+                <Link
+                  href={courseEndAction.href as Route}
+                  className={cn(buttonVariants({ size: "sm" }), "mt-3 h-auto min-h-11 min-w-11 whitespace-normal px-4 text-center")}
+                >
+                  {courseEndAction.label}
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                </Link>
+              </>
+            ) : null}
+          </>
         )}
       </section>
     </div>

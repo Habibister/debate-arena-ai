@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
+import { decaCourseEndAction } from "@/lib/education/deca-simulation-prep";
 import { getServerSession } from "next-auth";
 import { ArrowLeft, Dumbbell, MessageSquare } from "lucide-react";
 import { authOptions } from "@/lib/auth";
@@ -113,7 +114,10 @@ function conceptEducationLesson(slug: string) {
     entry,
     // Fail closed rather than inventing a label for a module that is not registered.
     moduleLabel: moduleEntry ? moduleEntry.label : "Lesson",
-    next: nextEntry && nextTitle ? { id: nextEntry.id, title: nextTitle } : null
+    next: nextEntry && nextTitle ? { id: nextEntry.id, title: nextTitle } : null,
+    // Only where a course chain actually terminates, and only where that course names an onward
+    // action. Null everywhere else, so every other lesson renders exactly what it did before.
+    courseEndAction: decaCourseEndAction(entry.id)
   };
 }
 
@@ -206,6 +210,7 @@ export default async function LessonPage({ params }: { params: { slug: string } 
           moduleLabel={concept.moduleLabel}
           next={concept.next}
           practiceDrill={concept.entry.practiceDrill}
+          courseEndAction={concept.courseEndAction ?? undefined}
         />
       </div>
     );

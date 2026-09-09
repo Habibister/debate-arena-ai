@@ -25,7 +25,11 @@ function competeDestinations(track: TrackInfo): Destination[] {
     return [
       { label: "Guided DECA Role-Play", detail: "A coached run-through: scenario → pitch → the judge's objections → feedback. Retry freely.", icon: MessageSquareText, href: "/training/deca/practice" },
       { label: "Full DECA Simulation", detail: "The timed end-to-end run: prep clock → pitch → objections → scored ballot. Results aren't saved yet.", icon: PlayCircle, href: `/study-arcade?track=${track.slug}` },
-      { label: "History", detail: "Your past debate/practice sessions and ballots.", icon: History, href: "/debates/history" }
+      // P1-D: this said "Your past debate/practice sessions and ballots", which promises a DECA
+      // learner they will find the role-play ballot they were just shown. They will not — no DECA
+      // role-play writes anything (app/api/ai/judge-deca has no Prisma call), and the room itself
+      // already says "This session isn't saved yet". Two surfaces disagreed; this was the wrong one.
+      { label: "History", detail: "Your past rounds and ballots. DECA role-plays aren't saved yet.", icon: History, href: "/debates/history" }
     ];
   }
   if (track.id === "HOSA") {

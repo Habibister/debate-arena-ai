@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DECA_CLUSTERS } from "@/lib/training-tracks";
 import { DECA_ROLE_PAIRS, writeRoleplayConfig } from "@/components/rooms/roleplay-config";
+import { DecaSimulationPrepPanel } from "@/components/training/deca-simulation-prep-panel";
 
 const LEVELS: Level[] = ["BEGINNER", "INTERMEDIATE", "ELITE"];
 
@@ -75,6 +76,11 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
             <Input value={judgeRole} onChange={(e) => setJudgeRole(e.target.value)} placeholder="e.g. frustrated hotel guest" />
           </label>
         </div>
+
+        {/* P1-D: the curriculum path, recommended and never required. It sits ABOVE the entry button
+            on purpose — a learner who wants to read first meets it, and a learner who wants to
+            practise first walks straight past it to a button nothing has disabled. */}
+        <DecaSimulationPrepPanel variant="before" />
 
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" onClick={enterRoom}>

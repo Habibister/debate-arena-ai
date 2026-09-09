@@ -364,11 +364,78 @@ async function main() {
   // THE COACH is asserted behaviourally instead: the executed mapped cases above (S3-1, S3-W), the
   // parity sweep (S3-4), review-ladder:smoke's S2-5/S2-6 agreement and cardinality guards, and
   // education-registry:smoke's strict identity controls.
-  for (const p of ["prisma/schema.prisma",
-                   "components/lessons/concept-education-lesson-practice.tsx",
-                   "lib/spaced-review.ts"]) {
-    assert.equal(now(p), sha(p), `S3-15. ${p} is byte-identical to the immutable pre-Slice-3 baseline`);
+  //
+  // COLLECT, DO NOT ABORT (P1-C.1). These pins used to be a loop of bare asserts, so the FIRST stale
+  // one ended the whole suite and every control after it silently stopped running. That is how a
+  // stale lib/spaced-review.ts digest hid S3-15d for two phases: the suite was red for a reason
+  // nobody had to look past. Mismatches are now collected and reported together, so one stale pin
+  // costs you that pin and nothing else.
+  const pinFailures: string[] = [];
+  const pin = (p: string, expected: string, why: string) => {
+    const actual = now(p);
+    if (actual !== expected) pinFailures.push(`${p}: expected ${expected.slice(0, 12)}… got ${actual.slice(0, 12)}… (${why})`);
+  };
+  pin("prisma/schema.prisma", sha("prisma/schema.prisma"), "immutable pre-Slice-3 baseline");
+  pin("components/lessons/concept-education-lesson-practice.tsx", sha("components/lessons/concept-education-lesson-practice.tsx"),
+      "immutable pre-Slice-3 baseline");
+
+  // ---- S3-15e. lib/spaced-review.ts: RE-ACCEPTED, not self-healed (P1-C.1) ----------------------
+  // This file stopped being byte-identical to ede805b on 2026-09-01 and the pin was never updated, so
+  // the control had been failing on a file nobody had modified since. The drift is real and semantic —
+  // not comments — and it is the MASTERY HOLD:
+  //   3065b9e fix(education): hold unsafe rebuttal mastery
+  //   c9bdb1d fix(education): align held mastery learner truth
+  // Together they stop a held skill from being written or surfaced as a due review: a due card for a
+  // held skill can never be resolved (passing pushes nothing out, failing lowers nothing), so showing
+  // one tells a learner to do something that cannot succeed. Both are reviewed, intentional commits
+  // with their own contracts. The file is ACCEPTED; the digest below records that acceptance.
+  //
+  // This is a re-acceptance, not a loosening, and deliberately not a self-heal: the digest is a
+  // literal, so the file cannot drift again without failing here, and the acceptance is ANCHORED to
+  // the named product fact below rather than resting on an opaque hex string. Any further change —
+  // including one that removed the hold — fails this pin and must be accepted on its own evidence.
+  const SPACED_REVIEW_ACCEPTED = "9f3bb37ff1e6f4b464f5bc123c11e4ec8623d5909328cd193734df4320409c90";
+  pin("lib/spaced-review.ts", SPACED_REVIEW_ACCEPTED, "accepted at the mastery-hold commits 3065b9e + c9bdb1d");
+  assert.deepEqual(pinFailures, [], `S3-15. frozen-file pins: ${pinFailures.join(" | ")}`);
+
+  // S3-15e2. The acceptance is anchored: the accepted file really is the mastery-hold one, and the
+  // pre-Slice-3 version really lacked it. If someone bumps the digest to whatever the file happens to
+  // say, these still have to hold.
+  const spacedNow = read("lib/spaced-review.ts");
+  const spacedBase = gitShow("lib/spaced-review.ts");
+  assert.ok(spacedNow.includes("debateMasteryHeld"), "S3-15e2. the accepted file carries the mastery hold");
+  assert.ok(!spacedBase.includes("debateMasteryHeld"), "S3-15e3. and the pre-Slice-3 baseline did not");
+  assert.ok(/status: "mastery-held"/.test(spacedNow), "S3-15e4. a held skill is reported as held, never as skill-missing");
+  // S3-15e5. EACH persistence boundary carries its own gate, checked separately. A single
+  // file-wide regex was not enough: deleting the gate from one writer still matched the other one,
+  // so a mutation that removed a real containment passed. The ruling is about the skill, not about
+  // one entry point, so both writers are asserted independently — and each gate must come BEFORE
+  // that writer's skill lookup, or a held skill would be reported as a seeding fault instead.
+  const fnBody = (src: string, name: string) => {
+    const start = src.indexOf(`export async function ${name}(`);
+    assert.ok(start >= 0, `S3-15e5a. ${name} exists in lib/spaced-review.ts`);
+    const next = src.indexOf("\nexport ", start + 1);
+    return src.slice(start, next === -1 ? src.length : next);
+  };
+  for (const writer of ["recordDrillMasteryDetailed", "recordDrillMasteryInTransaction"]) {
+    const body = fnBody(spacedNow, writer);
+    const gate = body.search(/if \(debateMasteryHeld\(skillSlug\)\) return \{ status: "mastery-held"/);
+    assert.ok(gate >= 0, `S3-15e5. ${writer} gates on the mastery hold before writing`);
+    const lookup = body.search(/findUnique\(\{ where: \{ slug: skillSlug \}|prisma\.skill\.findUnique/);
+    if (lookup >= 0) {
+      assert.ok(gate < lookup, `S3-15e5b. ${writer} checks the hold BEFORE its skill lookup, so held is never reported as skill-missing`);
+    }
   }
+
+  // S3-15e6. What the byte pin protects FOR THE COACH, asserted as behaviour so the digest is not the
+  // only line of defence. The Coach takes due[0] of getDueReviews and compares mastery to the floor;
+  // if either of those changed shape the Coach would silently choose a different action.
+  const { PRACTICING_MASTERY_MIN: floorNow } = await import("../lib/spaced-review");
+  assert.equal(typeof floorNow, "number", "S3-15e6. the mastery floor the Coach compares against is still a number");
+  assert.ok(/orderBy: \{ nextReviewAt: "asc" \}/.test(spacedNow),
+    "S3-15e7. due reviews are still ordered most-overdue-first — the ordering the Coach's due[0] relies on");
+  assert.ok(/take: 50|take === undefined \? \{\} : \{ take \}/.test(spacedNow),
+    "S3-15e8. and the due list is still bounded");
   // ---- S3-15f. skills-compat: raw byte pin deliberately RETIRED (Clash measurable-practice) ----
   // The file legitimately carries mutable catalog data — the skill inventory that approved
   // measurement work extends — so byte identity would forbid approved work, exactly the reasoning
@@ -486,7 +553,7 @@ async function main() {
     "S3-15b. the Taught-only orientation is invisible to the remediation/Coach evidence path");
 
   console.log(
-    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema, the concept lesson practice component and spaced-review are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}, and the review page is executable-identical to that same baseline — its Wave 1C comment correction records the deliberate debate-evidence writing-practice displacement truthfully while changing no executable token. The education-registry, skills-compat and concept-lesson-view byte pins were deliberately retired because approved curriculum and measurement work legitimately extends their catalogs; the trust boundaries they protected are asserted semantically instead — resolver precedence and canonical-id shadowing, the concept-entry discriminant that keeps CWI's authored association from minting remediation, the formative records-nothing framing, and the metadata-derived CTA.`
+    `Coach-evidence smoke passed: the AI Coach's next action is chosen by the server from durable evidence and the model can change nothing but the prose. Mastery 69 on the mapped pilot yields the exact refutation lesson and the exact rebuttal drill; 70 and 71 yield the drill alone with no weakness framing, so DUE stays distinct from WEAK at exactly the canonical PRACTICING floor. The most-overdue due row is selected from getDueReviews' existing nextReviewAt-asc order with no re-sorting; every unmapped seeded skill lands on the same destination the review card's rule produces (${paritySlugs} slugs swept, DECA and HOSA included); unknown slugs fall back to the track chooser with no fabricated lesson or drill. The request schema is a strict empty object that rejects eleven smuggled learning claims; the route reads only the authenticated userId in auth -> rate-limit -> parse order; the helper contains no AI, XP, attempt-table or reviewCount logic. NO_DUE_ACTION returns the deterministic template before the single provider call site; provider output is validated to one bounded string, falls back to the same template, and can reach neither the action nor any href; no learner identity or raw percentage is sent. The dashboard card is a real caller posting a literal empty object. The readiness route, evaluateReadiness, the schema and the concept lesson practice component are byte-identical to the immutable pre-Slice-3 baseline ${PRE_SLICE3.slice(0, 8)}. spaced-review is NOT: it was re-accepted at the mastery-hold commits 3065b9e + c9bdb1d against a recorded digest, anchored to the hold gates themselves so the digest cannot be bumped to bless a removed containment. The review page is no longer executable-identical either — P1-C made it track-aware, and its empty-state copy had already drifted from the baseline before that; the delta is pinned to the remediation card plus that one recorded copy change. The education-registry, skills-compat and concept-lesson-view byte pins were deliberately retired because approved curriculum and measurement work legitimately extends their catalogs; the trust boundaries they protected are asserted semantically instead — resolver precedence and canonical-id shadowing, the concept-entry discriminant that keeps CWI's authored association from minting remediation, the formative records-nothing framing, and the metadata-derived CTA.`
   );
 }
 

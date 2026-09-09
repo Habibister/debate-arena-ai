@@ -938,15 +938,56 @@ async function main() {
     // C2b: Debate writing is now session-backed too.
     "app/api/skills/debate-writing/session/route.ts", "app/api/skills/debate-writing/route.ts"
   ];
-  let m13e2RuntimeRefs: string[] = [];
-  try {
-    m13e2RuntimeRefs = execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
-      .trim().split("\n").filter(Boolean);
-  } catch {
-    m13e2RuntimeRefs = []; // grep exits non-zero when nothing matches, which is also a passing case
-  }
+  // PA7 DETECTOR REPAIRED (P1-C.1). It used to grep RAW file text, so a file that merely NAMED a
+  // session model in a doc comment counted as a runtime reference. lib/secure-evidence.ts was failing
+  // this control on exactly one line — `Mirrors the fields \`PracticeSessionItem\` already persists` —
+  // while importing nothing at all, touching no model, and performing no read or write. That is a
+  // false positive, and the fix is NOT to add the file to the allowlist: an allowlist entry asserts
+  // "this file's session access is authorized", which would have been a claim about access that does
+  // not exist, and a blanket exemption for anything later added to it. The contract means RUNTIME
+  // reference, so the scan now reads code with comments stripped. Nothing is exempted; the allowlist
+  // is unchanged and still holds exactly the C1 helpers and the C2a/C2b routes.
+  const grepHits = (() => {
+    try {
+      return execSync('grep -rli "practicesession" app lib components', { encoding: "utf8" })
+        .trim().split("\n").filter(Boolean);
+    } catch {
+      return []; // grep exits non-zero when nothing matches, which is also a passing case
+    }
+  })();
+  const referencesInCode = (file: string) => /practicesession/i.test(stripComments(read(file)));
+  const m13e2RuntimeRefs = grepHits.filter(referencesInCode);
   assert.deepEqual(m13e2RuntimeRefs.filter((f) => !M13E2_C1_ALLOWED.includes(f)), [],
     "PA7. only the approved C1 helpers and C2a drill routes reference the new models");
+  // PA7e. The repair must not have hidden a real consumer. Every file the raw grep finds is either a
+  // real code reference (and then allowlisted, asserted above) or a comment-only mention — and a
+  // comment-only mention must be genuinely comment-only, never a code reference the stripper ate.
+  const commentOnly = grepHits.filter((f) => !referencesInCode(f));
+  for (const f of commentOnly) {
+    const src = read(f);
+    const codeLines = stripComments(src).split("\n");
+    assert.ok(!codeLines.some((line) => /practicesession/i.test(line)),
+      `PA7e. ${f} names a session model only in prose, never in code`);
+    assert.ok(/practicesession/i.test(src), `PA7e2. control: ${f} really was a raw-grep hit`);
+  }
+  // PA7f. Non-vacuity, both directions. The narrowed scan must still see every real consumer — if the
+  // stripper were too aggressive this control would be trivially satisfiable by seeing none.
+  assert.ok(m13e2RuntimeRefs.length >= 13,
+    `PA7f. the narrowed scan still finds the real consumers (${m13e2RuntimeRefs.length})`);
+  for (const required of ["lib/practice-session.ts", "lib/validators.ts",
+                          "app/api/debate/drills/check/route.ts", "app/api/deca/drills/check/route.ts",
+                          "app/api/hosa/medterm/check/route.ts"]) {
+    assert.ok(m13e2RuntimeRefs.includes(required), `PA7f2. ${required} is still detected as a real consumer`);
+  }
+  // PA7g. The discriminator itself, on synthetic input: prose is not access, code is.
+  assert.equal(/practicesession/i.test(stripComments('// mirrors what PracticeSessionItem persists')), false,
+    "PA7g. a line comment naming a session model is not a reference");
+  assert.equal(/practicesession/i.test(stripComments('/** the `PracticeSessionItem` row */')), false,
+    "PA7g2. nor is a block comment naming one");
+  assert.equal(/practicesession/i.test(stripComments('const s = await tx.practiceSession.findFirst({})')), true,
+    "PA7g3. but real code is still caught");
+  assert.equal(/practicesession/i.test(stripComments('import { practiceSessionSubmitRequestSchema } from "@/lib/validators";')), true,
+    "PA7g4. and so is an import of a session symbol");
   for (const f of m13e2RuntimeRefs) {
     assert.ok(!f.startsWith("components/"),
       `PA7a. no component references the session tables before the C3 cutover (${f})`);

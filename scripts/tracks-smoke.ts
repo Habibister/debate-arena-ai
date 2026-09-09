@@ -1166,6 +1166,8 @@ async function main() {
   // index card the single entry point, and an unlisted lesson would be published but unreachable.
   assert.ok(m11r5IndexDeca.includes("Understanding Performance Indicators"),
     "P1-B1. the DECA index lists the published performance-indicators lesson — its only entry point");
+  assert.ok(m11r5IndexDeca.includes("Justifying Your Recommendation"),
+    "P1-B2. and the business-reasoning lesson, which has the same single entry point");
   assert.ok(m11r5IndexDeca.includes("Role-play skills"),
     "P1-B1b. labelled with its own module, not another track's name");
   // TRACK ISOLATION on the index: a DECA learner's list never names another track.

@@ -541,12 +541,13 @@ async function main() {
     "S2-1. a due debate-rebuttal routes to the refutation lesson and the rebuttal drill");
 
   // S2-2. Everything else fails CLOSED. A skill with no authored mapping gets no substitute lesson.
-  // P1-B1 added the fifth, and the first outside Debate: deca-performance-indicators now has a real
-  // published teaching owner, so it stops failing closed. The list is still exhaustive — a skill with
-  // no authored mapping still gets no substitute lesson.
+  // P1-B1 added the fifth (deca-performance-indicators); P1-B2 added the sixth
+  // (deca-business-reasoning). Both are DECA ROLE-PLAY skills with real published teaching owners, so
+  // they stop failing closed. The list is still exhaustive — a skill with no authored mapping still
+  // gets no substitute lesson, and DECA's two CLUSTER-KNOWLEDGE skills are deliberately absent.
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((s) => practiceRemediationForSkill(s) !== null),
-    ["debate-evidence", "debate-rebuttal", "debate-weighing", "deca-performance-indicators", "debate-clash"],
-    "S2-2. exactly the five lesson-connected intended skills have a remediation today (clash is activation-pending, listed last)");
+    ["debate-evidence", "debate-rebuttal", "debate-weighing", "deca-performance-indicators", "deca-business-reasoning", "debate-clash"],
+    "S2-2. exactly the six lesson-connected intended skills have a remediation today (clash is activation-pending, listed last)");
 
   // S2-3. Untrusted-looking input is not an error and not a near match.
   for (const s of ["", "unknown", "debate-rebuttal-1", "DEBATE-REBUTTAL", "debate-rebuttal "]) {
@@ -566,7 +567,7 @@ async function main() {
     assert.notEqual(target.drill.track, "debate", `S2-4a. ${s} is never routed to a Debate drill`);
   }
   assert.deepEqual([...INTENDED_SKILL_SLUGS].filter((x) => !x.startsWith("debate-")).filter((s) => practiceRemediationForSkill(s) !== null),
-    ["deca-performance-indicators"], "S2-4c. and exactly one non-Debate skill resolves today");
+    ["deca-performance-indicators", "deca-business-reasoning"], "S2-4c. and exactly the two owned DECA role-play skills resolve today");
   assert.ok([...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("deca-"))
          && [...INTENDED_SKILL_SLUGS].some((s) => s.startsWith("hosa-")),
     "S2-4b. control: the isolation scan really covered DECA and HOSA slugs");

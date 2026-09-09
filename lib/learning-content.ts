@@ -1542,6 +1542,180 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       )
     }
   },
+  // P1-B2 (2026-09-09) — the teaching owner for the DECA `business-reasoning` drill area.
+  //
+  // WHAT ORIENTATION ALREADY OWNS, and this lesson must not restate: the five-part recommendation
+  // scaffold in lib/roleplay-lessons.ts (Problem / Recommendation / Business reason / Implementation
+  // / Measurement), its honesty caveat, and the rule that a recommendation without a reason is an
+  // opinion a judge can dismiss. Orientation names the slots and says a beginner who stops after
+  // "Recommendation" has under-answered. It never teaches how to FILL them. That gap is this lesson.
+  //
+  // WHAT THIS LESSON OWNS: feasibility against every stated limit; what counts as a material cost;
+  // building the reason from facts the scenario supplies rather than from a rule true of any
+  // business; measurement as metric + comparison + target; picking the measure the stated problem
+  // names; checking the business can collect it; pairing a cost with the return; and a tradeoff that
+  // names both sides. De-risking rides in a common mistake.
+  //
+  // WHAT IT DOES NOT TEACH, recorded so the gap is not mistaken for coverage:
+  //   - ROI and break-even as formal definitions (br-02, br-06). Finance vocabulary whose distractors
+  //     turn on margin, cost of goods sold and payback period. A plain-language clause only.
+  //   - arithmetic on stem numbers (br-11, br-18, br-30) — the habit is taught, the sums are not.
+  //   - sequencing and multi-constraint scheduling (br-16, br-19). The bank deliberately names no
+  //     sequencing method, so inventing one here would be new unsourced doctrine.
+  //   - settlement and cash flow (br-24); impact/effort prioritisation (br-09) beyond one clause.
+  //   - exposure larger than a headline percentage (br-21).
+  //
+  // NOT PERFORMANCE INDICATORS: the PI lesson owns working out what skill the card asks you to show,
+  // and its measurement rule is anchored to the INDICATOR. This lesson's measurement rule is anchored
+  // to the BUSINESS PROBLEM the scenario states. NOT ROOT-CAUSE either: the held identifying-problem
+  // entry owns symptom-versus-cause and keeps it.
+  //
+  // NO FAKE PRECISION, and no borrowed vocabulary: nothing below invents a price, a percentage or a
+  // customer count, and the word "competitor" is never used to mean the student — the bank uses it in
+  // both senses and the role-play lesson already establishes "the participant (you)".
+  {
+    organization: "DECA",
+    track: "DECA",
+    name: "Business Reasoning",
+    // The lesson's own id, NOT the `deca-business-reasoning` Skill slug — the same rule P1-B1
+    // established. `resolveSkillsSlug` rule 1 redirects any slug that is a registry lesson id, so
+    // reusing the skill slug would turn `/skills/deca-business-reasoning/practice` from an honest
+    // DECA compatibility page into a 404 for a learner with a due review.
+    slug: "deca-justifying-your-recommendation",
+    description: "Test a recommendation for feasibility, benefit, measurement and cost before you say it.",
+    category: "DECA roleplay",
+    order: 5,
+    lesson: {
+      title: "Justifying Your Recommendation",
+      slug: "deca-justifying-your-recommendation-lesson",
+      summary: "Turn an idea into a business decision: can this business do it, what would it gain, and what does it cost?",
+      estimatedMinutes: 8,
+      content: lesson(
+        "Test a recommendation before you say it, and give the reason that makes it worth doing at this business.",
+        "A recommendation is what you would do. Business reasoning is why it would work here.\n\nCompare these two. “The shop should start a loyalty program.” Now the same idea with reasoning: “The shop could run a points scheme through the checkout system it already has. Setup costs almost nothing, regulars get a reason to come back, and the manager can check whether repeat visits go up.”\n\nBoth name the same action. Only the second says the shop can do it, what it gets back, and how anyone would know. That is the gap between an idea and a business decision.\n\nThe scenarios and figures here are ours. Yours come from your own scenario card: the sheet handed to you before a role-play — the practice meeting where you explain a recommendation to a judge. It sets the situation and its limits.",
+        "Judges hear plenty of ideas. Yours holds up when it survives the next question. Reasoning lets you answer “what will this cost us?” without inventing anything.",
+        [
+          "Can we do it? Check the plan against every limit the card states.",
+          "Why would it help? Build the reason from a fact on the card.",
+          "How would we know? Name what you would watch and what it must reach.",
+          "What does it cost? Say what it uses up, and why the gain is worth it."
+        ],
+        {
+          prompt: "You are the assistant manager of a bike shop. Repairs are booked three weeks out and the shop turns away about ten jobs a week. There is a spare bench, and one mechanic who works Saturdays only. The judge is playing the owner. (Our scenario, not an official one.)",
+          weakAnswer: "We should hire another mechanic. More repairs would mean more money coming in for the shop.",
+          strongAnswer: "I’d move the Saturday mechanic to two weekday evenings. The bench is there, so the cost is his hours. That puts a second mechanic on the ten jobs we turn away. Saturdays lose their cover, so I’d try it for two months. The measure is the booking wait — three weeks now, and I want it under one week.",
+          whyItWorks: "It fits what the shop has, and every fact about the shop comes off the card. It names the cost, says what the shop gives up, and picks one measure with a before."
+        },
+        q(
+          "Which of these is business reasoning, rather than just an idea?",
+          [
+            "Open a second shop downtown next year, starting early in the spring",
+            "Improve our customer service, because good service always matters to every business",
+            "Open Sundays, because the market next door runs then and draws customers",
+            "Launch a loyalty card for regulars at the start of next month"
+          ],
+          "Open Sundays, because the market next door runs then and draws customers",
+          "Which one says why, using something about this business?",
+          "Three of these say what to do. Only one gives a reason drawn from this shop’s own situation — the market next door. Naming a season or a launch date makes a plan specific, not justified.",
+          "Idea versus reasoning"
+        ),
+        [
+          q(
+            "A shop has $400 and four staff-hours for a one-week promotion. Which plan is feasible?",
+            [
+              "A window display and a flyer drop, using stock the shop already has",
+              "A radio ad the local station quotes at $900 for the week",
+              "A weekend sampling stand, staffed for six hours by two paid assistants",
+              "A printed catalog, quoted at $700 for the print run before any postage"
+            ],
+            "A window display and a flyer drop, using stock the shop already has",
+            "Check the plan against both limits, not just the easier one.",
+            "Feasible means the business can actually carry it out with what it has. Only the display and flyers stay inside both the money and the hours. Two assistants for six hours is twelve staff-hours against four, and the two quoted prices are both above $400.",
+            "Feasibility"
+          ),
+          q(
+            "The judge asks what your plan will cost. The scenario gives no prices. What is the strongest answer?",
+            [
+              "A confident figure, because a judge would rather hear a number than a hedge",
+              "A rough percentage of last year’s sales, worked out on the spot",
+              "Nothing about cost, since the scenario never supplied any prices at all",
+              "What the plan uses up in hours and materials, and how you’d price it"
+            ],
+            "What the plan uses up in hours and materials, and how you’d price it",
+            "Specific logic beats an invented number.",
+            "You can be exact about what a plan consumes without inventing a price for it. A made-up figure and a percentage worked out on the spot both fall apart under one follow-up, and saying nothing leaves the question unanswered.",
+            "Cost without fake numbers"
+          ),
+          q(
+            "A salon’s stated problem is that clients book once and never rebook. It starts offering a rebooking discount at checkout. Which measure shows whether that problem improved?",
+            [
+              "Total sales for the month after the discount started",
+              "The share of clients who book a second appointment",
+              "How many clients say they liked being offered a discount",
+              "The number of discounts handed out at the checkout"
+            ],
+            "The share of clients who book a second appointment",
+            "Measure the problem the scenario named.",
+            "The problem was clients not coming back, so the measure has to be clients coming back. Total sales move for other reasons, discounts handed out counts the action rather than the result, and an opinion is not the behaviour.",
+            "Choosing a measure"
+          )
+        ],
+        [
+          q(
+            "A car wash is deciding whether to add a Saturday morning shift. Which reason best supports it?",
+            [
+              "Weekend trade is growing across the car-wash sector as a whole",
+              "Customers always prefer having more times available to them",
+              "The site sits idle on Saturdays and the booking line logs refusals then",
+              "Rivals in the area open Saturdays, so this one must be losing that work"
+            ],
+            "The site sits idle on Saturdays and the booking line logs refusals then",
+            "Which reason uses something the scenario states?",
+            "Only one is built from this car wash: a site standing idle and refusals already logged. A sector trend, a claim about what customers always prefer, and an assumption about what rivals are taking would each be true of almost any business.",
+            "Reasons built from facts"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Can we do it?",
+              body: "Feasible does not mean good. It means the business can carry the plan out with what it has. Check it against every limit the card states, not just the easiest one. One staff-hour means one person’s work for one hour. A plan that fits the budget but needs six from a shop with three is not feasible.\n\nBe careful what you count as a cost. A cost uses up money, time or capacity — the work a business can handle — enough to notice. Getting used to a new order form does not. Relabeling four hundred shelf tags does, because someone has to stand there and do it."
+            },
+            {
+              heading: "Why would it help, and how would we know?",
+              body: "Build the reason out of facts the scenario gave you. A reason that would be true of any business — “customers like convenience” — proves nothing about this one.\n\nThen say how the business would know. A useful answer names the measure, what you would compare it to, and what would count as working. “Sales went up” is not enough, because sales move for all sorts of reasons.\n\nPick the measure that matches the problem the scenario named, and check the business can actually collect it. A shop with no customer accounts cannot track repeat visits."
+            },
+            {
+              heading: "What does it cost?",
+              body: "When you name a cost, put it beside what the business gets back. A price alone does not answer the question, and nor does a benefit with no price. Return on investment asks whether the benefit was worth what the business spent.\n\nMost plans have a downside as well as an upside, and weighing the two is a tradeoff. Say the downside, then say why the gain still wins. “This costs more up front, but it pays back by spring” is a tradeoff. Naming only the good half is not."
+            }
+          ],
+          misconception: {
+            wrongModel: "If my idea is specific enough — what, who and when — it counts as business reasoning.",
+            whyItFails: "Specific is not the same as justified. A plan can name staffing and dates and still not say why this business should do it.",
+            betterModel: "The reasoning is the part that could change the owner’s mind. Take it away and you are left with an idea nobody has argued for."
+          },
+          commonMistakes: [
+            {
+              mistake: "Inventing numbers the scenario never gave you.",
+              whyItFails: "A made-up percentage falls apart under one follow-up, and the judge cannot check it.",
+              fix: "Use the figures on the card. If you need one that is not there, say what you would look up."
+            },
+            {
+              mistake: "Backing a plan with a rule that would fit any business.",
+              whyItFails: "“Faster is always better” and “every plan carries risk” are true everywhere, so they say nothing about this shop.",
+              fix: "Point at something the scenario actually states."
+            },
+            {
+              mistake: "Dropping the plan when the judge says it has been tried before.",
+              whyItFails: "Giving up answers nothing, and repeating the plan louder answers nothing either.",
+              fix: "Offer a smaller or shorter version that would show whether it works this time."
+            }
+          ]
+        }
+      )
+    }
+  },
   {
     organization: "HOSA",
     track: "HOSA",

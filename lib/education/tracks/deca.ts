@@ -8,8 +8,10 @@
 // WHY DECA GETS A CONCEPT TRACK AT ALL. The B5 architecture audit established that DECA's four drill
 // areas and its three held lessons are ORTHOGONAL: every area writes real mastery to a real Skill
 // row, and no published lesson taught any of the constructs those drills measure. P1-A made that
-// state representable (`lib/education/deca-practice-map.ts`); P1-B1 closes the first of the four by
-// publishing a teaching owner for `performance-indicators`.
+// state representable (`lib/education/deca-practice-map.ts`); P1-B1 closed the first of the four by
+// publishing a teaching owner for `performance-indicators`, and P1-B2 closes the second with an
+// owner for `business-reasoning`. Both are ROLE-PLAY skills in the practice map's own split; the two
+// cluster-knowledge areas the exam tests are still ownerless and are not dressed up here.
 //
 // THREE DECA CATALOG ENTRIES STAY HELD and are deliberately absent below:
 //
@@ -43,7 +45,7 @@ export const AUTHORED_DECA_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
 });
 
 /** The DECA catalog slugs this file publishes, in teaching order. */
-const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators"] as const;
+const PUBLISHED_DECA_SLUGS = ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation"] as const;
 
 /** The DECA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
 export const HELD_DECA_CATALOG_SLUGS: readonly string[] = [
@@ -94,9 +96,10 @@ function selectDecaCatalogLesson(slug: PublishedDecaSlug): ConceptEducationLesso
 }
 
 const understandingPerformanceIndicators = selectDecaCatalogLesson("deca-understanding-performance-indicators");
+const justifyingYourRecommendation = selectDecaCatalogLesson("deca-justifying-your-recommendation");
 
 /** Exported for the smoke suite's strict-identity proof against the catalog. */
-export const PUBLISHED_DECA_SOURCES = { understandingPerformanceIndicators } as const;
+export const PUBLISHED_DECA_SOURCES = { understandingPerformanceIndicators, justifyingYourRecommendation } as const;
 
 /**
  * P1-B1 — the teaching owner for the `deca-performance-indicators` drill area.
@@ -112,8 +115,10 @@ export const PUBLISHED_DECA_SOURCES = { understandingPerformanceIndicators } as 
  * MasteryProgress and schedules review, and `practiceDrill` names that exact drill rather than a
  * drill front door.
  *
- * `nextLessonId` is null and stays null: no second DECA concept lesson exists yet, and pointing at
- * one of the three held lessons would route a learner to teaching the owner has not published.
+ * `nextLessonId` was null while this was the only DECA concept lesson. P1-B2 points it at the
+ * business-reasoning owner, because leaving it null would make the page's own end-of-course line —
+ * "This is the last lesson written for this course so far" — false the moment a second one shipped.
+ * The lesson's authored bytes are untouched; only this metadata changed.
  */
 export const DECA_PERFORMANCE_INDICATORS_LESSON: EducationRegistryEntry = {
   id: "deca-understanding-performance-indicators",
@@ -128,8 +133,48 @@ export const DECA_PERFORMANCE_INDICATORS_LESSON: EducationRegistryEntry = {
   skillSlug: "deca-performance-indicators",
   practiceDrill: { track: "deca", area: "performance-indicators" },
   legacySlugs: [],
+  nextLessonId: "deca-justifying-your-recommendation",
+  provenance: AUTHORED_DECA_PROVENANCE
+};
+
+/**
+ * P1-B2 — the teaching owner for the `deca-business-reasoning` drill area.
+ *
+ * Same architecture as the PI entry and the same two hard rules. `skillSlug` names the EXISTING
+ * Skill row the drill already writes to, so no new skill row is declared. The lesson id is
+ * deliberately NOT that slug: `resolveSkillsSlug` rule 1 redirects any slug that is a registry
+ * lesson id, which would 404 `/skills/deca-business-reasoning/practice` for a learner with a due
+ * review and would silently change what `ACTIVATION_PENDING_SKILLS` resolves to.
+ *
+ * It shares module "deca-roleplay-skills" with the PI lesson. That is legal and intended: the
+ * one-skill-claim-per-module rule fires only when the SAME skillSlug is claimed twice inside one
+ * module, and these two claim different skills. Both are role-play skills, so a second module would
+ * have split a single construct group for no reason.
+ *
+ * ASSOCIATION ONLY: the lesson's five checks stay formative and save nothing. The 30-item
+ * server-graded business-reasoning drill is what writes MasteryProgress and schedules review.
+ *
+ * `nextLessonId` is null — it is the last DECA concept lesson written so far, and the only remaining
+ * DECA entries are the three held ones.
+ */
+export const DECA_BUSINESS_REASONING_LESSON: EducationRegistryEntry = {
+  id: "deca-justifying-your-recommendation",
+  track: "DECA",
+  courseId: "deca-roleplay-core",
+  moduleId: "deca-roleplay-skills",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: justifyingYourRecommendation,
+  sourceKind: "concept-education-lesson",
+  skillSlug: "deca-business-reasoning",
+  practiceDrill: { track: "deca", area: "business-reasoning" },
+  legacySlugs: [],
   nextLessonId: null,
   provenance: AUTHORED_DECA_PROVENANCE
 };
 
-export const DECA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [DECA_PERFORMANCE_INDICATORS_LESSON];
+export const DECA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
+  DECA_PERFORMANCE_INDICATORS_LESSON,
+  DECA_BUSINESS_REASONING_LESSON
+];

@@ -71,11 +71,12 @@ function main() {
     for (const entry of drilled.filter((e) => e.track === "GENERAL_DEBATE")) {
       assert.equal(entry.practiceDrill!.track, "debate", `${entry.id}: Debate drill mapping untouched`);
     }
-    // EXACTLY ONE DECA lesson carries a drill, and it is the teaching owner P1-B1 published.
+    // EXACTLY TWO DECA lessons carry a drill, and they are the teaching owners P1-B1 and P1-B2
+    // published — one per ROLE-PLAY area. Neither cluster-knowledge area has one.
     assert.deepEqual(
       EDUCATION_LESSONS.filter((e) => e.track === "DECA" && e.practiceDrill).map((e) => e.id),
-      ["deca-understanding-performance-indicators"],
-      "exactly one DECA lesson carries a drill — the performance-indicators teaching owner"
+      ["deca-understanding-performance-indicators", "deca-justifying-your-recommendation"],
+      "exactly two DECA lessons carry a drill — the two role-play teaching owners"
     );
   });
 
@@ -138,13 +139,18 @@ function main() {
       assert.equal(entry!.track, "DECA", `${mapping.area}: the claimed owner is a DECA lesson`);
       assert.equal(entry!.skillSlug, mapping.skillSlug, `${mapping.area}: the owner claims this area's exact existing skill slug`);
     }
-    // EXACTLY ONE area is owned after P1-B1. Three remain ownerless, and are not dressed up.
+    // EXACTLY TWO areas are owned after P1-B2, and they are precisely the two ROLE-PLAY areas. The
+    // two CLUSTER-KNOWLEDGE areas the exam tests remain ownerless and are not dressed up.
     const owned = DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").map((m) => m.area);
-    assert.deepEqual(owned, ["performance-indicators"], "one of four areas is owned");
+    assert.deepEqual(owned, ["performance-indicators", "business-reasoning"], "two of four areas are owned");
+    assert.deepEqual(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").map((m) => m.component), ["roleplay", "roleplay"],
+      "and both owned areas are role-play skills — no cluster-knowledge area has an owner yet");
     const ownerless = DECA_PRACTICE_MAP.filter((m) => m.publishedTeachingOwner === null).map((m) => m.area);
-    assert.deepEqual(ownerless.sort(), ["business-reasoning", "customer-relations", "marketing-fundamentals"], "the other three still have no owner");
+    assert.deepEqual(ownerless.sort(), ["customer-relations", "marketing-fundamentals"], "the other two still have no owner");
     const pi = decaPracticeMappingForSkill("deca-performance-indicators");
     assert.equal(pi?.publishedTeachingOwner, "deca-understanding-performance-indicators", "and the owner is the lesson P1-B1 authored");
+    const br = decaPracticeMappingForSkill("deca-business-reasoning");
+    assert.equal(br?.publishedTeachingOwner, "deca-justifying-your-recommendation", "and the business-reasoning owner is the lesson P1-B2 authored");
   });
 
   check("D2. a HELD lesson is never treated as a published teaching owner", () => {
@@ -171,6 +177,15 @@ function main() {
       { skillSlug: "deca-performance-indicators", lessonId: "deca-understanding-performance-indicators", drill: { track: "deca", area: "performance-indicators" } },
       "the owned skill resolves to the lesson that owns it"
     );
+    assert.deepEqual(
+      decaRemediationTargetForSkill("deca-business-reasoning", alwaysPublished),
+      { skillSlug: "deca-business-reasoning", lessonId: "deca-justifying-your-recommendation", drill: { track: "deca", area: "business-reasoning" } },
+      "and so does the second owned skill, to its own lesson and its own drill"
+    );
+    const genericBr = practiceRemediationForSkill("deca-business-reasoning");
+    assert.ok(genericBr, "the generic resolver finds the business-reasoning target too");
+    assert.equal(genericBr!.lessonId, "deca-justifying-your-recommendation", "on the same lesson");
+    assert.deepEqual(genericBr!.drill, { track: "deca", area: "business-reasoning" }, "with the DECA drill, never a Debate one");
     // The generic resolver reaches the same destination WITHOUT being told the owner — it reads the
     // registry — so the map and the registry cannot disagree about where a learner is sent.
     const generic = practiceRemediationForSkill("deca-performance-indicators");
@@ -224,7 +239,7 @@ function main() {
     // All four have a drill; only ONE is taught. Teaching is a separate, authored fact — which is
     // still the point of this control, now demonstrated by a 1-of-4 split rather than 0-of-4.
     assert.equal(DECA_PRACTICE_MAP.length, 4, "four areas, all drilled");
-    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").length, 1, "exactly one of them is taught");
+    assert.equal(DECA_PRACTICE_MAP.filter((m) => m.coverage === "owned").length, 2, "exactly two of them are taught");
     for (const mapping of DECA_PRACTICE_MAP.filter((m) => m.coverage !== "owned")) {
       assert.ok(DECA_DRILL_AREAS.some((area) => area.id === mapping.area), `${mapping.area}: drilled`);
       assert.equal(mapping.publishedTeachingOwner, null, `${mapping.area}: drilled and still untaught`);
@@ -238,57 +253,63 @@ function main() {
   // hardcoded "General Debate" badge and a "this is the last Debate lesson" footer left every suite
   // green. Track isolation is a product rule, so it is asserted against rendered output here.
 
-  check("G1. the published DECA lesson renders with no other track's name anywhere in its visible text", () => {
-    const entry = EDUCATION_LESSONS.find((e) => e.id === "deca-understanding-performance-indicators");
-    assert.ok(entry && isConceptEducationLessonEntry(entry), "control: the DECA concept entry is registered");
-    const html = renderToStaticMarkup(React.createElement(ConceptEducationLessonView as never, {
-      source: entry!.source,
-      provenance: entry!.provenance,
-      moduleLabel: getEducationModule(entry!.moduleId)?.label ?? "Lesson",
+  // P1-B2 generalised G1/G2 from the single P1-B1 lesson id to EVERY published DECA concept lesson.
+  // Hardcoding one id meant a second lesson could ship with another track's branding and leave this
+  // suite green — which is the exact failure mode G1 exists to catch.
+  const decaConceptEntries = EDUCATION_LESSONS.filter(
+    (e) => e.track === "DECA" && isConceptEducationLessonEntry(e)
+  );
+  const renderDecaLesson = (entry: (typeof EDUCATION_LESSONS)[number]) =>
+    renderToStaticMarkup(React.createElement(ConceptEducationLessonView as never, {
+      source: (entry as never as { source: unknown }).source,
+      provenance: entry.provenance,
+      moduleLabel: getEducationModule(entry.moduleId)?.label ?? "Lesson",
       next: null,
-      practiceDrill: entry!.practiceDrill
+      practiceDrill: entry.practiceDrill
     } as never));
-    const visible = html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ");
-    for (const foreign of ["General Debate", "Debate", "debate", "HOSA", "Model UN"]) {
-      assert.ok(!visible.includes(foreign), `G1. a DECA learner never reads "${foreign}" (track isolation)`);
+
+  check("G1. every published DECA lesson renders with no other track's name anywhere in its visible text", () => {
+    assert.equal(decaConceptEntries.length, 2, "control: both DECA concept lessons are registered");
+    for (const entry of decaConceptEntries) {
+      const visible = renderDecaLesson(entry)
+        .replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ");
+      for (const foreign of ["General Debate", "Debate", "debate", "HOSA", "Model UN"]) {
+        assert.ok(!visible.includes(foreign), `G1. ${entry.id}: a DECA learner never reads "${foreign}" (track isolation)`);
+      }
+      assert.ok(visible.includes("DECA"), `G1b. ${entry.id}: control — the scan really read the rendered page, which names DECA`);
+      const title = (entry as never as { source: { lesson: { title: string } } }).source.lesson.title;
+      assert.ok(visible.includes(title), `G1c. ${entry.id}: control — and it is the right lesson (${title})`);
     }
-    assert.ok(visible.includes("DECA"), "G1b. control: the scan really read the rendered page, which does name DECA");
-    assert.ok(visible.includes("Understanding Performance Indicators"), "G1c. control: and it is the right lesson");
     // The badge is DERIVED. A Debate lesson still reads "General Debate" through the same code path,
     // so this is a per-entry resolution and not a blanket removal of the label.
     const debate = EDUCATION_LESSONS.find((e) => e.id === "debate-clash");
     assert.ok(debate && isConceptEducationLessonEntry(debate), "control: a Debate concept entry to compare against");
-    const debateHtml = renderToStaticMarkup(React.createElement(ConceptEducationLessonView as never, {
-      source: debate!.source, provenance: debate!.provenance,
-      moduleLabel: getEducationModule(debate!.moduleId)?.label ?? "Lesson",
-      next: null, practiceDrill: debate!.practiceDrill
-    } as never));
-    assert.ok(debateHtml.replace(/<[^>]+>/g, " ").includes("General Debate"),
+    assert.ok(renderDecaLesson(debate!).replace(/<[^>]+>/g, " ").includes("General Debate"),
       "G1d. NON-REGRESSION: a Debate concept lesson still shows its own track label");
   });
 
-  check("G2. the practice call to action points at the exact DECA drill, and the destination honours it", () => {
-    const entry = EDUCATION_LESSONS.find((e) => e.id === "deca-understanding-performance-indicators")!;
-    const html = renderToStaticMarkup(React.createElement(ConceptEducationLessonView as never, {
-      source: (entry as never as { source: unknown }).source,
-      provenance: entry.provenance,
-      moduleLabel: getEducationModule(entry.moduleId)?.label ?? "Lesson",
-      next: null, practiceDrill: entry.practiceDrill
-    } as never));
-    assert.ok(html.includes("/study-arcade?track=deca&amp;area=performance-indicators"),
-      "G2. the CTA deep-links to the performance-indicators drill, not the DECA drill front door");
+  check("G2. every DECA lesson's practice CTA points at its own exact drill, and the destination honours it", () => {
+    for (const entry of decaConceptEntries) {
+      const area = entry.practiceDrill!.area;
+      assert.equal(entry.practiceDrill!.track, "deca", `G2. ${entry.id}: DECA drill`);
+      assert.equal(isDecaDrillArea(area), true, `G2b. ${entry.id}: ${area} is a real DECA area`);
+      assert.ok(renderDecaLesson(entry).includes(`/study-arcade?track=deca&amp;area=${area}`),
+        `G2c. ${entry.id}: the CTA deep-links to the ${area} drill, not the DECA drill front door`);
+    }
+    // Each owned area is reached by exactly one lesson — no two lessons compete for one drill.
+    const areas = decaConceptEntries.map((e) => e.practiceDrill!.area).sort();
+    assert.deepEqual(areas, ["business-reasoning", "performance-indicators"], "G2d. one lesson per owned area");
+    assert.equal(isDecaDrillArea("clash"), false, "G2e. and the narrowing rejects another track's area");
     // And the destination must actually READ that parameter. Before P1-B1 the DECA branch dropped
     // `?area=` entirely, so a link whose visible label named one drill opened the mixed picker — and
     // a mixed session spreads its questions across all four areas, so it usually cannot reach the
     // per-area unique-question floor the record depends on.
-    assert.equal(isDecaDrillArea("performance-indicators"), true, "G2b. the narrowing accepts the real area");
-    assert.equal(isDecaDrillArea("clash"), false, "G2c. and rejects another track's area");
     const arcade = read("app/(app)/study-arcade/page.tsx");
     assert.ok(/const decaArea = isDecaDrillArea\(searchParams\.area\) \? searchParams\.area : undefined;/.test(arcade),
-      "G2d. the DECA branch narrows ?area= rather than casting or ignoring it");
-    assert.ok(/initialArea=\{decaArea\}/.test(arcade), "G2e. and passes it to the DECA drill component");
+      "G2f. the DECA branch narrows ?area= rather than casting or ignoring it");
+    assert.ok(/initialArea=\{decaArea\}/.test(arcade), "G2g. and passes it to the DECA drill component");
     assert.ok(/useState<string>\(initialArea \?\? "mixed"\)/.test(read("components/training/concept-drills.tsx")),
-      "G2f. which seeds the area filter, falling back to mixed when nothing was narrowed");
+      "G2h. which seeds the area filter, falling back to mixed when nothing was narrowed");
   });
 
   check("G3. the record claim is derived from DECA's own hold list, not from a Debate lookup that cannot see DECA", () => {
@@ -343,17 +364,91 @@ function main() {
     assert.ok(/examples we wrote/i.test(decaText), "H2b. the lesson states its example indicators are CompeteReady's own");
   });
 
+  // ---- H3/H4. THE BUSINESS-REASONING INVARIANTS, IN THE LESSON'S OWN VOICE ----------------------
+  //
+  // Scanning a whole entry is unreliable for "the page never says X": a keyed-WRONG option and the
+  // misconception block both state falsehoods on purpose. These scan only the TEACHING VOICE — the
+  // fields where the page speaks as itself — so a deliberate wrong answer cannot trip them and a
+  // genuine claim cannot hide inside a distractor.
+  const decaTeachingVoice = (): string => {
+    const out: string[] = [];
+    for (const entry of decaConceptEntries) {
+      const c = (entry as never as { source: { lesson: { content: Record<string, unknown> } } }).source.lesson.content;
+      out.push(String(c.objective), String(c.explanation), String(c.whyMatters), (c.steps as string[]).join(" "));
+      const we = c.workedExample as { whyItWorks: string };
+      out.push(we.whyItWorks);
+      for (const t of (c.teachingSections as Array<{ heading: string; body: string }> | undefined) ?? []) out.push(t.heading, t.body);
+      const m = c.misconception as { betterModel: string } | undefined;
+      if (m) out.push(m.betterModel);
+      for (const cm of (c.commonMistakes as Array<{ mistake: string; whyItFails: string; fix: string }> | undefined) ?? []) {
+        out.push(cm.mistake, cm.whyItFails, cm.fix);
+      }
+    }
+    return out.join("\n");
+  };
+
+  check("H3. the teaching voice keeps an idea separate from its reasoning, and never rewards an invented number", () => {
+    const voice = decaTeachingVoice();
+    assert.ok(voice.length > 1000, "H3a. control: there is teaching text to scan");
+    // POSITIVE: the distinction is stated, not left to the questions.
+    assert.ok(/Business reasoning is why it would work here/.test(voice),
+      "H3. the lesson states plainly that a recommendation and its reasoning are different things");
+    assert.ok(/gap between an idea and a business decision/.test(voice),
+      "H3b. and names that gap as the skill");
+    // POSITIVE: fabricated precision is warned against in the lesson's own voice.
+    assert.ok(/made-up percentage falls apart/.test(voice) && /the judge cannot check it/.test(voice),
+      "H3c. invented numbers are called out as weak, with the reason");
+    assert.ok(/Use the figures on the card/.test(voice) && /say what you would look up/.test(voice),
+      "H3d. and the learner is given the honest alternative");
+    // NEGATIVE: the teaching voice never tells a learner to supply a number they do not have.
+    // Matched as verb-phrase-plus-negation-check rather than a bare regex, because the PI lesson
+    // legitimately contains "rather than invent a number" — the opposite claim in the same words.
+    const NEGATORS = /(rather than|instead of|never|not|don't|do not|cannot|without|avoid)\s*$/i;
+    const encouragesFakePrecision = (text: string): boolean => {
+      const verb = /\b(?:invent|make up|guess)\s+(?:a|the|your own|some)\s+(?:number|figure|percentage|statistic)/gi;
+      for (let m = verb.exec(text); m !== null; m = verb.exec(text)) {
+        if (!NEGATORS.test(text.slice(Math.max(0, m.index - 24), m.index))) return true;
+      }
+      return /makes? the answer sound stronger|estimate something rather than say nothing|a confident (?:number|figure) is better than/i.test(text);
+    };
+    assert.ok(!encouragesFakePrecision(voice), "H3e. the teaching voice never encourages fake precision");
+    // CONTROL: the scan is not vacuous — a planted encouragement is caught, and the legitimate
+    // negation the PI lesson actually uses is not.
+    assert.ok(encouragesFakePrecision("Under pressure, invent a number and move on."),
+      "H3f. control: a planted encouragement really would be caught");
+    assert.ok(!encouragesFakePrecision("If the scenario gives you nothing to measure, say so rather than invent a number."),
+      "H3g. control: and the lesson's own negation is not a false positive");
+  });
+
+  check("H4. business reasoning and performance-indicator interpretation stay separate skills", () => {
+    const voice = decaTeachingVoice();
+    // Two owners, two constructs. A sentence equating them would make one lesson's remediation the
+    // wrong destination for the other's failed drill.
+    for (const banned of [/business reasoning is the same skill as/i, /reasoning and (?:performance )?indicators are the same/i,
+                          /the same as working out what the listed indicator/i]) {
+      assert.ok(!banned.test(voice), `H4. no published DECA teaching equates the two constructs (${banned})`);
+    }
+    // And the map keeps them on distinct skills and distinct drills.
+    const pi = decaPracticeMappingForSkill("deca-performance-indicators");
+    const br = decaPracticeMappingForSkill("deca-business-reasoning");
+    assert.notEqual(pi?.publishedTeachingOwner, br?.publishedTeachingOwner, "H4b. the two areas have different owners");
+    assert.notEqual(pi?.area, br?.area, "H4c. on different drill areas");
+  });
+
   console.log(
     `\nDECA practice-map smoke passed: ${checks} controls. DECA practice is REPRESENTABLE and now ` +
-    `PARTLY RESOLVABLE. The drill type admits a DECA track with its own area union, all four areas map ` +
-    `to their exact existing skill slugs, and the role-play/cluster-knowledge split is explicit. P1-B1 ` +
-    `published ONE teaching owner — deca-understanding-performance-indicators — so that skill now ` +
-    `resolves to its own lesson and its own DECA drill, proven through the generic resolver as well as ` +
-    `the map. The other three areas are drilled and still ownerless, and resolve to nothing: a 1-of-4 ` +
-    `split, not four plausible destinations. A claimed owner must be a registered, learner-visible DECA ` +
-    `lesson naming that area's exact skill slug; publication stays load-bearing; held lessons are never ` +
-    `treated as published; and every practice drill belongs to its own lesson's track, which now fails ` +
-    `on a cross-track mapping in either direction rather than only on a non-Debate one.`
+    `RESOLVABLE FOR BOTH ROLE-PLAY SKILLS. The drill type admits a DECA track with its own area union, ` +
+    `all four areas map to their exact existing skill slugs, and the role-play/cluster-knowledge split ` +
+    `is explicit. P1-B1 published the performance-indicators owner and P1-B2 the business-reasoning ` +
+    `owner, so both role-play skills resolve to their own lesson and their own DECA drill — proven ` +
+    `through the generic resolver as well as the map, and each area reached by exactly one lesson. The ` +
+    `two cluster-knowledge areas the exam tests are drilled and still ownerless, and resolve to ` +
+    `nothing: a 2-of-4 split, not four plausible destinations, and both owned areas are role-play ones. ` +
+    `A claimed owner must be a registered, learner-visible DECA lesson naming that area's exact skill ` +
+    `slug; publication stays load-bearing; held lessons are never treated as published; every practice ` +
+    `drill belongs to its own lesson's track; and EVERY published DECA lesson is rendered and scanned ` +
+    `for another track's name rather than one hardcoded id, so a second lesson cannot ship with Debate ` +
+    `branding and leave this suite green.`
   );
 }
 

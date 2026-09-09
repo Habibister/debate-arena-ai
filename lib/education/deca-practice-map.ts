@@ -18,10 +18,11 @@ import type { DecaPracticeDrill } from "@/lib/education/types";
  * top-level surface.
  *
  * P1-A invented no teaching owner: every `publishedTeachingOwner` was null, and remediation resolved
- * to nothing for every DECA skill. P1-B1 (2026-09-09) closed the FIRST of the four by authoring and
- * publishing `deca-understanding-performance-indicators`, so performance-indicators is now "owned"
- * and its remediation resolves. The other three are untouched and still ownerless — a map with one
- * real owner and three honest nulls, never four plausible-looking ones.
+ * to nothing for every DECA skill. P1-B1 closed the first by publishing
+ * `deca-understanding-performance-indicators`; P1-B2 closed the second with
+ * `deca-justifying-your-recommendation`. Both ROLE-PLAY areas are now owned and resolve. The two
+ * CLUSTER-KNOWLEDGE areas the exam tests are untouched and still ownerless — a map with two real
+ * owners and two honest nulls, never four plausible-looking ones.
  */
 
 /** Which half of the DECA competition a drill area serves. */
@@ -69,11 +70,20 @@ export const DECA_PRACTICE_MAP: readonly DecaPracticeMapping[] = [
     area: "business-reasoning",
     skillSlug: "deca-business-reasoning",
     component: "roleplay",
-    publishedTeachingOwner: null,
-    coverage: "none",
+    publishedTeachingOwner: "deca-justifying-your-recommendation",
+    coverage: "owned",
     note:
-      "The role-play lesson's recommendation scaffold names a business-reason step, but nothing teaches " +
-      "cost, feasibility, measurement or return on investment, which is what the drill items test."
+      "P1-B2 published the teaching owner. Orientation's scaffold names a business-reason step; this " +
+      "lesson teaches how to fill it — feasibility against every stated limit, what counts as a material " +
+      "cost, building the reason from facts the scenario supplies rather than a rule true of any " +
+      "business, measurement as metric plus comparison plus target, picking the measure the stated " +
+      "problem names, checking the business can collect it, pairing a cost with the return, and a " +
+      "tradeoff that names both sides. STILL DRILL-ONLY, recorded so the gap is not mistaken for " +
+      "coverage: ROI and break-even as formal definitions (br-02, br-06 — the DECA Finance deck defines " +
+      "both; this lesson gives one plain-language clause and no formula), arithmetic on stem numbers " +
+      "(br-11, br-18, br-30), sequencing and multi-constraint scheduling (br-16, br-19 — the bank " +
+      "deliberately names no sequencing method), settlement and cash flow (br-24), impact/effort " +
+      "prioritisation (br-09), and exposure larger than a headline percentage (br-21)."
   },
   {
     area: "customer-relations",

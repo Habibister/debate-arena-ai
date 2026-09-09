@@ -139,7 +139,7 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     courseId: "deca-roleplay-core",
     track: "DECA",
     label: "Role-play skills",
-    outcome: "Turn a listed performance indicator into a response that shows the idea inside the scenario.",
+    outcome: "Turn what the role-play card asks for into a response a judge can actually score.",
     prerequisiteId: "deca-event-orientation"
   },
   {
@@ -210,9 +210,10 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
     nextLessonId: null,
     provenance: decaRoleplay.provenance
   },
-  // P1-B1 — the first DECA CONCEPT lesson: the teaching owner for the performance-indicators drill
-  // area. Held by reference from the catalog through lib/education/tracks/deca.ts, the same
-  // mechanism the Debate concept lessons use. The three held DECA catalog entries stay absent.
+  // The DECA CONCEPT lessons, held by reference from the catalog through lib/education/tracks/deca.ts
+  // — the same mechanism the Debate concept lessons use. P1-B1 added the performance-indicators
+  // owner; P1-B2 added the business-reasoning owner and chained the first into it. The three held
+  // DECA catalog entries stay absent.
   ...DECA_PUBLISHED_LESSONS,
   {
     id: "how-hosa-scenario-interaction-works",

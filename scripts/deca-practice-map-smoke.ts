@@ -25,6 +25,8 @@ import {
   type DecaPracticeMapping
 } from "../lib/education/deca-practice-map";
 import { practiceRemediationForSkill } from "../lib/education/skills-compat";
+import { PRACTICE_DRILL_AREAS_COVERED, practiceDrillAreaLabel, practiceDrillHref } from "../lib/education/practice-drill";
+import type { DebatePracticeDrill, DecaPracticeDrill } from "../lib/education/types";
 import { EDUCATION_LESSONS, getEducationModule } from "../lib/education/registry";
 import { isConceptEducationLessonEntry } from "../lib/education/types";
 import { isDecaDrillArea } from "../lib/deca-drills";
@@ -262,9 +264,63 @@ function main() {
       "the expected drill track is derived from the owning lesson's track"
     );
     assert.ok(/if \(expectedDrillTrack === null \|\| entry\.practiceDrill\.track !== expectedDrillTrack\) return null;/.test(compat), "a mismatch yields no target at all");
-    // The two Debate-only consumers narrow rather than coerce.
-    assert.ok(/remediation && remediation\.drill\.track === "debate"/.test(read("lib/coach-evidence.ts")), "the coach card refuses a non-Debate remediation rather than coercing it");
-    assert.ok(/remediation && remediation\.drill\.track === "debate"/.test(read("app/(app)/study-arcade/review/page.tsx")), "and so does the review card");
+    // SUPERSEDED (P1-C). This used to require the literal `remediation.drill.track === "debate"`
+    // in both consumers: with only Debate resolvable, refusing everything else was how they avoided
+    // coercion. That gate is exactly what made a correct DECA remediation invisible — the helper
+    // resolved the right lesson and the right drill, and both learner surfaces then dropped it. The
+    // property being protected was never "refuse non-Debate", it was NEVER COERCE: no surface may
+    // show a drill under a track its remediation did not name. So the gate is gone and the property
+    // is now checked directly, on source and on behaviour.
+    const consumers = ["lib/coach-evidence.ts", "app/(app)/study-arcade/review/page.tsx"];
+    for (const file of consumers) {
+      const src = read(file);
+      assert.ok(!/drill\.track === "(debate|deca)"/.test(src), `${file}: no track literal decides what a remediation renders`);
+      assert.ok(!/study-arcade\?track=(debate|deca)/.test(src), `${file}: and no hardcoded track in the link it builds`);
+      assert.ok(/practiceDrillHref\(remediation\.drill\)/.test(src), `${file}: the link comes from the drill the helper returned`);
+      assert.ok(/practiceDrillAreaLabel\(remediation\.drill\)/.test(src), `${file}: and so does the name it shows`);
+    }
+    // Behaviour, not just shape: for every skill that resolves at all, what a learner would be sent
+    // to carries the drill's OWN track, and is named out of that track's own bank. A coercion bug
+    // shows up here as a deca drill rendered with a debate href or a Debate area's label.
+    let crossTrackRendered = 0;
+    let resolvedSkills = 0;
+    for (const slug of [...DECA_DRILL_SKILL_SLUGS, ...DRILL_AREAS.map((area) => area.skillSlug)]) {
+      if (!slug) continue;
+      const remediation = practiceRemediationForSkill(slug);
+      if (!remediation) continue;
+      resolvedSkills += 1;
+      const { track, area } = remediation.drill;
+      const bank = track === "deca" ? DECA_DRILL_AREAS : DRILL_AREAS;
+      const expectedLabel = bank.find((entry) => entry.id === area)?.label;
+      assert.ok(expectedLabel, `${slug}: ${track}/${area} exists in its own bank`);
+      if (!practiceDrillHref(remediation.drill).includes(`track=${track}&area=${area}`)) crossTrackRendered += 1;
+      if (practiceDrillAreaLabel(remediation.drill) !== expectedLabel) crossTrackRendered += 1;
+    }
+    assert.equal(crossTrackRendered, 0, "no resolved remediation renders under another track");
+    // Non-vacuity: both tracks are actually represented in that sweep, so a total resolution failure
+    // cannot pass this control by resolving nothing.
+    assert.ok(resolvedSkills >= 5, `control: the sweep resolved real remediations (${resolvedSkills})`);
+    assert.equal(DECA_DRILL_SKILL_SLUGS.filter((slug) => practiceRemediationForSkill(slug)).length, 4,
+      "and all four DECA skills are among them");
+  });
+
+  check("F1b. every drill area the type system allows can actually be named", () => {
+    // The runtime half of the compile-time coverage in lib/education/practice-drill.ts. Together they
+    // reproduce what the deleted `Record<area, string>` maps guaranteed: tsc forces a new area to be
+    // acknowledged there, and this proves its own bank really carries a label for it — so no learner
+    // can ever be shown a drill named by its raw slug.
+    for (const area of Object.keys(PRACTICE_DRILL_AREAS_COVERED.deca) as Array<DecaPracticeDrill["area"]>) {
+      const label = DECA_DRILL_AREAS.find((entry) => entry.id === area)?.label;
+      assert.ok(label && label !== area, `deca/${area}: the DECA bank names it (${label ?? "missing"})`);
+      assert.equal(practiceDrillAreaLabel({ track: "deca", area }), label, `deca/${area}: and the resolver returns that name`);
+    }
+    for (const area of Object.keys(PRACTICE_DRILL_AREAS_COVERED.debate) as Array<DebatePracticeDrill["area"]>) {
+      const label = DRILL_AREAS.find((entry) => entry.id === area)?.label;
+      assert.ok(label && label !== area, `debate/${area}: the Debate bank names it (${label ?? "missing"})`);
+      assert.equal(practiceDrillAreaLabel({ track: "debate", area }), label, `debate/${area}: and the resolver returns that name`);
+    }
+    assert.equal(Object.keys(PRACTICE_DRILL_AREAS_COVERED.deca).length, DECA_DRILL_AREAS.length, "coverage and bank agree in size for DECA");
+    assert.equal(Object.keys(PRACTICE_DRILL_AREAS_COVERED.debate).length, DRILL_AREAS.length, "and for Debate");
   });
 
   check("F2. a drill existing never implies the skill is taught", () => {

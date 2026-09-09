@@ -7,6 +7,7 @@ import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
 import { EDUCATION_COURSES, EDUCATION_LESSONS, EDUCATION_MODULES, EDUCATION_REGISTRY, educationLessonsForTrack, getEducationLesson, getEducationModule } from "../lib/education/registry";
 import { DEBATE_MIGRATED_LESSONS, HELD_DEBATE_CATALOG_SLUGS, MIGRATED_DEBATE_PROVENANCE } from "../lib/education/tracks/debate";
 import { EDUCATION_GENERIC_FILLER_SIGNATURES, validateEducationRegistry } from "../lib/education/validate";
+import { practiceDrillHref } from "../lib/education/practice-drill";
 // M13E1C: the compatibility-alias rule validates its target against the seeded manifest.
 import { SEEDED_LESSON_SLUGS, SEEDED_SKILL_SLUGS } from "../lib/education/skills-compat";
 import { isConceptEducationLessonEntry } from "../lib/education/types";
@@ -845,8 +846,24 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
       "37. the lesson view special-cases NO lesson id — the destination comes from registry metadata");
     assert.ok(/practiceDrill \? \(/.test(view),
       "37b. and it renders the practice action only when a destination exists");
-    assert.ok(/\/study-arcade\?track=\$\{practiceDrill\.track\}&area=\$\{practiceDrill\.area\}/.test(view),
-      "37c. the action targets the real study-arcade deep link, built from the mapping");
+    // 37c. SUPERSEDED (P1-C). This pinned the literal template. The view was the fourth hand-written
+    // copy of it, and the copies had already drifted once — a dropped `&area=` sent a learner to the
+    // mixed picker. All four surfaces now call one builder, so the pin is on the property instead:
+    // the destination is still built from THIS lesson's mapping, and still carries area as well as
+    // track. Checked on source and then on the value itself, from a real registry mapping.
+    assert.ok(/practiceDrillHref\(practiceDrill\)/.test(view),
+      "37c. the action targets the study-arcade deep link built from this lesson's own mapping");
+    assert.ok(!/study-arcade\?track=(debate|deca)/.test(view),
+      "37c2. and never a track hardcoded into the view");
+    let mappedChecked = 0;
+    for (const entry of EDUCATION_REGISTRY.lessons) {
+      const drill = entry.practiceDrill;
+      if (!drill) continue;
+      mappedChecked += 1;
+      assert.equal(practiceDrillHref(drill), `/study-arcade?track=${drill.track}&area=${drill.area}`,
+        `37c4. ${entry.id}: both parameters come from its own mapping`);
+    }
+    assert.ok(mappedChecked > 0, "37c3. control: mapped lessons exist to check");
     assert.ok(!/disabled/.test(view),
       "37d. an unmapped lesson gets no disabled placeholder button");
     // Honest copy: the formative check must not be described as recorded progress.

@@ -683,8 +683,13 @@ async function main() {
   // number of gated things at two and S2-15b/S2-16 name both of them, so a gated drill link would make
   // the count three. A positional check on top of that could only ever fail on link ORDER, which is
   // not a defect, so it is deliberately absent.
-  const drillHref = /href=\{.\/study-arcade\?track=\$\{remediation\.drill\.track\}&area=\$\{remediation\.drill\.area\}/;
+  // SUPERSEDED (P1-C): the href template moved into the shared builder lib/education/practice-drill.ts,
+  // which all four learner surfaces now call. The property is untouched — a mapped card still offers a
+  // drill link, and still builds it from THIS remediation's own drill rather than a fixed destination.
+  const drillHref = /href=\{practiceDrillHref\(remediation\.drill\)/;
   assert.ok(drillHref.test(mappedBranch), "S2-17. the drill deep link is offered on every mapped card");
+  assert.ok(!/study-arcade\?track=(debate|deca)/.test(mappedBranch),
+    "S2-17b. and never a destination hardcoded into the card");
 
   // S2-18. Nothing about the destination is hardcoded, so an authoring change moves the card with it.
   for (const banned of ["debate-refutation", "debate-rebuttal", "rebuttal", "Answer with refutation"]) {

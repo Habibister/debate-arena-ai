@@ -1,4 +1,5 @@
-import { type DrillArea, drillAreaLabel } from "@/lib/debate-drills";
+import { practiceDrillAreaLabel, practiceDrillHref } from "@/lib/education/practice-drill";
+import type { EducationPracticeDrill } from "@/lib/education/types";
 import {
   COMPAT_TRACK_DESTINATION,
   compatTrackForSlug,
@@ -28,9 +29,14 @@ export type CoachSkill = {
   organization: string;
 };
 
+/**
+ * P1-C widened `track` from the literal "debate" to the canonical per-track union. The Coach never
+ * chose a track; it simply could not describe a non-Debate one, so a DECA learner with a real due
+ * review and a real destination was handed the generic fallback instead.
+ */
 export type CoachDrill = {
-  track: "debate";
-  area: DrillArea;
+  track: EducationPracticeDrill["track"];
+  area: EducationPracticeDrill["area"];
   label: string;
   href: string;
 };
@@ -76,16 +82,17 @@ export async function getEvidenceBackedNextAction(userId: string): Promise<Coach
   const belowPracticing = first.masteryPercent < PRACTICING_MASTERY_MIN;
 
   const remediation = practiceRemediationForSkill(first.skillSlug);
-  // P1-A (2026-09-09): remediation is now representable for any track, but this card's destination
-  // shape and copy are still Debate-only. A non-Debate remediation is deliberately NOT surfaced here
-  // rather than coerced into a Debate drill — routing DECA remediation is P1-C's job, and inventing a
-  // Debate destination for a DECA skill is exactly the cross-track fallback the architecture forbids.
-  if (remediation && remediation.drill.track === "debate") {
+  // P1-C (2026-09-09): the Debate-only gate is gone. Nothing here coerces a track — the drill is
+  // copied through from the remediation exactly as the helper resolved it, and the helper is what
+  // refuses a cross-track, unpublished or non-concept target. The Coach and /study-arcade/review now
+  // reach the same destination for the same skill on the same data, which is the property that kept
+  // them from disagreeing when only Debate resolved.
+  if (remediation) {
     const drill: CoachDrill = {
       track: remediation.drill.track,
       area: remediation.drill.area,
-      label: drillAreaLabel(remediation.drill.area),
-      href: `/study-arcade?track=${remediation.drill.track}&area=${remediation.drill.area}`
+      label: practiceDrillAreaLabel(remediation.drill),
+      href: practiceDrillHref(remediation.drill)
     };
     if (belowPracticing) {
       return {

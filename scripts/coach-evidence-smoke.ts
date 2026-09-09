@@ -387,15 +387,22 @@ async function main() {
   assert.ok(stripComments(read("lib/education/skills-compat.ts")).includes("isConceptEducationLessonEntry(entry)"),
     "S3-15f4. and the concept-entry discriminant guard is still the code enforcing that boundary");
   // ---- S3-15g. concept lesson view: raw byte pin deliberately RETIRED (typed label catalog) ----
-  // DRILL_AREA_LABELS is keyed by the area union, so tsc forces one catalog line per new area; the
-  // Slice 1 trust boundary is asserted content-sightedly instead:
+  // The view's private DRILL_AREA_LABELS map moved to lib/education/practice-drill.ts in P1-C, where
+  // one track-aware resolver now serves all three learner surfaces; the area union still makes an
+  // unknown area a compile error. The Slice 1 trust boundary is asserted content-sightedly instead:
   const lessonView = read("components/lessons/concept-education-lesson-view.tsx");
   assert.ok(lessonView.includes("The check above is for practice and records nothing"),
     "S3-15g. the formative framing stays truthful — in-lesson checks record nothing");
   assert.ok(/\{practiceDrill \? \(/.test(lessonView),
     "S3-15g2. the practice CTA renders only when practiceDrill metadata exists");
-  assert.ok(lessonView.includes("/study-arcade?track=${practiceDrill.track}&area=${practiceDrill.area}"),
+  // S3-15g3. SUPERSEDED (P1-C): the href template moved into the one shared builder that all four
+  // surfaces now call, so pinning the literal here would fail on a change that removed no
+  // destination. The property is unchanged and is still what is asserted — the CTA is built from
+  // THIS lesson's metadata, and no destination is hardcoded in the view.
+  assert.ok(/practiceDrillHref\(practiceDrill\)/.test(lessonView),
     "S3-15g3. the CTA href is derived from the metadata — no hardcoded destination");
+  assert.ok(!/study-arcade\?track=(debate|deca)/.test(lessonView),
+    "S3-15g3b. and no literal track is written into the view at all");
   assert.ok(!/clash/i.test(stripComments(lessonView).replace('clash: "Clash"', "")),
     "S3-15g4. no Clash special case exists in the view beyond the typed label line");
   for (const banned of ["MasteryProgress", "spaced-review", "recordDrillMastery", "recordPracticeOutcome"]) {
@@ -417,8 +424,59 @@ async function main() {
     assert.equal((src.match(/\/\*/g) ?? []).length, (src.match(/\{\s*\/\*/g) ?? []).length,
       `S3-15c2. every block-comment opener in the ${flavor} review page is a real JSX comment, none hides in a string`);
   }
-  assert.equal(executableView(read(reviewPath)), executableView(gitShow(reviewPath)),
-    "S3-15d. the review page is executable-identical to the immutable pre-Slice-3 baseline: comments aside, not one token differs");
+  // S3-15d. SUPERSEDED (P1-C). Whole-file executable identity was a proxy for two things: that this
+  // page never grows durable-evidence machinery, and that it and the Coach cannot drift apart. It
+  // also forbade the one change P1-C exists to make — the page named its drill through the
+  // Debate-only `drillAreaLabel`, which THROWS on a DECA area, so a correct DECA remediation
+  // resolved and then could not be rendered. A pin that forbids fixing that is protecting the bug.
+  //
+  // Both properties are now asserted directly, plus a scope pin proving nothing ELSE in the file
+  // moved: every executable line that differs from the baseline belongs to the remediation card.
+  const baseLines = executableView(gitShow(reviewPath)).split("\n");
+  const nowLines = executableView(read(reviewPath)).split("\n");
+  const changed = [
+    ...nowLines.filter((line) => !baseLines.includes(line)),
+    ...baseLines.filter((line) => !nowLines.includes(line))
+  ].filter((line) => line.trim().length > 0);
+  // RECORDED PRE-EXISTING DRIFT, not a P1-C change. The empty-state copy was rewritten by approved
+  // work after ede805b, so the file has NOT been executable-identical to the frozen baseline for
+  // some time. Nothing caught it: the S3-15 loop above asserts a spaced-review.ts hash that already
+  // fails at HEAD, which aborted this suite before it ever reached this control. Both halves of that
+  // pair are pre-existing and are deliberately NOT repaired here. The allowance is pinned to the
+  // exact two lines, and each is checked to be present at HEAD as well, so it can never absorb a
+  // NEW edit to this page.
+  const PRE_EXISTING_COPY_DRIFT = [
+    "that record your practice; their review schedule starts from there, and they surface here when due.",
+    "to start their review schedule, then come back when they surface."
+  ];
+  const headLines = executableView(execSync(`git show HEAD:'${reviewPath}'`, { encoding: "utf8" })).split("\n");
+  for (const drifted of PRE_EXISTING_COPY_DRIFT) {
+    assert.ok(baseLines.some((line) => line.includes(drifted)) || headLines.some((line) => line.includes(drifted)),
+      `S3-15d0. the recorded drift line is real, in the baseline or at HEAD: ${drifted}`);
+  }
+  for (const line of changed) {
+    if (PRE_EXISTING_COPY_DRIFT.some((drifted) => line.includes(drifted))) continue;
+    assert.ok(/remediation|practiceDrill(Href|AreaLabel)|drillAreaLabel|debate-drills|education\/practice-drill/.test(line),
+      `S3-15d. the review page changed outside the remediation card: ${line.trim()}`);
+  }
+  // ...and the page still WRITES nothing. It legitimately READS the mastery record — that is what a
+  // due-review list is — so the ban is on the writers and on the client itself, checked with comments
+  // stripped so that naming a writer in order to say the page avoids it does not trip the control.
+  const reviewSrc = read(reviewPath);
+  const reviewCode = stripComments(reviewSrc);
+  for (const banned of ["recordDrillMastery", "recordPracticeOutcome", "prisma", "XPLog", "awardXp", ".update(", ".create(", ".upsert("]) {
+    assert.ok(!reviewCode.includes(banned), `S3-15d2. the review page writes no durable evidence (${banned})`);
+  }
+  // ...and it cannot drift from the Coach, because both compute the same destination the same way
+  // from the same helper. This is the property whole-file identity was standing in for.
+  const coachSrc = read("lib/coach-evidence.ts");
+  for (const [file, src] of [["the review page", reviewSrc], ["the Coach", coachSrc]] as const) {
+    assert.ok(/practiceRemediationForSkill\(/.test(src), `S3-15d3. ${file} resolves remediation through the shared helper`);
+    assert.ok(/practiceDrillHref\(remediation\.drill\)/.test(src), `S3-15d4. ${file} builds the drill link from what that helper returned`);
+    assert.ok(/practiceDrillAreaLabel\(remediation\.drill\)/.test(src), `S3-15d5. ${file} names the drill from the same value`);
+    assert.ok(!/study-arcade\?track=(debate|deca)/.test(src), `S3-15d6. ${file} hardcodes no destination`);
+    assert.ok(!/drill\.track === "(debate|deca)"/.test(src), `S3-15d7. ${file} lets no track literal decide what renders`);
+  }
   assert.ok(executableView(read(reviewPath)).includes("if (remediation)"),
     "S3-15e. and the stripped view demonstrably keeps executable code — the mapped branch is present in it");
   // The Taught-only orientation must be invisible to the evidence path: no skillSlug, no drill, so

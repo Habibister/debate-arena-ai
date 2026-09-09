@@ -5,7 +5,7 @@ import { CheckCircle2, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
-import { drillAreaLabel } from "@/lib/debate-drills";
+import { practiceDrillAreaLabel, practiceDrillHref } from "@/lib/education/practice-drill";
 import { COMPAT_TRACK_DESTINATION, compatTrackForSlug, debateWritingPracticeSupported, practiceRemediationForSkill } from "@/lib/education/skills-compat";
 import { getDueReviews, PRACTICING_MASTERY_MIN } from "@/lib/spaced-review";
 
@@ -103,10 +103,18 @@ export default async function ReviewSessionPage() {
               // review-ladder:smoke requires every such displacement to be explicitly listed — a mapped
               // skill can still never lose a working destination silently, and a listing today does not
               // make future displacements automatically acceptable.
-              // P1-A (2026-09-09): remediation is representable for any track now, but this card's copy
-              // and destination are Debate-only. A non-Debate remediation falls through to the generic
-              // reassess path rather than being rendered as a Debate drill — never a cross-track target.
-              if (remediation && remediation.drill.track === "debate") {
+              // P1-C (2026-09-09): the track gate is GONE. It existed because this card named its drill
+              // through the Debate-only `drillAreaLabel`, which throws on a DECA area — the destination
+              // resolved correctly and the surface could not render it. Both halves are now track-aware,
+              // so any track's remediation is shown here.
+              //
+              // WHAT STILL PROTECTS THE LEARNER is `practiceRemediationForSkill` itself, not this
+              // branch: it refuses a lesson that is not learner-visible, refuses a non-concept entry,
+              // and refuses any drill whose track does not match the track of the lesson that owns it.
+              // A held lesson is never registered, so it can never be reached from here. The guard lives
+              // in the helper on purpose — UI filtering alone would not stop the Coach making the same
+              // mistake on the same data.
+              if (remediation) {
                 return (
                   <div key={review.skillId} className="rounded-lg border bg-background p-4">
                     {summary}
@@ -125,10 +133,10 @@ export default async function ReviewSessionPage() {
                         </Link>
                       ) : null}
                       <Link
-                        href={`/study-arcade?track=${remediation.drill.track}&area=${remediation.drill.area}` as Route}
+                        href={practiceDrillHref(remediation.drill) as Route}
                         className="text-sm font-semibold text-primary hover:underline"
                       >
-                        {`Reassess in the ${drillAreaLabel(remediation.drill.area)} drill`}
+                        {`Reassess in the ${practiceDrillAreaLabel(remediation.drill)} drill`}
                       </Link>
                     </div>
                   </div>

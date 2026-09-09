@@ -33,6 +33,7 @@ const { LearnerPathRail } = require("../components/ui/learner-path-rail");
 const { debateDiagnosisLesson } = require("../lib/education/diagnosis");
 const { EDUCATION_REGISTRY } = require("../lib/education/registry");
 const { validateEducationRegistry } = require("../lib/education/validate");
+const { practiceDrillHref } = require("../lib/education/practice-drill");
 
 const read = (p: string) => readFileSync(p, "utf8");
 const stripComments = (src: string) =>
@@ -170,15 +171,29 @@ function main() {
   // ---- G-H. the capabilities under the removed categories are still reachable -------------------
   check("G. targeted drills and due reviews are still reachable, from Learn-side surfaces", () => {
     // The drill deep link survives in the places a learner actually meets it, none of which is a stage.
+    //
+    // SUPERSEDED (P1-C). This used to pin the literal `/study-arcade?track=${...}&area=${...}` template
+    // in each file. Three of those four surfaces now build the link through the single shared builder
+    // `practiceDrillHref`, so the literal pin would have failed on a change that did not remove a single
+    // learner route. What the control was protecting is the PROPERTY: each surface still reaches the
+    // drill, and reaches it with the area preserved rather than dumping the learner on the mixed picker.
+    // So a surface satisfies this either by building the link itself or by calling the shared builder,
+    // and the builder is then checked once, directly, for both parameters.
     const drillBuilders: Array<[string, RegExp]> = [
-      ["components/lessons/concept-education-lesson-view.tsx", /\/study-arcade\?track=\$\{practiceDrill\.track\}&area=\$\{practiceDrill\.area\}/],
-      ["app/(app)/study-arcade/review/page.tsx", /\/study-arcade\?track=/],
-      ["lib/coach-evidence.ts", /\/study-arcade\?track=/],
-      ["components/skills/skill-path.tsx", /\/study-arcade\?track=/]
+      ["components/lessons/concept-education-lesson-view.tsx", /practiceDrillHref\(|\/study-arcade\?track=/],
+      ["app/(app)/study-arcade/review/page.tsx", /practiceDrillHref\(|\/study-arcade\?track=/],
+      ["lib/coach-evidence.ts", /practiceDrillHref\(|\/study-arcade\?track=/],
+      ["components/skills/skill-path.tsx", /practiceDrillHref\(|\/study-arcade\?track=/]
     ];
     for (const [file, pattern] of drillBuilders) {
       assert.ok(pattern.test(stripComments(read(file))), `G. ${file} still reaches the drill surface`);
     }
+    // The builder every one of them now shares keeps BOTH parameters. `area` is the load-bearing half:
+    // dropping it is a silent defect, because the link still works and still lands in the right track.
+    assert.equal(practiceDrillHref({ track: "deca", area: "customer-relations" }),
+      "/study-arcade?track=deca&area=customer-relations", "G1b. the shared builder keeps track AND area");
+    assert.equal(practiceDrillHref({ track: "debate", area: "clash" }),
+      "/study-arcade?track=debate&area=clash", "G1c. for either track, from the drill's own fields");
     // Review keeps its own direct route from three independent surfaces.
     for (const file of ["app/(app)/home/page.tsx", "app/(app)/study-arcade/page.tsx", "components/skills/skill-path.tsx"]) {
       assert.ok(/\/study-arcade\/review/.test(stripComments(read(file))), `G2. ${file} still reaches review`);

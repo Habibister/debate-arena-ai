@@ -240,9 +240,17 @@ export type WeightedScoringRubric = {
 };
 
 // Returns a weighted rubric ONLY when every category carries a real point value (a genuine point
-// split we can compute a weighted sum from). Specs with any point-less category — e.g. Public Forum,
-// whose win is holistic — return null, so the judge keeps its existing behavior instead of faking a
-// weighted score. DECA HLM (5 PIs x 18 + Overall 10 = 100) qualifies; MT (single 50-pt category) does too.
+// split we can compute a weighted sum from) AND every category is positively sourced. Specs with any
+// point-less category — e.g. Public Forum, whose win is holistic — return null, so the judge keeps
+// its existing behavior instead of faking a weighted score.
+//
+// The point split lives in the DATABASE, never here. An earlier version of this comment asserted
+// "DECA HLM (5 PIs x 18 + Overall 10 = 100)". That was FALSE: no DECA-published evaluation form has
+// ever used an 18-point performance-indicator scale, and the claim traced to a 2014 California DECA
+// (chartered association, not DECA Inc.) handout. The audited 2026-27 Individual Series form is
+// 5 PIs x 10 + Solution 3 x 8 + Career Competencies 3 x 6 + Overall Impression 8 = 100; its stored
+// provenance and source references live on the CompetitionSpec row, which is the authority. Do not
+// re-derive a point split from any comment, fixture or memory.
 export async function getWeightedScoringRubric(organization: Organization, eventType?: string): Promise<WeightedScoringRubric | null> {
   try {
     const spec = await findSpecForEvent(organization, eventType);

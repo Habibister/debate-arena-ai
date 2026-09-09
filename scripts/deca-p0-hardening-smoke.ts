@@ -152,15 +152,17 @@ function main() {
     assert.ok(/Official rubric categories from the \$\{spec\.eventName\}/.test(ai), "control: the official claim still exists for sourced rubrics");
   });
 
-  check("B4. the scenario generator applies the same gate before stamping piSource registry", () => {
+  check("B4. the scenario generator cannot stamp piSource registry from rubric data at all", () => {
     const ai = read("lib/ai.ts");
+    // SUPERSEDED BY A STRONGER GUARANTEE (B4 milestone, 2026-09-09). This check originally required
+    // the scenario's registry-PI path to be gated on positive sourcing, mirroring the judge. Once the
+    // 2026-27 rubric was actually sourced, that gate would have PASSED and handed the learner twelve
+    // rubric lines as their performance indicators. The path is now removed outright, which subsumes
+    // the provenance gate: no rubric category can become a performance indicator under any provenance.
+    assert.ok(/const hasRegistry = false;/.test(ai), "the registry-PI path is closed unconditionally");
     assert.ok(
-      /registryBreakdown\.categories\.every\(\(category\) => category\.provenance === "sourced"\)/.test(ai),
-      "scenario PIs come only from positively sourced categories"
-    );
-    assert.ok(
-      /const registryPis = registrySourced \? registryBreakdown\.categories\.map\(\(category\) => category\.name\) : \[\];/.test(ai),
-      "a placeholder or unknown rubric degrades the scenario to generic"
+      !/registryBreakdown\.categories\.every\(\(category\) => category\.provenance === "sourced"\)/.test(ai),
+      "the weaker provenance-gated derivation is gone, not merely bypassed"
     );
   });
 
@@ -245,6 +247,46 @@ function main() {
     assert.ok(!/readinessLabel/.test(results), "including the variable that carried it");
     assert.ok(/Strong practice result/.test(results) && /Solid practice result/.test(results), "the band describes the RESULT");
     assert.ok(/Focused review/.test(results), "control: the low band is unchanged");
+  });
+
+  // ============================================================================================
+  // B4 — the sourced 2026-27 Individual Series rubric contract (source assertions only: the modules
+  // that resolve a rubric import prisma, so they are never executed here).
+  // ============================================================================================
+  check("E1. the false 5x18+10 point split is corrected, not merely deleted", () => {
+    const specs = read("lib/competition-specs.ts");
+    assert.ok(
+      !/DECA HLM \(5 PIs x 18 \+ Overall 10 = 100\) qualifies/.test(specs),
+      "the false claim no longer stands as an assertion of fact"
+    );
+    assert.ok(/The point split lives in the DATABASE, never here\./.test(specs), "the authority is named as the data, not the comment");
+    assert.ok(/traced to a 2014 California DECA/.test(specs), "the origin of the false claim is recorded so it cannot be reintroduced");
+    assert.ok(
+      /5 PIs x 10 \+ Solution 3 x 8 \+ Career Competencies 3 x 6 \+ Overall Impression 8 = 100/.test(specs),
+      "the audited 2026-27 structure is recorded"
+    );
+    assert.ok(/Do not\s*\n\/\/ re-derive a point split from any comment, fixture or memory\./.test(specs), "and re-derivation is forbidden");
+  });
+
+  check("E2. a rubric line is never used as a performance indicator", () => {
+    const ai = read("lib/ai.ts");
+    assert.ok(/A RUBRIC LINE IS NOT A PERFORMANCE INDICATOR/.test(ai), "the distinction is recorded where it is enforced");
+    assert.ok(
+      !/const registryPis = registrySourced \? registryBreakdown\.categories\.map\(\(category\) => category\.name\) : \[\];/.test(ai),
+      "scenario performance indicators are no longer derived from rubric CATEGORY NAMES"
+    );
+    assert.ok(/const registryPis: string\[\] = \[\];\s*\n\s*const hasRegistry = false;/.test(ai), "so the registry-PI path cannot fire");
+    // The judge still consumes the rubric — that is the whole point of sourcing it.
+    assert.ok(/const weighted = await getWeightedScoringRubric\("DECA", input\.eventType\);/.test(ai), "the JUDGE still resolves the weighted rubric");
+    assert.ok(/result\.overallScore = computeWeightedOverall\(items\);/.test(ai), "and still computes the overall from the sourced point weights");
+  });
+
+  check("E3. control: the weighted-scoring gate itself is unchanged and still demands positive sourcing", () => {
+    const specs = read("lib/competition-specs.ts");
+    assert.ok(
+      /const allPointed = breakdown\.categories\.every\(\(c\) => typeof c\.points === "number" && c\.points > 0 && c\.provenance === "sourced"\);/.test(specs),
+      "B1's gate is intact — seeding data did not weaken it"
+    );
   });
 
   console.log(

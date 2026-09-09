@@ -1758,17 +1758,17 @@ export async function generateDecaRoleplayScenario(input: {
   // so it must degrade to generic rather than borrow HLM's event name and categories.
   const clusterMatchesSpec = /hospitality|tourism|lodging|hotel/i.test(input.cluster);
   const spec = clusterMatchesSpec ? await findSpecForEvent("DECA", "ROLEPLAY") : null;
-  // FAIL-CLOSED (2026-09-09), same contract as registryRubricForJudge: these names are handed to the
-  // model as "official rubric categories from the <spec> specification" and are stamped onto the
-  // scenario as piSource "registry", so they may come only from categories that are POSITIVELY
-  // sourced. A placeholder or unknown-provenance category degrades the whole scenario to generic.
-  const registryBreakdown = spec ? await getSpecRubricBreakdown(spec) : null;
-  const registrySourced =
-    registryBreakdown !== null &&
-    registryBreakdown.categories.length > 0 &&
-    registryBreakdown.categories.every((category) => category.provenance === "sourced");
-  const registryPis = registrySourced ? registryBreakdown.categories.map((category) => category.name) : [];
-  const hasRegistry = registryPis.length > 0;
+  // A RUBRIC LINE IS NOT A PERFORMANCE INDICATOR (2026-09-09). This branch used to hand the spec's
+  // rubric CATEGORY NAMES to the model as the scenario's performance indicators. That conflates two
+  // different DECA artifacts: the evaluation form is a scoring instrument, while performance
+  // indicators are event-specific curriculum content published in a separate cluster PI list. With
+  // the 2026-27 Individual Series form now sourced, that conflation would show a learner "Solution:
+  // Unique", "Career Competencies: Communication" and "Overall Impression" as their performance
+  // indicators — false, and useless for practice. The rubric is therefore consumed by the JUDGE
+  // (registryRubricForJudge / getWeightedScoringRubric), never as a PI list here. Scenario PIs stay
+  // model-proposed and are labelled generic until a real PI list is sourced into the registry.
+  const registryPis: string[] = [];
+  const hasRegistry = false;
 
   // Variety seed: a random setting + pressure per generation so identical inputs still produce
   // meaningfully different scenarios (and the deterministic fallback varies the same way).
@@ -1811,7 +1811,8 @@ ${ROLEPLAY_SCAFFOLD_FIELDS}`,
   ) as RoleplayScenario;
 
   if (hasRegistry && spec) {
-    // Trust the registry categories over anything the model returned for the scored dimensions.
+    // Unreachable while `hasRegistry` is false: kept so the shape is obvious if a real, sourced PI
+    // list is later added to the registry as its own artifact (not as rubric categories).
     result.performanceIndicators = registryPis;
     result.piSource = "registry";
     result.eventName = spec.eventName;

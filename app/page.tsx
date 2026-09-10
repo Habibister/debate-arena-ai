@@ -18,7 +18,23 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { ORGANIZATIONS } from "@/lib/constants";
+import { ORGANIZATIONS, XP_REWARDS } from "@/lib/constants";
+import { DAILY_REWARD_QUOTA } from "@/lib/xp";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
+
+/**
+ * QA-R1 — what this page may advertise.
+ *
+ * The homepage listed five organizations from `ORGANIZATIONS` — the SIGNUP list — including Mock Trial
+ * and Public Speaking, which no training track backs, and printed a hardcoded "6 Org tracks" that
+ * matched neither that list nor the product. A beginner could read the page and expect training the app
+ * cannot give. Both now derive from the training tracks themselves: an organization appears only when it
+ * maps to a track that exists and is not retired, and the count is that list's length.
+ */
+const TRAINABLE_ORGANIZATIONS = ORGANIZATIONS.filter((org) => {
+  const track = trackByOrganization(org.value);
+  return Boolean(track) && !isTrackRetired(track!.id);
+});
 
 const featureCards = [
   {
@@ -100,12 +116,18 @@ export default function HomePage() {
               <div className="rounded-lg border bg-card p-3">
                 <p className="flex items-center gap-2 text-2xl font-bold">
                   <Flame className="h-5 w-5 text-accent" aria-hidden />
-                  +25
+                  +{XP_REWARDS.debateCompleted}
                 </p>
-                <p className="text-xs font-semibold text-muted-foreground">Debate XP</p>
+                {/* "Debate XP" named a per-track currency that does not exist: XP is one account-wide
+                    counter, and the judge route pays this same amount for a DECA or HOSA session too.
+                    It is also capped — only the first few completions each day pay. The label now says
+                    what the number is, and the cap it lives under, instead of assigning it to a track. */}
+                <p className="text-xs font-semibold text-muted-foreground">
+                  XP per judged round, first {DAILY_REWARD_QUOTA} each day
+                </p>
               </div>
               <div className="rounded-lg border bg-card p-3">
-                <p className="text-2xl font-bold">6</p>
+                <p className="text-2xl font-bold">{TRAINABLE_ORGANIZATIONS.length}</p>
                 <p className="text-xs font-semibold text-muted-foreground">Org tracks</p>
               </div>
               <div className="rounded-lg border bg-card p-3">
@@ -166,7 +188,7 @@ export default function HomePage() {
             description="Each organization can carry its own skills, lessons, AI prompts, practice tests, rubrics, and coach analytics without forking the product architecture."
           />
           <div className="grid gap-3 sm:grid-cols-2">
-            {ORGANIZATIONS.map((org) => (
+            {TRAINABLE_ORGANIZATIONS.map((org) => (
               <div key={org.value} className="rounded-lg border bg-background p-4">
                 <div className="flex items-center gap-3">
                   <GraduationCap className="h-5 w-5 text-primary" aria-hidden />

@@ -20,7 +20,8 @@ import {
   trackSelectionCookieValue
 } from "../lib/track-precedence";
 import { routeConsumesTrackParam, routeTrackSlugFor, TRACK_PARAM_ROUTES } from "../lib/track-route";
-import { isTrackRetired, trackById, trackBySlug, type TrackInfo } from "../lib/training-tracks";
+import { isTrackRetired, trackById, trackBySlug, trackByOrganization, type TrackInfo } from "../lib/training-tracks";
+import { ORGANIZATIONS } from "../lib/constants";
 import { AUTHORED_LESSONS } from "../lib/lessons";
 import { ROLEPLAY_LESSONS } from "../lib/roleplay-lessons";
 import { EDUCATION_LESSONS } from "../lib/education/registry";
@@ -409,6 +410,68 @@ check("T22. a track-scoped page describes the track it is scoped to", () => {
   assert.ok(!/not official DECA or HOSA tests/.test(generator), "T22m and no longer names both to every learner");
   assert.match(generator, /const \[organization, setOrganization\] = useState<TestingOrganization>\(initialOrg\);/,
     "T22n the value it follows is the generator's real organization state, which is what gets posted");
+});
+
+check("T23. the product advertises only tracks it can actually train", () => {
+  // QA-R1 #10. The homepage printed a hardcoded "6 Org tracks" and listed five organizations from the
+  // SIGNUP list — including Mock Trial and Public Speaking, which no training track backs. A learner
+  // could read the page and expect training the product cannot give.
+  const trainable = ORGANIZATIONS.filter((org) => {
+    const track = trackByOrganization(org.value);
+    return Boolean(track) && !isTrackRetired(track!.id);
+  });
+  assert.deepEqual(trainable.map((org) => org.value), ["DEBATE", "DECA", "HOSA"], "T23a exactly the three trainable organizations");
+  for (const unbacked of ["MOCK_TRIAL", "PUBLIC_SPEAKING"]) {
+    assert.equal(trackByOrganization(unbacked as never), undefined, `T23-C ${unbacked} really has no track behind it`);
+  }
+  const landing = stripComments(read("app/page.tsx"));
+  assert.ok(landing.length > 2000, "T23-C1 the landing page was read");
+  assert.match(landing, /const TRAINABLE_ORGANIZATIONS = ORGANIZATIONS\.filter\(/, "T23b the page derives its list from the tracks");
+  assert.match(landing, /\{TRAINABLE_ORGANIZATIONS\.length\}/, "T23c and its count from that same list");
+  assert.match(landing, /\{TRAINABLE_ORGANIZATIONS\.map\(/, "T23d the supported-tracks grid renders that list, not every signup option");
+  assert.ok(!/>6</.test(landing), "T23e no hardcoded track count survives");
+  assert.ok(!/(?<![A-Z_])ORGANIZATIONS\.map\(/.test(landing), "T23f and nothing on the page still walks the raw signup list");
+  // XP: the number is real but it is not a per-track currency, and it is capped.
+  assert.match(landing, /\+\{XP_REWARDS\.debateCompleted\}/, "T23g the XP figure is derived from the reward table");
+  assert.match(landing, /XP per judged round, first \{DAILY_REWARD_QUOTA\} each day/, "T23h and is described as capped, not as a track's currency");
+  assert.ok(!/Debate XP/.test(landing), "T23i the invented 'Debate XP' currency is gone");
+});
+
+check("T24. a learner's profile shows the track they train, and only work they really did", () => {
+  const profile = stripComments(read("app/(app)/profile/page.tsx"));
+  assert.ok(profile.length > 2000, "T24-C the profile page was read");
+  // QA-R1 #13: identity followed the SIGNUP organization, so a DECA learner read "Debate" as who they are.
+  assert.match(profile, /const activeTrack = \(await resolveActiveTrack\(\)\)\.track;/, "T24a identity comes from the one canonical resolver");
+  assert.match(profile, /Training in: \$\{activeTrack\.label\}/, "T24b and is stated as the track being trained");
+  assert.match(profile, /Signed up under \{signupOrganizationLabel\}/, "T24c the signup organization is still shown, named as what it is");
+  assert.match(profile, /signupTrack\?\.id !== activeTrack\?\.id \? organizationLabel\(signupOrganization\) : null/,
+    "T24d and only when it differs from the track being trained");
+  assert.ok(!/<span>\{organizationLabel\(user\.preferredOrganization \?\? user\.organization\)\}<\/span>/.test(profile),
+    "T24e the signup organization is no longer presented as the learner's identity");
+  // QA-R1 #14: "In progress" was printed for any ungraded row, including a set never opened.
+  assert.match(profile, /questions: \{ select: \{ _count: \{ select: \{ answers: true \} \} \} \}/, "T24f the page counts real answers");
+  assert.match(profile, /answered > 0 \? `In progress — \$\{answered\} answered` : "Not started"/, "T24g an untouched set is called Not started");
+  assert.match(profile, /graded \? `\/tests\/\$\{test\.id\}\/results` : `\/tests\/\$\{test\.id\}`/, "T24h and each row opens what it names");
+  assert.ok(!/typeof test\.score === "number" \? `\$\{test\.score\}% score` : "In progress"/.test(profile),
+    "T24i the ungraded-equals-in-progress shortcut is gone");
+});
+
+check("T25. a retired track keeps its record but offers no way back in", () => {
+  // QA-R1 #13. The Model UN row is the learner's own persisted session, so it is neither deleted nor
+  // hidden — but Model UN is retired, and "Continue" led back into a track the product no longer runs.
+  const history = stripComments(read("app/(app)/debates/history/page.tsx"));
+  assert.ok(history.length > 1500, "T25-C the history page was read");
+  assert.match(history, /const retiredTrack = Boolean\(track && isTrackRetired\(track\.id\)\);/, "T25a the row knows whether its track is retired");
+  assert.match(history, /No longer offered/, "T25b and says so on the row");
+  assert.match(history, /\{unfinished && retiredTrack \? \(/, "T25c an unfinished retired session takes a different branch");
+  assert.match(history, /This track is no longer offered, so this session cannot be continued\./, "T25d which states why instead of offering a dead action");
+  const continueBlock = history.slice(history.indexOf("unfinished && retiredTrack"), history.indexOf("View replay"));
+  assert.ok(!/retiredTrack[\s\S]{0,400}Continue\s*<\/Link>/.test(continueBlock) || continueBlock.indexOf("Continue") > continueBlock.indexOf("cannot be continued"),
+    "T25e the retired branch precedes and replaces the Continue action");
+  assert.ok(/View replay/.test(history), "T25f a judged record can still be read back");
+  assert.ok(isTrackRetired("MODEL_UN"), "T25-C1 control: Model UN really is the retired track this protects against");
+  assert.ok(!isTrackRetired("DECA") && !isTrackRetired("GENERAL_DEBATE") && !isTrackRetired("HOSA"),
+    "T25-C2 and no live track is caught by it");
 });
 
 console.log(results.join("\n"));

@@ -10,7 +10,7 @@ import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { authOptions } from "@/lib/auth";
 import { getStudentDebates, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { Badge } from "@/components/ui/badge";
-import { trackByOrganization } from "@/lib/training-tracks";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +55,13 @@ export default async function DebateHistoryPage() {
           {debates.map((debate) => {
             const unfinished = isUnfinished(debate.status);
             const track = trackByOrganization(debate.organization);
+            // QA-R1 #13. History legitimately holds every track's sessions, and a Model UN round a
+            // learner really started is their own record — it is not deleted or hidden. But Model UN is
+            // retired: the product offers no way to train it, so "Continue" led back into a track that
+            // no longer exists. The row keeps its place and its label, says the track is no longer
+            // offered, and stops advertising a way back in. A judged round can still be replayed,
+            // because reading your own record is not the same as resuming training in a dead track.
+            const retiredTrack = Boolean(track && isTrackRetired(track.id));
             return (
               <Card key={debate.id}>
                 <CardHeader className="pb-2">
@@ -63,7 +70,12 @@ export default async function DebateHistoryPage() {
                 <CardContent className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0 space-y-1 text-sm text-muted-foreground">
                     <p>
-                      {track?.label ?? debate.organization} · {practiceTypeLabel(debate)}
+                      {track?.label ?? debate.organization} · {practiceTypeLabel(debate)}{" "}
+                      {retiredTrack ? (
+                        <Badge variant="outline" className="ml-2 align-middle text-[10px]">
+                          No longer offered
+                        </Badge>
+                      ) : null}
                     </p>
                     <p>
                       {showsOpponentMeta(debate) ? <>{sideLabel(debate.studentSide)} · vs {debate.aiPersona ?? "AI opponent"}</> : "Solo practice"}
@@ -92,7 +104,13 @@ export default async function DebateHistoryPage() {
                         : ""}
                     </p>
                   </div>
-                  {unfinished ? (
+                  {unfinished && retiredTrack ? (
+                    // A statement, not a disabled control: there is nothing to press because the track
+                    // itself is gone.
+                    <p className="text-sm text-muted-foreground">
+                      This track is no longer offered, so this session cannot be continued.
+                    </p>
+                  ) : unfinished ? (
                     <Link href={`/debate/${debate.id}` as Route} className={buttonVariants({ size: "sm" })}>
                       <PlayCircle className="mr-2 h-4 w-4" aria-hidden />
                       Continue

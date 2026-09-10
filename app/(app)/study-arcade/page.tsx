@@ -22,7 +22,7 @@ import { getActiveTrack } from "@/lib/track-server";
 export default async function StudyArcadePage({
   searchParams
 }: {
-  searchParams: { track?: string; area?: string };
+  searchParams: { track?: string; area?: string; focus?: string };
 }) {
   const activeTrack = await getActiveTrack(searchParams.track);
   // `?area=` is untrusted URL text. It is narrowed against the real Debate drill areas — never cast —
@@ -30,6 +30,11 @@ export default async function StudyArcadePage({
   // the drill on its existing "mixed" default. It is applied ONLY to the Debate component, so a
   // Debate area on a DECA or HOSA URL changes nothing about those tracks.
   const debateArea = drillAreaFromQuery(searchParams.area);
+  // QA-R3 #11. A link labelled "Full DECA Simulation" used to land at the top of this page, thousands
+  // of pixels above the simulation, and an anchor alone did not reliably deliver the learner there. The
+  // simulation is one section of this page, not a separate product, so the link asks the page to LEAD
+  // with it instead. Same component, same route, no duplicate page — only the order changes.
+  const focusSimulation = searchParams.focus === "simulation";
   // The same narrowing for DECA. Without it the DECA branch dropped `?area=` entirely, so the
   // concept lesson's "Practice this skill in the Performance indicators drill" link landed on the
   // mixed picker — a link whose visible label named one drill and whose destination was another.
@@ -169,6 +174,12 @@ export default async function StudyArcadePage({
         </div>
       </div>
 
+      {showDeca && focusSimulation ? (
+        <div id="full-simulation" className="scroll-mt-24">
+          <DecaRoleplaySetup mode="simulation" />
+        </div>
+      ) : null}
+
       {/* General Debate has no flashcard decks; its drills are the argument/rebuttal/evidence/weighing
           concept reps that feed mastery + spaced review. */}
       {!activeTrack || activeTrack.id === "GENERAL_DEBATE" ? <DebateDrills initialArea={debateArea} progressTracking={debateProgressTracking} /> : null}
@@ -190,7 +201,15 @@ export default async function StudyArcadePage({
       {/* DECA Full Simulation — one timed end-to-end round (prep clock → pitch → objections → scored
           ballot), distinct from the isolated concept drills above. Reuses the registry-backed role-play
           AI + rubric; provenance stays honest (official only on the Hospitality/HLM path). */}
-      {showDeca ? <DecaRoleplaySetup mode="simulation" /> : null}
+      {/* QA-R3 #11: the anchor a "Full DECA Simulation" link lands on. The card is one of several on
+          this page, so a bare /study-arcade link dropped the learner at the top of a flashcard page and
+          left them to hunt for the simulation. No duplicate page is created — the link now names the
+          section it opens. */}
+      {showDeca && !focusSimulation ? (
+        <div id="full-simulation" className="scroll-mt-24">
+          <DecaRoleplaySetup mode="simulation" />
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>

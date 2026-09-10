@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  appendCharacterTurn,
+  appendStudentTurn,
+  canRetryEvaluation,
+  endedWithoutBallot,
+  evaluationFailed,
+  evaluationSucceeded,
+  initialEvaluation,
+  repeatsPreviousCharacterLine,
+  requestEvaluation,
+  type EvaluationState
+} from "@/lib/rooms/roleplay-round";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { Clock, Loader2, PlayCircle, ShieldCheck } from "lucide-react";
@@ -77,7 +89,16 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
   const [started, setStarted] = useState(false); // opening response submitted
   const [result, setResult] = useState<JudgeResult | null>(null);
   const [busy, setBusy] = useState<null | "scenario" | "turn" | "judge">(null);
+  // QA-R3 #2: the round's own failures (scenario, judge conversation) keep this channel. Evaluation
+  // gets its own, because a ballot that could not be produced is a different fact from a judge that
+  // did not answer — and neither is a Side Coach failure.
   const [error, setError] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<EvaluationState>(initialEvaluation);
+  // QA-R3 #5: a ref, not the render state, is what makes a double click safe — two clicks in one tick
+  // both read the same stale `busy`.
+  const evaluatingRef = useRef(false);
+  // QA-R3 #3/#10: reported, never rewritten. The room does not invent a different question.
+  const [judgeRepeatedItself, setJudgeRepeatedItself] = useState(false);
 
   const isDeca = track === "deca";
   const characterRole = config ? (isDeca ? (config as DecaRoomConfig).judgeRole : (config as HosaRoomConfig).characterRole) : "";
@@ -212,7 +233,11 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         exchangesSoFar: list.filter((t) => t.speaker === "character").length,
         maxExchanges
       });
-      setTurns((cur) => [...cur, { speaker: "character", content: turn.line, character: turn.character }]);
+      setTurns((cur) => {
+        const next = appendCharacterTurn(cur, turn.line, turn.character);
+        setJudgeRepeatedItself(repeatsPreviousCharacterLine(next));
+        return next;
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "The other person didn't respond. Try again.");
     } finally {
@@ -222,7 +247,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
   async function submitOpening() {
     if (draft.trim().length < 8) return;
-    const next: Turn[] = [{ speaker: "student", content: draft.trim() }];
+    const next = appendStudentTurn([], draft) as Turn[];
     setTurns(next);
     setDraft("");
     setStarted(true);
@@ -231,9 +256,12 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
   async function sendReply() {
     if (draft.trim().length < 2) return;
-    const next: Turn[] = [...turns, { speaker: "student", content: draft.trim() }];
+    // The learner's words are appended BEFORE the request and are never removed by its failure: they
+    // said it, so it is part of the round, and it is what the next request carries.
+    const next = appendStudentTurn(turns, draft) as Turn[];
     setTurns(next);
     setDraft("");
+    setJudgeRepeatedItself(false);
     if (next.filter((t) => t.speaker === "character").length < maxExchanges) {
       await requestCharacterTurn(next);
     }
@@ -241,8 +269,13 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
   async function endAndJudge() {
     if (!scenario || !config) return;
+    // One evaluation at a time, and never a second ballot for a round that already has one.
+    if (evaluatingRef.current) return;
+    const gate = requestEvaluation(evaluation);
+    if (!gate.start) return;
+    evaluatingRef.current = true;
+    setEvaluation(gate.state);
     setBusy("judge");
-    setError(null);
     try {
       const transcript = buildTranscript(turns);
       const data = isDeca
@@ -262,10 +295,18 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
             transcript
           });
       setResult(data);
+      setEvaluation((current) => evaluationSucceeded(current));
       setPerformRunning(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not score the round.");
+      // QA-R3 #1. The round ENDS here either way. What failed is the evaluation, and the terminal card
+      // below says exactly that — it does not invent a ballot, a score, or feedback, and the room
+      // writes nothing at any point, so there is no progression to withhold or grant.
+      setEvaluation((current) =>
+        evaluationFailed(current, e instanceof Error ? e.message : "Could not score the round.")
+      );
+      setPerformRunning(false);
     } finally {
+      evaluatingRef.current = false;
       setBusy(null);
     }
   }
@@ -279,7 +320,10 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
   }
 
   const stages = ["Brief", isDeca ? "Interrogation" : "Conversation", isDeca ? "Ballot" : "Feedback"];
-  const stageIndex = result ? 2 : started ? 1 : 0;
+  const roundOver = result !== null || endedWithoutBallot(evaluation);
+  // The rail reaches the ballot stage when the round is OVER, not only when a score exists: a learner
+  // who finished and could not be scored still finished.
+  const stageIndex = roundOver ? 2 : started ? 1 : 0;
   // Read-only copy of the conversation for the Side Coach. Coach output lives in the panel's own state
   // and is NEVER written back here — endAndJudge() only ever sends `turns`, so coaching cannot leak
   // into the judge transcript or count as the student's response.
@@ -290,6 +334,34 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
     content: t.content
   }));
   const coachEventType = isDeca ? decaEventNameForCluster((config as DecaRoomConfig).cluster) : (config as HosaRoomConfig).category;
+
+  // QA-R3 #4/#13/#14. Coverage is per DIMENSION, and each line below states only its own. Timing being
+  // officially sourced never implies the indicators, the rubric or the ballot are — the scoring line is
+  // derived from the same `piSource` gate that decides whether official weighting could apply at all,
+  // so it cannot drift away from it.
+  const coverageLines = isDeca && scenario
+    ? [
+        {
+          label: "Timing",
+          value: officialTimingApplies
+            ? `Sourced for ${officialPrep?.eventName ?? "this event"} (${officialPrep?.season ?? "season on file"})`
+            : timingUnavailable
+              ? "No sourced period — this round runs untimed"
+              : "CompeteReady practice timer, not DECA's"
+        },
+        {
+          label: "Performance indicators",
+          value: scenario.piSource === "registry" ? `From ${scenario.eventName ?? "the sourced specification"}` : "CompeteReady practice, not official"
+        },
+        {
+          label: "Ballot",
+          value:
+            scenario.piSource === "registry"
+              ? "Scored against the sourced rubric named on the ballot"
+              : "CompeteReady practice evaluation — official DECA weighted scoring is not available"
+        }
+      ]
+    : [];
 
   const eventTitle = isDeca ? "DECA Role-Play" : "HOSA Health-Science Role-Play";
   const officialPill =
@@ -307,7 +379,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
     { label: isDeca ? "DECA" : "HOSA", href: `/training/${track}` },
     { label: eventTitle }
   ];
-  const stageProgress = started && !result ? `Turn ${exchanges} of ${maxExchanges}` : stages[stageIndex];
+  const stageProgress = started && !roundOver ? `Turn ${exchanges} of ${maxExchanges}` : stages[stageIndex];
   function handleExit() {
     if (window.confirm("Leave this role-play? It isn't saved yet — you'll start a new one next time.")) {
       router.push(`/training/${track}/practice` as Route);
@@ -340,6 +412,27 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
         <div className="mt-4"><StageRail stages={stages} activeIndex={stageIndex} /></div>
         <p className="mt-2 text-xs text-muted-foreground">This session isn&apos;t saved yet — finish it in one sitting. (Saved history is coming.)</p>
+
+      {judgeRepeatedItself && !roundOver ? (
+        <p className="mt-3 rounded-md border border-amber-400/40 bg-amber-500/10 p-3 text-xs text-amber-100" aria-live="polite">
+          The other person just repeated their previous line word for word. Your reply is in the transcript above and was
+          sent with it — answer again, or end the round.
+        </p>
+      ) : null}
+
+      {coverageLines.length > 0 ? (
+        <section className="mt-4 rounded-lg border bg-card p-4" aria-label="What is official in this round">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What is official in this round</p>
+          <dl className="mt-2 grid gap-1 sm:grid-cols-3">
+            {coverageLines.map((line) => (
+              <div key={line.label}>
+                <dt className="text-xs font-semibold text-foreground">{line.label}</dt>
+                <dd className="text-xs leading-5 text-muted-foreground">{line.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       {error ? (
         <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3">
@@ -404,7 +497,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
       {/* Simulation requested, but no preparation period resolved — say so rather than quietly
           running the untimed round under a "timed round" promise. */}
-      {timingUnavailable && scenario && !result ? (
+      {timingUnavailable && scenario && !roundOver ? (
         <section className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] p-4">
           <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-amber-500" aria-hidden />Running untimed</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -415,7 +508,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
       ) : null}
 
       {/* DECA prep clock. */}
-      {isSim && scenario && !prepDone && !result ? (
+      {isSim && scenario && !prepDone && !roundOver ? (
         <section className="mt-4 rounded-lg border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />{prepClockLabel}</p>
@@ -435,14 +528,14 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           </div>
         </section>
       ) : null}
-      {isSim && prepDone && !result && performanceUntimed ? (
+      {isSim && prepDone && !roundOver && performanceUntimed ? (
         <section className="mt-4 rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">
             Preparation was timed; the meeting itself is not — no performance length is available for this round.
           </p>
         </section>
       ) : null}
-      {isSim && prepDone && !result && performTotal > 0 ? (
+      {isSim && prepDone && !roundOver && performTotal > 0 ? (
         <section className={cn("mt-4 rounded-lg border p-4", performExpired ? "border-destructive/40 bg-destructive/10" : "border-track/30 bg-track/5")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />{performClockLabel}</p>
@@ -470,7 +563,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
       ) : null}
 
       {/* Input area. */}
-      {scenario && !result && pitchUnlocked ? (
+      {scenario && !roundOver && pitchUnlocked ? (
         <section className="mt-4 rounded-lg border bg-card p-5">
           <p className="eyebrow">{!started ? (isDeca ? "Your opening pitch" : "Your response") : "Your reply"}</p>
           {!started && scenario.suggestedOpening ? (
@@ -517,7 +610,7 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
       {/* Side Coach — private in-room help while responding. Its text is never sent to the judge and
           never counts as the response (see coachMessages note above). */}
-      {scenario && !result ? (
+      {scenario && !roundOver ? (
         <div className="mt-4">
           <SideCoachPanel
             organization={isDeca ? "DECA" : "HOSA"}
@@ -529,6 +622,42 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
             messages={coachMessages}
           />
         </div>
+      ) : null}
+
+      {/* QA-R3 #1 + #7. THE ROUND ENDED AND THE EVALUATION DID NOT ARRIVE. Two separate facts, said
+          separately. There is no score here, no band, no feedback and no "your practice was not
+          recorded" — the practice happened, the transcript above is still the learner's round, and the
+          room never wrote anything to begin with, so nothing was lost and nothing was earned. */}
+      {endedWithoutBallot(evaluation) ? (
+        <section className="mt-4 rounded-lg border border-amber-400/40 bg-amber-500/10 p-5" aria-live="polite">
+          <p className="flex items-start gap-2 font-semibold text-amber-100">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden />
+            <span>Round complete. Evaluation is unavailable right now.</span>
+          </p>
+          <p className="mt-2 text-sm text-neutral-200">
+            You performed the round and your transcript is above. No ballot could be produced, so there is no score, no
+            feedback and no progress from this attempt — this room records nothing either way.
+          </p>
+          {evaluation.message ? <p className="mt-2 text-xs text-amber-100/80">{evaluation.message}</p> : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {canRetryEvaluation(evaluation) ? (
+              // Same transcript, same round: retrying evaluates what was already performed. It cannot
+              // produce a second ballot, because a successful evaluation is terminal.
+              <Button type="button" variant="outline" onClick={endAndJudge} disabled={busy !== null}>
+                {busy === "judge" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                Try evaluating this round again
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/training/${track}/practice` as Route)}
+              disabled={busy !== null}
+            >
+              Set up a new practice
+            </Button>
+          </div>
+        </section>
       ) : null}
 
       {/* Ballot / Feedback. */}

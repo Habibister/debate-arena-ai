@@ -1745,7 +1745,7 @@ function fallbackRoleplayScenario(input: {
       "Professional communication"
     ],
     piSource: "generic",
-    fallbackNotice: "No competition specification was found for this event, so this is generic practice — performance indicators are not sourced from official guidelines.",
+    fallbackNotice: "The performance indicators in this brief are CompeteReady practice, not official DECA indicators. Any timing shown for this round is sourced separately.",
     ...fallbackScaffold(input.level, "deca")
   };
 }
@@ -1829,8 +1829,13 @@ ${ROLEPLAY_SCAFFOLD_FIELDS}`,
     if (tag) result.rubricSource = tag.tag;
   } else if (result.piSource !== "generic") {
     result.piSource = "generic";
+    // QA-R3 #4. This used to read "No competition specification was found for this event", which a
+    // learner read beside a prep clock citing the sourced HLM specification — two statements about
+    // different dimensions that sounded like a contradiction. Coverage is not one boolean: timing,
+    // indicators, rubric and scoring are sourced independently. The notice now speaks only for the
+    // dimension it owns.
     result.fallbackNotice =
-      "No competition specification was found for this event, so performance indicators are generic practice, not official.";
+      "The performance indicators in this brief are CompeteReady practice, not official DECA indicators. Any timing shown for this round is sourced separately.";
   }
 
   return result;

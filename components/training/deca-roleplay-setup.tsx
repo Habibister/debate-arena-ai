@@ -11,10 +11,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DECA_CLUSTERS } from "@/lib/training-tracks";
 import { decaClusterHasOfficialSpec } from "@/lib/deca-spec-scope";
-import { DECA_ROLE_PAIRS, writeRoleplayConfig } from "@/components/rooms/roleplay-config";
+import {
+  DECA_ROLE_PAIRS,
+  decaDefaultRolePairForCluster,
+  decaRolePairsForCluster,
+  writeRoleplayConfig
+} from "@/components/rooms/roleplay-config";
 import { DecaSimulationPrepPanel } from "@/components/training/deca-simulation-prep-panel";
 
 const LEVELS: Level[] = ["BEGINNER", "INTERMEDIATE", "ELITE"];
+
+/** The cluster the setup opens on: the one our sourced specification covers. */
+const DEFAULT_CLUSTER = "Hospitality & Tourism";
 
 // Setup-only form for the DECA role-play. Configuration lives here; the session itself runs in the
 // dedicated room (/training/deca/room). `mode="simulation"` adds the timed prep/performance clocks.
@@ -22,9 +30,28 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
   const router = useRouter();
   const isSim = mode === "simulation";
   const [level, setLevel] = useState<Level>("BEGINNER");
-  const [cluster, setCluster] = useState("Hospitality & Tourism");
-  const [studentRole, setStudentRole] = useState("front desk manager");
-  const [judgeRole, setJudgeRole] = useState("hotel guest whose reserved suite was given away");
+  const [cluster, setCluster] = useState(DEFAULT_CLUSTER);
+  const [studentRole, setStudentRole] = useState(decaDefaultRolePairForCluster(DEFAULT_CLUSTER).student);
+  const [judgeRole, setJudgeRole] = useState(decaDefaultRolePairForCluster(DEFAULT_CLUSTER).judge);
+  // QA-R3 #12/#20. Roles follow the cluster until the learner types their own; after that they are the
+  // learner's and the cluster stops overwriting them. Deterministic, and both states are labelled — no
+  // silent mixture of a hotel role with a Finance cluster, and no beginner asked to repair a default.
+  const [rolesAreCustom, setRolesAreCustom] = useState(false);
+
+  function chooseCluster(next: string) {
+    setCluster(next);
+    if (rolesAreCustom) return;
+    const pair = decaDefaultRolePairForCluster(next);
+    setStudentRole(pair.student);
+    setJudgeRole(pair.judge);
+  }
+
+  function useClusterDefaults() {
+    const pair = decaDefaultRolePairForCluster(cluster);
+    setStudentRole(pair.student);
+    setJudgeRole(pair.judge);
+    setRolesAreCustom(false);
+  }
   // OWNER QA REPAIR 3C. Exactly one DECA specification is seeded (Hotel and Lodging Management
   // Series, Hospitality & Tourism). The simulation's clock is attributed as official only for that
   // cluster, so the setup says which clock this run will get BEFORE the learner enters the room —
@@ -37,10 +64,13 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
   }
 
   function surpriseMe() {
-    const options = DECA_ROLE_PAIRS.filter((p) => p.student !== studentRole || p.judge !== judgeRole);
-    const pick = options[Math.floor(Math.random() * options.length)] ?? DECA_ROLE_PAIRS[0];
+    // Shuffles within the CHOSEN cluster, so a surprise never hands a Finance learner a hotel pairing.
+    const pool = decaRolePairsForCluster(cluster);
+    const options = pool.filter((p) => p.student !== studentRole || p.judge !== judgeRole);
+    const pick = options[Math.floor(Math.random() * options.length)] ?? pool[0] ?? DECA_ROLE_PAIRS[0];
     setStudentRole(pick.student);
     setJudgeRole(pick.judge);
+    setRolesAreCustom(false);
   }
 
   return (
@@ -73,7 +103,7 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Career cluster</span>
-            <select value={cluster} onChange={(e) => setCluster(e.target.value)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+            <select value={cluster} onChange={(e) => chooseCluster(e.target.value)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
               {DECA_CLUSTERS.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
@@ -85,17 +115,43 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Your role <span className="font-normal text-muted-foreground">(editable — type any role)</span></span>
-            <Input value={studentRole} onChange={(e) => setStudentRole(e.target.value)} placeholder="e.g. the manager on duty" />
+            <Input
+              value={studentRole}
+              onChange={(e) => {
+                setStudentRole(e.target.value);
+                setRolesAreCustom(true);
+              }}
+              placeholder="e.g. the manager on duty"
+            />
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">AI plays <span className="font-normal text-muted-foreground">(editable — type any character)</span></span>
-            <Input value={judgeRole} onChange={(e) => setJudgeRole(e.target.value)} placeholder="e.g. the customer you are meeting" />
+            <Input
+              value={judgeRole}
+              onChange={(e) => {
+                setJudgeRole(e.target.value);
+                setRolesAreCustom(true);
+              }}
+              placeholder="e.g. the customer you are meeting"
+            />
           </label>
         </div>
-        <p className="text-xs text-muted-foreground">
-          The career cluster and difficulty shape the scenario the room generates. The two roles above are your own
-          starting values — they do not change when you pick a cluster, so edit them if you want a different pairing.
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            The career cluster and difficulty shape the scenario the room generates. The two roles are CompeteReady
+            practice pairings for the cluster you picked — ours, not DECA event roles — and they follow the cluster
+            until you type your own.
+          </p>
+          {rolesAreCustom ? (
+            <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">Custom roles.</span> These stay as you typed them, even if you
+              change cluster.
+              <button type="button" onClick={useClusterDefaults} className="focus-ring font-semibold text-primary underline">
+                Use {cluster} defaults
+              </button>
+            </p>
+          ) : null}
+        </div>
 
         {/* P1-D: the curriculum path, recommended and never required. It sits ABOVE the entry button
             on purpose — a learner who wants to read first meets it, and a learner who wants to

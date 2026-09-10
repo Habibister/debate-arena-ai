@@ -13,6 +13,9 @@ type CoachRequest = {
   latestStudentSpeech?: string;
 };
 
+/** One card for every automatic-feedback failure, replaced in place, never appended per turn. */
+const AUTO_FEEDBACK_FAILURE_ID = "coach-auto-unavailable";
+
 type CoachEntry = {
   id: string;
   kind: "turn" | "ask" | "unavailable";
@@ -177,7 +180,12 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
         example: data.example
       });
     } catch {
-      upsert({ id: localId, kind: "unavailable", label: options?.askKind, retry: request });
+      // QA-R3 #8. AUTOMATIC turn feedback fires once per student turn, so a provider outage stacked one
+      // identical card per turn. Automatic failures share a single id and replace each other; an
+      // explicit ask keeps its own card, because the learner asked for that one.
+      const failureId = requestType === "turn-feedback" ? AUTO_FEEDBACK_FAILURE_ID : localId;
+      setEntries((current) => current.filter((entry) => entry.id !== failureId));
+      upsert({ id: failureId, kind: "unavailable", label: options?.askKind, retry: request });
     } finally {
       setLoading(false);
     }
@@ -229,12 +237,18 @@ export function SideCoachPanel({ debateId, organization, eventType, studentSide,
                 no completion. Status is carried by an icon AND text, never by colour alone. */}
             {entry.kind === "unavailable" ? (
               <div>
+                {/* QA-R3 #2/#7. This card owns ONE failure: the private coach could not answer. It used
+                    to add "Your practice was not evaluated. No score, feedback, or progress was
+                    recorded." — a verdict on the whole round, produced by a coaching request the
+                    learner never made, while their round was still running and no evaluation had been
+                    requested at all. The coach is not the scorer, and it now says only what it is. */}
                 <p className="flex items-start gap-2 font-semibold text-amber-100">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden />
-                  <span>Side Coach is temporarily unavailable. {isPractice ? "Your practice was not evaluated." : "Your debate was not evaluated."}</span>
+                  <span>Side Coach could not answer just now.</span>
                 </p>
                 <p className="mt-1 text-xs text-amber-100/80">
-                  No score, feedback, or progress was recorded. Your {isPractice ? "practice" : "debate"} and transcript are
+                  This is private coaching only — it is not your score and it does not end your{" "}
+                  {isPractice ? "practice" : "debate"}. Your {isPractice ? "practice" : "debate"} and transcript are
                   unchanged, and you can keep going.
                 </p>
                 {entry.retry ? (

@@ -133,7 +133,9 @@ check("R5J. Home ranks the evidence-backed step above generic practice, and spea
 
 check("R6. Home's COMPETE action is the track's own, in the track's own words", () => {
   const home = stripComments(read(HOME));
-  assert.match(home, /activeTrack\?\.id === "DECA"\s*\? \{ href: `\/study-arcade\?track=\$\{trackSlug\}`, label: "Run the full DECA simulation"/, "R6a DECA: the full simulation, named as the Compete page names it, where the Compete page sends it");
+  // QA-R3 #11: the href gained the anchor that lands on the simulation card; the label, detail and
+  // Compete-page parity are unchanged, and the anchor is asserted on BOTH surfaces below.
+  assert.match(home, /activeTrack\?\.id === "DECA"\s*\? \{ href: `\/study-arcade\?track=\$\{trackSlug\}&focus=simulation#full-simulation`, label: "Run the full DECA simulation"/, "R6a DECA: the full simulation, named as the Compete page names it, where the Compete page sends it");
   assert.match(home, /activeTrack\?\.id === "HOSA"\s*\? \{ href: "\/training\/hosa\/events", label: "Find your HOSA event"/, "R6b HOSA: the Event Navigator, where the Compete page sends it");
   assert.match(home, /: \{ href: `\/debate\?track=\$\{trackSlug\}`, label: "Debate Now", detail: "A full round with an AI opponent and judge"/, "R6c Debate keeps Debate Now, unchanged");
   const deca = home.slice(home.indexOf('activeTrack?.id === "DECA"\n      ? { href:'), home.indexOf('activeTrack?.id === "HOSA"'));
@@ -141,6 +143,9 @@ check("R6. Home's COMPETE action is the track's own, in the track's own words", 
   // Compete-page parity, word for word.
   const compete = stripComments(read("app/(app)/compete/page.tsx"));
   assert.ok(compete.includes("The timed end-to-end run: prep clock → pitch → objections → scored ballot. Results aren't saved yet."), "R6e the DECA detail is the Compete card's own sentence");
+  assert.ok(compete.includes("focus=simulation#full-simulation"), "R6e-1 and Compete lands on the simulation card too");
+  const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
+  assert.match(arcade, /id="full-simulation"/, "R6e-2 which is a real anchor on the page that holds the setup");
   assert.ok(compete.includes("HOSA events differ too much for one arena. Start from your exact event and train what it actually contains."), "R6f and so is HOSA's");
   assert.match(home, /const quickActions = \[\s*competeAction,/, "R6g it is the first quick action");
 });

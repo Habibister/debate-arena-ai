@@ -151,7 +151,7 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   // "Practice a role-play" beside it. Each track's card now mirrors its Compete card, word for word.
   const competeAction =
     activeTrack?.id === "DECA"
-      ? { href: `/study-arcade?track=${trackSlug}`, label: "Run the full DECA simulation", detail: "The timed end-to-end run: prep clock → pitch → objections → scored ballot. Results aren't saved yet.", icon: PlayCircle }
+      ? { href: `/study-arcade?track=${trackSlug}&focus=simulation#full-simulation`, label: "Run the full DECA simulation", detail: "The timed end-to-end run: prep clock → pitch → objections → scored ballot. Results aren't saved yet.", icon: PlayCircle }
       : activeTrack?.id === "HOSA"
         ? { href: "/training/hosa/events", label: "Find your HOSA event", detail: "HOSA events differ too much for one arena. Start from your exact event and train what it actually contains.", icon: Compass }
         : { href: `/debate?track=${trackSlug}`, label: "Debate Now", detail: "A full round with an AI opponent and judge", icon: Gavel };

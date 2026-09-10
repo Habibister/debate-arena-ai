@@ -24,7 +24,8 @@ function competeDestinations(track: TrackInfo): Destination[] {
   if (track.id === "DECA") {
     return [
       { label: "Guided DECA Role-Play", detail: "A coached run-through: scenario → pitch → the judge's objections → feedback. Retry freely.", icon: MessageSquareText, href: "/training/deca/practice" },
-      { label: "Full DECA Simulation", detail: "The timed end-to-end run: prep clock → pitch → objections → scored ballot. Results aren't saved yet.", icon: PlayCircle, href: `/study-arcade?track=${track.slug}` },
+      // QA-R3 #11: the anchor lands on the simulation setup card itself, not the top of the Study Arcade.
+      { label: "Full DECA Simulation", detail: "The timed end-to-end run: prep clock → pitch → objections → scored ballot. Results aren't saved yet.", icon: PlayCircle, href: `/study-arcade?track=${track.slug}&focus=simulation#full-simulation` },
       // P1-D: this said "Your past debate/practice sessions and ballots", which promises a DECA
       // learner they will find the role-play ballot they were just shown. They will not — no DECA
       // role-play writes anything (app/api/ai/judge-deca has no Prisma call), and the room itself

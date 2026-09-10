@@ -55,15 +55,67 @@ export function readRoleplayConfig(track: "deca" | "hosa"): RoleplayConfig | nul
 }
 
 // "Surprise me" role pairs (shared by the DECA setup and quick-start). Both fields stay editable.
-export const DECA_ROLE_PAIRS: Array<{ student: string; judge: string }> = [
-  { student: "front desk manager", judge: "hotel guest whose reserved suite was given away" },
-  { student: "assistant restaurant manager", judge: "diner whose allergy request was mishandled" },
-  { student: "event coordinator", judge: "corporate client whose budget was just cut" },
-  { student: "marketing associate", judge: "skeptical small-business owner" },
-  { student: "customer-service lead", judge: "regular customer demanding a policy exception" },
-  { student: "retail floor supervisor", judge: "vendor rep pushing an aggressive restock deal" },
-  { student: "operations intern", judge: "department head questioning your cost estimate" },
-  { student: "franchise trainee", judge: "mystery shopper revealing their findings" },
-  { student: "guest-services agent", judge: "wedding planner with last-minute changes" },
-  { student: "night-shift duty manager", judge: "tour-group leader whose rooms aren't ready" }
-];
+/**
+ * CompeteReady-authored practice roles, per career cluster (beginner QA R3, finding #12).
+ *
+ * The setup used to hold one flat list whose first pair was a hotel front desk, and nothing changed it
+ * when the learner picked another cluster — so choosing Finance left a hotel guest whose suite was given
+ * away, and the copy asked the beginner to repair the pairing themselves. A beginner picking Finance has
+ * no way to know what a Finance role-play looks like; that is the product's job.
+ *
+ * These are OURS: plausible practice pairings written by CompeteReady, not DECA event roles, and no
+ * entry here claims official coverage of anything. The cluster keys match `DECA_CLUSTERS` exactly, and
+ * `decaRolePairsForCluster` falls back to the hospitality set only for an unrecognised cluster.
+ */
+export const DECA_CLUSTER_ROLE_PAIRS: Record<string, Array<{ student: string; judge: string }>> = {
+  "Hospitality & Tourism": [
+    { student: "front desk manager", judge: "hotel guest whose reserved suite was given away" },
+    { student: "event coordinator", judge: "corporate client whose budget was just cut" },
+    { student: "guest-services agent", judge: "wedding planner with last-minute changes" },
+    { student: "night-shift duty manager", judge: "tour-group leader whose rooms aren't ready" }
+  ],
+  Marketing: [
+    { student: "marketing associate", judge: "skeptical small-business owner" },
+    { student: "brand manager", judge: "store owner who thinks advertising is wasted money" },
+    { student: "promotion planner", judge: "campus club president with a small budget" },
+    { student: "customer insights analyst", judge: "manager who wants one customer group chosen" }
+  ],
+  Finance: [
+    { student: "financial analyst", judge: "owner deciding whether to take a loan" },
+    { student: "budget coordinator", judge: "department head whose costs keep rising" },
+    { student: "loan associate", judge: "first-time borrower asking what the terms mean" },
+    { student: "credit assistant", judge: "customer whose application was declined" }
+  ],
+  "Business Management": [
+    { student: "operations lead", judge: "department head questioning your cost estimate" },
+    { student: "shift supervisor", judge: "employee who says the new schedule is unfair" },
+    { student: "team lead", judge: "manager asking why complaints went up" },
+    { student: "business analyst", judge: "owner who wants a slow process fixed" }
+  ],
+  Entrepreneurship: [
+    { student: "founder", judge: "investor asking who exactly will buy this" },
+    { student: "venture planner", judge: "mentor questioning your start-up costs" },
+    { student: "pitch presenter", judge: "potential partner weighing the risk" },
+    { student: "market validation lead", judge: "advisor asking what evidence you have" }
+  ],
+  "Personal Financial Literacy": [
+    { student: "peer financial coach", judge: "student deciding between saving and spending" },
+    { student: "credit-union youth associate", judge: "first-time account holder asking about fees" },
+    { student: "budget workshop leader", judge: "parent helping a teen plan a first budget" },
+    { student: "financial literacy volunteer", judge: "shopper weighing a buy-now-pay-later offer" }
+  ]
+};
+
+/** The authored pairs for a cluster, falling back to hospitality for anything unrecognised. */
+export function decaRolePairsForCluster(cluster: string | null | undefined): Array<{ student: string; judge: string }> {
+  const pairs = cluster ? DECA_CLUSTER_ROLE_PAIRS[cluster] : undefined;
+  return pairs ?? DECA_CLUSTER_ROLE_PAIRS["Hospitality & Tourism"];
+}
+
+/** The cluster's own starting pair — what a learner who changes cluster and types nothing should see. */
+export function decaDefaultRolePairForCluster(cluster: string | null | undefined): { student: string; judge: string } {
+  return decaRolePairsForCluster(cluster)[0];
+}
+
+/** Every authored pair, in cluster order. Kept for surfaces that shuffle across the whole set. */
+export const DECA_ROLE_PAIRS: Array<{ student: string; judge: string }> = Object.values(DECA_CLUSTER_ROLE_PAIRS).flat();

@@ -68,9 +68,17 @@ function main() {
   assert.ok(PANEL.includes("if (!isRenderableCoaching(data, requestType))"), "the panel validates every payload before rendering it");
   assert.ok(PANEL.includes("data.unavailable === true"), "the panel treats unavailable: true as a failure");
   assert.ok(PANEL.includes('kind: "unavailable"'), "the panel has an explicit unavailable entry kind");
-  assert.ok(PANEL.includes("Side Coach is temporarily unavailable."), "honest unavailable wording present");
-  assert.ok(PANEL.includes("was not evaluated."), "the panel states the work was not evaluated");
-  assert.ok(PANEL.includes("No score, feedback, or progress was recorded."), "the panel states nothing was recorded");
+  // SUPERSEDED by QA-R3 #2, not loosened. The card must still be honest about the coach failing — but
+  // its old wording ("Your practice was not evaluated. No score, feedback, or progress was recorded.")
+  // was a verdict on the whole ROUND, produced by an automatic coaching request, and a beginner read it
+  // mid-round as their session being void. The coach owns the coach's failure and says so.
+  assert.ok(PANEL.includes("Side Coach could not answer just now."), "honest unavailable wording present");
+  assert.ok(PANEL.includes("it is not your score and it does not end your"), "the panel scopes the failure to coaching");
+  assert.ok(PANEL.includes("transcript are\n                  unchanged"), "the panel still says the round itself is untouched");
+  assert.ok(!PANEL.includes("No score, feedback, or progress was recorded."), "and no longer claims the round recorded nothing as if it had been evaluated");
+  // One causal failure, one card: automatic per-turn feedback replaces its own failure entry.
+  assert.ok(PANEL.includes('const AUTO_FEEDBACK_FAILURE_ID = "coach-auto-unavailable"'), "automatic failures share one id");
+  assert.ok(PANEL.includes('requestType === "turn-feedback" ? AUTO_FEEDBACK_FAILURE_ID : localId'), "so repeated automatic failures replace rather than stack");
   // Failure is conveyed by icon + text, never by colour alone.
   assert.ok(PANEL.includes("<AlertTriangle"), "failure carries a non-colour icon cue");
   // No success affordances on the unavailable path.
@@ -87,7 +95,10 @@ function main() {
   assert.ok(PANEL.includes("replaceEntryId?: string") && PANEL.includes("const localId = replaceEntryId ??"), "retry replaces the unavailable entry in place");
   assert.ok(PANEL.includes("current.some((e) => e.id === entry.id) ? current.map"), "upsert replaces rather than appends on retry");
   // A repeat failure produces another unavailable entry with a retry payload — still honest, still retryable.
-  assert.ok(PANEL.includes('upsert({ id: localId, kind: "unavailable", label: options?.askKind, retry: request });'), "a failed retry remains unavailable and retryable");
+  // QA-R3 #8: the id is now the automatic-failure id for auto feedback and the request's own id for an
+  // explicit ask, so repeated automatic failures collapse into one card while an ask keeps its own.
+  assert.ok(PANEL.includes('upsert({ id: failureId, kind: "unavailable", label: options?.askKind, retry: request });'), "a failed retry remains unavailable and retryable");
+  assert.ok(PANEL.includes("current.filter((entry) => entry.id !== failureId)"), "and a repeat failure replaces the previous card instead of adding one");
   // The auto-request fires at most once per student speech and is not re-armed by failure.
   assert.ok(PANEL.includes("coachedIdRef.current = latestStudent.id;"), "the auto request is guarded by a per-speech ref");
   const autoBlock = PANEL.slice(PANEL.indexOf("// Auto turn-feedback once per new student speech."), PANEL.indexOf("return ("));

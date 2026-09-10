@@ -201,7 +201,14 @@ check("S10. the Career cluster and Difficulty controls both reach generation", (
 check("S11. the setup's editable roles are not presented as a preview of the cluster", () => {
   const setup = stripComments(read(SETUP));
   assert.match(setup, /The career cluster and difficulty shape the scenario the room generates\./, "S11a the page says what the controls do");
-  assert.match(setup, /The two roles above are your own\s*\n?\s*starting values — they do not change when you pick a cluster/, "S11b and that the role fields are not a preview of it");
+  // SUPERSEDED by beginner QA R3 #12. 3C's repair was to SAY the roles do not follow the cluster,
+  // because rewiring them was out of scope then. A beginner picking Finance still got a hotel front
+  // desk and was asked to fix it themselves, so R3 rewired the defaults per cluster. The control keeps
+  // its purpose — the fields must not read as a live preview of the cluster — and now pins the
+  // behaviour that replaced the disclaimer.
+  assert.match(setup, /they follow the cluster\s*\n?\s*until you type your own/, "S11b and says how the role fields relate to it");
+  assert.match(setup, /function chooseCluster\(next: string\)/, "S11b-1 which is what the control does");
+  assert.match(setup, /Custom roles\./, "S11b-2 with a named state once the learner takes them over");
   // Non-vacuity: the fields really are independent state with no cluster derivation.
   assert.ok(!/useEffect/.test(setup), "S11-C control: nothing recomputes them, which is why it is said rather than wired");
   assert.ok(!/placeholder="e\.g\. front desk manager"|placeholder="e\.g\. frustrated hotel guest"/.test(setup), "S11c the empty-field hints no longer model one cluster under every cluster");

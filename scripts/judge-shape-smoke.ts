@@ -812,11 +812,39 @@ async function main() {
     // constructive evidence hardening and the turn-mechanics reactivation. Pinning them here would
     // force a passing test to block accepted work. The three that carry the XP/session-counter policy
     // itself are still pinned, which is what the control was protecting.
-    for (const p of ["lib/xp.ts", "app/api/tests/[testId]/grade/route.ts",
-                     "app/(app)/tests/[testId]/results/page.tsx"]) {
-      const atPin = execSync(`git show ${PRE_M15_A4B}:'${p}' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
-      const now = execSync(`shasum -a 256 '${p}'`, { encoding: "utf8" }).split(" ")[0];
-      assert.equal(now, atPin, `A4b-C3. ${p} is byte-identical to the A4a baseline`);
+    // SUPERSEDED for two of the three files, by this control's own doctrine. The comment above already
+    // records why a whole-file byte pin cannot be permanent: a file legitimately moves in a later
+    // accepted milestone, and pinning the whole file makes a passing test block accepted work. That
+    // happened here — beginner QA R2 rewrote how the grade route CHOOSES a lesson recommendation and
+    // how the results page RENDERS it, neither of which is XP policy, and the byte pin failed on the
+    // change rather than on any policy drift.
+    //
+    // lib/xp.ts is still pinned whole: it IS the policy — the reward table, the daily quota, and the
+    // single award writer. The other two are now pinned on the XP-BEARING LINES ONLY, so a change to
+    // what a test recommends stays free while a change to what it pays does not.
+    {
+      const atPin = execSync(`git show ${PRE_M15_A4B}:'lib/xp.ts' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0];
+      const now = execSync(`shasum -a 256 'lib/xp.ts'`, { encoding: "utf8" }).split(" ")[0];
+      assert.equal(now, atPin, "A4b-C3. lib/xp.ts is byte-identical to the A4a baseline");
+    }
+    const gradeNow = strip(readFileSync("app/api/tests/[testId]/grade/route.ts", "utf8"));
+    const gradeAtPin = strip(execSync(`git show ${PRE_M15_A4B}:'app/api/tests/[testId]/grade/route.ts'`, { encoding: "utf8" }));
+    for (const line of [
+      "const xpEarned = rewardAmountForCompletion(\"PRACTICE_TEST\", positiveAwardsToday);",
+      "sourceType: \"PRACTICE_TEST\","
+    ]) {
+      assert.ok(gradeAtPin.includes(line), `A4b-C3a. control: the baseline grade route carried ${line}`);
+      assert.ok(gradeNow.includes(line), `A4b-C3b. and it is unchanged: ${line}`);
+    }
+    const resultsNow = strip(readFileSync("app/(app)/tests/[testId]/results/page.tsx", "utf8"));
+    const resultsAtPin = strip(execSync(`git show ${PRE_M15_A4B}:'app/(app)/tests/[testId]/results/page.tsx'`, { encoding: "utf8" }));
+    for (const line of [
+      "where: { userId: session.user.id, sourceType: \"PRACTICE_TEST\", sourceId: test.id },",
+      "rewardEvent === null ? null : rewardEvent.amount > 0 ? (",
+      "No XP — today&apos;s XP limit is reached."
+    ]) {
+      assert.ok(resultsAtPin.includes(line), `A4b-C3c. control: the baseline results page carried ${line}`);
+      assert.ok(resultsNow.includes(line), `A4b-C3d. and it is unchanged: ${line}`);
     }
   }
 

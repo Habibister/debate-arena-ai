@@ -18,6 +18,8 @@
  */
 import { PrismaClient, Prisma } from "@prisma/client";
 import { readFileSync, existsSync } from "node:fs";
+import { HOSA_MEDTERM_TEST_PLAN } from "@/lib/hosa-events";
+import { testPlanProblems, testPlanRows, type TestPlanRow } from "@/lib/test-plan";
 
 function loadEnv(file: string) {
   if (!existsSync(file)) return;
@@ -40,7 +42,14 @@ const SEASON = "2025-2026";
 // the strength of one event's research, which is the generalization this record exists to prevent.
 const MT_SEASON = "2026-2027";
 
-type SpecSeed = Omit<Prisma.CompetitionSpecUncheckedCreateInput, "id" | "createdAt" | "updatedAt">;
+type SpecSeed = Omit<Prisma.CompetitionSpecUncheckedCreateInput, "id" | "createdAt" | "updatedAt"> & {
+  /**
+   * The official written-test blueprint, when the organization publishes one. Not a column on the
+   * spec: these become SpecTestPlanRow children, kept separate from the rubric rows on purpose.
+   * A plan says what the test covers; a rubric says how a performance is scored.
+   */
+  testPlan?: readonly TestPlanRow[];
+};
 
 const specs: SpecSeed[] = [
   {
@@ -165,6 +174,9 @@ const specs: SpecSeed[] = [
       categories: [{ name: "Test score", points: 50, description: "One point per correct item; ties broken by tiebreaker sets" }],
       notes: "Pure knowledge test — no judged presentation component."
     },
+    // The blueprint, kept out of `rubric` above. Twelve rows totalling 100 percent describe what the
+    // 50 questions are drawn from; the rubric's one 50-point row describes how they are scored.
+    testPlan: testPlanRows(HOSA_MEDTERM_TEST_PLAN),
     penalties: [
       { name: "Missing photo ID / materials", description: "Competitors must present photo ID and #2 lead pencils (not mechanical)", consequence: "May be barred from testing per ILC registration rules" }
     ],
@@ -183,7 +195,7 @@ const specs: SpecSeed[] = [
     fieldNotes: {
       roundStructure: "sourced (official 2026-27 ILC guidelines, September 2026: 50 items / 60 min, unchanged from 2025-26; tiebreakers REDUCED this season to ten, as two sets of five)",
       rubric: "sourced (knowledge test; ten tiebreaker questions in two sets of five, fill-in-the-blank, correct spelling required)",
-      testPlan: "sourced (2026-27 written test plan: twelve weighted rows totalling 100 — 45% roots/prefixes/suffixes/combining forms, then eleven body-system rows at 5% each). The CompetitionSpec model has no column for a weighted plan, so the canonical machine-readable copy lives in lib/hosa-events.ts HOSA_MEDTERM_TEST_PLAN rather than being hidden in this note.",
+      testPlan: "sourced (2026-27 written test plan: twelve weighted rows totalling 100 — 45% roots/prefixes/suffixes/combining forms, then eleven body-system rows at 5% each). Transcribed in lib/hosa-events.ts HOSA_MEDTERM_TEST_PLAN and seeded as SpecTestPlanRow children of this spec. Those rows are a content blueprint, not points: this event's rubric is a single 50-point row.",
       officialReferences: "The guideline names four external works used to develop its questions (Ehrlich; Taber's Cyclopedic Medical Dictionary; Stanhope & Turnbull; Dean Vaughn's). They are HOSA's references, not CompeteReady sources, and none of their content is reproduced here.",
       timeAnnouncements: "sourced (no verbal time-remaining announcements; competitors monitor their own time)",
       penalties: "sourced (photo ID + #2 pencil requirements)",
@@ -244,18 +256,29 @@ const specs: SpecSeed[] = [
 ];
 
 async function main() {
+  // Validate every plan BEFORE writing anything. A plan that does not total 100 is a partial reading
+  // of the guideline, and half-seeding one would leave the registry claiming official coverage it
+  // does not have.
   for (const spec of specs) {
+    const problems = testPlanProblems(spec.testPlan ?? []);
+    if (spec.testPlan && problems.length > 0) {
+      throw new Error(`[specs] ${spec.organization} · ${spec.eventName} test plan is not seedable: ${problems.join("; ")}`);
+    }
+  }
+
+  for (const spec of specs) {
+    const { testPlan, ...columns } = spec;
     const result = await prisma.competitionSpec.upsert({
       where: {
         organization_eventName_season_version: {
-          organization: spec.organization,
-          eventName: spec.eventName,
-          season: spec.season,
-          version: spec.version ?? 1
+          organization: columns.organization,
+          eventName: columns.eventName,
+          season: columns.season,
+          version: columns.version ?? 1
         }
       },
-      create: spec,
-      update: spec
+      create: columns,
+      update: columns
     });
     console.log(`[specs] upserted ${result.organization} · ${result.eventName} · ${result.season} v${result.version} (${result.verificationStatus})`);
 
@@ -277,8 +300,36 @@ async function main() {
       });
       console.log(`[specs]   rubric: ${categories.length} structured categories`);
     }
+
+    // Sync the written-test blueprint. Rows are matched on their stable key rather than deleted and
+    // recreated, so anything that later maps evidence to a row keeps pointing at the same row.
+    const planRows = testPlan ?? [];
+    for (const row of planRows) {
+      await prisma.specTestPlanRow.upsert({
+        where: { specId_key: { specId: result.id, key: row.key } },
+        create: { specId: result.id, key: row.key, label: row.label, order: row.order, weightPercent: row.weightPercent },
+        update: { label: row.label, order: row.order, weightPercent: row.weightPercent }
+      });
+    }
+    const stale = await prisma.specTestPlanRow.deleteMany({
+      where: { specId: result.id, key: { notIn: planRows.map((row) => row.key) } }
+    });
+    if (planRows.length > 0 || stale.count > 0) {
+      console.log(`[specs]   test plan: ${planRows.length} rows totalling ${planRows.reduce((total, row) => total + row.weightPercent, 0)}%${stale.count > 0 ? ` (${stale.count} stale removed)` : ""}`);
+    }
+
+    // One active spec per event. `getActiveSpec` picks the newest active row by season, so a
+    // superseded season left active is invisible until something reads it — and then the app shows
+    // last season's rules as current. Retiring it here is the point at which we actually know.
+    const superseded = await prisma.competitionSpec.updateMany({
+      where: { organization: result.organization, eventName: result.eventName, isActive: true, id: { not: result.id } },
+      data: { isActive: false }
+    });
+    if (superseded.count > 0) {
+      console.log(`[specs]   deactivated ${superseded.count} superseded ${result.organization} · ${result.eventName} spec(s)`);
+    }
   }
-  console.log("Competition Specification Registry seeded: 4 specs with structured rubric categories.");
+  console.log("Competition Specification Registry seeded: 4 specs with structured rubric categories, and the official written-test plan for the one event that publishes one.");
 }
 
 main()

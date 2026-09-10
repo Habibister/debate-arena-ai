@@ -767,6 +767,10 @@ model CompetitionSpec {
   lastVerifiedAt     DateTime?
 
   rubricCategories SpecRubricCategory[]
+  // The official WRITTEN TEST PLAN — what the test is made of, not how it is scored. Separate from
+  // rubricCategories on purpose: conflating a content blueprint with a scoring instrument is how a
+  // "45% of the questions" row becomes a "45 points" row.
+  testPlanRows     SpecTestPlanRow[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -801,6 +805,36 @@ model SpecRubricCategory {
 // separate table from MasteryProgress so deploying code and pushing schema stay order-independent
 // (adding columns to MasteryProgress would break existing selects until db push). Simple expanding
 // intervals; a failed review resets the ladder. No SM-2 gold-plating.
+/// One row of an official written test plan: a content area and the share of the test it carries.
+///
+/// This is BLUEPRINT data — what the questions are about — and it is deliberately NOT
+/// SpecRubricCategory, which describes how a performance is scored. HOSA Medical Terminology has both
+/// and they say different things: its rubric is one row ("Test score", 50 points), while its test plan
+/// is twelve rows totalling 100 percent. Storing the plan in the rubric table would render a blueprint
+/// as a score sheet and claim a 50-point test is worth 100 points.
+///
+/// Weights are whole percentages as published. They are informational and never feed ballot scoring.
+model SpecTestPlanRow {
+  id            String @id @default(cuid())
+  specId        String
+  /// Stable identifier for this row, ours rather than the organization's, so evidence can be mapped
+  /// to it later without depending on display wording. Unique within a spec.
+  key           String
+  /// The row as the guideline lists it.
+  label         String
+  order         Int
+  /// Whole-percent share of the test. A spec's rows are expected to total 100.
+  weightPercent Int
+
+  spec CompetitionSpec @relation(fields: [specId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([specId, key])
+  @@index([specId, order])
+}
+
 model SkillReviewSchedule {
   id           String   @id @default(cuid())
   userId       String

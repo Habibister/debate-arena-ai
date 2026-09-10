@@ -23,7 +23,11 @@ its 2026-27 document — *Medical Terminology ILC Guidelines (September 2026)*. 
 in 60 minutes; its **tiebreakers were reduced to ten**, administered as two sets of five
 fill-in-the-blank items with correct spelling required; and it now publishes a **written test plan** —
 twelve weighted rows, 45% roots/prefixes/suffixes/combining forms and eleven body-system rows at 5%
-each. That plan is recorded as data in `lib/hosa-events.ts` (`HOSA_MEDTERM_TEST_PLAN`).
+each. That plan is recorded as data in `lib/hosa-events.ts` (`HOSA_MEDTERM_TEST_PLAN`) and, since
+H4-C1, has a first-class home in the registry: `SpecTestPlanRow`, a child of the competition spec
+and deliberately not a rubric row — the plan totals 100 percent while the event's rubric totals 50
+points. The shared database has not been synchronized yet; `docs/MEDTERM_SPEC_SYNC.md` holds that
+runbook.
 
 **Every other HOSA event remains unread for 2026-27** and keeps its September-1 gate: a fact verified
 for Medical Terminology is evidence about Medical Terminology only (doc 14, MT-only supersession).

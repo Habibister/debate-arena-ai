@@ -51,6 +51,7 @@
     "hosa-source-scope:smoke": "tsx scripts/hosa-source-scope-smoke.ts",
     "hosa-test-integrity:smoke": "tsx scripts/hosa-test-integrity-smoke.ts",
     "hosa-source-2627:smoke": "tsx scripts/hosa-source-2627-smoke.ts",
+    "test-plan-model:smoke": "tsx scripts/test-plan-model-smoke.ts",
     "clash-activation:smoke": "tsx scripts/seed-debate-clash-skill-smoke.ts",
     "wg08-activation:smoke": "tsx scripts/wg08-activation-smoke.ts",
     "secure-evidence:smoke": "tsx scripts/secure-evidence-smoke.ts",

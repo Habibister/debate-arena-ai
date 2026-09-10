@@ -26,6 +26,12 @@ const PRE_M13E2 = "95fdd4c812328728766de2f518b38da618bab3cb";
 const M13E2_NEW_BLOCKS = ["model PracticeSession", "model PracticeSessionItem",
                           "enum PracticeSessionKind", "enum PracticeSessionStatus"];
 const M13E2_USER_FIELD = "practiceSessions PracticeSession[]";
+// H4-C1 gives the official written-test plan its own table. The change has exactly the same shape as
+// M13E2's: one new model, plus one back-relation on the model that owns it. So it is recorded the same
+// way — as a NAMED, EXACT allowance — rather than by loosening the identity rule for every model, which
+// would retire the protection instead of extending it.
+const H4C1_NEW_BLOCKS = ["model SpecTestPlanRow"];
+const H4C1_SPEC_FIELD = "testPlanRows SpecTestPlanRow[]";
 // name -> normalized body lines (comments stripped, runs of whitespace collapsed) so a rename, retype,
 // nullability flip, default change or attribute change all surface as a body mismatch.
 const schemaBlocks = (src: string) => {
@@ -41,20 +47,28 @@ const schemaBlocks = (src: string) => {
 function assertAdditiveSchema(now: string, parent: string) {
   const was = schemaBlocks(parent);
   const is = schemaBlocks(now);
-  for (const name of M13E2_NEW_BLOCKS) {
+  for (const name of [...M13E2_NEW_BLOCKS, ...H4C1_NEW_BLOCKS]) {
     if (was.has(name)) throw new Error(`the parent schema already defined ${name}`);
     if (!is.has(name)) throw new Error(`the working schema is missing ${name}`);
   }
   if (parent.includes(M13E2_USER_FIELD)) throw new Error("the parent schema already had the User back-relation");
+  if (parent.includes(H4C1_SPEC_FIELD)) throw new Error("the parent schema already had the spec back-relation");
+  // Every other model must be byte-identical. These two may each gain EXACTLY the one back-relation
+  // named here and nothing else — a second added field, or a lost one, still fails.
+  const ALLOWED_BACK_RELATION = new Map([
+    ["model User", M13E2_USER_FIELD],
+    ["model CompetitionSpec", H4C1_SPEC_FIELD]
+  ]);
   for (const [name, body] of was) {
     const next = is.get(name);
     if (!next) throw new Error(`${name} was removed`);
-    if (name === "model User") {
+    const allowed = ALLOWED_BACK_RELATION.get(name);
+    if (allowed) {
       const gained = next.filter((l) => !body.includes(l));
       const lost = body.filter((l) => !next.includes(l));
-      if (lost.length > 0) throw new Error(`User lost ${lost.join(" | ")}`);
-      if (gained.length !== 1 || gained[0] !== M13E2_USER_FIELD) {
-        throw new Error(`User gained ${gained.join(" | ") || "nothing"} instead of exactly the back-relation`);
+      if (lost.length > 0) throw new Error(`${name} lost ${lost.join(" | ")}`);
+      if (gained.length !== 1 || gained[0] !== allowed) {
+        throw new Error(`${name} gained ${gained.join(" | ") || "nothing"} instead of exactly the back-relation`);
       }
     } else if (next.join("\n") !== body.join("\n")) {
       throw new Error(`${name} is not structurally identical to the parent`);
@@ -420,14 +434,15 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   // ---- PA1-PA16. M13E2 Phase A: prisma/schema.prisma changed only by ADDING -----------------------------
   const schemaAtM13E2Parent = execSync(`git show ${PRE_M13E2}:prisma/schema.prisma`, { encoding: "utf8" });
   const schemaNow = readFileSync("prisma/schema.prisma", "utf8");
-  for (const name of M13E2_NEW_BLOCKS) {
+  for (const name of [...M13E2_NEW_BLOCKS, ...H4C1_NEW_BLOCKS]) {
     assert.ok(!schemaAtM13E2Parent.includes(`${name} {`), `PA1. at ${PRE_M13E2.slice(0, 8)} the schema had no ${name}`);
     assert.ok(schemaNow.includes(`${name} {`), `PA2. the working schema defines ${name}`);
   }
   assert.ok(!schemaAtM13E2Parent.includes(M13E2_USER_FIELD), "PA3. and no User.practiceSessions back-relation");
+  assert.ok(!schemaAtM13E2Parent.includes(H4C1_SPEC_FIELD), "PA3b. and no CompetitionSpec.testPlanRows back-relation");
   assertAdditiveSchema(schemaNow, schemaAtM13E2Parent); // PA4. additive practice-session definitions only
-  assert.equal(schemaBlocks(schemaNow).size, schemaBlocks(schemaAtM13E2Parent).size + 4,
-    "PA5. exactly four new schema blocks (2 models + 2 enums) and nothing else");
+  assert.equal(schemaBlocks(schemaNow).size, schemaBlocks(schemaAtM13E2Parent).size + 5,
+    "PA5. exactly five new schema blocks — M13E2's two models and two enums, plus H4-C1's SpecTestPlanRow — and nothing else");
   assert.ok(!existsSync("prisma/migrations"), "PA6. Phase A introduces no migration directory");
   assert.ok(existsSync("prisma/schema.prisma"), "PA6b. control: existsSync does report a path that exists");
   // M13E2 C1 adds approved shared helpers under lib/. They are wired to NO route yet, so this check
@@ -512,6 +527,13 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   m13e2Rejects("a removed unique constraint", (s) => s.replace("@@unique([sessionId, bankQuestionId])", ""));
   m13e2Rejects("a PROCESSING status", (s) => s.replace(/(enum PracticeSessionStatus \{\n[ \t]+ISSUED)/, "$1\n  PROCESSING"));
   m13e2Rejects("a claimedAt column", (s) => s.replace(/([ \t]+purgeAfter[ \t]+DateTime\n)/, "$1  claimedAt DateTime?\n"));
+  // H4-C1's allowance is held to the same standard, so it cannot quietly become a licence to edit the
+  // spec: the back-relation must be there, and it must be the only thing that arrived.
+  m13e2Rejects("a removed spec back-relation",
+    (s) => s.replace(/\n[ \t]+testPlanRows[ \t]+SpecTestPlanRow\[\]/, ""));
+  m13e2Rejects("an extra unapproved CompetitionSpec field",
+    (s) => s.replace(/([ \t]+testPlanRows[ \t]+SpecTestPlanRow\[\])/, "$1\n  sneaky String?"));
+  m13e2Rejects("a dropped test-plan model", (s) => s.replace(/model SpecTestPlanRow \{[\s\S]*?\n\}\n/, ""));
 
   // ---- 4b. what the lib/spaced-review snapshot was really protecting ---------------------------------
   // (i) The education surface still writes no mastery. Proven by import graph, not by a file hash:

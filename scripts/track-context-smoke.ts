@@ -318,6 +318,61 @@ check("T14. no repaired surface still emits a bare track-sensitive href", () => 
   assert.deepEqual(bareHits, [], `bare hrefs remain: ${bareHits.join(" | ")}`);
 });
 
+check("T20. a record-owned page takes its track from the RECORD, not the learner's selection", () => {
+  // Owner QA Repair 3D, Round-3 finding #6: a DECA learner opening their own General Debate replay
+  // saw "Track: DECA" over a Debate transcript, with no way back except the browser button.
+  assert.equal(routeConsumesTrackParam("/debates/abc123/replay"), true, "T20a the shell reads the record's stamped track on a replay");
+  assert.equal(routeConsumesTrackParam("/tests/abc123/results"), true, "T20b and on a graded test result");
+  assert.equal(routeConsumesTrackParam("/debate/abc123"), false, "T20c the live arena is an activity, not a record view — its URL is never rewritten");
+  assert.equal(routeConsumesTrackParam("/debates/history"), false, "T20d global history stays global");
+  assert.equal(routeTrackSlugFor("/debates/abc123/replay", "debate"), "debate", "T20e the stamped value is honoured");
+  assert.equal(routeTrackSlugFor("/debates/abc123/replay", null), undefined, "T20f the id alone still proves no track");
+  assert.equal(routeTrackSlugFor("/tests/abc123/results", null), undefined);
+
+  const replay = stripComments(read("app/(app)/debates/[debateId]/replay/page.tsx"));
+  assert.ok(replay.length > 2000, "T20-C1 replay page read");
+  assert.match(replay, /const track = trackByOrganization\(debate\.organization\);/, "T20g the replay's owner is the ROW's organization");
+  assert.match(replay, /redirect\(`\/debates\/\$\{params\.debateId\}\/replay\?track=\$\{track\.slug\}`/, "T20h and it is stamped into the URL the shell reads");
+  // Bound the slice to the RENDER of a real replay: the error branch ("Replay unavailable") already
+  // had a history link, so an unbounded match would pass on a success branch with no way back — the
+  // exact Round-3 dead end.
+  const replayRender = replay.slice(replay.indexOf("const judgeSpeech"));
+  assert.ok(replayRender.length > 1000, "T20-C3 the replay render slice is real");
+  assert.match(replayRender, /href=\{"\/debates\/history" as Route\}/, "T20i a viewable replay has a canonical return that needs no referrer");
+
+  const resultsPage = stripComments(read("app/(app)/tests/[testId]/results/page.tsx"));
+  assert.ok(resultsPage.length > 2000, "T20-C2 results page read");
+  assert.match(resultsPage, /const recordTrack = trackByOrganization\(test\.organization\);/, "T20j a graded result belongs to the organization stored on the row");
+  assert.match(resultsPage, /redirect\(`\/tests\/\$\{test\.id\}\/results\?track=\$\{recordTrack\.slug\}`/, "T20k stamped the same way");
+  assert.match(resultsPage, /Back to \$\{recordTrack\.label\} practice tests/, "T20l and its return names the catalog it opens");
+
+  const skill = stripComments(read("app/(app)/skills/[slug]/page.tsx"));
+  assert.match(skill, /const ownerTrack = trackByOrganization\(resolution\.track\);/, "T20m the legacy skill record's Back follows its own track");
+  assert.ok(!/href=\{"\/lessons" as Route\}/.test(skill), "T20n and no longer drops to whichever catalog the learner had selected");
+
+  // A retired owner has no catalog and no active track: every one of these pages must fall back
+  // rather than stamp a track the resolver would refuse.
+  for (const [file, src] of [["replay", replay], ["results", resultsPage], ["skills", skill]] as const) {
+    assert.match(src, /isTrackRetired\(/, `T20o ${file} refuses to stamp a retired track`);
+  }
+});
+
+check("T21. viewing a foreign record never changes the learner's selection", () => {
+  // The selection is written in exactly one place. A record page that wrote it would silently move a
+  // DECA learner to Debate for opening one old replay.
+  for (const file of [
+    "app/(app)/debates/[debateId]/replay/page.tsx",
+    "app/(app)/tests/[testId]/results/page.tsx",
+    "app/(app)/skills/[slug]/page.tsx"
+  ]) {
+    const src = stripComments(read(file));
+    assert.ok(src.length > 1000, `T21-C ${file} read`);
+    assert.ok(!/setTrack|document\.cookie|cookies\(\)\.set|TRACK_COOKIE/.test(src), `T21a ${file} writes no selection`);
+  }
+  const provider = stripComments(read("components/training/training-track-context.tsx"));
+  assert.match(provider, /setTrack: \(next\) => \{/, "T21b the switcher is still the only writer");
+});
+
 console.log(results.join("\n"));
 console.log(`\n${results.length - failures}/${results.length} track-context controls passed`);
 if (failures > 0) process.exit(1);

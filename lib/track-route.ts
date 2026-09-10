@@ -78,6 +78,25 @@ export const TRACK_PARAM_ROUTES = [
 // URL disagrees with the content), so the shell reads the parameter on every `/lessons/<slug>` too.
 const LESSON_ROUTE = /^\/lessons\/[^/]+$/;
 
+/**
+ * RECORD-OWNED routes (Owner QA Repair 3D). A finished record belongs to the organization stored on
+ * the row, not to whatever track the learner currently has selected: a DECA learner opening their own
+ * General Debate replay was shown "Track: DECA" over a Debate transcript. These two pages therefore
+ * stamp the RECORD's track into `?track=` exactly the way a lesson page stamps its content's track,
+ * and the shell reads it here.
+ *
+ * The pathname still proves nothing on its own — `resolveTrackFromPathname` above deliberately
+ * refuses `/debates/<id>/replay`, because the id alone cannot tell you the track and the page must
+ * load the row first. Only the value the page itself redirected to is honoured, and only after the
+ * page has read the record's organization. Where a record's organization maps to no active track the
+ * page adds nothing, so the learner's own track keeps the shell and the body still names the record.
+ *
+ * The live arena `/debate/<id>` is NOT here: it is an activity, not a record view, it already carries
+ * its own record-owned breadcrumb and "Back to <track>", and rewriting its URL mid-round would change
+ * operational behaviour.
+ */
+const RECORD_ROUTES = [/^\/debates\/[^/]+\/replay$/, /^\/tests\/[^/]+\/results$/];
+
 function normalizePath(pathname: string): string {
   const path = (pathname.split("?")[0] ?? "").split("#")[0] ?? "";
   return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
@@ -86,7 +105,11 @@ function normalizePath(pathname: string): string {
 export function routeConsumesTrackParam(pathname: string): boolean {
   if (typeof pathname !== "string") return false;
   const path = normalizePath(pathname);
-  return (TRACK_PARAM_ROUTES as readonly string[]).includes(path) || LESSON_ROUTE.test(path);
+  return (
+    (TRACK_PARAM_ROUTES as readonly string[]).includes(path) ||
+    LESSON_ROUTE.test(path) ||
+    RECORD_ROUTES.some((route) => route.test(path))
+  );
 }
 
 /**

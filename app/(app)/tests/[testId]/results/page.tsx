@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { ArrowRight, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target } from "lucide-react";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { studyDeckForSkill, type StudyOrganization } from "@/lib/study-content";
+import { resolveActiveTrack } from "@/lib/track-server";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 type RecommendationPayload = {
@@ -55,7 +57,13 @@ function explainWrongSelection(selectedAnswer: string, skillTag: string) {
   return `Your selected answer was weaker because it did not best satisfy the tested ${skillTag} skill. The correct answer is stronger because it directly addresses the scenario, stays within the event expectations, and gives a measurable or safe next step.`;
 }
 
-export default async function PracticeTestResultsPage({ params }: { params: { testId: string } }) {
+export default async function PracticeTestResultsPage({
+  params,
+  searchParams
+}: {
+  params: { testId: string };
+  searchParams?: { track?: string | string[] };
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -101,6 +109,21 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
     redirect(`/tests/${test.id}`);
   }
 
+  // RECORD-OWNED CONTEXT (Owner QA Repair 3D). A graded test belongs to the organization stored on
+  // the row. A learner who has since moved to another track can still open their own older result,
+  // and the shell must name the RECORD's track, not their current selection. Same rule as the replay:
+  // stamped once into `?track=`, no cookie written, and skipped entirely when the record's
+  // organization maps to no active track.
+  const recordTrack = trackByOrganization(test.organization);
+  if (recordTrack && !isTrackRetired(recordTrack.id)) {
+    const rawTrack = searchParams?.track;
+    const trackParam = typeof rawTrack === "string" ? rawTrack : undefined;
+    const effective = await resolveActiveTrack(trackParam);
+    if (effective.track?.id !== recordTrack.id) {
+      redirect(`/tests/${test.id}/results?track=${recordTrack.slug}` as Route);
+    }
+  }
+
   const recommendations = (test.recommendations ?? {}) as RecommendationPayload;
   const lessonRecommendations = normalizeLessonRecommendations(recommendations.lessons);
   const score = test.score ?? 0;
@@ -112,8 +135,19 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
   const studyOrganization = test.organization === "DECA" || test.organization === "HOSA" ? test.organization : undefined;
   const recommendedDeck = studyOrganization ? studyDeckForSkill(test.weakAreas[0] ?? test.eventCluster ?? test.eventType, studyOrganization) : undefined;
 
+  // The return names the catalog it opens. For a result whose organization is not the learner's
+  // current track that is a DIFFERENT track's test list, so the label says which — the learner is
+  // never moved into another track's catalog by a generic "Back".
+  const backHref = (recordTrack && !isTrackRetired(recordTrack.id) ? `/tests?track=${recordTrack.slug}` : "/tests") as Route;
+  const backLabel = recordTrack && !isTrackRetired(recordTrack.id) ? `Back to ${recordTrack.label} practice tests` : "Back to practice tests";
+
   return (
     <div className="space-y-6">
+      <Link href={backHref} className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto min-h-11 min-w-11 px-3")}>
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        {backLabel}
+      </Link>
+
       <div className="rounded-lg border bg-card p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -123,7 +157,7 @@ export default async function PracticeTestResultsPage({ params }: { params: { te
               {test.eventCluster ?? test.eventType} · {test.difficulty.toLowerCase()} · {test.questionCount} questions
             </p>
           </div>
-          <Link href="/tests" className={buttonVariants({ variant: "outline" })}>
+          <Link href={backHref} className={buttonVariants({ variant: "outline" })}>
             <RotateCcw className="h-4 w-4" aria-hidden />
             Generate another
           </Link>

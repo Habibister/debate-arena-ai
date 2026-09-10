@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { debateWritingPracticeSupported, resolveSkillsSlug } from "@/lib/education/skills-compat";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 /**
@@ -45,6 +46,13 @@ export default function SkillCompatibilityPage({ params }: { params: { slug: str
   }
 
   const trackLabel = TRACK_LABEL[resolution.track] ?? resolution.track;
+  // Owner QA Repair 3D. This record has an owning track, so its Back must return to THAT track's
+  // lesson catalog. A bare `/lessons` resolved to whatever the learner had selected, which quietly
+  // moved a learner reading a DECA-owned record into another track's catalog. A retired owner (Model
+  // UN) has no catalog to return to, so it keeps the unscoped list.
+  const ownerTrack = trackByOrganization(resolution.track);
+  const backHref = (ownerTrack && !isTrackRetired(ownerTrack.id) ? `/lessons?track=${ownerTrack.slug}` : "/lessons") as Route;
+  const backLabel = ownerTrack && !isTrackRetired(ownerTrack.id) ? `${ownerTrack.label} lessons` : "Lessons";
   const retired = resolution.track === "MODEL_UN";
   // Debate is the only track with a writing-practice implementation behind this route. Everything
   // else gets its own track's real tool rather than a debate motion.
@@ -53,11 +61,11 @@ export default function SkillCompatibilityPage({ params }: { params: { slug: str
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       <Link
-        href={"/lessons" as Route}
+        href={backHref}
         className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto min-h-11 min-w-11 px-3")}
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        Lessons
+        {backLabel}
       </Link>
 
       <div className="rounded-lg border bg-card p-6">

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
-import { Gavel, Lock, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Gavel, Lock, ShieldAlert } from "lucide-react";
 import { ArgumentFlow } from "@/components/debate/argument-flow";
 import { RetryMotionButton } from "@/components/debate/retry-motion-button";
 import { SpeakButton } from "@/components/debate/accessibility/speak-button";
@@ -14,7 +14,8 @@ import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { getAttemptsForMotion, getDebateReplay, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
-import { trackByOrganization } from "@/lib/training-tracks";
+import { resolveActiveTrack } from "@/lib/track-server";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,13 @@ function categoryRows(debate: ScoredDebate): Array<{ label: string; score: numbe
   return rows.filter((row): row is { label: string; score: number } => typeof row.score === "number");
 }
 
-export default async function DebateReplayPage({ params }: { params: { debateId: string } }) {
+export default async function DebateReplayPage({
+  params,
+  searchParams
+}: {
+  params: { debateId: string };
+  searchParams?: { track?: string | string[] };
+}) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     redirect(`/signin?callbackUrl=/debates/${params.debateId}/replay`);
@@ -80,8 +87,27 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
     );
   }
 
-  const isOwner = debate.studentId === session.user.id;
+  // RECORD-OWNED CONTEXT (Owner QA Repair 3D). The track of a replay is a property of the ROW — its
+  // stored organization — never of the learner's current selection. Without this, a DECA learner
+  // opening their own General Debate replay from the global history read "Track: DECA" in the shell
+  // above a Debate transcript. The redirect stamps the record's own track once, exactly as a lesson
+  // page stamps its content's track, so shell, body and every nav href agree with the row.
+  //
+  // It changes nothing else: the selection cookie is never written (following `?track=` is viewing,
+  // not selecting), the authorization check above still decides what may be read, and a record whose
+  // organization has no active track (a retired track, or an organization outside the four) is left
+  // alone — the learner's own track keeps the shell and the badge below still names the record.
   const track = trackByOrganization(debate.organization);
+  if (track && !isTrackRetired(track.id)) {
+    const rawTrack = searchParams?.track;
+    const trackParam = typeof rawTrack === "string" ? rawTrack : undefined;
+    const effective = await resolveActiveTrack(trackParam);
+    if (effective.track?.id !== track.id) {
+      redirect(`/debates/${params.debateId}/replay?track=${track.slug}` as Route);
+    }
+  }
+
+  const isOwner = debate.studentId === session.user.id;
   const attempts = isOwner ? await getAttemptsForMotion(session.user.id, debate.topic, debate.id) : [];
   const judged = debate.status === "JUDGED";
   const hasJudgeNotes =
@@ -102,6 +128,17 @@ export default async function DebateReplayPage({ params }: { params: { debateId:
 
   return (
     <div className="space-y-6">
+      {/* A record opened from a bookmark or a shared internal link has no referrer to go back to, so
+          the return is a canonical destination rather than browser history. History is global — it
+          holds every track's sessions — which is why this is not a track-scoped list. */}
+      <Link
+        href={"/debates/history" as Route}
+        className={`${buttonVariants({ variant: "ghost", size: "sm" })} h-auto min-h-11 min-w-11 px-3`}
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to history
+      </Link>
+
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Replay</Badge>

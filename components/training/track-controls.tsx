@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { RefreshCw } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTrainingTrack } from "@/components/training/training-track-context";
-import { PRACTICE_SOURCES, type PracticeSource, type TrainingTrack } from "@/lib/training-tracks";
+import type { TrainingTrack } from "@/lib/training-tracks";
 
 // Persists the track from the URL (strongest source of truth), and offers the Past/AI/Mixed practice
 // source selector with honest notes. Switch track returns to the selection page.
 export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
   const { setTrack } = useTrainingTrack();
-  const [source, setSource] = useState<PracticeSource>("AI");
 
   useEffect(() => {
     setTrack(trackId);
@@ -30,37 +29,17 @@ export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
           Switch track
         </Link>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {PRACTICE_SOURCES.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setSource(s.id)}
-            aria-pressed={source === s.id}
-            // M12D2, class-only: the selector was 34px tall. `min-h-11 min-w-11` with centred
-            // inline-flex padding clears 44px without changing the pressed state, the labels, the
-            // notes, or which source is selected.
-            className={cn(
-              "focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border px-4 py-2 text-sm font-semibold",
-              source === s.id ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">{PRACTICE_SOURCES.find((s) => s.id === source)?.note}</p>
-      {/* OWNER QA #6 adjudication: "Past Competition" was already honest — selecting it disclosed that no
-          verified past material exists. "Mixed" was not: its note promised "both verified past material
-          and AI practice", the same absent material, with no disclosure at all, and the PAST notice even
-          pointed learners at it. Nothing reads this selection anywhere (it is local state, unpersisted,
-          never sent), so every option delivers AI practice today. Any option whose note names past
-          material therefore carries the same disclosure, and it no longer recommends Mixed. */}
-      {source !== "AI" ? (
-        <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs font-medium text-amber-700">
-          No verified public past prompts are available for this event yet — AI Practice is what runs today.
-        </p>
-      ) : null}
+      {/* OWNER QA REPAIR 1A: this was a three-way selector — Past Competition / AI Practice / Mixed —
+          whose value nothing read: local state, never persisted, never sent to the scenario request,
+          never seen by the server. Every choice produced the same AI-generated practice. A truthful
+          warning under an inert control does not make the control truthful, so the choice is gone and
+          the one source that exists is stated. No source system is built here; when verified past
+          prompts exist, a real selector can return with behaviour behind it. */}
+      <p className="text-sm font-semibold">AI-generated CompeteReady practice</p>
+      <p className="text-xs text-muted-foreground">
+        Original scenarios written for practice and labelled as such — not official DECA prompts.
+        Verified past competition prompts are not available for this event yet.
+      </p>
     </div>
   );
 }

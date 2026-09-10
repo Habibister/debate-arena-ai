@@ -616,25 +616,33 @@ function main() {
   });
 
   // ---- D14. PRACTICE-SOURCE TRUTH (owner QA #6 adjudication) --------------------------------------
-  check("D14. no practice-source option promises past material without disclosing that none exists", () => {
+  check("D14. the practice source is stated, not selected — a control must affect behaviour to exist", () => {
+    // OWNER QA REPAIR 1A. The learner-graph rule now has a fourth leg: label promise -> destination
+    // and content -> and, for interactive UI, the control actually changes behaviour. A three-way
+    // source selector sat on the DECA hub whose value nothing read. Static truth replaced it.
     const controls = stripComments(read("components/training/track-controls.tsx"));
-    const sources = stripComments(read("lib/training-tracks.ts"));
-    // Two options name past material in their note; both must trigger the disclosure. Asserted as the
-    // condition itself: anything that is not the AI option discloses.
-    assert.ok(/source !== "AI" \? \(/.test(controls), "D14. every non-AI option renders the no-past-material disclosure");
-    assert.ok(/No verified public past prompts are available for this event yet/.test(controls),
-      "D14b. and the disclosure says plainly that none exists");
-    assert.ok(!/Try AI Practice or Mixed/.test(controls),
-      "D14c. and no longer steers the learner toward Mixed, which carried the same absence undisclosed");
-    // The reason: the control is inert. Nothing outside its own file reads the selection, so no option
-    // can deliver anything but AI practice. Proven by scan rather than assumed.
-    const readers = execSync('grep -rl "PracticeSource\\|PRACTICE_SOURCES\\|practiceSource" app components lib || true', { encoding: "utf8" })
-      .trim().split("\n").filter(Boolean)
-      .filter((f) => !/track-controls\.tsx|track-practice-setup\.tsx|training-tracks\.ts$/.test(f));
-    assert.deepEqual(readers, [], `D14d. no consumer outside the control reads the selection (${readers.join(", ")})`);
-    // Non-vacuity: the notes really do name past material, which is what makes the disclosure load-bearing.
-    assert.ok(/verified past material/i.test(sources) && /verified public past/i.test(sources),
-      "D14e. control: the PAST and MIXED notes still describe past material, so the disclosure is not decorative");
+    // A. no interactive selector remains while only one source exists
+    assert.ok(!/PRACTICE_SOURCES|setSource|useState<PracticeSource>|aria-pressed=\{source/.test(controls),
+      "D14. no interactive practice-source selector remains");
+    // C/D. no selectable Past Competition or Mixed mode
+    for (const gone of [/Past Competition/, /\bMixed\b/, /AI Practice/]) {
+      assert.ok(!gone.test(controls), `D14b. no selectable source mode remains (${gone})`);
+    }
+    // B. the one source that exists is named truthfully, as AI-generated CompeteReady practice
+    assert.ok(/AI-generated CompeteReady practice/.test(controls), "D14c. the source is identified as AI-generated CompeteReady practice");
+    assert.ok(/not official DECA prompts/.test(controls), "D14d. and explicitly not official DECA prompts");
+    // E. no claim that verified past material exists — only that it does not yet
+    assert.ok(/Verified past competition prompts are not available for this event yet/.test(controls),
+      "D14e. the absence of verified past prompts is stated");
+    for (const falseClaim of [/official DECA practice/i, /verified past competition prompts are available/i, /both verified past material/i, /mixed source/i]) {
+      assert.ok(!falseClaim.test(controls), `D14f. no claim that past or official material is served (${falseClaim})`);
+    }
+    // The track switcher on the same row is a REAL control and stays.
+    assert.ok(/Switch track/.test(controls) && /href=\{"\/training" as Route\}/.test(controls), "D14g. the Switch track control is untouched");
+    // F. scenario generation reads no source: request schema and payload carry none.
+    for (const f of ["app/api/ai/deca-scenario/route.ts", "components/rooms/roleplay-room.tsx", "components/rooms/roleplay-config.ts"]) {
+      assert.ok(!/practiceSource|PracticeSource|"PAST"|"MIXED"/.test(stripComments(read(f))), `D14h. ${f} carries no practice-source input — generation is unchanged`);
+    }
   });
 
   console.log(

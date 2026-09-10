@@ -110,7 +110,7 @@ export function PracticeTestGenerator({ lockedOrganization , officialFormat }: {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <CardTitle>Generate Original Practice Test</CardTitle>
+            <CardTitle as="h2">Generate Original Practice Test</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
               Choose a track, focus area, and difficulty. Then jump into original practice inspired by public event guidance and classroom standards.
             </p>

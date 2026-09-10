@@ -68,7 +68,7 @@ export function CoachNextActionCard() {
   return (
     <Card aria-busy={state.status === "loading"}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle as="h2" className="flex items-center gap-2 text-base">
           <Sparkles className="h-4 w-4 text-primary" aria-hidden />
           AI Coach — your next action
         </CardTitle>

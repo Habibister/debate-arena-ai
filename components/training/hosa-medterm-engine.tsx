@@ -245,7 +245,7 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Medical Terminology practice</CardTitle>
+          <CardTitle as="h2">Medical Terminology practice</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
@@ -314,7 +314,7 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Results</CardTitle>
+          <CardTitle as="h2">Results</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -376,7 +376,7 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base">
+          <CardTitle as="h2" className="text-base">
             Question {index + 1} of {order.length}
           </CardTitle>
           <div className="flex items-center gap-3 text-sm">

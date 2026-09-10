@@ -45,13 +45,24 @@ export default async function TrackPracticePage({ params }: { params: { track: s
         <>
           <div>
             <Badge variant="secondary">Training in: {track.label}</Badge>
-            <h1 className="mt-3 text-2xl font-bold">Model UN practice</h1>
+            <h1 className="page-title mt-3">Model UN practice</h1>
           </div>
           <MunConference />
         </>
       ) : (
         <>
-          {track.id === "DECA" ? <DecaRoleplaySetup /> : null}
+          {/* DESIGN F1: this branch rendered no heading element at all — the setup card's title was the
+              page's first heading, at h2, under no h1. The page now names itself the way the Model UN
+              branch above already does, on the canonical page-title class. */}
+          {track.id === "DECA" ? (
+            <>
+              <div>
+                <Badge variant="secondary">Training in: {track.label}</Badge>
+                <h1 className="page-title mt-3">DECA practice</h1>
+              </div>
+              <DecaRoleplaySetup />
+            </>
+          ) : null}
           {/* M11R6: HOSA practice here is the verified Medical Terminology exam and nothing else. The
               generic health-science role-play that used to sit beside it invented patient scenarios
               and scored them against no sourced rubric, so it was withdrawn. Events HOSA runs that

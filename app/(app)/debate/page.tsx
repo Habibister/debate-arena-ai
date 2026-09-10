@@ -30,7 +30,7 @@ export default async function DebatePage({ searchParams }: { searchParams: { tra
           <Badge variant="secondary">AI Debate Arena</Badge>
           <Badge variant="outline">Free local judging</Badge>
         </div>
-        <h1 className="mt-4 text-3xl font-bold sm:text-4xl">Create a debate room</h1>
+        <h1 className="page-title mt-4">Create a debate room</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           Choose a motion, format, timer, and side. CompeteReady will create a dedicated arena page with turn order,
           AI opponent speeches, and a judge decision when the round is complete.

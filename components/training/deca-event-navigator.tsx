@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { AlertTriangle, ArrowRight, CheckCircle2, HelpCircle, Search } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
@@ -292,7 +292,7 @@ export function DecaEventNavigator({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold leading-none text-base">Find your event family</h2>
+          <CardTitle as="h2" className="text-base">Find your event family</CardTitle>
           <p className="text-sm text-muted-foreground">
             DECA&apos;s families run on different rules. Timing, Performance Indicator counts, exam structure, and when
             the judge may ask questions all change between them — so a formula learned for one family is wrong for
@@ -434,7 +434,7 @@ export function DecaEventNavigator({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold leading-none text-base">What each scope means</h2>
+          <CardTitle as="h2" className="text-base">What each scope means</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">

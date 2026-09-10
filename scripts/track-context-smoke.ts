@@ -255,7 +255,9 @@ check("T12. the Tests study CTA keeps the track and names only what it opens", (
 check("T13. history is one list for every track and says so", () => {
   const history = stripComments(read("app/(app)/debates/history/page.tsx"));
   assert.ok(!/Debate history<\/h1>/.test(history), "T13a no Debate-only heading over a multi-track list");
-  assert.match(history, /<h1 className="text-2xl font-bold">History<\/h1>/, "T13b heading is neutral");
+  // DESIGN F1: the heading moved onto the canonical page-title class inside PageHeader; the neutral
+  // word "History" is what this control protects, not the utility string it used to wear.
+  assert.match(history, /<h1 className="page-title">History<\/h1>/, "T13b heading is neutral");
   assert.match(history, /Every round and session saved to your history, from any of your tracks — each labelled with its own\./, "T13c the description states what is listed — saved rows, from any track — and no more");
   assert.ok(!/Every session you have started/.test(history), "T13c2 it does not claim every session (Medical Terminology practice is stored elsewhere)");
   assert.match(history, /trackByOrganization\(debate\.organization\)/, "T13d each row is still labelled with its own track");
@@ -395,7 +397,7 @@ check("T22. a track-scoped page describes the track it is scoped to", () => {
   // The "Supported test tracks" card heading is deliberately NOT track-scoped: its tiles list event
   // types and a grading note, so a heading claiming what a track's tests COVER would assert something
   // the tiles do not support. Pinned as unchanged rather than silently left alone.
-  assert.match(tests, /<CardTitle>Supported test tracks<\/CardTitle>/, "T22h the card heading makes no new content claim");
+  assert.match(tests, /<CardTitle as="h2">Supported test tracks<\/CardTitle>/, "T22h the card heading makes no new content claim");
 
   const preview = stripComments(read("components/tests/test-builder-preview.tsx"));
   assert.match(preview, /The API route generates original \{organization \?\? "DECA and HOSA"\} questions\./,

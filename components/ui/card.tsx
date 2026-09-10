@@ -39,8 +39,21 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
   return <div className={cn("flex flex-col gap-1.5 p-5", className)} {...props} />;
 }
 
-export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-lg font-semibold leading-none", className)} {...props} />;
+/**
+ * The heading levels a card title may render as. DESIGN F1: CardTitle was a fixed <h3>, which forced
+ * every card that sits directly under a page's <h1> into an h1 -> h3 skip, and pushed the Event
+ * Navigators into hand-rolled <h2> elements to avoid it. The level is chosen by the page, which is the
+ * only thing that knows the document outline; it is never inferred from nesting or from font size.
+ */
+export type CardTitleLevel = "h2" | "h3" | "h4";
+
+export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+  /** The semantic heading level. Defaults to h3, the level every existing caller already had. */
+  as?: CardTitleLevel;
+}
+
+export function CardTitle({ className, as: Level = "h3", ...props }: CardTitleProps) {
+  return <Level className={cn("text-lg font-semibold leading-none", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {

@@ -11,6 +11,7 @@ import { authOptions } from "@/lib/auth";
 import { getStudentDebates, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { Badge } from "@/components/ui/badge";
 import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -32,15 +33,17 @@ export default async function DebateHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        {/* Owner QA Repair 2: this list holds every track's sessions (each row is labelled with its
-            own track below), but it was headed "Debate history" — a DECA or HOSA learner arriving from
-            their Compete page read another track's name over their own sessions. */}
-        <h1 className="text-2xl font-bold">History</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every round and session saved to your history, from any of your tracks — each labelled with its own. Resume the unfinished ones or replay the judged ones — scores shown are your real results.
-        </p>
-      </div>
+      {/* Owner QA Repair 2: this list holds every track's sessions (each row is labelled with its
+          own track below), but it was headed "Debate history" — a DECA or HOSA learner arriving from
+          their Compete page read another track's name over their own sessions. */}
+      <PageHeader
+        heading={<h1 className="page-title">History</h1>}
+        description={
+          <p className="text-sm">
+            Every round and session saved to your history, from any of your tracks — each labelled with its own. Resume the unfinished ones or replay the judged ones — scores shown are your real results.
+          </p>
+        }
+      />
 
       {debates.length === 0 ? (
         <EmptyState
@@ -65,7 +68,7 @@ export default async function DebateHistoryPage() {
             return (
               <Card key={debate.id}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{debate.topic}</CardTitle>
+                  <CardTitle as="h2" className="text-base">{debate.topic}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0 space-y-1 text-sm text-muted-foreground">

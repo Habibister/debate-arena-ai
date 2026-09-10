@@ -159,7 +159,7 @@ export default async function DebateReplayPage({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Official transcript</CardTitle>
+          <CardTitle as="h2" className="text-base">Official transcript</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {debate.messages.length === 0 ? (
@@ -190,7 +190,7 @@ export default async function DebateReplayPage({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between gap-2 text-base">
+          <CardTitle as="h2" className="flex items-center justify-between gap-2 text-base">
             <span className="flex items-center gap-2">
               <Gavel className="h-4 w-4" aria-hidden />
               Judge feedback
@@ -255,7 +255,7 @@ export default async function DebateReplayPage({
       {isOwner && attempts.length > 0 ? (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Your other attempts at this motion</CardTitle>
+            <CardTitle as="h2" className="text-base">Your other attempts at this motion</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">

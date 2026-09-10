@@ -78,7 +78,7 @@ export function JoinTeamCard({ teams }: { teams: StudentTeam[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle as="h2" className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" aria-hidden />
           Your teams
         </CardTitle>

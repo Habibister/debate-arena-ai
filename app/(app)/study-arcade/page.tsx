@@ -97,7 +97,7 @@ export default async function StudyArcadePage({
           <Badge variant="secondary">Study Arcade</Badge>
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
-        <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Study Arcade</h1>
+        <h1 className="page-title mt-3">Study Arcade</h1>
         {/* G19 (M14 Phase 1e): recording claims are scoped to the surfaces that actually record.
             Drills write mastery + spaced review; flashcard decks and review games make no server
             write at all (components/study/ issues none), so the copy must never lump them in. */}
@@ -214,7 +214,7 @@ export default async function StudyArcadePage({
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle as="h2" className="flex items-center gap-2">
               <Layers3 className="h-4 w-4 text-primary" aria-hidden />
               Flashcard decks
             </CardTitle>

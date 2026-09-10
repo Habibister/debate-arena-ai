@@ -158,7 +158,7 @@ export default async function EventHqPage({ params }: { params: { track: string;
       {stages.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
               <ListChecks className="h-4 w-4 text-track" aria-hidden />
               Official round structure
             </CardTitle>
@@ -195,7 +195,7 @@ export default async function EventHqPage({ params }: { params: { track: string;
       {config.studyTopics && config.studyTopics.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Study topics</CardTitle>
+            <CardTitle as="h2" className="text-base">Study topics</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {config.studyTopics.map((topic) => (
@@ -212,7 +212,7 @@ export default async function EventHqPage({ params }: { params: { track: string;
       {showWeakAreas ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
               <Target className="h-4 w-4 text-track" aria-hidden />
               Your common mistakes
             </CardTitle>

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SelectField } from "@/components/ui/select";
 import { DECA_CLUSTERS } from "@/lib/training-tracks";
 import { decaClusterHasOfficialSpec } from "@/lib/deca-spec-scope";
 import {
@@ -77,7 +78,7 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle as="h2" className="flex items-center gap-2">
             {isSim ? <PlayCircle className="h-5 w-5 text-primary" aria-hidden /> : <MessageSquareQuote className="h-5 w-5 text-primary" aria-hidden />}
             {isSim ? "DECA Full Simulation — timed round" : "Guided role-play with objection round"}
           </CardTitle>
@@ -101,18 +102,25 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
             a preview of it. They are not: they are your own starting values, and the cluster is what
             shapes the generated scenario. Said plainly rather than rewiring the defaults. */}
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold">Career cluster</span>
-            <select value={cluster} onChange={(e) => chooseCluster(e.target.value)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-              {DECA_CLUSTERS.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold">Difficulty</span>
-            <select value={level} onChange={(e) => setLevel(e.target.value as Level)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-              {LEVELS.map((l) => <option key={l} value={l}>{l.toLowerCase()}</option>)}
-            </select>
-          </label>
+          {/* DESIGN F1: the two selects sat beside two Input primitives and were 4px shorter, on a
+              different fill. The Select primitive gives all four controls one height and one surface;
+              the labels, options and handlers are unchanged. */}
+          <SelectField
+            id="deca-cluster"
+            label={<span className="font-semibold">Career cluster</span>}
+            value={cluster}
+            onChange={(e) => chooseCluster(e.target.value)}
+          >
+            {DECA_CLUSTERS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </SelectField>
+          <SelectField
+            id="deca-difficulty"
+            label={<span className="font-semibold">Difficulty</span>}
+            value={level}
+            onChange={(e) => setLevel(e.target.value as Level)}
+          >
+            {LEVELS.map((l) => <option key={l} value={l}>{l.toLowerCase()}</option>)}
+          </SelectField>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Your role <span className="font-normal text-muted-foreground">(editable — type any role)</span></span>
             <Input

@@ -39,7 +39,7 @@ export default async function ReviewSessionPage({ searchParams }: { searchParams
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Review session</Badge>
         </div>
-        <h1 className="mt-3 flex items-center gap-2 text-3xl font-bold sm:text-4xl">
+        <h1 className="page-title mt-3 flex items-center gap-2">
           <RotateCcw className="h-7 w-7 text-primary" aria-hidden />
           Reviews due
         </h1>
@@ -66,7 +66,7 @@ export default async function ReviewSessionPage({ searchParams }: { searchParams
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>
+            <CardTitle as="h2">
               {due.length} {due.length === 1 ? "skill" : "skills"} to reassess
             </CardTitle>
           </CardHeader>

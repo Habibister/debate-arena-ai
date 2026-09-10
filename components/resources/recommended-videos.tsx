@@ -20,7 +20,7 @@ export function RecommendedVideos({ organization, skillTags, title = "Recommende
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <PlayCircle className="h-5 w-5 text-primary" aria-hidden />
-            <CardTitle>{title}</CardTitle>
+            <CardTitle as="h2">{title}</CardTitle>
           </div>
           <Badge variant="outline">External resources</Badge>
         </div>

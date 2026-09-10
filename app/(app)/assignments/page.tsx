@@ -11,6 +11,7 @@ import { LocalDate } from "@/components/ui/local-date";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -64,13 +65,11 @@ export default async function AssignmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Badge variant="secondary">Assigned Work</Badge>
-        <h1 className="mt-3 text-3xl font-bold">Assignments</h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
-          Start coach-assigned practice, then submit real completed work so your coach can track progress.
-        </p>
-      </div>
+      <PageHeader
+        badges={<Badge variant="secondary">Assigned Work</Badge>}
+        heading={<h1 className="page-title">Assignments</h1>}
+        description={<p>Start coach-assigned practice, then submit real completed work so your coach can track progress.</p>}
+      />
 
       {assignments.length === 0 ? (
         <EmptyState icon={ClipboardList} title="No assignments yet." description="When a coach assigns work to one of your teams, it will appear here." />
@@ -79,7 +78,7 @@ export default async function AssignmentsPage() {
           group.rows.length > 0 ? (
             <Card key={group.title}>
               <CardHeader>
-                <CardTitle>{group.title}</CardTitle>
+                <CardTitle as="h2">{group.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {group.rows.map((assignment) => {

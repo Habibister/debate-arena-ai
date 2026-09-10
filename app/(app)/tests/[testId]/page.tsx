@@ -55,7 +55,7 @@ export default async function PracticeTestPage({
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
         <Badge variant="secondary">Practice Test</Badge>
-        <h1 className="mt-3 text-3xl font-bold">Answer every question</h1>
+        <h1 className="page-title mt-3">Answer every question</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           The answer key stays server-side until grading. Results will include explanations, weak areas, and recommended lessons.
         </p>

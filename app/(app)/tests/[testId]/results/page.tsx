@@ -169,7 +169,7 @@ export default async function PracticeTestResultsPage({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <Badge variant="accent">Results</Badge>
-            <h1 className="mt-3 text-3xl font-bold">{test.organization} Practice Test</h1>
+            <h1 className="page-title mt-3">{test.organization} Practice Test</h1>
             <p className="mt-2 text-muted-foreground">
               {test.eventCluster ?? test.eventType} · {test.difficulty.toLowerCase()} · {test.questionCount} questions
             </p>
@@ -267,7 +267,7 @@ export default async function PracticeTestResultsPage({
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Weak Skill Detection</CardTitle>
+              <CardTitle as="h2">Weak Skill Detection</CardTitle>
             </CardHeader>
             <CardContent>
               {test.weakAreas.length > 0 ? (
@@ -295,7 +295,7 @@ export default async function PracticeTestResultsPage({
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>What to work on</CardTitle>
+            <CardTitle as="h2">What to work on</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {diagnosticRoutes.length > 0 ? (
@@ -377,7 +377,7 @@ export default async function PracticeTestResultsPage({
             <Card key={question.id}>
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <CardTitle className="text-base">Question {index + 1}</CardTitle>
+                  <CardTitle as="h2" className="text-base">Question {index + 1}</CardTitle>
                   <Badge variant={isCorrect ? "accent" : "outline"}>
                     {isCorrect ? "Correct" : question.skillTag}
                   </Badge>

@@ -11,7 +11,7 @@ export function TestBuilderPreview({ organization }: { organization?: "DECA" | "
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Practice Exam Generator</CardTitle>
+          <CardTitle as="h2">Practice Exam Generator</CardTitle>
           <Badge variant="secondary">Original questions only</Badge>
         </div>
       </CardHeader>

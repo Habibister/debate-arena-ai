@@ -43,7 +43,7 @@ export function ArgumentFlow({ debateId }: { debateId: string }) {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle as="h2" className="flex items-center gap-2 text-base">
             <Network className="h-4 w-4 text-primary" aria-hidden />
             Argument flow
           </CardTitle>

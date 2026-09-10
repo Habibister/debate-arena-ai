@@ -98,7 +98,13 @@ export default async function ProfilePage() {
             <div className="pb-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-3xl font-bold">{displayName}</h1>
-                <Badge variant="secondary">@{username}</Badge>
+                {/* DESIGN F1. The username chip overlaps the gradient banner, and its tinted variant put
+                    violet text on violet-to-cyan ground — the census measured it well under AA. The
+                    banner is untouched; the chip simply stands on an opaque card surface so its text
+                    has a known ground, the same treatment the avatar's border already uses. */}
+                <Badge variant="outline" className="bg-card text-foreground">
+                  @{username}
+                </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
             </div>
@@ -114,7 +120,7 @@ export default async function ProfilePage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Identity</CardTitle>
+              <CardTitle as="h2">Identity</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div className="flex items-center gap-3">
@@ -150,7 +156,7 @@ export default async function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Progress</CardTitle>
+              <CardTitle as="h2">Progress</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between text-sm">
@@ -177,7 +183,7 @@ export default async function ProfilePage() {
         <div className="grid gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recent debates</CardTitle>
+              <CardTitle as="h2">Recent debates</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {user.studentDebates.length > 0 ? (
@@ -202,7 +208,7 @@ export default async function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent tests</CardTitle>
+              <CardTitle as="h2">Recent tests</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {user.practiceTests.length > 0 ? (

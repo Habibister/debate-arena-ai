@@ -56,7 +56,7 @@ export function AccessibilitySettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Accessibility</CardTitle>
+        <CardTitle as="h2">Accessibility</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="rounded-lg border bg-background p-4">

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { getActiveTrack } from "@/lib/track-server";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function SkillsPage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
@@ -27,16 +28,19 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{isDebate ? "Skill drills" : "Skills"}</Badge>
-          {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
-        </div>
-        {/* Owner QA Repair 3B: the non-Debate header promised focused per-stage pages and a
-            five-step outline — a retired lesson shape no track renders. DECA's skills live in three
-            real places, named here; HOSA's in its Event HQ. The page says what it holds. */}
-        <h1 className="mt-3 text-3xl font-bold">{isDebate ? "Drill a debate skill" : activeTrack ? `${activeTrack.label} skills` : "Skills"}</h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
+      {/* Owner QA Repair 3B: the non-Debate header promised focused per-stage pages and a
+          five-step outline — a retired lesson shape no track renders. DECA's skills live in three
+          real places, named here; HOSA's in its Event HQ. The page says what it holds. */}
+      <PageHeader
+        badges={
+          <>
+            <Badge variant="secondary">{isDebate ? "Skill drills" : "Skills"}</Badge>
+            {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
+          </>
+        }
+        heading={<h1 className="page-title">{isDebate ? "Drill a debate skill" : activeTrack ? `${activeTrack.label} skills` : "Skills"}</h1>}
+        description={
+          <p>
           {isDebate
             ? "Drills work one skill at a time and repeat it, and each one tells you whether it added to your record; skills that record come back later for review. Start with the lesson that teaches the skill — these are not the questions inside a lesson, and those live in the lesson."
             : activeTrack?.id === "DECA"
@@ -44,8 +48,9 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
               : activeTrack?.id === "HOSA"
                 ? "HOSA trains from your exact event. Medical Terminology practice lives on its Event HQ page; start from the Event Navigator below."
                 : "Pick a track to see the skills it trains."}
-        </p>
-      </div>
+          </p>
+        }
+      />
 
       <SkillPath showSampleProgress={showSampleProgress} track={activeTrack?.id} />
 

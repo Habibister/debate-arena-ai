@@ -163,7 +163,7 @@ export function SkillPath({ track }: { showSampleProgress?: boolean; track?: Tra
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Skills in this track</CardTitle>
+        <CardTitle as="h2">Skills in this track</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Same rule the Event Navigator states while a learner browses families: a grouping we made

@@ -57,7 +57,7 @@ export default function DebateSkillWritingPracticePage({ params }: { params: { s
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
               <Info className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
               Writing practice is not available for this skill
             </CardTitle>

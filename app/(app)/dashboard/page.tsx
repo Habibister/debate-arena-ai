@@ -247,7 +247,7 @@ export default async function DashboardPage() {
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <UserAvatar username={username} displayName={fullDisplayName} avatarUrl={avatarUrl} size="lg" />
             <div>
-              <h1 className="text-3xl font-bold sm:text-4xl">Welcome back, {displayName}</h1>
+              <h1 className="page-title">Welcome back, {displayName}</h1>
               <p className="mt-1 text-sm font-semibold text-muted-foreground">@{username}</p>
             </div>
           </div>
@@ -328,7 +328,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle>Assigned Work</CardTitle>
+              <CardTitle as="h2">Assigned Work</CardTitle>
               <Link href={"/assignments" as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
                 View all
               </Link>
@@ -428,7 +428,7 @@ export default async function DashboardPage() {
         />
         <Card>
           <CardHeader>
-            <CardTitle>{showDebateRecord ? "Recommended Lessons" : `Weak areas from your ${activeTrack?.short} tests`}</CardTitle>
+            <CardTitle as="h2">{showDebateRecord ? "Recommended Lessons" : `Weak areas from your ${activeTrack?.short} tests`}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {recommendedRows.length > 0 ? (

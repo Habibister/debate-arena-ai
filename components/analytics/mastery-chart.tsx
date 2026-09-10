@@ -16,7 +16,7 @@ export function MasteryChart({ data = fallbackData, emptyDescription }: { data?:
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Skill Growth</CardTitle>
+        <CardTitle as="h2">Skill Growth</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {data.length === 0 ? (

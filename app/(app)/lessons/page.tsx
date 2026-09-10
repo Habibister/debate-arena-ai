@@ -228,7 +228,9 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
                   {card.minutes} min
                 </span>
               </div>
-              <h2 className="mt-3 text-xl font-bold">{card.title}</h2>
+              {/* DESIGN F1. A lesson is a member of the course group above it, so it sits one level
+                  below the group heading: h1 page -> h2 course -> h3 lesson. Same appearance. */}
+              <h3 className="mt-3 text-xl font-bold">{card.title}</h3>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">{card.subtitle}</p>
 
               {/* What this lesson actually offers. Every value is a word first; the chip only

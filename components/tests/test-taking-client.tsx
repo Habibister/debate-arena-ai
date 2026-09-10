@@ -101,7 +101,7 @@ export function TestTakingClient({ test, officialMinutes }: TestTakingClientProp
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{test.organization} Practice Test</CardTitle>
+          <CardTitle as="h2">{test.organization} Practice Test</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
@@ -171,7 +171,7 @@ export function TestTakingClient({ test, officialMinutes }: TestTakingClientProp
       {test.questions.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Answer Map</CardTitle>
+            <CardTitle as="h2" className="text-base">Answer Map</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -205,7 +205,7 @@ export function TestTakingClient({ test, officialMinutes }: TestTakingClientProp
           <Card key={question.id} id={`question-${index + 1}`} className="scroll-mt-24">
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="text-base">Question {index + 1}</CardTitle>
+                <CardTitle as="h2" className="text-base">Question {index + 1}</CardTitle>
                 <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">{question.skillTag}</span>
               </div>
             </CardHeader>

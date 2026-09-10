@@ -32,7 +32,7 @@ export default async function TeamsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Teams</Badge>
         </div>
-        <h1 className="mt-3 flex items-center gap-2 text-3xl font-bold sm:text-4xl">
+        <h1 className="page-title mt-3 flex items-center gap-2">
           <Users className="h-7 w-7 text-primary" aria-hidden />
           Teams
         </h1>
@@ -46,7 +46,7 @@ export default async function TeamsPage() {
       {isCoach ? (
         <Card>
           <CardHeader>
-            <CardTitle>Coach tools</CardTitle>
+            <CardTitle as="h2">Coach tools</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">

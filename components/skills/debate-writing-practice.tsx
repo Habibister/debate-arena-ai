@@ -239,7 +239,7 @@ export function DebateWritingPractice({ slug }: DebateWritingPracticeProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Your response</CardTitle>
+          <CardTitle as="h2">Your response</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -278,7 +278,7 @@ export function DebateWritingPractice({ slug }: DebateWritingPracticeProps) {
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle>Feedback</CardTitle>
+                <CardTitle as="h2">Feedback</CardTitle>
                 {/* M15 S1A A1: the number is a keyword/structure checklist result, not a mastery or
                     competition score, so it is labeled as checklist coverage and never celebrated
                     with an achievement variant. */}

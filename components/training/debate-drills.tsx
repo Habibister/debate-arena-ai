@@ -353,7 +353,7 @@ export function DebateDrills({ initialArea, progressTracking }: {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Practice session expired</CardTitle>
+          <CardTitle as="h2" className="text-base">Practice session expired</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
@@ -373,7 +373,7 @@ export function DebateDrills({ initialArea, progressTracking }: {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle as="h2" className="flex items-center gap-2 text-base">
             <Target className="h-4 w-4 text-primary" aria-hidden />
             Drill results — {result.scorePercent}% ({result.correctCount}/{result.total})
           </CardTitle>
@@ -422,7 +422,7 @@ export function DebateDrills({ initialArea, progressTracking }: {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle as="h2" className="flex items-center gap-2 text-base">
             <Target className="h-4 w-4 text-primary" aria-hidden />
             General Debate skill drills
           </CardTitle>
@@ -471,7 +471,7 @@ export function DebateDrills({ initialArea, progressTracking }: {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base">Question {slot + 1} of {session.order.length}</CardTitle>
+          <CardTitle as="h2" className="text-base">Question {slot + 1} of {session.order.length}</CardTitle>
           <span className="text-sm text-muted-foreground">{runningCorrect}/{answeredCount} correct</span>
         </div>
       </CardHeader>

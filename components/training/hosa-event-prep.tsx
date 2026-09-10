@@ -49,7 +49,7 @@ export async function HosaEventPrep() {
       {official && stages.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
               <ListChecks className="h-4 w-4 text-primary" aria-hidden />
               Event stages
             </CardTitle>
@@ -76,7 +76,7 @@ export async function HosaEventPrep() {
       {official ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
               <ShieldAlert className="h-4 w-4 text-amber-500" aria-hidden />
               Competition-day checklist & rules
             </CardTitle>

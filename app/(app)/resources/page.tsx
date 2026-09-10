@@ -17,7 +17,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: { 
           <Badge variant="secondary">Resources</Badge>
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
-        <h1 className="mt-3 flex items-center gap-2 text-3xl font-bold sm:text-4xl">
+        <h1 className="page-title mt-3 flex items-center gap-2">
           <Library className="h-7 w-7 text-primary" aria-hidden />
           Resource library
         </h1>

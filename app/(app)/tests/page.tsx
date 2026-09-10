@@ -67,7 +67,7 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
           <Badge variant="secondary">{lockedOrganization ?? "DECA and HOSA"}</Badge>
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
-        <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Practice tests</h1>
+        <h1 className="page-title mt-3">Practice tests</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           {HEADER_DESCRIPTION[lockedOrganization ?? "BOTH"]}
         </p>
@@ -128,7 +128,7 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
               content, and the tiles under it list EVENT_OPTIONS labels (Roleplay, Case Study) — event
               types, not what a generated test covers, which comes from the cluster list instead. The
               card also holds the "After grading" tile, which is not coverage either. */}
-          <CardTitle>Supported test tracks</CardTitle>
+          <CardTitle as="h2">Supported test tracks</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
           {!activeTrack || activeTrack.id === "DECA" ? (

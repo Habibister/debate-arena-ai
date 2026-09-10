@@ -54,10 +54,34 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
         <p className="mt-2 max-w-3xl text-muted-foreground">
           Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.
         </p>
-        {lockedOrganization ? (
+{/* OWNER QA REPAIR 3C — the attribution here is per ORGANIZATION, because the two specs are
+            different KINDS of document.
+
+            DECA: the only seeded spec is the Hotel and Lodging Management Series, a ROLE-PLAY event.
+            This page carried its judged evaluation form ("Official rubric — …, 100 points total",
+            twelve scored lines) directly above a multiple-choice generator that scores nothing of the
+            sort — a test result is the proportion answered correctly
+            (app/api/tests/[testId]/grade/route.ts). It also carried that event's source banner over a
+            generator whose cluster the learner picks freely, defaulting to Marketing. Neither belongs
+            to this product: the exam segment of that spec carries no duration, so nothing on this page
+            is derived from it at all. Both are gone for DECA; the form is still shown where it applies,
+            on the event's own page.
+
+            HOSA: the seeded spec IS the written test (Medical Terminology, 50 items / 60 minutes), its
+            rubric line IS this product's scoring rule ("Test score — one point per correct item"), and
+            the official-format option on the generator really is derived from it. Both stay. */}
+        {lockedOrganization === "HOSA" ? (
           <div className="mt-4 space-y-3">
             <SpecBanner organization={lockedOrganization} />
             <RubricBreakdown organization={lockedOrganization} />
+          </div>
+        ) : lockedOrganization === "DECA" ? (
+          <div className="mt-4">
+            <p className="rounded-md border bg-background p-3 text-xs leading-6 text-muted-foreground">
+              These are original multiple-choice questions on the cluster you choose, and your result is the share you
+              answer correctly. DECA&apos;s judged evaluation form scores a role-play, not a test like this one, so it is
+              not shown here — you will find it on your event&apos;s own page, with the role-play it belongs to.
+            </p>
           </div>
         ) : null}
         <div className="mt-5 grid gap-3 md:grid-cols-3">

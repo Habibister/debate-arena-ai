@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DECA_CLUSTERS } from "@/lib/training-tracks";
+import { decaClusterHasOfficialSpec } from "@/lib/deca-spec-scope";
 import { DECA_ROLE_PAIRS, writeRoleplayConfig } from "@/components/rooms/roleplay-config";
 import { DecaSimulationPrepPanel } from "@/components/training/deca-simulation-prep-panel";
 
@@ -24,6 +25,11 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
   const [cluster, setCluster] = useState("Hospitality & Tourism");
   const [studentRole, setStudentRole] = useState("front desk manager");
   const [judgeRole, setJudgeRole] = useState("hotel guest whose reserved suite was given away");
+  // OWNER QA REPAIR 3C. Exactly one DECA specification is seeded (Hotel and Lodging Management
+  // Series, Hospitality & Tourism). The simulation's clock is attributed as official only for that
+  // cluster, so the setup says which clock this run will get BEFORE the learner enters the room —
+  // and the cluster control visibly decides it.
+  const officialTiming = decaClusterHasOfficialSpec(cluster);
 
   function enterRoom() {
     writeRoleplayConfig({ track: "deca", level, cluster, studentRole, judgeRole, simulation: isSim });
@@ -52,8 +58,18 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
             ? "Set it up here, then enter the room for one continuous timed round: prep clock → pitch → the judge's objection round → scored ballot."
             : "Set it up here, then enter the room: scenario brief → pitch → the judge's objection round → scored ballot, read-aloud and speech input available."}
         </p>
+        {isSim ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {officialTiming
+              ? "Hospitality & Tourism is the one cluster our sourced specification covers, so where a preparation period is available this run uses that event's own."
+              : "No official preparation period is sourced for this career cluster, so any clock in this run is CompeteReady's practice timer, not DECA's. The room tells you which one you got."}
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* OWNER QA REPAIR 3C: the two editable fields below sit under the cluster select and read as
+            a preview of it. They are not: they are your own starting values, and the cluster is what
+            shapes the generated scenario. Said plainly rather than rewiring the defaults. */}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Career cluster</span>
@@ -69,13 +85,17 @@ export function DecaRoleplaySetup({ mode = "practice" }: { mode?: "practice" | "
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Your role <span className="font-normal text-muted-foreground">(editable — type any role)</span></span>
-            <Input value={studentRole} onChange={(e) => setStudentRole(e.target.value)} placeholder="e.g. front desk manager" />
+            <Input value={studentRole} onChange={(e) => setStudentRole(e.target.value)} placeholder="e.g. the manager on duty" />
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">AI plays <span className="font-normal text-muted-foreground">(editable — type any character)</span></span>
-            <Input value={judgeRole} onChange={(e) => setJudgeRole(e.target.value)} placeholder="e.g. frustrated hotel guest" />
+            <Input value={judgeRole} onChange={(e) => setJudgeRole(e.target.value)} placeholder="e.g. the customer you are meeting" />
           </label>
         </div>
+        <p className="text-xs text-muted-foreground">
+          The career cluster and difficulty shape the scenario the room generates. The two roles above are your own
+          starting values — they do not change when you pick a cluster, so edit them if you want a different pairing.
+        </p>
 
         {/* P1-D: the curriculum path, recommended and never required. It sits ABOVE the entry button
             on purpose — a learner who wants to read first meets it, and a learner who wants to

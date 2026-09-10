@@ -222,11 +222,25 @@ function main() {
 
   check("C3. the event identity follows the chosen cluster, never a blanket HLM label", () => {
     const room = read("components/rooms/roleplay-room.tsx");
-    assert.ok(/function decaEventNameForCluster\(cluster: string\): string/.test(room), "a cluster-derived label exists");
+    // OWNER QA REPAIR 3C: the cluster-coverage regex was duplicated in the room and in lib/ai.ts, so
+    // the two could drift about who the seeded specification covers. It now lives once, in the pure
+    // client-safe lib/deca-spec-scope.ts, and every attribution — event name, scenario spec lookup,
+    // and the simulation clock's official label — asks that one function.
+    const scope = read("lib/deca-spec-scope.ts");
+    assert.ok(/export function decaEventNameForCluster\(cluster: string\): string/.test(scope), "a cluster-derived label exists");
     assert.ok(
-      /\/hospitality\|tourism\|lodging\|hotel\/i\.test\(cluster\) \? DECA_HOSPITALITY_EVENT_NAME : DECA_GENERIC_EVENT_NAME/.test(room),
+      /decaClusterHasOfficialSpec\(cluster\) \? DECA_SPEC_EVENT_NAME : DECA_GENERIC_EVENT_NAME/.test(scope),
       "only a hospitality cluster carries the seeded hospitality event name"
     );
+    assert.ok(
+      /\/hospitality\|tourism\|lodging\|hotel\/i\.test\(cluster\)/.test(scope),
+      "and the coverage test itself is that one regex"
+    );
+    assert.ok(
+      !/\/hospitality\|tourism\|lodging\|hotel\/i/.test(room) && !/\/hospitality\|tourism\|lodging\|hotel\/i/.test(read("lib/ai.ts")),
+      "no consumer keeps its own copy of the coverage regex"
+    );
+    assert.ok(/decaClusterHasOfficialSpec\(input\.cluster\)/.test(read("lib/ai.ts")), "the scenario generator asks the shared helper");
     assert.ok(!/const DECA_EVENT_NAME =/.test(room), "the blanket constant is gone");
     assert.ok(
       !/eventType: DECA_EVENT_NAME/.test(room),

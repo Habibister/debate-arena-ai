@@ -14,6 +14,7 @@ import { SideCoachPanel, type OfficialMessage } from "@/components/debate/side-c
 import { DecaSimulationPrepPanel } from "@/components/training/deca-simulation-prep-panel";
 import { cn } from "@/lib/utils";
 import { readRoleplayConfig, roleplayEstimatedMinutes, roleplayTurnCap, type DecaRoomConfig, type HosaRoomConfig, type RoleplayConfig } from "./roleplay-config";
+import { decaClusterHasOfficialSpec, decaEventNameForCluster } from "@/lib/deca-spec-scope";
 import { RoomChrome, StageRail } from "./room-chrome";
 
 type OfficialPrep = { prepMinutes: number; performMinutes: number | null; eventName: string; season: string; verificationStatus: string } | null;
@@ -48,13 +49,8 @@ type JudgeResult = {
 // as the event identity for EVERY cluster, so a Finance or Marketing round was authored and framed
 // as a Hotel and Lodging Management Series round. The event label must now be truthful for the
 // cluster actually chosen: the specific event only where the cluster is the one it covers, and an
-// honest generic label otherwise. No event mapping is invented here.
-const DECA_HOSPITALITY_EVENT_NAME = "Hotel and Lodging Management Series";
-const DECA_GENERIC_EVENT_NAME = "DECA role-play";
-
-function decaEventNameForCluster(cluster: string): string {
-  return /hospitality|tourism|lodging|hotel/i.test(cluster) ? DECA_HOSPITALITY_EVENT_NAME : DECA_GENERIC_EVENT_NAME;
-}
+// honest generic label otherwise. No event mapping is invented here — the one regex that decides
+// coverage lives in lib/deca-spec-scope.ts and is shared with the setup screen and the generator.
 
 async function call<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -92,8 +88,26 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
 
   // Clocks (DECA simulation only).
   const isSim = config?.track === "deca" && config.simulation && Boolean(officialPrep?.prepMinutes);
+  // OWNER QA REPAIR 3C. The room asks the registry for "the DECA prep format" with no event, which
+  // returns the one seeded spec — Hotel and Lodging Management Series. A learner who chose Finance or
+  // Marketing was therefore shown HLM's ten minutes labelled "Official prep". The clock still runs
+  // (a timer is real CompeteReady behaviour), but it is attributed as OFFICIAL only for the cluster
+  // that specification actually covers; every other cluster gets a practice timer, named as one.
+  const officialTimingApplies = isSim && decaClusterHasOfficialSpec(config?.track === "deca" ? config.cluster : null);
+  const prepClockLabel = officialTimingApplies
+    ? `Official prep — ${officialPrep?.prepMinutes} min`
+    : `Practice timer — ${officialPrep?.prepMinutes} min`;
+  const performClockLabel = officialTimingApplies ? "Performance time with the judge" : "Practice performance timer";
+  // The learner entered through the SIMULATION setup, which promises a timed round, but the registry
+  // produced no preparation period (no active spec, malformed prepTime, or a failed lookup — all of
+  // which return null). The round then runs exactly like untimed practice. That degradation used to be
+  // silent, so the promise stayed on screen while the clock never appeared; it is now stated.
+  const simulationRequested = config?.track === "deca" && config.simulation === true;
+  const timingUnavailable = simulationRequested && !isSim;
   const prepTotal = (officialPrep?.prepMinutes ?? 0) * 60;
   const performTotal = (officialPrep?.performMinutes ?? 0) * 60;
+  // A resolved prep period with no performance segment: the pitch is timed, the meeting is not.
+  const performanceUntimed = isSim && performTotal === 0;
   const [prepLeft, setPrepLeft] = useState(0);
   const [prepRunning, setPrepRunning] = useState(false);
   const [prepDone, setPrepDone] = useState(false);
@@ -388,14 +402,31 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
         </section>
       ) : null}
 
+      {/* Simulation requested, but no preparation period resolved — say so rather than quietly
+          running the untimed round under a "timed round" promise. */}
+      {timingUnavailable && scenario && !result ? (
+        <section className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-amber-500" aria-hidden />Running untimed</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            No preparation period is available for this round right now, so there is no clock — everything else works
+            the same. Nothing here is timed, and nothing is being withheld from you.
+          </p>
+        </section>
+      ) : null}
+
       {/* DECA prep clock. */}
       {isSim && scenario && !prepDone && !result ? (
         <section className="mt-4 rounded-lg border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />Official prep — {officialPrep?.prepMinutes} min</p>
+            <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />{prepClockLabel}</p>
             <p className="font-mono text-xl font-bold tabular-nums" aria-live="polite">{clockLabel(prepLeft)}</p>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">Plan your pitch. It unlocks when prep runs out — or start early.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Plan your pitch. It unlocks when prep runs out — or start early.{" "}
+            {officialTimingApplies
+              ? `${officialPrep?.prepMinutes} minutes is the sourced preparation period for ${officialPrep?.eventName} (${officialPrep?.season})${officialPrep?.verificationStatus !== "VERIFIED" ? " — partially verified" : ""}.`
+              : "This is CompeteReady's practice timer — no official preparation period is sourced for this career cluster."}
+          </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => setPrepRunning((r) => !r)} className={cn("focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold", prepRunning ? "border-track bg-track/10 text-track" : "text-muted-foreground")}>
               {prepRunning ? "Pause prep" : prepLeft === prepTotal ? "Start prep" : "Resume prep"}
@@ -404,10 +435,17 @@ export function RoleplayRoom({ track, officialPrep }: { track: "deca" | "hosa"; 
           </div>
         </section>
       ) : null}
+      {isSim && prepDone && !result && performanceUntimed ? (
+        <section className="mt-4 rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">
+            Preparation was timed; the meeting itself is not — no performance length is available for this round.
+          </p>
+        </section>
+      ) : null}
       {isSim && prepDone && !result && performTotal > 0 ? (
         <section className={cn("mt-4 rounded-lg border p-4", performExpired ? "border-destructive/40 bg-destructive/10" : "border-track/30 bg-track/5")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />Performance time with the judge</p>
+            <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-track" aria-hidden />{performClockLabel}</p>
             <p className="font-mono text-xl font-bold tabular-nums" aria-live="polite">{clockLabel(performLeft)}</p>
           </div>
           {performExpired ? <p className="mt-1 text-xs font-semibold text-destructive" aria-live="polite">Time&apos;s up — finish your thought and end the round for your ballot.</p> : null}

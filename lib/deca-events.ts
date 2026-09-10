@@ -133,9 +133,15 @@ export const DECA_RESEARCH_RECORD_LAST_CHECKED = "2026-07-05";
  * research record; the date is when WE last checked that record; and what remains unverified is which
  * official DECA document and competition season those details correspond to. The gap is in the
  * provenance, not in the details.
+ *
+ * OWNER QA REPAIR 3C — SCOPE. A learner can meet the same two numbers twice: here, as a FAMILY-level
+ * record whose official document and season we have not established, and on a single event's own page,
+ * where one seeded specification carries its event name, its season and its own verification date.
+ * Those statuses only look contradictory while the scope is invisible, so the note names it. Neither
+ * claim is widened: a sourced event does not verify its family, and this record still verifies no event.
  */
 export const DECA_PROVENANCE_NOTE =
-  "These family details come from CompeteReady's approved research record, last checked July 5, 2026. We have not verified which official DECA document or competition season they correspond to — confirm against your family's current official guideline.";
+  "These family details come from CompeteReady's approved research record, last checked July 5, 2026. We have not verified which official DECA document or competition season they correspond to — confirm against your family's current official guideline. This is a family-level record: where a single event in the family has its own sourced guidelines, its Event HQ page shows them with that event's season and verification date, and for that event it is the more specific source — one event being sourced does not verify the family, so it says nothing about yours.";
 
 export const DECA_NAVIGATOR_SCOPE_NOTE =
   "This Navigator identifies your event family and routes you — it is not a full DECA event list and it does not replace your event's current official guidelines. CompeteReady's course teaches the role-play and case-study families only.";

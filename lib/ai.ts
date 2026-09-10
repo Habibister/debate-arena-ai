@@ -14,6 +14,7 @@ import {
 import { getAiPersona } from "@/lib/ai-personas";
 import { buildTranscriptBasedDebateJudge } from "@/lib/debate-judge-analysis";
 import { findSpecForEvent, getSpecRubricBreakdown, getWeightedScoringRubric } from "@/lib/competition-specs";
+import { decaClusterHasOfficialSpec } from "@/lib/deca-spec-scope";
 import { rubricLineNamesNoScoredBehaviour } from "@/lib/rubrics";
 import { pickFallbackDebateTopic } from "@/lib/debate-topics";
 import { getRubricSeed, SHARED_SPEAKING_SKILLS, type RubricCategorySeed } from "@/lib/rubrics";
@@ -1762,7 +1763,7 @@ export async function generateDecaRoleplayScenario(input: {
   // Only attribute to a registry spec when the selected cluster matches the domain that spec
   // actually covers. The seeded HLM spec is Hospitality & Tourism; a Finance role-play has no spec,
   // so it must degrade to generic rather than borrow HLM's event name and categories.
-  const clusterMatchesSpec = /hospitality|tourism|lodging|hotel/i.test(input.cluster);
+  const clusterMatchesSpec = decaClusterHasOfficialSpec(input.cluster);
   const spec = clusterMatchesSpec ? await findSpecForEvent("DECA", "ROLEPLAY") : null;
   // A RUBRIC LINE IS NOT A PERFORMANCE INDICATOR (2026-09-09). This branch used to hand the spec's
   // rubric CATEGORY NAMES to the model as the scenario's performance indicators. That conflates two

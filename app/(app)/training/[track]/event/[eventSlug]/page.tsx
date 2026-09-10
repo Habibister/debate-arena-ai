@@ -67,7 +67,7 @@ const EVENT_HQ: Record<
     rubricEventType: "ROLEPLAY",
     sections: [
       { label: "Guided role-play", detail: "Scenario → pitch → in-character objections → scored ballot.", href: "/training/deca/practice", icon: "rounds" },
-      { label: "Full Simulation (timed)", detail: "The complete round on the official prep clock.", href: "/study-arcade?track=deca", icon: "sim" },
+      { label: "Full Simulation", detail: "The complete round end to end. Pick Hospitality & Tourism to run it on this event's sourced preparation period where one is available; other clusters use a practice timer.", href: "/study-arcade?track=deca", icon: "sim" },
       { label: "Concept drills", detail: "Performance indicators, business reasoning, customer relations, marketing.", href: "/study-arcade?track=deca", icon: "drills" },
       { label: "Practice tests", detail: "Cluster-exam style sets with explanations.", href: "/tests?track=deca", icon: "tests" }
     ]

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { lockUserRow } from "@/lib/practice-session";
 import { practiceTestGradeSchema } from "@/lib/validators";
 import { awardXpInTransaction, rewardAmountForCompletion, utcDayBounds } from "@/lib/xp";
+import { decaDiagnosticRoutesForLearner } from "@/lib/education/deca-diagnostic-bridge";
 
 export const runtime = "nodejs";
 
@@ -65,40 +66,54 @@ export async function POST(request: Request, { params }: { params: { testId: str
       new Set(gradedQuestions.filter((item) => !item.isCorrect).map((item) => item.question.skillTag))
     );
 
-    const lessons = await prisma.lesson.findMany({
-      where: {
-        skill: {
-          organization: test.organization
-        }
-      },
-      include: { skill: true },
-      take: 20
-    });
+    // QA-R2 #5. This used to recommend rows from the legacy `Lesson` table by matching the weak-area
+    // string against a lesson title or its skill name. Those rows have no written lesson behind them —
+    // every DECA one resolves to the "older record, no lesson here yet" compatibility page — so a
+    // learner's diagnosis pointed at nothing, and the fallback branch handed out the first three rows
+    // of an unrelated skill when nothing matched at all.
+    //
+    // DECA now routes through the one bridge that knows which recorded skill a diagnostic belongs to
+    // and which PUBLISHED lesson teaches it. A diagnostic the bridge does not cover produces no
+    // recommendation rather than a plausible-looking one, and no fallback invents a lesson.
+    //
+    // Other organizations keep the legacy behaviour untouched: HOSA has its own content and is outside
+    // this repair.
+    let recommendedLessons: Array<{ lessonSlug: string; title: string; reason: string }> = [];
 
-    let recommendedLessons = lessons
-      .filter((lesson) =>
-        weakAreas.some((area) => {
-          const normalizedArea = area.toLowerCase();
-          return (
-            lesson.title.toLowerCase().includes(normalizedArea) ||
-            lesson.skill.name.toLowerCase().includes(normalizedArea) ||
-            normalizedArea.includes(lesson.skill.name.toLowerCase())
-          );
-        })
-      )
-      .slice(0, 5)
-      .map((lesson) => ({
-        lessonSlug: lesson.slug,
-        title: lesson.title,
-        reason: `Targets ${lesson.skill.name}, which appeared in your missed-question pattern.`
+    if (test.organization === "DECA") {
+      recommendedLessons = decaDiagnosticRoutesForLearner(weakAreas).map((route) => ({
+        lessonSlug: route.lessonId,
+        title: route.areaLabel,
+        reason: route.why
       }));
+    } else {
+      const lessons = await prisma.lesson.findMany({
+        where: {
+          skill: {
+            organization: test.organization
+          }
+        },
+        include: { skill: true },
+        take: 20
+      });
 
-    if (recommendedLessons.length === 0 && weakAreas.length > 0) {
-      recommendedLessons = lessons.slice(0, 3).map((lesson) => ({
-        lessonSlug: lesson.slug,
-        title: lesson.title,
-        reason: `Builds foundational ${lesson.skill.name} skills that support ${weakAreas[0]}.`
-      }));
+      recommendedLessons = lessons
+        .filter((lesson) =>
+          weakAreas.some((area) => {
+            const normalizedArea = area.toLowerCase();
+            return (
+              lesson.title.toLowerCase().includes(normalizedArea) ||
+              lesson.skill.name.toLowerCase().includes(normalizedArea) ||
+              normalizedArea.includes(lesson.skill.name.toLowerCase())
+            );
+          })
+        )
+        .slice(0, 5)
+        .map((lesson) => ({
+          lessonSlug: lesson.slug,
+          title: lesson.title,
+          reason: `Targets ${lesson.skill.name}, which appeared in your missed-question pattern.`
+        }));
     }
 
     await prisma.$transaction(async (tx) => {
@@ -184,7 +199,7 @@ export async function POST(request: Request, { params }: { params: { testId: str
             lessons: recommendedLessons,
             note:
               weakAreas.length > 0
-                ? "Review the recommended lessons, then regenerate a shorter test in the same event cluster."
+                ? "Work through what the results page lists under \"What to work on\", then regenerate a shorter test in the same event cluster."
                 : "Strong performance. Move up a difficulty level or switch event clusters."
           }
         }

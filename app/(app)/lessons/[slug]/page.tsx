@@ -208,7 +208,7 @@ export default async function LessonPage({ params, searchParams }: { params: { s
       { id: "mistakes", label: "Common mistakes" },
       ...(available ? [{ id: "practice", label: "Practice" }] : []),
       { id: "next", label: course ? (course.next ? course.next.title : "End of this course so far") : roleplay.nextLesson.label },
-      { id: "coursemap", label: `Your ${roleplay.organization} Performance Course` }
+      { id: "coursemap", label: `Your ${roleplay.organization} role-play course` }
     ];
     return (
       <div className={column}>

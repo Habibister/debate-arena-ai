@@ -363,7 +363,28 @@ function main() {
     // importing the registry themselves, so the dependency stays a single edge.
     "components/training/deca-simulation-prep-panel.tsx",
     "app/api/ai/side-coach/route.ts",
+    // QA-R2 #5/#6: the three surfaces that turn a graded test into learning. Each imports ONLY
+    // lib/education/deca-diagnostic-bridge — pure static mapping plus one registry-visibility check —
+    // and none of them reads mastery, writes progress, or touches the registry directly.
+    "app/(app)/tests/[testId]/results/page.tsx",
+    "app/(app)/home/page.tsx",
+    "app/api/tests/[testId]/grade/route.ts",
   ]);
+  // The boundary that keeps that concession narrow: those three may reach the bridge and nothing else.
+  const BRIDGE_ONLY_CONSUMERS = [
+    "app/(app)/tests/[testId]/results/page.tsx",
+    "app/(app)/home/page.tsx",
+    "app/api/tests/[testId]/grade/route.ts"
+  ];
+  for (const file of BRIDGE_ONLY_CONSUMERS) {
+    const src = stripComments(readFileSync(file, "utf8"));
+    const educationImports = (src.match(/from "@\/lib\/education\/[a-z-]+"/g) ?? []).map((hit) => hit.trim());
+    assert.deepEqual(
+      [...new Set(educationImports)],
+      ['from "@/lib/education/deca-diagnostic-bridge"'],
+      `16b. ${file} consumes only the diagnostic bridge`
+    );
+  }
   const consumers: string[] = [];
   for (const file of [...appFiles, ...componentFiles]) {
     const src = stripComments(readFileSync(file, "utf8"));
@@ -635,7 +656,31 @@ function main() {
   // And the REAL registry is still clean after every fixture ran.
   assert.deepEqual(validateEducationRegistry({ ...EDUCATION_REGISTRY, seededSlugs: [...SEEDED_LESSON_SLUGS, ...SEEDED_SKILL_SLUGS] }), [], "the real registry is untouched by the controls");
 
-  console.log(
+  // ---------------------------------------------------------------------------------------------
+// QA-R2 #15 — ONE COURSE MODEL, TWO COURSES. The catalog listed all twelve DECA lessons under one badge
+// reading "Performance Course" while a lesson's own map showed five steps, so a beginner could not say
+// how many things they were meant to complete.
+{
+  const decaCourses = EDUCATION_COURSES.filter((course) => course.track === "DECA");
+  assert.equal(decaCourses.length, 2, "C1. DECA really has two courses");
+  const catalog = stripComments(readFileSync("app/(app)/lessons/page.tsx", "utf8"));
+  assert.match(catalog, /const courseGroups = EDUCATION_COURSES\.filter\(/, "C2. the catalog groups by the registry's own courses");
+  assert.match(catalog, /card\.courseId === course\.id/, "C3. a card joins the course it belongs to");
+  assert.match(catalog, /courseId: getEducationLesson\(l\.slug\)\?\.courseId \?\? null/, "C4. including the role-play card, whose course comes from the registry too");
+  assert.match(catalog, /courseGroups\.length > 1 \? `\$\{courseGroups\.length\} courses`/, "C5. the badge counts courses instead of naming one");
+  assert.ok(!/<Badge variant="secondary">Performance Course<\/Badge>/.test(catalog), "C6. the single hardcoded course badge is gone");
+  assert.match(catalog, /\{group\.cards\.length\} \{group\.cards\.length === 1 \? "lesson" : "lessons"\} published in this course/, "C7. each course states its own size");
+
+  const roleplayView = stripComments(readFileSync("components/lessons/roleplay-lesson-view.tsx", "utf8"));
+  assert.ok(!/Performance Course/.test(roleplayView), "C8. the in-lesson map no longer calls itself the performance course");
+  assert.match(roleplayView, /Your \{lesson\.organization\} role-play course/, "C9. it names the course it actually lists");
+  assert.match(roleplayView, /Role-play course · Lesson \{lesson\.courseMapCurrentIndex \?\? 0\}/, "C10. and so does the lesson badge");
+  const lessonRoute = stripComments(readFileSync("app/(app)/lessons/[slug]/page.tsx", "utf8"));
+  assert.match(lessonRoute, /label: `Your \$\{roleplay\.organization\} role-play course`/, "C11. the on-this-page link agrees with the heading it jumps to");
+  console.log("  ok  DECA course model: two named courses, catalog and lesson map in agreement");
+}
+
+console.log(
     `Education-registry smoke passed: the canonical registry holds exactly twenty-three lessons — the P1-B6 DECA Identifying the Problem lesson (DECA, concept, the second SIMULATION PREREQUISITE, likewise carrying NO skillSlug and NO practiceDrill; it sits between the indicators lesson and business reasoning because the approved curriculum identifies the problem before attaching the reason), the P1-B5 DECA Reading the Scenario lesson (DECA, concept, in the role-play course's skills module, a SIMULATION PREREQUISITE that deliberately carries NO skillSlug and NO practiceDrill, so it owns no mastery area and the four owners stay four; it chains into the performance-indicators lesson because the approved curriculum reads role, then scenario, then indicators), the six P1-B4 Marketing Fundamentals lessons (MK1-MK6 from the approved curriculum, in the DECA Business-Content course, chained in order, with only MK1 claiming the deca-marketing skill so the area keeps one remediation destination while the other five carry the practice CTA alone), the P1-B3 DECA Handling Customer Situations lesson (DECA, concept, the teaching owner for deca-customer-relations, and the first CLUSTER-KNOWLEDGE lesson: it sits in its own DECA Business-Content course rather than the role-play course, whose module outcomes are about performing a round, and it carries stable-teaching provenance per the approved curriculum), the P1-B2 DECA Justifying Your Recommendation lesson (DECA, concept, the teaching owner for the deca-business-reasoning skill, sharing module deca-roleplay-skills with the indicators lesson because the single-claim rule is per skill and these claim different ones, and terminating the DECA concept chain), the P1-B1 DECA Understanding Performance Indicators lesson (DECA, concept, the teaching owner for the deca-performance-indicators skill: skillSlug plus the exact DECA performance-indicators drill mapping, its own checks still formative, chain-terminating because the only DECA lessons left are held), the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: every file under app/ or components/ that imports lib/education is on the recorded allowlist — the lessons surface, the legacy /skills compatibility surface, and, from M15 S4, the post-round debate arena, which resolves a judge diagnosis to the canonical lesson through one pure fail-closed resolver. lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the five historical judge-recommendation slugs, all five active — Wave 1B published the corrected weighing lesson, and M15 S4 added the constructive-speeches alias that previously resolved nowhere. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }

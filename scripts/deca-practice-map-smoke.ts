@@ -835,7 +835,83 @@ function main() {
     }
   });
 
-  console.log(
+  // ---------------------------------------------------------------------------------------------
+// QA-R2 #5/#6 — THE DIAGNOSTIC BRIDGE. A graded test speaks the question bank's vocabulary; the product
+// records four skills. These controls prove the bridge connects the two truthfully and fails closed.
+{
+  const {
+    DECA_DIAGNOSTIC_BRIDGE,
+    decaBridgeForDiagnostic,
+    decaDiagnosticRoutes,
+    decaUnbridgedDiagnostics,
+    decaBridgeAreasAreCanonical
+  } = require("../lib/education/deca-diagnostic-bridge");
+  const { getEducationLesson } = require("../lib/education/registry");
+  const { DECA_DRILL_AREAS } = require("../lib/deca-drills");
+  const published = (lessonId: string) => getEducationLesson(lessonId)?.visibility === "learner";
+
+  assert.ok(decaBridgeAreasAreCanonical(), "B1. every bridged diagnostic belongs to one of the four recorded areas");
+  for (const entry of DECA_DIAGNOSTIC_BRIDGE) {
+    const lesson = getEducationLesson(entry.lessonId);
+    assert.ok(lesson, `B2. ${entry.diagnostic} names a lesson that exists (${entry.lessonId})`);
+    assert.equal(lesson.visibility, "learner", `B2b. ${entry.diagnostic} names a lesson a learner can open`);
+    assert.equal(lesson.track, "DECA", `B2c. ${entry.diagnostic} stays inside DECA`);
+    assert.ok(entry.why.length > 20, `B2d. ${entry.diagnostic} explains the connection in words`);
+  }
+
+  // The bank's four Marketing tags, end to end: the two that marketing teaches, and the measurement one
+  // the approved curriculum assigns to reasoning.
+  const marketing = decaDiagnosticRoutes(
+    ["Target market analysis", "Customer behavior", "Promotion strategy", "Marketing metrics"],
+    published
+  );
+  assert.deepEqual(
+    marketing.map((route: { area: string; lessonId: string }) => [route.area, route.lessonId]),
+    [
+      ["marketing-fundamentals", "deca-who-the-customer-is"],
+      ["marketing-fundamentals", "deca-telling-them-about-it"],
+      ["business-reasoning", "deca-justifying-your-recommendation"]
+    ],
+    "B3. a marketing diagnosis reaches the specific lesson that teaches it, once per lesson"
+  );
+  assert.equal(
+    decaDiagnosticRoutes(["Service recovery"], published)[0]?.lessonId,
+    "deca-handling-customer-situations",
+    "B4. a service diagnosis reaches customer relations"
+  );
+  assert.equal(
+    decaDiagnosticRoutes(["Performance indicators"], published)[0]?.lessonId,
+    "deca-understanding-performance-indicators",
+    "B5. an indicator diagnosis reaches the indicators lesson"
+  );
+  assert.equal(
+    decaDiagnosticRoutes(["Business reasoning"], published)[0]?.lessonId,
+    "deca-justifying-your-recommendation",
+    "B6. a reasoning diagnosis reaches the reasoning lesson"
+  );
+
+  // FAIL CLOSED. Clusters with no published teaching get no route and are reported as uncovered.
+  const uncovered = ["Financial analysis", "Risk management", "Operations planning", "Value proposition ", "Feasibility"];
+  assert.deepEqual(
+    decaDiagnosticRoutes(["Financial analysis", "Operations planning", "Feasibility"], published),
+    [],
+    "B7. a diagnostic with no published lesson produces no recommendation"
+  );
+  assert.deepEqual(
+    decaUnbridgedDiagnostics(["Financial analysis", "Target market analysis"]),
+    ["Financial analysis"],
+    "B8. and is reported as uncovered rather than dropped"
+  );
+  assert.equal(decaBridgeForDiagnostic("value proposition"), DECA_DIAGNOSTIC_BRIDGE.find((e: { diagnostic: string }) => e.diagnostic === "Value proposition"), "B9. matching is case-insensitive");
+  assert.equal(decaBridgeForDiagnostic(null), null, "B10. and null-safe");
+  assert.deepEqual(decaDiagnosticRoutes(["Target market analysis"], () => false), [], "B11. an unpublished lesson yields no route — the control that proves the publication gate");
+  assert.ok(uncovered.length > 0, "B12-C the uncovered list is non-empty, so B7 is not vacuous");
+  const areas = new Set(DECA_DRILL_AREAS.map((a: { id: string }) => a.id));
+  for (const entry of DECA_DIAGNOSTIC_BRIDGE) assert.ok(areas.has(entry.area), "B13. no bridged area outside the four");
+  console.log(`  ok  diagnostic bridge: ${DECA_DIAGNOSTIC_BRIDGE.length} diagnostics, all resolving to published DECA lessons`);
+}
+
+console.log(
     `\nDECA practice-map smoke passed: ${checks} controls. ALL FOUR DECA areas now resolve. P1-B1 and ` +
     `P1-B2 published the two ROLE-PLAY owners from the role-play course; P1-B3 and P1-B4 published the ` +
     `two CLUSTER-KNOWLEDGE owners from the Business-Content course, because the role-play course ` +

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { getActiveTrack } from "@/lib/track-server";
 import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
-import { educationLessonsForTrack, getEducationModule } from "@/lib/education/registry";
+import { EDUCATION_COURSES, educationLessonsForTrack, getEducationLesson, getEducationModule } from "@/lib/education/registry";
 import { EDUCATION_TRACKS, isConceptEducationLessonEntry, type EducationTrack } from "@/lib/education/types";
 
 /**
@@ -43,6 +43,8 @@ type LessonCard = {
   kind: "Concept lesson" | "Role-play lesson";
   availability: LessonAvailability[];
   unavailableNote?: string;
+  /** QA-R2 #15: which course this lesson belongs to, or null for a lesson outside the course model. */
+  courseId?: string | null;
 };
 
 const CHIP: Record<LessonAvailability["state"], "success" | "unavailable" | "info"> = {
@@ -87,6 +89,7 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
     ...roleplayLessonsForTrack(activeTrack?.slug).map((l) => ({
       slug: l.slug, title: l.title, subtitle: l.subtitle, minutes: l.estimatedMinutes,
       label: l.organization, kind: "Role-play lesson" as const,
+      courseId: getEducationLesson(l.slug)?.courseId ?? null,
       unavailableNote: l.practiceStatus === "available" ? undefined : l.practiceUnavailable.cardNote,
       availability: l.practiceStatus === "available"
         ? [
@@ -122,6 +125,7 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
             // metadata slip on a DECA or HOSA entry would have printed another track's name on its card.
             label: getEducationModule(entry.moduleId)?.label ?? "Lesson",
             kind: "Concept lesson" as const,
+            courseId: entry.courseId,
             // Reading and checks, and nothing saved. Stated as words first, exactly like every other
             // card here, so the meaning survives with all styling removed.
             availability: [
@@ -143,12 +147,35 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
       : [])
   ];
 
+  // The registry's course `label` is documented as an internal name, so the learner-facing heading is
+  // named here per course and falls back to that label for any course this map does not know.
+  const COURSE_HEADING: Record<string, string> = {
+    "deca-roleplay-core": "Role-play course",
+    "deca-business-content": "Business-content course",
+    "debate-performance": "Performance course"
+  };
+
+  // QA-R2 #15. The catalog put every card under one badge reading "Performance Course", so twelve DECA
+  // lessons looked like one course — while the course map inside a role-play lesson listed five steps.
+  // They are two DIFFERENT approved courses: the role-play core and the business-content course. The
+  // page now groups by the course each lesson actually belongs to and names it, so the learner can see
+  // how many things there are and which one they are in. A lesson outside the course model (the older
+  // authored Debate set) keeps its own group.
+  const courseGroups = EDUCATION_COURSES.filter((course) => course.track === canonicalTrack)
+    .map((course) => ({
+      course,
+      heading: COURSE_HEADING[course.id] ?? course.label,
+      cards: cards.filter((card) => card.courseId === course.id)
+    }))
+    .filter((group) => group.cards.length > 0);
+  const ungrouped = cards.filter((card) => !courseGroups.some((group) => group.cards.includes(card)));
+
   return (
     <div className="space-y-6">
       <PageHeader
         badges={
           <>
-            <Badge variant="secondary">Performance Course</Badge>
+            <Badge variant="secondary">{courseGroups.length > 1 ? `${courseGroups.length} courses` : "Guided lessons"}</Badge>
             {activeTrack ? <Badge variant="outline">{activeTrack.label}</Badge> : null}
           </>
         }
@@ -172,8 +199,23 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {cards.map((card) => (
+        <div className="space-y-8">
+          {[
+            ...courseGroups.map((group) => ({ key: group.course.id, heading: group.heading, cards: group.cards })),
+            ...(ungrouped.length > 0
+              ? [{ key: "other", heading: courseGroups.length > 0 ? "Other lessons in this track" : "Lessons", cards: ungrouped }]
+              : [])
+          ].map((group) => (
+            <section key={group.key} className="space-y-4" aria-labelledby={`course-${group.key}`}>
+              <div>
+                <h2 id={`course-${group.key}`} className="text-lg font-bold">
+                  {group.heading}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {group.cards.length} {group.cards.length === 1 ? "lesson" : "lessons"} published in this course, in order.
+                </p>
+              </div>
+              {group.cards.map((card) => (
             // Deliberately NOT one card-wide link any more: the entry now carries several
             // availability statements, and wrapping them all in an anchor would make the link's
             // accessible name the whole card. One real action, one accessible name.
@@ -218,6 +260,8 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </Link>
             </article>
+              ))}
+            </section>
           ))}
         </div>
       )}

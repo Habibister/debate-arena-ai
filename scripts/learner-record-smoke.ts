@@ -101,13 +101,34 @@ check("R5. Home's recommendation links to the graded test that flagged it, and c
   const home = stripComments(read(HOME));
   assert.match(home, /const flagged = flaggedTestForTrack\(practiceTests, activeOrg\);/, "R5a the evidence test is resolved");
   assert.match(home, /select: \{ id: true, score: true, weakAreas: true, organization: true \}/, "R5b its id is fetched with the window");
-  assert.match(home, /Flagged by the grader on \{flagged\.isLatest \? "your latest" : "a recent"\} completed \{activeTrack\?\.short\} practice test/, "R5c the sentence says which test, truthfully, and names the track");
+  // SUPERSEDED by QA-R2 #8/#13, not loosened. The sentence still names WHICH test and still says
+  // "latest" only when it is; what changed is that it now offers the step proportionally — one graded
+  // test is evidence for a suggestion, not a verdict on the learner's weakest skill.
+  assert.match(home, /Based on \{flagged\.isLatest \? "your latest" : "a recent"\} completed \{activeTrack\?\.short\} practice test, which flagged \{weakAreas\[0\]\}/, "R5c the sentence says which test, truthfully, and names the track");
+  assert.ok(!/biggest weakness|weakest skill|must fix/i.test(home), "R5c-1 and never escalates one test into a verdict");
   assert.match(home, /href=\{`\/tests\/\$\{flagged\.testId\}\/results` as Route\}/, "R5d the action opens THAT test's feedback");
   assert.match(home, /See that test&apos;s feedback/, "R5e and the label says so");
   assert.ok(!/Open skill practice/.test(home), "R5f the generic skills CTA is gone");
   assert.ok(!/href=\{`\/skills\?track=\$\{trackSlug\}` as Route\}/.test(home), "R5g nothing on Home routes a named weak area to /skills");
-  assert.match(home, /\{isTestTrack \? \(\s*<Card>[\s\S]*?Recommended next/, "R5h the card renders only on tracks with a test product — the only source of weak areas");
+  assert.match(home, /\{isTestTrack \? \(\s*<Card>[\s\S]*?Suggested next step/, "R5h the card renders only on tracks with a test product — the only source of weak areas");
   assert.ok(!/complete a practice test or drill and your weak areas/.test(home), "R5i the empty state no longer claims drills produce weak areas");
+});
+
+check("R5J. Home ranks the evidence-backed step above generic practice, and speaks the recorded skill's name", () => {
+  // QA-R2 #8: the generic "Start DECA practice" button and the recommendation card used to sit at the
+  // same weight, so a beginner got two next steps that disagreed. QA-R2 #6: the card named the test's
+  // own vocabulary ("Target market analysis"), which appears nowhere else in the product.
+  const home = stripComments(read(HOME));
+  assert.match(home, /const hasPersonalNextStep = Boolean\(flagged && weakAreas\.length > 0\);/, "R5J-a one value decides whether personalised evidence exists");
+  assert.ok(
+    home.indexOf("Suggested next step") < home.indexOf("Or start ${activeTrack.short} practice"),
+    "R5J-b the suggestion is rendered before the generic action"
+  );
+  assert.match(home, /variant: hasPersonalNextStep \? "outline" : "default"/, "R5J-c and the generic action steps down to secondary when it exists");
+  assert.match(home, /hasPersonalNextStep\s*\? `Or start \$\{activeTrack\.short\} practice`/, "R5J-d its label says it is the alternative");
+  assert.match(home, /decaDiagnosticRoutesForLearner\(weakAreas\)/, "R5J-e the recorded skill comes from the one bridge");
+  assert.match(home, /suggestion \? `Suggested: \$\{suggestion\.areaLabel\}` : `Suggested: \$\{weakAreas\[0\]\}`/, "R5J-f which names the skill, falling back to the raw area when unbridged");
+  assert.match(home, /activeOrg === "DECA"/, "R5J-g and only DECA has a bridge — no other track is given an invented one");
 });
 
 check("R6. Home's COMPETE action is the track's own, in the track's own words", () => {

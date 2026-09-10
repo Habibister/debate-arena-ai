@@ -42,7 +42,7 @@ export function RoleplayLessonView({ lesson, nav }: { lesson: RoleplayLesson; na
       <header className="rounded-lg border bg-card p-6">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{orgLabel}</Badge>
-          <Badge variant="outline">Performance Course · Lesson {lesson.courseMapCurrentIndex ?? 0}</Badge>
+          <Badge variant="outline">Role-play course · Lesson {lesson.courseMapCurrentIndex ?? 0}</Badge>
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
             <Clock className="h-3.5 w-3.5" aria-hidden />
             {lesson.estimatedMinutes} min
@@ -237,7 +237,10 @@ export function RoleplayCourseFooter({ lesson, course }: { lesson: RoleplayLesso
         <section aria-labelledby="coursemap" className="rounded-lg border bg-card p-6">
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" aria-hidden />
-            <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} Performance Course</h2>
+            {/* QA-R2 #15: this map is ONE of the track's courses — the role-play course whose lessons share this
+                lesson's courseId. Calling it "Your DECA Performance Course" implied it was the whole
+                curriculum, while the catalog listed twelve lessons under the same words. */}
+            <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} role-play course</h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
             The lessons published in this course so far, in order. Every one listed is available now.
@@ -288,7 +291,7 @@ export function RoleplayCourseFooter({ lesson, course }: { lesson: RoleplayLesso
       {lesson.courseMap ? <section aria-labelledby="coursemap" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" aria-hidden />
-          <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} Performance Course</h2>
+          <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} role-play course</h2>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">The full path from zero to a competitor. This lesson is ready now; the rest are on the way.</p>
         <ol className="mt-4 space-y-1.5">

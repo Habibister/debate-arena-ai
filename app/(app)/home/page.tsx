@@ -16,6 +16,7 @@ import { countDueReviews } from "@/lib/spaced-review";
 import { getActiveTrack } from "@/lib/track-server";
 import { recentCompletedTestsQuery, trackPracticeRecord, type TrackPracticeRecord } from "@/lib/learner-record";
 import { flaggedTestForTrack, weakAreasForTrack } from "@/lib/track-recommendations";
+import { decaDiagnosticRoutesForLearner } from "@/lib/education/deca-diagnostic-bridge";
 import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +76,17 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   const weakAreas = weakAreasForTrack(practiceTests, activeOrg);
   // The graded test those areas came from — the evidence behind the personal claim below.
   const flagged = flaggedTestForTrack(practiceTests, activeOrg);
+  // QA-R2 #6 + #8. A weak area is the test's own vocabulary; the bridge names the recorded skill it
+  // belongs to and the lesson that teaches it, so Home speaks the same language as the Skills page and
+  // the drills. DECA only — no other track has a bridge, and one is never invented.
+  const diagnosticRoutes =
+    activeOrg === "DECA"
+      ? decaDiagnosticRoutesForLearner(weakAreas)
+      : [];
+  const suggestion = diagnosticRoutes[0] ?? null;
+  // Personalised evidence exists only when a graded test flagged something. Everything below ranks off
+  // this one value, so the page never shows two equally-weighted instructions that disagree.
+  const hasPersonalNextStep = Boolean(flagged && weakAreas.length > 0);
   // `User.streak` is a LIFETIME count of scored activities across EVERY track (its two writers are
   // the Debate judge route and the PracticeTest grade route). It is shown only on the Debate tile,
   // where it is labelled account-wide; a DECA or HOSA tile shows that track's own record instead.
@@ -176,8 +188,10 @@ export default async function HomePage({ searchParams }: { searchParams: { track
         description={
           hasContinue
             ? "You have an unfinished session — continuing it is the fastest way back into form."
-            : activeTrack
-              ? `One focused ${activeTrack.label} rep is the best next step. Each activity tells you what it records.`
+            : hasPersonalNextStep && activeTrack
+              ? `Your last ${activeTrack.label} test points at one skill — start there. Each activity tells you what it records.`
+              : activeTrack
+                ? `One focused ${activeTrack.label} rep is the best next step. Each activity tells you what it records.`
               : "Pick a track and start a focused rep — each activity tells you what it records."
         }
       />
@@ -189,17 +203,10 @@ export default async function HomePage({ searchParams }: { searchParams: { track
              title; it exists so the outline reads h1 -> h2 -> h3 instead of jumping straight to the
              resume card's own h3, which is what it did before. */}
       <h2 className="sr-only">{hasContinue ? "Continue training" : "Start training"}</h2>
-      {hasContinue ? (
-        <ResumeDebatesCard debates={unfinished} isPractice={Boolean(activeTrack && activeTrack.id !== "GENERAL_DEBATE")} />
-      ) : (
-        <Link
-          href={(activeTrack ? `/training/${activeTrack.slug}/practice` : "/training") as Route}
-          className={cn(buttonVariants({ size: "lg" }), "min-h-11 w-full sm:w-fit")}
-        >
-          {activeTrack ? `Start ${activeTrack.short} practice` : "Choose your track"}
-        </Link>
-      )}
-
+      {/* QA-R2 #8. ORDER IS THE PRIORITY. When a graded test has flagged something, that evidence-backed
+             step is rendered first and the generic practice button follows it as the alternative; with
+             no such evidence the generic action leads, exactly as before. The learner never sees two
+             equally weighted instructions pointing different ways. */}
       {/* 3. Recommended next — real weak-area data from a graded test, or an honest empty state.
              Shown only on tracks that HAVE a practice-test product: the areas come from graded tests
              and nothing else, so a track without tests cannot ever fill this card.
@@ -210,16 +217,36 @@ export default async function HomePage({ searchParams }: { searchParams: { track
       {isTestTrack ? (
         <Card>
           <CardContent className="p-5">
-            <p className="eyebrow">Recommended next</p>
+            <p className="eyebrow">{hasPersonalNextStep ? "Suggested next step" : "Recommended next"}</p>
             {flagged && weakAreas.length > 0 ? (
               <div className="mt-3">
-                <p className="text-lg font-bold">Work on: {weakAreas[0]}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Flagged by the grader on {flagged.isLatest ? "your latest" : "a recent"} completed {activeTrack?.short} practice test{weakAreas.length > 1 ? ` — also worth a look: ${weakAreas.slice(1).join(", ")}` : ""}.
+                {/* Proportional wording: this comes from ONE graded test, so it is offered as a
+                    suggestion based on that test — never as the learner's biggest weakness. Where the
+                    bridge covers the diagnostic, the recorded skill is named too, because that is the
+                    word the Skills page and the drills use. */}
+                <p className="text-lg font-bold">
+                  {suggestion ? `Suggested: ${suggestion.areaLabel}` : `Suggested: ${weakAreas[0]}`}
                 </p>
-                <Link href={`/tests/${flagged.testId}/results` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-3 min-h-11")}>
-                  See that test&apos;s feedback
-                </Link>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Based on {flagged.isLatest ? "your latest" : "a recent"} completed {activeTrack?.short} practice test, which flagged {weakAreas[0]}
+                  {suggestion ? ` — part of ${suggestion.areaLabel.toLowerCase()}` : ""}
+                  {weakAreas.length > 1 ? `. It also flagged ${weakAreas.slice(1).join(", ")}` : ""}.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {suggestion ? (
+                    <>
+                      <Link href={suggestion.lessonHref as Route} className={cn(buttonVariants({ size: "sm" }), "min-h-11")}>
+                        Read the lesson
+                      </Link>
+                      <Link href={suggestion.drillHref as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-11")}>
+                        Drill {suggestion.areaLabel.toLowerCase()}
+                      </Link>
+                    </>
+                  ) : null}
+                  <Link href={`/tests/${flagged.testId}/results` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-11")}>
+                    See that test&apos;s feedback
+                  </Link>
+                </div>
               </div>
             ) : (
               <p className="mt-3 text-sm text-muted-foreground">
@@ -229,6 +256,28 @@ export default async function HomePage({ searchParams }: { searchParams: { track
           </CardContent>
         </Card>
       ) : null}
+
+      {hasContinue ? (
+        <ResumeDebatesCard debates={unfinished} isPractice={Boolean(activeTrack && activeTrack.id !== "GENERAL_DEBATE")} />
+      ) : (
+        // QA-R2 #8. This button and the recommendation card below it used to sit at the same weight,
+        // giving a beginner two next steps that pointed in different directions with nothing to
+        // choose between them. When a graded test has actually flagged something, that evidence leads
+        // and this becomes the alternative; with no evidence, it stays the primary action it was.
+        <Link
+          href={(activeTrack ? `/training/${activeTrack.slug}/practice` : "/training") as Route}
+          className={cn(
+            buttonVariants({ size: "lg", variant: hasPersonalNextStep ? "outline" : "default" }),
+            "min-h-11 w-full sm:w-fit"
+          )}
+        >
+          {activeTrack
+            ? hasPersonalNextStep
+              ? `Or start ${activeTrack.short} practice`
+              : `Start ${activeTrack.short} practice`
+            : "Choose your track"}
+        </Link>
+      )}
 
       {/* 4. Quick actions — same labels, same destinations, now a compact list instead of four
              oversized cards competing with the primary action above. */}

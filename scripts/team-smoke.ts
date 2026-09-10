@@ -172,10 +172,26 @@ async function main() {
       }
     });
     const activeView = await getCoachStudentProgress(coach.id, student.id, "COACH");
+
+    // HOSA H1 — CROSS-TRACK ISOLATION. This coach is viewing the student through a DEBATE team, and
+    // the practice test created above is a DECA row. A coach's student view is scoped to its own
+    // team's organization now, so that row must not enter this view's figures at all: it is real
+    // history and it is kept, but it is not evidence about this student's Debate training. These run
+    // before the assertions below deliberately, so the isolation contract is checked even while the
+    // pre-existing scoring-era failure on the next line remains open.
+    assert.equal(activeView.organization, "DEBATE", "The view resolves to the team's organization.");
+    assert.equal(activeView.tests.completed, 0, "A DECA test must not count inside a DEBATE team's view.");
+    assert.equal(activeView.tests.averageScore, null, "A DECA test cannot contribute to a DEBATE view's average.");
+    assert.ok(
+      !activeView.tests.weakCategories.includes("Marketing"),
+      "A DECA weak category must not appear in a DEBATE view."
+    );
+    // Mastery is recorded evidence or nothing: this student has no MasteryProgress rows, so the figure
+    // is null rather than the practice-test average it used to borrow.
+    assert.equal(activeView.masteryPercent, null, "No mastery rows means null, never a substituted number.");
+
     assert.equal(activeView.debate.judgedRounds, 1, "Judged round must be counted.");
     assert.equal(activeView.debate.averageScore, 78, "Average judge score must reflect real data.");
-    assert.equal(activeView.tests.completed, 1, "Completed test must be counted.");
-    assert.equal(activeView.tests.averageScore, 82, "Test average must reflect real data.");
     assert.ok(activeView.hasAnyActivity, "Student with activity must report activity.");
     assert.ok(
       activeView.recommendations.some((step) => /rebuttal/i.test(step)),

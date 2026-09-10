@@ -22,6 +22,12 @@ export type SourceRevalidation = {
   /** What the learner must re-check against, e.g. "the expected September 1, 2026 release". */
   triggerLabel?: string;
   note?: string;
+  /**
+   * ISO yyyy-mm-dd form of that trigger, when the record states one (HOSA H2). Supplying it lets the
+   * presenter notice that the date has passed; omitting it keeps the previous behaviour exactly, so a
+   * record with no stated date can never acquire a warning it did not earn.
+   */
+  dueOn?: string;
 };
 
 export type SourceFreshnessMetadata = {
@@ -107,6 +113,53 @@ function authorityLabel(authority: SourceAuthority, organization?: SourceOrganiz
   }
 }
 
+// --- revalidation dates (HOSA H2) ----------------------------------------------------------------
+//
+// A record may state the date after which it must be re-checked. Until now nothing compared that date
+// to today, so a record whose trigger had passed still presented itself as current — the one thing a
+// freshness model exists to prevent. The comparison lives HERE, with the rest of the decision layer,
+// and the date itself lives with the record that states it: registries supply metadata, this module
+// decides what the metadata may claim, and it keeps no imports of its own.
+
+/** ISO yyyy-mm-dd to a UTC timestamp, or null when it is not a real calendar day. */
+function isoDay(value: string | undefined | null): number | null {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+  const parsed = Date.parse(`${value}T00:00:00.000Z`);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * Has a stated revalidation trigger fallen due?
+ *
+ * True only when a real trigger date exists, `now` is at or past it, and the record's verification
+ * predates it. A record verified AFTER its own trigger has already been re-checked and stays current.
+ * An unreadable date returns false: a malformed value must not manufacture a warning any more than it
+ * may manufacture currency.
+ */
+export function revalidationIsDue(input: { dueOn?: string | null; lastVerifiedAt?: string | null; now: Date }): boolean {
+  const due = isoDay(input.dueOn);
+  if (due === null) return false;
+  const now = input.now.getTime();
+  if (Number.isNaN(now) || now < due) return false;
+  const verified = isoDay(input.lastVerifiedAt);
+  if (verified !== null && verified >= due) return false;
+  return true;
+}
+
+/**
+ * States only what is provable: this was verified, and it was verified before the point it named for
+ * its own re-check. It does NOT say the release happened, that the rules changed, or that the record
+ * is wrong — none of that is known without going and looking.
+ */
+function revalidationDueLabel(triggerLabel?: string | null): string {
+  const trigger = triggerLabel?.trim();
+  return trigger
+    ? `Revalidation due — this was last verified before ${trigger}`
+    : "Revalidation due — this has not been re-checked since it was first verified";
+}
+
 function freshnessLabel(freshness: FreshnessStatus, season?: string, documentVersion?: string): string | null {
   switch (freshness) {
     case "current":
@@ -136,7 +189,11 @@ function freshnessLabel(freshness: FreshnessStatus, season?: string, documentVer
  *  - revalidation with no trigger says only that revalidation is required — it never invents a date.
  *  - partial and unverified never render with verified tone or official wording.
  */
-export function presentSourceFreshness(metadata: SourceFreshnessMetadata): SourceFreshnessPresentation {
+export function presentSourceFreshness(
+  metadata: SourceFreshnessMetadata,
+  /** Injected so the revalidation boundary can be proved on both sides of its own date. */
+  now: Date = new Date()
+): SourceFreshnessPresentation {
   const sourceLabel = metadata.sourceLabel?.trim() || null;
   const organization = metadata.organization;
   let degraded = false;
@@ -182,10 +239,25 @@ export function presentSourceFreshness(metadata: SourceFreshnessMetadata): Sourc
   const verifiedLabel = formatted && sourceLabel && claimSurvived ? `Last verified ${formatted}` : null;
 
   // --- revalidation ------------------------------------------------------------------------------
+  // HOSA H2. A stated trigger date that has PASSED changes what this record may claim. The record was
+  // verified — that stays on the page — but "current" is no longer supported, because the re-check it
+  // asked for has not happened. The presented currency drops to the model's own
+  // "awaiting-revalidation", and the line says a re-check is due rather than scheduling one in the
+  // past. Nothing here decides the guidelines changed; only that we have not looked.
   let revalidationLabel: string | null = null;
   const trigger = metadata.revalidation?.triggerLabel?.trim();
+  const dueNow =
+    metadata.revalidation?.required === true &&
+    revalidationIsDue({ dueOn: metadata.revalidation?.dueOn, lastVerifiedAt: metadata.lastVerified, now });
   if (metadata.revalidation?.required) {
-    revalidationLabel = trigger ? `Revalidation required after ${trigger}` : "Revalidation required before relying on this";
+    revalidationLabel = dueNow
+      ? revalidationDueLabel(trigger)
+      : trigger
+        ? `Revalidation required after ${trigger}`
+        : "Revalidation required before relying on this";
+  }
+  if (dueNow && freshness === "current") {
+    freshness = "awaiting-revalidation";
   }
   const revalidationNote = metadata.revalidation?.note?.trim() || null;
 
@@ -205,6 +277,10 @@ export function presentSourceFreshness(metadata: SourceFreshnessMetadata): Sourc
     sourceLabel,
     degraded,
     // "verified" tone is reserved for an official claim that survived every check with a date.
-    tone: authority === "official" && !degraded && verifiedLabel ? "verified" : "provisional"
+    // A record awaiting a re-check has NOT survived every check, so it does not keep the verified
+    // tone. Without this the indicator paints a green verified shield beside the words "Awaiting
+    // revalidation against the next release" — the colour asserting exactly what the text denies,
+    // which is the failure the status-by-words rule exists to prevent.
+    tone: authority === "official" && !degraded && verifiedLabel && !dueNow ? "verified" : "provisional"
   };
 }

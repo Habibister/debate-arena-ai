@@ -10,6 +10,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { hosaEventById, HOSA_REVALIDATION_DUE_ON } from "@/lib/hosa-events";
+import { revalidationIsDue } from "@/lib/source-freshness";
 
 // tsconfig jsx=preserve => classic React.createElement, so React must be global before the
 // component modules are evaluated.
@@ -145,8 +147,24 @@ function main() {
 
   // ================= track-specific detail regressions =================
   const mt = route("hosa", { event: "medical-terminology" });
-  assert.ok(mt.includes("Official HOSA source") && mt.includes("Current for 2025-26") && mt.includes("Last verified July 5, 2026"),
+  assert.ok(mt.includes("Official HOSA source") && mt.includes("Last verified July 5, 2026"),
     "Medical Terminology keeps its approved provenance");
+  // HOSA H2 — SUPERSEDED from a snapshot to the invariant behind it. This record states a revalidation
+  // date, so the currency half of its provenance depends on the day the page is rendered. What must
+  // always hold is the pairing: it may claim the season only while a re-check is not owed, and once one
+  // is owed it must say so instead. A real revalidation updates `lastVerified` and restores the first
+  // branch, so this stays true across that too.
+  const revalidationOwed = revalidationIsDue({
+    dueOn: HOSA_REVALIDATION_DUE_ON,
+    lastVerifiedAt: hosaEventById("medical-terminology")!.lastVerified,
+    now: new Date()
+  });
+  assert.ok(
+    revalidationOwed
+      ? mt.includes("Awaiting revalidation against the next release") && !mt.includes("Current for 2025-26")
+      : mt.includes("Current for 2025-26"),
+    "Medical Terminology claims its season only while no revalidation is owed, and says so when one is"
+  );
   const partial = route("hosa", { event: "hosa-bowl" });
   assert.ok(!partial.includes("Official HOSA source") && !partial.includes("Last verified"), "a partial HOSA event inherits no provenance");
   assert.ok(visible(partial).includes("Complete current details not yet verified"), "and says so in words");

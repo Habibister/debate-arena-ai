@@ -324,9 +324,15 @@ export default async function PracticeTestResultsPage({
                 </div>
               ))
             ) : (
+              // HOSA H2. This sentence named DECA on every result, including HOSA's. It is the only
+              // branch a HOSA learner can reach — `diagnosticRoutes` is computed for DECA alone — so
+              // every HOSA result told a health-science competitor their weak areas did not map to a
+              // DECA lesson. For HOSA the truthful statement is simpler and does not promise a lesson
+              // that has not been written, or send them to another track's.
               <p className="text-sm leading-6 text-muted-foreground">
-                Nothing here maps to a written DECA lesson yet. Review the explanations below and retry a shorter set in
-                the same cluster.
+                {test.organization === "DECA"
+                  ? "Nothing here maps to a written DECA lesson yet. Review the explanations below and retry a shorter set in the same cluster."
+                  : `No written ${test.organization} lesson covers this result yet. Review the explanations below and retry a shorter set in the same category.`}
               </p>
             )}
             {uncoveredDiagnostics.length > 0 ? (

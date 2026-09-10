@@ -107,6 +107,16 @@ export const HOSA_CURRENT_SEASON = "2025-26";
 export const HOSA_REVALIDATION_NOTE =
   "HOSA publishes annual competitive-event guidelines. The final 2026-27 guidelines are expected September 1, 2026 — after that release, every officially dependent detail here must be re-checked against it and any later update notices.";
 
+/**
+ * The same date, in the form the freshness model can compare against (HOSA H2).
+ *
+ * The sentence above remains what it MEANS; this is only its calendar value, so a presenter can
+ * notice when it has passed instead of printing "current" forever. Changing this constant does not
+ * revalidate anything — a real re-check updates the record's own `lastVerified`, and only then does
+ * the presented currency come back.
+ */
+export const HOSA_REVALIDATION_DUE_ON = "2026-09-01";
+
 /** Association dependence applies to every HOSA event (doc 03 §6). */
 export const HOSA_ASSOCIATION_NOTE =
   "HOSA's guidelines are written for the International Leadership Conference. Your chartered association may run the event differently, and your association decides advancement — check with it or your advisor.";
@@ -284,6 +294,9 @@ export function hosaSourceMetadata(record: HosaEventRecord): SourceFreshnessMeta
           required: true,
           // One dated expectation, never a standing annual rule.
           triggerLabel: "the expected September 1, 2026 release",
+          // The calendar form of that same expectation, so the decision layer can tell whether it has
+          // passed. The record's status is untouched: this changes what we SAY, not what we know.
+          dueOn: HOSA_REVALIDATION_DUE_ON,
           note: HOSA_REVALIDATION_NOTE
         }
       : undefined,

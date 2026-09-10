@@ -129,12 +129,32 @@ function main() {
 
   // ---- 12/13. HOSA Medical Terminology --------------------------------------------------------------------------
   const mt = hosaEventById("medical-terminology")!;
-  const mtView = presentSourceFreshness(hosaSourceMetadata(mt));
+  // HOSA H2 — SUPERSEDED, deliberately. This record states a revalidation date, so what it may claim
+  // depends on when it is read, and a single undated snapshot could only ever pin one side of that.
+  // Both sides are pinned now: the claim while the gate was still ahead, and the claim a learner sees
+  // once it has passed with no newer verification on file. The verification itself is asserted in both,
+  // because a lapsed currency claim must never be mistaken for a withdrawn source.
+  const beforeGate = new Date("2026-08-31T00:00:00Z");
+  const afterGate = new Date("2026-09-02T00:00:00Z");
+  const mtView = presentSourceFreshness(hosaSourceMetadata(mt), beforeGate);
   assert.equal(mtView.authority, "official", "MT is an official claim");
   assert.equal(mtView.authorityLabel, "Official HOSA source", "named to the organization");
-  assert.equal(mtView.freshnessLabel, "Current for 2025-26", "the approved season");
+  assert.equal(mtView.freshnessLabel, "Current for 2025-26", "the approved season, while the gate is still ahead");
   assert.equal(mtView.verifiedLabel, "Last verified July 5, 2026", "the approved verification date");
   assert.equal(mtView.revalidationLabel, "Revalidation required after the expected September 1, 2026 release", "the dated gate");
+  const mtAfterGate = presentSourceFreshness(hosaSourceMetadata(mt), afterGate);
+  assert.equal(
+    mtAfterGate.freshnessLabel,
+    "Awaiting revalidation against the next release",
+    "once the stated date passes it is no longer presented as current"
+  );
+  assert.equal(
+    mtAfterGate.revalidationLabel,
+    "Revalidation due — this was last verified before the expected September 1, 2026 release",
+    "and the line says a re-check is owed rather than scheduling one in the past"
+  );
+  assert.equal(mtAfterGate.authorityLabel, "Official HOSA source", "the source is still official");
+  assert.equal(mtAfterGate.verifiedLabel, "Last verified July 5, 2026", "and the verification it really had still shows");
   assert.ok(/later update notices/.test(mtView.revalidationNote ?? ""), "later notices must also be checked");
   assert.deepEqual(mtView.variationLabels, ["Association rules may vary"], "association implementation may vary");
   assert.equal(mtView.tone, "verified", "and it earns verified tone");
@@ -283,7 +303,7 @@ function main() {
   assert.equal(decaSourceMetadata(decaFamilyById("individual-series")!).organization, "DECA", "DECA metadata is attributed to DECA");
 
   console.log(
-    "Source/freshness smoke passed: one shared decision layer gates every provenance claim, and the shared indicator renders only what it allows. Official status requires a source label AND an organization; currency requires a season or a document version; a verification date must be a real ISO calendar day and is dropped otherwise; revalidation without a trigger never invents a date; and partial or unverified records can never acquire official wording, a currency claim, or verified tone. No machine code (verified-current, tier-2, awaiting-season-revalidation, sourceStatus) reaches a learner, and no internal proposal ID or unsupported URL does either. HOSA Medical Terminology shows Official HOSA source, Current for 2025-26, Last verified July 5, 2026, the dated September 1 2026 revalidation gate with later notices, and association variation — while every other HOSA event inherits none of it and September 1 is never stated as an annual rule. DECA Series, PBA and TDM keep their approved metadata; TDM's weighting stays unresolved and is not laundered into a clean badge; PSC and the prepared, written and online families stay partial. Debate CWI is labeled as the specific Guide's stable teaching material rather than NSDA's only model; the DECA lesson labels the five-part scaffold as CompeteReady's and defers to family rules; the HOSA lesson keeps its communication-only and no-clinical-readiness boundaries with practice still withdrawn. Seasons, dates and labels live only in registry and lesson data, and the model itself has no runtime imports."
+    "Source/freshness smoke passed: one shared decision layer gates every provenance claim, and the shared indicator renders only what it allows. Official status requires a source label AND an organization; currency requires a season or a document version; a verification date must be a real ISO calendar day and is dropped otherwise; revalidation without a trigger never invents a date; and partial or unverified records can never acquire official wording, a currency claim, or verified tone. No machine code (verified-current, tier-2, awaiting-season-revalidation, sourceStatus) reaches a learner, and no internal proposal ID or unsupported URL does either. HOSA Medical Terminology shows Official HOSA source, Last verified July 5, 2026, the dated September 1 2026 revalidation gate with later notices, and association variation; its currency depends on when it is read, and both sides are pinned — Current for 2025-26 while that gate was still ahead, and Awaiting revalidation against the next release once it passed with no newer verification on file — while every other HOSA event inherits none of it and September 1 is never stated as an annual rule. DECA Series, PBA and TDM keep their approved metadata; TDM's weighting stays unresolved and is not laundered into a clean badge; PSC and the prepared, written and online families stay partial. Debate CWI is labeled as the specific Guide's stable teaching material rather than NSDA's only model; the DECA lesson labels the five-part scaffold as CompeteReady's and defers to family rules; the HOSA lesson keeps its communication-only and no-clinical-readiness boundaries with practice still withdrawn. Seasons, dates and labels live only in registry and lesson data, and the model itself has no runtime imports."
   );
 }
 

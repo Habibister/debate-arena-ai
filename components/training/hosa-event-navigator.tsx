@@ -19,9 +19,12 @@ import {
   presentHosaEvent,
   HOSA_FAMILIES,
   HOSA_ASSOCIATION_NOTE,
+  HOSA_REVALIDATION_DUE_ON,
   HOSA_SUPERVISION_POLICY_NOTE,
-  type HosaEventRecord
+  type HosaEventRecord,
+  type HosaSourceStatus
 } from "@/lib/hosa-events";
+import { revalidationIsDue } from "@/lib/source-freshness";
 
 // The HOSA training hub. This component renders ON /training/hosa/events, so the events hub can
 // never be its own recovery destination — the hub above it is the honest one.
@@ -68,16 +71,37 @@ function FactRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * The status a learner is shown, which is not always the status stored.
+ *
+ * HOSA H2: a record that states its own revalidation date keeps saying "Verified against the current
+ * official guidelines" once that date passes, which is a currency claim nobody has re-earned. The
+ * stored status is untouched — it is still what it was verified as — but the WORDS drop to the
+ * registry's own "awaiting revalidation" vocabulary. The verified facts stay: they were checked
+ * against the 2025-26 document and that has not stopped being true.
+ */
+function presentedStatus(record: HosaEventRecord, verified: boolean, now: Date): HosaSourceStatus {
+  if (!verified) return "partial";
+  const due =
+    record.revalidationRequired === true &&
+    revalidationIsDue({ dueOn: HOSA_REVALIDATION_DUE_ON, lastVerifiedAt: record.lastVerified, now });
+  return due ? "awaiting-season-revalidation" : record.sourceStatus;
+}
+
 /** Status is always carried by words plus an icon — never by colour alone. */
 function StatusLine({ record }: { record: HosaEventRecord }) {
   const verified = presentHosaEvent(record).verified;
-  const Icon = verified ? CheckCircle2 : HelpCircle;
+  const status = presentedStatus(record, verified, new Date());
+  // The icon follows the words. A record awaiting revalidation must not wear the same green check as
+  // one that is current, or the strongest cue on the card contradicts the sentence beside it.
+  const Icon = status === "verified-current" || status === "verified-stable" ? CheckCircle2 : HelpCircle;
+  const iconTone = Icon === CheckCircle2 ? "text-emerald-600" : "text-amber-600";
   // M11R9: a SPAN, not a paragraph. This line renders inside the result <button>s below, and a
   // button may only contain phrasing content — `flex` gives the same layout without invalid markup.
   return (
     <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
-      <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${verified ? "text-emerald-600" : "text-amber-600"}`} aria-hidden />
-      <span>{hosaStatusLabel(verified ? record.sourceStatus : "partial")}</span>
+      <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${iconTone}`} aria-hidden />
+      <span>{hosaStatusLabel(status)}</span>
     </span>
   );
 }

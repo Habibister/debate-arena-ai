@@ -144,6 +144,22 @@ const EVENT_TYPE_TO_SPEC_EVENT: Partial<Record<Organization, Record<string, stri
   MODEL_UN: { COMMITTEE_SPEECH: "General Assembly Committee Session", RESOLUTION_DEFENSE: "General Assembly Committee Session" }
 };
 
+/**
+ * The practice event types this spec honestly describes (HOSA H2).
+ *
+ * The same honest mapping `findSpecForEvent` uses, exposed so a UI can scope a claim BEFORE it is
+ * rendered rather than after a request is made. HOSA's Medical Terminology specification maps from
+ * HEALTH_SCIENCE_EVENT only — PREPARED_SPEAKING has no mapping, so a 50-item written format is not
+ * its official format and must not be shown as one. Returns an empty list when nothing maps, which is
+ * the fail-closed answer: no event type, no claim.
+ */
+export function specEventTypesFor(organization: Organization, eventName: string): string[] {
+  const mapping = EVENT_TYPE_TO_SPEC_EVENT[organization] ?? {};
+  return Object.entries(mapping)
+    .filter(([, mappedEvent]) => mappedEvent === eventName)
+    .map(([eventType]) => eventType);
+}
+
 export async function findSpecForEvent(organization: Organization, eventType?: string): Promise<CompetitionSpec | null> {
   if (eventType) {
     // An explicit event type must map to a spec honestly, or get no attribution at all — never

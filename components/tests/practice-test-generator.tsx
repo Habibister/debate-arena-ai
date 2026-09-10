@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { Level } from "@prisma/client";
@@ -57,7 +57,19 @@ async function createPracticeTest(input: {
 // `lockedOrganization` pins the generator to the selected track's organization (DECA or HOSA) so a
 // HOSA user can never switch to DECA content, and vice versa. Omitted → the user may choose (used only
 // on the no-track browse-all tests page).
-export function PracticeTestGenerator({ lockedOrganization , officialFormat }: { lockedOrganization?: TestingOrganization ; officialFormat?: OfficialTestFormatProps | null }) {
+export function PracticeTestGenerator({
+  lockedOrganization,
+  officialFormat,
+  officialClaims,
+  officialEventTypes
+}: {
+  lockedOrganization?: TestingOrganization;
+  officialFormat?: OfficialTestFormatProps | null;
+  /** The source banner and rubric for `officialFormat`'s event, rendered only while it is selected. */
+  officialClaims?: ReactNode;
+  /** The practice event types that specification honestly describes. Empty means it describes none. */
+  officialEventTypes?: readonly string[];
+}) {
   const router = useRouter();
   const initialOrg: TestingOrganization = lockedOrganization ?? "DECA";
   const [organization, setOrganization] = useState<TestingOrganization>(initialOrg);
@@ -82,7 +94,24 @@ export function PracticeTestGenerator({ lockedOrganization , officialFormat }: {
     setEventCluster(testingClustersForOrganization(nextOrganization)[0]);
   }
 
-  const officialAvailable = Boolean(officialFormat && [10, 25, 50, 100].includes(officialFormat.questionCount));
+  // HOSA H2 — AN OFFICIAL CLAIM BELONGS TO ONE EVENT.
+  // `officialFormat` is the registry's spec for the organization, and for HOSA that spec describes
+  // Medical Terminology and nothing else. It may only speak while the learner has that event
+  // selected: the fifteen other categories have no official specification, so borrowing this one's
+  // question count, timer, rubric or verification date would attribute a real document to material it
+  // never described. The event name is matched against the selection rather than assumed.
+  // BOTH selectors name an event, so both must agree. The category has to be the event the spec
+  // describes, AND the event type has to be one the spec honestly maps from — HOSA's maps from
+  // HEALTH_SCIENCE_EVENT alone, so a set labelled Prepared Speaking never inherits a 50-item written
+  // format, its rubric or its verification date, whatever category is chosen beside it.
+  const officialAppliesToSelection = Boolean(
+    officialFormat &&
+      eventCluster === officialFormat.eventName &&
+      (officialEventTypes ?? []).includes(eventType)
+  );
+  const officialAvailable = Boolean(
+    officialFormat && officialAppliesToSelection && [10, 25, 50, 100].includes(officialFormat.questionCount)
+  );
   const officialSelected = Boolean(officialAvailable && officialFormat && questionCount === officialFormat.questionCount && useOfficial);
 
   async function onGenerate() {
@@ -175,6 +204,20 @@ export function PracticeTestGenerator({ lockedOrganization , officialFormat }: {
             ))}
           </div>
         </div>
+
+        {/* The official source, rubric and point total for the one event they describe — on screen
+            only while that event is the selection. Every other category shows what it actually is
+            below: CompeteReady-authored practice with no official specification attached. Neither
+            statement says the category is not a real event, or that unverified means wrong. */}
+        {officialClaims && officialAppliesToSelection ? <div className="space-y-3">{officialClaims}</div> : null}
+        {officialClaims && officialFormat && !officialAppliesToSelection ? (
+          <p className="rounded-md border bg-background p-3 text-xs leading-6 text-muted-foreground">
+            Original CompeteReady practice questions for {eventCluster}. No event-specific official specification
+            is attached to this category in our record, so nothing here is presented as {organization}&apos;s
+            official format or scoring. The {officialFormat.eventName} specification we do hold describes that
+            event only, and appears when you select it.
+          </p>
+        ) : null}
 
         <div>
           <p className="mb-3 text-sm font-semibold">{organization === "DECA" ? "Event cluster" : "Event category"}</p>

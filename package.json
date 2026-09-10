@@ -48,6 +48,7 @@
     "review-ladder:smoke": "tsx scripts/review-ladder-smoke.ts",
     "coach-evidence:smoke": "tsx scripts/coach-evidence-smoke.ts",
     "coach-truth:smoke": "tsx scripts/coach-truth-smoke.ts",
+    "hosa-source-scope:smoke": "tsx scripts/hosa-source-scope-smoke.ts",
     "clash-activation:smoke": "tsx scripts/seed-debate-clash-skill-smoke.ts",
     "wg08-activation:smoke": "tsx scripts/wg08-activation-smoke.ts",
     "secure-evidence:smoke": "tsx scripts/secure-evidence-smoke.ts",

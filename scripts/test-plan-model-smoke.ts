@@ -19,6 +19,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { HOSA_MEDTERM_TEST_PLAN } from "@/lib/hosa-events";
 import { testPlanIsUsable, testPlanProblems, testPlanRows, testPlanTotalWeight, type TestPlanRow } from "@/lib/test-plan";
+import { supersedesActiveSpecs, SUPERSEDING_EVENT_NAME, SUPERSEDING_ORGANIZATION } from "@/lib/spec-supersession";
 
 const read = (file: string) => readFileSync(file, "utf8");
 const flat = (source: string) => source.replace(/\s+/g, " ");
@@ -163,10 +164,60 @@ assert.ok(validateAt > -1 && firstWriteAt > -1 && validateAt < firstWriteAt,
 assert.ok(/throw new Error\(`\[specs\] \$\{spec\.organization\}/.test(seed),
   "D7. and a bad plan stops the seed instead of being written");
 
-// One active spec per event. Two active rows means the registry holds two answers to "what is current".
+// ---- SUPERSESSION SCOPE (H4-C1-R1) -----------------------------------------------------------
+//
+// Exactly one duplicate-active case has ever been established: seeding Medical Terminology 2026-27
+// leaves the 2025-26 row active, so the registry holds two rows both claiming to be current. Retiring
+// that row is right. Retiring rows for Public Forum Debate, Hotel and Lodging Management and the Model
+// UN General Assembly is NOT: nothing requires one active spec per event — the unique key names
+// (organization, eventName, season, version) and never isActive, and every runtime read is an ordered
+// findFirst that tolerates several actives — so a general guard would invent that rule for three
+// tracks out of one HOSA discovery and change what an ordinary future seed run does to them.
+//
+// EXECUTED, not read from source: the decision function is run against the four seeded events
+// themselves, so a widened scope fails here rather than passing a regex that never looked.
+const seededEvents = (() => {
+  const array = seed.slice(seed.indexOf("const specs: SpecSeed[] = ["), seed.indexOf("async function main"));
+  const organizations = [...array.matchAll(/\n    organization: "([^"]+)",/g)].map((match) => match[1]);
+  const eventNames = [...array.matchAll(/\n    eventName: "([^"]+)",/g)].map((match) => match[1]);
+  assert.equal(organizations.length, 4, "D8a. the seed still declares four specs");
+  assert.equal(eventNames.length, 4, "D8b. each with one event name");
+  return organizations.map((organization, index) => ({ organization, eventName: eventNames[index] }));
+})();
+assert.deepEqual(
+  seededEvents.filter(supersedesActiveSpecs),
+  [{ organization: "HOSA", eventName: "Medical Terminology" }],
+  "D8. exactly one seeded spec retires other active rows, and it is Medical Terminology"
+);
+for (const event of seededEvents.filter((candidate) => !supersedesActiveSpecs(candidate))) {
+  assert.equal(supersedesActiveSpecs(event), false,
+    `D8c. seeding ${event.organization} · ${event.eventName} changes no other spec's active state`);
+}
+// The scope must be BOTH halves of the pair. A guard keyed on the organization alone would retire
+// every other HOSA event too; one keyed on the event name alone would reach another organization's
+// event of the same name.
+assert.equal(supersedesActiveSpecs({ organization: "HOSA", eventName: "Medical Math" }), false,
+  "D8d. another HOSA event does not supersede");
+assert.equal(supersedesActiveSpecs({ organization: "DECA", eventName: SUPERSEDING_EVENT_NAME }), false,
+  "D8e. and the event name alone does not carry the rule into another organization");
+assert.equal(supersedesActiveSpecs({ organization: SUPERSEDING_ORGANIZATION, eventName: SUPERSEDING_EVENT_NAME }), true,
+  "D8f. control: the pair the rule is actually about does supersede");
+
+// The write is gated by that decision, and — the trap — its query still keys on the row THIS
+// iteration wrote. Hardcoded literals in the where clause would let the Model UN iteration, which runs
+// after HOSA in the same loop, retire the brand-new Medical Terminology row and leave ZERO active MT
+// specs. That failure is invisible to any assertion that only checks the gate exists.
 assert.ok(
-  /organization: result\.organization, eventName: result\.eventName, isActive: true, id: \{ not: result\.id \} \}, data: \{ isActive: false \}/.test(seedFlat),
-  "D8. upserting a spec retires any other active spec for the same event"
+  /if \(supersedesActiveSpecs\(result\)\) \{ const superseded = await prisma\.competitionSpec\.updateMany\(\{/.test(seedFlat),
+  "D8g. the deactivation is gated by the scope decision"
+);
+assert.ok(
+  /where: \{ organization: result\.organization, eventName: result\.eventName, isActive: true, id: \{ not: result\.id \} \}, data: \{ isActive: false \}/.test(seedFlat),
+  "D8h. and keys on the row just written, never on hardcoded literals"
+);
+assert.ok(
+  !/organization: "HOSA", eventName: "Medical Terminology", isActive: true/.test(seedFlat),
+  "D8i. no literal-keyed deactivation exists anywhere in the seed"
 );
 assert.ok(/deactivated \$\{superseded\.count\}/.test(seed),
   "D9. and says so, because it is the one write that touches rows the seed did not create");
@@ -180,6 +231,7 @@ assert.ok(
 );
 assert.notEqual(testPlanTotalWeight(MT), 50, "D12. and the plan's 100 percent is not the rubric's 50 points");
 ok("seed: the plan is derived, keyed, validated before any write, and never becomes rubric points");
+ok("supersession: exactly one seeded event retires other active rows, gated and keyed on the row just written");
 
 // ---- 5. THE SYNC IS DESIGNED, NOT DONE --------------------------------------------------------
 
@@ -196,12 +248,16 @@ console.log(
     "100 percent with twelve distinct keys, 45 percent on word parts and eleven body systems at 5; published order " +
     "survives transcription rather than being re-sorted by weight; and a plan is refused as official when its weights " +
     "fall short of or exceed 100, a key repeats or is blank, a label is blank, a weight is fractional or zero, orders " +
-    "are out of sequence, or there are no rows at all. ASSERTED FROM SOURCE: SpecTestPlanRow is its own table, keyed " +
+    "are out of sequence, or there are no rows at all; and, run against the four seeded events themselves, the " +
+    "supersession rule fires for Medical Terminology alone — not for another HOSA event, not for the same event name " +
+    "under another organization, and not for Public Forum Debate, Hotel and Lodging Management or the Model UN " +
+    "General Assembly. ASSERTED FROM SOURCE: SpecTestPlanRow is its own table, keyed " +
     "uniquely per spec, ordered, cascading from CompetitionSpec, carrying no points column, while SpecRubricCategory " +
     "keeps its nullable points and gains no percentage; the seed derives the plan from the transcribed registry, keeps " +
     "it out of the spec's own columns, matches rows on their stable key, deletes only rows the plan dropped, validates " +
-    "every plan before its first write, aborts on a bad one, retires any other active spec for the same event and logs " +
-    "that it did, and leaves Medical Terminology scored by exactly one 50-point rubric row; the sync runbook holds the " +
+    "every plan before its first write, aborts on a bad one, gates its one deactivating write behind that scope decision " +
+    "while keying the query on the row just written rather than on literals, and leaves Medical Terminology scored by " +
+    "exactly one 50-point rubric row; the sync runbook holds the " +
     "exact DDL and states it has not been applied. NOT PROVEN HERE: anything about the shared database — no client was " +
     "constructed and no connection was made. The table does not exist there yet."
 );

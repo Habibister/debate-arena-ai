@@ -20,6 +20,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { readFileSync, existsSync } from "node:fs";
 import { HOSA_MEDTERM_TEST_PLAN } from "@/lib/hosa-events";
 import { testPlanProblems, testPlanRows, type TestPlanRow } from "@/lib/test-plan";
+import { supersedesActiveSpecs } from "@/lib/spec-supersession";
 
 function loadEnv(file: string) {
   if (!existsSync(file)) return;
@@ -318,15 +319,24 @@ async function main() {
       console.log(`[specs]   test plan: ${planRows.length} rows totalling ${planRows.reduce((total, row) => total + row.weightPercent, 0)}%${stale.count > 0 ? ` (${stale.count} stale removed)` : ""}`);
     }
 
-    // One active spec per event. `getActiveSpec` picks the newest active row by season, so a
-    // superseded season left active is invisible until something reads it — and then the app shows
-    // last season's rules as current. Retiring it here is the point at which we actually know.
-    const superseded = await prisma.competitionSpec.updateMany({
-      where: { organization: result.organization, eventName: result.eventName, isActive: true, id: { not: result.id } },
-      data: { isActive: false }
-    });
-    if (superseded.count > 0) {
-      console.log(`[specs]   deactivated ${superseded.count} superseded ${result.organization} · ${result.eventName} spec(s)`);
+    // Retire the superseded Medical Terminology season — and ONLY that. `getActiveSpec` picks the
+    // newest active row by season, so the 2025-26 row left active is invisible until something reads
+    // it, and then the registry holds two rows both claiming to be current. Retiring it here is the
+    // point at which we actually know.
+    //
+    // The scope decision lives in lib/spec-supersession.ts, which explains why this is not general:
+    // no invariant anywhere requires one active spec per event, so running this for Debate, DECA and
+    // Model UN would invent that rule for three tracks out of one HOSA discovery. The query still
+    // keys on the row THIS iteration just wrote — never on hardcoded literals, which would let a
+    // later iteration retire an event it does not own.
+    if (supersedesActiveSpecs(result)) {
+      const superseded = await prisma.competitionSpec.updateMany({
+        where: { organization: result.organization, eventName: result.eventName, isActive: true, id: { not: result.id } },
+        data: { isActive: false }
+      });
+      if (superseded.count > 0) {
+        console.log(`[specs]   deactivated ${superseded.count} superseded ${result.organization} · ${result.eventName} spec(s)`);
+      }
     }
   }
   console.log("Competition Specification Registry seeded: 4 specs with structured rubric categories, and the official written-test plan for the one event that publishes one.");

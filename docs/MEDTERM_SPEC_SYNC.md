@@ -61,13 +61,24 @@ line against the database before accepting the run:
 | 2 | **INSERT** HOSA MT `2026-2027` v1 | A new season is a new unique key — this is an insert, not an edit of the existing `2025-2026` row |
 | 3 | Delete + recreate SpecRubricCategory rows per spec | Pre-existing behaviour, unchanged by H4-C1 |
 | 4 | **INSERT 12 SpecTestPlanRow rows** for HOSA MT | The 2026-27 written test plan; 45 + (11 × 5) = 100 |
-| 5 | **Deactivate superseded specs** | `isActive = false` on any other active row with the same organization + event name |
+| 5 | **Deactivate the superseded MT season** | `isActive = false` on any other active Medical Terminology row. HOSA MT only — the other three specs deactivate nothing |
 
 Write 5 is new in H4-C1 and is the only write that changes rows the seed did not create. It exists
 because `getActiveSpec` returns the newest active row by season: without it, MT `2025-2026` stays
 active and invisible, and the registry holds two rows both claiming to be current. Expected effect on
-the shared database: the existing MT `2025-2026` row is retired. **Confirm before running** that this
-is the only spec it will touch — the seed logs each deactivation by organization and event.
+the shared database: the existing MT `2025-2026` row is retired, and nothing else.
+
+**It is scoped to Medical Terminology alone** (H4-C1-R1, `lib/spec-supersession.ts`). One active spec
+per event is *not* an established invariant here — the unique key is
+`(organization, eventName, season, version)` with no constraint on `isActive`, and every runtime read
+is an ordered `findFirst` that tolerates several active rows. Debate, DECA and Model UN therefore keep
+exactly the seed behaviour they had before H4-C1: they deactivate nothing. **Confirm before running**
+that the log shows at most one deactivation, and that it names HOSA · Medical Terminology.
+
+Known limitation, deliberately not fixed here: the query filters on organization + event name and
+**does not compare seasons**, so it would also retire a *newer* MT row if one existed. None does —
+the seed is the only writer of MT rows — but the admin routes `POST /api/specs` and
+`PATCH /api/specs/[specId]` can create or re-activate one, and no code path stops them.
 
 The seed refuses to write at all if any test plan fails validation (missing or duplicate key, empty
 label, non-positive weight, out-of-sequence order, or weights not totalling 100). It validates every
@@ -85,6 +96,7 @@ Both are owner-approved actions against a shared production database. Neither ma
 ## 4. Verification after the run
 
 - `CompetitionSpec` has exactly one active HOSA Medical Terminology row, season `2026-2027`.
+- The active-state of every DEBATE, DECA and MODEL_UN spec is unchanged from before the run.
 - That spec has 12 `SpecTestPlanRow` children whose `weightPercent` sums to 100.
 - That spec still has exactly **one** `SpecRubricCategory` row worth **50** points. The plan totals
   100 percent and the rubric totals 50 points; they describe different things and neither number may

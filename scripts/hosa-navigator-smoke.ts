@@ -48,15 +48,22 @@ function main() {
   const mtView = presentHosaEvent(mt!);
   assert.equal(mtView.verified, true, "Medical Terminology is displayable as verified");
   assert.equal(mt!.season, HOSA_CURRENT_SEASON, "its season is the current official set");
-  assert.equal(mt!.season, "2025-26", "the current official set is 2025-26");
-  assert.equal(mt!.lastVerified, "2026-07-05", "its last-verified date matches the approved record");
+  // H4-B: re-verified against the 2026-27 guideline dated September 2026, read directly.
+  assert.equal(mt!.season, "2026-27", "the current official set is 2026-27");
+  assert.equal(mt!.lastVerified, "2026-09-10", "its last-verified date matches the record it was read from");
   assert.equal(mt!.sourceStatus, "verified-current", "its verification status is explicit in the registry");
-  assert.ok(mt!.sourceLabel?.includes("2025-26"), "its source label names the season");
-  // The ONLY two sourced structural facts. Anything else would be invention.
-  assert.deepEqual(Object.keys(mtView.facts).sort(), ["questionCount", "timeMinutes"], "exactly the two sourced facts");
+  assert.ok(mt!.sourceLabel?.includes("2026-27"), "its source label names the season");
+  // The ONLY sourced structural facts. Anything else would be invention. H4-B added the third: the
+  // September 2026 guideline publishes a written test plan, so the card may say one exists — the plan
+  // itself is recorded as data in HOSA_MEDTERM_TEST_PLAN, not restated here.
+  assert.deepEqual(
+    Object.keys(mtView.facts).sort(),
+    ["questionCount", "testPlanAvailable", "timeMinutes"],
+    "exactly the sourced facts"
+  );
   assert.equal(mtView.facts.questionCount, 50, "50 questions (docs/curriculum/00-principles-and-sources.md:130)");
   assert.equal(mtView.facts.timeMinutes, 60, "60 minutes (docs/curriculum/00-principles-and-sources.md:130)");
-  for (const absent of ["rounds", "teamSize", "prejudged", "onsite", "resultsTiming", "equipmentNote", "ratingSheetAvailable", "testPlanAvailable"] as const) {
+  for (const absent of ["rounds", "teamSize", "prejudged", "onsite", "resultsTiming", "equipmentNote", "ratingSheetAvailable"] as const) {
     assert.equal(mtView.facts[absent], undefined, `unsourced field stays absent, not defaulted: ${absent}`);
   }
 
@@ -122,7 +129,9 @@ function main() {
   // documentation must not read as an invention.
   const stripComments = (src: string) =>
     src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/(^|\s)\/\/.*$/, "")).join("\n");
-  const surfaces = [registry, nav, page].map(stripComments).join("\n");
+  const stripMedTermTiebreaker = (src: string) =>
+    src.replace(/export const HOSA_MEDTERM_TIEBREAKER = \{[\s\S]*?\} as const;/, " ");
+  const surfaces = [registry, nav, page].map(stripComments).map(stripMedTermTiebreaker).join("\n");
   const inventions: Array<[string, RegExp]> = [
     ["room layout", /room (is |will be )?(set ?up|layout|arrangement)|the room will have|two chairs|exam table/i],
     ["patient portrayal", /the patient is (played|portrayed)|an actor (plays|portrays)|a judge (plays|portrays) the patient/i],
@@ -131,13 +140,27 @@ function main() {
     ["universal question count", /\b\d+\s*-?\s*question (test|exam)\b/i],
     ["universal round count", /\b(two|three|four|\d+) rounds\b/i],
     ["equipment list", /you (will|must) (bring|need)\b|required equipment includes/i],
-    ["tiebreaker", /tiebreak/i],
+    // H4-B: tiebreakers are SOURCED for Medical Terminology now, so a blanket ban would forbid a true
+    // fact. What must never exist is a tiebreaker claim that is not tied to that one event, so the
+    // scan drops the MT-scoped constant by name and keeps banning every other mention.
+    ["tiebreaker outside Medical Terminology", /tiebreak/i],
     ["advancement rule", /top \d+ advance|advance to (the )?(final|international)|cut ?line/i],
     ["results timing", /results (are|will be) (posted|announced) (on|within)/i]
   ];
   for (const [label, pattern] of inventions) {
     assert.ok(!pattern.test(surfaces), `no universal ${label} is invented`);
   }
+  // The exemption is narrow by construction: the sourced tiebreaker lives in ONE constant, that
+  // constant names Medical Terminology, and removing it leaves no other mention anywhere.
+  assert.ok(/export const HOSA_MEDTERM_TIEBREAKER = \{/.test(registry), "the sourced tiebreaker is one MT-named constant");
+  assert.ok(/totalQuestions: 10/.test(registry) && /questionsPerSet: 5/.test(registry),
+    "carrying the ten questions in two sets of five the guideline states");
+  assert.equal(
+    (stripComments(registry).replace(/export const HOSA_MEDTERM_TIEBREAKER = \{[\s\S]*?\} as const;/, " ").match(/tiebreak/gi) ?? []).length,
+    0,
+    "and no other tiebreaker mention exists in the registry"
+  );
+
   // The partial card names what it refuses to show, which is the honest form of the same rule.
   assert.ok(nav.includes("has not yet verified the complete current structure for this event"), "the honest partial message is present");
 
@@ -148,9 +171,16 @@ function main() {
   assert.ok(nav.includes("HOSA_ASSOCIATION_NOTE"), "the Navigator renders it");
   assert.ok(!/\bentry limit|field size|how many advance/i.test(surfaces), "no advancement model or entry limit is taught");
 
-  // ---- 14. the September 1 gate, without a permanent annual-release claim ------------------------------
-  assert.ok(HOSA_REVALIDATION_NOTE.includes("September 1, 2026"), "the dated gate is preserved");
-  assert.ok(/2026-27 guidelines are expected/.test(HOSA_REVALIDATION_NOTE), "phrased as an expectation for one named release");
+  // ---- 14. the revalidation gate, without a permanent annual-release claim -----------------------------
+  // H4-B — SUPERSEDED. The gate used to name September 1, 2026 because that was the release being
+  // waited for; it arrived and was read. Naming it now would schedule a re-check in the past, so the
+  // gate names the NEXT release and stays undated — HOSA publishes annually, but the 2027-28 date is
+  // not published and guessing it is the invention this section exists to prevent. What the control
+  // protects is unchanged: one named expectation, never a standing annual rule.
+  assert.ok(HOSA_REVALIDATION_NOTE.includes("2027-28"), "the gate names the next release");
+  assert.ok(!/September 1, 2026/.test(HOSA_REVALIDATION_NOTE), "and no longer names the release already read");
+  assert.ok(!/\b20\d\d-\d\d-\d\d\b/.test(HOSA_REVALIDATION_NOTE), "with no invented calendar date for it");
+  assert.ok(/2026-27 guidelines are the set in force/.test(HOSA_REVALIDATION_NOTE), "and states which set is in force");
   assert.ok(!/every September|each September|annually on September|every year on September/i.test(surfaces),
     "September 1 is never stated as a permanent annual release rule");
   assert.equal(mt!.revalidationRequired, true, "the verified event carries the revalidation flag");
@@ -270,11 +300,11 @@ function main() {
   assert.equal(mtNow.family, "knowledge-test", "its family is unchanged");
   assert.equal(mtNow.routeTarget, "/training/hosa/event/medical-terminology", "its route is unchanged");
   assert.equal(mtNow.sourceStatus, "verified-current", "its source status is unchanged");
-  assert.equal(mtNow.season, "2025-26", "its season is unchanged");
+  assert.equal(mtNow.season, "2026-27", "its season is the one now in force");
   const mtMeta = hosaSourceMetadata(mtNow);
   assert.equal(mtMeta.authority, "official", "its provenance authority is unchanged");
-  assert.equal(mtMeta.sourceLabel, "HOSA 2025-26 competitive event guidelines", "its source label is unchanged");
-  assert.equal(mtMeta.lastVerified, "2026-07-05", "its last-verified date is unchanged");
+  assert.equal(mtMeta.sourceLabel, "HOSA 2026-27 Medical Terminology ILC Guidelines (September 2026)", "its source label names the document read");
+  assert.equal(mtMeta.lastVerified, "2026-09-10", "its last-verified date is the day that document was read");
   // A family whose destination is a fixed CompeteReady surface still resolves to it.
   const clinical2 = resolveHosaFamilyDestination("clinical-skill");
   assert.equal(clinical2.kind, "branch", "the clinical-skill family still resolves to its fixed branch");
@@ -370,7 +400,7 @@ function main() {
   }
 
   console.log(
-    "HOSA Navigator smoke passed: the HOSA branch of the shared Navigator route resolves only ?event= through the HOSA registry and fails closed. Exactly one event (Medical Terminology) is displayable as verified, carrying only the two facts the approved local record sources — 50 questions and 60 minutes, season 2025-26, verified 2026-07-05 — and every other field stays absent rather than defaulted. The other seven events are identity-only partial cards that expose no facts at all, and no Medical Terminology value reaches them. Unknown, blank, or malformed identifiers resolve to nothing: never the first entry, never a silent redirect, never another event. A record claiming verification without season, date, source label and at least one real fact degrades to partial. No room layout, patient portrayal, team size, timing, question count, round count, equipment list, tiebreaker, advancement rule or results timing is invented anywhere; families are labeled as CompeteReady's grouping, not an official taxonomy; association variation is stated for every event; and the September 1, 2026 gate is preserved as one dated expectation rather than an annual rule. The clinical-skill family routes only to the informational communication lesson with its scope statement, whose practice remains unavailable and mounts no hooks, storage or request. Debate and DECA are untouched, status is always words plus an icon, search is labeled and keyboard-operable, and nothing writes to a schema, API, mastery, progress, XP, rating or ballot."
+    "HOSA Navigator smoke passed: the HOSA branch of the shared Navigator route resolves only ?event= through the HOSA registry and fails closed. Exactly one event (Medical Terminology) is displayable as verified, carrying only the two facts the approved local record sources — 50 questions and 60 minutes, season 2026-27, verified 2026-09-10 against the September 2026 guideline — and every other field stays absent rather than defaulted. The other seven events are identity-only partial cards that expose no facts at all, and no Medical Terminology value reaches them. Unknown, blank, or malformed identifiers resolve to nothing: never the first entry, never a silent redirect, never another event. A record claiming verification without season, date, source label and at least one real fact degrades to partial. No room layout, patient portrayal, team size, timing, question count, round count, equipment list, tiebreaker, advancement rule or results timing is invented anywhere; families are labeled as CompeteReady's grouping, not an official taxonomy; association variation is stated for every event; and the revalidation gate now names the next release rather than a date that has passed, still as one expectation rather than an annual rule. The clinical-skill family routes only to the informational communication lesson with its scope statement, whose practice remains unavailable and mounts no hooks, storage or request. Debate and DECA are untouched, status is always words plus an icon, search is labeled and keyboard-operable, and nothing writes to a schema, API, mastery, progress, XP, rating or ballot."
   );
 }
 

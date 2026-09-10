@@ -147,7 +147,7 @@ function main() {
 
   // ================= track-specific detail regressions =================
   const mt = route("hosa", { event: "medical-terminology" });
-  assert.ok(mt.includes("Official HOSA source") && mt.includes("Last verified July 5, 2026"),
+  assert.ok(mt.includes("Official HOSA source") && mt.includes("Last verified September 10, 2026"),
     "Medical Terminology keeps its approved provenance");
   // HOSA H2 — SUPERSEDED from a snapshot to the invariant behind it. This record states a revalidation
   // date, so the currency half of its provenance depends on the day the page is rendered. What must
@@ -161,8 +161,8 @@ function main() {
   });
   assert.ok(
     revalidationOwed
-      ? mt.includes("Awaiting revalidation against the next release") && !mt.includes("Current for 2025-26")
-      : mt.includes("Current for 2025-26"),
+      ? mt.includes("Awaiting revalidation against the next release") && !mt.includes("Current for 2026-27")
+      : mt.includes("Current for 2026-27"),
     "Medical Terminology claims its season only while no revalidation is owed, and says so when one is"
   );
   const partial = route("hosa", { event: "hosa-bowl" });

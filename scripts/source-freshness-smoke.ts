@@ -129,32 +129,18 @@ function main() {
 
   // ---- 12/13. HOSA Medical Terminology --------------------------------------------------------------------------
   const mt = hosaEventById("medical-terminology")!;
-  // HOSA H2 — SUPERSEDED, deliberately. This record states a revalidation date, so what it may claim
-  // depends on when it is read, and a single undated snapshot could only ever pin one side of that.
-  // Both sides are pinned now: the claim while the gate was still ahead, and the claim a learner sees
-  // once it has passed with no newer verification on file. The verification itself is asserted in both,
-  // because a lapsed currency claim must never be mistaken for a withdrawn source.
-  const beforeGate = new Date("2026-08-31T00:00:00Z");
-  const afterGate = new Date("2026-09-02T00:00:00Z");
-  const mtView = presentSourceFreshness(hosaSourceMetadata(mt), beforeGate);
+  // H4-B — SUPERSEDED again, and simplified. H2 pinned this record on both sides of its own stated
+  // gate. That gate has since been answered: the September 2026 guideline was read and the record
+  // re-verified, so it is current for the season in force and names no date that can pass. The
+  // date-boundary MECHANISM is proved on a synthetic record in hosa-source-scope:smoke, where it
+  // belongs; what belongs here is what this record now says.
+  const mtView = presentSourceFreshness(hosaSourceMetadata(mt), new Date("2026-09-10T00:00:00Z"));
   assert.equal(mtView.authority, "official", "MT is an official claim");
   assert.equal(mtView.authorityLabel, "Official HOSA source", "named to the organization");
-  assert.equal(mtView.freshnessLabel, "Current for 2025-26", "the approved season, while the gate is still ahead");
-  assert.equal(mtView.verifiedLabel, "Last verified July 5, 2026", "the approved verification date");
-  assert.equal(mtView.revalidationLabel, "Revalidation required after the expected September 1, 2026 release", "the dated gate");
-  const mtAfterGate = presentSourceFreshness(hosaSourceMetadata(mt), afterGate);
-  assert.equal(
-    mtAfterGate.freshnessLabel,
-    "Awaiting revalidation against the next release",
-    "once the stated date passes it is no longer presented as current"
-  );
-  assert.equal(
-    mtAfterGate.revalidationLabel,
-    "Revalidation due — this was last verified before the expected September 1, 2026 release",
-    "and the line says a re-check is owed rather than scheduling one in the past"
-  );
-  assert.equal(mtAfterGate.authorityLabel, "Official HOSA source", "the source is still official");
-  assert.equal(mtAfterGate.verifiedLabel, "Last verified July 5, 2026", "and the verification it really had still shows");
+  assert.equal(mtView.freshnessLabel, "Current for 2026-27", "the season now in force");
+  assert.equal(mtView.verifiedLabel, "Last verified September 10, 2026", "the date the guideline was read");
+  assert.equal(mtView.revalidationLabel, "Revalidation required after the 2027-28 guidelines release", "the next gate, undated");
+  assert.ok(!/September 1, 2026/.test(mtView.revalidationLabel ?? ""), "and the answered gate is no longer named");
   assert.ok(/later update notices/.test(mtView.revalidationNote ?? ""), "later notices must also be checked");
   assert.deepEqual(mtView.variationLabels, ["Association rules may vary"], "association implementation may vary");
   assert.equal(mtView.tone, "verified", "and it earns verified tone");

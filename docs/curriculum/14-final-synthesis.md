@@ -236,10 +236,33 @@ HOSA performed-communication gap · caption accessibility.
 
 **Omit entirely until resolved:** parliamentary rule content · TDM weighting · any cut line, advancement
 model, entry limit, question-skipped penalty, device deduction, or universal blazer rule · any HOSA
-2026-27 claim.
+2026-27 claim **except Medical Terminology — see the supersession below**.
+
+> **SUPERSEDED FOR MEDICAL TERMINOLOGY ONLY — HOSA phase H4-B, 2026-09-10.**
+>
+> The blanket prohibition above was written while the 2026-27 guidelines were unpublished, so every
+> 2026-27 claim was necessarily unsourced. That is no longer true for one event. The official
+> *Medical Terminology ILC Guidelines (September 2026)* have been read directly from
+> `https://hosa.org/wp-content/uploads/2026/08/MT-26-27.pdf`, and the facts taken from them are
+> recorded in `lib/hosa-events.ts`.
+>
+> **Permitted:** Medical Terminology 2026-27 claims that are positively verified against that
+> document, within the scope actually read — the 50-question / 60-minute round, the divisions, the
+> ten tiebreaker questions in two sets of five with correct spelling required, the twelve-row written
+> test plan, the no-verbal-time-announcements rule, and the official reference list.
+>
+> **Still prohibited, unchanged:** every 2026-27 claim about every other HOSA event — Prepared
+> Speaking, Job Seeking Skills, Interviewing Skills, Research Poster, Clinical Specialty, Biomedical
+> Debate, HOSA Bowl and any event not listed here. None of their guidelines has been read. A fact
+> verified for Medical Terminology is evidence about Medical Terminology and nothing else, and the
+> Navigator's partial records must keep saying so.
+>
+> **Also still prohibited:** any Medical Terminology 2026-27 claim *beyond* what the document states
+> — question wording, item content, cut scores, advancement, or anything inferred from the textbook
+> reference list, which HOSA names as its own sources and which CompeteReady does not hold or copy.
 
 **Placeholder / honest-partial:** unsourced Navigator events · DECA point values in learner-facing text ·
-per-event tiebreakers.
+per-event tiebreakers **other than Medical Terminology's, which are now sourced**.
 
 **Feature-flag or separately gated:** learner recording/transcript self-review · lesson progress Phase B ·
 error-tag storage · registry seeding.

@@ -35,6 +35,11 @@ const prisma = new PrismaClient();
 
 const SEASON = "2025-2026";
 
+// Medical Terminology alone has been re-verified against a 2026-27 primary document (H4-B). It does
+// NOT share the constant above: doing so would mark every other seeded spec as 2026-27 verified on
+// the strength of one event's research, which is the generalization this record exists to prevent.
+const MT_SEASON = "2026-2027";
+
 type SpecSeed = Omit<Prisma.CompetitionSpecUncheckedCreateInput, "id" | "createdAt" | "updatedAt">;
 
 const specs: SpecSeed[] = [
@@ -145,7 +150,7 @@ const specs: SpecSeed[] = [
   },
   {
     organization: "HOSA",
-    season: SEASON,
+    season: MT_SEASON,
     version: 1,
     isActive: true,
     eventName: "Medical Terminology",
@@ -153,7 +158,7 @@ const specs: SpecSeed[] = [
     division: "Secondary / Postsecondary-Collegiate",
     roundStructure: [
       { order: 1, name: "Round One written test", speaker: "Individual competitor", minutes: 60, notes: "50 multiple-choice items, maximum 60 minutes" },
-      { order: 2, name: "Tiebreakers", speaker: "Individual competitor", minutes: null, notes: "Successive sets of 5 tiebreaker questions until resolved; correct spelling required" }
+      { order: 2, name: "Tiebreakers", speaker: "Individual competitor", minutes: null, notes: "Ten tiebreaker questions, administered as two sets of five fill-in-the-blank items with the test; correct spelling required; successive sets of five are judged until a winner is determined" }
     ],
     rubric: {
       totalPoints: 50,
@@ -173,16 +178,19 @@ const specs: SpecSeed[] = [
       { scope: "state", name: "State conference formats", differsHow: "PLACEHOLDER: some state associations adjust question counts/timing at regionals — verify per state" }
     ],
     officialReferences: [
-      { label: "HOSA Medical Terminology ILC Guidelines (August 2025)", url: "https://hosa.org/wp-content/uploads/2025/08/25-26-MT-Aug30.pdf" }
+      { label: "HOSA Medical Terminology ILC Guidelines (September 2026)", url: "https://hosa.org/wp-content/uploads/2026/08/MT-26-27.pdf" }
     ],
     fieldNotes: {
-      roundStructure: "sourced (official 2025-26 ILC guidelines: 50 items / 60 min — CHANGED this season from 100 items / 90 min)",
-      rubric: "sourced (knowledge test, tiebreaker sets of 5 with spelling requirement)",
+      roundStructure: "sourced (official 2026-27 ILC guidelines, September 2026: 50 items / 60 min, unchanged from 2025-26; tiebreakers REDUCED this season to ten, as two sets of five)",
+      rubric: "sourced (knowledge test; ten tiebreaker questions in two sets of five, fill-in-the-blank, correct spelling required)",
+      testPlan: "sourced (2026-27 written test plan: twelve weighted rows totalling 100 — 45% roots/prefixes/suffixes/combining forms, then eleven body-system rows at 5% each). The CompetitionSpec model has no column for a weighted plan, so the canonical machine-readable copy lives in lib/hosa-events.ts HOSA_MEDTERM_TEST_PLAN rather than being hidden in this note.",
+      officialReferences: "The guideline names four external works used to develop its questions (Ehrlich; Taber's Cyclopedic Medical Dictionary; Stanhope & Turnbull; Dean Vaughn's). They are HOSA's references, not CompeteReady sources, and none of their content is reproduced here.",
+      timeAnnouncements: "sourced (no verbal time-remaining announcements; competitors monitor their own time)",
       penalties: "sourced (photo ID + #2 pencil requirements)",
       stateVariations: "placeholder"
     },
     verificationStatus: "VERIFIED",
-    lastVerifiedAt: new Date("2026-07-05")
+    lastVerifiedAt: new Date("2026-09-10")
   },
   {
     organization: "MODEL_UN",

@@ -18,7 +18,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { hosaEventById, hosaSourceMetadata, HOSA_REVALIDATION_DUE_ON, HOSA_EVENTS } from "@/lib/hosa-events";
-import { presentSourceFreshness, revalidationIsDue } from "@/lib/source-freshness";
+import { presentSourceFreshness, revalidationIsDue, type SourceFreshnessMetadata } from "@/lib/source-freshness";
 import { HOSA_EVENT_CATEGORIES } from "@/lib/testing";
 
 const read = (file: string) => readFileSync(file, "utf8");
@@ -33,20 +33,26 @@ const AFTER = new Date("2026-09-01T00:00:00Z");
 
 // ---- 1. THE REVALIDATION BOUNDARY IS A DATE ---------------------------------------------------
 
-assert.equal(HOSA_REVALIDATION_DUE_ON, "2026-09-01", "R1. the stated trigger date is recorded in comparable form");
+// H4-B — SUPERSEDED. The September 1, 2026 release arrived and was read, so the record no longer names
+// a dated trigger: HOSA publishes annually but the 2027-28 date is not published, and guessing one is
+// the fabrication this gate exists to prevent. The MECHANISM is unchanged and is still proved below
+// against a synthetic record, which is stronger than proving it against whichever state the live
+// record happens to be in.
+assert.equal(HOSA_REVALIDATION_DUE_ON, undefined, "R1. no trigger date is claimed while none is published");
+const SYNTHETIC_DUE_ON = "2026-09-01";
 assert.equal(
-  revalidationIsDue({ dueOn: HOSA_REVALIDATION_DUE_ON, lastVerifiedAt: "2026-07-05", now: BEFORE }),
+  revalidationIsDue({ dueOn: SYNTHETIC_DUE_ON, lastVerifiedAt: "2026-07-05", now: BEFORE }),
   false,
   "R2. the day before the trigger, nothing is due"
 );
 assert.equal(
-  revalidationIsDue({ dueOn: HOSA_REVALIDATION_DUE_ON, lastVerifiedAt: "2026-07-05", now: AFTER }),
+  revalidationIsDue({ dueOn: SYNTHETIC_DUE_ON, lastVerifiedAt: "2026-07-05", now: AFTER }),
   true,
   "R3. on the trigger date it is due"
 );
 // A record re-checked after its own trigger has answered it, and must not keep warning.
 assert.equal(
-  revalidationIsDue({ dueOn: HOSA_REVALIDATION_DUE_ON, lastVerifiedAt: "2026-09-02", now: AFTER }),
+  revalidationIsDue({ dueOn: SYNTHETIC_DUE_ON, lastVerifiedAt: "2026-09-02", now: AFTER }),
   false,
   "R4. a verification later than the trigger clears it — this is how the warning ends"
 );
@@ -64,19 +70,37 @@ for (const [label, input] of [
   );
 }
 assert.equal(
-  revalidationIsDue({ dueOn: HOSA_REVALIDATION_DUE_ON, lastVerifiedAt: null, now: AFTER }),
+  revalidationIsDue({ dueOn: SYNTHETIC_DUE_ON, lastVerifiedAt: null, now: AFTER }),
   true,
   "R6. a record with no verification date at all is still due once the trigger passes"
 );
 ok("revalidation: decided by a real date on both sides, and never by a malformed one");
 
 // ---- 2. WHAT THE LEARNER IS TOLD, BEFORE AND AFTER ---------------------------------------------
+//
+// H4-B — SUPERSEDED, and made stronger. This used to read the live Medical Terminology record on both
+// sides of its own gate. That record has since been re-verified against the September 2026 guideline,
+// so it is current and states no dated trigger — the very outcome the gate existed to produce. Testing
+// the MECHANISM now requires a record that is still waiting, so one is built here. The live record is
+// asserted separately, on what is true of it today.
 
-const mt = hosaEventById("medical-terminology");
-assert.ok(mt, "S0. the Medical Terminology record exists");
-const metadata = hosaSourceMetadata(mt!);
-const before = presentSourceFreshness(metadata, BEFORE);
-const after = presentSourceFreshness(metadata, AFTER);
+const SYNTHETIC_WAITING: SourceFreshnessMetadata = {
+  authority: "official",
+  freshness: "current",
+  organization: "HOSA",
+  sourceLabel: "A source record still awaiting its stated re-check",
+  season: "2025-26",
+  lastVerified: "2026-07-05",
+  revalidation: {
+    required: true,
+    triggerLabel: "the expected September 1, 2026 release",
+    dueOn: SYNTHETIC_DUE_ON,
+    note: "Re-check every officially dependent detail against that release and any later update notices."
+  }
+};
+
+const before = presentSourceFreshness(SYNTHETIC_WAITING, BEFORE);
+const after = presentSourceFreshness(SYNTHETIC_WAITING, AFTER);
 
 assert.equal(before.freshnessLabel, "Current for 2025-26", "S1. before the trigger, the record is current for its season");
 assert.equal(
@@ -103,6 +127,8 @@ for (const [label, view] of [["before", before], ["after", after]] as const) {
   assert.equal(view.authorityLabel, "Official HOSA source", `S6. ${label}: the source is still official`);
   assert.equal(view.verifiedLabel, "Last verified July 5, 2026", `S7. ${label}: and the verification date still shows`);
 }
+assert.equal(before.tone, "verified", "S7a. a record inside its window keeps the verified tone");
+assert.equal(after.tone, "provisional", "S7b. and loses it while a re-check is owed, so colour cannot contradict the words");
 // And nothing here claims a new season, a new document, or that the old one was superseded.
 for (const view of [before, after]) {
   const rendered = [view.freshnessLabel, view.revalidationLabel, view.revalidationNote, view.authorityLabel].join(" ");
@@ -110,7 +136,30 @@ for (const view of [before, after]) {
     assert.ok(!rendered.includes(forbidden), `S8. no unsupported claim about the newer document: ${forbidden}`);
   }
 }
-ok("presentation: verified stays verified, currency lapses, and no new-season claim is invented");
+ok("revalidation presentation: verified stays verified, currency lapses, no new-season claim is invented");
+
+// THE LIVE RECORD, AS IT NOW STANDS. Re-verified against the primary document, so it is current and
+// owes nothing — reached through the same generic presenter, with no HOSA special case anywhere in it.
+const mt = hosaEventById("medical-terminology");
+assert.ok(mt, "S0. the Medical Terminology record exists");
+const liveView = presentSourceFreshness(hosaSourceMetadata(mt!), new Date("2026-09-10T00:00:00Z"));
+assert.equal(liveView.freshnessLabel, "Current for 2026-27", "S11. Medical Terminology is current for the season now in force");
+assert.equal(liveView.verifiedLabel, "Last verified September 10, 2026", "S12. carrying the date it was actually re-checked");
+assert.equal(liveView.tone, "verified", "S13. and it holds the verified tone again");
+assert.ok(
+  !/Revalidation due/.test(liveView.revalidationLabel ?? ""),
+  "S14. nothing is owed on it — the gate it was waiting for has been read"
+);
+assert.equal(
+  liveView.revalidationLabel,
+  "Revalidation required after the 2027-28 guidelines release",
+  "S15. and the next trigger names the next release rather than a date that has passed"
+);
+assert.ok(
+  !/September 1, 2026/.test([liveView.revalidationLabel, liveView.revalidationNote].join(" ")),
+  "S16. the superseded date is gone from what a learner reads"
+);
+ok("Medical Terminology: current for 2026-27, verified 2026-09-10, next trigger undated");
 
 // A record with no revalidation requirement is untouched by any of this.
 const partner = HOSA_EVENTS.find((event) => event.revalidationRequired !== true);
@@ -156,16 +205,25 @@ assert.ok(
   ),
   "N4c. and the shared freshness indicator drops its verified tone while a re-check is owed"
 );
-// The stored status is NOT rewritten — presentation only.
+// THE STORED RECORD CHANGES ONLY ON EVIDENCE. H2 changed presentation and left the record alone,
+// because no research had happened. H4-B changed the record, because research did: the September 2026
+// guideline was read directly. What both phases share, and what this control now states, is the rule —
+// a stored season or status moves only when a document was actually read, and it moves together with
+// the source label and verification date that say which one.
 const registry = stripComments(read("lib/hosa-events.ts"));
 assert.ok(/sourceStatus: "verified-current"/.test(registry), "N5. the record still records what it was verified as");
 assert.ok(
   !/sourceStatus: "awaiting-season-revalidation"/.test(registry),
-  "N6. nothing downgraded the stored status — that would be a research result, and no research happened"
+  "N6. nothing downgraded the stored status — a downgrade would be a research result too"
 );
-assert.ok(/season: HOSA_CURRENT_SEASON/.test(registry) && /HOSA_CURRENT_SEASON = "2025-26"/.test(registry),
-  "N7. and the season is untouched");
-ok("navigator: the shown status follows the date; the stored status follows the evidence");
+assert.ok(/season: HOSA_CURRENT_SEASON/.test(registry) && /HOSA_CURRENT_SEASON = "2026-27"/.test(registry),
+  "N7. the season is the one now in force");
+assert.ok(/lastVerified: "2026-09-10"/.test(registry), "N7a. carrying the date the document was read");
+assert.ok(
+  /sourceLabel: "HOSA 2026-27 Medical Terminology ILC Guidelines \(September 2026\)"/.test(registry),
+  "N7b. and naming the exact document it was read from — the three move together or not at all"
+);
+ok("navigator: the shown status follows the date; the stored record follows the evidence");
 
 // ---- 4. AN OFFICIAL CLAIM IS SCOPED TO THE EVENT IT DESCRIBES ----------------------------------
 

@@ -643,8 +643,11 @@ async function main() {
   // pair are pre-existing and are deliberately NOT repaired here. The allowance is pinned to the
   // exact two lines, and each is checked to be present at HEAD as well, so it can never absorb a
   // NEW edit to this page.
+  // Owner QA #4 (889e7f3) reworded the first of these again, so the line recorded at P1-C.1 now
+  // exists in neither the baseline nor HEAD and the "it is real" control rightly failed. The current
+  // wording is recorded in its place; the baseline line stays. Both are still checked to be real.
   const PRE_EXISTING_COPY_DRIFT = [
-    "that record your practice; their review schedule starts from there, and they surface here when due.",
+    "— those record your practice, and a skill surfaces here when its review comes due.",
     "to start their review schedule, then come back when they surface."
   ];
   const headLines = executableView(execSync(`git show HEAD:'${reviewPath}'`, { encoding: "utf8" })).split("\n");

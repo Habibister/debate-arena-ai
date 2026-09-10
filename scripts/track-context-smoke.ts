@@ -398,8 +398,14 @@ check("T22. a track-scoped page describes the track it is scoped to", () => {
   assert.match(tests, /<CardTitle>Supported test tracks<\/CardTitle>/, "T22h the card heading makes no new content claim");
 
   const preview = stripComments(read("components/tests/test-builder-preview.tsx"));
-  assert.match(preview, /The API route generates original \{organization \?\? "DECA and HOSA"\} questions\./,
+  // H3 — SUPERSEDED from one literal to the property it protects: a locked learner reads about their
+  // own track and no other. The sentence became a branch because HOSA stopped generating anything —
+  // its one testable category is drawn from an authored bank — so describing HOSA's set as generated
+  // would now be false. DECA still generates and keeps the original wording.
+  assert.match(preview, /The API route generates original \$\{organization \?\? "DECA and HOSA"\} questions\./,
     "T22i the preview names one track when one is locked");
+  assert.match(preview, /organization === "HOSA"\s*\n?\s*\?\s*"Medical Terminology sets are drawn from CompeteReady's own authored question bank/,
+    "T22i2 and HOSA reads about the bank it actually draws from, naming no other organization");
   assert.ok(!/OpenAI/.test(preview), "T22j and names no provider it does not select");
 
   // The generator's own disclaimer is the third multi-track string a locked learner used to read.

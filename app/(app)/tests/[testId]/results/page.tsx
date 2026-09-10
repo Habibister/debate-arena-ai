@@ -54,12 +54,26 @@ function normalizeLessonRecommendations(value: unknown): LessonRecommendation[] 
   });
 }
 
-function explainWrongSelection(selectedAnswer: string, skillTag: string) {
+/**
+ * WHAT THE PRODUCT ACTUALLY KNOWS ABOUT A WRONG ANSWER (H3).
+ *
+ * This used to assert, under the heading "Why your answer missed", that "Your selected answer was
+ * weaker because it did not best satisfy the tested {skill} skill. The correct answer is stronger
+ * because it directly addresses the scenario, stays within the event expectations, and gives a
+ * measurable or safe next step." Nothing in that sentence was derived from the option the learner
+ * chose — the text was identical whatever they picked — and its praise of the correct answer is
+ * simply false for a knowledge item like "The root 'nephr' most directly refers to which organ?".
+ * It was a diagnosis with no examination behind it.
+ *
+ * The product stores which option was selected and which was correct. That is what it may state. The
+ * reasoning is already on the page, in the question's own recorded explanation.
+ */
+function describeSelection(selectedAnswer: string, correctAnswer: string, skillTag: string) {
   if (selectedAnswer === "No answer") {
-    return `No answer was submitted, so this counts as a missed ${skillTag} rep. Review the correct answer and retry a smaller set.`;
+    return `No answer was submitted, so this counts as a missed ${skillTag} rep.`;
   }
 
-  return `Your selected answer was weaker because it did not best satisfy the tested ${skillTag} skill. The correct answer is stronger because it directly addresses the scenario, stays within the event expectations, and gives a measurable or safe next step.`;
+  return `You selected “${selectedAnswer}”. The correct answer is “${correctAnswer}”.`;
 }
 
 export default async function PracticeTestResultsPage({
@@ -422,9 +436,9 @@ export default async function PracticeTestResultsPage({
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{question.explanation}</p>
                     </div>
                     <div className="rounded-lg border bg-background p-4">
-                      <p className="font-semibold">Why your answer missed</p>
+                      <p className="font-semibold">Your answer</p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {explainWrongSelection(selectedAnswer, question.skillTag)}
+                        {describeSelection(selectedAnswer, question.correctAnswer, question.skillTag)}
                       </p>
                     </div>
                   </div>

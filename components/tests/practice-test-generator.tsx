@@ -12,7 +12,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Progress } from "@/components/ui/progress";
 import { LEVELS } from "@/lib/constants";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
-import { testingClustersForOrganization } from "@/lib/testing";
+import { testableCategories, testableEventTypes, untestableCategories } from "@/lib/test-availability";
 import { cn } from "@/lib/utils";
 
 type TestingOrganization = "DECA" | "HOSA";
@@ -73,16 +73,28 @@ export function PracticeTestGenerator({
   const router = useRouter();
   const initialOrg: TestingOrganization = lockedOrganization ?? "DECA";
   const [organization, setOrganization] = useState<TestingOrganization>(initialOrg);
-  const [eventType, setEventType] = useState(EVENT_OPTIONS[initialOrg][0].value);
-  const [eventCluster, setEventCluster] = useState(testingClustersForOrganization(initialOrg)[0]);
+  // H3: the first SERVABLE option, not the first option in the registry. Model UN is retired, HOSA's
+  // Prepared Speaking is not assessed by a written test, and fifteen HOSA categories have no question
+  // source — none of them may be the state this form opens in.
+  const [eventType, setEventType] = useState(testableEventTypes(initialOrg)[0]?.value ?? "");
+  const [eventCluster, setEventCluster] = useState(testableCategories(initialOrg)[0] ?? "");
   const [difficulty, setDifficulty] = useState<Level>("BEGINNER");
   const [questionCount, setQuestionCount] = useState<QuestionCount>(10);
   const [useOfficial, setUseOfficial] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const events = EVENT_OPTIONS[organization];
-  const clusters = useMemo(() => testingClustersForOrganization(organization), [organization]);
+  const events = useMemo(() => testableEventTypes(organization), [organization]);
+  const clusters = useMemo(() => testableCategories(organization), [organization]);
+  // Named rather than silently dropped: a learner who expected one of these should learn that we have
+  // no questions for it yet, not that it stopped existing.
+  const notYetTestable = useMemo(() => untestableCategories(organization), [organization]);
+  const canGenerate = events.length > 0 && clusters.length > 0;
+  // H3. Difficulty changes the questions only where something reads it. HOSA's Medical Terminology set
+  // is drawn from one authored bank that carries no level, so offering three levels there would be a
+  // control that alters nothing while its value is still stored on the row and read back as a property
+  // of the attempt. It is stated instead of offered.
+  const difficultyAffectsQuestions = organization !== "HOSA";
   const generationProgress = isLoading ? 66 : 0;
 
   function updateOrganization(nextOrganization: TestingOrganization) {
@@ -90,8 +102,8 @@ export function PracticeTestGenerator({
       return; // organization is pinned to the selected track
     }
     setOrganization(nextOrganization);
-    setEventType(EVENT_OPTIONS[nextOrganization][0].value);
-    setEventCluster(testingClustersForOrganization(nextOrganization)[0]);
+    setEventType(testableEventTypes(nextOrganization)[0]?.value ?? "");
+    setEventCluster(testableCategories(nextOrganization)[0] ?? "");
   }
 
   // HOSA H2 — AN OFFICIAL CLAIM BELONGS TO ONE EVENT.
@@ -148,8 +160,17 @@ export function PracticeTestGenerator({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        {/* H3: for HOSA nothing is being generated — the set is drawn from an authored bank — so the
+            progress copy follows the source rather than describing a generation that is not happening. */}
         {isLoading ? (
-          <LoadingState title="Generating your practice set" description="Creating original questions, answer choices, explanations, and skill tags." />
+          <LoadingState
+            title={organization === "HOSA" ? "Building your practice set" : "Generating your practice set"}
+            description={
+              organization === "HOSA"
+                ? "Drawing questions from CompeteReady's authored Medical Terminology bank."
+                : "Creating original questions, answer choices, explanations, and skill tags."
+            }
+          />
         ) : null}
 
         {lockedOrganization ? (
@@ -221,6 +242,16 @@ export function PracticeTestGenerator({
 
         <div>
           <p className="mb-3 text-sm font-semibold">{organization === "DECA" ? "Event cluster" : "Event category"}</p>
+          {notYetTestable.length > 0 ? (
+            // H3. These categories used to be offered and served with template questions — four
+            // recycled stems and one set of wrong answers shared by every category. They are named
+            // here instead, so the gap is visible as ours rather than presented as coverage.
+            <p className="mb-3 text-xs leading-6 text-muted-foreground">
+              Practice tests are available for {clusters.join(", ")} only. We do not have questions written
+              for {notYetTestable.join(", ")} yet, so they are not offered rather than filled with generic
+              ones.
+            </p>
+          ) : null}
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {clusters.map((cluster) => (
               <button
@@ -242,7 +273,13 @@ export function PracticeTestGenerator({
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
             <p className="mb-3 text-sm font-semibold">Difficulty</p>
-            <div className="grid gap-2 sm:grid-cols-3">
+            {!difficultyAffectsQuestions ? (
+              <p className="mb-3 text-xs leading-6 text-muted-foreground">
+                Medical Terminology questions come from one authored bank that is not graded by level, so
+                there is no difficulty setting to choose here.
+              </p>
+            ) : null}
+            <div className={cn("grid gap-2 sm:grid-cols-3", !difficultyAffectsQuestions && "hidden")}>
               {LEVELS.map((level) => (
                 <button
                   key={level.value}
@@ -327,7 +364,14 @@ export function PracticeTestGenerator({
           </div>
         ) : null}
 
-        <Button type="button" size="lg" onClick={onGenerate} disabled={isLoading} className="w-full">
+        {/* H3. With no servable event type or category there is nothing to generate, and the button
+            must not offer to. The API refuses the same selection, so this is the courtesy, not the gate. */}
+        {!canGenerate ? (
+          <p className="rounded-md border bg-background p-3 text-sm leading-6 text-muted-foreground">
+            Practice tests are not available for this track yet.
+          </p>
+        ) : null}
+        <Button type="button" size="lg" onClick={onGenerate} disabled={isLoading || !canGenerate} className="w-full">
           {isLoading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Sparkles className="h-5 w-5" aria-hidden />}
           Generate test
         </Button>

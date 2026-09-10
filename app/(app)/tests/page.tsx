@@ -8,8 +8,8 @@ import { RubricBreakdown } from "@/components/specs/rubric-breakdown";
 import { SpecBanner } from "@/components/specs/spec-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EVENT_OPTIONS } from "@/lib/rubrics";
 import { getOfficialTestFormat, specEventTypesFor } from "@/lib/competition-specs";
+import { testableEventTypes } from "@/lib/test-availability";
 import { getActiveTrack } from "@/lib/track-server";
 import { trackHasPracticeTests } from "@/lib/training-tracks";
 
@@ -160,13 +160,16 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
           {!activeTrack || activeTrack.id === "DECA" ? (
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold text-muted-foreground">DECA</p>
-              <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
+              {/* H3: the events that can actually be TESTED, not every event the organization runs.
+                  This listed HOSA's Prepared Speaking as a supported practice test while the generator
+                  above and the API both refuse it — a page contradicting itself two cards apart. */}
+              <p className="mt-2 font-semibold">{testableEventTypes("DECA").map((event) => event.label).join(", ")}</p>
             </div>
           ) : null}
           {!activeTrack || activeTrack.id === "HOSA" ? (
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
-              <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
+              <p className="mt-2 font-semibold">{testableEventTypes("HOSA").map((event) => event.label).join(", ")}</p>
             </div>
           ) : null}
           <div className="rounded-lg border bg-background p-4">

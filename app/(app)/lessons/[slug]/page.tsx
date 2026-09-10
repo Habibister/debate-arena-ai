@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import Link from "next/link";
 import type { Route } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { decaCourseEndAction } from "@/lib/education/deca-simulation-prep";
 import { getServerSession } from "next-auth";
 import { ArrowLeft, Dumbbell, MessageSquare } from "lucide-react";
@@ -18,6 +18,8 @@ import { getRoleplayLesson } from "@/lib/roleplay-lessons";
 import { ConceptEducationLessonView } from "@/components/lessons/concept-education-lesson-view";
 import { getEducationLesson, getEducationModule } from "@/lib/education/registry";
 import { isConceptEducationLessonEntry } from "@/lib/education/types";
+import { resolveActiveTrack } from "@/lib/track-server";
+import { isTrackRetired, trackById, trackBySlug, type TrackInfo } from "@/lib/training-tracks";
 
 // Opaque, stable per-account namespace for DEVICE-LOCAL lesson resume (M5 Phase A).
 //
@@ -121,7 +123,7 @@ function conceptEducationLesson(slug: string) {
   };
 }
 
-export default async function LessonPage({ params }: { params: { slug: string } }) {
+export default async function LessonPage({ params, searchParams }: { params: { slug: string }; searchParams?: { track?: string | string[] } }) {
   const lesson = getLesson(params.slug);
   const roleplay = getRoleplayLesson(params.slug);
   const concept = lesson || roleplay ? null : conceptEducationLesson(params.slug);
@@ -129,14 +131,45 @@ export default async function LessonPage({ params }: { params: { slug: string } 
     notFound();
   }
 
+  // CONTENT-OWNED CONTEXT (Owner QA Repair 2). A lesson belongs to exactly one track, and that track
+  // is the context of this render — the doctrine in lib/track-precedence.ts names "the entity's own
+  // track" as the first source. The three lesson sources spell it differently (a slug, a slug, an id),
+  // so it is normalised here once. Every lesson has one; a lesson without one cannot render.
+  const owner: TrackInfo | undefined = lesson
+    ? trackBySlug(lesson.track)
+    : roleplay
+      ? trackBySlug(roleplay.track)
+      : concept
+        ? trackById(concept.entry.track)
+        : undefined;
+  // A retired owner could never satisfy the redirect below (the resolver never returns a retired
+  // track), so it is refused outright rather than looping. No published lesson is owned by one.
+  if (!owner || isTrackRetired(owner.id)) {
+    notFound();
+  }
+  // The URL must say the same thing the content does. If this render would otherwise resolve to a
+  // different track than the lesson's own — a DECA learner opening a HOSA lesson link, or a bare URL
+  // under another selection — redirect once to the canonical `?track=<owner>` form, so the shell,
+  // which reads `?track=` on lesson routes, paints THIS lesson's track and links into it. A URL that
+  // already names the owner, or a learner whose current track already is the owner, never redirects.
+  // A repeated `?track=` is not a track: exactly one string value counts, as the shell also requires.
+  const rawTrack = searchParams?.track;
+  const trackParam = typeof rawTrack === "string" ? rawTrack : undefined;
+  const effective = await resolveActiveTrack(trackParam);
+  if (effective.track?.id !== owner.id) {
+    redirect(`/lessons/${params.slug}?track=${owner.slug}` as Route);
+  }
+
   // No session id → no safe namespace → the practice does not persist at all and says so honestly,
   // rather than risking cross-account resume on a shared browser.
   const session = await getServerSession(authOptions);
   const userScope = session?.user?.id ? localProgressScope(session.user.id) : null;
 
+  // Back goes to the catalog of the track this lesson BELONGS to — never to a bare `/lessons`, which
+  // resolved the learner's default track and sent a DECA reader to the Debate catalog.
   const back = (
     <Link
-      href={"/lessons" as Route}
+      href={`/lessons?track=${owner.slug}` as Route}
       className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto min-h-11 min-w-11 px-3")}
     >
       <ArrowLeft className="h-4 w-4" aria-hidden />

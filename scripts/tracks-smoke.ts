@@ -41,6 +41,7 @@ import { DRILL_AREAS } from "../lib/debate-drills";
 import { educationLessonsForTrack } from "../lib/education/registry";
 import { weakAreasForTrack } from "../lib/track-recommendations";
 import { pickActiveTrack, activeTrackFromOrganization } from "../lib/track-server";
+import { parseTrackSelectionCookie } from "../lib/track-precedence";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
 import React, { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -720,8 +721,11 @@ async function main() {
   // The registry assertion above is what pins the canonical ten; this pins the destination change.
   assert.ok(skillPath.includes('href: "/study-arcade?track=debate" as Route'),
     "the Debate skills surface opens the drills");
-  assert.ok(skillPath.includes('href: "/study-arcade/review" as Route'),
-    "and the review queue");
+  // Owner QA Repair 2: the review queue link now names its track, so the count it sits under and the
+  // list it opens describe the same evidence set (a bare /study-arcade/review resolved the learner's
+  // default track instead).
+  assert.ok(skillPath.includes('href: "/study-arcade/review?track=debate" as Route'),
+    "and the review queue, scoped to Debate");
   assert.ok(!skillPath.includes("`/lessons/${entry.id}`"),
     "and no longer duplicates the Learn catalog as skill tiles");
   assert.ok(skillPath.includes("/training/deca/practice"), "DECA exposes its real practice destination");
@@ -1443,9 +1447,20 @@ async function main() {
   assert.equal(PA(null, "HOSA", null).track?.id, "HOSA", "P1a-4. persisted HOSA resolves to HOSA");
   assert.equal(PA(null, "DECA", null).source, "organization", "P1a-4b. and reports itself as an organization resolution");
 
-  // 3. A valid organization outranks the cookie — the Phase 1a precedence decision.
-  assert.equal(PA(null, "DECA", "hosa").track?.id, "DECA", "P1a-5. persisted organization beats the cookie");
-  assert.equal(PA(null, "HOSA", "debate").track?.id, "HOSA", "P1a-5b. and again in the other direction");
+  // 3. SUPERSEDED (Owner QA Repair 2). Phase 1a ranked the organization above the cookie because the
+  //    cookie's only writer initialised itself to General Debate. The picker now receives only a
+  //    VALIDATED selection — `parseTrackSelectionCookie` rejects legacy, malformed and other-account
+  //    values before anything reaches here — so the learner's own selection outranks the signup
+  //    organization, which is what lets "Switch track" mean what it says.
+  assert.equal(PA(null, "DECA", "hosa").track?.id, "HOSA", "P1a-5. the learner's validated selection beats the persisted organization");
+  assert.equal(PA(null, "HOSA", "debate").track?.id, "GENERAL_DEBATE", "P1a-5b. and again in the other direction");
+  assert.equal(PA(null, "DECA", "hosa").source, "preference", "P1a-5c. and reports itself as the selection");
+  //    The organization is the FALLBACK, and a real one: with no selection it decides.
+  assert.equal(PA(null, "DECA", null).track?.id, "DECA", "P1a-5d. with no selection the organization decides");
+  //    The guard that makes P1a-5 safe: an unscoped (legacy) or foreign-scoped cookie is not a selection.
+  assert.equal(parseTrackSelectionCookie("debate", "0123456789abcdef"), null, "P1a-5e. a legacy plain-slug cookie is never a selection");
+  assert.equal(parseTrackSelectionCookie("debate.fedcba9876543210", "0123456789abcdef"), null, "P1a-5f. another account's selection is never this learner's");
+  assert.equal(parseTrackSelectionCookie("debate.0123456789abcdef", "0123456789abcdef"), "debate", "P1a-5g. the learner's own scoped selection parses");
 
   // 4. An unsupported / missing / malformed organization is treated as ABSENT and must not override a
   //    valid cookie. PUBLIC_SPEAKING and MOCK_TRIAL have no track; MODEL_UN's is retired.
@@ -1475,14 +1490,14 @@ async function main() {
   }
 
   // 8. NON-VACUOUS CONTROLS — each proves the assertion above would catch a real regression.
-  //    Swapping the organization changes the answer, so P1a-5 is not passing by coincidence.
-  assert.notEqual(PA(null, "DECA", "hosa").track?.id, PA(null, "HOSA", "hosa").track?.id,
-    "P1a-C1. control: changing only the organization changes the resolved track");
-  //    Removing the organization changes the answer back to the cookie, so P1a-5 really is precedence.
-  assert.equal(PA(null, null, "hosa").track?.id, "HOSA",
-    "P1a-C2. control: dropping the organization hands the decision back to the cookie");
-  assert.notEqual(PA(null, "DECA", "hosa").source, PA(null, null, "hosa").source,
-    "P1a-C3. control: the reported source differs between an organization hit and a cookie hit");
+  //    Swapping the selection changes the answer, so P1a-5 is not passing by coincidence.
+  assert.notEqual(PA(null, "DECA", "hosa").track?.id, PA(null, "DECA", "debate").track?.id,
+    "P1a-C1. control: changing only the selection changes the resolved track");
+  //    Removing the selection changes the answer to the organization, so P1a-5 really is precedence.
+  assert.equal(PA(null, "DECA", null).track?.id, "DECA",
+    "P1a-C2. control: dropping the selection hands the decision to the organization");
+  assert.notEqual(PA(null, "DECA", "hosa").source, PA(null, "DECA", null).source,
+    "P1a-C3. control: the reported source differs between a selection hit and an organization hit");
   //    A valid route slug must be doing the work in P1a-1, not the organization.
   assert.notEqual(PA("deca", "HOSA", "hosa").track?.id, PA(null, "HOSA", "hosa").track?.id,
     "P1a-C4. control: removing the route slug changes the winner");

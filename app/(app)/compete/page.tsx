@@ -29,7 +29,9 @@ function competeDestinations(track: TrackInfo): Destination[] {
       // learner they will find the role-play ballot they were just shown. They will not — no DECA
       // role-play writes anything (app/api/ai/judge-deca has no Prisma call), and the room itself
       // already says "This session isn't saved yet". Two surfaces disagreed; this was the wrong one.
-      { label: "History", detail: "Your past rounds and ballots. DECA role-plays aren't saved yet.", icon: History, href: "/debates/history" }
+      // Owner QA Repair 2: history is ONE list for every track (see lib/track-route.ts), so the card
+      // says so rather than reading as a DECA-only history.
+      { label: "History", detail: "Your saved rounds and sessions, from any of your tracks. DECA role-plays aren't saved yet.", icon: History, href: "/debates/history" }
     ];
   }
   if (track.id === "HOSA") {
@@ -39,7 +41,9 @@ function competeDestinations(track: TrackInfo): Destination[] {
     return [
       { label: "Find your HOSA event", detail: "HOSA events differ too much for one arena. Start from your exact event and train what it actually contains.", icon: Compass, href: "/training/hosa/events" },
       { label: "Full HOSA Simulation", detail: "A timed, scored professional interaction. Not built yet — coming soon.", icon: PlayCircle, comingSoon: true },
-      { label: "History", detail: "Your past sessions and feedback.", icon: History, href: "/debates/history" }
+      // Medical Terminology practice is stored separately (app/api/hosa/medterm/session) and this list
+      // does not read it, so the card must not promise it.
+      { label: "History", detail: "Your saved rounds and sessions, from any of your tracks. Medical Terminology practice isn't listed here yet.", icon: History, href: "/debates/history" }
     ];
   }
   return [];

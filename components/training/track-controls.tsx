@@ -1,25 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTrainingTrack } from "@/components/training/training-track-context";
 import type { TrainingTrack } from "@/lib/training-tracks";
 
-// Persists the track from the URL (strongest source of truth), and offers the Past/AI/Mixed practice
-// source selector with honest notes. Switch track returns to the selection page.
+// ENTERING A HUB IS THE SWITCH (Owner QA Repair 2). Mounting on `/training/<slug>` records that track
+// as the learner's current selection — the owner-bound cookie the server resolver reads — so every
+// page they open afterwards is scoped to it until they enter another hub. Viewing a page through a
+// `?track=` link does not do this; only the hub does. "Switch track" returns to the chooser.
 export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
-  const { setTrack } = useTrainingTrack();
-
+  // The switch itself lives in a child that mounts only after hydration: it needs the App Router
+  // (to refresh), which exists in the browser but not in a static server render — and selecting is a
+  // browser-side act anyway. Server HTML for the hub is therefore router-free and byte-stable.
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    setTrack(trackId);
-  }, [trackId, setTrack]);
+    setHydrated(true);
+  }, []);
 
   return (
     <div className="space-y-3 rounded-lg border bg-card p-4">
+      {hydrated ? <HubSelection trackId={trackId} /> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">Practice source</p>
         {/* M12D2, class-only: `h-auto min-h-11 min-w-11` overrides the compact size's `h-9` so the
@@ -42,4 +48,21 @@ export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
       </p>
     </div>
   );
+}
+
+// Renders nothing. Entering this hub records its track as the learner's selection (once), then drops
+// the client router cache so a page visited moments ago is re-rendered under the new track rather
+// than replayed from the cached payload — a refresh, never a navigation: the hub stays the hub.
+function HubSelection({ trackId }: { trackId: TrainingTrack }) {
+  const { selectedTrack, setTrack } = useTrainingTrack();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (selectedTrack !== trackId) {
+      setTrack(trackId);
+      router.refresh();
+    }
+  }, [trackId, selectedTrack, setTrack, router]);
+
+  return null;
 }

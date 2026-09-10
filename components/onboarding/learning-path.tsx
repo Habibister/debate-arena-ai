@@ -25,7 +25,7 @@ import {
 type Props = { weakAreas: string[]; hasActivity: boolean; pendingAssignment?: boolean };
 
 export function LearningPath({ weakAreas, hasActivity, pendingAssignment }: Props) {
-  const { track } = useTrainingTrack();
+  const { track, effectiveTrack } = useTrainingTrack();
   const [profile, setProfile] = useState<LearningProfile | null>(null);
 
   useEffect(() => {
@@ -58,8 +58,10 @@ export function LearningPath({ weakAreas, hasActivity, pendingAssignment }: Prop
             <Badge variant="secondary">{info.label}</Badge>
             {profile ? <Badge variant="outline">{profile.experience.toLowerCase()}</Badge> : null}
           </div>
-          <Link href={`/training/${info.slug}` as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-            Continue
+          {/* Owner QA Repair 2: with no resolved track, "Continue" went to the DEFAULT track's hub —
+              and entering a hub selects it. A learner who never chose a track is offered the chooser. */}
+          <Link href={(effectiveTrack ? `/training/${info.slug}` : "/training") as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            {effectiveTrack ? "Continue" : "Choose a track"}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>

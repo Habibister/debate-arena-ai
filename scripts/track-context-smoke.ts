@@ -1,0 +1,323 @@
+/**
+ * track-context:smoke — the learner-facing EFFECTIVE-TRACK contract (Owner QA Repair 2).
+ *
+ * Strict-safe: imports only the pure precedence/route modules and reads source files. No .env, no
+ * database, no network, no React render.
+ *
+ * What it proves: one precedence function (lib/track-precedence.ts) is consumed by BOTH the server
+ * resolver and the client shell with the same inputs; the selection cookie is owner-bound; the shell
+ * reads and appends `?track=` only on routes whose page consumes it; and every edge repaired for the
+ * owner's findings #4 #5 #6 #7 #13 #15 #21 #23 keeps its track. Each control is paired with a
+ * non-vacuous companion where a regex could otherwise pass on an empty or wrong file.
+ */
+import assert from "node:assert/strict";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import {
+  activeTrackFromOrganization,
+  parseTrackSelectionCookie,
+  pickActiveTrack,
+  trackSelectionCookieValue
+} from "../lib/track-precedence";
+import { routeConsumesTrackParam, routeTrackSlugFor, TRACK_PARAM_ROUTES } from "../lib/track-route";
+import { isTrackRetired, trackById, trackBySlug, type TrackInfo } from "../lib/training-tracks";
+import { AUTHORED_LESSONS } from "../lib/lessons";
+import { ROLEPLAY_LESSONS } from "../lib/roleplay-lessons";
+import { EDUCATION_LESSONS } from "../lib/education/registry";
+
+const results: string[] = [];
+let failures = 0;
+function check(name: string, fn: () => void) {
+  try {
+    fn();
+    results.push(`PASS ${name}`);
+  } catch (error) {
+    failures += 1;
+    results.push(`FAIL ${name}\n     ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+const read = (path: string) => readFileSync(path, "utf8");
+// Comments never count as product behaviour: strip block, line and JSX comments before scanning.
+const stripComments = (src: string) =>
+  src.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+
+const PA = (routeSlug: string | null, organization: string | null, cookieSlug: string | null) =>
+  pickActiveTrack({ routeSlug, organization: organization as never, cookieSlug });
+
+// ---------------------------------------------------------------------------------------------
+check("T1. precedence: route > selection > organization > unresolved (fail closed)", () => {
+  assert.equal(PA("deca", "HOSA", "debate").track?.id, "DECA", "T1a route wins over selection and organization");
+  assert.equal(PA("deca", "HOSA", "debate").source, "route");
+  assert.equal(PA(null, "HOSA", "debate").track?.id, "GENERAL_DEBATE", "T1b selection wins over organization");
+  assert.equal(PA(null, "HOSA", "debate").source, "preference");
+  assert.equal(PA(null, "HOSA", null).track?.id, "HOSA", "T1c organization is the fallback");
+  assert.equal(PA(null, "HOSA", null).source, "organization");
+  assert.equal(PA(null, null, null).resolved, false, "T1d nothing resolves to nothing");
+  assert.equal(PA(null, null, null).source, "none");
+  // Non-vacuous controls: each input actually does the work claimed above.
+  assert.notEqual(PA("deca", "HOSA", "debate").track?.id, PA(null, "HOSA", "debate").track?.id, "T1-C1 removing the route changes the winner");
+  assert.notEqual(PA(null, "HOSA", "debate").track?.id, PA(null, "HOSA", null).track?.id, "T1-C2 removing the selection changes the winner");
+  assert.notEqual(PA(null, "HOSA", null).track?.id, PA(null, "DECA", null).track?.id, "T1-C3 changing the organization changes the fallback");
+  // Invalid or retired values are absent, never overrides.
+  for (const bad of ["", "model-un", "not-a-track", "../deca", "DECA;"]) {
+    assert.equal(PA(bad, "DECA", null).track?.id, "DECA", `T1e invalid route ${JSON.stringify(bad)} cannot override`);
+    assert.equal(PA(null, "DECA", bad).track?.id, "DECA", `T1f invalid selection ${JSON.stringify(bad)} cannot override`);
+  }
+  for (const org of ["PUBLIC_SPEAKING", "MOCK_TRIAL", "MODEL_UN", "NOT_AN_ORG", ""]) {
+    assert.equal(activeTrackFromOrganization(org as never), undefined, `T1g ${org} maps to no live track`);
+  }
+});
+
+check("T2. the selection cookie is owner-bound: legacy, foreign and malformed values are not selections", () => {
+  const mine = "0123456789abcdef";
+  const theirs = "fedcba9876543210";
+  assert.equal(parseTrackSelectionCookie(trackSelectionCookieValue("deca", mine), mine), "deca", "T2a roundtrip parses");
+  assert.equal(parseTrackSelectionCookie("deca", mine), null, "T2b legacy plain slug is NOT a selection");
+  assert.equal(parseTrackSelectionCookie("deca.fedcba9876543210", mine), null, "T2c another account's selection is NOT mine");
+  assert.equal(parseTrackSelectionCookie(trackSelectionCookieValue("deca", theirs), mine), null, "T2c2 built for them, read by me → null");
+  assert.equal(parseTrackSelectionCookie(trackSelectionCookieValue("model-un", mine), mine), null, "T2d a retired track is never a selection");
+  assert.equal(parseTrackSelectionCookie(trackSelectionCookieValue("garbage", mine), mine), null, "T2e an unknown slug is never a selection");
+  assert.equal(parseTrackSelectionCookie(trackSelectionCookieValue("deca", mine), null), null, "T2f signed out (no scope) → no selection");
+  assert.equal(parseTrackSelectionCookie(trackSelectionCookieValue("deca", mine), "not-a-scope"), null, "T2g a malformed scope never matches");
+  assert.equal(parseTrackSelectionCookie(null, mine), null, "T2h absent cookie");
+  assert.equal(parseTrackSelectionCookie(".0123456789abcdef", mine), null, "T2i empty slug");
+  // Control: the scope check is doing the work — same value, only the scope differs.
+  assert.notEqual(parseTrackSelectionCookie("deca." + mine, mine), parseTrackSelectionCookie("deca." + mine, theirs), "T2-C the scope decides");
+});
+
+check("T3. the server scope is a one-way, per-account digest that never leaks the id", () => {
+  const server = stripComments(read("lib/track-server.ts"));
+  assert.match(server, /export function selectionScopeForUser\(userId: string, organization: Organization \| null\)/, "T3a scope helper exists and takes the organization");
+  assert.match(server, /createHash\("sha256"\)[\s\S]{0,80}track-selection:\$\{userId\}:\$\{organization \?\? "none"\}[\s\S]{0,80}digest\("hex"\)\.slice\(0, 16\)/, "T3b sha256, salted with user AND organization, truncated to 16 hex — an organization change orphans every earlier selection");
+  assert.match(server, /selectionScopeForUser\(userId, organization\)/, "T3b2 and the request scope is built with the session organization");
+  assert.match(server, /parseTrackSelectionCookie\(rawCookie, selectionScope\)/, "T3c the raw cookie is validated against THIS learner's scope before it reaches the picker");
+  assert.match(server, /cookies\(\)\.get\(TRACK_COOKIE\)/, "T3d the resolver reads the cookie");
+  assert.ok(!server.includes(".set("), "T3e and never writes it");
+  assert.ok(!/prisma\./.test(server), "T3f and touches no database directly");
+  assert.match(server, /return pickActiveTrack\(\{ organization: inputs\.organization, cookieSlug: inputs\.selection \}\)/, "T3g the server hands the shared picker the validated selection, nothing rawer");
+  assert.ok(!/export function pickActiveTrack/.test(server), "T3h there is ONE precedence function, and it does not live in the server module");
+  assert.match(read("lib/track-server.ts"), /export \{ activeTrackFromOrganization, pickActiveTrack \} from "@\/lib\/track-precedence"/, "T3i the server re-exports the shared one");
+});
+
+// ---------------------------------------------------------------------------------------------
+check("T4. `?track=` is honoured exactly where a page consumes it — the list equals the pages", () => {
+  const pages: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (entry === "page.tsx") pages.push(full);
+    }
+  };
+  walk("app/(app)");
+  assert.ok(pages.length > 15, "T4-C0 the page walk found the app");
+  const consuming = new Set<string>();
+  for (const file of pages) {
+    const src = stripComments(read(file));
+    // A page consumes the parameter when it hands it to the resolver, or (the /study shim) forwards it.
+    // ... directly, via the lesson page's normalised `trackParam` (derived from searchParams.track), or forwarded by the /study shim.
+    const passesParam =
+      /(getActiveTrack|resolveActiveTrack)\(searchParams\??\.track\)/.test(src) ||
+      (/const rawTrack = searchParams\??\.track;/.test(src) && /resolveActiveTrack\(trackParam\)/.test(src)) ||
+      /redirect\([^;]{0,200}searchParams\??\.track/.test(src);
+    if (!passesParam) continue;
+    const route = "/" + file.replace(/^app\/\(app\)\//, "").replace(/\/page\.tsx$/, "").replace(/^page\.tsx$/, "");
+    consuming.add(route === "/" ? "/" : route);
+  }
+  const listed = new Set<string>(TRACK_PARAM_ROUTES);
+  // Dynamic segments (`/lessons/[slug]`) are handled by the lesson rule, not the exact list.
+  const staticConsuming = [...consuming].filter((r) => !r.includes("["));
+  for (const route of staticConsuming) assert.ok(listed.has(route), `T4a page ${route} consumes ?track= but the shell list omits it`);
+  for (const route of listed) assert.ok(consuming.has(route), `T4b shell list names ${route} but its page does not consume ?track=`);
+  assert.ok(consuming.has("/lessons/[slug]"), "T4c the lesson page consumes ?track= (content-owned context)");
+  // Pages that deliberately take NO parameter must not be in the list.
+  for (const route of ["/dashboard", "/debates/history", "/training", "/teams", "/assignments", "/settings", "/profile"]) {
+    assert.ok(!listed.has(route), `T4d ${route} takes no ?track= and is not listed`);
+  }
+});
+
+check("T5. the client route half: pathname wins, then ?track= only on consuming routes", () => {
+  assert.equal(routeTrackSlugFor("/training/deca/practice", "hosa"), "deca", "T5a a track-scoped pathname wins over the query");
+  assert.equal(routeTrackSlugFor("/training/hosa", null), "hosa");
+  assert.equal(routeTrackSlugFor("/home", "deca"), "deca", "T5b ?track= is read on a consuming route");
+  assert.equal(routeTrackSlugFor("/study-arcade/review", "hosa"), "hosa");
+  assert.equal(routeTrackSlugFor("/lessons/how-deca-roleplay-works", "deca"), "deca", "T5c and on every lesson page");
+  assert.equal(routeTrackSlugFor("/dashboard", "deca"), undefined, "T5d ignored where the page ignores it");
+  assert.equal(routeTrackSlugFor("/debates/history", "deca"), undefined);
+  assert.equal(routeTrackSlugFor("/home", null), undefined, "T5e no query → no route track");
+  assert.equal(routeTrackSlugFor("/training", "deca"), undefined, "T5f the chooser is neutral: no path track, and it consumes no query");
+  assert.equal(routeConsumesTrackParam("/lessons/deca-reading-scenarios"), true, "T5g lesson routes consume the query");
+  assert.equal(routeConsumesTrackParam("/lessons"), true);
+  assert.equal(routeConsumesTrackParam("/training/deca"), false, "T5h hub routes are path-scoped, not query-scoped");
+});
+
+// ---------------------------------------------------------------------------------------------
+check("T6. the shell consumes the SAME effective track as the page body — no second resolver", () => {
+  const shell = stripComments(read("components/app/app-shell.tsx"));
+  assert.match(shell, /const \{ effectiveTrack, source, ownTrack \} = useTrainingTrack\(\);/, "T6a the shell reads the effective track from the shared provider");
+  assert.ok(!/resolveTrackFromPathname|pickActiveTrack|localStorage|useSearchParams/.test(shell), "T6b and computes nothing of its own");
+  assert.match(shell, /const TRACK_AWARE: readonly string\[\] = TRACK_PARAM_ROUTES;/, "T6c hrefs are parameterised from the ONE consumption list");
+  assert.ok(!/TRACK_AWARE = \["\/home"/.test(shell), "T6d no private copy of the list");
+  assert.match(shell, /const withTrack = \(href: string\) => \(visualTrackSlug && TRACK_AWARE\.includes\(href\) \? `\$\{href\}\?track=\$\{visualTrackSlug\}` : href\);/, "T6e every parameterised href carries the EFFECTIVE slug, and none when unresolved");
+  assert.match(shell, /const visualTrackSlug = effectiveTrack \? trackById\(effectiveTrack\)\.slug : undefined;/, "T6f the slug is the effective track's");
+  assert.match(shell, /source === "route" && effectiveTrack !== ownTrack[\s\S]{0,40}Viewing: /, "T6g Viewing: names a route-scoped render of another track");
+  assert.match(shell, /: `Track: \$\{trackById\(effectiveTrack\)\.short\}`/, "T6h Track: names the selection/organization render");
+  assert.match(shell, /\? "Choose a track"/, "T6i an unresolved learner is told so, not painted as Debate");
+  assert.match(shell, /withTrack\(item\.href\)/, "T6j the nav uses it");
+});
+
+check("T7. the provider is server-initialised and calls the shared picker; no localStorage; cookie is owner-bound", () => {
+  const ctx = stripComments(read("components/training/training-track-context.tsx"));
+  assert.match(ctx, /pickActiveTrack\(\{ routeSlug, organization: inputs\.organization, cookieSlug: selection \}\)/, "T7a same function, same inputs");
+  assert.match(ctx, /routeTrackSlugFor\(pathname \?\? "", trackParam\)/, "T7b the route half comes from the shared route resolver");
+  assert.match(ctx, /useState<string \| null>\(inputs\.selection\)/, "T7c the selection state starts from the server-validated value");
+  assert.ok(!/localStorage|TRACK_STORAGE_KEY/.test(ctx), "T7d no localStorage mirror remains");
+  assert.match(ctx, /if \(!scope\) return;/, "T7e no scope → nothing written");
+  assert.match(ctx, /document\.cookie = `\$\{TRACK_COOKIE\}=\$\{trackSelectionCookieValue\(slug, scope\)\}/, "T7f the cookie value is owner-bound");
+  assert.match(ctx, /writeTrackCookie\(normalized, inputs\.selectionScope\)/, "T7g setTrack writes with THIS learner's scope");
+  // The only effect is a RE-SYNC from the live cookie (another tab, a cleared cookie); it never seeds
+  // and it never writes, so the first render is already right and the common path never re-renders.
+  const effects = ctx.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[[^\]]*\]\);/g) ?? [];
+  assert.equal(effects.length, 1, "T7h exactly one effect, and it is the re-sync");
+  assert.match(effects[0] ?? "", /parseTrackSelectionCookie\(readSelectionCookie\(\), inputs\.selectionScope\)/, "T7h2 it re-validates the live cookie with THIS learner's scope");
+  assert.match(effects[0] ?? "", /setSelection\(\(current\) => \(current === live \? current : live\)\)/, "T7h3 and only changes state when the value changed");
+  assert.ok(!/document\.cookie =|writeTrackCookie/.test(effects[0] ?? ""), "T7h4 and never writes");
+  assert.match(ctx, /const values = searchParams\?\.getAll\("track"\) \?\? \[\];\s*const trackParam = values\.length === 1 \? values\[0\] : null;/, "T7k a repeated ?track= is not a track — exactly one value counts, as on the server");
+  assert.match(ctx, /const own = pickActiveTrack\(\{ organization: inputs\.organization, cookieSlug: selection \}\)\.track\?\.id;/, "T7l the learner's OWN track (selection → organization) is exposed beside the effective one");
+  const layout = stripComments(read("app/(app)/layout.tsx"));
+  assert.match(layout, /const inputs = await getTrackContext\(\);/, "T7i the layout gathers the server inputs");
+  assert.match(layout, /<TrainingTrackProvider inputs=\{inputs\}>/, "T7j and hands them to the provider");
+});
+
+// ---------------------------------------------------------------------------------------------
+check("T8. entering a hub is the switch, and the chooser says exactly that", () => {
+  const controls = stripComments(read("components/training/track-controls.tsx"));
+  assert.match(controls, /if \(selectedTrack !== trackId\) \{\s*setTrack\(trackId\);/, "T8a the hub records the selection once");
+  assert.ok(!/router\.(push|replace)/.test(controls), "T8b and launches nothing");
+  const chooser = stripComments(read("app/(app)/training/page.tsx"));
+  assert.match(chooser, /const currentTrack = resolution\.resolved \? resolution\.track : undefined;/, "T8c the chooser marks the track actually in force");
+  assert.match(chooser, /Current track<\/StatusChip>/, "T8d as 'Current track'");
+  assert.match(chooser, /Entering a track makes it your current track everywhere in CompeteReady until you enter another one\./, "T8e the copy states the real semantics");
+  assert.ok(!/switch it from a track\s+page/.test(chooser), "T8f the circular instruction is gone");
+  assert.ok(!/following a link here doesn(&apos;|')t change it/.test(chooser), "T8g and so is the false persistence claim");
+});
+
+check("T9. a lesson renders under its OWN track: Back returns to that catalog, the URL is made to agree", () => {
+  const page = stripComments(read("app/(app)/lessons/[slug]/page.tsx"));
+  assert.match(page, /const owner: TrackInfo \| undefined = lesson\s*\? trackBySlug\(lesson\.track\)\s*: roleplay\s*\? trackBySlug\(roleplay\.track\)\s*: concept\s*\? trackById\(concept\.entry\.track\)\s*: undefined;/, "T9a ownership comes from the lesson's own track field, all three sources");
+  assert.match(page, /if \(!owner \|\| isTrackRetired\(owner\.id\)\) \{\s*notFound\(\);\s*\}/, "T9b a lesson with no track cannot render");
+  assert.match(page, /const rawTrack = searchParams\?\.track;\s*const trackParam = typeof rawTrack === "string" \? rawTrack : undefined;\s*const effective = await resolveActiveTrack\(trackParam\);\s*if \(effective\.track\?\.id !== owner\.id\) \{\s*redirect\(`\/lessons\/\$\{params\.slug\}\?track=\$\{owner\.slug\}` as Route\);\s*\}/, "T9c a render that would resolve to another track is redirected to the owner's canonical URL; a repeated ?track= counts as absent, as in the shell");
+  assert.match(page, /if \(!owner \|\| isTrackRetired\(owner\.id\)\) \{\s*notFound\(\);\s*\}/, "T9c2 a retired owner is refused, never redirected in a loop");
+  assert.match(page, /href=\{`\/lessons\?track=\$\{owner\.slug\}` as Route\}/, "T9d Back goes to the owner's catalog");
+  assert.ok(!/href=\{"\/lessons" as Route\}/.test(page), "T9e no bare /lessons back link remains");
+  assert.match(page, /export default async function LessonPage\(\{ params, searchParams \}/, "T9f the page accepts ?track=");
+  // Lookup order pinned elsewhere (education-migration 32b) must survive: legacy → roleplay → concept.
+  assert.ok(page.indexOf("getLesson(params.slug)") < page.indexOf("conceptEducationLesson(params.slug)"), "T9g lookup order unchanged");
+  const practice = stripComments(read("components/lessons/roleplay-lesson-practice.tsx"));
+  assert.match(practice, /backHref=\{`\/lessons\?track=\$\{lesson\.track\}`\}/, "T9h the unavailable-practice Back also names the owner");
+  assert.ok(!/href=\{"\/lessons" as Route\}/.test(practice), "T9i and no bare one remains there either");
+});
+
+check("T10. review CTAs name the same track as the count they sit under", () => {
+  const home = stripComments(read("app/(app)/home/page.tsx"));
+  assert.match(home, /href: activeTrack \? `\/study-arcade\/review\?track=\$\{activeTrack\.slug\}` : "\/study-arcade\/review"/, "T10a home review card carries the effective track");
+  const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
+  assert.match(arcade, /const trackQuery = activeTrack \? `\?track=\$\{activeTrack\.slug\}` : "";/, "T10b the arcade query is the RESOLVED slug, never the raw param");
+  assert.match(arcade, /href=\{`\/study-arcade\/review\$\{trackQuery\}` as Route\}/, "T10c arcade review link carries it");
+  assert.match(stripComments(read("app/(app)/lessons/page.tsx")), /"\/study-arcade\/review\?track=debate"/, "T10d Debate catalog review link is Debate-scoped");
+  assert.match(stripComments(read("components/skills/skill-path.tsx")), /"\/study-arcade\/review\?track=debate"/, "T10e Debate skill path review tile is Debate-scoped");
+  for (const file of ["app/(app)/home/page.tsx", "app/(app)/study-arcade/page.tsx", "app/(app)/lessons/page.tsx", "components/skills/skill-path.tsx"]) {
+    const src = stripComments(read(file));
+    const bare = src.match(/["'`]\/study-arcade\/review["'`]/g) ?? [];
+    // home keeps ONE bare fallback, used only when no track resolved (the destination then fails closed too).
+    assert.equal(bare.length, file.endsWith("home/page.tsx") ? 1 : 0, `T10f ${file} has no bare review href (${bare.length})`);
+  }
+  // Destination truth: the review page resolves the same parameter.
+  assert.match(stripComments(read("app/(app)/study-arcade/review/page.tsx")), /getActiveTrack\(searchParams\.track\)/, "T10g the review page consumes it");
+});
+
+check("T11. Open Training under 'Practise <track>' opens THAT track's hub", () => {
+  const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
+  assert.match(arcade, /href=\{\(activeTrack \? `\/training\/\$\{activeTrack\.slug\}` : "\/training"\) as Route\}/, "T11a destination keeps the track");
+  assert.match(arcade, /\{activeTrack \? `Open \$\{activeTrack\.label\} training` : "Choose your competition"\}/, "T11b the label names the track it opens");
+  assert.ok(!/activeTrack && !hasDecks \? "\/training" : "\/training"/.test(arcade), "T11c the two-branches-one-destination ternary is gone");
+});
+
+check("T12. the Tests study CTA keeps the track and names only what it opens", () => {
+  const tests = stripComments(read("app/(app)/tests/page.tsx"));
+  assert.match(tests, /const studyTrack = lockedOrganization \? activeTrack : undefined;/, "T12a0 the CTA is keyed on a track that HAS decks (an assigned test can render under Debate)");
+  assert.match(tests, /href=\{\(studyTrack \? `\/study-arcade\?track=\$\{studyTrack\.slug\}` : "\/study-arcade"\) as Route\}/, "T12a destination keeps the track");
+  assert.match(tests, /\{studyTrack \? `Study \$\{studyTrack\.label\} terms before testing` : "Study DECA\/HOSA terms before testing"\}/, "T12b the label matches the decks it opens");
+  assert.ok(!/href="\/study"/.test(tests), "T12c the bare /study shim is no longer used");
+});
+
+check("T13. history is one list for every track and says so", () => {
+  const history = stripComments(read("app/(app)/debates/history/page.tsx"));
+  assert.ok(!/Debate history<\/h1>/.test(history), "T13a no Debate-only heading over a multi-track list");
+  assert.match(history, /<h1 className="text-2xl font-bold">History<\/h1>/, "T13b heading is neutral");
+  assert.match(history, /Every round and session saved to your history, from any of your tracks — each labelled with its own\./, "T13c the description states what is listed — saved rows, from any track — and no more");
+  assert.ok(!/Every session you have started/.test(history), "T13c2 it does not claim every session (Medical Terminology practice is stored elsewhere)");
+  assert.match(history, /trackByOrganization\(debate\.organization\)/, "T13d each row is still labelled with its own track");
+  const compete = stripComments(read("app/(app)/compete/page.tsx"));
+  assert.match(compete, /detail: "Your saved rounds and sessions, from any of your tracks\. DECA role-plays aren't saved yet\."/, "T13e the DECA card says any-track, and keeps the saved-yet truth");
+  assert.match(compete, /detail: "Your saved rounds and sessions, from any of your tracks\. Medical Terminology practice isn't listed here yet\."/, "T13f the HOSA card says any-track and names what it does not list");
+});
+
+check("T15. every reachable lesson resolves to a live owner track (data, not regex)", () => {
+  const owners: Array<[string, TrackInfo | undefined]> = [
+    ...AUTHORED_LESSONS.map((l): [string, TrackInfo | undefined] => [l.slug, trackBySlug(l.track)]),
+    ...ROLEPLAY_LESSONS.map((l): [string, TrackInfo | undefined] => [l.slug, trackBySlug(l.track)]),
+    ...EDUCATION_LESSONS.filter((e) => e.visibility === "learner").map((e): [string, TrackInfo | undefined] => [e.id, trackById(e.track)])
+  ];
+  assert.ok(owners.length >= 20, `T15-C ${owners.length} lessons enumerated`);
+  for (const [id, owner] of owners) {
+    assert.ok(owner, `T15a ${id} has an owner track`);
+    assert.ok(owner && !isTrackRetired(owner.id), `T15b ${id} is owned by a live track`);
+    // The redirect target must be accepted by the resolver on the next request, or it would loop.
+    assert.equal(owner && pickActiveTrack({ routeSlug: owner.slug }).track?.id, owner?.id, `T15c ${id}'s canonical ?track= resolves back to its owner`);
+  }
+});
+
+check("T16. onboarding writes a selection only for a track the learner actually chose", () => {
+  const form = stripComments(read("components/onboarding/diagnostic-form.tsx"));
+  assert.match(form, /const \[trackChosen, setTrackChosen\] = useState\(false\);/, "T16a the form tracks whether the select was touched");
+  assert.match(form, /setTrackChosen\(true\);/, "T16b touching the select marks it");
+  assert.match(form, /if \(trackChosen\) setTrack\(finished\.track\);/, "T16c and only then is the selection written — an untouched pre-fill (possibly the default) is never a selection");
+  assert.ok(!/^\s*setTrack\(finished\.track\);/m.test(form), "T16d no unconditional write remains");
+});
+
+check("T17. an unresolved learner is offered the chooser, never walked into the default hub", () => {
+  const path = stripComments(read("components/onboarding/learning-path.tsx"));
+  assert.match(path, /href=\{\(effectiveTrack \? `\/training\/\$\{info\.slug\}` : "\/training"\) as Route\}/, "T17a Continue goes to the hub only when a track resolved");
+  assert.match(path, /\{effectiveTrack \? "Continue" : "Choose a track"\}/, "T17b and says so");
+});
+
+check("T18. entering a hub refreshes the server render, and launches nothing", () => {
+  const controls = stripComments(read("components/training/track-controls.tsx"));
+  assert.match(controls, /if \(selectedTrack !== trackId\) \{\s*setTrack\(trackId\);\s*router\.refresh\(\);\s*\}/, "T18a a changed selection triggers router.refresh() so cached pages re-render under the new track");
+  assert.ok(!/router\.(push|replace)/.test(controls), "T18b and never navigates");
+});
+
+check("T19. the chip says Viewing only when the render is scoped to a track that is not the learner's own", () => {
+  const shell = stripComments(read("components/app/app-shell.tsx"));
+  assert.match(shell, /const \{ effectiveTrack, source, ownTrack \} = useTrainingTrack\(\);/, "T19a the shell reads the learner's own track too");
+  assert.match(shell, /: source === "route" && effectiveTrack !== ownTrack\s*\? `Viewing: /, "T19b Viewing: requires a route track that differs from the learner's own");
+});
+
+check("T14. no repaired surface still emits a bare track-sensitive href", () => {
+  const bareHits: string[] = [];
+  const scan = (file: string, patterns: RegExp[]) => {
+    const src = stripComments(read(file));
+    assert.ok(src.length > 200, `T14-C ${file} read`);
+    for (const p of patterns) for (const m of src.match(p) ?? []) bareHits.push(`${file}: ${m}`);
+  };
+  scan("app/(app)/lessons/[slug]/page.tsx", [/["'`]\/lessons["'`]/g]);
+  scan("components/lessons/roleplay-lesson-practice.tsx", [/["'`]\/lessons["'`]/g]);
+  scan("app/(app)/tests/page.tsx", [/["'`]\/study["'`]/g]);
+  scan("app/(app)/study-arcade/page.tsx", [/["'`]\/study-arcade\/review["'`]/g, /["'`]\/resources["'`]/g]);
+  assert.deepEqual(bareHits, [], `bare hrefs remain: ${bareHits.join(" | ")}`);
+});
+
+console.log(results.join("\n"));
+console.log(`\n${results.length - failures}/${results.length} track-context controls passed`);
+if (failures > 0) process.exit(1);

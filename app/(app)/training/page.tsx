@@ -21,11 +21,12 @@ const ICONS: Record<TrainingTrack, typeof GraduationCap> = {
 export const metadata = { title: "Choose your training track" };
 
 export default async function TrainingPage() {
-  // The SAVED preference only. This page passes no route slug, so the shared resolver can return
-  // "preference" or "none" — never "route" — which is what lets the chip below name its source
-  // honestly rather than guessing. Reading it changes nothing: the resolver never writes.
+  // The learner's CURRENT track — their own selection if they have made one, otherwise their signup
+  // organization. This page passes no route slug, so the shared resolver can return "preference",
+  // "organization" or "none" — never "route" — which is what lets the chip below name the track that
+  // is actually in force everywhere else. Reading it changes nothing: the resolver never writes.
   const resolution = await resolveActiveTrack();
-  const savedTrack = resolution.source === "preference" ? resolution.track : undefined;
+  const currentTrack = resolution.resolved ? resolution.track : undefined;
 
   return (
     <div className="space-y-8">
@@ -40,7 +41,7 @@ export default async function TrainingPage() {
         {ACTIVE_TRACKS.map((track) => {
           const Icon = ICONS[track.id];
           const stages = learnerPathForTrack(track.id);
-          const isSaved = savedTrack?.id === track.id;
+          const isCurrent = currentTrack?.id === track.id;
           return (
             // Deliberately NOT a wrapping link: the card contains its own action plus a rail of
             // stage links, and one interactive element must never contain another.
@@ -53,8 +54,8 @@ export default async function TrainingPage() {
                     </span>
                     <h2 className="section-title">{track.label}</h2>
                   </div>
-                  {/* Rendered only when the preference cookie actually resolved to this track. */}
-                  {isSaved ? <StatusChip variant="track">Current context</StatusChip> : null}
+                  {/* Rendered only for the track the shared resolver actually put in force. */}
+                  {isCurrent ? <StatusChip variant="track">Current track</StatusChip> : null}
                 </div>
 
                 <p className="text-sm leading-6 text-muted-foreground">{track.description}</p>
@@ -76,10 +77,14 @@ export default async function TrainingPage() {
       </div>
 
       <div className="space-y-2 text-xs leading-6 text-muted-foreground">
-        {/* Opening a track shows that track; it is not a claim that the saved selection changed. */}
+        {/* Owner QA Repair 2: this said the saved track changed "only when you switch it from a track
+            page", while no track page had any control but a link back here — and for a signed-in
+            learner the saved value was never consulted at all. Now entering a track IS the switch,
+            and it is the track every other page uses until the learner enters another one. */}
         <p>
-          Opening a track shows you that track. Your saved track changes only when you switch it from a track
-          page — following a link here doesn&apos;t change it.
+          Entering a track makes it your current track everywhere in CompeteReady until you enter another one.
+          Opening a single lesson or page from another track only shows you that page — it doesn&apos;t change
+          your current track.
         </p>
         <p>{TRACK_DISCLAIMER}</p>
       </div>

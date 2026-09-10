@@ -30,8 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTrainingTrack } from "@/components/training/training-track-context";
-import { resolveTrackFromPathname } from "@/lib/track-route";
-import { trackById, trackHasPracticeTests } from "@/lib/training-tracks";
+import { TRACK_PARAM_ROUTES } from "@/lib/track-route";
+import { DEFAULT_TRACK, trackById, trackHasPracticeTests } from "@/lib/training-tracks";
 
 // The shell owns ONE navigation definition. Desktop and mobile both render from these two arrays, so
 // role gating and active state cannot drift apart between the two surfaces.
@@ -136,25 +136,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profileUsername = session?.user?.username ?? session?.user?.email?.split("@")[0] ?? "profile";
   const profileAvatar = session?.user?.avatarUrl ?? session?.user?.image;
   const role = session?.user?.role ?? null;
-  const { track } = useTrainingTrack();
-  const trackSlug = trackById(track).slug;
-  // ---- Route-derived VISUAL identity (M12C) --------------------------------------------------
-  // The route wins over a stale stored preference for what the chrome LOOKS like, and for nothing
-  // else. `track`/`trackSlug` above remain the learner's stored selection and keep driving every
-  // link, query parameter and persisted behaviour, so following a DECA link never rewrites a saved
-  // HOSA preference. This mirrors the contract lib/track-server.ts already enforces server-side.
-  // Derived from `pathname`, which is available on the first render, so there is no wrong-track flash.
-  const routeTrack = resolveTrackFromPathname(pathname);
-  const visualTrack = routeTrack ?? track;
-  const visualTrackSlug = trackById(visualTrack).slug;
-  // "Viewing:" on a route-scoped page (this page's track), "Track:" on a neutral one (your saved
-  // selection). The wording never implies the saved preference changed.
-  const trackChipLabel = routeTrack
-    ? `Viewing: ${trackById(visualTrack).short}`
-    : `Track: ${trackById(track).short}`;
-  // Preserve the selected track when navigating to track-filterable content routes.
-  const TRACK_AWARE = ["/home", "/compete", "/study-arcade", "/tests", "/skills", "/debate", "/lessons"];
-  const withTrack = (href: string) => (TRACK_AWARE.includes(href) ? `${href}?track=${trackSlug}` : href);
+  // ---- ONE effective track per render (Owner QA Repair 2) ------------------------------------
+  // `effectiveTrack` is the same answer the page body computed on the server: route/activity track
+  // first, then the learner's own selection, then their signup organization (lib/track-precedence.ts).
+  // The provider is initialised with the server's inputs, so the first HTML and every client render
+  // agree, and every nav href below carries THIS track — the chrome can never contradict the page.
+  // Following a `?track=` link is viewing, not selecting: it changes this render, never the cookie.
+  const { effectiveTrack, source, ownTrack } = useTrainingTrack();
+  const visualTrack = effectiveTrack ?? DEFAULT_TRACK;
+  const visualTrackSlug = effectiveTrack ? trackById(effectiveTrack).slug : undefined;
+  // "Viewing:" only when this render is scoped to a track that is NOT the learner's own (a lesson or
+  // page from another track); "Track:" whenever the learner's own selection or signup organization
+  // is what they are looking at — including through a `?track=` link into their own track; and an
+  // honest prompt when nothing resolves.
+  const trackChipLabel = !effectiveTrack
+    ? "Choose a track"
+    : source === "route" && effectiveTrack !== ownTrack
+      ? `Viewing: ${trackById(effectiveTrack).short}`
+      : `Track: ${trackById(effectiveTrack).short}`;
+  // Carry the effective track to every destination whose page consumes `?track=` — and only those,
+  // so a parameter is never appended where it would be ignored. Unresolved → bare href, so the
+  // destination fails closed the same way this render did rather than being pushed to Debate.
+  const TRACK_AWARE: readonly string[] = TRACK_PARAM_ROUTES;
+  const withTrack = (href: string) => (visualTrackSlug && TRACK_AWARE.includes(href) ? `${href}?track=${visualTrackSlug}` : href);
   // Real values from the session (zero/Bronze for a brand-new account) — never hardcoded sample stats.
   const xp = session?.user?.xp ?? 0;
   const rank = (session?.user?.rank ?? "BRONZE").replace("_", " ");
@@ -210,7 +214,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (focusMode) {
     return (
-      <div className="min-h-screen bg-background" data-track={visualTrackSlug}>
+      <div className="min-h-screen bg-background" data-track={visualTrackSlug ?? "none"}>
         {skipLink}
         {/* Role-play rooms render their own in-room exit (RoomChrome); only the debate room still
             needs this floating control until it migrates onto the shared shell. */}
@@ -233,8 +237,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     // data-track retints --track-accent for the whole shell (debate=gold, deca=emerald, hosa=red).
-    // On a track-scoped route this is the ROUTE's track, so the chrome can never contradict the page.
-    <div className="min-h-screen bg-background" data-track={visualTrackSlug}>
+    // It is the EFFECTIVE track of this render, so the chrome can never contradict the page.
+    <div className="min-h-screen bg-background" data-track={visualTrackSlug ?? "none"}>
       {skipLink}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r bg-card px-4 py-5 lg:block">
         <Link href="/" className="focus-ring flex min-h-11 items-center gap-3 rounded-md px-2">

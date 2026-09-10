@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { BookOpenCheck, CheckCircle2, ClipboardList, Layers3, Sparkles } from "lucide-react";
 import { TestBuilderPreview } from "@/components/tests/test-builder-preview";
@@ -38,6 +39,10 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
   // Registry-driven official test shape (HOSA MT: 50 questions / 60 minutes). Null when the
   // registry has no timed multiple-choice round for the organization — generator is unchanged.
   const officialFormat = lockedOrganization ? await getOfficialTestFormat(lockedOrganization) : null;
+  // The study CTA names decks only for a track that HAS them (DECA/HOSA). An assigned test is exempt
+  // from the redirect above, so a Debate-resolved learner can reach this page — they get the generic
+  // arcade link, never "Study General Debate terms" pointing at a deck list that does not exist.
+  const studyTrack = lockedOrganization ? activeTrack : undefined;
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
@@ -103,10 +108,13 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
         </CardContent>
       </Card>
 
-      <Link href="/study" className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
+      {/* Owner QA Repair 2: this went to the bare `/study` shim, which forwarded to the Study Arcade
+          under the learner's DEFAULT track — a DECA tests page sent its reader to Debate decks. The
+          destination now keeps the resolved track, and the label names only the decks it opens. */}
+      <Link href={(studyTrack ? `/study-arcade?track=${studyTrack.slug}` : "/study-arcade") as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
         <Layers3 className="mt-1 h-5 w-5 text-primary" aria-hidden />
         <span>
-          <span className="block font-semibold">Study DECA/HOSA terms before testing</span>
+          <span className="block font-semibold">{studyTrack ? `Study ${studyTrack.label} terms before testing` : "Study DECA/HOSA terms before testing"}</span>
           <span className="mt-1 block text-sm leading-6 text-muted-foreground">
             Open original flashcard decks with definitions, examples, quick checks, and external video resources.
           </span>

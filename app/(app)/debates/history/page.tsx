@@ -33,9 +33,12 @@ export default async function DebateHistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Debate history</h1>
+        {/* Owner QA Repair 2: this list holds every track's sessions (each row is labelled with its
+            own track below), but it was headed "Debate history" — a DECA or HOSA learner arriving from
+            their Compete page read another track's name over their own sessions. */}
+        <h1 className="text-2xl font-bold">History</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Every debate you have started. Resume the unfinished ones or replay the judged ones — scores shown are your real results.
+          Every round and session saved to your history, from any of your tracks — each labelled with its own. Resume the unfinished ones or replay the judged ones — scores shown are your real results.
         </p>
       </div>
 

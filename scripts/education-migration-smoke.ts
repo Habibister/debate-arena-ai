@@ -182,7 +182,16 @@ async function main() {
                       // it. What this suite needs from the legacy view — that CWI still renders through it
                       // with its teaching sections, and that it imports nothing from lib/education — is
                       // asserted directly at 4V below.
-                      "components/lessons/roleplay-lesson-view.tsx", "components/lessons/roleplay-lesson-practice.tsx",
+                      "components/lessons/roleplay-lesson-view.tsx",
+                      // components/lessons/roleplay-lesson-practice.tsx is deliberately absent from Owner QA
+                      // Repair 2 onward, for the same HEAD-RELATIVE flaw called out throughout this list: the
+                      // pin only failed while a change was uncommitted and passed again the moment HEAD
+                      // advanced onto it. That repair changed ONE href in it — the withdrawn-practice "Back to
+                      // lessons" link now names the lesson's own track. What this suite needs from the
+                      // component — that it still branches on the explicit practiceStatus discriminant, that
+                      // its withdrawn branch renders no input and makes no request, and that its live branch
+                      // still coaches through the Side Coach route and records no mastery, XP or progress —
+                      // is asserted directly at 4W below.
                       // components/lessons/concept-education-lesson-view.tsx is deliberately absent
                       // from the rebuttal containment onward — the same HEAD-RELATIVE flaw called out
                       // for lib/assignments.ts below: it failed only while a change to the file was
@@ -249,6 +258,30 @@ async function main() {
       assert.ok(view.includes(`id="${id}"`), `4V2. the legacy view still renders its ${id} teaching section`);
     }
     assert.ok(!/@\/lib\/education/.test(view), "4V3. the legacy view imports nothing from lib/education (dependency flow stays one-way)");
+  }
+
+  // ---- 4W. what the retired roleplay-lesson-practice pin protected, asserted directly --------------
+  {
+    const practice = read("components/lessons/roleplay-lesson-practice.tsx");
+    const code = practice.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+    assert.ok(/export function RoleplayLessonPractice\b/.test(code), "4W1. the role-play practice is still exported under its name");
+    assert.ok(/lesson\.practiceStatus !== "available"/.test(code) || /lesson\.practiceStatus === "available"/.test(code),
+      "4W2. it still branches on the explicit practiceStatus discriminant, never on missing data");
+    // The withdrawn branch: a statement, a Back link, and nothing that could produce or persist a result.
+    const unavailable = code.slice(code.indexOf("function PracticeUnavailable"), code.indexOf("function PracticeUnavailable") + 1600);
+    assert.ok(unavailable.length > 400, "4W3. the withdrawn-practice component was located");
+    assert.ok(!/<Textarea|<textarea|fetch\(|useState|useEffect|localStorage|sessionStorage/.test(unavailable),
+      "4W3b. the withdrawn branch renders no input, makes no request and holds no state");
+    assert.ok(/Nothing is recorded for this lesson, and no part of it counts as completed\./.test(unavailable),
+      "4W3c. and says so");
+    assert.ok(/Back to lessons/.test(unavailable) && /backHref/.test(unavailable), "4W3d. and its Back link is the caller's, naming the lesson's own track");
+    assert.ok(/backHref=\{`\/lessons\?track=\$\{lesson\.track\}`\}/.test(code), "4W3e. which the entry point builds from lesson.track");
+    // The live branch: authored rubric, Side Coach feedback only, device-local resume, no record of any kind.
+    assert.ok(/fetch\("\/api\/ai\/side-coach"/.test(code), "4W4. the live branch still coaches through the existing Side Coach route");
+    assert.ok(/validateAuthoredRubricFeedback\(/.test(code), "4W4b. and validates feedback against the authored rubric");
+    assert.ok(/from "@\/lib\/authored-lesson-progress"/.test(code), "4W4c. resume stays device-local through lib/authored-lesson-progress");
+    assert.ok(!/recordDrillMastery|MasteryProgress|\/api\/(skills|deca|debate)\/[a-z-]*\/(submit|record)|xp\b|XP\b/.test(code),
+      "4W4d. and nothing in it records mastery, XP or a durable result");
   }
 
   // ---- 4R. what the retired seed pin protected, asserted directly ---------------------------------

@@ -35,6 +35,11 @@ export function DiagnosticForm() {
   const { track, setTrack } = useTrainingTrack();
   const [profile, setProfile] = useState<LearningProfile>({ ...DEFAULT_PROFILE, track });
   const [saving, setSaving] = useState(false);
+  // Owner QA Repair 2: the select is pre-filled from the learner's current track — and, for a learner
+  // with no resolved track, from the default. Saving used to write that pre-fill as a SELECTION, so
+  // a learner who never chose a track was silently given General Debate. Only a track the learner
+  // actually picked here is written; an untouched select changes nothing.
+  const [trackChosen, setTrackChosen] = useState(false);
 
   const set = (patch: Partial<LearningProfile>) => setProfile((c) => ({ ...c, ...patch }));
   const setConfidence = (key: ConfidenceKey, value: Confidence) => setProfile((c) => ({ ...c, confidence: { ...c.confidence, [key]: value } }));
@@ -49,7 +54,7 @@ export function DiagnosticForm() {
     } catch {
       // ignore storage failure; still navigate
     }
-    setTrack(finished.track); // keep the sitewide track in sync
+    if (trackChosen) setTrack(finished.track); // an explicit choice becomes the sitewide selection
     router.push("/dashboard");
   }
 
@@ -60,7 +65,10 @@ export function DiagnosticForm() {
         <select
           id="track"
           value={profile.track}
-          onChange={(e) => set({ track: e.target.value as TrainingTrack })}
+          onChange={(e) => {
+            setTrackChosen(true);
+            set({ track: e.target.value as TrainingTrack });
+          }}
           className="h-10 w-full rounded-md border bg-background px-3 text-sm"
         >
           {ACTIVE_TRACKS.map((t) => (

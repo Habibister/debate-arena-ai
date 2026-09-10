@@ -51,7 +51,7 @@ function tilesForTrack(track: TrainingTrack | undefined): Tile[] {
         key: "debate-review",
         title: "Reviews due",
         detail: "Skills that record your practice come back later on a spacing schedule. It never shows a number you did not earn.",
-        href: "/study-arcade/review" as Route,
+        href: "/study-arcade/review?track=debate" as Route,
         icon: RotateCcw,
         cta: "Open reviews"
       }

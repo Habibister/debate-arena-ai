@@ -59,7 +59,7 @@ export function RoleplayLessonPractice({ lesson, userScope }: { lesson: Roleplay
   if (lesson.practiceStatus !== "available") {
     // An unavailable lesson never mounts the active practice, so it initializes NO practice state,
     // runs NO persistence hooks, and performs NO localStorage read or write.
-    return <PracticeUnavailable notice={lesson.practiceUnavailable} />;
+    return <PracticeUnavailable notice={lesson.practiceUnavailable} backHref={`/lessons?track=${lesson.track}`} />;
   }
   return <ActiveRoleplayPractice lesson={lesson} userScope={userScope ?? null} />;
 }
@@ -68,7 +68,7 @@ export function RoleplayLessonPractice({ lesson, userScope }: { lesson: Roleplay
 // question, no textarea and no submit control; makes no Side Coach request; records no progress,
 // completion or mastery; and claims no completion of any kind. It holds no hooks and no state, so
 // there is nothing here that could produce or persist a result.
-function PracticeUnavailable({ notice }: { notice: { title: string; message: string } }) {
+function PracticeUnavailable({ notice, backHref }: { notice: { title: string; message: string }; backHref: string }) {
   return (
     <Card>
       <CardHeader>
@@ -82,7 +82,8 @@ function PracticeUnavailable({ notice }: { notice: { title: string; message: str
         <p className="text-xs text-muted-foreground">
           Nothing is recorded for this lesson, and no part of it counts as completed.
         </p>
-        <Link href={"/lessons" as Route} className={`${buttonVariants({ variant: "outline", size: "sm" })} h-auto min-h-11 min-w-11 px-4`}>
+        {/* Back to the catalog of the track this lesson belongs to (Owner QA Repair 2). */}
+        <Link href={backHref as Route} className={`${buttonVariants({ variant: "outline", size: "sm" })} h-auto min-h-11 min-w-11 px-4`}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Back to lessons
         </Link>

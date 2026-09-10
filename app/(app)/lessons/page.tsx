@@ -246,7 +246,7 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
                 Drill a skill
               </Link>
               <Link
-                href={"/study-arcade/review" as Route}
+                href={"/study-arcade/review?track=debate" as Route}
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto min-h-11 min-w-11 px-4")}
               >
                 Reviews that are due

@@ -132,7 +132,10 @@ export default async function HomePage({ searchParams }: { searchParams: { track
     ...(trackHasPracticeTests(activeTrack?.id)
       ? [{ href: `/tests?track=${trackSlug}`, label: "Take a test", detail: "An original practice set with explanations", icon: ClipboardList }]
       : []),
-    { href: "/study-arcade/review", label: "Review missed terms", detail: reviewsDue > 0 ? `${reviewsDue} ${reviewsDue === 1 ? "skill is" : "skills are"} due for review` : "Nothing due — reviews appear as skills record your practice", icon: RotateCcw }
+    // The count above is scoped to the effective track, so the destination must be too (Owner QA
+    // Repair 2): a bare `/study-arcade/review` resolved the learner's default track and could list
+    // a different track's reviews than the number it was reached from.
+    { href: activeTrack ? `/study-arcade/review?track=${activeTrack.slug}` : "/study-arcade/review", label: "Review missed terms", detail: reviewsDue > 0 ? `${reviewsDue} ${reviewsDue === 1 ? "skill is" : "skills are"} due for review` : "Nothing due — reviews appear as skills record your practice", icon: RotateCcw }
   ];
 
   return (

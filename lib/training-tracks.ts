@@ -84,9 +84,10 @@ export function trackHasPracticeTests(track: TrainingTrack | null | undefined): 
 }
 
 export const DEFAULT_TRACK: TrainingTrack = "GENERAL_DEBATE";
-export const TRACK_STORAGE_KEY = "debatearena_training_track";
-// A non-auth preference cookie (slug value) written alongside localStorage so server components can
-// resolve the selected track when the `?track=` query param is absent. Never in the JWT/session.
+// The learner's CURRENT SELECTION: a non-auth cookie holding `<slug>.<scope>`, where the scope binds
+// the value to the account that made it (lib/track-precedence.ts). Written only by the client switcher,
+// read by the server resolver and passed back to the shell, so both resolve the same track. Never in
+// the JWT/session. (Owner QA Repair 2 retired the localStorage mirror: one store, one answer.)
 export const TRACK_COOKIE = "debatearena_track";
 
 // Resolve the active track for a page: an explicit `?track=` on a track-specific route wins (URL

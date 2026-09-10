@@ -38,7 +38,9 @@ export default async function StudyArcadePage({
   const decks = activeTrack ? allDecks.filter((d) => d.organization === activeTrack.organization) : allDecks;
   const cardCount = decks.reduce((total, deck) => total + deck.count, 0);
   const hasDecks = decks.length > 0;
-  const trackQuery = activeTrack ? `?track=${searchParams.track ?? ""}` : "";
+  // The resolved track's OWN slug — not the raw query, which was empty whenever the track came from
+  // the learner's selection or organization and so emitted `?track=` with nothing after it.
+  const trackQuery = activeTrack ? `?track=${activeTrack.slug}` : "";
 
   // DECA Full Simulation entry point: fetch the registry-driven prep format only when DECA is in view.
   // Null (no spec) makes the simulation degrade to an untimed flow with no fake "official" clock.
@@ -113,7 +115,7 @@ export default async function StudyArcadePage({
                   {reviewsDue === 1 ? "skill is" : "skills are"} due for review — mastery only counts if it survives the
                   gap.
                 </p>
-                <Link href={"/study-arcade/review" as Route} className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
+                <Link href={`/study-arcade/review${trackQuery}` as Route} className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
                   Start review session
                 </Link>
               </>
@@ -142,8 +144,11 @@ export default async function StudyArcadePage({
                   : `${activeTrack.label} does not use flashcard decks — that practice happens in ${activeTrack.label} sessions and lessons. Head to Training to continue.`
                 : "Select a training track to get track-specific decks and games."}
             </p>
-            <Link href={(activeTrack && !hasDecks ? "/training" : "/training") as Route} className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
-              {activeTrack ? "Open Training" : "Choose your competition"}
+            {/* Owner QA Repair 2: "Open Training" under "Practise DECA" went to the track CHOOSER —
+                the label promised this track's training and the destination left the track. It now
+                opens this track's own hub; with no track resolved it still offers the chooser. */}
+            <Link href={(activeTrack ? `/training/${activeTrack.slug}` : "/training") as Route} className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
+              {activeTrack ? `Open ${activeTrack.label} training` : "Choose your competition"}
             </Link>
           </div>
           <div className="rounded-md border bg-background p-3">
@@ -236,7 +241,7 @@ export default async function StudyArcadePage({
       <RecommendedVideos organization={activeTrack?.organization} title="Video resource shelf" limit={6} />
       <p className="text-xs text-muted-foreground">
         {cardCount > 0 ? `${cardCount} total cards across ${decks.length} ${decks.length === 1 ? "deck" : "decks"}.` : ""}{" "}
-        Looking for the full resource library? It moved to <Link href={"/resources" as Route} className="font-semibold text-primary hover:underline">Resources</Link>.
+        Looking for the full resource library? It moved to <Link href={`/resources${trackQuery}` as Route} className="font-semibold text-primary hover:underline">Resources</Link>.
       </p>
     </div>
   );

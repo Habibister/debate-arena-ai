@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     // P1-C.2: the Coach answers for the learner's ACTIVE TRACK. Same canonical resolver the
     // learner-facing surfaces use; no route slug exists on this endpoint, so it falls through to the
-    // learner's persisted organization and then the switcher cookie, exactly as elsewhere.
+    // learner's own selection and then their persisted organization, exactly as elsewhere.
     const active = await resolveActiveTrack();
     const action = await getEvidenceBackedNextAction(user.id, active.track?.organization);
     const template = coachActionExplanationTemplate(action);

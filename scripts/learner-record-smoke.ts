@@ -179,16 +179,54 @@ check("R10. /skills no longer promises DECA a mastery-lesson product it does not
     assert.ok(!skills.includes(gone), `R10a "${gone}" is gone`);
   }
   assert.match(skills, /activeTrack \? `\$\{activeTrack\.label\} skills` : "Skills"/, "R10b the non-Debate title names the track");
-  assert.match(skills, /DECA records four skills — performance indicators, business reasoning, customer relations and marketing fundamentals\./, "R10c DECA's copy names its real recorded skills");
-  assert.match(skills, /The role-play practice room below is where you rehearse the whole event; it records nothing\./, "R10d and says what the room records");
+  // SUPERSEDED by the final DECA cleanup, not loosened. R10c used to pin the sentence that NAMED the
+  // four skills, which was the whole repair at the time. The page then listed none of them, so a
+  // beginner could not open any one, and could not tell which two are role-play skills and which two
+  // are the cluster knowledge the exam tests. The copy now points at cards that carry that, and the
+  // cards are derived from the canonical map rather than restated — so the control moves with it.
+  assert.match(skills, /DECA records four skills\./, "R10c DECA's copy still states the number it records");
+  assert.match(
+    skills,
+    /says which side of the event CompeteReady trains it for, links the lesson to start from, and opens its own drill/,
+    "R10c-1 and now promises, per skill, an attributed grouping, a starting lesson and its own drill"
+  );
+  const path = stripComments(read("components/skills/skill-path.tsx"));
+  assert.match(path, /DECA_DRILL_AREAS\.map/, "R10c-2 the four cards come from the canonical drill areas, never a hand-written list");
+  assert.match(path, /decaPracticeMappingForArea\(area\.id\)/, "R10c-3 and their role-play/exam split from the canonical practice map");
+  assert.match(path, /\/study-arcade\?track=deca&area=\$\{area\.id\}/, "R10c-4 each card opens ITS OWN drill, not the arcade in general");
+  // The role-play/exam split is CompeteReady's training model, not DECA's taxonomy: every place it is
+  // shown names it as ours, and no surface tells a learner what the official exam contains.
+  assert.match(path, /CompeteReady grouping: role-play side/, "R10c-4a the split is attributed on the card itself");
+  assert.match(path, /CompeteReady grouping: exam side/, "R10c-4b on both sides");
+  assert.match(path, /how CompeteReady groups these\s*\n?\s*for training/, "R10c-4c and again in the note that governs the list");
+  assert.ok(!/the cluster knowledge the exam tests/.test(skills), "R10c-4d and the page states nothing about what the official exam tests");
+  assert.ok(
+    !/mapping\?\.component === "roleplay" \? "Role-play skill" : "Cluster-exam knowledge"/.test(path),
+    "R10c-5 an area with no mapping is left unclassified rather than defaulted into one half of the event"
+  );
+  // FAIL CLOSED on teaching. A card offers a lesson only when the map OWNS the construct and that
+  // lesson is learner-visible; otherwise the area is still listed with its drill and simply carries no
+  // teaching link. Verified behaviourally by holding the marketing gateway: the lesson link
+  // disappeared, the area and its drill stayed.
+  assert.match(path, /mapping\?\.coverage === "owned" \? mapping\.publishedTeachingOwner : null/, "R10c-6 only an OWNED construct gets a teaching link");
+  assert.match(path, /owner\.visibility === "learner"/, "R10c-7 and only a lesson the learner can actually open");
+  assert.match(skills, /The role-play practice room is where you rehearse the whole event; it records nothing\./, "R10d and says what the room records");
   assert.match(skills, /href=\{`\/lessons\?track=\$\{activeTrack\.slug\}` as Route\}/, "R10e it links the lessons");
   assert.match(skills, /Where \{activeTrack\.short\} skills are taught\{activeTrack\.id === "DECA" \? " and recorded" : ""\}/, "R10e2 'recorded' is claimed only where a recording destination is offered (DECA drills)");
   assert.match(skills, /activeTrack\.id === "DECA" \? \(\s*<Link href=\{`\/study-arcade\?track=\$\{activeTrack\.slug\}` as Route\}/, "R10f and, for DECA, the drills that record");
   assert.match(skills, /isDebate \? "Drill a debate skill"/, "R10g Debate's heading is unchanged");
   assert.match(skills, /Drills work one skill at a time and repeat it/, "R10h and so is Debate's description");
-  // The skill-path tiles are untouched (their DECA branch is pinned elsewhere to hold no drill).
+  // The room is still listed — it is real practice — and it is now the LAST of five, after the four
+  // recorded skills, because it records nothing and they do.
   const tiles = stripComments(read("components/skills/skill-path.tsx"));
-  assert.match(tiles, /title: "DECA role-play practice"/, "R10i the DECA tile remains");
+  assert.match(tiles, /title: "DECA role-play practice"/, "R10i the DECA room tile remains");
+  const decaTiles = tiles.slice(tiles.indexOf('canonical === "DECA"'), tiles.indexOf('canonical === "HOSA"'));
+  assert.ok(decaTiles.length > 50, "R10-C the DECA branch was located");
+  assert.ok(
+    decaTiles.includes("...decaAreaTiles()") &&
+      decaTiles.indexOf("...decaAreaTiles()") < decaTiles.indexOf('title: "DECA role-play practice"'),
+    "R10j the four recorded skills are composed into the DECA list, before the room that records nothing"
+  );
 });
 
 check("R11. the XP card and the learning path stop attributing Debate to other tracks", () => {

@@ -40,7 +40,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
           {isDebate
             ? "Drills work one skill at a time and repeat it, and each one tells you whether it added to your record; skills that record come back later for review. Start with the lesson that teaches the skill — these are not the questions inside a lesson, and those live in the lesson."
             : activeTrack?.id === "DECA"
-              ? "DECA records four skills — performance indicators, business reasoning, customer relations and marketing fundamentals. Each is taught in a lesson under Learn and drilled in the Study Arcade, where your results are recorded. The role-play practice room below is where you rehearse the whole event; it records nothing."
+              ? "DECA records four skills. Each card below names one, says which side of the event CompeteReady trains it for, links the lesson to start from, and opens its own drill in the Study Arcade, where your results are recorded. The role-play practice room is where you rehearse the whole event; it records nothing."
               : activeTrack?.id === "HOSA"
                 ? "HOSA trains from your exact event. Medical Terminology practice lives on its Event HQ page; start from the Event Navigator below."
                 : "Pick a track to see the skills it trains."}

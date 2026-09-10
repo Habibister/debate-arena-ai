@@ -8,13 +8,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SourceFreshnessNote } from "@/components/source/source-freshness-note";
+import { searchDecaNavigator } from "@/lib/deca-navigator-search";
 import {
   decaFamiliesByScope,
   decaFamilyById,
   decaScope,
   decaSourceMetadata,
   decaStatusLabel,
-  findDecaFamilies,
   presentDecaFamily,
   DECA_ASSOCIATION_NOTE,
   DECA_DRESS_NOTE,
@@ -276,8 +276,12 @@ export function DecaEventNavigator({
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(initialFamilyId ?? null);
 
-  const results = useMemo(() => findDecaFamilies(query), [query]);
-  const groups = useMemo(() => decaFamiliesByScope(results), [results]);
+  // One search, three kinds of answer: families (unchanged), the events we hold a page for, and the
+  // practice-test clusters. Each is rendered under its own heading and its own truthful description,
+  // so finding something can never be read as more support than it is.
+  const results = useMemo(() => searchDecaNavigator(query), [query]);
+  const groups = useMemo(() => decaFamiliesByScope(results.families), [results.families]);
+  const hasAnyMatch = groups.length > 0 || results.events.length > 0 || results.clusters.length > 0;
   // Resolved through the same fail-closed lookup the server used — never an index into the list.
   const selected = decaFamilyById(selectedId);
 
@@ -298,7 +302,7 @@ export function DecaEventNavigator({
         <CardContent className="space-y-4">
           <div>
             <label htmlFor="deca-family-search" className="text-sm font-medium">
-              Search DECA event families
+              Search DECA families, events and practice clusters
             </label>
             <div className="relative mt-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -307,36 +311,92 @@ export function DecaEventNavigator({
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Family name, abbreviation, or kind of event"
+                placeholder="Family, event name, abbreviation, or cluster"
                 className="pl-9"
                 autoComplete="off"
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              These are event families, not a list of every DECA event. Your association&apos;s current event list is the
-              authority on what it offers.
+              The families below are not a list of every DECA event, and searching an event name finds one only where we
+              already hold a page for it. Your association&apos;s current event list is the authority on what it offers.
             </p>
           </div>
 
-          {/* M11R7: the scope headings below (role-play / prepared / written / online) are OURS — a
-              training sort, not DECA's published taxonomy. Say so where the learner is browsing. */}
-          <div>
-            <p className="rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
-              The headings below are{" "}
-              <span className="font-medium text-foreground">CompeteReady training groups</span> — we sort families by
-              how they are trained, not by DECA&apos;s own classification. Your current official event guideline controls
-              your event&apos;s official classification and its requirements.
-            </p>
-          </div>
+          {/* Events we hold a page for. A row here means exactly one thing: this event has a page.
+              Its season, verification date and any partial-verification state live on that page,
+              taken from the record — never restated here, and never upgraded by a search match. */}
+          {results.events.length > 0 ? (
+            <div>
+              <h3 className="text-sm font-semibold">Events we hold a page for</h3>
+              <p className="text-xs text-muted-foreground">
+                Our DECA record is family-level. These are the individual events we also hold a page for — open one to see
+                whatever our record holds for it. Holding a page is not itself evidence that an event is sourced, and where
+                an event does carry its own sourced guidelines, that says nothing about the rest of its family.
+              </p>
+              <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                {results.events.map((event) => (
+                  <li key={event.id}>
+                    <Link
+                      href={`/training/deca/event/${event.id}` as Route}
+                      className="focus-ring block rounded-lg border bg-card p-3 transition-colors hover:bg-muted"
+                    >
+                      <span className="block font-medium">
+                        {event.displayName}
+                        {event.code ? ` (${event.code})` : ""}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{event.name}</span>
+                      <span className="mt-1 block text-xs font-semibold text-primary">Open its Event HQ page</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
-          {groups.length === 0 ? (
+          {/* Practice-test clusters. CompeteReady practice, stated as such — not a DECA exam and not
+              a claim that the cluster names an event we support. */}
+          {results.clusters.length > 0 ? (
+            <div>
+              <h3 className="text-sm font-semibold">Practice-test clusters</h3>
+              <p className="text-xs text-muted-foreground">
+                Clusters you can generate CompeteReady practice questions for. These are our own practice sets, not an
+                official DECA exam, and matching one here does not identify your event. Practice tests carry their own
+                cluster selector — pick yours there.
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {results.clusters.map((cluster) => (
+                  <li key={cluster}>
+                    <Link
+                      href={"/tests?track=deca" as Route}
+                      className="focus-ring inline-flex min-h-11 items-center rounded-lg border bg-card px-3 py-2 text-sm transition-colors hover:bg-muted"
+                    >
+                      {cluster}
+                      <span className="ml-2 text-xs font-semibold text-primary">Open practice tests</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {!hasAnyMatch ? (
             <EmptyState
               icon={Search}
-              title="No families match that search"
-              description="Try the family name or its abbreviation, or clear the search to see them all. If you can't place your event, your current official guideline names its family."
+              title="Nothing in our DECA record matches that search"
+              description="Try the family name or its abbreviation, an event name we hold a page for, or a practice-test cluster — or clear the search to see every family. Our record is family-level, so an event we do not hold a page for will not appear here even when DECA offers it; your current official guideline names its family."
             />
-          ) : (
+          ) : groups.length === 0 ? null : (
             <div className="space-y-4">
+              {/* M11R7: the scope headings below (role-play / prepared / written / online) are OURS — a
+                  training sort, not DECA's published taxonomy. Say so where the learner is browsing.
+                  It sits INSIDE the family block, so it describes the headings it is about and not the
+                  event or cluster groups above, which name their own provenance. */}
+              <p className="rounded-md border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+                The headings below are{" "}
+                <span className="font-medium text-foreground">CompeteReady training groups</span> — we sort families by
+                how they are trained, not by DECA&apos;s own classification. Your current official event guideline controls
+                your event&apos;s official classification and its requirements.
+              </p>
               {groups.map(({ scope, families }) => (
                 <div key={scope.id}>
                   <h3 className="text-sm font-semibold">{scope.label}</h3>

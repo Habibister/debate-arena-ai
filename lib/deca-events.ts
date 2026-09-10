@@ -504,6 +504,61 @@ export function decaFamilyById(id: string | null | undefined): DecaFamilyRecord 
 }
 
 /** Case-insensitive name/abbreviation/scope search. An empty query returns the whole list. */
+/**
+ * EVENT-LEVEL records CompeteReady itself holds a page for (Final DECA cleanup).
+ *
+ * The Navigator is a FAMILY browser, and it stays one. But a beginner searches with the words on
+ * their registration — "Hotel and Lodging Management", "HLM", "hotel" — and every one of those
+ * returned "No families match that search", because the filter only ever tested family names,
+ * abbreviations and our own scope labels. The one DECA event we hold a sourced record for was
+ * unreachable by its own name.
+ *
+ * Nothing here is new DECA data. Each entry restates records the product already holds: the event
+ * name our Event HQ registry stores (`specEvent`), the title it renders, and the event code carried
+ * on the sourced specification the same page displays. The row therefore makes an event FINDABLE and
+ * says nothing about what it is worth or how far it is verified — the Event HQ page it links to shows
+ * the season, the verification date and the partial-verification state from the record itself.
+ *
+ * Adding a row here NEVER adds event support. It means "we have a page for this event", nothing more.
+ * An event we do not hold must not be listed, and the empty state says the record is family-level.
+ */
+export type DecaEventRecord = {
+  /** The Event HQ slug — the page this row opens. */
+  id: string;
+  /** The event name our sourced specification uses. */
+  name: string;
+  /** How the Event HQ page titles it. */
+  displayName: string;
+  /** The event code stored on that specification, when it has one. */
+  code?: string;
+  /** Extra words a learner plausibly types for this event. Search only; they assert nothing. */
+  searchTerms: readonly string[];
+};
+
+export const DECA_EVENT_RECORDS: readonly DecaEventRecord[] = [
+  {
+    id: "hotel-lodging-management",
+    name: "Hotel and Lodging Management Series",
+    displayName: "Hotel & Lodging Management",
+    code: "HLM",
+    searchTerms: ["hotel", "lodging", "hospitality"]
+  }
+];
+
+/** What our record holds an event page for, for a learner's typed words. Fail-closed: no query, no rows. */
+export function findDecaEventRecords(query: string | null | undefined): DecaEventRecord[] {
+  const q = (query ?? "").trim().toLowerCase();
+  if (!q) return [];
+  return DECA_EVENT_RECORDS.filter((event) => {
+    return (
+      event.name.toLowerCase().includes(q) ||
+      event.displayName.toLowerCase().includes(q) ||
+      (event.code?.toLowerCase() === q) ||
+      event.searchTerms.some((term) => term.includes(q))
+    );
+  });
+}
+
 export function findDecaFamilies(query: string | null | undefined): DecaFamilyRecord[] {
   const q = (query ?? "").trim().toLowerCase();
   if (!q) return DECA_FAMILIES;

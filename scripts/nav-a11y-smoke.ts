@@ -22,6 +22,7 @@ const { RoleplayLessonView } = require("../components/lessons/roleplay-lesson-vi
 const { RoleplayLessonPractice } = require("../components/lessons/roleplay-lesson-practice");
 const { getLesson } = require("../lib/lessons");
 const { getRoleplayLesson } = require("../lib/roleplay-lessons");
+const { SkillPath } = require("../components/skills/skill-path");
 
 const decode = (h: string) =>
   h.replace(/&#x27;|&#39;/g, "'").replace(/&quot;|&ldquo;|&rdquo;/g, '"').replace(/&amp;/g, "&");
@@ -188,6 +189,51 @@ function main() {
   assert.ok(shell.includes('{ href: "/training"'), "desktop navigation also reaches /training");
   assert.ok(!/onMouseEnter|onMouseOver|hover:block|group-hover:(block|flex)/.test(shell), "no navigation depends on hover");
   ok("both desktop and mobile navigation reach /training, the only path to either Navigator");
+
+  // ---- FINAL DECA CLEANUP: the Skills index lists the four recorded areas, rendered ----------------
+  //
+  // Source regexes prove the tiles are DERIVED; this proves what a learner actually receives. The page
+  // named four skills and rendered one room, so none of the four could be opened and nothing said
+  // which half of the event each trains.
+  {
+    const html = render(React.createElement(SkillPath, { track: "DECA" } as never));
+    const text = visible(html);
+    const areas = [
+      { label: "Performance indicators", area: "performance-indicators", lesson: "deca-understanding-performance-indicators" },
+      { label: "Business reasoning", area: "business-reasoning", lesson: "deca-justifying-your-recommendation" },
+      { label: "Customer relations", area: "customer-relations", lesson: "deca-handling-customer-situations" },
+      { label: "Marketing fundamentals", area: "marketing-fundamentals", lesson: "deca-who-the-customer-is" }
+    ];
+    for (const entry of areas) {
+      assert.ok(text.includes(entry.label), `the DECA skills index names ${entry.label}`);
+      assert.ok(html.includes(`/study-arcade?track=deca&amp;area=${entry.area}`) || html.includes(`/study-arcade?track=deca&area=${entry.area}`),
+        `${entry.label} opens its own drill`);
+      assert.ok(html.includes(`/lessons/${entry.lesson}?track=deca`), `${entry.label} links the lesson it starts from`);
+    }
+    // The split is CompeteReady's own training model, so every place it appears says so — twice per
+    // side on the cards, and once in the note that governs them.
+    assert.equal((text.match(/CompeteReady grouping: role-play side/g) ?? []).length, 2, "exactly two areas sit on the role-play side");
+    assert.equal((text.match(/CompeteReady grouping: exam side/g) ?? []).length, 2, "and exactly two on the exam side");
+    assert.ok(text.includes("how CompeteReady groups these for training"), "the grouping is attributed where the learner reads it");
+    assert.ok(text.includes("not DECA") && text.includes("published taxonomy"), "and explicitly disclaims being DECA's taxonomy");
+    assert.ok(!/the exam tests/.test(text), "nothing tells the learner what the official exam contains");
+    assert.ok(text.includes("Start with the lesson:"), "a lesson link promises a starting point, not whole-area coverage");
+    assert.ok(text.includes("DECA role-play practice") && text.includes("nothing is recorded"),
+      "the whole-event room is still listed, still saying it records nothing");
+    // Track isolation: DECA's areas never appear on another track's index.
+    const debateHtmlSkills = visible(render(React.createElement(SkillPath, { track: "GENERAL_DEBATE" } as never)));
+    const hosaHtmlSkills = visible(render(React.createElement(SkillPath, { track: "HOSA" } as never)));
+    for (const other of [debateHtmlSkills, hosaHtmlSkills]) {
+      for (const entry of areas) assert.ok(!other.includes(entry.label), `${entry.label} stays inside DECA`);
+    }
+    assert.ok(debateHtmlSkills.includes("Debate skill drills") && debateHtmlSkills.includes("Reviews due"), "Debate's two tiles are unchanged");
+    assert.ok(hosaHtmlSkills.includes("Find your HOSA event"), "HOSA's tile is unchanged");
+    // No progress claim rides in with the new cards.
+    for (const claim of ["% complete", "Mastery", "mastered"]) {
+      assert.ok(!text.includes(claim), `the index makes no ${claim} claim`);
+    }
+    ok("DECA Skills index: four recorded areas, each classified, taught and drilled — and no other track sees them");
+  }
 
   console.log(results.join("\n"));
   // ============ M11R9: button content semantics and heading outline ============

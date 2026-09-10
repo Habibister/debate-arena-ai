@@ -565,12 +565,18 @@ function main() {
     // CONTENT REACHABLE: the destination really serves the four DECA drill areas.
     const arcade = stripComments(read("app/(app)/study-arcade/page.tsx"));
     assert.ok(/ConceptDrills/.test(arcade), "D10c. control: the destination renders the concept drills");
-    // And the surface it no longer points at really has no drill for DECA, which is why it moved.
+    // SUPERSEDED by the final DECA cleanup. When D10 was written, /skills' DECA branch offered no
+    // drill at all — that absence was the reason the hub's "Skill drills" row was repointed here, and
+    // the control recorded it. The Skills index now lists the four recorded areas, each opening ITS
+    // OWN drill, so the old absence is no longer true and asserting it would pin a stale fact. What
+    // still matters is that the hub row keeps sending a learner to the surface that runs the drills
+    // (D10 above), and that /skills sends them to a SPECIFIC area rather than duplicating the arcade.
     const skillPath = stripComments(read("components/skills/skill-path.tsx"));
-    const decaBranch = skillPath.slice(skillPath.indexOf('canonical === "DECA"'), skillPath.indexOf('canonical === "HOSA"'));
-    assert.ok(decaBranch.length > 50, "control: the DECA branch was located");
-    assert.ok(!/study-arcade\?track=deca/.test(decaBranch),
-      "D10d. control: /skills' DECA branch still offers no drill, which is the reason for D10");
+    assert.ok(skillPath.includes('canonical === "DECA"'), "control: the DECA branch was located");
+    assert.ok(/\/study-arcade\?track=deca&area=\$\{area\.id\}/.test(skillPath),
+      "D10d. /skills' DECA cards open one area each, so the index never competes with the arcade surface");
+    assert.ok(!/href: "\/study-arcade\?track=deca"/.test(skillPath),
+      "D10d-1. and none of them is a bare arcade link wearing a skill's name");
   });
 
   check("D11. the DECA Learn stage opens the DECA lesson catalog, not one lesson", () => {
@@ -627,11 +633,18 @@ function main() {
     // The destination really renders them.
     assert.ok(/ConceptDrills/.test(stripComments(read("app/(app)/study-arcade/page.tsx"))),
       "D13d. control: that destination renders the concept drills");
-    // The surface it no longer points DECA at genuinely has no DECA drill — the reason for the move.
+    // SUPERSEDED with D10d: /skills' DECA index now lists the four recorded areas, each opening its
+    // own drill. The empty review state still points at the arcade because that is where a drill RUNS;
+    // what the index adds is a per-area entry, which is a different promise, not a competing one.
     const skillPath = stripComments(read("components/skills/skill-path.tsx"));
+    // Non-vacuous: the helper must be COMPOSED INTO the DECA branch, not merely defined in the file.
+    // Defining it and never spreading it would leave the index exactly as broken as it was.
     const decaBranch = skillPath.slice(skillPath.indexOf('canonical === "DECA"'), skillPath.indexOf('canonical === "HOSA"'));
-    assert.ok(decaBranch.length > 50 && !/study-arcade/.test(decaBranch),
-      "D13e. control: /skills' DECA branch still offers no drill");
+    assert.ok(decaBranch.length > 50, "control: the DECA branch was located");
+    assert.ok(/\.\.\.decaAreaTiles\(\)/.test(decaBranch),
+      "D13e. control: /skills' DECA branch really lists the recorded areas from the canonical map");
+    assert.ok(/DECA_DRILL_AREAS\.map/.test(skillPath) && /decaPracticeMappingForArea/.test(skillPath),
+      "D13e-1. and builds them from the canonical modules rather than a hand-written list");
     // Debate and HOSA keep their existing destination — Debate's /skills branch does carry its drill.
     assert.ok(/\{ href: "\/skills", label: "Skills" \}/.test(review),
       "D13f. every other track is unchanged");

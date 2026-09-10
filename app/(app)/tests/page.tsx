@@ -19,6 +19,15 @@ const testSteps = [
   { title: "Improve", detail: "Review explanations and recommended lessons.", icon: BookOpenCheck }
 ];
 
+// The header describes exactly the organization the generator below is locked to. Keyed rather than
+// compared, so this copy adds no second `lockedOrganization === "DECA"` branch to a file whose DECA
+// branch is a pinned control.
+const HEADER_DESCRIPTION = {
+  DECA: "Generate original questions by DECA event cluster, score attempts, explain mistakes, and route weak areas into lessons.",
+  HOSA: "Generate original questions by HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.",
+  BOTH: "Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons."
+} as const;
+
 export default async function TestsPage({ searchParams }: { searchParams: { track?: string; assignmentId?: string } }) {
   // `?track=` wins; otherwise fall back to the selected track (cookie).
   const activeTrack = await getActiveTrack(searchParams.track);
@@ -46,13 +55,21 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-5">
+        {/* FINAL DECA CLEANUP — a track-scoped page describes ONE track.
+            The eyebrow read "DECA and HOSA" and the description named both an event cluster and an
+            event category on every render, including /tests?track=deca, where the generator below is
+            already locked to DECA and uses only the DECA vocabulary. A beginner had to work out which
+            half of the sentence was theirs. Both strings now follow `lockedOrganization`, which is the
+            same value that locks the generator — so the header cannot describe a track the page is not
+            serving. Where no organization is locked (an assigned test, or no resolved track) the
+            generator really does offer both, and the copy still says both. */}
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">DECA and HOSA</Badge>
+          <Badge variant="secondary">{lockedOrganization ?? "DECA and HOSA"}</Badge>
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
         <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Practice tests</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Generate original questions by DECA event cluster or HOSA event category, score attempts, explain mistakes, and route weak areas into lessons.
+          {HEADER_DESCRIPTION[lockedOrganization ?? "BOTH"]}
         </p>
 {/* OWNER QA REPAIR 3C — the attribution here is per ORGANIZATION, because the two specs are
             different KINDS of document.
@@ -103,10 +120,14 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
       {/* Every path that reaches this render has a generator to show: a track with practice tests, an
           assignment, or no selected track at all. The empty state that used to sit here is gone. */}
       <PracticeTestGenerator lockedOrganization={lockedOrganization} officialFormat={officialFormat} />
-      <TestBuilderPreview />
+      <TestBuilderPreview organization={lockedOrganization} />
 
       <Card>
         <CardHeader>
+          {/* Deliberately UNCHANGED. Renaming this to "What DECA tests cover" read as a claim about
+              content, and the tiles under it list EVENT_OPTIONS labels (Roleplay, Case Study) — event
+              types, not what a generated test covers, which comes from the cluster list instead. The
+              card also holds the "After grading" tile, which is not coverage either. */}
           <CardTitle>Supported test tracks</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">

@@ -2,7 +2,11 @@ import { ClipboardCheck, FileQuestion, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function TestBuilderPreview() {
+/**
+ * `organization` is the SAME locked organization that locks the generator above this card. It only
+ * narrows the copy: this component renders no control and posts nothing.
+ */
+export function TestBuilderPreview({ organization }: { organization?: "DECA" | "HOSA" }) {
   return (
     <Card>
       <CardHeader>
@@ -37,7 +41,10 @@ export function TestBuilderPreview() {
               AI generation
             </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              The API route uses OpenAI to generate original DECA and HOSA questions.
+              {/* Track-scoped like the header above it. The provider is deliberately not named here:
+                  this line claimed OpenAI, which is not what the generation chain runs, and a page
+                  cannot state a provider it does not select. */}
+              The API route generates original {organization ?? "DECA and HOSA"} questions.
             </p>
           </div>
         </div>

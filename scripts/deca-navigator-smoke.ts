@@ -22,8 +22,11 @@ import {
   DECA_SCOPES,
   DECA_TDM_WEIGHTING_NOTE,
   DECA_WEIGHTING_NOTE,
+  DECA_EVENT_RECORDS,
+  findDecaEventRecords,
   type DecaFamilyRecord
 } from "../lib/deca-events";
+import { findDecaTestClusters, searchDecaNavigator } from "../lib/deca-navigator-search";
 import { hosaEventById, presentHosaEvent, HOSA_EVENTS } from "../lib/hosa-events";
 import { formatVerifiedDate, presentSourceFreshness } from "../lib/source-freshness";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
@@ -348,6 +351,17 @@ function main() {
   }
   const runtimeImports = registry.split("\n").filter((l) => /^\s*import\s+(?!type\b)/.test(l));
   assert.equal(runtimeImports.length, 0, "the DECA registry has no runtime imports at all");
+  // The search module sits OUTSIDE the registry precisely so it may import the cluster list. It is
+  // still bound by the same closure rule: two local modules, and nothing that reads env, DB or network.
+  const searchModule = stripComments(readFileSync("lib/deca-navigator-search.ts", "utf8"));
+  const searchImports = searchModule.split("\n").filter((l) => /^\s*import\s+(?!type\b)/.test(l));
+  assert.equal(searchImports.length, 2, "the DECA search module imports exactly its two local sources");
+  for (const line of searchImports) {
+    assert.match(line, /from "@\/lib\/(testing|deca-events)";/, `search module import is local: ${line.trim()}`);
+  }
+  for (const banned of ["@/lib/prisma", "prisma.", "fetch(", "process.env", "localStorage", "NextResponse"]) {
+    assert.ok(!searchModule.includes(banned), `the DECA search module performs no ${banned}`);
+  }
 
   // ---- 27. track isolation --------------------------------------------------------------------------------------
   assert.ok(!/HOSA|Medical Terminology|clinical|patient/i.test(stripComments(registry) + stripComments(nav)),
@@ -393,6 +407,77 @@ function main() {
   }
   for (const f of DECA_FAMILIES) assert.ok(decaScope(f.scope), `${f.name} maps to a declared scope`);
   assert.equal(DECA_SCOPES.length, 5, "all five scopes are declared");
+
+  // ============ FINAL DECA CLEANUP: a learner searches with the words on their registration ========
+  //
+  // Every one of "Hotel and Lodging Management", "HLM" and "hotel" used to return "No families match
+  // that search" — the one DECA event we hold a sourced record for was unreachable by its own name,
+  // and so were the practice-test clusters. Search now answers with three SEPARATE kinds of result,
+  // and finding something must never upgrade what the product supports.
+  {
+    const navigatorSearch = stripComments(readFileSync("components/training/deca-event-navigator.tsx", "utf8"));
+
+    // The event a learner types their way to, and what a row here is allowed to mean.
+    for (const term of ["Hotel and Lodging Management", "hotel", "HLM", "hlm", "lodging"]) {
+      const hits = findDecaEventRecords(term);
+      assert.equal(hits[0]?.id, "hotel-lodging-management", `"${term}" reaches the event page we hold for it`);
+    }
+    assert.equal(findDecaEventRecords("").length, 0, "an empty query lists no event rows — the browser stays family-first");
+    assert.equal(findDecaEventRecords("Restaurant Management").length, 0, "an event we hold no page for is not conjured by a search");
+    assert.equal(findDecaEventRecords("zzzz").length, 0, "and neither is anything else");
+    for (const event of DECA_EVENT_RECORDS) {
+      assert.ok(event.name.length > 3 && event.displayName.length > 3, `${event.id} carries the names our record uses`);
+      const row = JSON.stringify(event).toLowerCase();
+      for (const claim of ["verified", "official", "season", "2026", "sourced"]) {
+        assert.ok(!row.includes(claim), `${event.id} makes no ${claim} claim — the Event HQ page owns provenance`);
+      }
+    }
+    // A row here CLAIMS we hold a page. Prove it against the Event HQ registry the destination reads,
+    // so a fabricated row cannot ship a link to a 404 with every suite green.
+    const eventHq = readFileSync("app/(app)/training/[track]/event/[eventSlug]/page.tsx", "utf8");
+    for (const event of DECA_EVENT_RECORDS) {
+      assert.ok(eventHq.includes(`"deca/${event.id}"`), `${event.id} is a real DECA Event HQ page, not a link to nothing`);
+      assert.ok(eventHq.includes(`specEvent: "${event.name}"`), `${event.id} restates the event name that page already stores`);
+      assert.ok(eventHq.includes(`title: "${event.displayName}"`), `${event.id} restates the title that page already renders`);
+    }
+    assert.ok(/Events we hold a page for/.test(navigatorSearch), "the events group is named for what it is");
+    assert.ok(/Holding a page is not itself evidence that an event is sourced/.test(navigatorSearch),
+      "and refuses to let holding a page stand in for provenance");
+    assert.ok(/that says nothing about the rest of its family/.test(navigatorSearch),
+      "and repeats the scope rule rather than implying the family is covered");
+    for (const overclaim of ["the page shows the guidelines and verification date"]) {
+      assert.ok(!navigatorSearch.includes(overclaim), `the events group promises no destination content it cannot know (${overclaim})`);
+    }
+
+    // Clusters: a CompeteReady practice capability, never DECA's taxonomy.
+    assert.deepEqual(findDecaTestClusters("Finance"), ["Finance"], "a cluster query reaches the clusters we generate for");
+    assert.deepEqual(findDecaTestClusters("financial"), ["Personal Financial Literacy", "Financial analysis"], "and a partial word reaches every cluster containing it");
+    assert.ok(findDecaTestClusters("Marketing").includes("Marketing"), "including the one a marketing learner types");
+    assert.equal(findDecaTestClusters("").length, 0, "an empty query lists no clusters");
+    assert.ok(/not an\s+official DECA exam/.test(navigatorSearch), "the cluster group says what it is not");
+    assert.ok(/does not identify your event/.test(navigatorSearch), "and refuses to stand in for identifying an event");
+    // The href is the tests page, not a pre-selected cluster, so the label and the note say exactly that.
+    assert.ok(/Open practice tests/.test(navigatorSearch), "the cluster action promises only what the link does");
+    assert.ok(/carry their own\s+cluster selector/.test(navigatorSearch), "and the group says where the cluster is actually chosen");
+    assert.ok(!/>Practice tests<\/span>/.test(navigatorSearch), "no chip still reads as a per-cluster destination");
+
+    // Families are unchanged — the words that worked before still work.
+    // The composite is what the component actually calls, so it is asserted end to end — a search
+    // that reached the right helper but never wired it into the results would otherwise pass.
+    assert.equal(searchDecaNavigator("HLM").events[0]?.id, "hotel-lodging-management", "the composite carries the event match through");
+    assert.ok(searchDecaNavigator("Marketing").clusters.includes("Marketing"), "and the cluster match");
+    assert.equal(searchDecaNavigator("hotel").events.length, 1, "an event word answers with the event, not a family guess");
+    const composite = searchDecaNavigator("Team Decision Making");
+    assert.equal(composite.families[0]?.id, "team-decision-making", "a family name still resolves to its family");
+    assert.equal(searchDecaNavigator("Individual Series").families[0]?.id, "individual-series", "so does Individual Series");
+    assert.equal(searchDecaNavigator("PSC").families[0]?.id, "professional-selling-and-consulting", "and an abbreviation");
+    const nothing = searchDecaNavigator("zzzz");
+    assert.ok(nothing.families.length === 0 && nothing.events.length === 0 && nothing.clusters.length === 0,
+      "a genuine no-match returns nothing in all three groups");
+    assert.ok(/Nothing in our DECA record matches that search/.test(navigatorSearch), "and the empty state says the record did not match");
+    assert.ok(/Our record is family-level, so an event we do not hold a page for will not appear here even when DECA offers it/.test(navigatorSearch),
+      "and explains that an unlisted event is a gap in OUR record, not proof DECA lacks the event");
+  }
 
   // ============ M11R7: the grouping shown while browsing is OURS, and says so there ============
   {

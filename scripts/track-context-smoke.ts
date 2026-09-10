@@ -373,6 +373,44 @@ check("T21. viewing a foreign record never changes the learner's selection", () 
   assert.match(provider, /setTrack: \(next\) => \{/, "T21b the switcher is still the only writer");
 });
 
+check("T22. a track-scoped page describes the track it is scoped to", () => {
+  // Final DECA cleanup, Round-3 finding #10. /tests?track=deca locks the generator to DECA and uses
+  // DECA vocabulary throughout, while the header said "DECA and HOSA" and offered the learner both an
+  // "event cluster" and an "event category" to work out between them.
+  const tests = stripComments(read("app/(app)/tests/page.tsx"));
+  assert.ok(tests.length > 2000, "T22-C the tests page was read");
+  assert.match(tests, /<Badge variant="secondary">\{lockedOrganization \?\? "DECA and HOSA"\}<\/Badge>/,
+    "T22a the eyebrow names the organization the page is actually serving");
+  assert.match(tests, /\{HEADER_DESCRIPTION\[lockedOrganization \?\? "BOTH"\]\}/, "T22b and so does the description");
+  assert.match(tests, /DECA: "Generate original questions by DECA event cluster,/, "T22c DECA's copy names only DECA's vocabulary");
+  assert.match(tests, /HOSA: "Generate original questions by HOSA event category,/, "T22d HOSA's names only HOSA's");
+  assert.match(tests, /BOTH: "Generate original questions by DECA event cluster or HOSA event category/,
+    "T22e and both are named only where the generator really offers both");
+  // The SAME value that locks the generator drives the copy, so the header cannot describe a track
+  // the page is not serving. This is the non-vacuous half: a hardcoded string would pass T22a alone.
+  assert.match(tests, /const lockedOrganization = activeTrack\?\.id === "DECA" \? "DECA" : activeTrack\?\.id === "HOSA" \? "HOSA" : undefined;/,
+    "T22f the discriminator is unchanged — copy follows the lock, the lock does not follow copy");
+  assert.match(tests, /<TestBuilderPreview organization=\{lockedOrganization\} \/>/, "T22g the generator preview is scoped by the same value");
+  // The "Supported test tracks" card heading is deliberately NOT track-scoped: its tiles list event
+  // types and a grading note, so a heading claiming what a track's tests COVER would assert something
+  // the tiles do not support. Pinned as unchanged rather than silently left alone.
+  assert.match(tests, /<CardTitle>Supported test tracks<\/CardTitle>/, "T22h the card heading makes no new content claim");
+
+  const preview = stripComments(read("components/tests/test-builder-preview.tsx"));
+  assert.match(preview, /The API route generates original \{organization \?\? "DECA and HOSA"\} questions\./,
+    "T22i the preview names one track when one is locked");
+  assert.ok(!/OpenAI/.test(preview), "T22j and names no provider it does not select");
+
+  // The generator's own disclaimer is the third multi-track string a locked learner used to read.
+  const generator = stripComments(read("components/tests/practice-test-generator.tsx"));
+  assert.match(generator, /These are not official \{organization\} tests\./, "T22k the disclaimer names the org being generated");
+  assert.match(generator, /\{organization === "HOSA" \? "event category" : "event cluster"\}/, "T22l in that org's own vocabulary");
+  assert.ok(!/it still names both/.test(generator), "T22l-1 and claims no 'both' state, which that value can never hold");
+  assert.ok(!/not official DECA or HOSA tests/.test(generator), "T22m and no longer names both to every learner");
+  assert.match(generator, /const \[organization, setOrganization\] = useState<TestingOrganization>\(initialOrg\);/,
+    "T22n the value it follows is the generator's real organization state, which is what gets posted");
+});
+
 console.log(results.join("\n"));
 console.log(`\n${results.length - failures}/${results.length} track-context controls passed`);
 if (failures > 0) process.exit(1);

@@ -291,7 +291,14 @@ export function PracticeTestGenerator({ lockedOrganization , officialFormat }: {
 
         <div className="flex gap-3 rounded-lg border bg-background p-4 text-sm leading-6 text-muted-foreground">
           <ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-          These are not official DECA or HOSA tests. Questions are original prompts by event cluster/category and difficulty, designed to practice public guideline-style skills without copying protected past exams.
+          {/* This follows `organization` — the generator's own state, which is what a Generate press
+              actually posts — not the page's lock. So it names the test the learner is about to make,
+              including on the unlocked path where they can still switch: the sentence changes with the
+              selector. It is therefore always exactly one organization, never both. The claim itself
+              (these are not official tests, questions are original) is unchanged. */}
+          These are not official {organization} tests. Questions are original prompts by{" "}
+          {organization === "HOSA" ? "event category" : "event cluster"} and difficulty, designed to practice public
+          guideline-style skills without copying protected past exams.
         </div>
       </CardContent>
     </Card>

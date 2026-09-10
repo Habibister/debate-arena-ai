@@ -282,11 +282,15 @@ function main() {
   // P1-B3 raised it 4 -> 5. The cluster-knowledge lesson is the only one in its own course, so it
   // terminates: chaining it to a role-play lesson would cross two courses that teach different things.
   // P1-B4 keeps it at 5: MK1-MK6 are a chain, so only its last link terminates.
-  assert.equal(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).length, 6,
-    "14b. exactly six lessons end a chain");
+  // Owner QA Repair 3A drops it to 5: the DECA orientation no longer ends a chain — it opens into the
+  // published "Reading the Scenario", the same order the approved curriculum and the prep path use.
+  assert.equal(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).length, 5,
+    "14b. exactly five lessons end a chain");
   assert.deepEqual(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).map((e) => e.id).sort(),
-    ["debate-weighing", "deca-handling-customer-situations", "deca-justifying-your-recommendation", "deca-telling-them-about-it", "how-deca-roleplay-works", "how-hosa-scenario-interaction-works"],
-    "14c. and they are exactly those six");
+    ["debate-weighing", "deca-handling-customer-situations", "deca-justifying-your-recommendation", "deca-telling-them-about-it", "how-hosa-scenario-interaction-works"],
+    "14c. and they are exactly those five");
+  assert.equal(EDUCATION_LESSONS.find((e) => e.id === "how-deca-roleplay-works")?.nextLessonId, "deca-reading-scenarios",
+    "14c2. the DECA orientation continues into the published scenario lesson");
   // The marketing chain runs MK1 -> MK2 -> ... -> MK6 in the curriculum's own order.
   assert.deepEqual(["deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"].map((id) => EDUCATION_LESSONS.find((e) => e.id === id)?.nextLessonId),
     ["deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it", null], "14e. and the marketing lessons chain in order");

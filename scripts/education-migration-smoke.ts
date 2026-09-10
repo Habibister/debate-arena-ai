@@ -182,7 +182,12 @@ async function main() {
                       // it. What this suite needs from the legacy view — that CWI still renders through it
                       // with its teaching sections, and that it imports nothing from lib/education — is
                       // asserted directly at 4V below.
-                      "components/lessons/roleplay-lesson-view.tsx",
+                      // components/lessons/roleplay-lesson-view.tsx is deliberately absent from Owner QA Repair 3A
+                      // onward, for the same HEAD-RELATIVE flaw called out throughout this list. That repair gave
+                      // RoleplayCourseFooter an optional registry-derived `course` (the DECA orientation's map and
+                      // next step), leaving the HOSA rendering path untouched. What this suite needs from the
+                      // renderer — that it is still the routed role-play view, imports nothing from lib/education,
+                      // keeps its own common-mistakes teaching, and records nothing — is asserted at 4X below.
                       // components/lessons/roleplay-lesson-practice.tsx is deliberately absent from Owner QA
                       // Repair 2 onward, for the same HEAD-RELATIVE flaw called out throughout this list: the
                       // pin only failed while a change was uncommitted and passed again the moment HEAD
@@ -258,6 +263,23 @@ async function main() {
       assert.ok(view.includes(`id="${id}"`), `4V2. the legacy view still renders its ${id} teaching section`);
     }
     assert.ok(!/@\/lib\/education/.test(view), "4V3. the legacy view imports nothing from lib/education (dependency flow stays one-way)");
+  }
+
+  // ---- 4X. what the retired roleplay-lesson-view pin protected, asserted directly -----------------
+  {
+    const view = read("components/lessons/roleplay-lesson-view.tsx");
+    const code = view.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+    assert.ok(/export function RoleplayLessonView\b/.test(code) && /export function RoleplayCourseFooter\b/.test(code),
+      "4X1. the role-play view and its course footer are still exported under their names");
+    assert.ok(!/from "@\/lib\/education/.test(code) && !/require\(".*lib\/education/.test(code),
+      "4X2. the renderer still imports nothing from lib/education — the course map arrives as props");
+    assert.ok(/commonMistakes/.test(code), "4X3. it keeps its own common-mistakes teaching");
+    assert.ok(!/recordDrillMastery|MasteryProgress|fetch\(|localStorage|sessionStorage|\/api\//.test(code),
+      "4X4. and it still records, requests and stores nothing");
+    // The HOSA path is the hand-written outline, unchanged: without `course` the footer still renders it.
+    assert.ok(/\{lesson\.courseMap \? <section aria-labelledby="coursemap"/.test(code) && /lesson\.courseMap\.map\(/.test(code),
+      "4X5. the hand-written outline still renders when no derived course is supplied — and only when the lesson actually carries one");
+    assert.ok(/course\?: RoleplayCourseMapProps/.test(code), "4X6. and the derived course is optional, never required of HOSA");
   }
 
   // ---- 4W. what the retired roleplay-lesson-practice pin protected, asserted directly --------------

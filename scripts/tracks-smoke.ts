@@ -391,13 +391,16 @@ async function main() {
     assert.equal(hosaLesson.organization, "HOSA", "HOSA lesson is HOSA");
     // DECA Learn begins with lesson 0; HOSA sits BENEATH the Event Navigator (no universal
     // role-play claim — HOSA has many event formats).
-    assert.ok(decaLesson.courseMap[0].includes("How a DECA Role-Play Works"), "DECA Performance Course begins with 'How a DECA Role-Play Works'");
+    // Owner QA Repair 3A: the DECA course map is no longer hand-written on the lesson — it is derived
+    // from the registry at render time, so the first lesson of the role-play course is the registry's.
+    assert.equal(decaLesson.courseMap, undefined, "DECA lesson carries no static course map — the registry is the source");
+    assert.equal(educationLessonsForTrack("DECA")[0]?.id, "how-deca-roleplay-works", "DECA Performance Course begins with 'How a DECA Role-Play Works'");
     // M3: HOSA lesson retitled to the corrected scope. Slug/lesson ID deliberately UNCHANGED.
     assert.equal(hosaLesson.title, "Patient Communication in HOSA Clinical Skill Events", "HOSA lesson retitled — communication layer inside clinical skill events");
     assert.equal(hosaLesson.slug, "how-hosa-scenario-interaction-works", "HOSA lesson ID (slug) preserved across the M3 retitle");
     assert.ok(!/scenario interaction/i.test(hosaLesson.title) && !/scenario interaction/i.test(hosaLesson.subtitle), "the withdrawn 'scenario interaction' framing is gone from the learner-facing title/subtitle");
-    assert.ok(hosaLesson.courseMap[0].includes("HOSA Event Navigator"), "HOSA course map begins with the Event Navigator");
-    assert.ok(hosaLesson.courseMap[1].includes("Patient Communication in HOSA Clinical Skill Events"), "HOSA lesson sits beneath the Event Navigator under its corrected title");
+    assert.ok((hosaLesson.courseMap ?? [])[0].includes("HOSA Event Navigator"), "HOSA course map begins with the Event Navigator");
+    assert.ok((hosaLesson.courseMap ?? [])[1].includes("Patient Communication in HOSA Clinical Skill Events"), "HOSA lesson sits beneath the Event Navigator under its corrected title");
     assert.equal(hosaLesson.courseMapCurrentIndex, 1, "HOSA lesson marks itself (not the Navigator) as the current lesson");
     assert.ok(hosaLesson.intro[0].includes("written tests, clinical skill performances"), "HOSA lesson opens by naming HOSA's many event formats");
     // The lesson is scoped to the communication LAYER and disclaims complete-event readiness.

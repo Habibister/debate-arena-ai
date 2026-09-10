@@ -18,6 +18,7 @@ import { getRoleplayLesson } from "@/lib/roleplay-lessons";
 import { ConceptEducationLessonView } from "@/components/lessons/concept-education-lesson-view";
 import { getEducationLesson, getEducationModule } from "@/lib/education/registry";
 import { isConceptEducationLessonEntry } from "@/lib/education/types";
+import { roleplayCourseMap } from "@/lib/education/course-map";
 import { resolveActiveTrack } from "@/lib/track-server";
 import { isTrackRetired, trackById, trackBySlug, type TrackInfo } from "@/lib/training-tracks";
 
@@ -187,6 +188,11 @@ export default async function LessonPage({ params, searchParams }: { params: { s
   // reuses the Side Coach route (no mastery/record) + the course-map footer.
   if (roleplay) {
     const available = roleplay.practiceStatus === "available";
+    // Owner QA Repair 3A: the DECA course map and next step come from the registry, not from the
+    // lesson's hand-written outline, so a published lesson can never be shown as "Coming soon" and
+    // the orientation continues into the actual next published lesson. HOSA is out of scope and
+    // keeps its own outline unchanged.
+    const course = roleplay.track === "deca" ? roleplayCourseMap(roleplay.slug) ?? undefined : undefined;
     // Only the sections this lesson actually renders. `scenario` and `worked` exist solely on an
     // available lesson, and the branch below is the same `practiceStatus` discriminant the view uses.
     const sections: LessonSection[] = [
@@ -201,7 +207,7 @@ export default async function LessonPage({ params, searchParams }: { params: { s
         : []),
       { id: "mistakes", label: "Common mistakes" },
       ...(available ? [{ id: "practice", label: "Practice" }] : []),
-      { id: "next", label: roleplay.nextLesson.label },
+      { id: "next", label: course ? (course.next ? course.next.title : "End of this course so far") : roleplay.nextLesson.label },
       { id: "coursemap", label: `Your ${roleplay.organization} Performance Course` }
     ];
     return (
@@ -226,7 +232,7 @@ export default async function LessonPage({ params, searchParams }: { params: { s
           </div>
           <RoleplayLessonPractice lesson={roleplay} userScope={userScope} />
         </section>
-        <RoleplayCourseFooter lesson={roleplay} />
+        <RoleplayCourseFooter lesson={roleplay} course={course} />
       </div>
     );
   }

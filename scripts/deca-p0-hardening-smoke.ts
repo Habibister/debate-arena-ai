@@ -14,7 +14,17 @@ import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { rubricLineNamesNoScoredBehaviour } from "../lib/rubrics";
 import { DECA_SIMULATION_CORE_PREP, DECA_SIMULATION_ENTRY, DECA_SIMULATION_SKILL_PREP, decaCourseEndAction, decaSimulationPrep, decaSimulationPrepAll } from "../lib/education/deca-simulation-prep";
-import { EDUCATION_LESSONS, educationLessonsForTrack } from "../lib/education/registry";
+import { EDUCATION_LESSONS, educationLessonsForTrack, getEducationLesson } from "../lib/education/registry";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { roleplayCourseMap } from "../lib/education/course-map";
+import { learnerVisibleLesson } from "../lib/education/diagnosis";
+import { HELD_DECA_CATALOG_SLUGS } from "../lib/education/tracks/deca";
+import { getRoleplayLesson } from "../lib/roleplay-lessons";
+import { RoleplayCourseFooter } from "../components/lessons/roleplay-lesson-view";
+// tsconfig jsx=preserve => classic React.createElement, so React must be global before a component
+// renders under this harness (the same priming scripts/nav-a11y-smoke.ts does).
+(globalThis as { React?: unknown }).React = React;
 import { learnerPathForTrack } from "../lib/learner-path";
 import {
   DECA_DRILL_AREAS,
@@ -643,6 +653,83 @@ function main() {
     for (const f of ["app/api/ai/deca-scenario/route.ts", "components/rooms/roleplay-room.tsx", "components/rooms/roleplay-config.ts"]) {
       assert.ok(!/practiceSource|PracticeSource|"PAST"|"MIXED"/.test(stripComments(read(f))), `D14h. ${f} carries no practice-source input — generation is unchanged`);
     }
+  });
+
+  check("D15. the orientation's course state is the registry's, and it continues into the published course", () => {
+    // OWNER QA REPAIR 3A. The orientation was authored as the only DECA lesson: a hand-written course
+    // map badged every other lesson "Coming soon" and the page ended with no next step, long after the
+    // role-play lessons it named were published. The map and the next step are now DERIVED from the
+    // registry through the same fail-closed resolver the prep path uses, and rendered from that.
+    const ORIENTATION = "how-deca-roleplay-works";
+    const ROLEPLAY_COURSE = ["how-deca-roleplay-works", "deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-identifying-problem", "deca-justifying-your-recommendation"];
+    // A. the registry chain: orientation -> the published scenario lesson, same track, same course.
+    const entry = getEducationLesson(ORIENTATION);
+    assert.ok(entry && entry.visibility === "learner", "D15a. the orientation is registered and learner-visible");
+    assert.equal(entry!.nextLessonId, "deca-reading-scenarios", "D15b. the orientation continues into Reading the Scenario");
+    const next = getEducationLesson(entry!.nextLessonId!);
+    assert.ok(next && next.visibility === "learner" && next.track === "DECA" && next.courseId === entry!.courseId,
+      "D15c. the next lesson is published, DECA-owned and in the same role-play course");
+    // B. the derived map is exactly the published role-play course, in canonical order, all resolving.
+    const course = roleplayCourseMap(ORIENTATION);
+    assert.ok(course, "D15d. the course map derives");
+    assert.deepEqual(course!.lessons.map((l) => l.lessonId), ROLEPLAY_COURSE, "D15e. it lists exactly the published role-play lessons, in order");
+    for (const item of course!.lessons) {
+      assert.equal(item.href, `/lessons/${item.lessonId}`, `D15f. ${item.lessonId} links to its exact lesson`);
+      assert.equal(EDUCATION_LESSONS.find((e) => e.id === item.lessonId)?.visibility, "learner", `D15g. ${item.lessonId} is learner-visible`);
+      assert.equal(EDUCATION_LESSONS.find((e) => e.id === item.lessonId)?.track, "DECA", `D15g2. ${item.lessonId} is DECA`);
+    }
+    assert.equal(course!.currentId, ORIENTATION, "D15h. the orientation is marked current");
+    assert.equal(course!.next?.lessonId, "deca-reading-scenarios", "D15i. next resolves to the published scenario lesson");
+    assert.equal(course!.next?.href, "/lessons/deca-reading-scenarios", "D15i2. and links to that lesson — not a course page, a drill, a simulation or another track");
+    // C. the held lesson cannot become published by any of this.
+    assert.ok(HELD_DECA_CATALOG_SLUGS.includes("deca-professional-communication"), "D15j. professional communication is still held");
+    assert.equal(getEducationLesson("deca-professional-communication"), undefined, "D15j2. and is not registered");
+    assert.equal(learnerVisibleLesson("deca-professional-communication"), null, "D15j3. and never resolves as a learner-visible destination");
+    assert.ok(!course!.lessons.some((l) => l.lessonId === "deca-professional-communication"), "D15j4. and is absent from the map");
+    assert.equal(EDUCATION_LESSONS.filter((e) => e.track === "DECA" && e.visibility === "learner").length, 12, "D15k. DECA still publishes exactly twelve");
+    // D. rendered truth: no false availability claim survives on the DECA orientation footer.
+    const decaLesson = getRoleplayLesson(ORIENTATION)!;
+    const html = renderToStaticMarkup(React.createElement(RoleplayCourseFooter, { lesson: decaLesson, course: course! } as never));
+    assert.ok(html.includes("Continue to Reading the Scenario"), "D15l. the next action names the published next lesson");
+    assert.ok(html.includes('href="/lessons/deca-reading-scenarios"'), "D15l2. and links to it");
+    for (const id of ROLEPLAY_COURSE.slice(1)) assert.ok(html.includes(`href="/lessons/${id}"`), `D15m. ${id} is a real link on the map`);
+    for (const stale of ["Coming soon", "being written", "pilot lesson", "on the way", "ready now", "being authored", "will appear here", "Reading and Decoding"]) {
+      assert.ok(!html.includes(stale), `D15n. no stale or forward-looking availability claim remains: "${stale}"`);
+    }
+    // Numbering agrees with the header badge ("Performance Course · Lesson 0"): the map counts from 0.
+    assert.ok(html.includes("0. How a DECA Role-Play Works"), "D15n2. the orientation is lesson 0 on the map, as on its badge");
+    assert.ok(html.includes("1. Reading the Scenario"), "D15n3. and the next published lesson is 1");
+    assert.ok(!html.includes("5. Justifying"), "D15n4. no 1-based numbering leaks in");
+    assert.equal((html.match(/Available/g) ?? []).length, ROLEPLAY_COURSE.length - 1, "D15o. every other published lesson is marked Available");
+    assert.equal((html.match(/You&#x27;re here|You're here/g) ?? []).length, 1, "D15o2. and exactly one is marked current");
+    // Non-vacuity: the stale-claim detector really fires on the hand-written outline (HOSA, out of scope).
+    const hosaLesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
+    const hosaHtml = renderToStaticMarkup(React.createElement(RoleplayCourseFooter, { lesson: hosaLesson } as never));
+    assert.ok(hosaHtml.includes("Coming soon") && hosaHtml.includes("being written"), "D15-C. control: the legacy outline still renders its own copy where it is still used");
+    // Fail closed, not open: if derivation ever returned null for DECA, the fallback must not resurrect
+    // the stale copy over an empty outline — a lesson with no hand-written outline renders none of it.
+    const fallbackHtml = renderToStaticMarkup(React.createElement(RoleplayCourseFooter, { lesson: decaLesson } as never));
+    for (const stale of ["Coming soon", "being written", "pilot lesson", "on the way", "ready now"]) {
+      assert.ok(!fallbackHtml.includes(stale), `D15-C2. the DECA fallback (no derived course) shows no stale copy either: "${stale}"`);
+    }
+    assert.ok(!fallbackHtml.includes('id="coursemap"'), "D15-C3. and no empty course map");
+    // The next step is scoped to the course: a chain into another course or track yields no next step.
+    const cm = stripComments(read("lib/education/course-map.ts"));
+    assert.ok(/nextEntry\.track === entry\.track && nextEntry\.courseId === entry\.courseId/.test(cm), "D15u. next is accepted only from the same track AND the same course");
+    assert.ok(/const next = nextInCourse \? learnerVisibleLesson\(nextEntry\.id\) : null;/.test(cm), "D15u2. anything else is no next step, never a guess");
+    // The no-next branch's nav label equals its rendered heading (OnThisPage targets stay truthful).
+    assert.ok(/End of this course so far<\/h2>/.test(stripComments(read("components/lessons/roleplay-lesson-view.tsx"))), "D15v. the end-of-course heading text");
+    assert.ok(/course\.next \? course\.next\.title : "End of this course so far"/.test(stripComments(read("app/(app)/lessons/[slug]/page.tsx"))), "D15v2. equals the OnThisPage label for it");
+    // E. the lesson data no longer carries a second map, and its next label is the registry's title.
+    assert.equal(decaLesson.courseMap, undefined, "D15p. the DECA lesson carries no hand-written course map");
+    assert.equal(decaLesson.nextLesson.label, learnerVisibleLesson("deca-reading-scenarios")?.title, "D15q. its next-lesson label is the published lesson's real title");
+    // F. the route derives for DECA only, passes it down, and Back stays the DECA catalog.
+    const route = stripComments(read("app/(app)/lessons/[slug]/page.tsx"));
+    assert.ok(/const course = roleplay\.track === "deca" \? roleplayCourseMap\(roleplay\.slug\) \?\? undefined : undefined;/.test(route), "D15r. the route derives the course from the registry for DECA");
+    assert.ok(/<RoleplayCourseFooter lesson=\{roleplay\} course=\{course\} \/>/.test(route), "D15r2. and hands it to the footer");
+    assert.ok(/href=\{`\/lessons\?track=\$\{owner\.slug\}` as Route\}/.test(route), "D15s. Back still returns to the owner's catalog");
+    const view = stripComments(read("components/lessons/roleplay-lesson-view.tsx"));
+    assert.ok(!/from "@\/lib\/education/.test(view), "D15t. the renderer still imports nothing from lib/education");
   });
 
   console.log(

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import type { Route } from "next";
 import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Clock, Lightbulb, ListChecks, MapPin, MessageSquare, Target, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RolePlayLine, RoleplayLesson } from "@/lib/roleplay-lessons";
@@ -186,9 +188,85 @@ export function RoleplayLessonView({ lesson, nav }: { lesson: RoleplayLesson; na
   );
 }
 
+// A course map derived from the registry at render time (lib/education/course-map.ts). This
+// renderer never imports the education module itself — the route resolves it and passes it down —
+// so the DECA/HOSA lesson surfaces keep their one-way dependency on lib/education.
+export type CourseMapLesson = { lessonId: string; title: string; href: string };
+export type RoleplayCourseMapProps = { lessons: CourseMapLesson[]; currentId: string; next: CourseMapLesson | null };
+
 // The course map + next-lesson footer, shown after the interactive practice.
-export function RoleplayCourseFooter({ lesson }: { lesson: RoleplayLesson }) {
+//
+// With `course` (Owner QA Repair 3A, the DECA orientation): every lesson listed is one the registry
+// publishes, each a real link, the current one marked; "Continue to" is a link to the actual next
+// published lesson, and the section says so only when there is one. Without `course` (HOSA): the
+// hand-written outline renders exactly as before.
+export function RoleplayCourseFooter({ lesson, course }: { lesson: RoleplayLesson; course?: RoleplayCourseMapProps }) {
   const currentIndex = lesson.courseMapCurrentIndex ?? 0;
+  if (course) {
+    return (
+      <div className="space-y-6">
+        {lesson.supportingLink ? (
+          <p className="rounded-md border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{lesson.supportingLink.label}</span> {lesson.supportingLink.note}
+          </p>
+        ) : null}
+
+        <section aria-labelledby="next" className="rounded-lg border border-primary/30 bg-primary/5 p-6">
+          {course.next ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Next lesson</p>
+              <h2 id="next" tabIndex={-1} className="scroll-mt-24 mt-1 text-xl font-bold">{course.next.title}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{lesson.nextLesson.note}</p>
+              <Link
+                href={course.next.href as Route}
+                className="focus-ring mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Continue to {course.next.title}
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+          ) : (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">No next lesson yet</p>
+              <h2 id="next" tabIndex={-1} className="scroll-mt-24 mt-1 text-xl font-bold">End of this course so far</h2>
+              <p className="mt-1 text-sm text-muted-foreground">This is the last lesson published in this course. Nothing here has been marked complete on your behalf.</p>
+            </div>
+          )}
+        </section>
+
+        <section aria-labelledby="coursemap" className="rounded-lg border bg-card p-6">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" aria-hidden />
+            <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} Performance Course</h2>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The lessons published in this course so far, in order. Every one listed is available now.
+          </p>
+          <ol className="mt-4 space-y-1.5">
+            {course.lessons.map((item, i) => (
+              <li key={item.lessonId} className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm">
+                {item.lessonId === course.currentId ? (
+                  <span className="inline-flex items-center gap-1 font-semibold text-foreground">
+                    <BookOpen className="h-4 w-4 text-primary" aria-hidden />
+                    {i}. {item.title}
+                  </span>
+                ) : (
+                  <Link href={item.href as Route} className="focus-ring inline-flex min-h-11 items-center rounded-md text-foreground hover:underline">
+                    {i}. {item.title}
+                  </Link>
+                )}
+                {item.lessonId === course.currentId ? (
+                  <Badge variant="outline" className="ml-auto">You&apos;re here</Badge>
+                ) : (
+                  <Badge variant="outline" className="ml-auto">Available</Badge>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {lesson.supportingLink ? (
@@ -204,10 +282,10 @@ export function RoleplayCourseFooter({ lesson }: { lesson: RoleplayLesson }) {
           <ArrowRight className="h-5 w-5 text-primary" aria-hidden />
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">{lesson.nextLesson.note}</p>
-        <p className="mt-3 text-xs text-muted-foreground">The next lessons are being written — this pilot lesson comes first.</p>
+        {lesson.courseMap ? <p className="mt-3 text-xs text-muted-foreground">The next lessons are being written — this pilot lesson comes first.</p> : null}
       </section>
 
-      <section aria-labelledby="coursemap" className="rounded-lg border bg-card p-6">
+      {lesson.courseMap ? <section aria-labelledby="coursemap" className="rounded-lg border bg-card p-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" aria-hidden />
           <h2 id="coursemap" tabIndex={-1} className="scroll-mt-24 text-xl font-bold">Your {lesson.organization} Performance Course</h2>
@@ -228,7 +306,7 @@ export function RoleplayCourseFooter({ lesson }: { lesson: RoleplayLesson }) {
             </li>
           ))}
         </ol>
-      </section>
+      </section> : null}
     </div>
   );
 }

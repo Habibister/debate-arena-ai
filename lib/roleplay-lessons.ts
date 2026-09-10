@@ -42,8 +42,11 @@ type RoleplayLessonBase = {
   provenance: SourceFreshnessMetadata;
   supportingLink?: { label: string; note: string };
   nextLesson: { label: string; note: string };
-  courseMap: string[];
-  // Index of THIS lesson in courseMap (defaults to 0). Lets a future entry (e.g. the HOSA Event
+  // A hand-written course outline. Optional from Owner QA Repair 3A: the DECA lesson's map is derived
+  // from the education registry at render time (the route resolves it — this module imports nothing
+  // from there), because a static list kept calling published lessons "Coming soon". HOSA keeps its own.
+  courseMap?: string[];
+  // Index of THIS lesson in the course (defaults to 0). Lets a future entry (e.g. the HOSA Event
   // Navigator) sit above the lesson without claiming it is the current one.
   courseMapCurrentIndex?: number;
 };
@@ -243,20 +246,11 @@ const decaRoleplay: AvailableRoleplayLesson = {
     sourceLabel: "CompeteReady authored lesson"
   },
   supportingLink: { label: "Need a business term?", note: "Optional: review the related DECA vocabulary cards. This is support — the role-play is the lesson." },
-  nextLesson: { label: "Reading and Decoding a DECA Scenario", note: "Next you'll learn to pull the role, the judge, the problem, and the PIs out of a fresh scenario card fast." },
-  courseMap: [
-    "0. How a DECA Role-Play Works",
-    "1. Reading and Decoding the Scenario",
-    "2. Understanding Performance Indicators",
-    "3. Using Preparation Time",
-    "4. Opening the Role-Play",
-    "5. Building Recommendations",
-    "6. Business Reasoning",
-    "7. Implementation and Metrics",
-    "8. Handling Judge Questions",
-    "9. Closing Persuasively",
-    "10. Guided Full Role-Play"
-  ]
+  // Owner QA Repair 3A: the next lesson is the published "Reading the Scenario" (registry
+  // `deca-reading-scenarios`); the label matches its real title and the note describes what it
+  // actually teaches. The course map itself is no longer written here — it is derived from the
+  // registry so it can never again call a published lesson "Coming soon".
+  nextLesson: { label: "Reading the Scenario", note: "Next you'll learn to pull your role, your audience, the situation and the task out of a fresh scenario card." }
 };
 
 const hosaScenarioInteraction: UnavailableRoleplayLesson = {

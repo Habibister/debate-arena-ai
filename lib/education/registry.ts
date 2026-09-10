@@ -238,7 +238,10 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
     source: decaRoleplay,
     sourceKind: "roleplay-lesson",
     legacySlugs: [],
-    nextLessonId: null,
+    // Owner QA Repair 3A: the orientation was authored as the only DECA lesson and ended the chain.
+    // The approved curriculum's Module 1 opens with reading the scenario, which is published, so the
+    // course now continues there — the same first step the simulation prep path already recommends.
+    nextLessonId: "deca-reading-scenarios",
     provenance: decaRoleplay.provenance
   },
   // The DECA CONCEPT lessons, held by reference from the catalog through lib/education/tracks/deca.ts

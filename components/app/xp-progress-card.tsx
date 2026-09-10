@@ -1,4 +1,5 @@
 import { Medal, Sparkles } from "lucide-react";
+import type { TrainingTrack } from "@/lib/training-tracks";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RANK_THRESHOLDS } from "@/lib/constants";
@@ -7,13 +8,19 @@ type XpProgressCardProps = {
   xp: number;
   rank: string;
   streak: number;
+  /** The effective track this card is shown under; undefined keeps the original Debate wording. */
+  trackId?: TrainingTrack;
 };
 
 function getNextRank(xp: number) {
   return RANK_THRESHOLDS.find((item) => item.minXp > xp) ?? null;
 }
 
-export function XpProgressCard({ xp, rank, streak }: XpProgressCardProps) {
+export function XpProgressCard({ xp, rank, streak, trackId }: XpProgressCardProps) {
+  // The counter is account-wide (its two writers are the Debate judge route and the PracticeTest
+  // grade route, for every track). On a DECA or HOSA surface "in your track" would attribute Debate
+  // rounds to that track, so those tracks read the account-wide truth; Debate's copy is unchanged.
+  const accountWide = trackId !== undefined && trackId !== "GENERAL_DEBATE";
   const nextRank = getNextRank(xp);
   const previousRank = [...RANK_THRESHOLDS].reverse().find((item) => item.minXp <= xp) ?? RANK_THRESHOLDS[0];
   const progress = nextRank
@@ -48,8 +55,12 @@ export function XpProgressCard({ xp, rank, streak }: XpProgressCardProps) {
               move. The `streak` prop keeps its legacy schema name but holds a LIFETIME count of
               completed practice sessions, not a streak — so the copy says sessions, never days. */}
           {streak > 0
-            ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — scored training in your track.`
-            : "Complete a scored activity in your track to start your record."}
+            ? accountWide
+              ? `${streak} practice ${streak === 1 ? "session" : "sessions"} completed across all your tracks — not only this one.`
+              : `${streak} practice ${streak === 1 ? "session" : "sessions"} completed — scored training in your track.`
+            : accountWide
+              ? "Complete a scored activity to start your record."
+              : "Complete a scored activity in your track to start your record."}
         </div>
       </CardContent>
     </Card>

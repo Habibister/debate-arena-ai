@@ -59,10 +59,13 @@ export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
 
   // Every track has a skills destination, but they are not the same thing: Debate's is a drill layer,
   // the others' is their skill listing. The card says which one the learner is opening.
+  // Owner QA Repair 3B: "Open mastery lessons" promised a mastery-lesson product the /skills page
+  // does not hold for DECA or HOSA. The card now names what that page shows: the track's skills and
+  // where each is taught and recorded.
   actions.push(
     track.id === "GENERAL_DEBATE"
       ? { key: "skills", title: "Drill a debate skill", description: "Short drill sets on one skill at a time, and anything currently due for review.", href: `/skills?track=${slug}` }
-      : { key: "skills", title: "Open mastery lessons", description: "Work through the skills this track trains.", href: `/skills?track=${slug}` }
+      : { key: "skills", title: `See ${track.short} skills`, description: `The skills ${track.short} records, and where each is taught and practised.`, href: `/skills?track=${slug}` }
   );
 
   // Flashcard decks: DECA/HOSA only. Omit when the track has none rather than show an empty study CTA.

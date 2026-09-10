@@ -103,7 +103,9 @@ export function LearningPath({ weakAreas, hasActivity, pendingAssignment }: Prop
           })}
         </ol>
 
-        {showBeginner ? (
+        {/* Owner QA Repair 3B: the quick definitions are Debate vocabulary (warrant, impact, rebuttal,
+            weighing); they are shown only when the effective track is Debate. */}
+        {showBeginner && effectiveTrack === "GENERAL_DEBATE" ? (
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />

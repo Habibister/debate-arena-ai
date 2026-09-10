@@ -12,7 +12,7 @@ const fallbackData: MasteryPoint[] = [
   { skill: "Cross Exam", mastery: 57, trend: "down" }
 ];
 
-export function MasteryChart({ data = fallbackData }: { data?: MasteryPoint[] }) {
+export function MasteryChart({ data = fallbackData, emptyDescription }: { data?: MasteryPoint[]; emptyDescription?: string }) {
   return (
     <Card>
       <CardHeader>
@@ -20,7 +20,7 @@ export function MasteryChart({ data = fallbackData }: { data?: MasteryPoint[] })
       </CardHeader>
       <CardContent className="space-y-4">
         {data.length === 0 ? (
-          <EmptyState icon={Target} title="No mastery data yet" description="Complete a debate, lesson, or practice test to start charting growth." className="min-h-40" />
+          <EmptyState icon={Target} title="No mastery data yet" description={emptyDescription ?? "Complete a debate, lesson, or practice test to start charting growth."} className="min-h-40" />
         ) : null}
         {data.map((point) => (
           <div key={point.skill}>

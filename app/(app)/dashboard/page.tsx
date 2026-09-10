@@ -28,6 +28,7 @@ import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLa
 import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
 import { weakAreasForTrack } from "@/lib/track-recommendations";
+import { recentCompletedTestsQuery, trackPracticeRecord, type TrackPracticeRecord } from "@/lib/learner-record";
 import { nextStepsForTrack, resourceOrgForTrack, type DashboardAction } from "@/lib/dashboard-actions";
 import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
@@ -68,12 +69,13 @@ const demoSampleMastery: MasteryPoint[] = [
 
 // P0-4 (2026-09-09): the MEAN OF PRACTICE-TEST SCORES. It reads no MasteryProgress row and does not
 // survive spaced reassessment, so it is not mastery and is no longer labelled as such.
-function practiceAverageFromTests(tests: Array<{ score: number | null }>) {
+function practiceAverageFromTests(tests: Array<{ score: number | null }>): number | null {
   const completedScores = tests.map((test) => test.score).filter((score): score is number => typeof score === "number");
 
   if (completedScores.length === 0) {
-    // A brand-new user has no practice results yet — never fake a number.
-    return 0;
+    // A brand-new user has no practice results yet — never fake a number. Owner QA Repair 3B: that
+    // means NULL, rendered as "—"; a 0% would claim a measured result that does not exist.
+    return null;
   }
 
   return Math.round(completedScores.reduce((total, score) => total + score, 0) / completedScores.length);
@@ -94,15 +96,23 @@ export default async function DashboardPage() {
     : null;
   // Only this track's own graded tests inform the "weak area" recommendation. No resolved track ->
   // none (fail closed), so a prior HOSA test never becomes a Debate/DECA recommendation.
+  // Owner QA Repair 3B: the SAME window Home reads (lib/learner-record.ts) — ordered by completion,
+  // not creation — so "weak skill" and the average cannot differ between the two pages.
   const recentTests =
     activeOrg && session?.user?.id
       ? await prisma.practiceTest.findMany({
-          where: { userId: session.user.id, status: "COMPLETED", organization: activeOrg },
-          orderBy: { createdAt: "desc" },
-          take: 5,
+          ...recentCompletedTestsQuery(session.user.id, activeOrg),
+          where: { userId: session.user.id, status: "COMPLETED", organization: activeOrg, completedAt: { not: null } },
           select: { score: true, weakAreas: true, organization: true }
         })
       : [];
+  const trackRecord: TrackPracticeRecord | null =
+    activeOrg && session?.user?.id ? await trackPracticeRecord(session.user.id, activeOrg) : null;
+  const isDebateTrack = activeTrack?.id === "GENERAL_DEBATE";
+  // Debate-only concepts (judged rounds, ballot averages, the bot heuristic, the Debate record card)
+  // are rendered only under Debate. They are still computed — the queries are account-wide and other
+  // surfaces pin their shape — but a DECA or HOSA page never presents them as that track's record.
+  const showDebateRecord = isDebateTrack || !activeTrack;
   // INDEPENDENT rounds only: a guided lesson round (practiceMode LESSON) is coached practice on a
   // curriculum-limited ballot and is counted on its own line, never as a judged round
   // (lib/guided-rounds.ts). It still counts as ACTIVITY below — the learner really did practise.
@@ -146,9 +156,10 @@ export default async function DashboardPage() {
   const avgJudgeScore = typeof avgJudgeScoreRaw === "number" ? Math.round(avgJudgeScoreRaw) : null;
 
   const demo = isDemoUser(user?.email ?? session?.user?.email);
-  const fullDisplayName = user?.displayName ?? user?.name ?? session?.user?.displayName ?? "Debater";
+  // Name fallbacks fire only for an account with no name at all; "Debater" is a Debate word.
+  const fullDisplayName = user?.displayName ?? user?.name ?? session?.user?.displayName ?? (showDebateRecord ? "Debater" : "Student");
   const displayName = (user?.name ?? user?.displayName)?.split(" ")[0] ?? "there";
-  const username = user?.username ?? session?.user?.username ?? "debater";
+  const username = user?.username ?? session?.user?.username ?? (showDebateRecord ? "debater" : "student");
   const avatarUrl = user?.avatarUrl ?? user?.image ?? session?.user?.avatarUrl ?? null;
   // Real values from the DB (a new account is 0 / BRONZE). Never substitute sample numbers for real users.
   const xp = user?.xp ?? 0;
@@ -157,11 +168,13 @@ export default async function DashboardPage() {
   const rank = user?.rank ?? "BRONZE";
   const practiceAverage = practiceAverageFromTests(recentTests);
   const weakAreas = weakAreasForTrack(recentTests, activeOrg);
-  const masteryData: MasteryPoint[] = demo ? demoSampleMastery : [];
+  // Demo sample mastery points are Debate skill names; a seeded demo account sees them under Debate only.
+  const masteryData: MasteryPoint[] = demo && showDebateRecord ? demoSampleMastery : [];
   // Weak areas are real (from graded tests); we show their NAMES only — no invented percentages.
   // Demo accounts may show sample numbers (allowed for seeded demo data only).
+  // Demo sample rows are Debate skill names; they are shown to a seeded demo account under Debate only.
   const recommendedRows: ReadonlyArray<readonly [string, number | null]> =
-    weakAreas.length > 0 ? weakAreas.map((area) => [area, null] as const) : demo ? demoSampleLessons : [];
+    weakAreas.length > 0 ? weakAreas.map((area) => [area, null] as const) : demo && showDebateRecord ? demoSampleLessons : [];
   // Internal difficulty heuristic ONLY (bot matching). Never displayed as a rating or progress claim.
   const recommendedBot = nearestAiPersona(calculateDebateRating({ xp, wins, judgedDebates: judgedDebateCount }));
 
@@ -205,7 +218,11 @@ export default async function DashboardPage() {
           })
       : [];
   // Real signals for the learning path (no fabricated progress).
-  const hasActivity = (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0 || guidedExerciseCount > 0;
+  // Under DECA/HOSA the learning-path state is decided by THAT track's activity only; XP and the
+  // judged/guided counts are account-wide and would call a learner "active" on Debate rounds.
+  const hasActivity = showDebateRecord
+    ? (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0 || guidedExerciseCount > 0
+    : recentTests.length > 0 || (trackRecord?.recordedSkills ?? 0) > 0;
   const pendingAssignment = assignments.some((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED");
   const studentTeams: StudentTeam[] = studentTeamRows.map((row) => ({
     membershipId: row.id,
@@ -244,15 +261,24 @@ export default async function DashboardPage() {
             </div>
             <div className="rounded-md border bg-background p-3">
               <p className="text-xs font-semibold text-muted-foreground">Weak skill</p>
-              <p className="mt-1 font-semibold">{weakAreas[0] ?? "Not started yet"}</p>
+              <p className="mt-1 font-semibold">
+                {weakAreas[0] ?? (trackHasPracticeTests(activeTrack?.id) && activeTrack ? (trackRecord && trackRecord.testsCompleted > 0 ? "None flagged in recent tests" : "No test taken yet") : "Not started yet")}
+              </p>
             </div>
-            <div className="rounded-md border bg-background p-3">
-              <p className="text-xs font-semibold text-muted-foreground">Recommended bot</p>
-              <p className="mt-1 font-semibold">{recommendedBot.name}</p>
-            </div>
+            {showDebateRecord ? (
+              <div className="rounded-md border bg-background p-3">
+                <p className="text-xs font-semibold text-muted-foreground">Recommended bot</p>
+                <p className="mt-1 font-semibold">{recommendedBot.name}</p>
+              </div>
+            ) : (
+              <div className="rounded-md border bg-background p-3">
+                <p className="text-xs font-semibold text-muted-foreground">Practice room</p>
+                <p className="mt-1 font-semibold">{activeTrack?.id === "DECA" ? "DECA role-play setup" : `${activeTrack?.label} event practice`}</p>
+              </div>
+            )}
           </div>
         </div>
-        <XpProgressCard xp={xp} rank={rank} streak={streak} />
+        <XpProgressCard xp={xp} rank={rank} streak={streak} trackId={activeTrack?.id} />
       </div>
 
       {/* M15 S1A A3b-2: the historical wins counter is no longer shown on this card. A3a stopped the
@@ -260,22 +286,38 @@ export default async function DashboardPage() {
           real — it aggregates stored ballot scores — but formative, so it is named as a practice
           ballot score, matching the ballot itself. User.wins is untouched in the database. */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Judged rounds"
-          value={String(judgedDebateCount)}
-          detail={`Avg practice ballot score (current scoring) ${avgJudgeScore ?? "—"}.${
-            guidedExerciseCount > 0 ? ` ${guidedExerciseCount} guided ${guidedExerciseCount === 1 ? "exercise" : "exercises"} completed, not counted here.` : ""
-          }`}
-          icon={Trophy}
-        />
+        {showDebateRecord ? (
+          <StatCard
+            label="Judged rounds"
+            value={String(judgedDebateCount)}
+            detail={`Avg practice ballot score (current scoring) ${avgJudgeScore ?? "—"}.${
+              guidedExerciseCount > 0 ? ` ${guidedExerciseCount} guided ${guidedExerciseCount === 1 ? "exercise" : "exercises"} completed, not counted here.` : ""
+            }`}
+            icon={Trophy}
+          />
+        ) : (
+          <StatCard
+            label="Practice tests completed"
+            value={String(trackRecord?.testsCompleted ?? 0)}
+            detail={`${activeTrack?.short} practice tests you have finished, all time.`}
+            icon={ClipboardList}
+          />
+        )}
         {/* Capability-neutral, and true for every track. These named "generated practice tests" and
             "graded tests" to a learner of any track, including one whose track has no test product,
             and the XP line also named lessons — which award no XP at all (the only writers of this
             counter are the Debate judge route and the PracticeTest grade route). "Scored" is the
             honest umbrella: it covers a judged round and a graded set, and promises neither. */}
-        <StatCard label="XP" value={String(xp)} detail="Earn XP from scored training in your track." icon={Medal} />
-        <StatCard label="Practice sessions" value={String(streak)} detail="Scored training in your track, counted as it happens." icon={Flame} />
-        <StatCard label="Practice average" value={`${practiceAverage}%`} detail="Mean score across your recent practice tests." icon={Target} />
+        <StatCard label="XP" value={String(xp)} detail={showDebateRecord ? "Earn XP from scored training in your track." : "Earn XP from scored training — counted across all your tracks."} icon={Medal} />
+        <StatCard label="Practice sessions" value={String(streak)} detail={showDebateRecord ? "Scored training in your track, counted as it happens." : "Scored activities across all your tracks, counted as they happen — not only this track."} icon={Flame} />
+        {trackHasPracticeTests(activeTrack?.id) && activeTrack ? (
+          <StatCard
+            label="Practice average"
+            value={practiceAverage === null ? "—" : `${practiceAverage}%`}
+            detail={practiceAverage === null ? `No completed ${activeTrack.short} practice tests yet — nothing to average.` : `Mean score across your recent ${activeTrack.short} practice tests.`}
+            icon={Target}
+          />
+        ) : null}
       </div>
 
       <LearningPath weakAreas={weakAreas} hasActivity={hasActivity} pendingAssignment={pendingAssignment} />
@@ -324,6 +366,7 @@ export default async function DashboardPage() {
         </Card>
       ) : null}
 
+      {showDebateRecord ? (
       <Card>
         <CardContent className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -345,6 +388,23 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      ) : activeTrack ? (
+      <Card>
+        <CardContent className="p-5">
+          <Badge variant="outline">{activeTrack.label} record</Badge>
+          <h2 className="mt-3 text-xl font-bold">
+            {trackRecord && trackRecord.testsCompleted > 0
+              ? `${trackRecord.testsCompleted} ${activeTrack.short} practice ${trackRecord.testsCompleted === 1 ? "test" : "tests"} completed`
+              : `No ${activeTrack.short} practice tests completed yet`}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {activeTrack.id === "DECA"
+              ? `Every number here comes from your own DECA practice tests${trackRecord && trackRecord.recordedSkills > 0 ? ` and ${trackRecord.recordedSkills} ${trackRecord.recordedSkills === 1 ? "skill" : "skills"} with a recorded drill result` : ""}. DECA role-plays aren't saved yet, so they are not counted anywhere.`
+              : `Every number here comes from your own ${activeTrack.short} practice tests. Medical Terminology practice isn't listed here yet.`}
+          </p>
+        </CardContent>
+      </Card>
+      ) : null}
 
       <div className={`grid gap-4 ${nextSteps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {nextSteps.map((action) => (
@@ -362,10 +422,13 @@ export default async function DashboardPage() {
       <CoachNextActionCard />
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <MasteryChart data={masteryData} />
+        <MasteryChart
+          data={masteryData}
+          emptyDescription={showDebateRecord ? undefined : `Complete a ${activeTrack?.short} practice test or a drill that records to start charting growth.`}
+        />
         <Card>
           <CardHeader>
-            <CardTitle>Recommended Lessons</CardTitle>
+            <CardTitle>{showDebateRecord ? "Recommended Lessons" : `Weak areas from your ${activeTrack?.short} tests`}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {recommendedRows.length > 0 ? (
@@ -383,7 +446,11 @@ export default async function DashboardPage() {
             ) : (
               <div className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
                 <p className="font-semibold text-foreground">Start here</p>
-                <p className="mt-1">Complete a debate, lesson, or practice test and your recommended lessons will appear with real progress.</p>
+                <p className="mt-1">
+                  {showDebateRecord
+                    ? "Complete a debate, lesson, or practice test and your recommended lessons will appear with real progress."
+                    : `The areas the grader flags on your recent ${activeTrack?.short} practice tests appear here — named, never scored.`}
+                </p>
               </div>
             )}
           </CardContent>
@@ -402,9 +469,9 @@ export default async function DashboardPage() {
         <EmptyState
           icon={ClipboardList}
           title="No completed practice tests yet"
-          description="Generate a DECA or HOSA test to unlock score history, weak-skill detection, and recommended lessons."
+          description={activeTrack ? `Generate a ${activeTrack.short} test to unlock score history, weak-area detection, and recommended lessons.` : "Generate a DECA or HOSA test to unlock score history, weak-skill detection, and recommended lessons."}
           actionLabel="Create first test"
-          actionHref="/tests"
+          actionHref={activeTrack ? `/tests?track=${activeTrack.slug}` : "/tests"}
         />
       ) : null}
     </div>

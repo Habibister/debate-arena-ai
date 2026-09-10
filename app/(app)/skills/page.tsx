@@ -9,8 +9,6 @@ import { authOptions } from "@/lib/auth";
 import { isDemoUser } from "@/lib/demo";
 import { getActiveTrack } from "@/lib/track-server";
 
-const lessonStructure = ["Lesson", "Examples", "Guided practice", "Independent practice", "Mastery quiz"];
-
 export default async function SkillsPage({ searchParams }: { searchParams: { track?: string } }) {
   const session = await getServerSession(authOptions);
   const showSampleProgress = isDemoUser(session?.user?.email);
@@ -31,14 +29,21 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
     <div className="space-y-6">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{isDebate ? "Skill drills" : "Skill Development"}</Badge>
+          <Badge variant="secondary">{isDebate ? "Skill drills" : "Skills"}</Badge>
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
-        <h1 className="mt-3 text-3xl font-bold">{isDebate ? "Drill a debate skill" : "Mastery paths"}</h1>
+        {/* Owner QA Repair 3B: the non-Debate header promised focused per-stage pages and a
+            five-step outline — a retired lesson shape no track renders. DECA's skills live in three
+            real places, named here; HOSA's in its Event HQ. The page says what it holds. */}
+        <h1 className="mt-3 text-3xl font-bold">{isDebate ? "Drill a debate skill" : activeTrack ? `${activeTrack.label} skills` : "Skills"}</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
           {isDebate
             ? "Drills work one skill at a time and repeat it, and each one tells you whether it added to your record; skills that record come back later for review. Start with the lesson that teaches the skill — these are not the questions inside a lesson, and those live in the lesson."
-            : "Skills are organized by organization and lesson sequence, with focused pages for lessons, examples, guided reps, independent practice, and mastery checks."}
+            : activeTrack?.id === "DECA"
+              ? "DECA records four skills — performance indicators, business reasoning, customer relations and marketing fundamentals. Each is taught in a lesson under Learn and drilled in the Study Arcade, where your results are recorded. The role-play practice room below is where you rehearse the whole event; it records nothing."
+              : activeTrack?.id === "HOSA"
+                ? "HOSA trains from your exact event. Medical Terminology practice lives on its Event HQ page; start from the Event Navigator below."
+                : "Pick a track to see the skills it trains."}
         </p>
       </div>
 
@@ -62,22 +67,25 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
         </div>
       ) : null}
 
-      {isDebate ? null : (
-      <Card>
-        <CardHeader>
-          <CardTitle>Lesson anatomy</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-5">
-          {lessonStructure.map((item, index) => (
-            <div key={item} className="rounded-lg border bg-background p-4">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-                {index + 1}
-              </span>
-              <h3 className="mt-4 font-semibold">{item}</h3>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      {/* Owner QA Repair 3B: the five-step outline card that used to sit here (ending in a quiz)
+          described a lesson shape no track renders, so it is gone for every track. Nothing replaces
+          it: the card promised a product, not a fact. */}
+      {isDebate || !activeTrack ? null : (
+        <div className="rounded-lg border bg-card p-4">
+          <p className="font-semibold">Where {activeTrack.short} skills are taught{activeTrack.id === "DECA" ? " and recorded" : ""}</p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link href={`/lessons?track=${activeTrack.slug}` as Route} className="focus-ring inline-flex min-h-11 min-w-11 items-center gap-1 text-sm font-semibold text-primary">
+              {activeTrack.id === "DECA" ? "DECA lessons" : `${activeTrack.short} lessons`}
+              <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            </Link>
+            {activeTrack.id === "DECA" ? (
+              <Link href={`/study-arcade?track=${activeTrack.slug}` as Route} className="focus-ring inline-flex min-h-11 min-w-11 items-center gap-1 text-sm font-semibold text-primary">
+                DECA skill drills
+                <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              </Link>
+            ) : null}
+          </div>
+        </div>
       )}
     </div>
   );

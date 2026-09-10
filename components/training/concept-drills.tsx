@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, RotateCcw, Target, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -170,6 +171,7 @@ export function ConceptDrills({
   blurb: string;
   initialArea?: string;
 }) {
+  const router = useRouter();
   const [areaFilter, setAreaFilter] = useState<string>(initialArea ?? "mixed");
   const [count, setCount] = useState(8);
   const [session, setSession] = useState<SessionStart | null>(null);
@@ -302,6 +304,13 @@ export function ConceptDrills({
       }
       if (!res.ok) throw new Error(data.error ?? "Could not score the drill.");
       setResult(data);
+      // QA-R4 #7. The "Reviews due" and "Your record" boxes on this page are SERVER-rendered from the
+      // database, so a persisted attempt did not reach them until a full reload: the result panel said
+      // the attempt counted while the box beside it still read "Zero so far". `router.refresh()` is the
+      // framework's own way to re-run those server components against the row that was just written —
+      // no second copy of the count, no optimistic increment, and nothing to drift. It runs ONLY here,
+      // after a persisted success, so a failed or expired submission can never move the record.
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not score the drill.");
     } finally {

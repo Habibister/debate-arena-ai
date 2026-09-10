@@ -777,6 +777,55 @@ async function main() {
   );
 }
 
+// ---------------------------------------------------------------------------------------------
+// QA-R4 #7 — THE PAGE MUST AGREE WITH ITSELF AS SOON AS AN ATTEMPT IS PERSISTED.
+//
+// A learner finished a focused DECA drill, scored 63%, and read two things at once: "You answered
+// enough different questions, but scored below 70%" from the client, and "Zero so far" from a
+// server-rendered box that had not been re-run since page load. Only a reload made the record true.
+function drillRefreshControls() {
+  const strip = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const arcade = strip(read("app/(app)/study-arcade/page.tsx"));
+  // WHY a refresh is the right mechanism: the two boxes are server data, not client state.
+  assert.ok(arcade.includes("let practicedSkills = 0;"), "R4-1 the record box is computed on the server");
+  assert.ok(arcade.includes("reviewsDue"), "R4-2 and so is the review count");
+  assert.ok(!arcade.includes("useState"), "R4-3 the page holds no client copy of either number");
+
+  for (const [file, label] of [
+    ["components/training/concept-drills.tsx", "DECA concept drills"],
+    ["components/training/debate-drills.tsx", "Debate skill drills"]
+  ] as const) {
+    const src = strip(read(file));
+    assert.ok(src.includes("const router = useRouter();"), `R4-4 ${label} can ask the framework to refetch`);
+    // The refresh must sit AFTER the success assignment and INSIDE the try — never on a failure path.
+    // The submitting function is `next()` — it advances the drill and, on the last item, submits.
+    const submitStart = src.indexOf("async function next()");
+    assert.ok(submitStart > 0, `R4-4b ${label} has the submitting step`);
+    const submit = src.slice(submitStart, src.indexOf("} catch (e) {", submitStart));
+    assert.ok(submit.includes("setResult(data);"), `R4-5 ${label} records the persisted result`);
+    assert.ok(submit.includes("router.refresh();"), `R4-6 ${label} refreshes the server data it does not own`);
+    assert.ok(
+      submit.indexOf("setResult(data);") < submit.indexOf("router.refresh();"),
+      `R4-7 ${label} refreshes only after the attempt is known to have persisted`
+    );
+    const afterSubmit = src.slice(src.indexOf("} catch (e) {", submitStart));
+    assert.ok(!afterSubmit.includes("router.refresh();"), `R4-8 ${label} never refreshes from a failure or expiry path`);
+    // The 410 (expired) branch returns before the success assignment, so it cannot reach the refresh.
+    assert.ok(
+      submit.indexOf("setExpired(true);") < submit.indexOf("setResult(data);"),
+      `R4-9 ${label} leaves an expired session before anything is recorded`
+    );
+    // No second source of truth: nothing counts skills locally.
+    // No second source of truth for the page's record boxes: the drill holds its own session state
+    // (slot, answers) but never a copy of the recorded-skill or reviews-due counts.
+    for (const owned of ["practicedSkills", "recordedSkills", "reviewsDue", "skillsInProgress"]) {
+      assert.ok(!src.includes(owned), `R4-10 ${label} keeps no local copy of ${owned}`);
+    }
+  }
+}
+
+drillRefreshControls();
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

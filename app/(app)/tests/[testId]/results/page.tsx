@@ -2,22 +2,19 @@ import Link from "next/link";
 import type { Route } from "next";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target } from "lucide-react";
 import { NextStepCard } from "@/components/app/next-step-card";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { ResultRecommendationsCard } from "@/components/tests/result-recommendations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { studyDeckForSkill, type StudyOrganization } from "@/lib/study-content";
-import {
-  decaBridgeLessonIsPublished,
-  decaDiagnosticRoutesForLearner,
-  decaUnbridgedDiagnostics
-} from "@/lib/education/deca-diagnostic-bridge";
+import { testResultRecommendationsForLearner, weakAreaExplanation } from "@/lib/education/test-result-recommendations";
 import { resolveActiveTrack } from "@/lib/track-server";
 import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
@@ -137,18 +134,15 @@ export default async function PracticeTestResultsPage({
   // readiness model behind it and no semantic evaluation. The band still describes the RESULT, which
   // a single score can honestly support; it no longer asserts that the learner is ready.
   const resultLabel = score >= 85 ? "Strong practice result" : score >= 70 ? "Solid practice result" : "Focused review";
-  // QA-R2 #5 + #6. The weak areas are the question bank's own vocabulary ("Target market analysis"),
-  // which appears nowhere else in the product, and the stored lesson recommendations point at legacy
-  // rows that have no written lesson behind them. The bridge is the one place that says which of the
-  // four recorded skills a diagnostic belongs to and which published lesson teaches it; anything it
-  // cannot cover is listed as uncovered rather than sent somewhere plausible.
-  const diagnosticRoutes = test.organization === "DECA" ? decaDiagnosticRoutesForLearner(test.weakAreas) : [];
-  const uncoveredDiagnostics = test.organization === "DECA" ? decaUnbridgedDiagnostics(test.weakAreas) : [];
-  // A stored recommendation is rendered ONLY when its slug still resolves to a lesson a learner can
-  // read. The rest are older records: they stay out of the way rather than presenting themselves as
-  // lessons that exist.
-  const liveRecommendations = lessonRecommendations.filter((lesson) => decaBridgeLessonIsPublished(lesson.lessonSlug));
-  const retiredRecommendationCount = lessonRecommendations.length - liveRecommendations.length;
+  // QA-R2 #5 + #6, made per-track. One module decides what this test recommends: a DECA test goes
+  // through the DECA diagnostic bridge, any other organization is resolved on its own track only, a
+  // stored suggestion is linked only when it is a learner-visible lesson of that track, and a lesson
+  // appears once however many sources name it. The page renders the result and decides nothing.
+  const workOn = testResultRecommendationsForLearner({
+    organization: test.organization,
+    weakAreas: test.weakAreas,
+    stored: lessonRecommendations
+  });
   const studyOrganization = test.organization === "DECA" || test.organization === "HOSA" ? test.organization : undefined;
   const recommendedDeck = studyOrganization ? studyDeckForSkill(test.weakAreas[0] ?? test.eventCluster ?? test.eventType, studyOrganization) : undefined;
 
@@ -196,10 +190,10 @@ export default async function PracticeTestResultsPage({
             </div>
             <div className="rounded-lg border bg-background p-4">
               <BookOpenCheck className="h-5 w-5 text-secondary" aria-hidden />
-              {/* Counts what this page can actually open — a tile reading 3 while every one of those
-                  three had no lesson behind it was the same defect one number further up the page. */}
+              {/* Counts the distinct lessons this page links — never a lesson with nothing behind it, and never
+                  the same lesson twice because two sources named it. */}
               <p className="mt-3 text-sm font-semibold">Lessons</p>
-              <p className="mt-1 text-2xl font-bold">{diagnosticRoutes.length + liveRecommendations.length}</p>
+              <p className="mt-1 text-2xl font-bold">{workOn.lessonCount}</p>
             </div>
             {/* M15 S1A A4a — three states, and the third is the important one. A MISSING ledger row
                 is not proof of an award and not proof that the limit was hit: tests graded before
@@ -229,7 +223,7 @@ export default async function PracticeTestResultsPage({
         <NextStepCard
           title="Practice weak skills"
           description="Start with the first recommended lesson, then retry the same cluster."
-          href={(diagnosticRoutes[0]?.lessonHref ?? liveRecommendations[0]?.lessonSlug ?? "/skills") as Route}
+          href={(workOn.firstLessonHref ?? "/skills") as Route}
           icon={BookOpenCheck}
           tone="secondary"
         />
@@ -279,12 +273,9 @@ export default async function PracticeTestResultsPage({
                       </Badge>
                     ))}
                   </div>
-                  {/* Said once, in plain words: these are what THIS test measured, not the four skills
-                      the product records. The card below turns them into those four. */}
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    These are the topics this test asked about. The next card shows which recorded skill each one
-                    belongs to.
-                  </p>
+                  {/* Said once, in plain words: these are what THIS test measured. Only DECA's card maps them
+                      to recorded skills, so only DECA's sentence says it does. */}
+                  <p className="text-sm leading-6 text-muted-foreground">{weakAreaExplanation(test.organization)}</p>
                 </div>
               ) : (
                 <EmptyState icon={CheckCircle2} title="No weak areas detected" description="Strong performance on this attempt. Move up a difficulty level or switch event categories." className="min-h-32" />
@@ -293,77 +284,7 @@ export default async function PracticeTestResultsPage({
             </CardContent>
           </Card>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle as="h2">What to work on</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {diagnosticRoutes.length > 0 ? (
-              diagnosticRoutes.map((route) => (
-                <div key={route.lessonId} className="rounded-lg border bg-background p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {route.diagnostic} · recorded skill: {route.areaLabel}
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{route.why}</p>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-                    <Link
-                      href={route.lessonHref as Route}
-                      className="focus-ring inline-flex min-h-11 min-w-11 items-center gap-1 text-sm font-semibold text-primary"
-                    >
-                      Read the lesson
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    </Link>
-                    <Link
-                      href={route.drillHref as Route}
-                      className="focus-ring inline-flex min-h-11 min-w-11 items-center gap-1 text-sm font-semibold text-primary"
-                    >
-                      Drill {route.areaLabel.toLowerCase()}
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    </Link>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm leading-6 text-muted-foreground">
-                Nothing here maps to a written DECA lesson yet. Review the explanations below and retry a shorter set in
-                the same cluster.
-              </p>
-            )}
-            {uncoveredDiagnostics.length > 0 ? (
-              // Never silently dropped: a topic we cannot teach yet is named, so the learner knows the
-              // gap is ours rather than assuming the lesson list covers everything they missed.
-              <p className="text-sm leading-6 text-muted-foreground">
-                No DECA lesson covers {uncoveredDiagnostics.join(", ")} yet, so nothing above points there.
-              </p>
-            ) : null}
-            {liveRecommendations.length > 0 ? (
-              <div className="rounded-lg border bg-background p-4">
-                <p className="text-sm font-semibold">Also recommended when this test was graded</p>
-                <ul className="mt-2 space-y-1">
-                  {liveRecommendations.map((lesson) => (
-                    <li key={lesson.lessonSlug}>
-                      <Link
-                        href={`/lessons/${lesson.lessonSlug}?track=deca` as Route}
-                        className="focus-ring inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary"
-                      >
-                        {lesson.title ?? lesson.lessonSlug}
-                        <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {retiredRecommendationCount > 0 ? (
-              // The older grader stored names from a lesson system that was retired. The record is not
-              // rewritten and the names are not turned into links that go nowhere.
-              <p className="text-xs leading-6 text-muted-foreground">
-                This test was graded when {retiredRecommendationCount === 1 ? "one recommendation" : `${retiredRecommendationCount} recommendations`}{" "}
-                pointed at an older lesson list that no longer has written lessons behind it, so {retiredRecommendationCount === 1 ? "it is" : "they are"} not linked here.
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
+        <ResultRecommendationsCard recommendations={workOn} trackLabel={recordTrack?.label ?? test.organization} />
       </div>
 
       <div className="space-y-4">

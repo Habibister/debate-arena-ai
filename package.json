@@ -25,6 +25,7 @@
     "track-context:smoke": "tsx scripts/track-context-smoke.ts",
     "roleplay-round:smoke": "tsx scripts/roleplay-round-smoke.ts",
     "design-foundation:smoke": "tsx scripts/design-foundation-smoke.ts",
+    "test-result-recommendations:smoke": "tsx scripts/test-result-recommendations-smoke.ts",
     "learner-record:smoke": "tsx scripts/learner-record-smoke.ts",
     "deca-source-truth:smoke": "tsx scripts/deca-source-truth-smoke.ts",
     "hosa-practice-scope:smoke": "tsx scripts/hosa-practice-scope-smoke.ts",

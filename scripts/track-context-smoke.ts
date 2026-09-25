@@ -479,15 +479,25 @@ check("T25. a retired track keeps its record but offers no way back in", () => {
 check("T26. test feedback resolves to lessons that exist", () => {
   // QA-R2 #5. The grader recommended rows from the legacy Lesson table, every DECA one of which renders
   // "no written lesson here yet", and the results page linked them at /skills/<slug>.
+  // The shared results-page repair moved these guarantees, unchanged, into the per-track results
+  // module (what to recommend) and the card (how to show it); the page renders the module's answer.
+  // test-result-recommendations:smoke proves the behaviour; these pin where each guarantee now lives.
   const results_ = stripComments(read("app/(app)/tests/[testId]/results/page.tsx"));
+  const module_ = stripComments(read("lib/education/test-result-recommendations.ts"));
+  const card_ = stripComments(read("components/tests/result-recommendations.tsx"));
   assert.ok(results_.length > 2000, "T26-C the results page was read");
-  assert.match(results_, /decaDiagnosticRoutesForLearner\(test\.weakAreas\)/, "T26a the page routes diagnostics through the bridge");
-  assert.match(results_, /href=\{route\.lessonHref as Route\}/, "T26b and links the lesson the bridge names");
-  assert.match(results_, /href=\{route\.drillHref as Route\}/, "T26c beside the drill for that recorded skill");
-  assert.ok(!/href=\{`\/skills\/\$\{lesson\.lessonSlug\}` as Route\}/.test(results_), "T26d no stored slug is linked into the legacy skills route any more");
-  assert.match(results_, /decaBridgeLessonIsPublished\(lesson\.lessonSlug\)/, "T26e a stored recommendation renders only when its lesson is real");
-  assert.match(results_, /retiredRecommendationCount > 0/, "T26f and the rest are disclosed as older records");
-  assert.match(results_, /uncoveredDiagnostics\.length > 0/, "T26g a diagnostic with no lesson is named, not silently dropped");
+  assert.match(results_, /testResultRecommendationsForLearner\(\{[\s\S]{0,120}weakAreas: test\.weakAreas/, "T26a the page takes its recommendations from the results module");
+  assert.match(module_, /organization === "DECA" \? deps\.decaRoutes\(input\.weakAreas\)/, "T26a2 which routes DECA diagnostics through the bridge");
+  assert.match(module_, /decaRoutes: decaDiagnosticRoutesForLearner/, "T26a3 and binds the real bridge");
+  assert.match(card_, /href=\{route\.lessonHref as Route\}/, "T26b and links the lesson the bridge names");
+  assert.match(card_, /href=\{route\.drillHref as Route\}/, "T26c beside the drill for that recorded skill");
+  for (const [name, src] of [["page", results_], ["card", card_]] as const) {
+    assert.ok(!/\/skills\/\$\{/.test(src), `T26d no stored slug is linked into the legacy skills route from the ${name}`);
+  }
+  assert.match(module_, /const lesson = deps\.publishedLesson\(slug\);/, "T26e a stored recommendation is linked only when its lesson is real");
+  assert.match(module_, /learnerVisibleLesson\(lessonId\)/, "T26e2 by the shared learner-visible rule");
+  assert.match(card_, /olderRecordCount > 0/, "T26f and the rest are disclosed as older records");
+  assert.match(card_, /isDeca && uncoveredDiagnostics\.length > 0/, "T26g a diagnostic with no lesson is named, not silently dropped");
 
   const grade = stripComments(read("app/api/tests/[testId]/grade/route.ts"));
   assert.match(grade, /if \(test\.organization === "DECA"\) \{[\s\S]{0,200}decaDiagnosticRoutesForLearner\(weakAreas\)/, "T26h the grader stores DECA recommendations from the bridge");

@@ -1036,9 +1036,9 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     // pure registry data through the same fail-closed resolver the diagnosis uses. No writes, no
     // mastery reads, no progress reads.
     "components/training/deca-simulation-prep-panel.tsx",
-    // QA-R2 #5/#6: test feedback, Home's suggestion and the grader all resolve a diagnostic to the
-    // lesson that teaches it through lib/education/deca-diagnostic-bridge, and import nothing else
-    // from the registry (proved in education-registry-smoke 16b).
+    // QA-R2 #5/#6: Home's suggestion and the grader resolve a diagnostic through
+    // lib/education/deca-diagnostic-bridge; test feedback resolves through the per-track
+    // lib/education/test-result-recommendations. Each imports one module (education-registry-smoke 16b).
     "app/(app)/tests/[testId]/results/page.tsx",
     "app/(app)/home/page.tsx",
     "app/api/tests/[testId]/grade/route.ts",

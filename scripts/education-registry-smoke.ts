@@ -363,26 +363,29 @@ function main() {
     // importing the registry themselves, so the dependency stays a single edge.
     "components/training/deca-simulation-prep-panel.tsx",
     "app/api/ai/side-coach/route.ts",
-    // QA-R2 #5/#6: the three surfaces that turn a graded test into learning. Each imports ONLY
-    // lib/education/deca-diagnostic-bridge — pure static mapping plus one registry-visibility check —
-    // and none of them reads mastery, writes progress, or touches the registry directly.
+    // QA-R2 #5/#6: the three surfaces that turn a graded test into learning. Each imports ONE pure
+    // module — home and the grader the DECA bridge, the results page the per-track results module
+    // (lib/education/test-result-recommendations) — and none reads mastery or writes progress.
     "app/(app)/tests/[testId]/results/page.tsx",
     "app/(app)/home/page.tsx",
     "app/api/tests/[testId]/grade/route.ts",
   ]);
-  // The boundary that keeps that concession narrow: those three may reach the bridge and nothing else.
-  const BRIDGE_ONLY_CONSUMERS = [
-    "app/(app)/tests/[testId]/results/page.tsx",
-    "app/(app)/home/page.tsx",
-    "app/api/tests/[testId]/grade/route.ts"
+  // The boundary that keeps that concession narrow: each may reach exactly ONE education module.
+  // Home and the grader reach the DECA bridge. The results page reaches the per-track results module
+  // instead, which is the only place a HOSA result is kept out of the DECA bridge — a results page
+  // importing the bridge directly is how DECA copy and DECA filtering reached HOSA results.
+  const SINGLE_MODULE_CONSUMERS: Array<[string, string]> = [
+    ["app/(app)/tests/[testId]/results/page.tsx", "test-result-recommendations"],
+    ["app/(app)/home/page.tsx", "deca-diagnostic-bridge"],
+    ["app/api/tests/[testId]/grade/route.ts", "deca-diagnostic-bridge"]
   ];
-  for (const file of BRIDGE_ONLY_CONSUMERS) {
+  for (const [file, onlyModule] of SINGLE_MODULE_CONSUMERS) {
     const src = stripComments(readFileSync(file, "utf8"));
     const educationImports = (src.match(/from "@\/lib\/education\/[a-z-]+"/g) ?? []).map((hit) => hit.trim());
     assert.deepEqual(
       [...new Set(educationImports)],
-      ['from "@/lib/education/deca-diagnostic-bridge"'],
-      `16b. ${file} consumes only the diagnostic bridge`
+      [`from "@/lib/education/${onlyModule}"`],
+      `16b. ${file} consumes only lib/education/${onlyModule}`
     );
   }
   const consumers: string[] = [];

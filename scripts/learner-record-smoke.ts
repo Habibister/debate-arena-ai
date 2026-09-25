@@ -31,6 +31,7 @@ const HOME = "app/(app)/home/page.tsx";
 const DASH = "app/(app)/dashboard/page.tsx";
 const SKILLS = "app/(app)/skills/page.tsx";
 const RECORD = "lib/learner-record.ts";
+const HOME_SUGGESTION = "lib/education/deca-home-suggestion.ts";
 
 // ---------------------------------------------------------------------------------------------
 check("R1. absence is not zero: an average with nothing to average is null, never 0", () => {
@@ -104,7 +105,11 @@ check("R5. Home's recommendation links to the graded test that flagged it, and c
   // SUPERSEDED by QA-R2 #8/#13, not loosened. The sentence still names WHICH test and still says
   // "latest" only when it is; what changed is that it now offers the step proportionally — one graded
   // test is evidence for a suggestion, not a verdict on the learner's weakest skill.
-  assert.match(home, /Based on \{flagged\.isLatest \? "your latest" : "a recent"\} completed \{activeTrack\?\.short\} practice test, which flagged \{weakAreas\[0\]\}/, "R5c the sentence says which test, truthfully, and names the track");
+  // Final DECA QA, finding A: the words after "which flagged" are the suggestion card's own evidence,
+  // so they cannot name a different diagnostic from the links under them. Every other track's
+  // evidence still opens with the area the test recorded first, exactly as before.
+  assert.match(home, /Based on \{flagged\.isLatest \? "your latest" : "a recent"\} completed \{activeTrack\?\.short\} practice test, which flagged \{suggestionCard\.evidence\}/, "R5c the sentence says which test, truthfully, and names the track");
+  assert.match(home, /evidence: `\$\{weakAreas\[0\]\}\$\{weakAreas\.length > 1 \? `\. It also flagged \$\{weakAreas\.slice\(1\)\.join\(", "\)\}` : ""\}\.`/, "R5c-2 other tracks still name the area the test recorded first");
   assert.ok(!/biggest weakness|weakest skill|must fix/i.test(home), "R5c-1 and never escalates one test into a verdict");
   assert.match(home, /href=\{`\/tests\/\$\{flagged\.testId\}\/results` as Route\}/, "R5d the action opens THAT test's feedback");
   assert.match(home, /See that test&apos;s feedback/, "R5e and the label says so");
@@ -126,8 +131,18 @@ check("R5J. Home ranks the evidence-backed step above generic practice, and spea
   );
   assert.match(home, /variant: hasPersonalNextStep \? "outline" : "default"/, "R5J-c and the generic action steps down to secondary when it exists");
   assert.match(home, /hasPersonalNextStep\s*\? `Or start \$\{activeTrack\.short\} practice`/, "R5J-d its label says it is the alternative");
-  assert.match(home, /decaDiagnosticRoutesForLearner\(weakAreas\)/, "R5J-e the recorded skill comes from the one bridge");
-  assert.match(home, /suggestion \? `Suggested: \$\{suggestion\.areaLabel\}` : `Suggested: \$\{weakAreas\[0\]\}`/, "R5J-f which names the skill, falling back to the raw area when unbridged");
+  // Final DECA QA, finding A: Home reaches the bridge through ONE module that picks one diagnostic and
+  // builds the heading, sentence, lesson and drill from it. Its behaviour is proved by execution in
+  // deca-feedback-destinations:smoke; these pins keep Home wired to it.
+  const homeSuggestion = stripComments(read(HOME_SUGGESTION));
+  assert.match(home, /const decaSuggestion = activeOrg === "DECA" \? decaHomeSuggestionForLearner\(flaggedAreas\) : null;/, "R5J-e the recorded skill comes from the one bridge, through Home's one suggestion module");
+  assert.match(homeSuggestion, /routesFor: decaDiagnosticRoutesForLearner/, "R5J-e2 which resolves every route with the bridge itself");
+  assert.match(home, /<p className="text-lg font-bold">\{suggestionCard\.heading\}<\/p>/, "R5J-f the heading is the card's own");
+  assert.match(homeSuggestion, /heading: `Suggested: \$\{route\.areaLabel\}`/, "R5J-f2 which names the skill of the route it links");
+  assert.match(homeSuggestion, /route: null,\s*heading: DECA_UNCOVERED_HEADING,/, "R5J-f3 and with no lesson for any flagged area it names no skill and links no lesson");
+  assert.match(home, /heading: `Suggested: \$\{weakAreas\[0\]\}`/, "R5J-f4 and other tracks keep the raw area");
+  assert.match(home, /suggestionCard\.route\.lessonHref/, "R5J-f5 the lesson link is the card's own route");
+  assert.match(home, /suggestionCard\.route\.drillHref/, "R5J-f6 and so is the drill link");
   assert.match(home, /activeOrg === "DECA"/, "R5J-g and only DECA has a bridge — no other track is given an invented one");
 });
 

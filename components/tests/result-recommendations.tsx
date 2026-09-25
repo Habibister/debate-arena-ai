@@ -78,10 +78,16 @@ export function ResultRecommendationsCard({
           </p>
         ) : null}
         {isDeca && uncoveredDiagnostics.length > 0 ? (
-          // Never silently dropped: a topic we cannot teach yet is named, so the learner knows the
+          // Never silently dropped: a topic nothing here links to yet is named, so the learner knows the
           // gap is ours rather than assuming the lesson list covers everything they missed.
+          // Final DECA QA: this says what is LINKED, not what the curriculum teaches. The bridge has no row
+          // for some areas a published lesson does teach (a Distribution test flags "Distribution"), so
+          // "No DECA lesson covers Distribution" was false.
           <p className="text-sm leading-6 text-muted-foreground">
-            No DECA lesson covers {uncoveredDiagnostics.join(", ")} yet, so nothing above points there.
+            {uncoveredDiagnostics.length > 1
+              ? `${uncoveredDiagnostics.slice(0, -1).join(", ")} and ${uncoveredDiagnostics[uncoveredDiagnostics.length - 1]} aren't`
+              : `${uncoveredDiagnostics[0]} isn't`}{" "}
+            linked to a DECA lesson yet, so nothing above points there.
           </p>
         ) : null}
         {storedLessons.length > 0 ? (

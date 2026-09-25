@@ -95,7 +95,10 @@ check("TR-2. DECA unsupported diagnosis stays named as uncovered, with no invent
   assert.equal(model.lessonCount, 0);
   assert.equal(model.firstLessonHref, null);
   const html = render(model, "DECA");
-  assert.ok(html.includes("No DECA lesson covers Financial analysis, Budgeting yet"), "TR-2a the gap is named");
+  // Final DECA QA: the gap is named as what is LINKED. "No DECA lesson covers X" was false for areas a
+  // published lesson teaches but the bridge has no row for (a Distribution test flags "Distribution").
+  assert.match(html, /Financial analysis and Budgeting aren(?:'|&#x27;)t linked to a DECA lesson yet/, "TR-2a the gap is named");
+  assert.ok(!html.includes("No DECA lesson covers"), "TR-2a1 and never as a claim about what the curriculum teaches");
   assert.ok(html.includes("Nothing here maps to a written DECA lesson yet"), "TR-2b and the DECA empty state stays DECA's");
   assert.equal(lessonLinks(html).length, 0, "TR-2c no lesson link");
 });

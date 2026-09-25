@@ -364,19 +364,23 @@ function main() {
     "components/training/deca-simulation-prep-panel.tsx",
     "app/api/ai/side-coach/route.ts",
     // QA-R2 #5/#6: the three surfaces that turn a graded test into learning. Each imports ONE pure
-    // module — home and the grader the DECA bridge, the results page the per-track results module
-    // (lib/education/test-result-recommendations) — and none reads mastery or writes progress.
+    // module — the grader the DECA bridge, home the DECA home-suggestion module (which reads the
+    // bridge), the results page the per-track results module (lib/education/test-result-recommendations)
+    // — and none reads mastery or writes progress.
     "app/(app)/tests/[testId]/results/page.tsx",
     "app/(app)/home/page.tsx",
     "app/api/tests/[testId]/grade/route.ts",
   ]);
   // The boundary that keeps that concession narrow: each may reach exactly ONE education module.
-  // Home and the grader reach the DECA bridge. The results page reaches the per-track results module
-  // instead, which is the only place a HOSA result is kept out of the DECA bridge — a results page
-  // importing the bridge directly is how DECA copy and DECA filtering reached HOSA results.
+  // The grader reaches the DECA bridge. Home reaches the DECA home-suggestion module, which picks one
+  // flagged diagnostic and takes its heading, sentence, lesson and drill from that diagnostic's bridge
+  // route (final DECA QA, finding A: Home named one area and linked another's lesson). The results
+  // page reaches the per-track results module instead, which is the only place a HOSA result is kept
+  // out of the DECA bridge — a results page importing the bridge directly is how DECA copy and DECA
+  // filtering reached HOSA results.
   const SINGLE_MODULE_CONSUMERS: Array<[string, string]> = [
     ["app/(app)/tests/[testId]/results/page.tsx", "test-result-recommendations"],
-    ["app/(app)/home/page.tsx", "deca-diagnostic-bridge"],
+    ["app/(app)/home/page.tsx", "deca-home-suggestion"],
     ["app/api/tests/[testId]/grade/route.ts", "deca-diagnostic-bridge"]
   ];
   for (const [file, onlyModule] of SINGLE_MODULE_CONSUMERS) {

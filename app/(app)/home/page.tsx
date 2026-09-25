@@ -16,7 +16,7 @@ import { countDueReviews } from "@/lib/spaced-review";
 import { getActiveTrack } from "@/lib/track-server";
 import { recentCompletedTestsQuery, trackPracticeRecord, type TrackPracticeRecord } from "@/lib/learner-record";
 import { flaggedTestForTrack, weakAreasForTrack } from "@/lib/track-recommendations";
-import { decaDiagnosticRoutesForLearner } from "@/lib/education/deca-diagnostic-bridge";
+import { decaHomeSuggestionForLearner } from "@/lib/education/deca-home-suggestion";
 import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
@@ -79,11 +79,18 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   // QA-R2 #6 + #8. A weak area is the test's own vocabulary; the bridge names the recorded skill it
   // belongs to and the lesson that teaches it, so Home speaks the same language as the Skills page and
   // the drills. DECA only — no other track has a bridge, and one is never invented.
-  const diagnosticRoutes =
-    activeOrg === "DECA"
-      ? decaDiagnosticRoutesForLearner(weakAreas)
-      : [];
-  const suggestion = diagnosticRoutes[0] ?? null;
+  // Final DECA QA, finding A: the card printed the test's FIRST weak area while its lesson and drill
+  // came from the first area the bridge covers, so "Operations planning — part of business reasoning"
+  // linked the Performance measurement lesson. One module now picks ONE diagnostic from the flagged
+  // test's full record, and the heading, sentence, lesson and drill all come from it.
+  const flaggedAreas = flagged ? practiceTests.find((test) => test.id === flagged.testId)?.weakAreas ?? flagged.weakAreas : [];
+  const decaSuggestion = activeOrg === "DECA" ? decaHomeSuggestionForLearner(flaggedAreas) : null;
+  // Every other test track keeps the card it had: the first flagged area, named as the test recorded it.
+  const suggestionCard = decaSuggestion ?? {
+    heading: `Suggested: ${weakAreas[0]}`,
+    evidence: `${weakAreas[0]}${weakAreas.length > 1 ? `. It also flagged ${weakAreas.slice(1).join(", ")}` : ""}.`,
+    route: null
+  };
   // Personalised evidence exists only when a graded test flagged something. Everything below ranks off
   // this one value, so the page never shows two equally-weighted instructions that disagree.
   const hasPersonalNextStep = Boolean(flagged && weakAreas.length > 0);
@@ -189,7 +196,11 @@ export default async function HomePage({ searchParams }: { searchParams: { track
           hasContinue
             ? "You have an unfinished session — continuing it is the fastest way back into form."
             : hasPersonalNextStep && activeTrack
-              ? `Your last ${activeTrack.label} test points at one skill — start there. Each activity tells you what it records.`
+              ? decaSuggestion && !decaSuggestion.route
+                ? // Final DECA QA: the card below names no skill when nothing flagged is linked to a
+                  // lesson, so the header does not claim one either.
+                  `Nothing that ${flagged?.isLatest ? "your latest" : "a recent"} ${activeTrack.label} test flagged is linked to a lesson yet — start with its feedback. Each activity tells you what it records.`
+                : `Your last ${activeTrack.label} test points at one skill — start there. Each activity tells you what it records.`
               : activeTrack
                 ? `One focused ${activeTrack.label} rep is the best next step. Each activity tells you what it records.`
               : "Pick a track and start a focused rep — each activity tells you what it records."
@@ -223,23 +234,20 @@ export default async function HomePage({ searchParams }: { searchParams: { track
                 {/* Proportional wording: this comes from ONE graded test, so it is offered as a
                     suggestion based on that test — never as the learner's biggest weakness. Where the
                     bridge covers the diagnostic, the recorded skill is named too, because that is the
-                    word the Skills page and the drills use. */}
-                <p className="text-lg font-bold">
-                  {suggestion ? `Suggested: ${suggestion.areaLabel}` : `Suggested: ${weakAreas[0]}`}
-                </p>
+                    word the Skills page and the drills use. The heading, the sentence and both links
+                    come from the same `suggestionCard`, so they cannot name different diagnostics. */}
+                <p className="text-lg font-bold">{suggestionCard.heading}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Based on {flagged.isLatest ? "your latest" : "a recent"} completed {activeTrack?.short} practice test, which flagged {weakAreas[0]}
-                  {suggestion ? ` — part of ${suggestion.areaLabel.toLowerCase()}` : ""}
-                  {weakAreas.length > 1 ? `. It also flagged ${weakAreas.slice(1).join(", ")}` : ""}.
+                  Based on {flagged.isLatest ? "your latest" : "a recent"} completed {activeTrack?.short} practice test, which flagged {suggestionCard.evidence}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {suggestion ? (
+                  {suggestionCard.route ? (
                     <>
-                      <Link href={suggestion.lessonHref as Route} className={cn(buttonVariants({ size: "sm" }), "min-h-11")}>
+                      <Link href={suggestionCard.route.lessonHref as Route} className={cn(buttonVariants({ size: "sm" }), "min-h-11")}>
                         Read the lesson
                       </Link>
-                      <Link href={suggestion.drillHref as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-11")}>
-                        Drill {suggestion.areaLabel.toLowerCase()}
+                      <Link href={suggestionCard.route.drillHref as Route} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-11")}>
+                        Drill {suggestionCard.route.areaLabel.toLowerCase()}
                       </Link>
                     </>
                   ) : null}

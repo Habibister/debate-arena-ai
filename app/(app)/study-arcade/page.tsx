@@ -211,7 +211,9 @@ export default async function StudyArcadePage({
         </div>
       ) : null}
 
-      <Card>
+      {/* Final DECA QA, finding B: the anchor a results page's "Browse study decks" lands on when no
+          deck matches what the test flagged. */}
+      <Card id="flashcard-decks" className="scroll-mt-24">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle as="h2" className="flex items-center gap-2">

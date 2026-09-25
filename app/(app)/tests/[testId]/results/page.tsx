@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { studyDeckForSkill, type StudyOrganization } from "@/lib/study-content";
+import { weakTermsStudyStep, type StudyOrganization } from "@/lib/study-content";
 import { testResultRecommendationsForLearner, weakAreaExplanation } from "@/lib/education/test-result-recommendations";
 import { resolveActiveTrack } from "@/lib/track-server";
 import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
@@ -144,7 +144,16 @@ export default async function PracticeTestResultsPage({
     stored: lessonRecommendations
   });
   const studyOrganization = test.organization === "DECA" || test.organization === "HOSA" ? test.organization : undefined;
-  const recommendedDeck = studyOrganization ? studyDeckForSkill(test.weakAreas[0] ?? test.eventCluster ?? test.eventType, studyOrganization) : undefined;
+  // Final DECA QA, finding B: the flashcard card names what it opens. A DECA deck is linked only when a
+  // flagged area exactly names it or one of its cards; otherwise the card says so and opens the deck
+  // list. It sent a "Service recovery" miss to the Marketing deck before. Other organizations are
+  // unchanged until their own repair.
+  const studyStep = weakTermsStudyStep({
+    organization: test.organization,
+    weakAreas: test.weakAreas,
+    eventCluster: test.eventCluster,
+    eventType: test.eventType
+  });
 
   // The return names the catalog it opens. For a result whose organization is not the learner's
   // current track that is a DIFFERENT track's test list, so the label says which — the learner is
@@ -228,9 +237,9 @@ export default async function PracticeTestResultsPage({
           tone="secondary"
         />
         <NextStepCard
-          title="Study weak terms"
-          description="Review flashcards tied to the terms and concepts you missed."
-          href={(recommendedDeck ? `/study/${recommendedDeck.deckSlug}` : "/study") as Route}
+          title={studyStep.title}
+          description={studyStep.description}
+          href={studyStep.href as Route}
           icon={Target}
           tone="accent"
         />

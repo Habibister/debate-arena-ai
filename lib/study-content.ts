@@ -1250,6 +1250,9 @@ export function recommendedResources(input: { organization?: string; skillTags?:
   return matches.slice(0, input.limit ?? 3);
 }
 
+// Used for HOSA results only. DECA results go through `weakTermsStudyStep` below, because this
+// matches deck NAMES by substring and otherwise falls back to the organization's first deck — which
+// sent a DECA "Service recovery" miss to Marketing. HOSA keeps it until its own repair.
 export function studyDeckForSkill(skillTag: string, organization: "DECA" | "HOSA") {
   const normalized = skillTag.toLowerCase();
   const match = deckSummaries().find(
@@ -1257,4 +1260,114 @@ export function studyDeckForSkill(skillTag: string, organization: "DECA" | "HOSA
   );
 
   return match ?? deckSummaries().find((deck) => deck.organization === organization);
+}
+
+/** A deck a flagged weak area names EXACTLY: the deck itself, or the term on one of its cards. */
+export type WeakAreaDeckMatch = {
+  deck: string;
+  deckSlug: string;
+  /** The flagged weak area, as the test recorded it. */
+  weakArea: string;
+  /** "deck": the weak area is the deck's own name. "term": it is the term on one of the deck's cards. */
+  matchedBy: "deck" | "term";
+};
+
+const exactKey = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * The flashcard deck a graded test's weak areas actually point at (final DECA QA, finding B).
+ *
+ * Exact identity only, against the decks' own data: a weak area that IS a deck's name, or IS the term
+ * on one of its cards ("Service recovery" is a card in Hospitality and Tourism and in Customer
+ * relations). No substring or word-similarity matching — "Promotion strategy" does not become the
+ * Promotion deck — and no fallback: when nothing matches this returns null and the caller says so.
+ *
+ * Every flagged area is considered, and the order they were recorded in never decides the result:
+ *   1. a deck named by a flagged area wins — the whole deck is about it — the test's own cluster
+ *      deck first, then the deck list's order;
+ *   2. otherwise a deck with a card for a flagged area, the test's own cluster deck first, then the
+ *      deck list's order, naming the flagged term that comes first among that deck's cards.
+ */
+export function studyDeckForWeakAreas(input: {
+  organization: "DECA" | "HOSA";
+  weakAreas: readonly string[];
+  eventCluster?: string | null;
+}): WeakAreaDeckMatch | null {
+  // One entry per area whatever its case or spacing; when spellings differ, one fixed spelling is kept,
+  // so the card's wording never depends on which one the grader recorded first.
+  const flagged = new Map<string, string>();
+  for (const area of input.weakAreas) {
+    const key = exactKey(area);
+    const kept = flagged.get(key);
+    if (key && (kept === undefined || area.trim() < kept)) flagged.set(key, area.trim());
+  }
+  if (flagged.size === 0) return null;
+
+  const decks = deckSummaries().filter((deck) => deck.organization === input.organization);
+  const cluster = input.eventCluster ? exactKey(input.eventCluster) : null;
+  const ordered = [
+    ...decks.filter((deck) => exactKey(deck.deck) === cluster),
+    ...decks.filter((deck) => exactKey(deck.deck) !== cluster)
+  ];
+
+  for (const deck of ordered) {
+    const weakArea = flagged.get(exactKey(deck.deck));
+    if (weakArea) return { deck: deck.deck, deckSlug: deck.deckSlug, weakArea, matchedBy: "deck" };
+  }
+  for (const deck of ordered) {
+    for (const card of flashcardsForDeck(deck.deckSlug)) {
+      const weakArea = flagged.get(exactKey(card.term));
+      if (weakArea) return { deck: deck.deck, deckSlug: deck.deckSlug, weakArea, matchedBy: "term" };
+    }
+  }
+  return null;
+}
+
+export type StudyNextStep = { title: string; description: string; href: string };
+
+/**
+ * The results page's flashcard card: what it is called, what it says, and where it goes.
+ *
+ * DECA: a deck is linked only when `studyDeckForWeakAreas` finds one, and the card names the area and
+ * the deck so the claim can be checked. Otherwise the card is "Browse study decks" and opens Study
+ * Arcade's DECA deck list — it never presents an unrelated deck as the learner's weak terms.
+ *
+ * Every other organization keeps the card it had (HOSA's fallback to its first deck is recorded for
+ * the HOSA repair, not changed here).
+ */
+export function weakTermsStudyStep(input: {
+  organization: string;
+  weakAreas: readonly string[];
+  eventCluster?: string | null;
+  eventType: string;
+}): StudyNextStep {
+  if (input.organization === "DECA") {
+    const match = studyDeckForWeakAreas({ organization: "DECA", weakAreas: input.weakAreas, eventCluster: input.eventCluster });
+    if (match) {
+      return {
+        title: "Study weak terms",
+        description:
+          match.matchedBy === "deck"
+            ? `The ${match.deck} deck covers ${match.weakArea}, which this test flagged.`
+            : `The ${match.deck} deck has a card on ${match.weakArea}, which this test flagged.`,
+        href: `/study/${match.deckSlug}`
+      };
+    }
+    return {
+      title: "Browse study decks",
+      description:
+        input.weakAreas.length > 0
+          ? "No flashcard deck matches the areas this test flagged. Study Arcade lists every DECA deck under Flashcard decks."
+          : "This test flagged no weak areas. Study Arcade lists every DECA deck under Flashcard decks.",
+      href: "/study-arcade?track=deca#flashcard-decks"
+    };
+  }
+
+  const organization = input.organization === "HOSA" ? "HOSA" : undefined;
+  const deck = organization ? studyDeckForSkill(input.weakAreas[0] ?? input.eventCluster ?? input.eventType, organization) : undefined;
+  return {
+    title: "Study weak terms",
+    description: "Review flashcards tied to the terms and concepts you missed.",
+    href: deck ? `/study/${deck.deckSlug}` : "/study"
+  };
 }

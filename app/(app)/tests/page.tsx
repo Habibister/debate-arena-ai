@@ -8,8 +8,8 @@ import { RubricBreakdown } from "@/components/specs/rubric-breakdown";
 import { SpecBanner } from "@/components/specs/spec-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EVENT_OPTIONS } from "@/lib/rubrics";
-import { getOfficialTestFormat } from "@/lib/competition-specs";
+import { getOfficialTestFormat, specEventTypesFor } from "@/lib/competition-specs";
+import { testableEventTypes } from "@/lib/test-availability";
 import { getActiveTrack } from "@/lib/track-server";
 import { trackHasPracticeTests } from "@/lib/training-tracks";
 
@@ -87,12 +87,17 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
             HOSA: the seeded spec IS the written test (Medical Terminology, 50 items / 60 minutes), its
             rubric line IS this product's scoring rule ("Test score — one point per correct item"), and
             the official-format option on the generator really is derived from it. Both stay. */}
-        {lockedOrganization === "HOSA" ? (
-          <div className="mt-4 space-y-3">
-            <SpecBanner organization={lockedOrganization} />
-            <RubricBreakdown organization={lockedOrganization} />
-          </div>
-        ) : lockedOrganization === "DECA" ? (
+        {/* HOSA H2 — the official block moved INTO the generator, and this is why.
+            HOSA's seeded spec describes exactly one event: Medical Terminology. This header rendered
+            its source banner, its rubric and its point total once per page load, above a generator
+            where the learner then picks any of sixteen categories. Choosing Nutrition left "Official
+            rubric — Medical Terminology (2025-2026)", "50 points total" and the 2026-07-05
+            verification date on screen, reading as though they governed the set about to be
+            generated. Fifteen of the sixteen categories have no official specification at all.
+            A claim about one event can only be scoped by the selection that names the event, and that
+            selection is client state, so the block now travels to the generator and renders only while
+            Medical Terminology is chosen. Nothing about the claim itself changed. */}
+        {lockedOrganization === "DECA" ? (
           <div className="mt-4">
             <p className="rounded-md border bg-background p-3 text-xs leading-6 text-muted-foreground">
               These are original multiple-choice questions on the cluster you choose, and your result is the share you
@@ -119,7 +124,28 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
 
       {/* Every path that reaches this render has a generator to show: a track with practice tests, an
           assignment, or no selected track at all. The empty state that used to sit here is gone. */}
-      <PracticeTestGenerator lockedOrganization={lockedOrganization} officialFormat={officialFormat} />
+      <PracticeTestGenerator
+        lockedOrganization={lockedOrganization}
+        officialFormat={officialFormat}
+        // The practice event types this specification actually describes. Both selectors name an
+        // event, so both have to agree before the claim may speak: HOSA's spec maps from
+        // HEALTH_SCIENCE_EVENT only, and a Prepared Speaking set is not a 50-item written exam.
+        officialEventTypes={
+          lockedOrganization && officialFormat
+            ? specEventTypesFor(lockedOrganization, officialFormat.eventName)
+            : []
+        }
+        // Server-rendered here (both read the registry), handed to the client generator as an element
+        // it may only render while the selected category is the event these describe.
+        officialClaims={
+          lockedOrganization === "HOSA" ? (
+            <div className="space-y-3">
+              <SpecBanner organization={lockedOrganization} />
+              <RubricBreakdown organization={lockedOrganization} />
+            </div>
+          ) : null
+        }
+      />
       <TestBuilderPreview organization={lockedOrganization} />
 
       <Card>
@@ -134,13 +160,16 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
           {!activeTrack || activeTrack.id === "DECA" ? (
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold text-muted-foreground">DECA</p>
-              <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
+              {/* H3: the events that can actually be TESTED, not every event the organization runs.
+                  This listed HOSA's Prepared Speaking as a supported practice test while the generator
+                  above and the API both refuse it — a page contradicting itself two cards apart. */}
+              <p className="mt-2 font-semibold">{testableEventTypes("DECA").map((event) => event.label).join(", ")}</p>
             </div>
           ) : null}
           {!activeTrack || activeTrack.id === "HOSA" ? (
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
-              <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
+              <p className="mt-2 font-semibold">{testableEventTypes("HOSA").map((event) => event.label).join(", ")}</p>
             </div>
           ) : null}
           <div className="rounded-lg border bg-background p-4">

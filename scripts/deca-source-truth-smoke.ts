@@ -38,8 +38,21 @@ const SEED = "scripts/seed-competition-specs.ts";
 check("S1. the tests page shows a rubric only where that rubric really is the test's scoring rule", () => {
   const tests = stripComments(read(TESTS));
   // DECA's only seeded spec is a ROLE-PLAY event, so its judged form is not mounted here.
-  assert.match(tests, /\{lockedOrganization === "HOSA" \? \(/, "S1a the attribution is per organization, because the two specs are different kinds of document");
-  assert.match(tests, /\{lockedOrganization === "HOSA" \? \([\s\S]{0,400}?<RubricBreakdown organization=\{lockedOrganization\} \/>/, "S1b HOSA keeps its rubric — one point per correct item IS this product's scoring rule");
+  // HOSA H2 — SUPERSEDED. What this control protects is unchanged: HOSA keeps its rubric because one
+  // point per correct item IS this product's scoring rule, and DECA gets neither that rubric nor an
+  // event attribution. What moved is WHERE the HOSA block is mounted. It used to render once per page
+  // load, above a generator in which the learner then chose any of sixteen categories — so Nutrition
+  // inherited Medical Terminology's rubric, point total and verification date. The block is now handed
+  // to the generator, which renders it only while the event the specification names is selected.
+  assert.match(tests, /officialClaims=\{\s*\n?\s*lockedOrganization === "HOSA" \? \(/, "S1a the attribution is per organization, because the two specs are different kinds of document");
+  assert.match(tests, /officialClaims=\{[\s\S]{0,400}?<RubricBreakdown organization=\{lockedOrganization\} \/>/, "S1b HOSA keeps its rubric — one point per correct item IS this product's scoring rule");
+  const generator = stripComments(read("components/tests/practice-test-generator.tsx"));
+  assert.match(generator, /eventCluster === officialFormat\.eventName/,
+    "S1b2 and it is shown only for the event that specification actually describes");
+  assert.match(generator, /\(officialEventTypes \?\? \[\]\)\.includes\(eventType\)/,
+    "S1b2a and only for an event type that specification maps from");
+  assert.match(generator, /\{officialClaims && officialAppliesToSelection \?/,
+    "S1b3 control: that gate is what admits the block, not merely a computed value");
   const decaBranch = tests.slice(tests.indexOf('lockedOrganization === "DECA"'), tests.indexOf("</div>", tests.indexOf('lockedOrganization === "DECA"')));
   assert.ok(decaBranch.length > 100, "S1-C the DECA branch was located");
   assert.ok(!/RubricBreakdown|SpecBanner/.test(decaBranch), "S1c DECA gets neither the role-play form nor an event attribution — nothing on this page derives from that spec");

@@ -492,7 +492,18 @@ async function main() {
     const actual = now(p);
     if (actual !== expected) pinFailures.push(`${p}: expected ${expected.slice(0, 12)}… got ${actual.slice(0, 12)}… (${why})`);
   };
-  pin("prisma/schema.prisma", sha("prisma/schema.prisma"), "immutable pre-Slice-3 baseline");
+  // S3-15f. prisma/schema.prisma: RE-ACCEPTED at H4-C1 (2026-09-10), not self-healed.
+  // The schema stopped being byte-identical to the pre-Slice-3 baseline when the official written-test
+  // plan was given its own table (SpecTestPlanRow). That table is what stops a content blueprint from
+  // being stored in the rubric rows the Coach reads: HOSA Medical Terminology's plan totals 100 percent
+  // while its rubric totals 50 points, and rendering one through the other would show a learner an
+  // official-looking number that is not the event's. The change is additive — nothing the Coach reads
+  // lost or changed a field — which six suites assert structurally against the M13E2 parent.
+  //
+  // The digest is a literal, so the schema cannot drift again without failing here, and the acceptance
+  // is ANCHORED below to the named product fact rather than resting on an opaque hex string.
+  const SCHEMA_ACCEPTED = "b7423faa1b8c63222205a159c2c2adf831855a824c636fc04c585e072eb3b302";
+  pin("prisma/schema.prisma", SCHEMA_ACCEPTED, "accepted at H4-C1: the official written-test plan gained its own table");
   pin("components/lessons/concept-education-lesson-practice.tsx", sha("components/lessons/concept-education-lesson-practice.tsx"),
       "immutable pre-Slice-3 baseline");
 
@@ -522,6 +533,15 @@ async function main() {
   const spacedBase = gitShow("lib/spaced-review.ts");
   assert.ok(spacedNow.includes("debateMasteryHeld"), "S3-15e2. the accepted file carries the mastery hold");
   assert.ok(!spacedBase.includes("debateMasteryHeld"), "S3-15e3. and the pre-Slice-3 baseline did not");
+  // S3-15f2. The schema acceptance is anchored the same way: bumping the digest to whatever the file
+  // happens to say still has to satisfy these.
+  const schemaNowSrc = read("prisma/schema.prisma");
+  const schemaBaseSrc = gitShow("prisma/schema.prisma");
+  assert.ok(/model SpecTestPlanRow \{/.test(schemaNowSrc), "S3-15f2. the accepted schema carries the test-plan table");
+  assert.ok(!/SpecTestPlanRow/.test(schemaBaseSrc), "S3-15f3. and the pre-Slice-3 baseline had no such table");
+  const planBlock = schemaNowSrc.match(/model SpecTestPlanRow \{[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.ok(!/\bpoints\b/.test(planBlock),
+    "S3-15f4. and it carries no points column — a test plan is a blueprint, never the Coach's score sheet");
   assert.ok(/status: "mastery-held"/.test(spacedNow), "S3-15e4. a held skill is reported as held, never as skill-missing");
   // S3-15e5. EACH persistence boundary carries its own gate, checked separately. A single
   // file-wide regex was not enough: deleting the gate from one writer still matched the other one,

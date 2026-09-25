@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { buildDebateFormatConfig, getOpponentSide, resolveDebateSide, trackPracticeConfigForOrganization } from "@/lib/debate-formats";
 import { guidedRubricFor } from "@/lib/education/coaching";
 import { prisma } from "@/lib/prisma";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { debateCreateSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -57,6 +58,16 @@ export async function POST(request: Request) {
     // silently mapped to another organization; every other organization is unchanged.
     if (input.organization === "HOSA") {
       return hosaWithdrawn();
+    }
+
+    // A RETIRED TRACK CANNOT START A NEW ROUND (H3). Model UN is soft-removed: its code, its stored
+    // rounds and its honest historical labels all stay, but it is not something anyone begins today.
+    // The client used the retirement-blind lookup, so `/debate?track=model-un` reached here and this
+    // route — which refuses only HOSA — would mint the row. Refusing at creation is what makes the
+    // client fix a courtesy rather than the only gate. Reading existing rounds is untouched.
+    const requestedTrack = trackByOrganization(input.organization);
+    if (requestedTrack && isTrackRetired(requestedTrack.id)) {
+      throw new HttpError(`${requestedTrack.label} is no longer available for new practice rounds.`, 410);
     }
 
     // GUIDED LESSON ROUND — decided HERE, at creation, and persisted on the row (see

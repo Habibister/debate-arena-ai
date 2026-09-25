@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { normalizeAccessibility } from "@/lib/accessibility";
 import { LEARNING_PROFILE_KEY, normalizeLearningProfile } from "@/lib/learning-path";
-import { DEFAULT_TRACK, trackById, trackBySlug } from "@/lib/training-tracks";
+import { DEFAULT_TRACK, isTrackRetired, trackById, trackBySlug } from "@/lib/training-tracks";
 import { AI_DEBATE_PERSONAS } from "@/lib/ai-personas";
 import {
   DEBATE_CATEGORIES,
@@ -61,7 +61,15 @@ function formatTime(seconds: number) {
 export function DebateRoom({ track, guidedLessonId }: { track?: string; guidedLessonId?: string }) {
   // The selected training track (from the hub link ?track=slug) decides the organization the AI
   // opponent/judge use. Falls back to General Debate. URL is the strongest source of truth.
-  const trackInfo = trackBySlug(track ?? "") ?? trackById(DEFAULT_TRACK);
+  //
+  // H3: a RETIRED track is not a selection. `trackBySlug` is the retirement-blind lookup — it exists so
+  // stored history keeps honest labels — and reading a URL through it made `/debate?track=model-un` a
+  // live Model UN round: the organization flowed into the topic request and the debate row, and the
+  // create route refused only HOSA. Every sibling surface already treats retirement as unknown
+  // (lib/track-precedence.ts, lib/track-route.ts, the /training routes); this one did not. Existing
+  // Model UN rounds are untouched and still open with their real labels.
+  const requestedTrack = trackBySlug(track ?? "");
+  const trackInfo = requestedTrack && !isTrackRetired(requestedTrack.id) ? requestedTrack : trackById(DEFAULT_TRACK);
   const trackOrganization = trackInfo.organization;
   const router = useRouter();
   const [format, setFormat] = useState<DebateFormat>("PARLIAMENTARY");

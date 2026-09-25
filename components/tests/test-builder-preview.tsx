@@ -38,13 +38,19 @@ export function TestBuilderPreview({ organization }: { organization?: "DECA" | "
           <div className="rounded-lg border bg-background p-4">
             <div className="flex items-center gap-2 font-semibold">
               <Sparkles className="h-5 w-5 text-secondary" aria-hidden />
-              AI generation
+              {organization === "HOSA" ? "Where the questions come from" : "AI generation"}
             </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {/* Track-scoped like the header above it. The provider is deliberately not named here:
                   this line claimed OpenAI, which is not what the generation chain runs, and a page
-                  cannot state a provider it does not select. */}
-              The API route generates original {organization ?? "DECA and HOSA"} questions.
+                  cannot state a provider it does not select.
+                  H3: HOSA no longer generates anything. Its one testable category is drawn from
+                  CompeteReady's authored Medical Terminology bank, so calling that "AI generation"
+                  would invert the truth — the questions are written and reviewed by people, and the
+                  pool is fixed rather than composed fresh for each set. */}
+              {organization === "HOSA"
+                ? "Medical Terminology sets are drawn from CompeteReady's own authored question bank — written and reviewed by people, not generated. The pool is fixed, so sets will repeat questions as you take more of them."
+                : `The API route generates original ${organization ?? "DECA and HOSA"} questions.`}
             </p>
           </div>
         </div>

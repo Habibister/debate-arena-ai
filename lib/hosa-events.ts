@@ -8,21 +8,22 @@
 // or progress import. Static data plus lookup helpers.
 //
 // ---------------------------------------------------------------------------------------------
-// PROVENANCE — every value below traces to an approved local curriculum record. Nothing is written
-// from memory, and nothing is inferred from a different event.
+// PROVENANCE — every value below traces to either the official guideline itself or an approved local
+// curriculum record, and each is named. Nothing is written from memory, and nothing is inferred from
+// a different event.
 //
-//   Medical Terminology, 50 questions / 60 minutes, verified 2026-07-05
-//     docs/curriculum/00-principles-and-sources.md:130  ("Already sourced in the registry
-//       (verified 2026-07-05, re-verify each season)" → "HOSA Medical Terminology: 50 questions /
-//       60 minutes (changed this season from 100/90).")
-//     docs/curriculum/03-hosa-course.md:21              ("Sourced today: Medical Terminology only
-//       (50q/60min, verified 2026-07-05).")
-//     docs/curriculum/07-videos-hosa.md:58              (Medical Terminology "is currently a
-//       50-question timed" test)
-//   Season 2025-26 is the current final official set
-//     docs/curriculum/03-hosa-course.md:17-21, docs/curriculum/11-benchmark-hosa-event-navigator.md:12-14
-//   September 1, 2026 revalidation gate
-//     docs/curriculum/03-hosa-course.md:17-21, docs/curriculum/11-benchmark-hosa-event-navigator.md:12-14
+//   MEDICAL TERMINOLOGY IS NOW SOURCED FROM THE PRIMARY DOCUMENT (H4-B, verified 2026-09-10).
+//     Every Medical Terminology fact below was read directly from
+//     "Medical Terminology ILC Guidelines (September 2026)", the 2026-27 guideline published at
+//     https://hosa.org/wp-content/uploads/2026/08/MT-26-27.pdf — not from a curriculum note about it.
+//     50 questions / 60 minutes (unchanged this season); tiebreakers reduced to ten, administered as
+//     two sets of five; the written test plan below; no verbal time-remaining announcements.
+//     The earlier record cited local curriculum notes for 2025-26 (50q/60min, verified 2026-07-05)
+//     and waited on a September 1, 2026 release. That release arrived and has now been read.
+//   Season 2026-27 is the current final official set
+//     the same guideline; hosa.org/guidelines states the 2026-27 guidelines are posted.
+//   THIS APPLIES TO MEDICAL TERMINOLOGY ONLY. No other HOSA event has been re-verified against a
+//     2026-27 document, and none may be presented as though it had — see the partial records below.
 //   Association dependence applies to every HOSA event
 //     docs/curriculum/03-hosa-course.md:222-228 (§6, HR-2)
 //   Event names + their CompeteReady branch
@@ -31,9 +32,12 @@
 //
 // NOT sourced, therefore NOT present anywhere below: official HOSA category names, room layout,
 // who portrays a patient, team sizes, round counts, timings or question counts for any event other
-// than Medical Terminology, equipment lists, tiebreakers, advancement rules, entry limits, results
-// timing, and whether competitors receive rating sheets. Absent means absent — never defaulted,
-// never borrowed from a sibling event.
+// than Medical Terminology, equipment lists, advancement rules, entry limits, results timing, and
+// whether competitors receive rating sheets. Absent means absent — never defaulted, never borrowed
+// from a sibling event.
+//   TIEBREAKERS moved OFF this list for Medical Terminology only (H4-B): the September 2026 guideline
+//   states them, so they are recorded for that event. No other event's tiebreakers are sourced, and
+//   Medical Terminology's may not be lent to one.
 //   docs/curriculum/00-principles-and-sources.md:137 ("non-MT HOSA categories (labeled generic
 //     practice)" under "Known NOT sourced")
 //   docs/curriculum/03-hosa-course.md:280-287 (open validation gates)
@@ -97,15 +101,109 @@ export type HosaEventRecord = {
 // ---- season + gate wording (registry-owned; components never restate these) --------------------
 
 /** The current final official set. */
-export const HOSA_CURRENT_SEASON = "2025-26";
+export const HOSA_CURRENT_SEASON = "2026-27";
+
+// ---- the official written test plan (Medical Terminology only) ---------------------------------
+//
+// TWO DIFFERENT LISTS LIVE IN THE SAME GUIDELINE, AND THEY ARE NOT THE SAME THING.
+//
+//   • The EVENT SUMMARY names the subjects the event covers — prefixes, suffixes, word roots,
+//     anatomy, physiology, pathophysiology, and occupations related to the health field. That is the
+//     sentence lib/hosa-medterm.ts cites for its six practice areas, and it is accurately cited.
+//   • The WRITTEN TEST PLAN below is a different axis: twelve weighted rows saying how much of the
+//     50-item test each area is worth. Its second half is organised BY BODY SYSTEM, which the six
+//     practice areas are not.
+//
+// A subject list is not a blueprint. Only the rows below may be described as the test plan, and the
+// six practice tags may never be relabelled as it — they are CompeteReady's own grouping.
+//
+// This is recorded as data rather than prose so a later phase can map bank items and lessons to a row
+// id. Recording it makes no claim that our practice matches these weights; it does not yet.
+
+export type HosaTestPlanRow = {
+  /** Stable id for mapping evidence to this row later. Ours, not HOSA's. */
+  id: string;
+  /** The row exactly as the guideline lists it. */
+  label: string;
+  /** Percentage of the written test, as published. */
+  weight: number;
+};
 
 /**
- * The revalidation gate. Phrased as ONE dated expectation, never as a standing annual-release rule —
- * doc 03:17-20 states the official site expects the final 2026-27 guidelines on this date; it does
- * not establish that HOSA always publishes on September 1.
+ * The 2026-27 Medical Terminology written test plan, transcribed from the official guideline.
+ * Twelve rows totalling 100.
+ */
+export const HOSA_MEDTERM_TEST_PLAN: readonly HosaTestPlanRow[] = [
+  { id: "word-parts", label: "Roots, Prefixes, Suffixes, and Combining Forms", weight: 45 },
+  { id: "overview-of-body", label: "Overview of Body", weight: 5 },
+  { id: "skeletal", label: "Skeletal", weight: 5 },
+  { id: "muscular", label: "Muscular", weight: 5 },
+  { id: "respiratory", label: "Respiratory", weight: 5 },
+  { id: "digestive", label: "Digestive", weight: 5 },
+  { id: "cardiovascular-lymphatic", label: "Cardiovascular & Lymphatic", weight: 5 },
+  { id: "nervous-special-senses", label: "Nervous/Special Senses", weight: 5 },
+  { id: "endocrine", label: "Endocrine", weight: 5 },
+  { id: "reproductive", label: "Reproductive", weight: 5 },
+  { id: "integumentary", label: "Integumentary", weight: 5 },
+  { id: "urinary", label: "Urinary", weight: 5 }
+];
+
+/** The subjects the event summary names. NOT the test plan — see the note above. */
+export const HOSA_MEDTERM_EVENT_SUBJECTS: readonly string[] = [
+  "prefixes",
+  "suffixes",
+  "word roots",
+  "anatomy",
+  "physiology",
+  "pathophysiology",
+  "occupations related to the health field"
+];
+
+/**
+ * The tiebreaker, as the 2026-27 guideline states it. The repository previously recorded only the
+ * resolution procedure ("successive sets of five until resolved"), which was true but silent on how
+ * many exist: the 2026-27 release reduced them to ten, administered as two sets of five with the
+ * test. Both facts are kept because both are stated.
+ */
+export const HOSA_MEDTERM_TIEBREAKER = {
+  totalQuestions: 10,
+  sets: 2,
+  questionsPerSet: 5,
+  format: "fill-in-the-blank",
+  spellingRequired: true,
+  resolution: "Successive sets of five tiebreaker questions are judged until a winner is determined."
+} as const;
+
+/**
+ * Test-day format fact, recorded as source truth. Not yet surfaced to learners everywhere — a later
+ * competition-prep phase decides where it belongs.
+ */
+export const HOSA_MEDTERM_TIME_ANNOUNCEMENTS =
+  "No verbal time-remaining announcements are given; competitors monitor their own time.";
+
+/**
+ * The revalidation gate, re-expressed after the 2026-27 release (H4-B).
+ *
+ * The previous wording named one dated expectation — September 1, 2026 — because that was the release
+ * we were waiting for. It arrived: the Medical Terminology guideline dated September 2026 has been
+ * read against this record. Continuing to name that date would schedule a re-check in the past, so the
+ * gate now names the NEXT release instead. It is deliberately undated: HOSA publishes annually, but
+ * nothing in the source establishes the 2027-28 date, and inventing one would be the same fabrication
+ * the original wording was careful to avoid.
  */
 export const HOSA_REVALIDATION_NOTE =
-  "HOSA publishes annual competitive-event guidelines. The final 2026-27 guidelines are expected September 1, 2026 — after that release, every officially dependent detail here must be re-checked against it and any later update notices.";
+  "HOSA publishes annual competitive-event guidelines. The 2026-27 guidelines are the set in force here — after HOSA publishes the 2027-28 guidelines, every officially dependent detail must be re-checked against them and against any later update notices.";
+
+/**
+ * No structured due date, deliberately (H4-B).
+ *
+ * H2 added this so the freshness model could notice a stated date had passed, and it did its job. The
+ * next trigger has no published date, and `revalidationIsDue` treats an absent one as "no warning" —
+ * which is correct here: a warning must come from a real date, not from a guess about when HOSA will
+ * publish next. The machinery is untouched and starts working again the moment a dated expectation is
+ * recorded. Until then the record carries its verification date, and that is the honest signal.
+ */
+export const HOSA_REVALIDATION_DUE_ON: string | undefined = undefined;
 
 /** Association dependence applies to every HOSA event (doc 03 §6). */
 export const HOSA_ASSOCIATION_NOTE =
@@ -241,11 +339,14 @@ export const HOSA_EVENTS: HosaEventRecord[] = [
     family: "knowledge-test",
     sourceStatus: "verified-current",
     season: HOSA_CURRENT_SEASON,
-    lastVerified: "2026-07-05",
-    sourceLabel: "HOSA 2025-26 competitive event guidelines",
+    // Re-verified against the 2026-27 guideline dated September 2026 (H4-B).
+    lastVerified: "2026-09-10",
+    sourceLabel: "HOSA 2026-27 Medical Terminology ILC Guidelines (September 2026)",
     components: [{ type: "written-test", label: "Written test" }],
     // The ONLY sourced structural facts in this registry. See the provenance header.
-    verifiedFacts: { questionCount: 50, timeMinutes: 60 },
+    // Unchanged by the 2026-27 release: still 50 items in a maximum of 60 minutes. `testPlanAvailable`
+    // now says what HOSA_MEDTERM_TEST_PLAN records — the published weighting exists for this event.
+    verifiedFacts: { questionCount: 50, timeMinutes: 60, testPlanAvailable: true },
     associationVariation: true,
     revalidationRequired: true,
     routeTarget: "/training/hosa/event/medical-terminology"
@@ -282,8 +383,12 @@ export function hosaSourceMetadata(record: HosaEventRecord): SourceFreshnessMeta
     revalidation: record.revalidationRequired
       ? {
           required: true,
-          // One dated expectation, never a standing annual rule.
-          triggerLabel: "the expected September 1, 2026 release",
+          // The NEXT release, undated (H4-B). The September 1, 2026 expectation this used to name has
+          // been met and read; naming it now would schedule a re-check in the past. HOSA publishes
+          // annually, but the 2027-28 date is not published, so the trigger stays undated rather than
+          // guessed — and `dueOn` is absent for the same reason.
+          triggerLabel: "the 2027-28 guidelines release",
+          dueOn: HOSA_REVALIDATION_DUE_ON,
           note: HOSA_REVALIDATION_NOTE
         }
       : undefined,

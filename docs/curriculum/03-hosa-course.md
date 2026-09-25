@@ -14,11 +14,23 @@ communication scored as rating-sheet rows inside clinical skill rounds**, plus *
 with a judge acting as interviewer. Draft V1's "scenario / patient-facing events" category is
 withdrawn. *Absence from the reviewed corpus is not proof HOSA has never offered such an event.*
 
-**Season status.** The current final official set is **2025-26**. HOSA publishes annual
-competitive-event guidelines; **the official site states the final 2026-27 guidelines are expected
-September 1, 2026.** Preliminary 2026-27 announcements are **not final rules**. Every officially
-dependent detail below carries a **September 1 revalidation gate** (doc 00 §3). Sourced today:
-Medical Terminology only (50q/60min, verified 2026-07-05).
+**Season status (updated H4-B, 2026-09-10).** The current final official set is **2026-27**, and the
+guidelines are published. HOSA publishes annual competitive-event guidelines; the September 1, 2026
+release this document was waiting for has arrived.
+
+**What that release changed, and for which event.** Only **Medical Terminology** has been read against
+its 2026-27 document — *Medical Terminology ILC Guidelines (September 2026)*. It is still 50 questions
+in 60 minutes; its **tiebreakers were reduced to ten**, administered as two sets of five
+fill-in-the-blank items with correct spelling required; and it now publishes a **written test plan** —
+twelve weighted rows, 45% roots/prefixes/suffixes/combining forms and eleven body-system rows at 5%
+each. That plan is recorded as data in `lib/hosa-events.ts` (`HOSA_MEDTERM_TEST_PLAN`) and, since
+H4-C1, has a first-class home in the registry: `SpecTestPlanRow`, a child of the competition spec
+and deliberately not a rubric row — the plan totals 100 percent while the event's rubric totals 50
+points. The shared database has not been synchronized yet; `docs/MEDTERM_SPEC_SYNC.md` holds that
+runbook.
+
+**Every other HOSA event remains unread for 2026-27** and keeps its September-1 gate: a fact verified
+for Medical Terminology is evidence about Medical Terminology only (doc 14, MT-only supersession).
 
 ## 1. HOSA Event Navigator (mandatory first step)
 
@@ -93,8 +105,11 @@ Navigator. Classification: family-specific branch.*
 - Official **test plan** reading: the guideline publishes content areas and their weights.
 - **Weighted study planning** ⟨H8⟩ built from those official weights — never from guesswork.
 - Terminology and anatomy drills; the Knowledge-to-Performance Bridge (§5).
-- **Tiebreaker literacy**, per the current event guideline. ⟨GATE⟩ Named-event tiebreaker changes are
-  expected in 2026-27; **await the September 1 release before teaching any specific format.**
+- **Tiebreaker literacy**, per the current event guideline. ⟨GATE SATISFIED for Medical Terminology,
+  H4-B⟩ The 2026-27 release arrived and has been read: Medical Terminology's tiebreakers are ten
+  questions in two sets of five, fill-in-the-blank, correct spelling required, judged in successive
+  sets of five. That format may now be taught **for Medical Terminology only**. The gate still stands
+  for every other named event.
 - Spaced review with different items; seen vs unseen accuracy tracked separately.
 
 ⟨HR-6 — practice items⟩ Competitors in the reviewed discussions repeatedly reported **difficulty
@@ -224,8 +239,10 @@ Every applicable term eventually carries:
 MEDICAL TERM → CORRECT MEANING → SCENARIO MEANING → WHAT THE LEARNER OBSERVES → PATIENT-FACING
 EXPLANATION → PROFESSIONAL REPORT → ACTION PERMITTED WITHIN THE ASSIGNED ROLE.
 
-The existing MT bank (54 authored questions) is the seed corpus; bridge fields are authored additions,
-not AI-generated at runtime.
+The existing MT bank (**180** authored questions — the count was 54 when this was written) is the seed
+corpus; bridge fields are authored additions, not AI-generated at runtime. Note that the bank's six
+tags are CompeteReady's practice grouping, **not** the official twelve-row test plan; they are
+different axes and the bank has not yet been mapped to the plan.
 
 ## 6. Association dependence
 

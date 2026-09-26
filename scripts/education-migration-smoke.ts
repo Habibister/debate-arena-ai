@@ -1047,6 +1047,10 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     "app/(app)/tests/[testId]/results/page.tsx",
     "app/(app)/home/page.tsx",
     "app/api/tests/[testId]/grade/route.ts",
+    // HOSA remediation: the Medical Terminology room resolves the lesson that teaches each weak
+    // practice area through lib/education/hosa-medterm-practice alone (education-registry-smoke 16b),
+    // server-side, and hands the client engine plain data.
+    "components/training/hosa-event-prep.tsx",
   ]);
   const found: string[] = [];
   for (const file of [...walkTree("app"), ...walkTree("components")]) {

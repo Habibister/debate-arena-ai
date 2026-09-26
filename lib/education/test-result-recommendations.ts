@@ -92,6 +92,45 @@ export function resultOrganization(organization: string): ResultOrganization {
   return organization === "DECA" || organization === "HOSA" ? organization : "OTHER";
 }
 
+/**
+ * The "Practice weak skills" card's sentence. HOSA has no clusters: its tests are built from an event
+ * CATEGORY, the word its generator uses, so a HOSA learner is told to retry that. Every other
+ * organization keeps the sentence exactly as it was: DECA's tests are built from an event cluster, and
+ * an older test from any other organization reads what it always read.
+ */
+export function practiceWeakSkillsDescription(organization: string): string {
+  return resultOrganization(organization) === "HOSA"
+    ? "Start with the first recommended lesson, then retry the same event category."
+    : "Start with the first recommended lesson, then retry the same cluster.";
+}
+
+/**
+ * The grader's stored note, as a HOSA learner should read it. The grader writes one of two sentences
+ * for every organization, both in DECA's word ("event cluster"), and each graded test stores its note.
+ * Tests graded before 2026-09-10 (commit abe36bf) stored an older first sentence ("Review the
+ * recommended lessons, ..."), so it is listed too. For a HOSA test each known sentence is shown in
+ * HOSA's word instead; the stored row is not changed, DECA sees its note exactly as stored, and any
+ * other note passes through untouched.
+ */
+const HOSA_RESULT_NOTE: ReadonlyMap<string, string> = new Map([
+  [
+    "Review the recommended lessons, then regenerate a shorter test in the same event cluster.",
+    "Review the recommended lessons, then regenerate a shorter test in the same event category."
+  ],
+  [
+    "Work through what the results page lists under \"What to work on\", then regenerate a shorter test in the same event cluster.",
+    "Work through what the results page lists under \"What to work on\", then regenerate a shorter test in the same event category."
+  ],
+  [
+    "Strong performance. Move up a difficulty level or switch event clusters.",
+    "Strong performance. Move up a difficulty level or switch event categories."
+  ]
+]);
+
+export function resultNoteForOrganization(note: string, organization: string): string {
+  return resultOrganization(organization) === "HOSA" ? HOSA_RESULT_NOTE.get(note) ?? note : note;
+}
+
 /** The sentence under the weak-area badges. Only DECA has a card that maps topics to recorded skills. */
 export function weakAreaExplanation(organization: string): string {
   return resultOrganization(organization) === "DECA"

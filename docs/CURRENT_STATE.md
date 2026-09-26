@@ -775,8 +775,9 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 55** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
-  `hosa-medterm-session-safety:smoke` and `hosa-medterm-targeted-practice:smoke`); it read 45 when
+- **REGISTERED = 56** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
+  `hosa-medterm-session-safety:smoke`, `hosa-medterm-targeted-practice:smoke` and
+  `hosa-medterm-remediation:smoke`); it read 45 when
   re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
@@ -924,6 +925,72 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology practice remediation — 2026-09-26 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build` and a dev
+server are forbidden in the cloud workspace; the results list, lessons, hub and old record page were
+rendered server-side in the guard only). **The gap:** the practice room's results listed "Areas to
+review" as plain text ("Word roots: missed 2 of 4") with no way to reach the lesson that teaches
+the area; only the course's last lesson linked back to practice; `/skills/hosa-medical-terminology-1`
+(the seeded "Word roots" record, reachable from coach LESSON assignments and stored links) said
+there was nothing to read; the HOSA hub's "Skill drills" row opened `/skills?track=hosa`, which
+holds only a link back to the Event Navigator; and every test result told HOSA learners to "retry
+the same cluster" (DECA's word). **Census:** weak areas are computed by
+`POST /api/hosa/medterm/submit` from the stored answered items: every covered canonical area with at
+least one miss, in canonical order, as `{ area, label, missed, total }` (no threshold; unchanged).
+The engine rendered them verbatim; the results screen's only control was "New session". No code
+mapped an area to a lesson, and no registry field names the area a lesson teaches. **The change:**
+`lib/education/hosa-medterm-practice.ts` declares `HOSA_MEDTERM_AREA_TEACHING_OWNERS`
+(`word-roots` → `hosa-medical-word-roots`, `prefixes` → `hosa-medical-prefixes`, `suffixes` →
+`hosa-medical-suffixes`; anatomy, physiology and pathophysiology deliberately absent) and a
+fail-closed resolver, `hosaMedTermRemediation`: a lesson action only when the owner is a published
+learner-visible concept lesson of this HOSA course, that lesson links back to word-part practice, and
+word-part practice includes the area; the plain "CompeteReady does not have a lesson for this area
+yet." for an area with no owner; nothing at all when an owner exists but any later link fails. The
+HOSA room (`components/training/hosa-event-prep.tsx`, now an approved one-module `lib/education`
+consumer) resolves an action for every canonical area on the server and hands the client engine plain
+data; the engine's exported `WeakAreasReview` shows, under each weak area's own line, exactly that
+area's action (a link such as "Study word roots in the lesson “Word Roots: What the Term Is About”"
+to `/lessons/<id>?track=hosa`, or the no-lesson statement with an icon and a neutral pointer to All
+Medical Terminology practice), and says that opening a lesson closes the results. The Word Roots and
+Suffixes lessons now show "Practise the word parts from this course" under their next-lesson link
+(`hosaLessonPracticeReturn`, offered only while a published later lesson exists; the copy says the
+practice also asks about later lessons' parts); Prefixes keeps its course-end action. Nothing starts
+and nothing is written by opening a lesson or the practice page. The old record now redirects to the
+Word Roots lesson through the existing hand-audited `CANONICAL_REDIRECTS` allowlist (the same pairing
+`HOSA_SEEDED_TOPIC_LESSON` already used); `-2` and `-3` keep the honest compatibility page. The HOSA
+hub row is now "Medical Terminology practice" → `/training/hosa/event/medical-terminology`, whose Event
+HQ lists the practice room (the hub still never links the room itself); DECA and Debate keep "Skill
+drills". The results page's "Practice weak skills" sentence and the grader's stored note now come
+through `lib/education/test-result-recommendations.ts` (`practiceWeakSkillsDescription`,
+`resultNoteForOrganization`): HOSA reads "event category"; DECA, and an older test of any other
+organization, reads exactly what it did. The grader route itself is untouched, so stored notes still
+say "event cluster" and are re-worded only when shown to a HOSA learner, including the older first
+sentence tests graded before `abe36bf` stored ("Review the recommended lessons, ..."). No new model, skill, mastery, readiness or XP; the weak-area rule, grading and
+recording unchanged; DECA and Debate behaviour unchanged. **Guard:**
+`npm run hosa-medterm-remediation:smoke` (8 checks; an env carrier through `lib/api`, no connection):
+owners re-derived from each lesson's text against the part every bank question tests (the owner is
+the one lesson naming most of an area's parts; no lesson names an anatomy, physiology or disease
+term); the resolver's lesson, no-lesson and fail-closed outcomes, with the live registry entry held,
+moved track, moved course and next-lesson held in turn; the real submit route scored against an
+in-memory transaction, its weak areas rendered through `WeakAreasReview`; the return link rendered
+once per owner lesson with the page's props, and its word-parts choice serving that area's bank
+questions; the old record's redirect from the page itself; the rendered hubs; the wording, with the
+grader's two notes read from its source and the older one as a literal; the engine's results screen
+renders the review once, with the room's actions. Pins deliberately updated: `hosa-medterm-lessons` F1 (renders
+the page's `practiceReturn`; F1h now requires the return after the next-lesson link on Word Roots and
+Suffixes, and still forbids any practice link on the first lesson), `education-registry` 16/16b and
+`education-migration` 36 (the HOSA room added as a consumer of `hosa-medterm-practice` only),
+`skills-compat` 4c (35 compatibility pages) and 5/5c (four audited redirects; `-2`/`-3` stay); these
+run only past that suite's baseline item-2 failure, so they were checked under a soft-assert run
+(recorded failures identical to `804a8d2`: 2, 4, 4b, 6, 28; 4b's stale pin of 8 redirects now meets
+10, it met 9 before). **Known
+limits:** the results live only in the client, so opening a lesson loses them (the copy says so);
+remediation follows the existing weak-area rule, so it also appears for a practice-only session and
+for a single miss; the results page's "Practice weak skills" card still falls back to `/skills` when a
+HOSA test has no linked lesson, its flashcard step can fall back to an unrelated HOSA deck, and its
+"Practice speaking" card opens `/debate` (all out of this task's scope and unchanged). REGISTERED = 56.
 
 ## HOSA targeted Medical Terminology practice — 2026-09-26 — LOCAL COMMIT
 

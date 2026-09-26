@@ -56,9 +56,11 @@ import {
 } from "../lib/education/tracks/hosa";
 import {
   HOSA_MEDTERM_PRACTICE_ENTRY,
+  HOSA_MEDTERM_PRACTICE_RETURN,
   HOSA_MEDTERM_STUDY_COURSE,
   hosaCourseEndAction,
-  hosaCourseHasEventPractice
+  hosaCourseHasEventPractice,
+  hosaLessonPracticeReturn
 } from "../lib/education/hosa-medterm-practice";
 import { decaCourseEndAction } from "../lib/education/deca-simulation-prep";
 import { HOSA_MEDTERM_FOCUS_PARAM, HOSA_MEDTERM_PRACTICE_ROOM, medTermFocusFromParam } from "../lib/hosa-medterm-focus";
@@ -767,7 +769,9 @@ async function main() {
         provenance: entry.provenance,
         moduleLabel: getEducationModule(entry.moduleId)!.label,
         next,
-        courseEndAction: decaCourseEndAction(id) ?? hosaCourseEndAction(id) ?? undefined
+        courseEndAction: decaCourseEndAction(id) ?? hosaCourseEndAction(id) ?? undefined,
+        // The lesson page's own wiring (hosa-medterm-remediation-smoke pins that the page passes it).
+        practiceReturn: hosaLessonPracticeReturn(id) ?? undefined
       })));
       const text = visible(html);
       assert.ok(text.includes(source.lesson.title), `F1a. ${id} renders its title`);
@@ -781,7 +785,19 @@ async function main() {
       assert.ok(!/mastery/i.test(visible(html.slice(0, checksAt))), `F1f. ${id}'s teaching claims no mastery`);
       if (next) {
         assert.ok(html.includes(`href="/lessons/${next.id}"`), `F1g. ${id} continues to ${next.id}`);
-        assert.ok(!html.includes(`href="${HOSA_MEDTERM_PRACTICE_ROOM}`), `F1h. ${id} does not jump ahead to practice`);
+        // A lesson that teaches a practice area (word roots, suffixes) also offers the way back to
+        // word-part practice that the practice results send learners here from, AFTER the next-lesson
+        // link, so the course order stays the first path. The first lesson teaches no single area and
+        // still does not jump ahead to practice.
+        if (id === "hosa-medical-word-roots" || id === "hosa-medical-suffixes") {
+          const continueAt = html.indexOf(`href="/lessons/${next.id}"`);
+          const returnAt = html.indexOf(`href="${HOSA_MEDTERM_PRACTICE_RETURN.href}"`);
+          assert.ok(returnAt > continueAt, `F1h. ${id} offers word-part practice, after its next-lesson link`);
+          assert.ok(text.includes(HOSA_MEDTERM_PRACTICE_RETURN.label) && text.includes("a later lesson in this course teaches"),
+            `F1h2. ${id} labels that step and says the practice also asks about later lessons' parts`);
+        } else {
+          assert.ok(!html.includes(`href="${HOSA_MEDTERM_PRACTICE_ROOM}`), `F1h. ${id} does not jump ahead to practice`);
+        }
       } else {
         assert.ok(html.includes(`href="${HOSA_MEDTERM_PRACTICE_ENTRY.href}"`), `F1i. ${id} ends in the practice room, with the taught word parts preselected`);
         assert.ok(text.includes(HOSA_MEDTERM_PRACTICE_ENTRY.label), `F1j. ${id} labels that step`);

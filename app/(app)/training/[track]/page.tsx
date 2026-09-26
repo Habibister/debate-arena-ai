@@ -267,20 +267,36 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
               tracks, and its DECA branch is a single tile linking to the role-play setup — no drill
               anywhere on it. The four DECA concept drills live on the Study Arcade track surface.
               Debate's /skills branch does carry its drill tile, so its destination is unchanged.
-              The label is the promise; the href is what was wrong. */}
-          <DestinationRow
-            href={(track.id === "DECA" ? `/study-arcade?track=${track.slug}` : `/skills?track=${track.slug}`) as Route}
-            icon={BookOpenCheck}
-            label="Skill drills"
-            // The old detail described a five-stage mastery path that does not exist. Debate states
-            // what its drill layer really is, and the boundary against lesson questions; the other
-            // tracks keep the general wording.
-            detail={
-              isDebate
-                ? "Drill one skill at a time — separate from the questions inside a lesson. Each drill says whether it added to your record."
-                : "Work through the skills this track trains."
-            }
-          />
+              The label is the promise; the href is what was wrong.
+              HOSA has no skill drills at all: its /skills branch is one tile back to the Event
+              Navigator, so "Skill drills" was a loop. HOSA's practice is its Medical Terminology
+              question practice, which starts from that event's Event HQ page (this hub never links
+              the practice room itself), so the HOSA row names that practice and opens that page. It
+              renders only when the registry names the event, so it can never name a missing one. */}
+          {track.id === "HOSA" ? (
+            hosaEventHqName && EVENT_HQ_SLUG.HOSA ? (
+              <DestinationRow
+                href={`/training/${track.slug}/event/${EVENT_HQ_SLUG.HOSA}` as Route}
+                icon={BookOpenCheck}
+                label={`${hosaEventHqName} practice`}
+                detail={`Original ${hosaEventHqName} questions, every answer explained. Opens the event's page, where practice starts.`}
+              />
+            ) : null
+          ) : (
+            <DestinationRow
+              href={(track.id === "DECA" ? `/study-arcade?track=${track.slug}` : `/skills?track=${track.slug}`) as Route}
+              icon={BookOpenCheck}
+              label="Skill drills"
+              // The old detail described a five-stage mastery path that does not exist. Debate states
+              // what its drill layer really is, and the boundary against lesson questions; the other
+              // tracks keep the general wording.
+              detail={
+                isDebate
+                  ? "Drill one skill at a time — separate from the questions inside a lesson. Each drill says whether it added to your record."
+                  : "Work through the skills this track trains."
+              }
+            />
+          )}
         </ul>
       </section>
 

@@ -188,12 +188,18 @@ async function main() {
   }
   assert.equal(redirects + compat, 44, "4. all 30 lessons + 10 skills + 4 aliases are accounted for");
   assert.equal(redirects, 8, "4b. exactly eight redirect (3 allowlisted + 4 active aliases + the debate-weighing skill slug, whose id is now a published lesson)");
-  assert.equal(compat, 36, "4c. and the remaining 36 render the honest compatibility state");
+  assert.equal(compat, 35, "4c. and the remaining 35 render the honest compatibility state (36 before the HOSA Word roots record redirected)");
 
-  // ---- 5. the allowlist is exactly the audited three -------------------------------------------
+  // ---- 5. the allowlist is exactly the audited four ---------------------------------------------
+  // The fourth is HOSA's seeded "Word roots" record, whose topic is exactly the published Word Roots
+  // lesson's — the same audited pairing the test results page uses (HOSA_SEEDED_TOPIC_LESSON).
   assert.deepEqual(Object.keys(CANONICAL_REDIRECTS).sort(),
-    ["debate-claim-building", "debate-claim-building-1", "debate-rebuttal"],
-    "5. only the three hand-audited slugs redirect");
+    ["debate-claim-building", "debate-claim-building-1", "debate-rebuttal", "hosa-medical-terminology-1"],
+    "5. only the four hand-audited slugs redirect");
+  for (const notRedirected of ["hosa-medical-terminology-2", "hosa-medical-terminology-3"]) {
+    assert.equal(resolveSkillsSlug(notRedirected).kind, "compatibility",
+      `5c. "${notRedirected}" names a topic no lesson teaches, so it keeps the honest compatibility state`);
+  }
   for (const notRedirected of ["debate-claim-building-2", "debate-claim-building-3", "debate-rebuttal-1", "debate-rebuttal-2", "debate-rebuttal-3"]) {
     assert.equal(resolveSkillsSlug(notRedirected).kind, "compatibility",
       `5b. "${notRedirected}" is a DIFFERENT subject and must not be silently redirected`);

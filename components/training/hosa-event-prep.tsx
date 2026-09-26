@@ -4,6 +4,7 @@ import { SpecBanner } from "@/components/specs/spec-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getActiveSpec } from "@/lib/competition-specs";
+import { hosaMedTermRemediation } from "@/lib/education/hosa-medterm-practice";
 import type { MedTermFocusId } from "@/lib/hosa-medterm-focus";
 import { MEDTERM_AREAS } from "@/lib/hosa-medterm";
 import { HosaMedTermEngine } from "@/components/training/hosa-medterm-engine";
@@ -20,10 +21,19 @@ type Reference = { label?: string; url?: string };
 // `focus` is the practice choice the page read from its `focus` query value (null when none was
 // given, or it was unknown); the engine preselects it and starts nothing. The canonical area list is
 // handed to the engine here, from the server, so the client component never imports the bank module.
+//
+// So is what the results offer for each area a learner misses questions in: the published lesson
+// that teaches it, or a plain statement that no lesson does yet (lib/education/hosa-medterm-practice).
+// Resolved here, once, from the registry, so the client engine imports no curriculum module. An area
+// whose chain cannot be proven is left out, and the results then show the weak area alone.
 export async function HosaEventPrep({ focus = null }: { focus?: MedTermFocusId | null } = {}) {
   const spec = await getActiveSpec("HOSA", "Medical Terminology");
   const official = Boolean(spec);
   const areas = MEDTERM_AREAS.map(({ id, label, description }) => ({ id, label, description }));
+  const remediation = MEDTERM_AREAS.flatMap(({ id, label }) => {
+    const action = hosaMedTermRemediation(id, label);
+    return action ? [action] : [];
+  });
 
   const stages = (Array.isArray(spec?.roundStructure) ? spec?.roundStructure : []) as Stage[];
   const penalties = (Array.isArray(spec?.penalties) ? spec?.penalties : []) as Penalty[];
@@ -108,7 +118,7 @@ export async function HosaEventPrep({ focus = null }: { focus?: MedTermFocusId |
         </Card>
       ) : null}
 
-      <HosaMedTermEngine official={official} areas={areas} initialFocus={focus} />
+      <HosaMedTermEngine official={official} areas={areas} initialFocus={focus} remediation={remediation} />
 
       {references.length > 0 ? (
         <p className="text-xs text-muted-foreground">

@@ -1,6 +1,7 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course). Every other
+_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course, its practice
+and the practice-to-lesson remediation). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -10,6 +11,24 @@ non-executable, and not a description of current state. Rewrite this region in p
 below the boundary.
 
 ## What is complete
+
+- **HOSA Medical Terminology practice remediation — LOCAL COMMIT ONLY (2026-09-26).** Not pushed,
+  not deployed, not Production-verified, not browser-verified. The practice room's results name each
+  weak area and, for a word-part area, link the ONE published lesson that teaches it (word roots to
+  `hosa-medical-word-roots`, prefixes to `hosa-medical-prefixes`, suffixes to
+  `hosa-medical-suffixes`; declared in `lib/education/hosa-medterm-practice.ts`, checked server-side,
+  failing closed when any link in the chain is missing). Anatomy, physiology and pathophysiology say
+  "CompeteReady does not have a lesson for this area yet." and link nothing in its place. The Word
+  Roots and Suffixes lessons now link back to word-part practice (Prefixes already ends the course
+  there); nothing starts until the learner presses start. The old record
+  `/skills/hosa-medical-terminology-1` now redirects to the Word Roots lesson through the existing
+  compatibility allowlist (`-2`/`-3` still say there is no lesson). The hub's HOSA row now opens the
+  Medical Terminology event page instead of the event finder. HOSA test results say "event
+  category", not "cluster", including older stored notes; DECA and other organizations' wording is
+  unchanged. No new model, mastery, readiness or XP; grading,
+  DECA and Debate untouched. Guard: `npm run hosa-medterm-remediation:smoke` (8 checks, stubbed
+  route, no connection). Details: *HOSA Medical Terminology practice remediation* in
+  `docs/CURRENT_STATE.md`.
 
 - **HOSA targeted Medical Terminology practice — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
   deployed, not Production-verified, not browser-verified. The practice room now offers "Word parts
@@ -78,20 +97,18 @@ below the boundary.
 
 ## What remains open
 
-- **HOSA learning gaps after the word-parts course (2026-09-26).** Nothing teaches the anatomy,
-  physiology or pathophysiology half of the Medical Terminology bank yet. The practice room cannot
-  be focused on word-part areas from the UI and its weak areas link to no lesson. HOSA test results
-  now link the seeded "Word roots" suggestion to `hosa-medical-word-roots`, but the older record page
-  `/skills/hosa-medical-terminology-1` still says there is nothing to read, and "Clinical
-  abbreviations" and "Terminology in patient scenarios" have no lesson. The hub's HOSA "Skill drills" row still opens `/skills?track=hosa`, which only offers the event
-  finder. `hosa-patient-communication` and `hosa-healthcare-ethics` stay held; the communication
-  course is still one reading-only lesson; the other HOSA events carry identity only.
-  `origin/hosa-codex-transfer` is unmerged and was not used. **Pre-existing bug, not fixed:**
-  `POST /api/hosa/medterm/session` accepts any `areas` string and `buildMedTermSession` loops
-  forever on an empty pool, so an authenticated request naming an unknown area never returns (the
-  UI never sends `areas`). **Stale pins found, not changed:** `skills-compat` item 28 expects 12
-  canonical lessons (23 at `01bbaa1`, 27 now) and `hosa-practice-scope` 43b pins the registered
-  smoke inventory at 36 (52 at `01bbaa1`, 53 now); both are masked by earlier failures in the same suites (item 2 and 10c), which
+- **HOSA learning gaps after the word-parts course (2026-09-26, updated after the practice
+  remediation).** Nothing teaches the anatomy, physiology or pathophysiology half of the Medical
+  Terminology bank yet; the practice results say so for those areas. "Clinical abbreviations" and
+  "Terminology in patient scenarios" (`/skills/hosa-medical-terminology-2` and `-3`) have no lesson.
+  `hosa-patient-communication` and `hosa-healthcare-ethics` stay held; the communication course is
+  still one reading-only lesson; the other HOSA events carry identity only.
+  `origin/hosa-codex-transfer` is unmerged and was not used. HOSA test-result next steps still use
+  DECA navigation (deferred by Melo). Repaired in the local stack: the session-builder hang
+  (`6e365e9`), focusing practice on word parts (`804a8d2`), weak areas linking to lessons, the old
+  `-1` record and the hub row (practice remediation, above). **Stale pins found, not changed:**
+  `skills-compat` items 4, 4b, 6 and 28 and `hosa-practice-scope` 43b (pins the registered smoke
+  inventory at 36; 56 now) are masked by earlier failures in the same suites (item 2 and 10c), which
   fail identically at `01bbaa1`.
 - **REBUTTAL LIVE P0 — CONTAINED LOCALLY, NOT IN PRODUCTION.** A teaching-to-drill-to-mastery audit
   (2026-09-01) found the `rebuttal` drill area writing durable `debate-rebuttal` mastery on material
@@ -917,9 +934,9 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 55** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
-  `01bbaa1`, plus `hosa-medterm-lessons:smoke`, `hosa-medterm-session-safety:smoke` and
-  `hosa-medterm-targeted-practice:smoke`); it read 45
+- **REGISTERED = 56** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
+  `01bbaa1`, plus `hosa-medterm-lessons:smoke`, `hosa-medterm-session-safety:smoke`,
+  `hosa-medterm-targeted-practice:smoke` and `hosa-medterm-remediation:smoke`); it read 45
   when re-derived on 2026-09-09. **The three
   derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
   not subtract from 45 to guess.**

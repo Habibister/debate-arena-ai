@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, Clock, Loader2, RotateCcw, XCircle } from "lucide-react";
+import Link from "next/link";
+import type { Route } from "next";
+import { BookOpen, CheckCircle2, CircleAlert, Clock, Loader2, RotateCcw, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +21,14 @@ import {
 } from "@/lib/hosa-medterm-focus";
 
 type Area = { id: string; label: string; description: string };
+/**
+ * What the results offer for one area, resolved on the server from the course registry
+ * (lib/education/hosa-medterm-practice.ts) and handed down as plain data: the published lesson that
+ * teaches the area, or the plain statement that none does yet. An area with no entry gets neither.
+ */
+type Remediation =
+  | { area: string; kind: "lesson"; lessonId: string; lessonTitle: string; href: string; label: string }
+  | { area: string; kind: "no-lesson"; message: string };
 type ServedChoice = { optionId: string; text: string };
 // Server-issued item. No correct answer and no explanation until the learner has answered.
 type Question = {
@@ -134,14 +144,93 @@ export function preselectionNote(initialFocus: MedTermFocusId | null, focus: Med
   return `The link you followed preselected ${medTermFocus(initialFocus).label}. Change it below if you want something else. Nothing starts until you press start.`;
 }
 
+/**
+ * The action the results show for one weak area: the entry for EXACTLY that area, or null.
+ *
+ * Never a neighbour and never a default. A weak area the server resolved nothing for shows the area
+ * alone, so a missing entry can never turn into a lesson for some other area, or into a claim that no
+ * lesson exists when one might.
+ */
+export function weakAreaRemediation(area: string, remediation: readonly Remediation[]): Remediation | null {
+  const matches = remediation.filter((entry) => entry.area === area);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+/**
+ * The results screen's weak-area list, with what each area offers next.
+ *
+ * Exported so a suite can render it from a real submit response: it is the one place the practice
+ * results turn into a lesson link. Each area shows its own line, then EXACTLY its own action: the
+ * lesson that teaches it, the plain statement that no lesson does yet, or nothing when the server
+ * could not prove either.
+ */
+export function WeakAreasReview({
+  result,
+  remediation
+}: {
+  result: Pick<Result, "weakAreas" | "evidenceStatus">;
+  remediation: readonly Remediation[];
+}) {
+  return (
+    <>
+      {result.weakAreas.length > 0 ? (
+        <div>
+          <p className="text-sm font-semibold">Areas to review</p>
+          <ul className="mt-1 space-y-3 text-xs text-muted-foreground">
+            {result.weakAreas.map((w) => {
+              const next = weakAreaRemediation(w.area, remediation);
+              return (
+                <li key={w.area} className="space-y-1">
+                  <p>
+                    {w.label}: missed {w.missed} of {w.total}
+                  </p>
+                  {next?.kind === "lesson" ? (
+                    <Link
+                      href={next.href as Route}
+                      className="focus-ring inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
+                      {next.label}
+                    </Link>
+                  ) : next?.kind === "no-lesson" ? (
+                    <p className="flex items-start gap-1.5">
+                      <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span>
+                        {next.message} You can keep practising it with {medTermFocus("all").label}, where every answer is
+                        explained.
+                      </span>
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+          {result.weakAreas.some((w) => weakAreaRemediation(w.area, remediation)?.kind === "lesson") ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              A lesson opens on its own page, so these results close. Each of these lessons links back to word-part
+              practice.
+            </p>
+          ) : null}
+        </div>
+      ) : result.evidenceStatus !== "insufficient-evidence" ? (
+        // Scoped to what was actually covered — a session that never touched physiology cannot
+        // report physiology as clean.
+        <p className="text-sm text-muted-foreground">No weak areas were detected in the areas covered by this session.</p>
+      ) : null}
+    </>
+  );
+}
+
 export function HosaMedTermEngine({
   official,
   areas: catalog = [],
-  initialFocus = null
+  initialFocus = null,
+  remediation = []
 }: {
   official: boolean;
   areas?: Area[];
   initialFocus?: MedTermFocusId | null;
+  remediation?: readonly Remediation[];
 }) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
   // What to practise: the taught word parts, or every area. Sent to the server as the canonical area
@@ -471,22 +560,7 @@ export function HosaMedTermEngine({
             <p className="text-xs text-muted-foreground">{EVIDENCE_GUIDANCE}</p>
           </div>
 
-          {result.weakAreas.length > 0 ? (
-            <div>
-              <p className="text-sm font-semibold">Areas to review</p>
-              <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
-                {result.weakAreas.map((w) => (
-                  <li key={w.area}>
-                    {w.label}: missed {w.missed} of {w.total}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : result.evidenceStatus !== "insufficient-evidence" ? (
-            // Scoped to what was actually covered — a session that never touched physiology cannot
-            // report physiology as clean.
-            <p className="text-sm text-muted-foreground">No weak areas were detected in the areas covered by this session.</p>
-          ) : null}
+          <WeakAreasReview result={result} remediation={remediation} />
 
           <Button
             type="button"

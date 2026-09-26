@@ -14,7 +14,12 @@ import { Progress } from "@/components/ui/progress";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { weakTermsStudyStep, type StudyOrganization } from "@/lib/study-content";
-import { testResultRecommendationsForLearner, weakAreaExplanation } from "@/lib/education/test-result-recommendations";
+import {
+  practiceWeakSkillsDescription,
+  resultNoteForOrganization,
+  testResultRecommendationsForLearner,
+  weakAreaExplanation
+} from "@/lib/education/test-result-recommendations";
 import { resolveActiveTrack } from "@/lib/track-server";
 import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
@@ -231,7 +236,7 @@ export default async function PracticeTestResultsPage({
       <div className="grid gap-4 lg:grid-cols-3">
         <NextStepCard
           title="Practice weak skills"
-          description="Start with the first recommended lesson, then retry the same cluster."
+          description={practiceWeakSkillsDescription(test.organization)}
           href={(workOn.firstLessonHref ?? "/skills") as Route}
           icon={BookOpenCheck}
           tone="secondary"
@@ -289,7 +294,7 @@ export default async function PracticeTestResultsPage({
               ) : (
                 <EmptyState icon={CheckCircle2} title="No weak areas detected" description="Strong performance on this attempt. Move up a difficulty level or switch event categories." className="min-h-32" />
               )}
-              {recommendations.note ? <p className="mt-4 text-sm leading-6 text-muted-foreground">{recommendations.note}</p> : null}
+              {recommendations.note ? <p className="mt-4 text-sm leading-6 text-muted-foreground">{resultNoteForOrganization(recommendations.note, test.organization)}</p> : null}
             </CardContent>
           </Card>
         </div>

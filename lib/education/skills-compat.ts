@@ -163,7 +163,13 @@ export const INTENDED_SKILL_INVENTORY: readonly CompatSkill[] = [...SEEDED_SKILL
 export const CANONICAL_REDIRECTS: Readonly<Record<string, string>> = {
   "debate-claim-building": "claim-warrant-impact",
   "debate-claim-building-1": "claim-warrant-impact",
-  "debate-rebuttal": "debate-refutation"
+  "debate-rebuttal": "debate-refutation",
+  // HOSA remediation: the seeded "Word roots" record (step 1 of Medical Terminology) is exactly the
+  // topic the published Word Roots lesson teaches — the same hand audit the test results page already
+  // relies on (HOSA_SEEDED_TOPIC_LESSON in lib/education/test-result-recommendations.ts). Its page
+  // told learners there was nothing to read. Its siblings stay unmapped on purpose: no lesson teaches
+  // "Clinical abbreviations" (-2) or "Terminology in patient scenarios" (-3).
+  "hosa-medical-terminology-1": "hosa-medical-word-roots"
 };
 
 /** Where a learner is sent when a legacy record has no authored instruction behind it. */

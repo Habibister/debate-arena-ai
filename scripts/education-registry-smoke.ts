@@ -384,6 +384,11 @@ function main() {
     "app/(app)/tests/[testId]/results/page.tsx",
     "app/(app)/home/page.tsx",
     "app/api/tests/[testId]/grade/route.ts",
+    // HOSA remediation: the Medical Terminology practice room resolves, on the server, which
+    // published lesson teaches each area a learner missed questions in, through ONE pure fail-closed
+    // module (lib/education/hosa-medterm-practice). It hands the client engine plain data, so the
+    // engine itself imports nothing from lib/education. No writes, no mastery or progress reads.
+    "components/training/hosa-event-prep.tsx",
   ]);
   // The boundary that keeps that concession narrow: each may reach exactly ONE education module.
   // The grader reaches the DECA bridge. Home reaches the DECA home-suggestion module, which picks one
@@ -395,7 +400,8 @@ function main() {
   const SINGLE_MODULE_CONSUMERS: Array<[string, string]> = [
     ["app/(app)/tests/[testId]/results/page.tsx", "test-result-recommendations"],
     ["app/(app)/home/page.tsx", "deca-home-suggestion"],
-    ["app/api/tests/[testId]/grade/route.ts", "deca-diagnostic-bridge"]
+    ["app/api/tests/[testId]/grade/route.ts", "deca-diagnostic-bridge"],
+    ["components/training/hosa-event-prep.tsx", "hosa-medterm-practice"]
   ];
   for (const [file, onlyModule] of SINGLE_MODULE_CONSUMERS) {
     const src = stripComments(readFileSync(file, "utf8"));

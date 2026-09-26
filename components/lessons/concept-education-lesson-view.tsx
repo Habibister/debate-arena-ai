@@ -82,7 +82,8 @@ export function ConceptEducationLessonView({
   moduleLabel,
   next,
   practiceDrill,
-  courseEndAction
+  courseEndAction,
+  practiceReturn
 }: {
   source: ConceptEducationLessonSource;
   provenance: SourceFreshnessMetadata;
@@ -100,6 +101,13 @@ export function ConceptEducationLessonView({
    * next one, and absent for courses that name no onward action — those keep the unchanged prose.
    */
   courseEndAction?: { href: string; label: string; detail: string };
+  /**
+   * A way back to the event's practice from a lesson that HAS a next one: a HOSA word-part lesson
+   * that the practice results link to when a learner misses questions in the area it teaches. Shown
+   * under the next-lesson link, never instead of it, so the course order stays the primary path.
+   * Absent everywhere else, which renders exactly what it did before.
+   */
+  practiceReturn?: { href: string; label: string; detail: string };
 }) {
   const { lesson } = source;
   // Does the drill this lesson points at currently write a durable record? Read from the drill AREA's
@@ -459,6 +467,18 @@ export function ConceptEducationLessonView({
               Continue to {next.title}
               <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
             </Link>
+            {practiceReturn ? (
+              <>
+                <p className="mt-4 leading-7 text-muted-foreground">{practiceReturn.detail}</p>
+                <Link
+                  href={practiceReturn.href as Route}
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-3 h-auto min-h-11 min-w-11 whitespace-normal px-4 text-center")}
+                >
+                  {practiceReturn.label}
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                </Link>
+              </>
+            ) : null}
           </>
         ) : (
           <>

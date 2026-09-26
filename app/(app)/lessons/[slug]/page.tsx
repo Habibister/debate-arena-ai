@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
 import { decaCourseEndAction } from "@/lib/education/deca-simulation-prep";
-import { hosaCourseEndAction } from "@/lib/education/hosa-medterm-practice";
+import { hosaCourseEndAction, hosaLessonPracticeReturn } from "@/lib/education/hosa-medterm-practice";
 import { getServerSession } from "next-auth";
 import { ArrowLeft, Dumbbell, MessageSquare } from "lucide-react";
 import { authOptions } from "@/lib/auth";
@@ -122,7 +122,12 @@ function conceptEducationLesson(slug: string) {
     // Only where a course chain actually terminates, and only where that course names an onward
     // action. Null everywhere else, so every other lesson renders exactly what it did before. Each
     // helper answers only for its own track's course, so at most one of them can ever match.
-    courseEndAction: decaCourseEndAction(entry.id) ?? hosaCourseEndAction(entry.id)
+    courseEndAction: decaCourseEndAction(entry.id) ?? hosaCourseEndAction(entry.id),
+    // A HOSA word-part lesson that teaches a practice area, and is not the course's last, links back
+    // to word-part practice under its next-lesson link: the return leg of practice -> lesson ->
+    // practice. Null for every other lesson, including the last, whose course-end action already
+    // opens the same practice.
+    practiceReturn: hosaLessonPracticeReturn(entry.id)
   };
 }
 
@@ -252,6 +257,7 @@ export default async function LessonPage({ params, searchParams }: { params: { s
           next={concept.next}
           practiceDrill={concept.entry.practiceDrill}
           courseEndAction={concept.courseEndAction ?? undefined}
+          practiceReturn={concept.practiceReturn ?? undefined}
         />
       </div>
     );

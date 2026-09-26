@@ -1,7 +1,7 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course, its practice
-and the practice-to-lesson remediation). Every other
+_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course, its practice,
+the practice-to-lesson remediation and HOSA test-result next steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -12,6 +12,19 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA test-result next steps — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not deployed, not
+  Production-verified, not browser-verified. On a graded HOSA test, "Practice weak skills" opens the
+  linked HOSA lesson, else Medical Terminology practice (`/training/hosa/practice?focus=all`) only
+  for a test whose own event category is Medical Terminology, else states that nothing is linked and
+  links nothing; it no longer falls back to `/skills`. The flashcard card uses DECA's exact-match rule
+  with HOSA's decks, else HOSA's deck list; it no longer opens Medical Terminology for unrelated
+  misses. "Practice speaking" is replaced for HOSA by the statement that CompeteReady has no HOSA
+  speaking or role-play practice yet (no `/debate`). The retake opens `/tests?track=hosa` and names the category to choose there instead of promising a
+  shorter test. Decided by
+  `hosaResultNextSteps` in `lib/education/test-result-recommendations.ts`; DECA and other
+  organizations keep their cards; grading untouched. Guard: `npm run hosa-result-next-steps:smoke`
+  (7 checks; renders the real results page with stubbed session, track and database). Details:
+  *HOSA test-result next steps* in `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology practice remediation — LOCAL COMMIT ONLY (2026-09-26).** Not pushed,
   not deployed, not Production-verified, not browser-verified. The practice room's results name each
   weak area and, for a word-part area, link the ONE published lesson that teaches it (word roots to
@@ -103,12 +116,14 @@ below the boundary.
   "Terminology in patient scenarios" (`/skills/hosa-medical-terminology-2` and `-3`) have no lesson.
   `hosa-patient-communication` and `hosa-healthcare-ethics` stay held; the communication course is
   still one reading-only lesson; the other HOSA events carry identity only.
-  `origin/hosa-codex-transfer` is unmerged and was not used. HOSA test-result next steps still use
-  DECA navigation (deferred by Melo). Repaired in the local stack: the session-builder hang
-  (`6e365e9`), focusing practice on word parts (`804a8d2`), weak areas linking to lessons, the old
-  `-1` record and the hub row (practice remediation, above). **Stale pins found, not changed:**
+  `origin/hosa-codex-transfer` is unmerged and was not used. Repaired in the local stack: the
+  session-builder hang (`6e365e9`), focusing practice on word parts (`804a8d2`), weak areas linking to
+  lessons, the old `-1` record and the hub row (practice remediation), and the HOSA test-result next
+  steps (above). Still open on that page: a HOSA deck page follows the viewer's selected track, so a
+  learner now on DECA or Debate is sent to their own Study Arcade from a matched HOSA deck; the HOSA
+  generator tells such a learner it is "matched to your selected track". **Stale pins found, not changed:**
   `skills-compat` items 4, 4b, 6 and 28 and `hosa-practice-scope` 43b (pins the registered smoke
-  inventory at 36; 56 now) are masked by earlier failures in the same suites (item 2 and 10c), which
+  inventory at 36; 57 now) are masked by earlier failures in the same suites (item 2 and 10c), which
   fail identically at `01bbaa1`.
 - **REBUTTAL LIVE P0 — CONTAINED LOCALLY, NOT IN PRODUCTION.** A teaching-to-drill-to-mastery audit
   (2026-09-01) found the `rebuttal` drill area writing durable `debate-rebuttal` mastery on material
@@ -934,9 +949,10 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 56** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
+- **REGISTERED = 57** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
   `01bbaa1`, plus `hosa-medterm-lessons:smoke`, `hosa-medterm-session-safety:smoke`,
-  `hosa-medterm-targeted-practice:smoke` and `hosa-medterm-remediation:smoke`); it read 45
+  `hosa-medterm-targeted-practice:smoke`, `hosa-medterm-remediation:smoke` and
+  `hosa-result-next-steps:smoke`); it read 45
   when re-derived on 2026-09-09. **The three
   derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
   not subtract from 45 to guess.**

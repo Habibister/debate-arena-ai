@@ -13,7 +13,9 @@
  *    recorded order — the grader stores weak areas in whatever order the database returned them.
  * B. The results page's flashcard card opens a deck only when a flagged area exactly IS that deck's name
  *    or the term on one of its cards. Otherwise it says so and opens Study Arcade's DECA deck list. It
- *    never falls back to Marketing and never links a deck by word similarity. HOSA's card is unchanged.
+ *    never falls back to Marketing and never links a deck by word similarity. HOSA's card now follows
+ *    the same rule with HOSA's own decks (the HOSA results repair, 2026-09-26; proved in full by
+ *    hosa-result-next-steps:smoke). Every other organization's card is unchanged.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -527,17 +529,37 @@ check("X11. an area that is the skill's own name is named once", () => {
 });
 
 // =============================================================================================
-// Non-regression: HOSA and every other organization keep the flashcard card they had.
+// HOSA follows the same exact-match rule; every other organization keeps the flashcard card it had.
 // =============================================================================================
 
-check("N1. HOSA's flashcard card is exactly the one it had", () => {
+check("N1. HOSA's flashcard card follows the DECA rule with HOSA's decks; others keep the card they had", () => {
+  let legacyUnrelated = 0;
+  let linkedDecks = 0;
   for (const category of HOSA_EVENT_CATEGORIES) {
     const tags = bankTags("HOSA", category);
     for (const weakAreas of [tags, [...tags].reverse(), []]) {
-      const input = { organization: "HOSA", weakAreas, eventCluster: null, eventType: category };
-      assert.deepEqual(weakTermsStudyStep(input), legacyCard(input), `N1 HOSA ${category} [${weakAreas.join(", ")}]`);
+      const input = { organization: "HOSA", weakAreas, eventCluster: category, eventType: "HEALTH_SCIENCE_EVENT" };
+      const step = weakTermsStudyStep(input);
+      const flagged = new Set(weakAreas.map(exactKey));
+      const slug = step.href.startsWith("/study/") ? step.href.slice("/study/".length) : null;
+      if (slug) {
+        linkedDecks += 1;
+        const cards = flashcardsForDeck(slug);
+        assert.ok(cards.length > 0 && cards.every((card) => card.organization === "HOSA"), `N1a HOSA ${category}: ${slug} is a HOSA deck`);
+        assert.ok(flagged.has(exactKey(cards[0].deck)) || cards.some((card) => flagged.has(exactKey(card.term))),
+          `N1b HOSA ${category} [${weakAreas.join(", ")}]: ${slug} is named by a flagged area`);
+      } else {
+        assert.equal(step.href, "/study-arcade?track=hosa#flashcard-decks", `N1c HOSA ${category} [${weakAreas.join(", ")}]: otherwise HOSA's deck list`);
+        assert.equal(step.title, "Browse study decks", "N1d and says it is a list");
+      }
+      const legacy = legacyCard(input);
+      const legacySlug = legacy.href.startsWith("/study/") ? legacy.href.slice("/study/".length) : "";
+      const legacyDeck = flashcardsForDeck(legacySlug);
+      if (weakAreas.length && legacyDeck.length && !flagged.has(exactKey(legacyDeck[0].deck)) && !legacyDeck.some((card) => flagged.has(exactKey(card.term)))) legacyUnrelated += 1;
     }
   }
+  assert.ok(linkedDecks > 0, `N1e control: HOSA still links a deck when a flagged area names one (${linkedDecks} fixtures)`);
+  assert.ok(legacyUnrelated > 0, `N1f control: the old card linked a deck no flagged area named, with areas flagged (${legacyUnrelated} fixtures)`);
   for (const organization of ["GENERAL_DEBATE", "MODEL_UN"]) {
     const input = { organization, weakAreas: ["Rebuttal"], eventCluster: null, eventType: "Practice test" };
     assert.deepEqual(weakTermsStudyStep(input), legacyCard(input), `N1 ${organization}`);

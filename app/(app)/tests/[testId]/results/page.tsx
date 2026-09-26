@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target } from "lucide-react";
-import { NextStepCard } from "@/components/app/next-step-card";
+import { ArrowLeft, BookOpenCheck, CheckCircle2, CircleAlert, ClipboardList, MessageSquareText, RotateCcw, Target, type LucideIcon } from "lucide-react";
+import { NextStepCard, NextStepNote } from "@/components/app/next-step-card";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,10 +15,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { weakTermsStudyStep, type StudyOrganization } from "@/lib/study-content";
 import {
+  hosaResultNextSteps,
   practiceWeakSkillsDescription,
   resultNoteForOrganization,
   testResultRecommendationsForLearner,
-  weakAreaExplanation
+  weakAreaExplanation,
+  type ResultNextStep
 } from "@/lib/education/test-result-recommendations";
 import { resolveActiveTrack } from "@/lib/track-server";
 import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
@@ -54,6 +56,15 @@ function normalizeLessonRecommendations(value: unknown): LessonRecommendation[] 
       typeof item.reason === "string"
     );
   });
+}
+
+/** A next step the results module resolved: a card that links, or a card that only states. */
+function ResultNextStepCard({ step, icon, tone }: { step: ResultNextStep; icon: LucideIcon; tone?: "primary" | "secondary" | "accent" }) {
+  return step.kind === "link" ? (
+    <NextStepCard title={step.title} description={step.description} href={step.href as Route} icon={icon} tone={tone} />
+  ) : (
+    <NextStepNote title={step.title} description={step.description} icon={icon} tone={tone} />
+  );
 }
 
 function explainWrongSelection(selectedAnswer: string, skillTag: string) {
@@ -148,6 +159,11 @@ export default async function PracticeTestResultsPage({
     weakAreas: test.weakAreas,
     stored: lessonRecommendations
   });
+  // HOSA's next steps, each a link that does what it says or a plain statement (null for every other
+  // organization, whose cards below are unchanged). Without this a HOSA learner was sent to "/skills"
+  // (no HOSA practice there), to "/debate" (General Debate) and to a bare "/tests" (whatever track is
+  // selected now).
+  const hosaNext = hosaResultNextSteps({ recommendations: workOn, eventCluster: test.eventCluster, weakAreas: test.weakAreas });
   const studyOrganization = test.organization === "DECA" || test.organization === "HOSA" ? test.organization : undefined;
   // Final DECA QA, finding B: the flashcard card names what it opens. A DECA deck is linked only when a
   // flagged area exactly names it or one of its cards; otherwise the card says so and opens the deck
@@ -234,13 +250,17 @@ export default async function PracticeTestResultsPage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <NextStepCard
-          title="Practice weak skills"
-          description={practiceWeakSkillsDescription(test.organization)}
-          href={(workOn.firstLessonHref ?? "/skills") as Route}
-          icon={BookOpenCheck}
-          tone="secondary"
-        />
+        {hosaNext ? (
+          <ResultNextStepCard step={hosaNext.practice} icon={BookOpenCheck} tone="secondary" />
+        ) : (
+          <NextStepCard
+            title="Practice weak skills"
+            description={practiceWeakSkillsDescription(test.organization)}
+            href={(workOn.firstLessonHref ?? "/skills") as Route}
+            icon={BookOpenCheck}
+            tone="secondary"
+          />
+        )}
         <NextStepCard
           title={studyStep.title}
           description={studyStep.description}
@@ -248,12 +268,16 @@ export default async function PracticeTestResultsPage({
           icon={Target}
           tone="accent"
         />
-        <NextStepCard
-          title="Generate a retake"
-          description="Create a shorter test in the same category after reviewing explanations."
-          href="/tests"
-          icon={ClipboardList}
-        />
+        {hosaNext ? (
+          <ResultNextStepCard step={hosaNext.retake} icon={ClipboardList} />
+        ) : (
+          <NextStepCard
+            title="Generate a retake"
+            description="Create a shorter test in the same category after reviewing explanations."
+            href="/tests"
+            icon={ClipboardList}
+          />
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -262,13 +286,17 @@ export default async function PracticeTestResultsPage({
           skillTags={[...test.weakAreas, test.eventCluster ?? test.eventType]}
           title="Recommended videos and resources"
         />
-        <NextStepCard
-          title="Practice speaking"
-          description="Turn the same weak skill into a judged roleplay or debate response."
-          href="/debate"
-          icon={MessageSquareText}
-          tone="secondary"
-        />
+        {hosaNext ? (
+          <ResultNextStepCard step={hosaNext.speaking} icon={MessageSquareText} tone="secondary" />
+        ) : (
+          <NextStepCard
+            title="Practice speaking"
+            description="Turn the same weak skill into a judged roleplay or debate response."
+            href="/debate"
+            icon={MessageSquareText}
+            tone="secondary"
+          />
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">

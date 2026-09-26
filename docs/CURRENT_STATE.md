@@ -1,6 +1,7 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course). Every other
+_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course, its practice
+and HOSA test-result next steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -775,9 +776,9 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 56** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
-  `hosa-medterm-session-safety:smoke`, `hosa-medterm-targeted-practice:smoke` and
-  `hosa-medterm-remediation:smoke`); it read 45 when
+- **REGISTERED = 57** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
+  `hosa-medterm-session-safety:smoke`, `hosa-medterm-targeted-practice:smoke`,
+  `hosa-medterm-remediation:smoke` and `hosa-result-next-steps:smoke`); it read 45 when
   re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
@@ -925,6 +926,53 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA test-result next steps — 2026-09-26 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build` and a dev
+server are forbidden in the cloud workspace; the results page was rendered server-side in the guard
+only, with its session, track and database modules stubbed). **The gap** (1f3f4e1 report, confirmed
+by a census of every card on a graded HOSA test): "Practice weak skills" fell back to a bare `/skills`
+whenever no HOSA lesson was linked — that page holds no HOSA practice, and for a learner whose
+selected track is DECA or Debate it is theirs; the flashcard card opened HOSA's first deck (Medical
+Terminology) for any weak area no deck name contained (19 of the 36 bank tags; a Clinical Skills miss
+opened Medical Terminology flashcards), depending on the order the grader stored the areas; "Practice
+speaking" opened `/debate` for every HOSA result (General Debate for a DECA, Debate or unresolved
+viewer, HOSA's multiple-choice room for a HOSA viewer) although HOSA has no speaking or role-play
+practice; and "Generate a retake" opened a bare `/tests`, the generator of whatever track is selected
+now. **The change:** `hosaResultNextSteps` in `lib/education/test-result-recommendations.ts` decides
+every HOSA step, and the page renders it (DECA and every other organization keep their cards
+byte-for-byte, in the page's non-HOSA branch). Practice: the first linked HOSA lesson (unchanged);
+else, only for a test whose own event category is Medical Terminology (the registry event, the
+generator's category and a HOSA route all checked), "Practise Medical Terminology" to
+`/training/hosa/practice?focus=all`; else a statement with no link ("No HOSA lesson or practice is
+linked to this test's weak areas yet." / "This test flagged no weak areas ..."). The test's free-text
+weak-area tags are never read as practice areas. Flashcards: `weakTermsStudyStep` now gives HOSA
+DECA's exact-match rule (a deck only when a flagged area IS its name or one of its cards' terms, in
+any recorded order), else "Browse study decks" to `/study-arcade?track=hosa#flashcard-decks`.
+Speaking: a statement, "No speaking practice yet: CompeteReady does not have HOSA speaking or
+role-play practice yet." Retake: `/tests?track=hosa`, whose card no longer promises a shorter test in
+the same category (the generator opens on its own defaults); it names the test's category to choose
+there, in the generator's own spelling, only when the stored value is one of its categories. A new `NextStepNote` draws a statement like a next-step card with no
+link, arrow or hover. No new lesson, deck, practice engine, model, score, mastery, readiness or XP;
+the grader is untouched. **Guard:** `npm run hosa-result-next-steps:smoke` (7 checks; renders the real
+results page from bank-built HOSA and DECA records graded by the grader's own rule, with every link
+checked against the HOSA destinations it may open, for a HOSA and a DECA viewer, and the deck-page
+limit below asserted rather than hidden; the resolver with
+each fact it depends on removed in turn; every HOSA category and bank tag through the flashcard rule;
+the Medical Terminology loop from 1f3f4e1). Pin deliberately rewritten: `deca-feedback-destinations`
+N1 (it froze HOSA's old first-deck fallback; it now proves HOSA follows the exact-match rule and that
+the old card linked unrelated decks, with a positive control that HOSA still links matched decks).
+An independent QA, security and product review (each finding checked by two adversarial verifiers)
+found no blocker; its two confirmed minor findings (the HOSA retake copy, and the guard claiming
+reachability for deck links it did not check) were fixed before the commit. **Known limits:** a HOSA deck page (`/study/hosa-*`) still
+follows the viewer's selected track, so a learner now on DECA or Debate who opens a correctly matched
+HOSA deck from an old HOSA result is sent to their own Study Arcade (the deck route's own isolation
+guard, the same for DECA decks; not changed here); the HOSA generator says "matched to your selected
+track" to such a learner; the external resources card can be empty with no message; the results page
+shows questions that may be AI-generated with no AI-generated label (all pre-existing, outside the
+next-step cards).
+REGISTERED = 57.
 
 ## HOSA Medical Terminology practice remediation — 2026-09-26 — LOCAL COMMIT
 

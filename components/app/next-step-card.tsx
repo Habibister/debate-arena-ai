@@ -39,3 +39,31 @@ export function NextStepCard({ title, description, href, icon: Icon, tone = "pri
     </Link>
   );
 }
+
+type NextStepNoteProps = {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  tone?: "primary" | "secondary" | "accent";
+};
+
+/**
+ * A next step that is a statement, not a link: drawn like `NextStepCard` so it sits in the same row,
+ * but with no link, no arrow and no hover, so it never looks like something to press. Used where the
+ * honest answer is that no destination exists yet.
+ */
+export function NextStepNote({ title, description, icon: Icon, tone = "primary" }: NextStepNoteProps) {
+  return (
+    <Card className="h-full">
+      <CardContent className="flex h-full gap-4 p-4">
+        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-md", toneClasses[tone])}>
+          <Icon className="h-5 w-5" aria-hidden />
+        </span>
+        <span className="min-w-0">
+          <span className="block font-semibold">{title}</span>
+          <span className="mt-1 block text-sm leading-6 text-muted-foreground">{description}</span>
+        </span>
+      </CardContent>
+    </Card>
+  );
+}

@@ -1250,9 +1250,10 @@ export function recommendedResources(input: { organization?: string; skillTags?:
   return matches.slice(0, input.limit ?? 3);
 }
 
-// Used for HOSA results only. DECA results go through `weakTermsStudyStep` below, because this
-// matches deck NAMES by substring and otherwise falls back to the organization's first deck — which
-// sent a DECA "Service recovery" miss to Marketing. HOSA keeps it until its own repair.
+// No results page uses this any more: it matches deck NAMES by substring and otherwise falls back to
+// the organization's first deck, which sent a DECA "Service recovery" miss to Marketing and a HOSA
+// Clinical Skills miss to Medical Terminology. DECA and HOSA results both go through
+// `weakTermsStudyStep` below; the smoke suites keep this as the record of the old behaviour.
 export function studyDeckForSkill(skillTag: string, organization: "DECA" | "HOSA") {
   const normalized = skillTag.toLowerCase();
   const match = deckSummaries().find(
@@ -1328,12 +1329,13 @@ export type StudyNextStep = { title: string; description: string; href: string }
 /**
  * The results page's flashcard card: what it is called, what it says, and where it goes.
  *
- * DECA: a deck is linked only when `studyDeckForWeakAreas` finds one, and the card names the area and
- * the deck so the claim can be checked. Otherwise the card is "Browse study decks" and opens Study
- * Arcade's DECA deck list — it never presents an unrelated deck as the learner's weak terms.
+ * DECA and HOSA, one rule: a deck is linked only when `studyDeckForWeakAreas` finds one, and the card
+ * names the area and the deck so the claim can be checked. Otherwise the card is "Browse study decks"
+ * and opens Study Arcade's deck list for the test's own organization — it never presents an unrelated
+ * deck as the learner's weak terms. (HOSA used to fall back to its first deck, Medical Terminology,
+ * for any area no deck name contained; the HOSA results repair moved it onto the DECA rule.)
  *
- * Every other organization keeps the card it had (HOSA's fallback to its first deck is recorded for
- * the HOSA repair, not changed here).
+ * Every other organization keeps the card it had.
  */
 export function weakTermsStudyStep(input: {
   organization: string;
@@ -1341,8 +1343,9 @@ export function weakTermsStudyStep(input: {
   eventCluster?: string | null;
   eventType: string;
 }): StudyNextStep {
-  if (input.organization === "DECA") {
-    const match = studyDeckForWeakAreas({ organization: "DECA", weakAreas: input.weakAreas, eventCluster: input.eventCluster });
+  if (input.organization === "DECA" || input.organization === "HOSA") {
+    const organization = input.organization;
+    const match = studyDeckForWeakAreas({ organization, weakAreas: input.weakAreas, eventCluster: input.eventCluster });
     if (match) {
       return {
         title: "Study weak terms",
@@ -1353,21 +1356,21 @@ export function weakTermsStudyStep(input: {
         href: `/study/${match.deckSlug}`
       };
     }
+    // The deck list is route-scoped (`?track=`), so it lists the TEST's organization's decks whatever
+    // track the learner has selected now.
     return {
       title: "Browse study decks",
       description:
         input.weakAreas.length > 0
-          ? "No flashcard deck matches the areas this test flagged. Study Arcade lists every DECA deck under Flashcard decks."
-          : "This test flagged no weak areas. Study Arcade lists every DECA deck under Flashcard decks.",
-      href: "/study-arcade?track=deca#flashcard-decks"
+          ? `No flashcard deck matches the areas this test flagged. Study Arcade lists every ${organization} deck under Flashcard decks.`
+          : `This test flagged no weak areas. Study Arcade lists every ${organization} deck under Flashcard decks.`,
+      href: `/study-arcade?track=${organization === "DECA" ? "deca" : "hosa"}#flashcard-decks`
     };
   }
 
-  const organization = input.organization === "HOSA" ? "HOSA" : undefined;
-  const deck = organization ? studyDeckForSkill(input.weakAreas[0] ?? input.eventCluster ?? input.eventType, organization) : undefined;
   return {
     title: "Study weak terms",
     description: "Review flashcards tied to the terms and concepts you missed.",
-    href: deck ? `/study/${deck.deckSlug}` : "/study"
+    href: "/study"
   };
 }

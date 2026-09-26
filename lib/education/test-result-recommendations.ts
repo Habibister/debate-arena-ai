@@ -6,6 +6,9 @@ import {
 import { learnerVisibleLesson } from "@/lib/education/diagnosis";
 import { getEducationLesson } from "@/lib/education/registry";
 import type { EducationTrack } from "@/lib/education/types";
+import { hosaEventById } from "@/lib/hosa-events";
+import { medTermFocus, medTermFocusHref } from "@/lib/hosa-medterm-focus";
+import { HOSA_EVENT_CATEGORIES } from "@/lib/testing";
 
 /**
  * WHAT A GRADED PRACTICE TEST RECOMMENDS (shared results-page repair, after beginner QA R2).
@@ -213,4 +216,109 @@ export function testResultRecommendationsForLearner(input: {
     decaUncovered: decaUnbridgedDiagnostics,
     publishedLesson
   });
+}
+
+// --- HOSA: where each next step on a graded HOSA test goes -----------------------------------------
+
+/** One next step on the results page: a link that does what it says, or a plain statement. */
+export type ResultNextStep =
+  | { kind: "link"; title: string; description: string; href: string }
+  | { kind: "note"; title: string; description: string };
+
+export type HosaResultNextSteps = {
+  /** "Practice weak skills": the first linked HOSA lesson; else Medical Terminology practice for a
+   *  Medical Terminology test; else a statement that nothing is linked, with no link at all. */
+  practice: ResultNextStep;
+  /** HOSA has no speaking or role-play practice, so this is always a statement, never a link. */
+  speaking: ResultNextStep;
+  /** The HOSA test generator, route-scoped so it opens HOSA's generator whatever track is selected. It
+   *  opens on its own defaults, so the card says which category to choose instead of promising one. */
+  retake: ResultNextStep;
+};
+
+/** The one HOSA event with a practice room (lib/hosa-events.ts; the room is lib/hosa-medterm-focus.ts). */
+const HOSA_MEDTERM_EVENT_ID = "medical-terminology";
+
+const categoryKey = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * The Medical Terminology practice room, but only for a test whose OWN event category is that event:
+ * the category the learner chose names the event, the event is in the HOSA registry, the test
+ * generator offers it as a category, and the room is a HOSA route. Anything else gets null. The
+ * test's weak-area tags are free text written when the test was generated, so they are never read as
+ * practice areas.
+ */
+function hosaMedTermPracticeFor(eventCluster: string | null | undefined): { eventName: string; href: string } | null {
+  const event = hosaEventById(HOSA_MEDTERM_EVENT_ID);
+  if (!event || typeof eventCluster !== "string" || !categoryKey(eventCluster)) return null;
+  if (categoryKey(eventCluster) !== categoryKey(event.name)) return null;
+  if (!HOSA_EVENT_CATEGORIES.some((category) => categoryKey(category) === categoryKey(event.name))) return null;
+  const href = medTermFocusHref("all");
+  if (!href.startsWith(`/training/${TRACK_FOR_ORGANIZATION.HOSA.slug}/`)) return null;
+  return { eventName: event.name, href };
+}
+
+/**
+ * Every HOSA next step on the results page, each one either a link that does what its label says or
+ * a plain statement. None falls back to a page of another track or to a page that does not hold what
+ * the card promised: "/skills" holds no HOSA practice, "/debate" is General Debate, and a bare
+ * "/tests" opens whichever track the learner has selected now.
+ *
+ * Returns null for any test that is not HOSA's; those keep the cards they had.
+ */
+export function hosaResultNextSteps(input: {
+  recommendations: Pick<TestResultRecommendations, "organization" | "firstLessonHref">;
+  eventCluster: string | null | undefined;
+  weakAreas: readonly string[];
+}): HosaResultNextSteps | null {
+  if (input.recommendations.organization !== "HOSA") return null;
+  const flagged = input.weakAreas.some((area) => area.trim().length > 0);
+  const lessonHref = input.recommendations.firstLessonHref;
+  const medTerm = hosaMedTermPracticeFor(input.eventCluster);
+  // The generator's own spelling of the test's category, or null when the stored value is not one.
+  const category =
+    typeof input.eventCluster === "string"
+      ? HOSA_EVENT_CATEGORIES.find((entry) => categoryKey(entry) === categoryKey(input.eventCluster as string)) ?? null
+      : null;
+
+  let practice: ResultNextStep;
+  if (lessonHref && lessonHref.startsWith("/lessons/") && lessonHref.endsWith(`?track=${TRACK_FOR_ORGANIZATION.HOSA.slug}`)) {
+    practice = { kind: "link", title: "Practice weak skills", description: practiceWeakSkillsDescription("HOSA"), href: lessonHref };
+  } else if (medTerm) {
+    practice = {
+      kind: "link",
+      title: `Practise ${medTerm.eventName}`,
+      description: `${
+        flagged
+          ? `This test was in the ${medTerm.eventName} event category, and no lesson is linked to its weak areas yet.`
+          : "This test flagged no weak areas."
+      } ${medTerm.eventName} practice opens with “${medTermFocus("all").label}” selected: original questions on word parts, anatomy, physiology and disease, with every answer explained. Nothing starts until you press start.`,
+      href: medTerm.href
+    };
+  } else {
+    practice = flagged
+      ? {
+          kind: "note",
+          title: "No practice linked yet",
+          description: "No HOSA lesson or practice is linked to this test's weak areas yet. The explanations below cover each question you missed."
+        }
+      : { kind: "note", title: "No weak skills flagged", description: "This test flagged no weak areas, so there is nothing to practise from it." };
+  }
+
+  return {
+    practice,
+    speaking: {
+      kind: "note",
+      title: "No speaking practice yet",
+      description: "CompeteReady does not have HOSA speaking or role-play practice yet."
+    },
+    retake: {
+      kind: "link",
+      title: "Generate a retake",
+      description: category
+        ? `Opens the HOSA test generator. To retake this event category, choose “${category}” there.`
+        : "Opens the HOSA test generator, where you choose an event category and a number of questions.",
+      href: `/tests?track=${TRACK_FOR_ORGANIZATION.HOSA.slug}`
+    }
+  };
 }

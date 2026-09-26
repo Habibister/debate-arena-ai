@@ -37,7 +37,9 @@ async function main() {
   const practice = code(read(PRACTICE_ROUTE));
   assert.ok(practice.length > 200, "the practice route source is non-empty (the scans below are meaningful)");
   assert.ok(practice.includes("HosaEventPrep"), "1. the practice route retains HosaEventPrep");
-  assert.ok(/track\.id === "HOSA" \? <HosaEventPrep \/> : null/.test(practice),
+  // Targeted practice (2026-09-26) hands the page's `focus` query value to HosaEventPrep as a prop,
+  // so the mount may carry props; it is still the only thing the HOSA branch renders.
+  assert.ok(/track\.id === "HOSA" \? <HosaEventPrep(?: [^>]*)?\/> : null/.test(practice),
     "2. and mounts it for HOSA — the Medical Terminology practice path");
   const prep = read("components/training/hosa-event-prep.tsx");
   assert.ok(prep.includes('getActiveSpec("HOSA", "Medical Terminology")'), "3. which loads the registry spec");

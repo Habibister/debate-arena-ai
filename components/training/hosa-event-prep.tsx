@@ -4,6 +4,8 @@ import { SpecBanner } from "@/components/specs/spec-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getActiveSpec } from "@/lib/competition-specs";
+import type { MedTermFocusId } from "@/lib/hosa-medterm-focus";
+import { MEDTERM_AREAS } from "@/lib/hosa-medterm";
 import { HosaMedTermEngine } from "@/components/training/hosa-medterm-engine";
 
 type Stage = { order?: number; name?: string; minutes?: number | null; notes?: string };
@@ -14,9 +16,14 @@ type Reference = { label?: string; url?: string };
 // HOSA Medical Terminology Event Preparation Room. Reads the registry spec for the official stages,
 // rules, and references, reuses SpecBanner + RubricBreakdown, then mounts the knowledge engine.
 // Honest degradation: with no spec, everything is clearly labeled generic/unofficial practice.
-export async function HosaEventPrep() {
+//
+// `focus` is the practice choice the page read from its `focus` query value (null when none was
+// given, or it was unknown); the engine preselects it and starts nothing. The canonical area list is
+// handed to the engine here, from the server, so the client component never imports the bank module.
+export async function HosaEventPrep({ focus = null }: { focus?: MedTermFocusId | null } = {}) {
   const spec = await getActiveSpec("HOSA", "Medical Terminology");
   const official = Boolean(spec);
+  const areas = MEDTERM_AREAS.map(({ id, label, description }) => ({ id, label, description }));
 
   const stages = (Array.isArray(spec?.roundStructure) ? spec?.roundStructure : []) as Stage[];
   const penalties = (Array.isArray(spec?.penalties) ? spec?.penalties : []) as Penalty[];
@@ -101,7 +108,7 @@ export async function HosaEventPrep() {
         </Card>
       ) : null}
 
-      <HosaMedTermEngine official={official} />
+      <HosaMedTermEngine official={official} areas={areas} initialFocus={focus} />
 
       {references.length > 0 ? (
         <p className="text-xs text-muted-foreground">

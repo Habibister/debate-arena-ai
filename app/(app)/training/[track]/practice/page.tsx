@@ -6,9 +6,16 @@ import { HosaEventPrep } from "@/components/training/hosa-event-prep";
 import { MunConference } from "@/components/training/mun-conference";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { HOSA_MEDTERM_FOCUS_PARAM, medTermFocusFromParam } from "@/lib/hosa-medterm-focus";
 import { isTrackRetired, trackBySlug } from "@/lib/training-tracks";
 
-export default async function TrackPracticePage({ params }: { params: { track: string } }) {
+export default async function TrackPracticePage({
+  params,
+  searchParams
+}: {
+  params: { track: string };
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const track = trackBySlug(params.track);
   if (!track) {
     notFound();
@@ -67,7 +74,11 @@ export default async function TrackPracticePage({ params }: { params: { track: s
               generic health-science role-play that used to sit beside it invented patient scenarios
               and scored them against no sourced rubric, so it was withdrawn. Events HOSA runs that
               CompeteReady has not verified are NOT represented here — the Event Navigator says so. */}
-          {track.id === "HOSA" ? <HosaEventPrep /> : null}
+          {/* HOSA targeted practice: the word-part course's last lesson links here with a `focus` query
+              value that preselects "word parts from the course" on the setup screen. The value is read
+              through the same list the engine uses; anything else preselects nothing, and nothing here
+              starts a session. */}
+          {track.id === "HOSA" ? <HosaEventPrep focus={medTermFocusFromParam(searchParams?.[HOSA_MEDTERM_FOCUS_PARAM])} /> : null}
         </>
       )}
     </div>

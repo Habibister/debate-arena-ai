@@ -306,9 +306,15 @@ async function main() {
       "E4. the schema narrows areas through isMedTermArea");
     assert.ok(validators.includes('areas: z.array(medTermAreaSchema).min(1, "select at least one area").max(6).optional()'),
       "E5. and refuses an empty selection while keeping an omitted one legal");
-    // The engine still starts sessions without naming areas, so learners' practice is unchanged.
+    // The engine names areas only through a practice choice's canonical ids (targeted practice,
+    // lib/hosa-medterm-focus.ts) and names none for "all", so the omitted-selection path
+    // learners always used is still the every-area path, and a choice can never send an unknown area.
     const engine = read("components/training/hosa-medterm-engine.tsx");
-    assert.ok(engine.includes("body: JSON.stringify({ count })"), "E6. the practice engine still sends a count and no areas");
+    assert.ok(engine.includes("const requestAreas = medTermFocusRequestAreas(focus);"),
+      "E6. the practice engine resolves the areas it sends from the learner's practice choice");
+    assert.ok(engine.includes("body: JSON.stringify(requestAreas ? { count, areas: requestAreas } : { count })"),
+      "E6b. and sends a count and no areas for the every-area choice");
+    assert.ok(!/areas:\s*\[\s*"/.test(stripComments(engine)), "E6c. and hand-lists no area id of its own");
     // The builder module stays pure: no HttpError, no prisma, so the lessons suite's purity proof holds.
     const builder = stripComments(read("lib/hosa-medterm.ts"));
     for (const banned of ["@/lib/api", "@/lib/prisma", "process.env", "fetch("]) {

@@ -11,13 +11,25 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA targeted Medical Terminology practice — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
+  deployed, not Production-verified, not browser-verified. The practice room now offers "Word parts
+  from the course" (word roots, prefixes, suffixes: taught by the course) and "All Medical
+  Terminology" (every area: adds anatomy, physiology and disease, not taught yet), says which is
+  which before the learner starts, and attributes the grouping to CompeteReady, not HOSA. The
+  course's last lesson links to `/training/hosa/practice?focus=word-parts`, which preselects the
+  taught choice and starts nothing. The engine sends the choice's canonical area ids, or none for
+  every area, through the contract 6e365e9 validates; the route reports the stored `requestedAreas`
+  so a continued unfinished session is labelled by what it really covers. No new model, mastery,
+  readiness or XP; DECA, Debate, `prisma/` and the lesson text untouched. Guard:
+  `npm run hosa-medterm-targeted-practice:smoke` (6 checks; an env carrier through `lib/api`, no
+  connection). Details: *HOSA targeted Medical Terminology practice* in `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology session safety — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
   deployed, not Production-verified. `POST /api/hosa/medterm/session` accepted any area string and an
   unsupported one hung the session builder inside the route's transaction. Now the six canonical areas
   are guarded from one list (`isMedTermArea`), the start schema and the route refuse an unsupported or
   empty selection with HTTP 400 before any read or write, and the builder returns an empty session
-  for an empty pool instead of looping. Practice behaviour is unchanged; the engine still sends a
-  count only. Guard: `npm run hosa-medterm-session-safety:smoke` (an env carrier through `lib/api`,
+  for an empty pool instead of looping. Practice behaviour was unchanged by the repair; the engine
+  sent a count only until targeted practice (above) gave it a choice to send. Guard: `npm run hosa-medterm-session-safety:smoke` (an env carrier through `lib/api`,
   no connection). Details: *HOSA Medical Terminology session safety* in `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology word-parts course — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
   deployed, not Production-verified. Course `hosa-medterm-study`, module `hosa-medterm-word-parts`,
@@ -905,8 +917,9 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 54** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
-  `01bbaa1`, plus `hosa-medterm-lessons:smoke` and `hosa-medterm-session-safety:smoke`); it read 45
+- **REGISTERED = 55** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
+  `01bbaa1`, plus `hosa-medterm-lessons:smoke`, `hosa-medterm-session-safety:smoke` and
+  `hosa-medterm-targeted-practice:smoke`); it read 45
   when re-derived on 2026-09-09. **The three
   derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
   not subtract from 45 to guess.**

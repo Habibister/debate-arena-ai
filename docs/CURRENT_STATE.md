@@ -775,8 +775,9 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 54** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke` and
-  `hosa-medterm-session-safety:smoke`); it read 45 when re-derived on 2026-09-09. **The four
+- **REGISTERED = 55** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
+  `hosa-medterm-session-safety:smoke` and `hosa-medterm-targeted-practice:smoke`); it read 45 when
+  re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
   suite's transitive closure.
@@ -924,6 +925,54 @@ historical claim promoted back into current guidance must first be re-derived fr
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
 
+## HOSA targeted Medical Terminology practice — 2026-09-26 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build` and a dev
+server are forbidden in the cloud workspace; the setup screen was rendered server-side in the guard
+only). **The gap:** the practice room drilled the whole 180-question bank, and the four-lesson course
+teaches only its word-part half, so a learner finishing the course met anatomy, physiology and
+disease questions with no way to practise only what the lessons taught. **Census of the six
+canonical areas (`MEDTERM_AREAS` in `lib/hosa-medterm.ts`, 30 questions each):** `word-roots`,
+`prefixes` and `suffixes` are taught by the course — the lessons name the tested part of 29, 23 and
+19 of their 30 questions (71 taught, 19 not yet: `dent`, `re-`, `retro-`, `macro-`, `micro-`, `neo-`,
+`anti-`, `pseudo-`, `-rrhea`, `-phobia`, `-plegia`, `-genesis`, `-centesis`, `-pexy`, `-tripsy`,
+`-asthenia`, `-metry`, `-penia`, `-lysis`); teaching owners `hosa-medical-word-roots`,
+`hosa-medical-prefixes` and `hosa-medical-suffixes`, with `hosa-medical-terminology-basics`
+introducing all three kinds. `anatomy`, `physiology` and `pathophysiology`: no lesson names any term
+they test; no teaching owner. **The change:** `lib/hosa-medterm-focus.ts` (pure; its only
+import is a type, so the client never loads the bank) names two choices over the canonical areas:
+"Word parts from the course" (`word-roots`, `prefixes`, `suffixes`; marked *Taught in the current
+course*, with the disclosure that some questions use parts the lessons have not taught yet) and "All
+Medical Terminology" (every area; marked *Includes topics not taught yet*, with the disclosure that
+the course has no lessons on anatomy, physiology or disease yet). The grouping is attributed to
+CompeteReady, not to HOSA. The practice room's setup screen (`components/training/hosa-medterm-engine.tsx`)
+offers the two as a radio group (icon + text markers, never colour alone) with a "You will see:"
+list of the canonical area labels, untaught ones marked; the engine sends the choice's canonical ids
+as `areas`, or none for every area (the route's unchanged path), through the contract 6e365e9
+validates; the official-format button, the "(official)" count label and the 50-question default are
+offered only for every area, and the timer is computed from the issued session's own length
+(`sessionTimeLimitSeconds`), so a continued session keeps its time. The route's response now
+carries `requestedAreas` from the stored row, so a continued unfinished session is labelled by what
+it covers, with a notice when that differs from the choice just made (the route still reuses an
+unexpired ISSUED session regardless of areas — pre-existing, unchanged). The course's last lesson
+links to `/training/hosa/practice?focus=word-parts`, which preselects the taught choice and starts
+nothing; the practice page reads the value through the same resolver and preselects nothing for any
+other value. No new model, skill, mastery, readiness or XP semantics; recording unchanged; `prisma/`,
+DECA, Debate and the lesson text untouched. **Guard:** `npm run hosa-medterm-targeted-practice:smoke`
+(6 checks; an env carrier through `lib/api`, no connection): the choices carry only canonical areas
+and the URL value resolves only to a known choice; the taught areas are derived from the lessons'
+text against the part every bank question tests (71 / 19, and zero mentions for the untaught areas);
+course CTA → the word-parts choice → a 90-question pool of taught-area bank questions only; the page →
+room → engine wiring proved on the real element trees and the rendered setup screen (preselection,
+markers, attribution, no official format for a targeted session, nothing started); the route called
+for real against an in-memory transaction stand-in (a targeted request stores and serves only
+selected-area bank questions; one area never includes another; an omitted selection serves 100
+distinct questions, wider than the 90 word-part questions; an unsupported area is 400 before the
+database is touched; a continued session reports its own areas); purity, no mastery words, no
+coverage claim. Pins deliberately updated: `hosa-medterm-lessons` B3/F1h/F1i (the CTA carries the
+focus value), `hosa-medterm-session-safety` E6 (the engine sends areas from the choice only),
+`hosa-practice-scope` 2 (the room mount may carry props). REGISTERED = 55.
+
 ## HOSA Medical Terminology session safety — 2026-09-26 — LOCAL COMMIT
 
 Not pushed, not deployed, not Production-verified. **The defect:** `POST /api/hosa/medterm/session`
@@ -945,7 +994,8 @@ route refuse, so `lib/hosa-medterm.ts` stays free of `lib/api` and the lessons s
 holds). The legacy hand-listed `z.enum` of areas in `lib/validators.ts` (used only by the unused
 `medTermSessionRequestSchema`) was replaced by the same guard-derived schema, so one list exists.
 Legitimate practice is unchanged: focused, mixed, whole-bank (100 of 180, no repeat) and padded
-(40 over a 30-item area) sessions serve as before, and the engine still sends `{ count }` only.
+(40 over a 30-item area) sessions serve as before, and the engine still sent `{ count }` only
+(superseded the same day by targeted practice, above: it now sends a choice's canonical areas, or none).
 **Guard:** `npm run hosa-medterm-session-safety:smoke` (5 checks): the canonical list and its guard;
 the schema on valid, mixed, omitted, unsupported, empty and non-string selections mapped through
 `apiError` to 400; builder termination proved in a child process under a timeout before the builder

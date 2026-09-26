@@ -53,7 +53,9 @@ export async function POST(request: Request) {
           "DRILL",
           new Set(active.items.map((item) => item.id))
         );
-        return serializeStart(active, active.items, snapshot.kind === "DRILL" ? snapshot.order : [], true);
+        // The areas this session was really issued for, so a resumed session is labelled by what it
+        // covers, not by what the new request asked for. Empty means every area.
+        return { ...serializeStart(active, active.items, snapshot.kind === "DRILL" ? snapshot.order : [], true), requestedAreas: active.requestedAreas };
       }
 
       const served = buildMedTermSession(input.count, requestedAreas);
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
         data: { scenarioJson: { version: 1, kind: "DRILL", requestedCount: order.length, order } }
       });
 
-      return serializeStart(session, items, order, false);
+      return { ...serializeStart(session, items, order, false), requestedAreas: session.requestedAreas };
     });
 
     return NextResponse.json({

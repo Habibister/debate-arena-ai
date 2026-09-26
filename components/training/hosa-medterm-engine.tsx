@@ -5,6 +5,18 @@ import { CheckCircle2, CircleAlert, Clock, Loader2, RotateCcw, XCircle } from "l
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DEFAULT_MEDTERM_FOCUS,
+  HOSA_MEDTERM_FOCUS_ATTRIBUTION,
+  HOSA_MEDTERM_TAUGHT_AREAS,
+  MEDTERM_FOCUS_CHOICES,
+  medTermContinuedForOtherChoice,
+  medTermCoverageLabel,
+  medTermFocus,
+  medTermFocusForAreas,
+  medTermFocusRequestAreas,
+  type MedTermFocusId
+} from "@/lib/hosa-medterm-focus";
 
 type Area = { id: string; label: string; description: string };
 type ServedChoice = { optionId: string; text: string };
@@ -92,15 +104,63 @@ export function evidenceState(result: Result): { badge: string; tone: "success" 
   };
 }
 
-export function HosaMedTermEngine({ official }: { official: boolean }) {
+/**
+ * `areas` is the canonical area list, handed down by the server component so this client module never
+ * imports the bank. `initialFocus` is the practice choice a link preselected (the word-part course's
+ * last lesson links here with "word parts from the course"), or null when the learner arrived with
+ * nothing preselected; either way nothing starts until the learner presses start.
+ */
+/**
+ * The time limit of an issued session, in seconds. The official 60 minutes apply only to an official,
+ * every-area session of the official length; anything else gets 1.2 minutes a question. Computed from
+ * the ISSUED session's length, never from the setup screen's count, so a continued unfinished session
+ * (which may be longer or shorter than the count now selected) keeps the time its own length earns.
+ */
+export function sessionTimeLimitSeconds({ timed, official, everyArea, issuedCount }: { timed: boolean; official: boolean; everyArea: boolean; issuedCount: number }): number {
+  if (!timed) return 0;
+  if (!Number.isFinite(issuedCount) || issuedCount < 1) return 0;
+  const minutes = official && everyArea && issuedCount === OFFICIAL_COUNT ? OFFICIAL_MINUTES : Math.ceil(issuedCount * 1.2);
+  return minutes * 60;
+}
+
+/**
+ * The note shown above the choices when a link preselected one, or null when nothing was preselected
+ * or the learner has since chosen something else (the note would then describe a choice no longer
+ * selected). It names the choice and says nothing has started, so a learner arriving from the course
+ * knows what the link did and that they still decide.
+ */
+export function preselectionNote(initialFocus: MedTermFocusId | null, focus: MedTermFocusId): string | null {
+  if (!initialFocus || focus !== initialFocus) return null;
+  return `The link you followed preselected ${medTermFocus(initialFocus).label}. Change it below if you want something else. Nothing starts until you press start.`;
+}
+
+export function HosaMedTermEngine({
+  official,
+  areas: catalog = [],
+  initialFocus = null
+}: {
+  official: boolean;
+  areas?: Area[];
+  initialFocus?: MedTermFocusId | null;
+}) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
-  const [count, setCount] = useState(official ? OFFICIAL_COUNT : 10);
+  // What to practise: the taught word parts, or every area. Sent to the server as the canonical area
+  // ids of the choice (or omitted for every area), where the same validated contract applies.
+  const [focus, setFocus] = useState<MedTermFocusId>(initialFocus ?? DEFAULT_MEDTERM_FOCUS);
+  // The official format (50 questions, 60 minutes) is a whole-event test, so matching it is offered,
+  // labelled and timed only for the every-area choice; a targeted session is practice on its areas.
+  const officialFormat = official && focus === "all";
+  const [count, setCount] = useState(official && (initialFocus ?? DEFAULT_MEDTERM_FOCUS) === "all" ? OFFICIAL_COUNT : 10);
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [order, setOrder] = useState<string[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [areas, setAreas] = useState<Area[]>([]);
+  const [areas, setAreas] = useState<Area[]>(catalog);
+  // The areas the issued session really covers (empty = every area), from the server, so a resumed
+  // session is labelled by what it is rather than by what was just chosen.
+  const [sessionAreas, setSessionAreas] = useState<string[]>([]);
+  const [resumedElsewhere, setResumedElsewhere] = useState(false);
   const [sessionOfficial, setSessionOfficial] = useState(false);
 
   const [index, setIndex] = useState(0);
@@ -115,7 +175,12 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
   const [result, setResult] = useState<Result | null>(null);
 
   const timed = mode === "timed";
-  const timeLimit = timed ? (sessionOfficial && count === OFFICIAL_COUNT ? OFFICIAL_MINUTES : Math.ceil(count * 1.2)) * 60 : 0;
+  const areaLabel = (id: string) => areas.find((a) => a.id === id)?.label ?? id;
+  // What the issued session covers, named by the choice it matches, or by its areas when it matches none.
+  const sessionFocus = medTermFocusForAreas(sessionAreas);
+  const sessionCoverageLabel = medTermCoverageLabel(sessionAreas, areaLabel);
+  // Before a session is issued there is nothing to time; `order` is the issued session's real length.
+  const timeLimit = sessionTimeLimitSeconds({ timed, official: sessionOfficial, everyArea: sessionFocus === "all", issuedCount: order.length || count });
 
   useEffect(() => {
     if (!questions || result || !timed) return;
@@ -130,18 +195,26 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
     setBusy(true);
     setError(null);
     try {
+      // A targeted choice sends exactly its canonical areas; "all" sends none, which is the route's
+      // existing every-area behaviour. The server validates the areas again before it draws anything.
+      const requestAreas = medTermFocusRequestAreas(focus);
       const res = await fetch("/api/hosa/medterm/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count })
+        body: JSON.stringify(requestAreas ? { count, areas: requestAreas } : { count })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start the session.");
       if (!data.sessionId || !data.items || !data.order) throw new Error(data.error ?? "Could not start the session.");
+      const issuedAreas: string[] = Array.isArray(data.requestedAreas) ? data.requestedAreas.filter((a: unknown) => typeof a === "string") : [];
       setQuestions(data.items);
       setOrder(data.order);
       setSessionId(data.sessionId);
-      setAreas(data.areas ?? []);
+      setAreas(data.areas ?? catalog);
+      setSessionAreas(issuedAreas);
+      // An unfinished session from earlier is continued rather than replaced. If it was issued for a
+      // different choice, the learner is told so on the question screen.
+      setResumedElsewhere(medTermContinuedForOtherChoice(Boolean(data.resumed), issuedAreas, focus));
       setSessionOfficial(data.mode === "official");
       setIndex(0);
       setSelected(null);
@@ -240,6 +313,9 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
   }
 
+  const taughtAreaIds: readonly string[] = HOSA_MEDTERM_TAUGHT_AREAS;
+  const preselection = preselectionNote(initialFocus, focus);
+
   // --- Setup screen ---
   if (!questions) {
     return (
@@ -248,12 +324,60 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
           <CardTitle as="h2">Medical Terminology practice</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {preselection ? <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">{preselection}</p> : null}
+
+          <fieldset className="space-y-2">
+            <legend className="mb-2 text-sm font-semibold">What do you want to practise?</legend>
+            {MEDTERM_FOCUS_CHOICES.map((choice) => {
+              const chosen = focus === choice.id;
+              const included = choice.areas ? catalog.filter((a) => (choice.areas as readonly string[]).includes(a.id)) : catalog;
+              return (
+                <label
+                  key={choice.id}
+                  className={`block cursor-pointer rounded-md border p-3 ${chosen ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"}`}
+                >
+                  <span className="flex items-start gap-3">
+                    <input
+                      type="radio"
+                      name="medterm-practice-choice"
+                      value={choice.id}
+                      checked={chosen}
+                      onChange={() => setFocus(choice.id)}
+                      aria-labelledby={`medterm-choice-${choice.id}-name`}
+                      aria-describedby={`medterm-choice-${choice.id}-summary medterm-choice-${choice.id}-coverage medterm-choice-${choice.id}-disclosure`}
+                      className="focus-ring mt-1 h-4 w-4 shrink-0"
+                    />
+                    <span className="min-w-0">
+                      <span id={`medterm-choice-${choice.id}-name`} className="block text-sm font-semibold">{choice.label}</span>
+                      <span id={`medterm-choice-${choice.id}-summary`} className="mt-1 block text-xs text-muted-foreground">{choice.summary}</span>
+                      <span id={`medterm-choice-${choice.id}-coverage`} className="mt-2 flex items-center gap-1 text-xs font-semibold">
+                        {choice.taught ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden />
+                        ) : (
+                          <CircleAlert className="h-3.5 w-3.5 text-amber-600" aria-hidden />
+                        )}
+                        {choice.coverage}
+                      </span>
+                      <span id={`medterm-choice-${choice.id}-disclosure`} className="mt-1 block text-xs text-muted-foreground">{choice.disclosure}</span>
+                      {included.length > 0 ? (
+                        <span className="mt-2 block text-xs text-muted-foreground">
+                          You will see: {included.map((a) => `${a.label}${taughtAreaIds.includes(a.id) ? "" : " (not taught yet)"}`).join(", ")}.
+                        </span>
+                      ) : null}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+            <p className="text-xs text-muted-foreground">{HOSA_MEDTERM_FOCUS_ATTRIBUTION}</p>
+          </fieldset>
+
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => {
                 setMode("timed");
-                if (official) setCount(OFFICIAL_COUNT);
+                if (officialFormat) setCount(OFFICIAL_COUNT);
               }}
               className={`focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold ${timed ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}
             >
@@ -268,7 +392,9 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
             </button>
           </div>
 
-          {official && timed ? (
+          {/* The official format draws on every area, so matching it is offered only for the
+              every-area choice; a targeted session is practice on the chosen areas, not the format. */}
+          {officialFormat && timed ? (
             <button
               type="button"
               onClick={() => setCount(OFFICIAL_COUNT)}
@@ -278,12 +404,18 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
               <span className="mt-1 block text-xs text-muted-foreground">Mirrors the HOSA Medical Terminology Round One written test.</span>
             </button>
           ) : null}
+          {official && timed && !officialFormat ? (
+            <p className="text-xs text-muted-foreground">
+              Matching the official format ({OFFICIAL_COUNT} questions, {OFFICIAL_MINUTES}-minute timer) is offered for All Medical
+              Terminology only.
+            </p>
+          ) : null}
 
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Question count</span>
             <select value={count} onChange={(e) => setCount(Number(e.target.value))} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
               {[10, 20, 30, 50].map((c) => (
-                <option key={c} value={c}>{c} questions{official && c === OFFICIAL_COUNT ? " (official)" : ""}</option>
+                <option key={c} value={c}>{c} questions{officialFormat && c === OFFICIAL_COUNT ? " (official)" : ""}</option>
               ))}
             </select>
             <span className="mt-2 block text-xs font-normal text-muted-foreground">{EVIDENCE_GUIDANCE}</span>
@@ -393,8 +525,18 @@ export function HosaMedTermEngine({ official }: { official: boolean }) {
       <CardContent className="space-y-4">
         {current ? (
           <>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{areas.find((a) => a.id === current.area)?.label ?? current.area}</Badge>
+            {resumedElsewhere ? (
+              <p className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+                <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>
+                  This continues a session you started earlier and did not finish, covering {sessionCoverageLabel}. Your choice,{" "}
+                  {medTermFocus(focus).label}, applies to the next session after this one.
+                </span>
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{areaLabel(current.area)}</Badge>
+              <Badge variant="secondary">{sessionCoverageLabel}</Badge>
             </div>
             <p className="text-sm font-medium">{current.prompt}</p>
             <div className="space-y-2">

@@ -61,6 +61,7 @@ import {
   hosaCourseHasEventPractice
 } from "../lib/education/hosa-medterm-practice";
 import { decaCourseEndAction } from "../lib/education/deca-simulation-prep";
+import { HOSA_MEDTERM_FOCUS_PARAM, HOSA_MEDTERM_PRACTICE_ROOM, medTermFocusFromParam } from "../lib/hosa-medterm-focus";
 
 const read = (p: string) => readFileSync(p, "utf8");
 const stripComments = (src: string) =>
@@ -413,7 +414,13 @@ async function main() {
     for (const unknown of ["", "no-such-lesson", "hosa-patient-communication", "hosa-healthcare-ethics"]) {
       assert.equal(hosaCourseEndAction(unknown), null, `B2. "${unknown}" fails closed`);
     }
-    assert.equal(HOSA_MEDTERM_PRACTICE_ENTRY.href, "/training/hosa/practice", "B3. it leads to the event's practice room");
+    // The link opens the practice room with the taught word parts preselected (targeted practice,
+    // lib/hosa-medterm-focus.ts); the value is read through the same resolver the page uses.
+    const target = new URL(HOSA_MEDTERM_PRACTICE_ENTRY.href, "http://localhost");
+    assert.equal(target.pathname, HOSA_MEDTERM_PRACTICE_ROOM, "B3. it leads to the event's practice room");
+    assert.equal(HOSA_MEDTERM_PRACTICE_ROOM, "/training/hosa/practice", "B3a. which is the room the hub and Event HQ know");
+    assert.equal(medTermFocusFromParam(target.searchParams.get(HOSA_MEDTERM_FOCUS_PARAM) ?? undefined), "word-parts",
+      "B3c. with the word parts the course teaches preselected, never anything untaught-only");
     assert.ok(Object.isFrozen(HOSA_MEDTERM_PRACTICE_ENTRY), "B3b. and the entry is frozen");
     const copy = `${HOSA_MEDTERM_PRACTICE_ENTRY.label} ${HOSA_MEDTERM_PRACTICE_ENTRY.detail}`;
     // What the room saves is its own business; this copy claims nothing about it in either direction.
@@ -774,9 +781,9 @@ async function main() {
       assert.ok(!/mastery/i.test(visible(html.slice(0, checksAt))), `F1f. ${id}'s teaching claims no mastery`);
       if (next) {
         assert.ok(html.includes(`href="/lessons/${next.id}"`), `F1g. ${id} continues to ${next.id}`);
-        assert.ok(!html.includes('href="/training/hosa/practice"'), `F1h. ${id} does not jump ahead to practice`);
+        assert.ok(!html.includes(`href="${HOSA_MEDTERM_PRACTICE_ROOM}`), `F1h. ${id} does not jump ahead to practice`);
       } else {
-        assert.ok(html.includes('href="/training/hosa/practice"'), `F1i. ${id} ends in the practice room`);
+        assert.ok(html.includes(`href="${HOSA_MEDTERM_PRACTICE_ENTRY.href}"`), `F1i. ${id} ends in the practice room, with the taught word parts preselected`);
         assert.ok(text.includes(HOSA_MEDTERM_PRACTICE_ENTRY.label), `F1j. ${id} labels that step`);
       }
     }

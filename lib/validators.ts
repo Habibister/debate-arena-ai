@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isDrillArea, type DrillArea } from "@/lib/debate-drills";
+import { isMedTermArea, type MedTermArea } from "@/lib/hosa-medterm";
 
 export const organizationSchema = z.enum([
   "DEBATE",
@@ -481,7 +482,10 @@ export const decaObjectionsRequestSchema = z.object({
 
 // --- HOSA Medical Terminology knowledge engine ---
 
-const medTermAreaSchema = z.enum(["word-roots", "prefixes", "suffixes", "anatomy", "physiology", "pathophysiology"]);
+// Derived from MEDTERM_AREAS through its type guard, never hand-listed, for the same reason as the
+// Debate drill areas below: a second enumeration of the same set is a drift hazard. An unknown area
+// is refused with a 400 before a route reads or writes anything.
+const medTermAreaSchema = z.custom<MedTermArea>(isMedTermArea, { message: "unknown Medical Terminology area" });
 
 export const medTermSessionRequestSchema = z.object({
   count: z.number().int().min(1).max(100),
@@ -574,9 +578,12 @@ export const practiceSessionStartRequestSchema = z.object({
 });
 
 /** HOSA offers up to 50 questions, matching its existing official-mode session length. */
+// The start route's schema. `areas` is narrowed through `medTermAreaSchema` above; an unknown area
+// or an empty selection is refused with a 400 before the route reads or writes anything, and an
+// omitted `areas` still means every area.
 export const medTermSessionStartRequestSchema = z.object({
   count: z.number().int().min(1).max(100),
-  areas: z.array(z.string().min(1).max(40)).max(6).optional()
+  areas: z.array(medTermAreaSchema).min(1, "select at least one area").max(6).optional()
 });
 
 /** Writing session start. The server picks the scenario; the client may only name a skill and level,

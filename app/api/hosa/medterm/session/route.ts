@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, HttpError, parseJson } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
 import { getActiveSpec } from "@/lib/competition-specs";
-import { buildMedTermSession, MEDTERM_AREAS, MEDTERM_SKILL_SLUG, type MedTermArea } from "@/lib/hosa-medterm";
+import { buildMedTermSession, isMedTermArea, MEDTERM_AREAS, MEDTERM_SKILL_SLUG } from "@/lib/hosa-medterm";
 import {
   buildServedChoices,
   cleanupExpiredSessions,
@@ -29,6 +29,15 @@ export async function POST(request: Request) {
     const user = await requireUser();
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "light" });
     const input = await parseJson(request, medTermSessionStartRequestSchema);
+    // The schema already narrows `areas` to the canonical MEDTERM_AREAS ids and refuses an empty
+    // selection, so an unsupported request is a 400 before anything is read or written. This re-check
+    // keeps the route safe on its own if the schema is ever loosened: an unknown area must fail
+    // finitely and truthfully, never be dropped, broadened to every area, or passed through to empty
+    // the builder's pool. (Same rule as the DECA drill route.)
+    const requestedAreas = input.areas?.filter(isMedTermArea);
+    if (input.areas && requestedAreas && requestedAreas.length !== input.areas.length) {
+      throw new HttpError("Unknown Medical Terminology area requested", 400);
+    }
     const now = new Date();
 
     const spec = await getActiveSpec("HOSA", "Medical Terminology");
@@ -47,7 +56,12 @@ export async function POST(request: Request) {
         return serializeStart(active, active.items, snapshot.kind === "DRILL" ? snapshot.order : [], true);
       }
 
-      const served = buildMedTermSession(input.count, input.areas as MedTermArea[] | undefined);
+      const served = buildMedTermSession(input.count, requestedAreas);
+      // The builder returns nothing, rather than looping, when no question is eligible. Nothing has
+      // been written at this point, and a zero-item session must never be issued.
+      if (served.length === 0) {
+        throw new HttpError("No Medical Terminology questions match the requested areas", 400);
+      }
       const distinct = [...new Map(served.map((q) => [q.id, q])).values()];
       const { expiresAt, purgeAfter } = expiryFor(now);
 
@@ -60,7 +74,7 @@ export async function POST(request: Request) {
           issuedAt: now,
           expiresAt,
           purgeAfter,
-          requestedAreas: input.areas ?? []
+          requestedAreas: requestedAreas ?? []
         }
       });
 

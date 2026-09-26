@@ -27,6 +27,16 @@ export const MEDTERM_AREAS: Array<{ id: MedTermArea; label: string; description:
   { id: "pathophysiology", label: "Pathophysiology", description: "How disease alters normal function." }
 ];
 
+/**
+ * Narrow an untrusted value to one of the six canonical areas above. Derived from `MEDTERM_AREAS`,
+ * never hand-listed, so the request schema and the session builder cannot disagree with the bank
+ * about which areas exist. Anything else (another track's area, an empty string, a non-string) is
+ * simply not an area.
+ */
+export function isMedTermArea(value: unknown): value is MedTermArea {
+  return typeof value === "string" && MEDTERM_AREAS.some((a) => a.id === value);
+}
+
 export type MedTermQuestion = {
   id: string;
   area: MedTermArea;
@@ -338,8 +348,15 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 // Draw a session of `count` original questions, spread across areas as evenly as the bank allows.
+// Always terminates: an empty eligible pool, or a count that is not a positive finite number, yields
+// an empty session for the caller to refuse. The padding loop below appends the whole pool on every
+// pass, so with an empty pool it would never advance and would spin forever, synchronously, inside
+// the serving route's open transaction; with an infinite count it would never stop. The route
+// validates areas against `isMedTermArea` before it gets here, and this guard is independent of
+// that on purpose: it protects internal callers too. (The DECA builder carries the same guard.)
 export function buildMedTermSession(count: number, areas?: MedTermArea[]): MedTermSessionQuestion[] {
   const pool = areas && areas.length > 0 ? MEDTERM_BANK.filter((q) => areas.includes(q.area)) : MEDTERM_BANK;
+  if (pool.length === 0 || !Number.isFinite(count) || count < 1) return [];
   const shuffled = shuffle(pool);
   if (count <= shuffled.length) {
     return shuffled.slice(0, count);

@@ -775,8 +775,8 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 53** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`); it
-  read 45 when re-derived on 2026-09-09. **The four
+- **REGISTERED = 54** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke` and
+  `hosa-medterm-session-safety:smoke`); it read 45 when re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
   suite's transitive closure.
@@ -923,6 +923,39 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology session safety — 2026-09-26 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified. **The defect:** `POST /api/hosa/medterm/session`
+accepted any short string as an area (`medTermSessionStartRequestSchema` narrowed nothing), and
+`buildMedTermSession` seeds its result with the whole eligible pool and appends the whole pool again
+until `count` is reached, so an unsupported area name emptied the pool and the loop never advanced:
+a worker spun forever, synchronously, inside the route's open transaction. The practice engine never
+sends areas, so ordinary learners could not hit it; any signed-in user could on purpose. Found while
+building the word-parts course (below), confirmed by a direct builder call only, never by a request.
+**The repair, in three independent layers:** `isMedTermArea` in `lib/hosa-medterm.ts`, derived from
+`MEDTERM_AREAS` (the six canonical areas: word-roots, prefixes, suffixes, anatomy, physiology,
+pathophysiology); the start schema narrows `areas` through it and refuses an empty selection
+(`min(1)`), so an unsupported or empty selection is HTTP 400 before the route reads or writes
+anything, while an omitted `areas` still means every area; the route re-narrows through the same
+guard and refuses a zero-item build with HTTP 400 before `practiceSession.create`; and the builder
+itself returns an empty session for an empty pool or a count that is not a positive finite number
+instead of looping (the DECA builder throws for the same case; this one returns empty and lets the
+route refuse, so `lib/hosa-medterm.ts` stays free of `lib/api` and the lessons suite's purity proof
+holds). The legacy hand-listed `z.enum` of areas in `lib/validators.ts` (used only by the unused
+`medTermSessionRequestSchema`) was replaced by the same guard-derived schema, so one list exists.
+Legitimate practice is unchanged: focused, mixed, whole-bank (100 of 180, no repeat) and padded
+(40 over a 30-item area) sessions serve as before, and the engine still sends `{ count }` only.
+**Guard:** `npm run hosa-medterm-session-safety:smoke` (5 checks): the canonical list and its guard;
+the schema on valid, mixed, omitted, unsupported, empty and non-string selections mapped through
+`apiError` to 400; builder termination proved in a child process under a timeout before the builder
+is called in-process; the route called for real with auth, rate limit, registry spec and `prisma`
+stubbed through the module cache, proving an invalid request gets a 400 after auth and rate
+limiting with the database client never touched (so no session, item, mastery or review record can
+be written) and a valid one goes on to the spec read; and source order of every guard. Six
+reversions of the repair each fail it, including the original hang (reported as a hang, not a
+timeout). Classification: an ENV CARRIER through `lib/api` like every route-loading suite; it opens
+no connection. `hosa-practice-scope` control `43b` now reads 54 (already stale at 36; masked by 10c).
 
 ## HOSA Medical Terminology word parts — 2026-09-26 — LOCAL COMMIT
 

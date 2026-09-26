@@ -11,6 +11,14 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA Medical Terminology session safety — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
+  deployed, not Production-verified. `POST /api/hosa/medterm/session` accepted any area string and an
+  unsupported one hung the session builder inside the route's transaction. Now the six canonical areas
+  are guarded from one list (`isMedTermArea`), the start schema and the route refuse an unsupported or
+  empty selection with HTTP 400 before any read or write, and the builder returns an empty session
+  for an empty pool instead of looping. Practice behaviour is unchanged; the engine still sends a
+  count only. Guard: `npm run hosa-medterm-session-safety:smoke` (an env carrier through `lib/api`,
+  no connection). Details: *HOSA Medical Terminology session safety* in `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology word-parts course — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
   deployed, not Production-verified. Course `hosa-medterm-study`, module `hosa-medterm-word-parts`,
   four published concept lessons: `hosa-medical-terminology-basics` → `hosa-medical-word-roots` →
@@ -897,8 +905,9 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 53** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
-  `01bbaa1`, plus `hosa-medterm-lessons:smoke`); it read 45 when re-derived on 2026-09-09. **The three
+- **REGISTERED = 54** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
+  `01bbaa1`, plus `hosa-medterm-lessons:smoke` and `hosa-medterm-session-safety:smoke`); it read 45
+  when re-derived on 2026-09-09. **The three
   derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
   not subtract from 45 to guess.**
 - **What was executed and passing at the DECA P1 freeze (`77a8fab`)** — the honest verification

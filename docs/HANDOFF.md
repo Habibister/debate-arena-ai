@@ -1,6 +1,8 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-09._
+_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course). Every other
+line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
+beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
 **This region is the only operational part of this file.** Everything below the
 `PREVIOUS HANDOFF ARCHIVE` boundary is preserved historical handoff material: non-normative,
@@ -9,6 +11,19 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA Medical Terminology word-parts course — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
+  deployed, not Production-verified. Course `hosa-medterm-study`, module `hosa-medterm-word-parts`,
+  four published concept lessons: `hosa-medical-terminology-basics` → `hosa-medical-word-roots` →
+  `hosa-medical-suffixes` → `hosa-medical-prefixes`. 24 explained knowledge checks; the last lesson
+  links to the existing practice room `/training/hosa/practice`. HOSA's Learn stage, Event HQ, hub
+  and lessons index now lead to the course, and a HOSA test result's seeded "Word roots" suggestion
+  links to the roots lesson. No skill, drill, mastery or write path was added. The
+  lesson text is **AI-drafted with no human content review**; its label on the page says "AI-generated
+  CompeteReady lesson — not yet reviewed by a person". Do not describe it as human-reviewed. **Before
+  any push the owner decides on a human subject review or an explicit waiver.** Details: *Education
+  state* in `docs/CURRENT_STATE.md`. Guard: `npm run hosa-medterm-lessons:smoke`, mutation-tested:
+  30 of 34 wrong-content edits fail it; the four that pass (a wrong choice that is also correct, a
+  wrong root meaning inside an example gloss, a negated gloss) only a human reader catches.
 - **DECA P1 — FROZEN at `77a8fab`, LOCAL ONLY. Freeze result P0 = 0, P1 = 0.** Twelve DECA lessons
   published, one held. Four mastery loops complete end to end. Track-scoped due review, DECA-only
   coaching, simulation connected in both directions with truthful feedback, review-prep and retry.
@@ -43,6 +58,21 @@ below the boundary.
 
 ## What remains open
 
+- **HOSA learning gaps after the word-parts course (2026-09-26).** Nothing teaches the anatomy,
+  physiology or pathophysiology half of the Medical Terminology bank yet. The practice room cannot
+  be focused on word-part areas from the UI and its weak areas link to no lesson. HOSA test results
+  now link the seeded "Word roots" suggestion to `hosa-medical-word-roots`, but the older record page
+  `/skills/hosa-medical-terminology-1` still says there is nothing to read, and "Clinical
+  abbreviations" and "Terminology in patient scenarios" have no lesson. The hub's HOSA "Skill drills" row still opens `/skills?track=hosa`, which only offers the event
+  finder. `hosa-patient-communication` and `hosa-healthcare-ethics` stay held; the communication
+  course is still one reading-only lesson; the other HOSA events carry identity only.
+  `origin/hosa-codex-transfer` is unmerged and was not used. **Pre-existing bug, not fixed:**
+  `POST /api/hosa/medterm/session` accepts any `areas` string and `buildMedTermSession` loops
+  forever on an empty pool, so an authenticated request naming an unknown area never returns (the
+  UI never sends `areas`). **Stale pins found, not changed:** `skills-compat` item 28 expects 12
+  canonical lessons (23 at `01bbaa1`, 27 now) and `hosa-practice-scope` 43b pins the registered
+  smoke inventory at 36 (52 at `01bbaa1`, 53 now); both are masked by earlier failures in the same suites (item 2 and 10c), which
+  fail identically at `01bbaa1`.
 - **REBUTTAL LIVE P0 — CONTAINED LOCALLY, NOT IN PRODUCTION.** A teaching-to-drill-to-mastery audit
   (2026-09-01) found the `rebuttal` drill area writing durable `debate-rebuttal` mastery on material
   the published curriculum does not teach: 11 of 30 items not derivable from any learner-visible
@@ -867,7 +897,8 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 45** — every `*:smoke` script in `package.json`, re-derived 2026-09-09. **The three
+- **REGISTERED = 53** — every `*:smoke` script in `package.json`, as of 2026-09-26 (52 at
+  `01bbaa1`, plus `hosa-medterm-lessons:smoke`); it read 45 when re-derived on 2026-09-09. **The three
   derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
   not subtract from 45 to guess.**
 - **What was executed and passing at the DECA P1 freeze (`77a8fab`)** — the honest verification
@@ -1032,7 +1063,19 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-**OWNER BEGINNER QA.** DECA P1 is frozen at `77a8fab`. Stop agent-driven feature development. The
+**HOSA LEARNING is the development priority (owner direction, 2026-09-26).** Debate and DECA
+development stay stopped. The Medical Terminology word-parts course is a local commit awaiting the
+owner's review and push decision. **Recommended next HOSA task, for the owner to decide:** fix the
+`areas` hang in `POST /api/hosa/medterm/session` (validate against `MEDTERM_AREAS`, guard the empty
+pool), then offer word-part-only practice, link the practice room's weak areas to the lesson that
+teaches them, and get a human content review of the four lessons.
+**Separate follow-up from the independent security review (LOW, pre-existing):**
+`debateDiagnosisLesson` in `lib/education/diagnosis.ts` resolves any learner-visible lesson id with
+no track check, so a Debate judge that names a DECA or HOSA lesson id would show it as a Debate
+recommendation; compare the lesson's track with the round's track there. It touches the frozen
+Debate path, so it waits for the owner.
+
+**Previous next action, recorded 2026-09-09: OWNER BEGINNER QA.** DECA P1 is frozen at `77a8fab`. Stop agent-driven feature development. The
 owner now uses the site as a beginner — Learn, drills, review, simulation, deliberate mistakes — and
 records what is confusing, misleading, broken or annoying. Only deterministic issues the owner finds
 become repair tasks, and each stays narrow.
@@ -1085,6 +1128,8 @@ next education milestone, those files win over any task pointer that disagrees.
   proving the 2026-08-12 credential rotation, whose completion is UNVERIFIED from repository evidence.
 - Do not describe the B2.1 or B2.2 educational bytes as human-reviewed, human-approved or externally
   reviewed. External human content review was **WAIVED BY THE OWNER**; a waiver is not a review.
+- Do not describe the four HOSA Medical Terminology word-part lessons as human-reviewed. They were
+  AI-drafted and checked only by independent AI reviewers and the smoke suites.
 
 # PREVIOUS HANDOFF ARCHIVE — NON-AUTHORITATIVE
 

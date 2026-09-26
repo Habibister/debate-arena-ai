@@ -218,8 +218,10 @@ function main() {
     // P1-B4 raised it 12 -> 18. Nine Debate, nine DECA.
     // P1-B5 raised it 18 -> 19; P1-B6 raised it 19 -> 20. Nine Debate, eleven DECA — two of the
     // eleven are the simulation prerequisites, concept lessons like the rest but owning no area.
-    assert.equal(published.length, 20,
-      `control: exactly twenty published concept lessons — found ${published.length}. If a lesson was ` +
+    // The HOSA Medical Terminology word-part course raised it 20 -> 24: the first four HOSA concept
+    // lessons. Nine Debate, eleven DECA, four HOSA.
+    assert.equal(published.length, 24,
+      `control: exactly twenty-four published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -277,6 +279,14 @@ function main() {
     // failure the lesson exists to correct), and a scaffoldedTry was refused because every scaffold
     // evaluator, starter set and guided application is Debate-keyed — an authored exercise would have
     // rendered as permanently UNCHECKABLE. If a later change gives it any of those, record it here.
+    // The HOSA Medical Terminology word-part course added the first four HOSA entries. Each authors
+    // teachingSections, a misconception and commonMistakes, and the three part lessons also author
+    // additionalExamples. A ladder was refused (decoding a term is a sequence of reads, not
+    // successive redrafts), frames were refused (a phrase bank would teach recitation of glosses),
+    // and a scaffoldedTry was refused because every evaluator is Debate-keyed, the same reason the
+    // DECA entries give. If a later change gives any of them one of those, record it here. The four
+    // HOSA lessons were AI-drafted and no person has reviewed them yet, so for them "reviewed" in the
+    // message below means checked by this suite, not approved.
     assert.deepEqual(populated.map((e) => e.id).sort(), [
       "debate-answer-types",
       "debate-clash",
@@ -297,7 +307,11 @@ function main() {
       "deca-the-offering-and-its-price",
       "deca-understanding-performance-indicators",
       "deca-who-the-customer-is",
-      "deca-why-they-choose-you"
+      "deca-why-they-choose-you",
+      "hosa-medical-prefixes",
+      "hosa-medical-suffixes",
+      "hosa-medical-terminology-basics",
+      "hosa-medical-word-roots"
     ],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
@@ -698,7 +712,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 20, "O7. control: all twenty published lessons were rendered");
+    assert.equal(publishedAll.length, 24, "O7. control: all twenty-four published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

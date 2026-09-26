@@ -383,7 +383,11 @@ check("C8. HOSA result suggestions stay visible and carry no DECA copy", () => {
     { lessonSlug: "hosa-medical-terminology-2", title: "Clinical abbreviations", reason: "Targets Medical Terminology, which appeared in your missed-question pattern." }
   ];
   const model = testResultRecommendationsForLearner({ organization: "HOSA", weakAreas: ["Medical terminology"], stored });
-  assert.deepEqual(model.unwrittenTopics.map((topic) => topic.title), ["Word roots", "Clinical abbreviations"], "C8a the suggestions are kept");
+  // "Word roots" gained a written HOSA lesson with the Medical Terminology word-parts course
+  // (2026-09-26), so it is kept as a link to that lesson; the other suggestion still has none.
+  assert.deepEqual(model.storedLessons.map((lesson) => lesson.href), ["/lessons/hosa-medical-word-roots?track=hosa"],
+    "C8a the suggestions are kept: the one with a written HOSA lesson links to it");
+  assert.deepEqual(model.unwrittenTopics.map((topic) => topic.title), ["Clinical abbreviations"], "C8a2 and the other is still named");
   assert.deepEqual(model.diagnosticRoutes, [], "C8b and never go through the DECA bridge");
   assert.ok(!/DECA|recorded skill/.test(weakAreaExplanation("HOSA")), "C8c no DECA copy");
 });

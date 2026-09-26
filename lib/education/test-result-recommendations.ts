@@ -26,9 +26,11 @@ import type { EducationTrack } from "@/lib/education/types";
  *      of another track is not named either.
  *   3. A lesson appears once. Identity is the canonical lesson id, never a display title.
  *   4. `lessonCount` is the number of distinct lessons the page links, computed after rule 3.
- *   5. HOSA's stored suggestions come from the older seeded lesson rows, none of which has a written
- *      lesson today. They are the grader's real suggestions, so they stay visible, but named as topics
- *      with no written lesson yet — never linked and never counted as lessons.
+ *   5. HOSA's stored suggestions come from the older seeded lesson rows. A row whose whole topic a
+ *      published HOSA lesson now teaches is linked to that lesson through `HOSA_SEEDED_TOPIC_LESSON`,
+ *      a hand-audited map; rule 2 still applies to the mapped id. Every other row has no written
+ *      lesson, and as the grader's real suggestion it stays visible, named as a topic with no written
+ *      lesson yet — never linked and never counted as a lesson.
  *
  * Pure: no React, no database, no network, no provider. `buildTestResultRecommendations` takes its
  * lookups as arguments so it can be proved without the registry.
@@ -75,6 +77,17 @@ const TRACK_FOR_ORGANIZATION: Record<"DECA" | "HOSA", { track: EducationTrack; s
   HOSA: { track: "HOSA", slug: "hosa" }
 };
 
+/**
+ * Rule 5's map: a seeded HOSA suggestion row → the published HOSA lesson that teaches its whole topic.
+ * The grader stores these rows for a Medical Terminology miss (prisma/seed.ts names them
+ * `hosa-medical-terminology-1..3`). Only "Word roots" has such a lesson today. "Clinical
+ * abbreviations" and "Terminology in patient scenarios" stay unmapped: no lesson teaches either one,
+ * and pointing them at the word-part course would tell the learner it covers them.
+ */
+export const HOSA_SEEDED_TOPIC_LESSON: ReadonlyMap<string, string> = new Map([
+  ["hosa-medical-terminology-1", "hosa-medical-word-roots"] // seeded title "Word roots"
+]);
+
 export function resultOrganization(organization: string): ResultOrganization {
   return organization === "DECA" || organization === "HOSA" ? organization : "OTHER";
 }
@@ -102,7 +115,9 @@ export function buildTestResultRecommendations(
 
   const trackInfo = organization === "OTHER" ? null : TRACK_FOR_ORGANIZATION[organization];
   for (const recommendation of input.stored) {
-    const slug = recommendation.lessonSlug.trim();
+    const stored = recommendation.lessonSlug.trim();
+    // Rule 5: a seeded HOSA row whose whole topic a published lesson teaches is looked up as that lesson.
+    const slug = organization === "HOSA" ? HOSA_SEEDED_TOPIC_LESSON.get(stored) ?? stored : stored;
     const lesson = deps.publishedLesson(slug);
     if (lesson && trackInfo && lesson.track === trackInfo.track) {
       // Rule 3: already on the page as a diagnostic route, or already listed once.
@@ -119,9 +134,9 @@ export function buildTestResultRecommendations(
     // A published lesson of ANOTHER track is never linked and never named: that would present another
     // track's teaching as this learner's training.
     if (organization === "HOSA" && !lesson) {
-      if (namedTopics.has(slug)) continue;
-      namedTopics.add(slug);
-      unwrittenTopics.push({ slug, title: recommendation.title?.trim() || slug, reason: recommendation.reason });
+      if (namedTopics.has(stored)) continue;
+      namedTopics.add(stored);
+      unwrittenTopics.push({ slug: stored, title: recommendation.title?.trim() || stored, reason: recommendation.reason });
       continue;
     }
     olderRecordCount += 1;

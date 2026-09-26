@@ -53,7 +53,9 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-const LEARNING_CONTENT_BASELINE = "DECA-IDENTIFYING-PROBLEM-V1";
+// HOSA-MEDTERM-WORD-PARTS-V1 pins four HOSA Medical Terminology lessons that were AI-drafted and have
+// had no human content review yet. Pinning freezes their bytes; it is not an approval.
+const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-WORD-PARTS-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 
@@ -317,8 +319,10 @@ async function main(): Promise<void> {
   // Excluded from the snapshot because nothing reads it. P1-B1 added a SECOND production consumer of
   // the catalog, `lib/education/tracks/deca.ts`, so the scan covers both track files — a single-file
   // scan would have left the new one's `.order` usage unchecked while still reporting a clean result.
-  // `order` stays in SEED_KEYS so the exclusion is a recorded decision, not a forgotten field.
-  const CATALOG_CONSUMERS = ["lib/education/tracks/debate.ts", "lib/education/tracks/deca.ts"];
+  // The HOSA Medical Terminology course added a THIRD, `lib/education/tracks/hosa.ts`, for the same
+  // reason. `order` stays in SEED_KEYS so the exclusion is a recorded decision, not a forgotten field.
+  const CATALOG_CONSUMERS = ["lib/education/tracks/debate.ts", "lib/education/tracks/deca.ts",
+                             "lib/education/tracks/hosa.ts"];
   for (const consumer of CATALOG_CONSUMERS) {
     assert.ok(readFileSync(consumer, "utf8").includes("LEARNING_SKILL_CATALOG"),
       `4a. control: ${consumer} really is a catalog consumer, so scanning it is not vacuous`);

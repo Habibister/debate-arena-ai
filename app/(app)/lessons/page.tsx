@@ -13,6 +13,7 @@ import { lessonsForTrack } from "@/lib/lessons";
 import { roleplayLessonsForTrack } from "@/lib/roleplay-lessons";
 import { EDUCATION_COURSES, educationLessonsForTrack, getEducationLesson, getEducationModule } from "@/lib/education/registry";
 import { EDUCATION_TRACKS, isConceptEducationLessonEntry, type EducationTrack } from "@/lib/education/types";
+import { hosaCourseHasEventPractice } from "@/lib/education/hosa-medterm-practice";
 
 /**
  * `TrainingTrack` still includes the soft-removed Model UN; `EducationTrack` deliberately does not.
@@ -136,12 +137,24 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
                 state: "available" as const,
                 detail: "Answering them saves nothing — no score, no progress, no mastery record."
               },
-              {
-                label: "Skill drills",
-                value: "Available separately",
-                state: "available" as const,
-                detail: "A separate repeat-until-solid drill set in Study Arcade — not these questions."
-              }
+              // Study Arcade has skill drills for Debate and DECA only. A HOSA card never claims one:
+              // a HOSA course backed by its event's practice room says that instead, and any other
+              // HOSA concept lesson states only what it contains.
+              ...(entry.track !== "HOSA"
+                ? [{
+                    label: "Skill drills",
+                    value: "Available separately",
+                    state: "available" as const,
+                    detail: "A separate repeat-until-solid drill set in Study Arcade — not these questions."
+                  }]
+                : hosaCourseHasEventPractice(entry.courseId)
+                  ? [{
+                      label: "Question practice",
+                      value: "Available on the event page",
+                      state: "available" as const,
+                      detail: "Original Medical Terminology questions, each answer explained. The course’s last lesson links there. Separate from these checks."
+                    }]
+                  : [])
             ]
           }))
       : [])
@@ -152,7 +165,9 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
   const COURSE_HEADING: Record<string, string> = {
     "deca-roleplay-core": "Role-play course",
     "deca-business-content": "Business-content course",
-    "debate-performance": "Performance course"
+    "debate-performance": "Performance course",
+    "hosa-medterm-study": "Medical Terminology course",
+    "hosa-clinical-skill-communication": "Clinical-skill communication course"
   };
 
   // QA-R2 #15. The catalog put every card under one badge reading "Performance Course", so twelve DECA

@@ -594,9 +594,13 @@ function main() {
     // NON-REGRESSION: the other two tracks' Learn stages are untouched by this repair.
     assert.equal(learnerPathForTrack("GENERAL_DEBATE").find((s: { id: string }) => s.id === "learn")?.href,
       "/lessons?track=debate", "D11f. Debate's Learn stage is unchanged");
+    // HOSA's Learn stage opened its one lesson while HOSA had one. The Medical Terminology word-part
+    // course made it five, so HOSA now opens its catalog for the same reason DECA does (D11 above).
     assert.equal(learnerPathForTrack("HOSA").find((s: { id: string }) => s.id === "learn")?.href,
-      "/lessons/how-hosa-scenario-interaction-works",
-      "D11g. and HOSA's is unchanged — it has one published lesson, so the single-lesson form is still truthful there");
+      "/lessons?track=hosa",
+      "D11g. and HOSA's opens the HOSA catalog now that HOSA publishes more than one lesson");
+    assert.ok(educationLessonsForTrack("HOSA").filter((e: { visibility: string }) => e.visibility === "learner").length > 1,
+      "D11g2. control: HOSA really does publish more than one lesson, so the single-lesson form would no longer be truthful");
   });
 
   // ---- D12/D13. OWNER-QA REPAIR 1 ---------------------------------------------------------------

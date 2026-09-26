@@ -48,6 +48,7 @@
     "deca-mastery:smoke": "tsx scripts/deca-mastery-smoke.ts",
     "debate-mastery:smoke": "tsx scripts/debate-mastery-smoke.ts",
     "hosa-medterm-evidence:smoke": "tsx scripts/hosa-medterm-evidence-smoke.ts",
+    "hosa-medterm-lessons:smoke": "tsx scripts/hosa-medterm-lessons-smoke.ts",
     "review-ladder:smoke": "tsx scripts/review-ladder-smoke.ts",
     "coach-evidence:smoke": "tsx scripts/coach-evidence-smoke.ts",
     "clash-activation:smoke": "tsx scripts/seed-debate-clash-skill-smoke.ts",

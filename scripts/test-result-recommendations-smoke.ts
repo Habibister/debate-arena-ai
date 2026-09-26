@@ -7,7 +7,8 @@
  *
  * What it protects:
  *   1. a HOSA result never renders DECA copy and never goes through the DECA bridge
- *   2. HOSA's stored suggestions stay visible — named, not linked, not counted — when no lesson exists
+ *   2. HOSA's stored suggestions stay visible — named, not linked, not counted — when no lesson exists,
+ *      and a seeded topic that a published HOSA lesson teaches whole links to that lesson instead
  *   3. a DECA lesson renders once, however many sources name it, and the tile counts distinct lessons
  *   4. nothing held, unregistered or cross-track is ever recommended
  *   5. supported DECA diagnoses still reach the same published lesson and drill; unsupported ones stay
@@ -23,6 +24,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const {
   buildTestResultRecommendations,
+  HOSA_SEEDED_TOPIC_LESSON,
   publishedLesson,
   testResultRecommendationsForLearner,
   weakAreaExplanation
@@ -133,15 +135,25 @@ check("TR-4. HOSA with the grader's existing suggestions: visible, truthful, no 
   assert.equal(model.organization, "HOSA");
   assert.deepEqual(model.diagnosticRoutes, [], "TR-4a no DECA route");
   assert.deepEqual(model.uncoveredDiagnostics, [], "TR-4b no DECA gap list");
-  assert.deepEqual(model.unwrittenTopics.map((t: { title: string }) => t.title), ["Word roots", "Clinical abbreviations", "Terminology in patient scenarios"], "TR-4c all three suggestions stay visible");
+  // "Word roots" now has a written lesson, the Medical Terminology course's word-roots lesson, so it
+  // links there. The other two topics still have none, and stay named, unlinked and uncounted.
+  assert.deepEqual(model.storedLessons.map((l: { href: string }) => l.href), ["/lessons/hosa-medical-word-roots?track=hosa"],
+    "TR-4c the topic a written lesson teaches links to that lesson, on HOSA's track");
+  assert.deepEqual(model.unwrittenTopics.map((t: { title: string }) => t.title), ["Clinical abbreviations", "Terminology in patient scenarios"], "TR-4c2 the other two suggestions stay visible");
   assert.equal(model.olderRecordCount, 0, "TR-4d none is hidden as an older record");
-  assert.equal(model.lessonCount, 0, "TR-4e none counts as a lesson: none has a written lesson");
+  assert.equal(model.lessonCount, 1, "TR-4e only the topic with a written lesson counts as a lesson");
   const html = render(model, "HOSA");
   assert.ok(!html.includes("DECA"), "TR-4f the HOSA card contains no DECA text at all");
-  for (const title of ["Word roots", "Clinical abbreviations", "Terminology in patient scenarios"]) assert.ok(html.includes(title), `TR-4g ${title} is shown`);
-  assert.ok(html.includes("There is no written HOSA lesson for these topics yet"), "TR-4h the limitation is stated");
-  assert.equal(lessonLinks(html).length, 0, "TR-4i and nothing unpublished is linked as a lesson");
+  for (const title of ["Word Roots: What the Term Is About", "Clinical abbreviations", "Terminology in patient scenarios"]) assert.ok(html.includes(title), `TR-4g ${title} is shown`);
+  assert.ok(html.includes("There is no written HOSA lesson for these topics yet"), "TR-4h the limitation is stated for the two it is true of");
+  assert.deepEqual(lessonLinks(html), ["/lessons/hosa-medical-word-roots?track=hosa"], "TR-4i and only the written lesson is linked");
   assert.ok(!/href="\/skills\//.test(html), "TR-4j nor sent to the older-record page as if it were a lesson");
+  // Controls: the map is HOSA's alone, and it only ever names a published HOSA lesson.
+  const onDeca = testResultRecommendationsForLearner({ organization: "DECA", weakAreas: [], stored: [HOSA_MT_STORE[0]] });
+  assert.equal(onDeca.lessonCount, 0, "TR-4k the same seeded row on a DECA test links nothing");
+  for (const [seeded, lessonId] of HOSA_SEEDED_TOPIC_LESSON as Map<string, string>) {
+    assert.equal(publishedLesson(lessonId)?.track, "HOSA", `TR-4l ${seeded} maps to a published HOSA lesson`);
+  }
 });
 
 check("TR-5. HOSA with no suggestion and no teaching owner says so in HOSA's words", () => {

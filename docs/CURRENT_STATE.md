@@ -1,6 +1,8 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-09-09._
+_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course). Every other
+line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
+beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
 **This region is the only part of this file that describes current reality.** Everything below the
 `HISTORICAL ARCHIVE` boundary is preserved historical evidence and is explicitly non-normative and
@@ -51,9 +53,10 @@ non-executable. Rewrite this region after each milestone; append history below t
   reviews, nullable mastery) → `f004d05` → `956b9a9` (the two simulation prerequisites) → `d37a533`
   (simulation connected) → `77a8fab` (navigation truth).
 - **Lesson counts — never collapse DECA into the global figure.** **DECA published = 12.**
-  **Global published (all tracks, learner-visible registry entries) = 23**: 12 DECA, 10 General
-  Debate, 1 HOSA. Writing the global number where the DECA number belongs was a real reporting error
-  during P1-B4 and is the reason this line exists. **DECA held = 1.**
+  **Global published (all tracks, learner-visible registry entries) = 27**: 12 DECA, 10 General
+  Debate, 5 HOSA (it was 23, with 1 HOSA, at `01bbaa1`; the four added are the HOSA Medical
+  Terminology word-parts lessons below). Writing the global number where the DECA number belongs was
+  a real reporting error during P1-B4 and is the reason this line exists. **DECA held = 1.**
   ROLE-PLAY CORE carries the published prerequisite and skill path: `how-deca-roleplay-works`,
   `deca-reading-scenarios`, `deca-identifying-problem`, `deca-understanding-performance-indicators`,
   `deca-justifying-your-recommendation`. BUSINESS CONTENT carries Customer Relations
@@ -92,6 +95,60 @@ non-executable. Rewrite this region after each milestone; append history below t
   **0 automatic diagnosis mappings** — of ten authored feedback categories exactly one has a lesson
   teaching the same construct, and routing one in ten would read as a diagnosis of all ten, so the
   learner is offered manual review-prep links instead.
+- **HOSA — Medical Terminology word-parts course. LOCAL COMMIT ONLY (2026-09-26): not pushed, not
+  deployed, not Production-verified.** Owner direction on 2026-09-26 made HOSA learning the
+  development priority; Debate and DECA development were not restarted. New course
+  `hosa-medterm-study`, one module `hosa-medterm-word-parts` ("Medical word parts"), four published
+  concept lessons in this order: `hosa-medical-terminology-basics` (how a term is built; rewritten
+  from the thin held draft it was at `01bbaa1`, which was not learner-visible) →
+  `hosa-medical-word-roots` → `hosa-medical-suffixes` → `hosa-medical-prefixes` → end. Each teaches
+  before it checks, carries a worked example labelled "(Our example, not an official test
+  question.)" and six explained knowledge checks (24 in all). The entries live in
+  `lib/learning-content.ts` and are held by reference in `lib/education/tracks/hosa.ts`, mirroring
+  DECA. **Practice connection:** the last lesson's course-end action
+  (`lib/education/hosa-medterm-practice.ts`) links to the existing Medical Terminology practice room
+  `/training/hosa/practice` and says only what is true of it: original questions, not official HOSA
+  test items; most of its word-root, prefix and suffix questions use what the course teaches, and
+  some use parts it does not teach yet (19 of the 90 by a 2026-09-26 scan, for example -centesis,
+  retro- and pseudo-); its anatomy, physiology and disease questions are not taught yet; every answer
+  is explained. **What it does
+  NOT do:** no `skillSlug`, no `practiceDrill`, no concept-drill mapping, no MasteryProgress and no
+  new write path; the practice room's own review-only evidence model is unchanged. **Entry points:**
+  the HOSA Learn stage (`lib/learner-path.ts`) is now `available` and opens `/lessons?track=hosa`;
+  HOSA Event HQ lists "Lessons" first and drops the "Skills & lessons" row, which looped through
+  `/skills?track=hosa` back to the event finder; the lessons index shows the course with a
+  "Question practice" row in place of "Skill drills"; the HOSA hub copy names the word-parts
+  lessons. **Provenance:** stable teaching material. The lesson text was **AI-drafted and has had
+  no human content review** (independent AI reviewer passes only), so its source label reads
+  "AI-generated CompeteReady lesson — not yet reviewed by a person" and the lesson header shows it.
+  **Before any push, the owner decides on a human subject review or an explicit waiver:**
+  `docs/curriculum/00-principles-and-sources.md` asks for a subject-accuracy pass before a lesson
+  ships and clinical review before content carrying medical claims is released. After a review or
+  waiver is recorded in the authoring record in `lib/learning-content.ts`, the label can change.
+  Reviewed-content baseline updated for exactly the four affected slugs
+  (`hosa-medical-terminology-basics` changed; `hosa-medical-word-roots`, `hosa-medical-suffixes` and
+  `hosa-medical-prefixes` added); `LEARNING_CONTENT_BASELINE` pinned to
+  `HOSA-MEDTERM-WORD-PARTS-V1`. **Test results:** a HOSA practice-test result now links the seeded
+  "Word roots" suggestion (`hosa-medical-terminology-1`) to `hosa-medical-word-roots` through the
+  hand-audited `HOSA_SEEDED_TOPIC_LESSON` map in `lib/education/test-result-recommendations.ts`;
+  "Clinical abbreviations" and "Terminology in patient scenarios" are still named without a link,
+  because no lesson teaches them. The older record page `/skills/hosa-medical-terminology-1` still
+  says there is nothing to read. Guard: `npm run hosa-medterm-lessons:smoke` (14 checks). It ties
+  the lessons to the practice bank both ways: each of the bank's 90 word-part questions tests a part
+  the lessons teach with the bank's own meaning (71) or a part listed as not taught yet (19); every
+  definition a lesson gives a word part is one of the phrasings listed for that part in the suite,
+  word for word, and a meaning given with a verb the suite does not read, or to a bare root it does
+  not know, fails; every example term's gloss carries the meaning of the prefix and suffix it is
+  built from (67 glosses of 36 terms, over 28 parts, read in four sentence forms); and each of the 24 checks'
+  explanations argues for its own key, so a check re-keyed to any wrong choice fails.
+  Mutation-tested on 2026-09-26: of 34 wrong-content edits tried by the independent QA review and
+  the author (22 in memory, 12 at file level), 30 fail the suite and three correct sentences used as
+  false-alarm probes pass it. The four that survive are its known limits, each needing a human
+  reader: a wrong choice that is also correct in meaning ("The renal organs" beside "The kidneys");
+  a wrong ROOT meaning inside an example's gloss when the prefix or suffix meaning is right
+  ("myalgia, bone pain", "Hematuria is pus in the urine"); and a negated gloss ("hypertension is
+  not high blood pressure"), which the example reader skips because "not just a stomach problem"
+  is teaching, not a gloss. One more reason for the content review above.
 - **B2.2 — FULLY CLOSED.** Teaching `f7e7cf307e891ed1089f9f4e5a9a1d2ef65e1c8b`, pair-control
   `a66d46cb33e509e7d4985944e56f98af9b0fdbe8`, release `65c4e6f442d00296fe0a8f8e7902cfd627c02080`, in
   that order — the history itself proves TEACH → PROTECT THE MEASUREMENT → RELEASE.
@@ -126,13 +183,14 @@ non-executable. Rewrite this region after each milestone; append history below t
   `claim-warrant-impact` → `debate-evidence-evaluation` → `debate-signposting` → `debate-clash` →
   `debate-refutation` → `debate-answer-types` → `debate-turn-mechanics` →
   `debate-constructive-speeches` → `debate-weighing` → terminal.
-- **Catalog sets — three different sets, never conflate them.** `LEARNING_SKILL_CATALOG`
-  (`lib/learning-content.ts`) holds **21 authored** entries: **9 published** through the education
-  registry and **12 held**. Separately, `EDUCATION_LESSONS` (`lib/education/registry.ts`) holds
-  **12 registry lessons** = those 9 published entries **plus** `claim-warrant-impact`,
-  `how-deca-roleplay-works` and `how-hosa-scenario-interaction-works`, which are not catalog entries.
-  **The 12 held authored entries and the 12 registry lessons are NOT the same set** — they merely
-  share a cardinality.
+- **Catalog sets — three different sets, never conflate them.** Re-derived 2026-09-26 by loading
+  both modules: `LEARNING_SKILL_CATALOG` (`lib/learning-content.ts`) holds **33 authored** entries:
+  **24 published** through the education registry and **9 held**. Separately, `EDUCATION_LESSONS`
+  (`lib/education/registry.ts`) holds **27 registry lessons** = those 24 published entries **plus**
+  `claim-warrant-impact`, `how-deca-roleplay-works` and `how-hosa-scenario-interaction-works`, which
+  are not catalog entries. At `01bbaa1` the same derivation gives 30 authored (20 published, 10
+  held) and 23 registry lessons. (This line read 21 / 9 / 12 / 12 until 2026-09-26; those counts
+  predated DECA P1 and were stale.)
 - **Connected durable loops — exactly FIVE:** Claim-Warrant-Impact (embedded server-graded practice,
   architecturally distinct), Evidence Evaluation, Clash, Refutation, Weighing.
 - **Registry mapping.** Four entries carry BOTH `skillSlug` and `practiceDrill`
@@ -149,6 +207,8 @@ non-executable. Rewrite this region after each milestone; append history below t
 - **DECA has a complete concept-drill mapping** (`lib/education/deca-practice-map.ts`): 4 of 4 areas
   carry a published teaching owner and resolve to their exact drill. **HOSA still has none.** (This
   line read "DECA and HOSA have no concept-drill mapping" until DECA P1; it was true when written.)
+  The HOSA Medical Terminology word-parts course (2026-09-26) does not change that: it links to the
+  practice room only as a course-end action, and no HOSA practice area resolves to a lesson.
 - Thresholds: `PRACTICING_MASTERY_MIN` **70** and `DRILL_PASS_THRESHOLD` **70** — equal numbers,
   distinct product concepts. DUE ≠ WEAK.
 
@@ -715,7 +775,8 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 45** (`*:smoke` scripts in `package.json`, re-derived 2026-09-09). **The four
+- **REGISTERED = 53** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`); it
+  read 45 when re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
   suite's transitive closure.
@@ -789,7 +850,21 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 ## Current next action
 
-**OWNER BEGINNER QA.** DECA P1 is frozen at `77a8fab` and agent-driven DECA feature development
+**HOSA LEARNING (owner direction, 2026-09-26).** The owner paused repeated DECA acceptance reviews
+("We are done with repeated DECA acceptance reviews for now") and made HOSA learning the development
+priority, without restarting Debate or DECA development. The first step, the Medical Terminology
+word-parts course, is a local commit (see *Education state*). **Pre-existing bug found while doing
+it, not fixed:** `POST /api/hosa/medterm/session` validates `areas` only as strings
+(`medTermSessionStartRequestSchema` in `lib/validators.ts`), and `buildMedTermSession` in
+`lib/hosa-medterm.ts` loops forever when the filtered pool is empty, so an authenticated request
+naming an unknown area never returns (confirmed with a pure call on 2026-09-26; no request was
+sent). The practice UI never sends `areas`, so ordinary learners do not hit it. **Recommended next
+HOSA step, for the owner to decide:** fix that bug (validate `areas` against `MEDTERM_AREAS` and
+guard the empty pool), then let a learner practise only the word-part areas, link the practice
+room's weak areas to the lesson that teaches them, and get a human content review of the lesson
+text.
+
+**Previous next action, recorded 2026-09-09:** **OWNER BEGINNER QA.** DECA P1 is frozen at `77a8fab` and agent-driven DECA feature development
 stops here. The next step is the owner using the site as an actual beginner — clicking through Learn,
 taking drills, triggering review, running simulations, deliberately making mistakes — and recording
 anything confusing, misleading, broken or annoying. That QA is worth doing now precisely because the
@@ -848,6 +923,15 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology word parts — 2026-09-26 — LOCAL COMMIT
+
+Snapshot of what the authoritative region said before this sync, as it was replaced: global
+published lessons 23 (12 DECA, 10 General Debate, 1 HOSA); catalog-set counts 21 authored / 9
+published / 12 held / 12 registry lessons (already stale since DECA P1); REGISTERED 45; next action
+OWNER BEGINNER QA. `hosa-medical-terminology-basics` was a held catalog draft, not learner-visible.
+The HOSA Learn stage was informational and pointed at `/lessons/how-hosa-scenario-interaction-works`,
+and HOSA Event HQ carried a "Skills & lessons" row to `/skills?track=hosa`.
 
 ## B2 — curriculum closure of the held concepts (IN PROGRESS)
 

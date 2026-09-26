@@ -2748,39 +2748,564 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       )
     }
   },
+  // ---- HOSA MEDICAL TERMINOLOGY: WORD PARTS ------------------------------------------------------
+  //
+  // Branch A of the approved HOSA curriculum (docs/curriculum/03-hosa-course.md §3A, knowledge-test
+  // events), for the one knowledge-test event CompeteReady routes today. Four lessons in the order a
+  // beginner needs them: how a term is built, then roots, suffixes and prefixes.
+  //
+  // CONSISTENT WITH THE PRACTICE BANK. Every part meaning taught here is the meaning the Medical
+  // Terminology bank (lib/hosa-medterm.ts) keys, so a learner is never taught one gloss here and
+  // marked wrong for it there. The checks are original CompeteReady teaching items, deliberately NOT
+  // copies of bank items, and the worked examples say so in the learner's own view.
+  //
+  // NO OFFICIAL CLAIMS. Nothing here states a HOSA rule, test format, timing, weighting or score. Those
+  // belong to the event's current guideline, which the Event HQ attributes; a stable-teaching lesson
+  // is never a rules source (docs/curriculum/00-principles-and-sources.md).
+  //
+  // AUTHORING RECORD. The first entry replaces a thin held draft under the same slug. All four were
+  // AI-drafted in a Claude Code session on 2026-09-26 and have NOT yet had a human content review, so
+  // their provenance label reads "AI-generated CompeteReady lesson — not yet reviewed by a person"
+  // (set in the education registry's HOSA track file). Record a review or an owner waiver here before
+  // changing that label.
   {
     organization: "HOSA",
     track: "HOSA",
-    name: "Medical Terminology Basics",
+    name: "Medical Terminology",
     slug: "hosa-medical-terminology-basics",
-    description: "Break clinical words into roots, prefixes, and suffixes.",
+    description: "Split a medical term into its parts and read its meaning from them.",
     category: "Health science",
     order: 1,
     lesson: {
-      title: "Decode medical terms",
+      title: "How Medical Words Are Built",
       slug: "hosa-medical-terminology-basics-lesson",
-      summary: "Use word parts to understand unfamiliar health terms.",
-      estimatedMinutes: 7,
+      summary: "Split an unfamiliar medical term into prefix, root and suffix, and read its meaning from the parts.",
+      estimatedMinutes: 8,
       content: lesson(
-        "Break medical terms into word parts and explain them accurately.",
-        "Many medical terms are built from prefixes, roots, and suffixes. If you can identify parts, you can understand unfamiliar terms more safely.",
-        "HOSA events reward accurate health science language. Terminology also helps you communicate clearly with patients and judges.",
-        ["Find the prefix.", "Find the root.", "Find the suffix.", "Put the meaning together and check context."],
-        {
-          prompt: "Tachycardia",
-          weakAnswer: "A heart problem.",
-          strongAnswer: "Tachy means fast and cardia relates to the heart, so tachycardia means a fast heart rate.",
-          whyItWorks: "The strong answer uses word parts and avoids vague guessing."
-        },
-        q("In tachycardia, what does tachy mean?", ["Fast", "Slow", "Lung", "Skin"], "Fast", "Think of tachometer: speed.", "Tachy means fast.", "Medical terminology"),
+        "Split a medical term into its parts, say what each part means, and put the meaning back together in the right order.",
+        "Most medical terms are built from a small set of reusable parts. Learn the parts and how they fit together, and you can read a term you have never seen before.\n\nThere are three kinds of part. The word root carries the core meaning and usually names a body part or a substance: cardi means heart, gastr means stomach, arthr means joint. The suffix is the ending, and it usually says what is going on: -itis means inflammation and -ectomy means surgical removal. A prefix, when there is one, sits at the front and adds detail such as where, when, how many or how fast: peri- means around and brady- means slow.\n\nMost terms have at least one root and end in a suffix, and many have no prefix at all. Arthritis is just arthr (joint) plus -itis (inflammation): inflammation of a joint. A few terms are a prefix and a suffix with no separate root, like anemia: an- (without) plus -emia (a blood condition). Read literally that is “without blood”; the real meaning is a shortage of red blood cells or hemoglobin, so the parts are a clue, not the whole definition.",
+        "Nobody memorises every medical term. People who read terms well know the parts and how they fit, so a new word becomes something to work out rather than a blank. The same skill carries into textbooks, health-care conversations and any terminology question you have not seen before.",
         [
-          q("What does cardi relate to?", ["Heart", "Liver", "Bone", "Skin"], "Heart", "Cardiology studies the heart.", "Cardi/cardio refers to the heart.", "Medical terminology"),
-          q("Why use word parts?", ["To infer meaning safely", "To diagnose without context", "To avoid communication", "To skip definitions"], "To infer meaning safely", "Word parts are clues, not the whole clinical picture.", "Word parts help decode terms while still respecting context.", "Medical terminology"),
-          q("Which is most precise?", ["Tachycardia means fast heart rate", "Tachycardia is bad stuff", "Tachycardia is always fatal", "Tachycardia means slow breathing"], "Tachycardia means fast heart rate", "Avoid exaggeration.", "This answer is accurate and appropriately limited.", "Medical accuracy")
+          "Find the suffix at the end of the term and say what it means.",
+          "Look at the front for a prefix. Many terms do not have one.",
+          "Find the root or roots in between, and set aside any combining vowel.",
+          "Build the meaning: start with the suffix, then read the rest from the front.",
+          "Check that the meaning makes sense where the term appears."
+        ],
+        {
+          prompt: "You meet the term gastroenteritis and have never seen it before. What does it mean? (Our example, not an official test question.)",
+          weakAnswer: "Something to do with the stomach. I recognise gastr, so it’s probably a stomach illness.",
+          strongAnswer: "Split it: gastr/o + enter/o + -itis. Start with the suffix: -itis is inflammation. Then read from the front: gastr is the stomach and enter is the small intestine. So gastroenteritis is inflammation of the stomach and small intestine.",
+          whyItWorks: "The weak answer stops at the first part it recognises, so it loses half the meaning, including the suffix, which is the part that says what is happening. The strong answer names every part and starts the meaning from the suffix, which is how the definition reads in English."
+        },
+        q(
+          "Which part of a medical term tells you what is happening, such as inflammation or removal?",
+          ["The prefix", "The word root", "The suffix", "The combining vowel"],
+          "The suffix",
+          "Compare the endings of arthritis and appendectomy.",
+          "The suffix names what is happening: -itis is inflammation and -ectomy is surgical removal. The root says where it is happening, a prefix adds detail such as position or timing, and the combining vowel only joins parts together.",
+          "Word structure"
+        ),
+        [
+          q(
+            "How does cardiomegaly split into its parts?",
+            ["cardi/o + -megaly", "car- + di/o + -megaly", "cardiom- + -egaly", "cardiomeg- + -aly"],
+            "cardi/o + -megaly",
+            "The root is the part that means heart.",
+            "Cardi/o is the combining form for heart: the root cardi plus the combining vowel o. -megaly means enlargement, so cardiomegaly is an enlarged heart. The other splits cut through the middle of a part, which leaves pieces that mean nothing.",
+            "Word structure"
+          ),
+          q(
+            "The root gastr joins the suffix -itis. How is the term spelled, and why?",
+            [
+              "Gastroitis, because a combining vowel is always kept",
+              "Gastritis, because gastr never takes a combining vowel",
+              "Gastritis, because the vowel drops before a vowel",
+              "Gastroitis, because -itis needs a vowel in front of it"
+            ],
+            "Gastritis, because the vowel drops before a vowel",
+            "Look at the first letter of the suffix.",
+            "Before a suffix that starts with a vowel, the combining vowel drops: gastr + -itis gives gastritis. Gastr does take a combining vowel elsewhere, as in gastroscopy, where the suffix -scopy starts with a consonant. The reason matters as much as the spelling, because the rule is what you use on the next term.",
+            "Combining vowels"
+          ),
+          q(
+            "Why does gastroenteritis keep the o after gastr, even though enter starts with a vowel?",
+            [
+              "The o is part of the root, which is spelled gastro",
+              "A combining vowel stays between two roots",
+              "Enter always takes an o in front of it",
+              "The o stands for “and”, joining the two organs"
+            ],
+            "A combining vowel stays between two roots",
+            "What comes right after the o: a suffix or another root?",
+            "Between two roots the combining vowel stays, whatever letter the next root starts with. It drops only before a suffix that starts with a vowel. The o is not part of the root gastr, and it carries no meaning such as “and”.",
+            "Combining vowels"
+          ),
+          q(
+            "Reading the suffix first, what does hepatomegaly mean?",
+            ["Inflammation of the liver", "Removal of part of the liver", "Enlargement of the liver", "Pain in the liver"],
+            "Enlargement of the liver",
+            "Hepat/o is the liver. What does -megaly add?",
+            "Start with the suffix: -megaly is enlargement. Then the root: hepat is the liver. Enlargement of the liver. Inflammation would be -itis, removal -ectomy, and pain -algia.",
+            "Reading order"
+          )
         ],
         [
-          q("What does hypo usually mean?", ["Low or under", "High", "Heart", "Bone"], "Low or under", "Hypo means below.", "Hypo often means low, under, or deficient.", "Medical terminology")
-        ]
+          q(
+            "A student decodes pericarditis as “inflammation around the heart”. What should they do with that meaning?",
+            [
+              "Stop there, because the parts give the full definition",
+              "Use it as a clue and confirm it against the context",
+              "Replace it with a guess based on how the word sounds",
+              "Drop the prefix, because the root and suffix are enough"
+            ],
+            "Use it as a clue and confirm it against the context",
+            "Is a literal meaning always the whole definition?",
+            "Decoding gets you close, and the context confirms the exact meaning: pericarditis is inflammation of the pericardium, the sac around the heart. Stopping at the literal meaning can miss that. Dropping the prefix would lose “around”, which is what points to the sac rather than the heart itself.",
+            "Using context"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "The combining vowel",
+              body: "Parts are often joined by a combining vowel, usually o, to make the term easier to say. A root with its combining vowel attached, like cardi/o, is called a combining form. The vowel adds no meaning of its own.\n\nThree rules decide whether it appears. Keep it before a suffix that starts with a consonant: cardi/o + -megaly gives cardiomegaly, an enlarged heart. Drop it before a suffix that starts with a vowel: arthr/o + -itis gives arthritis, not arthroitis. Keep it between two roots, even when the second root starts with a vowel: gastr/o + enter/o + -itis gives gastroenteritis."
+            },
+            {
+              heading: "Read the suffix first",
+              body: "The English meaning of a term usually starts with its suffix. Read the suffix first, then go back to the start of the word and read the rest from left to right.\n\nPericarditis: -itis (inflammation), then peri- (around), then cardi (heart). Inflammation around the heart. Gastroscopy: -scopy (visual examination), then gastr (stomach). A visual examination of the stomach."
+            }
+          ],
+          misconception: {
+            wrongModel: "If I know every part, I know exactly what the term means.",
+            whyItFails: "Parts give you a literal meaning, and the real definition is often narrower. Pericarditis decodes to inflammation around the heart, but it names one specific structure: the pericardium, the sac around the heart. A few parts also carry two meanings, and only the context can say which one is meant.",
+            betterModel: "Use the parts to get close, then confirm the meaning against the context. Decoding is the strongest clue you have, not the final word."
+          },
+          commonMistakes: [
+            {
+              mistake: "Stopping at the first part you recognise.",
+              whyItFails: "Gastroenteritis is not just a stomach problem. The part you skipped, enter/o, is half of what the term says.",
+              fix: "Mark every part before you define any of them."
+            },
+            {
+              mistake: "Giving the combining vowel a meaning.",
+              whyItFails: "The o in cardiomegaly only joins cardi to -megaly. Treating it as a part sends you looking for a meaning that is not there.",
+              fix: "Set the combining vowel aside, then define what is left."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-medical-word-roots",
+    description: "Recognise common word roots and the body parts and substances they name.",
+    category: "Health science",
+    order: 4,
+    lesson: {
+      title: "Word Roots: What the Term Is About",
+      slug: "hosa-medical-word-roots-lesson",
+      summary: "Learn common roots for body parts and substances, grouped by body system, and tell apart the ones that look alike.",
+      estimatedMinutes: 8,
+      content: lesson(
+        "Recognise common word roots and combining forms, name the body part or substance each one refers to, and tell apart roots that look alike.",
+        "The word root is the core of a medical term. It tells you what the term is about: which organ, tissue or substance. Most roots come from Greek or Latin, which is why they rarely look like the everyday English word. Nephr means kidney. Hepat means liver.\n\nYou will usually see a root written as a combining form, the root plus its combining vowel: nephr/o, hepat/o, oste/o. The slash shows where the root ends and the vowel begins.\n\nRoots are easier to learn in groups than one at a time. Group them by body system, and learn each one with a real word you can picture, such as dermatology for dermat/o, skin.",
+        "The root tells you which part of the body a term is about. If you get it wrong, every other part of your answer is attached to the wrong organ.",
+        [
+          "Find where the root ends. A combining vowel or the start of the suffix usually marks it.",
+          "Read the whole root, not just its first two or three letters.",
+          "Name the body part or substance it refers to.",
+          "If it looks like another root, check the spelling letter by letter before you decide."
+        ],
+        {
+          prompt: "Two terms appear on the same page: cystitis and cytology. What does each one mean? (Our example, not an official test question.)",
+          weakAnswer: "Both are about cysts. Cystitis is an inflamed cyst, and cytology is the study of cysts.",
+          strongAnswer: "They use different roots. Cyst/o means the bladder or a fluid-filled sac, so cystitis is inflammation of the bladder. Cyt/o means cell, so cytology is the study of cells.",
+          whyItWorks: "The weak answer reads both terms by their first few letters. The strong answer checks the exact spelling of each root before giving it a meaning, which is the only way to tell cyst/o from cyt/o."
+        },
+        q(
+          "Nephrology is the study of which organ?",
+          ["The liver", "The kidneys", "The nerves", "The lungs"],
+          "The kidneys",
+          "Find the root in front of the combining vowel.",
+          "Nephr/o means kidney, so nephrology is the study of the kidneys. The liver is hepat/o, a nerve is neur/o, and the lungs are pulmon/o or pneum/o.",
+          "Word roots"
+        ),
+        [
+          q(
+            "A cystoscopy looks inside which structure?",
+            ["A single cell", "The skull", "A blood vessel", "The bladder"],
+            "The bladder",
+            "Check the spelling of the root: cyst/o or cyt/o?",
+            "Cyst/o means the bladder or a sac, and -scopy is a visual examination, so a cystoscopy looks inside the bladder. Cyt/o, one letter shorter, means cell. The skull is crani/o and a vessel is angi/o.",
+            "Look-alike roots"
+          ),
+          q(
+            "Enteritis is inflammation of which part of the digestive tract?",
+            ["The stomach", "The large intestine", "The small intestine", "The liver"],
+            "The small intestine",
+            "Enter/o names one specific part of the intestine.",
+            "Enter/o is the small intestine specifically. The large intestine, or colon, is col/o, the stomach is gastr/o, and the liver is hepat/o.",
+            "Word roots"
+          ),
+          q(
+            "Which combining form would you expect in a term about the ribs?",
+            ["cost/o", "crani/o", "oste/o", "cyst/o"],
+            "cost/o",
+            "The general root for bone is too broad here.",
+            "Cost/o means rib, as in intercostal, between the ribs. Crani/o is the skull, oste/o is bone in general, and cyst/o is the bladder or a sac.",
+            "Word roots"
+          ),
+          q(
+            "Pneumonia and pulmonary both refer to which organ?",
+            ["The heart", "The nose", "The lungs", "The liver"],
+            "The lungs",
+            "An organ can have a Greek root and a Latin one.",
+            "Pneum/o and pulmon/o are two roots for the lungs, one Greek and one Latin; pneum/o can also mean air. The heart is cardi/o, the nose is rhin/o, and the liver is hepat/o.",
+            "Word roots"
+          )
+        ],
+        [
+          q(
+            "What does a lipectomy remove?",
+            ["Part of the lips", "Fatty tissue", "A gland", "Part of the liver"],
+            "Fatty tissue",
+            "Lip/o does not mean what it looks like.",
+            "A lipectomy removes fatty tissue: lip/o means fat and -ectomy means surgical removal. The lips have their own root, labi/o. A gland is aden/o and the liver is hepat/o.",
+            "Look-alike roots"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Common roots by body system",
+              body: "Heart and blood: cardi/o (heart), angi/o (vessel), phleb/o (vein), hem/o or hemat/o (blood).\n\nBreathing: pulmon/o (lung), pneum/o (lung or air), rhin/o (nose).\n\nDigestion: gastr/o (stomach), enter/o (small intestine), col/o (large intestine, the colon), hepat/o (liver).\n\nBones, joints and muscles: oste/o (bone), arthr/o (joint), my/o (muscle), cost/o (rib), crani/o (skull).\n\nNerves and senses: neur/o (nerve), cerebr/o (the cerebrum, the largest part of the brain), myel/o (spinal cord or bone marrow), ophthalm/o (eye), ot/o (ear).\n\nKidneys and bladder: nephr/o (kidney), cyst/o (bladder or sac).\n\nTissues and substances: derm/o or dermat/o (skin), hist/o (tissue), cyt/o (cell), aden/o (gland), lip/o (fat), hydr/o (water)."
+            },
+            {
+              heading: "Roots that look alike",
+              body: "Some roots look or sound alike and mean completely different things. Slow down on these.\n\ncyst/o is the bladder or a sac, but cyt/o is a cell. my/o is muscle, but myel/o is the spinal cord or bone marrow. hist/o is tissue, hyster/o is the uterus, and hydr/o is water.\n\nOne more trap: lip/o means fat. It has nothing to do with the lips, which have their own root, labi/o."
+            },
+            {
+              heading: "One organ, two roots",
+              body: "Some organs have two roots, one from Greek and one from Latin, and you will meet both. pulmon/o and pneum/o both refer to the lungs, as in pulmonary and pneumonia, and pneum/o can also mean air.\n\nThe reverse happens too. myel/o names two different things, the spinal cord and the bone marrow, and only the rest of the term or its context tells you which."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Enteritis and colitis both describe inflammation of the intestine. What is the difference?",
+              strong: "Enter/o is the small intestine and col/o is the large intestine, so enteritis is inflammation of the small intestine and colitis is inflammation of the colon.",
+              explanation: "Both end in -itis, so the suffix cannot tell them apart. The root carries the whole difference."
+            },
+            {
+              setup: "A term contains myel/o. Is it about muscle?",
+              weak: "Yes. My/o means muscle, and myel/o starts with my.",
+              strong: "No. Myel/o is a separate root meaning the spinal cord or the bone marrow, and the rest of the term decides which.",
+              explanation: "My/o and myel/o share their first two letters and nothing else. Read the whole root before you give it a meaning."
+            }
+          ],
+          misconception: {
+            wrongModel: "A root means whatever everyday word it looks like.",
+            whyItFails: "Roots come from Greek and Latin, not everyday English. Lip/o means fat, not lips, and a guess based on resemblance can send you to the wrong meaning.",
+            betterModel: "Treat each root as a new word with its own meaning, and learn it with a real term you can picture: lip/o with liposuction, which removes fat."
+          },
+          commonMistakes: [
+            {
+              mistake: "Deciding on a root from its first few letters.",
+              whyItFails: "Cyst/o and cyt/o, my/o and myel/o, and hist/o and hyster/o look or sound alike and mean different things.",
+              fix: "Find where the root ends, at the combining vowel or the suffix, and read all of it."
+            },
+            {
+              mistake: "Assuming two roots must mean two different organs.",
+              whyItFails: "Pulmon/o and pneum/o both refer to the lungs. Many organs have a Greek root and a Latin one.",
+              fix: "When two roots seem to name the same organ, learn them as a pair."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-medical-suffixes",
+    description: "Use a term’s ending to tell a condition from a procedure or a field, and give its meaning.",
+    category: "Health science",
+    order: 5,
+    lesson: {
+      title: "Suffixes: What Is Happening",
+      slug: "hosa-medical-suffixes-lesson",
+      summary: "Read a term’s ending to tell whether it names a condition, a procedure or test, or a field of study.",
+      estimatedMinutes: 8,
+      content: lesson(
+        "Use a term’s suffix to say whether it names a condition, a procedure or test, or a field or specialist, and give the suffix’s exact meaning.",
+        "The suffix is the ending of a medical term, and it is the place to start reading. It tells you what kind of word you are looking at before you know anything else about it.\n\nMany suffixes fall into three groups. Some name a condition: -itis is inflammation and -megaly is enlargement. Some name a procedure or a test: -ectomy is surgical removal and -scopy is a visual examination with a scope. And some name a field or the person who works in it: -ology is the study of something, and -logist is the specialist. A fourth, simpler kind only turns the term into a describing word: -al, -ar, -ary, -ic and -ous all mean “pertaining to”, as in intravenous (within a vein) and pulmonary (of the lungs).\n\nSo even before you know what gastr/o means, gastrectomy tells you it is an operation that removes something.",
+        "The suffix can change a term’s meaning completely. Gastritis is an illness and gastrectomy is an operation, and only the ending tells them apart.",
+        [
+          "Read the whole ending, not just its last few letters.",
+          "Decide what kind of word it is: a condition, a procedure or test, a field or specialist, or a describing word.",
+          "Give the suffix’s exact meaning.",
+          "Attach it to the root: the suffix says what is happening, and the root says where."
+        ],
+        {
+          prompt: "A practice question asks how a colectomy differs from a colostomy. (Our example, not an official test question.)",
+          weakAnswer: "They’re the same operation on the colon. Both end in -tomy, so both mean cutting.",
+          strongAnswer: "They share the root col/o, the colon, so the suffix decides. -ectomy is surgical removal, so a colectomy removes all or part of the colon. -ostomy is the surgical creation of an opening, so a colostomy makes an opening from the colon to the outside of the body.",
+          whyItWorks: "The weak answer reads only the last four letters. The strong answer reads the whole suffix, because -ectomy, -otomy and -ostomy differ by a letter or two and name three different operations."
+        },
+        q(
+          "What kind of word is appendectomy?",
+          ["A condition", "A procedure", "A specialist", "A field of study"],
+          "A procedure",
+          "What does the ending -ectomy describe?",
+          "-ectomy means surgical removal, so an appendectomy is a procedure: the appendix is removed. A condition would end in something like -itis or -osis, a specialist in -logist, and a field of study in -ology.",
+          "Suffix types"
+        ),
+        [
+          q(
+            "Which suffix would you expect in the name of an operation that removes an organ?",
+            ["-ectomy", "-otomy", "-ostomy", "-scopy"],
+            "-ectomy",
+            "Removal, incision and opening are three different endings.",
+            "-ectomy is surgical removal. -otomy cuts into a structure without removing it, -ostomy creates an opening, and -scopy is looking inside with a scope.",
+            "Procedure suffixes"
+          ),
+          q(
+            "Which term names the specialist rather than the field?",
+            ["Dermatology", "Neurology", "Nephrology", "Cardiologist"],
+            "Cardiologist",
+            "Compare the endings -ology and -logist.",
+            "-logist names the person who specializes in a field, so a cardiologist is a heart specialist. The other three end in -ology, which names the field of study itself.",
+            "Suffix types"
+          ),
+          q(
+            "Which term names the image itself, not the process of making it?",
+            ["Electrocardiography", "Angiogram", "Radiography", "Mammography"],
+            "Angiogram",
+            "Process or result: -graphy or -gram?",
+            "-gram is the record or image produced, so an angiogram is the image of the blood vessels. The other three end in -graphy, the process of recording.",
+            "Procedure suffixes"
+          ),
+          q(
+            "Osteomalacia and arteriosclerosis describe opposite changes. Which is which?",
+            [
+              "Osteomalacia is softening of bone; arteriosclerosis is hardening of the arteries",
+              "Osteomalacia is hardening of bone; arteriosclerosis is softening of the arteries",
+              "Both describe hardening, in two different tissues",
+              "Both describe softening, in two different tissues"
+            ],
+            "Osteomalacia is softening of bone; arteriosclerosis is hardening of the arteries",
+            "-malacia and -sclerosis are opposites.",
+            "-malacia means softening, so osteomalacia is softening of bone. -sclerosis means hardening, so arteriosclerosis is hardening of the arteries. The roots, oste/o and arteri/o, say where; the suffixes say what.",
+            "Condition suffixes"
+          )
+        ],
+        [
+          q(
+            "What is a rhinoplasty?",
+            ["Inflammation inside the nose", "Repair or reshaping of the nose", "A visual examination of the nose", "Surgical removal of part of the nose"],
+            "Repair or reshaping of the nose",
+            "Rhin/o is the nose. What does -plasty do to it?",
+            "A rhinoplasty repairs or reshapes the nose: -plasty means surgical repair or reshaping. Inflammation would be -itis, a visual examination -scopy, and removal -ectomy.",
+            "Procedure suffixes"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Conditions",
+              body: "-itis means inflammation (arthritis). -osis means an abnormal condition (dermatosis). -pathy means disease (neuropathy). -algia means pain (myalgia, muscle pain).\n\n-megaly means enlargement (cardiomegaly). -emia means a blood condition (anemia). -oma means a tumor or mass (lipoma, a fatty mass). -malacia means softening (osteomalacia). -sclerosis means hardening (arteriosclerosis)."
+            },
+            {
+              heading: "Procedures and tests",
+              body: "-ectomy means surgical removal (appendectomy). -otomy means cutting into, an incision (tracheotomy). -ostomy means surgically creating an opening (colostomy). -plasty means surgical repair or reshaping (rhinoplasty).\n\n-scopy means a visual examination with a scope (gastroscopy). -graphy means the process of recording (radiography), and -gram means the record or image it produces (electrocardiogram)."
+            },
+            {
+              heading: "Fields and people",
+              body: "-ology means the study of a subject (cardiology, the study of the heart), and -logist means the specialist in it (cardiologist). You may also see the ending written -logy, with the o counted as a combining vowel. The meaning is the same."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Cardiology and cardiologist.",
+              strong: "Cardiology is the field: the study of the heart. A cardiologist is the specialist who works in it.",
+              explanation: "-ology names the field and -logist names the person. The root is the same in both."
+            },
+            {
+              setup: "Neuralgia and neuropathy both involve the nerves. How do they differ?",
+              strong: "-algia means pain, so neuralgia is nerve pain. -pathy means disease, so neuropathy is disease of the nerves.",
+              explanation: "Same root, different suffix, different meaning."
+            },
+            {
+              setup: "Electrocardiography and an electrocardiogram.",
+              strong: "Electrocardiography is the process of recording the heart’s electrical activity. The electrocardiogram is the record that process produces.",
+              explanation: "-graphy is the process and -gram is the result, so a question can ask for either one."
+            }
+          ],
+          misconception: {
+            wrongModel: "The root is the important part; the suffix is just the ending.",
+            whyItFails: "Gastritis, gastrectomy and gastroscopy share one root and describe three different things: an illness, an operation and an examination. Only the suffix tells them apart.",
+            betterModel: "Read the suffix first. It tells you what kind of word you have, and the root tells you where it applies."
+          },
+          commonMistakes: [
+            {
+              mistake: "Mixing up -ectomy, -otomy and -ostomy.",
+              whyItFails: "They differ by a letter or two, and they mean removing a part, cutting into it, and creating an opening.",
+              fix: "Anchor each one to its origin: the ec in -ectomy means out, so the part comes out; -ostomy comes from stoma, an opening; and -otomy means an incision, where the part is cut into, not cut out."
+            },
+            {
+              mistake: "Treating -graphy and -gram as the same.",
+              whyItFails: "One is the process and the other is the record it produces, and a question can ask for either.",
+              fix: "-graphy is making it; -gram is what you get."
+            },
+            {
+              mistake: "Calling every condition an inflammation.",
+              whyItFails: "Only -itis means inflammation. -osis is an abnormal condition, -pathy is disease and -megaly is enlargement.",
+              fix: "Say “inflammation” only when the term ends in -itis."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-medical-prefixes",
+    description: "Read what a prefix adds to a term, and tell apart prefixes that look alike or mean opposite things.",
+    category: "Health science",
+    order: 6,
+    lesson: {
+      title: "Prefixes: Where, When and How Much",
+      slug: "hosa-medical-prefixes-lesson",
+      summary: "Read the front of a term for position, time, number, speed and amount, then put all three kinds of part together.",
+      estimatedMinutes: 8,
+      content: lesson(
+        "Say what a prefix adds to a term’s meaning, tell apart prefixes that look alike or mean opposite things, and decode a term that uses all three kinds of part.",
+        "A prefix sits at the front of a term and changes its meaning without changing what the term is about. Tachycardia is tachy- (fast) + cardi (heart) + -ia (a condition): a fast heart rate. Swap the prefix for brady-, which means slow, and you get bradycardia, a slow heart rate. The heart stays the heart.\n\nNot every term has a prefix, so check before you look for one. When there is one, it usually answers one of a few questions: where, when, how many, how fast or how much.",
+        "Prefixes often decide between answers that look almost the same. A slow heart rate and a fast one differ only in brady- and tachy-, and intra- (within) and inter- (between) look almost identical on the page.",
+        [
+          "Check whether the term starts with a prefix. Many do not.",
+          "Decide what the prefix adds: where, when, how many, how fast or how much.",
+          "If the prefix has an opposite or a look-alike, make sure you have the right one.",
+          "Put it together with the root and suffix, starting from the suffix."
+        ],
+        {
+          prompt: "Intravenous and intercostal both begin with int-. What does each one mean? (Our example, not an official test question.)",
+          weakAnswer: "Both mean inside. An intravenous line goes inside a vein, and intercostal muscles are inside the ribs.",
+          strongAnswer: "They use different prefixes. Intra- means within, so intravenous means within a vein. Inter- means between, so intercostal means between the ribs, which is where those muscles sit.",
+          whyItWorks: "The weak answer stops at the three letters the prefixes share. The strong answer reads the whole prefix and then checks it against the root: a muscle can sit between ribs, but not inside one."
+        },
+        q(
+          "What does the prefix in bradycardia tell you?",
+          ["The heart is enlarged", "The heart rate is slow", "The heart is inflamed", "The heart rate is fast"],
+          "The heart rate is slow",
+          "Brady- is the opposite of tachy-.",
+          "Brady- means slow, so bradycardia is a slow heart rate; tachy- would make it fast. Enlargement and inflammation come from suffixes, -megaly and -itis, not from a prefix.",
+          "Prefixes"
+        ),
+        [
+          q(
+            "Where is something that is subcutaneous?",
+            ["On top of the skin", "Between two layers of muscle", "Below the skin", "Across the skin"],
+            "Below the skin",
+            "Sub- is a position prefix. Think about where it puts something.",
+            "Sub- means under or below, and cutane refers to the skin, so subcutaneous means below the skin. Epi- would mean upon, inter- between, and trans- across or through.",
+            "Position prefixes"
+          ),
+          q(
+            "Which term means “outside the cell”?",
+            ["Intracellular", "Intercellular", "Pericellular", "Extracellular"],
+            "Extracellular",
+            "Four position prefixes, one root. Which prefix means outside?",
+            "Extra- means outside, so extracellular means outside the cell. Intra- means within, inter- between and peri- around.",
+            "Position prefixes"
+          ),
+          q(
+            "Polyuria describes urine that is:",
+            ["Produced in large amounts", "Not produced at all", "Painful or difficult to pass", "Tinged with blood"],
+            "Produced in large amounts",
+            "Poly- is a number prefix.",
+            "Poly- means many or much, and -uria is a urine condition, so polyuria is urine produced in large amounts. No urine at all would take an- (anuria), and painful urination would take dys- (dysuria). Hematuria is blood in the urine: hemat/o means blood.",
+            "Number prefixes"
+          ),
+          q(
+            "A patient has difficulty swallowing. Which prefix would you expect in the term for this?",
+            ["a-", "hyper-", "dys-", "brady-"],
+            "dys-",
+            "Difficulty is not the same as absence.",
+            "Dys- means difficult or painful, so difficulty swallowing is dysphagia. A- means without, which would describe being unable to swallow at all. Hyper- means above normal and brady- means slow.",
+            "Prefixes"
+          )
+        ],
+        [
+          q(
+            "Put all three kinds of part together. What does polyneuropathy mean?",
+            ["Pain in one nerve", "Inflammation of the brain", "Disease of many nerves", "Surgical removal of several nerves"],
+            "Disease of many nerves",
+            "Start with the suffix, then read from the front.",
+            "Start at the end: -pathy is disease. Then read from the front: poly- is many and neur/o is nerve. Disease of many nerves. Pain would be -algia, inflammation -itis, and removal -ectomy.",
+            "Putting parts together"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Where: position",
+              body: "sub- means under or below (subcutaneous, below the skin). epi- means upon or over (epidermis, the outer layer of the skin). intra- means within (intravenous, within a vein). inter- means between (intercostal, between the ribs).\n\nperi- means around (pericardium, the sac around the heart). trans- means across or through (transdermal, through the skin). extra- means outside (extracellular, outside the cell)."
+            },
+            {
+              heading: "When, how many and how fast",
+              body: "pre- means before and post- means after (preoperative, postoperative).\n\nmono- means one, bi- two, tri- three and poly- many (bilateral, affecting both sides; polyuria, producing too much urine). hemi- means half (hemiplegia, paralysis of one side of the body).\n\nbrady- means slow and tachy- means fast (bradycardia, tachycardia)."
+            },
+            {
+              heading: "How much, and how well",
+              body: "hyper- means above normal or excessive, and hypo- means below normal or deficient (hypertension, high blood pressure; hypoglycemia, low blood sugar).\n\na- or an- means without (apnea, a pause in breathing). dys- means difficult or painful (dysphagia, difficulty swallowing). mal- means bad or abnormal (malformation)."
+            },
+            {
+              heading: "Pairs to keep apart",
+              body: "Some prefixes look alike: intra- (within) and inter- (between). Others are opposites that are easy to swap: hyper- and hypo-, brady- and tachy-, pre- and post-, and ad- (toward) and ab- (away from). Learn these as pairs, so that knowing one tells you the other."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Hypertension and hypotension.",
+              strong: "Hyper- means above normal and hypo- means below normal, so hypertension is high blood pressure and hypotension is low blood pressure.",
+              explanation: "They are opposites, and the only difference is the prefix. This pair is worth slowing down for."
+            },
+            {
+              setup: "Apnea.",
+              strong: "A- means without, and -pnea means breathing, so apnea is a period without breathing.",
+              explanation: "A one-letter prefix is easy to miss. When a term starts with a or an followed by a part you recognise, test whether it means “without”."
+            },
+            {
+              setup: "Preoperative and postoperative instructions.",
+              strong: "Pre- means before and post- means after, so preoperative instructions are for before surgery and postoperative ones are for after it.",
+              explanation: "The root is the same in both. The prefix alone moves the instructions to the other side of the surgery."
+            }
+          ],
+          misconception: {
+            wrongModel: "Every medical term starts with a prefix.",
+            whyItFails: "Many terms start with their root: gastritis, cardiology and nephrectomy have no prefix at all. Hunting for one makes you split a root in half.",
+            betterModel: "Check whether the first letters match a prefix you know and whether what is left is a real root. If not, the term starts with its root."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping intra- and inter-.",
+              whyItFails: "Within and between are different places. An intravenous injection goes into a vein; the intercostal space is between two ribs.",
+              fix: "Say the pair together: intra, within; inter, between."
+            },
+            {
+              mistake: "Flipping an opposite pair.",
+              whyItFails: "Hyper- and hypo-, and ad- and ab-, differ by a letter or two, and brady- and tachy- are easy to swap under pressure. Each pair means the reverse of the other, so one slip reverses the answer.",
+              fix: "Learn one anchor term for each pair: hypertension is high blood pressure, and bradycardia is a slow heart rate."
+            }
+          ]
+        }
       )
     }
   },

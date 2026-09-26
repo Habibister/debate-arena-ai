@@ -15,7 +15,9 @@
 //                                                                -> lib/learning-content.ts
 //
 // None of those three legacy modules imports anything from `lib/education/`, so there is no cycle,
-// and none of them was modified to make this work.
+// and none of them was modified to make this work. `tracks/deca.ts` (P1-B1) and `tracks/hosa.ts`
+// (HOSA Medical Terminology word parts) sit beside `tracks/debate.ts` in that chain and follow the
+// same by-reference rule.
 //
 // `app/(app)/lessons/**` consumes the helpers below for MIGRATED lessons only (M13E1B). The three
 // pre-existing lessons still resolve through `getLesson` / `getRoleplayLesson`, ahead of this
@@ -28,6 +30,7 @@ import { getRoleplayLesson, type RoleplayLesson } from "@/lib/roleplay-lessons";
 import { EDUCATION_SLUG_ALIASES } from "@/lib/education/slug-map";
 import { DEBATE_ORIENTATION_LESSON, DEBATE_EVIDENCE_LESSON, DEBATE_ANSWER_TYPES_LESSON, DEBATE_TURN_MECHANICS_LESSON, DEBATE_MIGRATED_LESSONS } from "@/lib/education/tracks/debate";
 import { DECA_PUBLISHED_LESSONS } from "@/lib/education/tracks/deca";
+import { HOSA_PUBLISHED_LESSONS } from "@/lib/education/tracks/hosa";
 import type {
   EducationCourse,
   EducationModule,
@@ -94,6 +97,17 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     track: "DECA",
     label: "DECA Business-Content Course",
     moduleIds: ["deca-customer-service", "deca-marketing-basics"]
+  },
+  {
+    // Branch A of the approved HOSA curriculum (docs/curriculum/03-hosa-course.md §3A), for the one
+    // knowledge-test event CompeteReady routes: Medical Terminology. FIRST among the HOSA courses
+    // because it is the one with a live practice room behind it, so it is where a HOSA beginner
+    // starts. Created no larger than its one module needs; the anatomy, physiology and disease areas
+    // the practice room also asks about are not taught yet and get no empty module here.
+    id: "hosa-medterm-study",
+    track: "HOSA",
+    label: "HOSA Medical Terminology Study (Branch A)",
+    moduleIds: ["hosa-medterm-word-parts"]
   },
   {
     id: "hosa-clinical-skill-communication",
@@ -174,6 +188,17 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     prerequisiteId: null
   },
   {
+    // The word-part foundation: how a term is built, then roots, suffixes and prefixes. Its outcome is
+    // the transferable skill, not a list of terms, because the practice room asks about terms no
+    // lesson can list in advance.
+    id: "hosa-medterm-word-parts",
+    courseId: "hosa-medterm-study",
+    track: "HOSA",
+    label: "Medical word parts",
+    outcome: "Decode an unfamiliar medical term from its prefix, word root and suffix, and check the result against context.",
+    prerequisiteId: null
+  },
+  {
     id: "hosa-communication-layer",
     courseId: "hosa-clinical-skill-communication",
     track: "HOSA",
@@ -249,6 +274,10 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // owner; P1-B2 added the business-reasoning owner and chained the first into it. The three held
   // DECA catalog entries stay absent.
   ...DECA_PUBLISHED_LESSONS,
+  // The HOSA CONCEPT lessons, held by reference from the catalog through lib/education/tracks/hosa.ts:
+  // the Medical Terminology word-part course, ahead of the communication lesson because it is the
+  // HOSA course with practice behind it. The two held HOSA catalog entries stay absent.
+  ...HOSA_PUBLISHED_LESSONS,
   {
     id: "how-hosa-scenario-interaction-works",
     track: "HOSA",

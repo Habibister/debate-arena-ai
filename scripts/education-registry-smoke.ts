@@ -130,7 +130,8 @@ function main() {
   // (Justifying Your Recommendation, the business-reasoning owner).
   // P1-B3 raised it 14 -> 15: the first DECA cluster-knowledge lesson.
   // P1-B4 raised it 15 -> 21: the six approved Marketing Fundamentals lessons, MK1-MK6.
-  assert.equal(EDUCATION_LESSONS.length, 23, "1. the registry contains exactly twenty-three lessons");
+  // The HOSA Medical Terminology word-part course raised it 23 -> 27: four HOSA concept lessons.
+  assert.equal(EDUCATION_LESSONS.length, 27, "1. the registry contains exactly twenty-seven lessons");
   const expectedIds = ["claim-warrant-impact", "how-deca-roleplay-works", "how-hosa-scenario-interaction-works",
                        "debate-signposting", "debate-clash", "debate-refutation", "debate-constructive-speeches",
                        "debate-weighing", "debate-round-orientation", "debate-evidence-evaluation",
@@ -138,7 +139,8 @@ function main() {
                        "deca-reading-scenarios", "deca-identifying-problem",
                        "deca-understanding-performance-indicators", "deca-justifying-your-recommendation",
                        "deca-handling-customer-situations",
-                       "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"];
+                       "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it",
+                       "hosa-medical-terminology-basics", "hosa-medical-word-roots", "hosa-medical-suffixes", "hosa-medical-prefixes"];
   for (const id of expectedIds) {
     assert.equal(EDUCATION_LESSONS.filter((entry) => entry.id === id).length, 1, `2. "${id}" is registered exactly once`);
   }
@@ -231,7 +233,10 @@ function main() {
   assert.deepEqual(educationLessonsForTrack("DECA").map((e) => e.id),
     ["how-deca-roleplay-works", "deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-identifying-problem", "deca-justifying-your-recommendation", "deca-handling-customer-situations",
      "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"], "10b. DECA filter");
-  assert.deepEqual(educationLessonsForTrack("HOSA").map((e) => e.id), ["how-hosa-scenario-interaction-works"], "10c. HOSA filter");
+  // The Medical Terminology word-part course comes first: it is the HOSA course with practice behind it.
+  assert.deepEqual(educationLessonsForTrack("HOSA").map((e) => e.id),
+    ["hosa-medical-terminology-basics", "hosa-medical-word-roots", "hosa-medical-suffixes", "hosa-medical-prefixes",
+     "how-hosa-scenario-interaction-works"], "10c. HOSA filter");
 
   // ---- 11. unknown lookups fail closed ----------------------------------------------------------
   assert.equal(getEducationLesson("no-such-lesson"), undefined, "11a. unknown lesson id returns undefined");
@@ -245,12 +250,16 @@ function main() {
   // knowledge is what the exam half tests. Forcing the customer-relations lesson into the role-play
   // course would have made that course's own outcomes false. The invariant that still matters is that
   // every course belongs to an active track and every track that has lessons has a course.
-  assert.equal(EDUCATION_COURSES.length, 4, "12a. four courses — Debate, DECA role-play, DECA business content, HOSA");
+  // The HOSA Medical Terminology word-part course raised it 4 -> 5, for the same reason DECA has two:
+  // knowledge-test teaching (Branch A) and clinical-skill communication (Branch B) are different claims.
+  assert.equal(EDUCATION_COURSES.length, 5, "12a. five courses — Debate, DECA role-play, DECA business content, HOSA Medical Terminology, HOSA communication");
+  assert.deepEqual(EDUCATION_COURSES.filter((c) => c.track === "HOSA").map((c) => c.id),
+    ["hosa-medterm-study", "hosa-clinical-skill-communication"], "12a3. and HOSA's two are the Medical Terminology and communication courses");
   assert.deepEqual(EDUCATION_COURSES.filter((c) => c.track === "DECA").map((c) => c.id),
     ["deca-roleplay-core", "deca-business-content"], "12a2. and DECA's two are the performance and content courses");
   // P1-B1 added "deca-roleplay-skills": event orientation and skill teaching are different claims,
   // and folding the new lesson into the orientation module would have labelled its card that way.
-  assert.equal(EDUCATION_MODULES.length, 8, "12b. eight modules (Debate three, DECA four, HOSA one)");
+  assert.equal(EDUCATION_MODULES.length, 9, "12b. nine modules (Debate three, DECA four, HOSA two)");
   for (const entry of EDUCATION_LESSONS) {
     const course = getEducationCourse(entry.courseId);
     const moduleEntry = getEducationModule(entry.moduleId);
@@ -284,11 +293,16 @@ function main() {
   // P1-B4 keeps it at 5: MK1-MK6 are a chain, so only its last link terminates.
   // Owner QA Repair 3A drops it to 5: the DECA orientation no longer ends a chain — it opens into the
   // published "Reading the Scenario", the same order the approved curriculum and the prep path use.
-  assert.equal(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).length, 5,
-    "14b. exactly five lessons end a chain");
+  // The HOSA Medical Terminology course raises it 5 -> 6: its four lessons are one chain, so only the
+  // prefixes lesson terminates, and it does not chain into the communication lesson, which is a
+  // different course.
+  assert.equal(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).length, 6,
+    "14b. exactly six lessons end a chain");
   assert.deepEqual(EDUCATION_LESSONS.filter((e) => e.nextLessonId === null).map((e) => e.id).sort(),
-    ["debate-weighing", "deca-handling-customer-situations", "deca-justifying-your-recommendation", "deca-telling-them-about-it", "how-hosa-scenario-interaction-works"],
-    "14c. and they are exactly those five");
+    ["debate-weighing", "deca-handling-customer-situations", "deca-justifying-your-recommendation", "deca-telling-them-about-it", "hosa-medical-prefixes", "how-hosa-scenario-interaction-works"],
+    "14c. and they are exactly those six");
+  assert.deepEqual(["hosa-medical-terminology-basics", "hosa-medical-word-roots", "hosa-medical-suffixes", "hosa-medical-prefixes"].map((id) => EDUCATION_LESSONS.find((e) => e.id === id)?.nextLessonId),
+    ["hosa-medical-word-roots", "hosa-medical-suffixes", "hosa-medical-prefixes", null], "14f. and the HOSA word-part lessons chain in order");
   assert.equal(EDUCATION_LESSONS.find((e) => e.id === "how-deca-roleplay-works")?.nextLessonId, "deca-reading-scenarios",
     "14c2. the DECA orientation continues into the published scenario lesson");
   // The marketing chain runs MK1 -> MK2 -> ... -> MK6 in the curriculum's own order.
@@ -688,7 +702,7 @@ function main() {
 }
 
 console.log(
-    `Education-registry smoke passed: the canonical registry holds exactly twenty-three lessons — the P1-B6 DECA Identifying the Problem lesson (DECA, concept, the second SIMULATION PREREQUISITE, likewise carrying NO skillSlug and NO practiceDrill; it sits between the indicators lesson and business reasoning because the approved curriculum identifies the problem before attaching the reason), the P1-B5 DECA Reading the Scenario lesson (DECA, concept, in the role-play course's skills module, a SIMULATION PREREQUISITE that deliberately carries NO skillSlug and NO practiceDrill, so it owns no mastery area and the four owners stay four; it chains into the performance-indicators lesson because the approved curriculum reads role, then scenario, then indicators), the six P1-B4 Marketing Fundamentals lessons (MK1-MK6 from the approved curriculum, in the DECA Business-Content course, chained in order, with only MK1 claiming the deca-marketing skill so the area keeps one remediation destination while the other five carry the practice CTA alone), the P1-B3 DECA Handling Customer Situations lesson (DECA, concept, the teaching owner for deca-customer-relations, and the first CLUSTER-KNOWLEDGE lesson: it sits in its own DECA Business-Content course rather than the role-play course, whose module outcomes are about performing a round, and it carries stable-teaching provenance per the approved curriculum), the P1-B2 DECA Justifying Your Recommendation lesson (DECA, concept, the teaching owner for the deca-business-reasoning skill, sharing module deca-roleplay-skills with the indicators lesson because the single-claim rule is per skill and these claim different ones, and terminating the DECA concept chain), the P1-B1 DECA Understanding Performance Indicators lesson (DECA, concept, the teaching owner for the deca-performance-indicators skill: skillSlug plus the exact DECA performance-indicators drill mapping, its own checks still formative, chain-terminating because the only DECA lessons left are held), the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: every file under app/ or components/ that imports lib/education is on the recorded allowlist — the lessons surface, the legacy /skills compatibility surface, and, from M15 S4, the post-round debate arena, which resolves a judge diagnosis to the canonical lesson through one pure fail-closed resolver. lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the five historical judge-recommendation slugs, all five active — Wave 1B published the corrected weighing lesson, and M15 S4 added the constructive-speeches alias that previously resolved nowhere. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
+    `Education-registry smoke passed: the canonical registry holds exactly twenty-seven lessons — the four HOSA Medical Terminology word-part lessons (HOSA, concept, in their own Branch A course, chained basics -> roots -> suffixes -> prefixes, stable-teaching provenance, NO skillSlug and NO practiceDrill), the P1-B6 DECA Identifying the Problem lesson (DECA, concept, the second SIMULATION PREREQUISITE, likewise carrying NO skillSlug and NO practiceDrill; it sits between the indicators lesson and business reasoning because the approved curriculum identifies the problem before attaching the reason), the P1-B5 DECA Reading the Scenario lesson (DECA, concept, in the role-play course's skills module, a SIMULATION PREREQUISITE that deliberately carries NO skillSlug and NO practiceDrill, so it owns no mastery area and the four owners stay four; it chains into the performance-indicators lesson because the approved curriculum reads role, then scenario, then indicators), the six P1-B4 Marketing Fundamentals lessons (MK1-MK6 from the approved curriculum, in the DECA Business-Content course, chained in order, with only MK1 claiming the deca-marketing skill so the area keeps one remediation destination while the other five carry the practice CTA alone), the P1-B3 DECA Handling Customer Situations lesson (DECA, concept, the teaching owner for deca-customer-relations, and the first CLUSTER-KNOWLEDGE lesson: it sits in its own DECA Business-Content course rather than the role-play course, whose module outcomes are about performing a round, and it carries stable-teaching provenance per the approved curriculum), the P1-B2 DECA Justifying Your Recommendation lesson (DECA, concept, the teaching owner for the deca-business-reasoning skill, sharing module deca-roleplay-skills with the indicators lesson because the single-claim rule is per skill and these claim different ones, and terminating the DECA concept chain), the P1-B1 DECA Understanding Performance Indicators lesson (DECA, concept, the teaching owner for the deca-performance-indicators skill: skillSlug plus the exact DECA performance-indicators drill mapping, its own checks still formative, chain-terminating because the only DECA lessons left are held), the B2.2 Turn Mechanics lesson (newly authored chain-anatomy teaching chained after answer-types: practice CTA to the rebuttal drill but deliberately NO skillSlug, same single-claim rule), the B2.1 Answer Types lesson (newly authored taxonomy teaching chained after refutation: practice CTA to the rebuttal drill but deliberately NO skillSlug, so refutation stays the module's single claimed debate-rebuttal teaching home), the Wave 1A Debate Round Orientation (Taught-only, formative checks, deliberately no skillSlug and no practiceDrill), the Wave 1C Evidence Evaluation teaching home (skillSlug debate-evidence, exact evidence-evaluation drill mapping), Claim/Warrant/Impact (General Debate, concept, practice available, mastery skill debate-claim-building), How a DECA Role-Play Works (DECA, performance, practice available and still telling the learner nothing is recorded), and Patient Communication in HOSA Clinical Skill Events (HOSA, performance, practice temporarily unavailable with no interactive scenario and a rung cap of 4). Each entry's source is the ORIGINAL exported lesson object by strict identity, proven against a deep clone that fails the same check, and each provenance object is the source's own and survives the production decision layer undegraded. Dependency flow is one-way: every file under app/ or components/ that imports lib/education is on the recorded allowlist — the lessons surface, the legacy /skills compatibility surface, and, from M15 S4, the post-round debate arena, which resolves a judge diagnosis to the canonical lesson through one pure fail-closed resolver. lib/lessons.ts, lib/roleplay-lessons.ts, lib/learning-content.ts and lib/source-freshness.ts import nothing from it, while the registry imports both legacy lesson modules. The slug map carries exactly the five historical judge-recommendation slugs, all five active — Wave 1B published the corrected weighing lesson, and M15 S4 added the constructive-speeches alias that previously resolved nowhere. The validator reports zero issues for the real registry, and all ${controlsRun.length} controls each produced their expected issue code — including a control proving that authored text containing "practice" and "performance" is not mistaken for seed-template filler.`
   );
 }
 

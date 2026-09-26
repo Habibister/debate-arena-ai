@@ -247,16 +247,18 @@ export default function TrackHubPage({ params }: { params: { track: string } }) 
             />
           ) : null}
           {hasGuidedLessons ? (
-            // M11R5C: HOSA's only lesson is informational and carries no worked examples and no
-            // active practice, so the generic "weak-vs-strong examples, then practice it" promise
-            // is false there. Debate and DECA keep it, where it remains accurate.
+            // M11R5C: the generic "weak-vs-strong examples, then practice it" promise is false for
+            // HOSA's communication lesson, which is informational and has no active practice, so HOSA
+            // keeps its own wording. The word-parts course now comes first in the HOSA lessons, and
+            // the detail names it without naming the event, which this page reads from the registry.
+            // Debate and DECA keep the generic promise, where it remains accurate.
             <DestinationRow
               href={`/lessons?track=${track.slug}` as Route}
               icon={GraduationCap}
               label={track.id === "HOSA" ? "Guided information" : "Guided lessons"}
               detail={
                 track.id === "HOSA"
-                  ? "Learn the communication layer, then check your current event guideline for event-specific requirements."
+                  ? "Start with medical word parts or the communication layer, then check your current event guideline for event-specific requirements."
                   : "Learn a skill with worked weak-vs-strong examples, then practice it."
               }
             />

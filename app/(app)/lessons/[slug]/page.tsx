@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
 import { decaCourseEndAction } from "@/lib/education/deca-simulation-prep";
+import { hosaCourseEndAction } from "@/lib/education/hosa-medterm-practice";
 import { getServerSession } from "next-auth";
 import { ArrowLeft, Dumbbell, MessageSquare } from "lucide-react";
 import { authOptions } from "@/lib/auth";
@@ -119,8 +120,9 @@ function conceptEducationLesson(slug: string) {
     moduleLabel: moduleEntry ? moduleEntry.label : "Lesson",
     next: nextEntry && nextTitle ? { id: nextEntry.id, title: nextTitle } : null,
     // Only where a course chain actually terminates, and only where that course names an onward
-    // action. Null everywhere else, so every other lesson renders exactly what it did before.
-    courseEndAction: decaCourseEndAction(entry.id)
+    // action. Null everywhere else, so every other lesson renders exactly what it did before. Each
+    // helper answers only for its own track's course, so at most one of them can ever match.
+    courseEndAction: decaCourseEndAction(entry.id) ?? hosaCourseEndAction(entry.id)
   };
 }
 

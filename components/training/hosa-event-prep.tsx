@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getActiveSpec } from "@/lib/competition-specs";
 import { hosaMedTermRemediation } from "@/lib/education/hosa-medterm-practice";
 import type { MedTermFocusId } from "@/lib/hosa-medterm-focus";
-import { MEDTERM_AREAS } from "@/lib/hosa-medterm";
+import { MEDTERM_AREAS, MEDTERM_BANK } from "@/lib/hosa-medterm";
 import { HosaMedTermEngine } from "@/components/training/hosa-medterm-engine";
 
 type Stage = { order?: number; name?: string; minutes?: number | null; notes?: string };
@@ -29,7 +29,14 @@ type Reference = { label?: string; url?: string };
 export async function HosaEventPrep({ focus = null }: { focus?: MedTermFocusId | null } = {}) {
   const spec = await getActiveSpec("HOSA", "Medical Terminology");
   const official = Boolean(spec);
-  const areas = MEDTERM_AREAS.map(({ id, label, description }) => ({ id, label, description }));
+  // Each area carries how many distinct questions it holds, so the engine offers only session lengths
+  // a targeted choice can fill without repeating a question. Counts only: no question leaves the server.
+  const areas = MEDTERM_AREAS.map(({ id, label, description }) => ({
+    id,
+    label,
+    description,
+    questionCount: MEDTERM_BANK.filter((question) => question.area === id).length
+  }));
   const remediation = MEDTERM_AREAS.flatMap(({ id, label }) => {
     const action = hosaMedTermRemediation(id, label);
     return action ? [action] : [];

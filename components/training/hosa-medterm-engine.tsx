@@ -20,7 +20,8 @@ import {
   type MedTermFocusId
 } from "@/lib/hosa-medterm-focus";
 
-type Area = { id: string; label: string; description: string };
+/** `questionCount` is how many distinct bank questions the area holds, when the server says. */
+type Area = { id: string; label: string; description: string; questionCount?: number };
 /**
  * What the results offer for one area, resolved on the server from the course registry
  * (lib/education/hosa-medterm-practice.ts) and handed down as plain data: the published lesson that
@@ -77,6 +78,38 @@ const OFFICIAL_MINUTES = 60;
 const REQUIRED_UNIQUE_FOR_REVIEW = 10;
 const REQUIRED_AREAS_FOR_REVIEW = 3;
 
+/** The session lengths the setup screen offers. */
+const COUNT_OPTIONS: readonly number[] = [10, 20, 30, 50];
+
+/**
+ * How many distinct questions a choice draws from, from the counts the server handed down, or null
+ * when any area in it came without a count.
+ */
+export function medTermPoolSize(catalog: readonly Area[], focus: MedTermFocusId): number | null {
+  const { areas } = medTermFocus(focus);
+  const included = areas ? catalog.filter((a) => (areas as readonly string[]).includes(a.id)) : catalog;
+  if (included.length === 0 || included.some((a) => typeof a.questionCount !== "number")) return null;
+  return included.reduce((total, a) => total + (a.questionCount ?? 0), 0);
+}
+
+/**
+ * The session lengths worth offering for a pool of that many distinct questions. A longer session
+ * would only repeat questions already answered in it (the session builder pads to the count), so
+ * those lengths are not offered. An unknown pool offers every length, as before.
+ */
+export function medTermCountOptions(poolSize: number | null): number[] {
+  if (poolSize === null) return [...COUNT_OPTIONS];
+  const fitting = COUNT_OPTIONS.filter((c) => c <= poolSize);
+  return fitting.length > 0 ? fitting : [COUNT_OPTIONS[0]];
+}
+
+/** Keeps a chosen length when it is still offered, else the longest offered length below it. */
+export function medTermClampCount(count: number, options: readonly number[]): number {
+  if (options.includes(count)) return count;
+  const below = options.filter((c) => c < count);
+  return below.length > 0 ? below[below.length - 1] : options[0];
+}
+
 /** Guidance shown before starting and again on results, so the requirement is never a surprise. */
 const EVIDENCE_GUIDANCE =
   `Mixed sessions can count toward review practice when they include at least ${REQUIRED_UNIQUE_FOR_REVIEW} ` +
@@ -116,8 +149,8 @@ export function evidenceState(result: Result): { badge: string; tone: "success" 
 
 /**
  * `areas` is the canonical area list, handed down by the server component so this client module never
- * imports the bank. `initialFocus` is the practice choice a link preselected (the word-part course's
- * last lesson links here with "word parts from the course"), or null when the learner arrived with
+ * imports the bank. `initialFocus` is the practice choice a link preselected (the last lesson of each
+ * course module links here with that module's choice), or null when the learner arrived with
  * nothing preselected; either way nothing starts until the learner presses start.
  */
 /**
@@ -207,8 +240,8 @@ export function WeakAreasReview({
           </ul>
           {result.weakAreas.some((w) => weakAreaRemediation(w.area, remediation)?.kind === "lesson") ? (
             <p className="mt-2 text-xs text-muted-foreground">
-              A lesson opens on its own page, so these results close. Each of these lessons links back to word-part
-              practice.
+              A lesson opens on its own page, so these results close. Each of these lessons links back to practice on
+              what it teaches.
             </p>
           ) : null}
         </div>
@@ -233,13 +266,21 @@ export function HosaMedTermEngine({
   remediation?: readonly Remediation[];
 }) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
-  // What to practise: the taught word parts, or every area. Sent to the server as the canonical area
-  // ids of the choice (or omitted for every area), where the same validated contract applies.
+  // What to practise: the taught word parts, the taught anatomy, or every area. Sent to the server as
+  // the canonical area ids of the choice (or omitted for every area), where the same validated
+  // contract applies.
   const [focus, setFocus] = useState<MedTermFocusId>(initialFocus ?? DEFAULT_MEDTERM_FOCUS);
   // The official format (50 questions, 60 minutes) is a whole-event test, so matching it is offered,
   // labelled and timed only for the every-area choice; a targeted session is practice on its areas.
   const officialFormat = official && focus === "all";
-  const [count, setCount] = useState(official && (initialFocus ?? DEFAULT_MEDTERM_FOCUS) === "all" ? OFFICIAL_COUNT : 10);
+  // The length the learner last asked for. What is shown and sent is that length clamped to what the
+  // current choice can fill, so looking at a smaller choice never overwrites it: switching back
+  // restores it (and the official-format highlight with it).
+  const [preferredCount, setPreferredCount] = useState(official && (initialFocus ?? DEFAULT_MEDTERM_FOCUS) === "all" ? OFFICIAL_COUNT : 10);
+  // Lengths a session on the chosen areas can fill with different questions.
+  const poolSize = medTermPoolSize(catalog, focus);
+  const countOptions = medTermCountOptions(poolSize);
+  const count = medTermClampCount(preferredCount, countOptions);
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [order, setOrder] = useState<string[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -403,6 +444,7 @@ export function HosaMedTermEngine({
   }
 
   const taughtAreaIds: readonly string[] = HOSA_MEDTERM_TAUGHT_AREAS;
+  const poolLimited = poolSize !== null && poolSize < COUNT_OPTIONS[COUNT_OPTIONS.length - 1];
   const preselection = preselectionNote(initialFocus, focus);
 
   // --- Setup screen ---
@@ -466,7 +508,7 @@ export function HosaMedTermEngine({
               type="button"
               onClick={() => {
                 setMode("timed");
-                if (officialFormat) setCount(OFFICIAL_COUNT);
+                if (officialFormat) setPreferredCount(OFFICIAL_COUNT);
               }}
               className={`focus-ring rounded-md border px-3 py-1.5 text-sm font-semibold ${timed ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}
             >
@@ -486,7 +528,7 @@ export function HosaMedTermEngine({
           {officialFormat && timed ? (
             <button
               type="button"
-              onClick={() => setCount(OFFICIAL_COUNT)}
+              onClick={() => setPreferredCount(OFFICIAL_COUNT)}
               className={`block w-full rounded-md border p-3 text-left text-sm ${count === OFFICIAL_COUNT ? "border-primary bg-primary/10" : "bg-background hover:bg-muted"}`}
             >
               <span className="font-semibold">Match official format — {OFFICIAL_COUNT} questions · {OFFICIAL_MINUTES}-minute timer</span>
@@ -500,15 +542,29 @@ export function HosaMedTermEngine({
             </p>
           ) : null}
 
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold">Question count</span>
-            <select value={count} onChange={(e) => setCount(Number(e.target.value))} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-              {[10, 20, 30, 50].map((c) => (
+          {/* The notes describe the select rather than name it, so a screen reader hears a short label
+              and then the notes as its description. */}
+          <div className="block text-sm">
+            <label htmlFor="medterm-count" className="mb-1 block font-semibold">Question count</label>
+            <select
+              id="medterm-count"
+              value={count}
+              onChange={(e) => setPreferredCount(Number(e.target.value))}
+              aria-describedby={poolLimited ? "medterm-count-pool medterm-count-evidence" : "medterm-count-evidence"}
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            >
+              {countOptions.map((c) => (
                 <option key={c} value={c}>{c} questions{officialFormat && c === OFFICIAL_COUNT ? " (official)" : ""}</option>
               ))}
             </select>
-            <span className="mt-2 block text-xs font-normal text-muted-foreground">{EVIDENCE_GUIDANCE}</span>
-          </label>
+            {poolLimited ? (
+              <p id="medterm-count-pool" className="mt-2 text-xs text-muted-foreground">
+                {medTermFocus(focus).label} has {poolSize} different questions, so longer sessions, which would only repeat
+                them, are not offered.
+              </p>
+            ) : null}
+            <p id="medterm-count-evidence" className="mt-2 text-xs text-muted-foreground">{EVIDENCE_GUIDANCE}</p>
+          </div>
 
           {error ? (
             <p className="flex items-center gap-2 text-sm font-semibold text-destructive">

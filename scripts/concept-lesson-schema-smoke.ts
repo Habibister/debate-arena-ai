@@ -220,8 +220,9 @@ function main() {
     // eleven are the simulation prerequisites, concept lessons like the rest but owning no area.
     // The HOSA Medical Terminology word-part course raised it 20 -> 24: the first four HOSA concept
     // lessons. Nine Debate, eleven DECA, four HOSA.
-    assert.equal(published.length, 24,
-      `control: exactly twenty-four published concept lessons — found ${published.length}. If a lesson was ` +
+    // The HOSA anatomy module raised it 24 -> 28. Nine Debate, eleven DECA, eight HOSA.
+    assert.equal(published.length, 28,
+      `control: exactly twenty-eight published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -287,6 +288,9 @@ function main() {
     // DECA entries give. If a later change gives any of them one of those, record it here. The four
     // HOSA lessons were AI-drafted and no person has reviewed them yet, so for them "reviewed" in the
     // message below means checked by this suite, not approved.
+    // The HOSA anatomy module added four more HOSA entries with the same shape as the word-part
+    // lessons (teachingSections, additionalExamples, a misconception and commonMistakes) and the same
+    // refusals for the same reasons. They too were AI-drafted and no person has reviewed them yet.
     assert.deepEqual(populated.map((e) => e.id).sort(), [
       "debate-answer-types",
       "debate-clash",
@@ -308,6 +312,10 @@ function main() {
       "deca-understanding-performance-indicators",
       "deca-who-the-customer-is",
       "deca-why-they-choose-you",
+      "hosa-anatomy-body-map",
+      "hosa-anatomy-bones-muscles-nerves-skin",
+      "hosa-anatomy-digestive-and-urinary",
+      "hosa-anatomy-heart-and-lungs",
       "hosa-medical-prefixes",
       "hosa-medical-suffixes",
       "hosa-medical-terminology-basics",
@@ -712,7 +720,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 24, "O7. control: all twenty-four published lessons were rendered");
+    assert.equal(publishedAll.length, 28, "O7. control: all twenty-eight published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

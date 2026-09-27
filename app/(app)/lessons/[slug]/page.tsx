@@ -123,10 +123,11 @@ function conceptEducationLesson(slug: string) {
     // action. Null everywhere else, so every other lesson renders exactly what it did before. Each
     // helper answers only for its own track's course, so at most one of them can ever match.
     courseEndAction: decaCourseEndAction(entry.id) ?? hosaCourseEndAction(entry.id),
-    // A HOSA word-part lesson that teaches a practice area, and is not the course's last, links back
-    // to word-part practice under its next-lesson link: the return leg of practice -> lesson ->
-    // practice. Null for every other lesson, including the last, whose course-end action already
-    // opens the same practice.
+    // A HOSA course lesson that has a next lesson may carry a practice link under its next-lesson link.
+    // The last lesson of a module (its next lesson starts another module) carries that module's
+    // practice link; a lesson inside a module that owns a practice area links back to that module's
+    // practice. Null for every other lesson, including the course's last, whose course-end action
+    // opens its own module's practice.
     practiceReturn: hosaLessonPracticeReturn(entry.id)
   };
 }

@@ -16,7 +16,7 @@
 //
 // None of those three legacy modules imports anything from `lib/education/`, so there is no cycle,
 // and none of them was modified to make this work. `tracks/deca.ts` (P1-B1) and `tracks/hosa.ts`
-// (HOSA Medical Terminology word parts) sit beside `tracks/debate.ts` in that chain and follow the
+// (HOSA Medical Terminology word parts and anatomy) sit beside `tracks/debate.ts` in that chain and follow the
 // same by-reference rule.
 //
 // `app/(app)/lessons/**` consumes the helpers below for MIGRATED lessons only (M13E1B). The three
@@ -102,12 +102,13 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     // Branch A of the approved HOSA curriculum (docs/curriculum/03-hosa-course.md §3A), for the one
     // knowledge-test event CompeteReady routes: Medical Terminology. FIRST among the HOSA courses
     // because it is the one with a live practice room behind it, so it is where a HOSA beginner
-    // starts. Created no larger than its one module needs; the anatomy, physiology and disease areas
-    // the practice room also asks about are not taught yet and get no empty module here.
+    // starts. Word parts come first, then anatomy, which reads its structure names through them.
+    // Created no larger than its modules need; the physiology and disease areas the practice room
+    // also asks about are not taught yet and get no empty module here.
     id: "hosa-medterm-study",
     track: "HOSA",
     label: "HOSA Medical Terminology Study (Branch A)",
-    moduleIds: ["hosa-medterm-word-parts"]
+    moduleIds: ["hosa-medterm-word-parts", "hosa-medterm-anatomy"]
   },
   {
     id: "hosa-clinical-skill-communication",
@@ -199,6 +200,17 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     prerequisiteId: null
   },
   {
+    // The anatomy the Medical Terminology practice bank asks about, derived from a census of its 30
+    // anatomy questions: direction terms, planes and cavities, then the structures of the body
+    // systems those questions name. Structure only; physiology and disease are not taught here.
+    id: "hosa-medterm-anatomy",
+    courseId: "hosa-medterm-study",
+    track: "HOSA",
+    label: "Anatomy",
+    outcome: "Say where a structure is with direction terms, planes and cavities, and name the main structures of the heart, lungs, digestive and urinary tracts, bones, muscles, nerves and skin.",
+    prerequisiteId: "hosa-medterm-word-parts"
+  },
+  {
     id: "hosa-communication-layer",
     courseId: "hosa-clinical-skill-communication",
     track: "HOSA",
@@ -275,8 +287,9 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // DECA catalog entries stay absent.
   ...DECA_PUBLISHED_LESSONS,
   // The HOSA CONCEPT lessons, held by reference from the catalog through lib/education/tracks/hosa.ts:
-  // the Medical Terminology word-part course, ahead of the communication lesson because it is the
-  // HOSA course with practice behind it. The two held HOSA catalog entries stay absent.
+  // the Medical Terminology course (word parts, then anatomy), ahead of the communication lesson
+  // because it is the HOSA course with practice behind it. The two held HOSA catalog entries stay
+  // absent.
   ...HOSA_PUBLISHED_LESSONS,
   {
     id: "how-hosa-scenario-interaction-works",

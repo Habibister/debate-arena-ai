@@ -641,10 +641,10 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
   // B2.1 raised this 10 -> 11; B2.2 (2026-08-25) raised it 11 -> 12: the newly authored
   // debate-turn-mechanics lesson.
   // P1-B1 raised this 12 -> 13; P1-B2 raised it 13 -> 14 (the business-reasoning owner).
-  // The HOSA Medical Terminology word-part course raised it 23 -> 27.
-  assert.equal(EDUCATION_LESSONS.length, 27, "5. twenty-seven canonical registry entries");
+  // The HOSA Medical Terminology word-part course raised it 23 -> 27; its anatomy module, 27 -> 31.
+  assert.equal(EDUCATION_LESSONS.length, 31, "5. thirty-one canonical registry entries");
   const learnerVisible = EDUCATION_LESSONS.filter((e) => e.visibility === "learner");
-  assert.equal(learnerVisible.length, 27, "6a. all twenty-seven are learner-visible (the HOSA word-part course added four)");
+  assert.equal(learnerVisible.length, 31, "6a. all thirty-one are learner-visible (the HOSA Medical Terminology course added eight)");
   const debate = educationLessonsForTrack("GENERAL_DEBATE");
   assert.equal(debate.length, 10, "7. exactly ten Debate lessons (B2.2 added turn-mechanics)");
   assert.deepEqual(debate.map((e) => e.id),
@@ -657,7 +657,7 @@ function assertPhase1aResolverInvariants(file: string, label: string) {
     ["how-deca-roleplay-works", "deca-reading-scenarios", "deca-understanding-performance-indicators", "deca-identifying-problem", "deca-justifying-your-recommendation", "deca-handling-customer-situations",
      "deca-who-the-customer-is", "deca-why-they-choose-you", "deca-how-you-are-understood", "deca-the-offering-and-its-price", "deca-getting-it-to-the-customer", "deca-telling-them-about-it"],
     "6b2. orientation, the two P1-B5/B6 prerequisites around the indicators lesson, the business-reasoning owner, the customer-relations owner, then MK1-MK6");
-  assert.equal(educationLessonsForTrack("HOSA").length, 5, "6c. five HOSA lessons: four Medical Terminology word-part lessons and the communication lesson");
+  assert.equal(educationLessonsForTrack("HOSA").length, 9, "6c. nine HOSA lessons: four Medical Terminology word-part lessons, four anatomy lessons and the communication lesson");
   assert.equal(EDUCATION_LESSONS.filter((e) => e.id === "claim-warrant-impact").length, 1, "8. CWI appears exactly once");
 
   // ---- 9-13. held content is nowhere near a learner ----------------------------------------------

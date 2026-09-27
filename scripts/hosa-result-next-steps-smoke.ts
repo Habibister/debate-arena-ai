@@ -531,8 +531,12 @@ async function main() {
     assert.equal(hosaMedTermRemediation("word-roots", "Word roots")?.kind, "lesson", "E1. word roots still resolve to their lesson");
     assert.equal(hosaMedTermRemediation("prefixes", "Prefixes")?.kind, "lesson", "E1b. prefixes");
     assert.equal(hosaMedTermRemediation("suffixes", "Suffixes")?.kind, "lesson", "E1c. suffixes");
-    for (const [id, label] of [["anatomy", "Anatomy"], ["physiology", "Physiology"], ["pathophysiology", "Pathophysiology"]]) {
-      assert.equal(hosaMedTermRemediation(id, label)?.kind, "no-lesson", `E1d. ${id} still has no lesson`);
+    // Anatomy gained its lessons after this suite was written (the anatomy module), so it now opens
+    // them; scripts/hosa-medterm-anatomy-smoke.ts owns that loop. The other two still have none.
+    const anatomy = hosaMedTermRemediation("anatomy", "Anatomy");
+    assert.ok(anatomy?.kind === "lesson" && anatomy.lessonId === "hosa-anatomy-body-map", "E1d. anatomy opens the anatomy lessons");
+    for (const [id, label] of [["physiology", "Physiology"], ["pathophysiology", "Pathophysiology"]]) {
+      assert.equal(hosaMedTermRemediation(id, label)?.kind, "no-lesson", `E1d2. ${id} still has no lesson`);
     }
     assert.equal(hosaLessonPracticeLink("hosa-medical-word-roots")?.href, "/training/hosa/practice?focus=word-parts", "E2. a lesson still returns to word-part practice");
     assert.deepEqual(resolveSkillsSlug("hosa-medical-terminology-1"), { kind: "canonical-redirect", lessonId: "hosa-medical-word-roots", via: "allowlist" },

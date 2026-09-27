@@ -53,9 +53,11 @@ import { getEducationLesson } from "../lib/education/registry";
  * The retired moving-HEAD pins were different in kind: committing ALONE changed the expected bytes
  * without anyone touching a baseline artifact. Nothing here is ever derived from HEAD.
  */
-// HOSA-MEDTERM-WORD-PARTS-V1 pins four HOSA Medical Terminology lessons that were AI-drafted and have
-// had no human content review yet. Pinning freezes their bytes; it is not an approval.
-const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-WORD-PARTS-V1";
+// HOSA-MEDTERM-WORD-PARTS-V1 pinned four HOSA Medical Terminology lessons that were AI-drafted and have
+// had no human content review yet. HOSA-MEDTERM-ANATOMY-V1 adds the four anatomy lessons of the same
+// course, likewise AI-drafted and not yet reviewed by a person. Pinning freezes their bytes; it is not
+// an approval.
+const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-ANATOMY-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 

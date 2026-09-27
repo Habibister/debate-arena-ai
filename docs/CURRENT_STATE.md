@@ -1,7 +1,7 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-09-26, HOSA lines only (the Medical Terminology word-parts course, its practice
-and HOSA test-result next steps). Every other
+_Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy
+module, their practice and HOSA test-result next steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -54,9 +54,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   reviews, nullable mastery) → `f004d05` → `956b9a9` (the two simulation prerequisites) → `d37a533`
   (simulation connected) → `77a8fab` (navigation truth).
 - **Lesson counts — never collapse DECA into the global figure.** **DECA published = 12.**
-  **Global published (all tracks, learner-visible registry entries) = 27**: 12 DECA, 10 General
-  Debate, 5 HOSA (it was 23, with 1 HOSA, at `01bbaa1`; the four added are the HOSA Medical
-  Terminology word-parts lessons below). Writing the global number where the DECA number belongs was
+  **Global published (all tracks, learner-visible registry entries) = 31**: 12 DECA, 10 General
+  Debate, 9 HOSA (it was 23, with 1 HOSA, at `01bbaa1`; the eight added are the HOSA Medical
+  Terminology word-parts and anatomy lessons below). Writing the global number where the DECA number belongs was
   a real reporting error during P1-B4 and is the reason this line exists. **DECA held = 1.**
   ROLE-PLAY CORE carries the published prerequisite and skill path: `how-deca-roleplay-works`,
   `deca-reading-scenarios`, `deca-identifying-problem`, `deca-understanding-performance-indicators`,
@@ -111,8 +111,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   `/training/hosa/practice` and says only what is true of it: original questions, not official HOSA
   test items; most of its word-root, prefix and suffix questions use what the course teaches, and
   some use parts it does not teach yet (19 of the 90 by a 2026-09-26 scan, for example -centesis,
-  retro- and pseudo-); its anatomy, physiology and disease questions are not taught yet; every answer
-  is explained. **What it does
+  retro- and pseudo-); its anatomy, physiology and disease questions are not taught yet (true when
+  written; since 2026-09-27 the anatomy module teaches the 30 anatomy questions and the link's copy
+  says so); every answer is explained. **What it does
   NOT do:** no `skillSlug`, no `practiceDrill`, no concept-drill mapping, no MasteryProgress and no
   new write path; the practice room's own review-only evidence model is unchanged. **Entry points:**
   the HOSA Learn stage (`lib/learner-path.ts`) is now `available` and opens `/lessons?track=hosa`;
@@ -208,8 +209,10 @@ non-executable. Rewrite this region after each milestone; append history below t
 - **DECA has a complete concept-drill mapping** (`lib/education/deca-practice-map.ts`): 4 of 4 areas
   carry a published teaching owner and resolve to their exact drill. **HOSA still has none.** (This
   line read "DECA and HOSA have no concept-drill mapping" until DECA P1; it was true when written.)
-  The HOSA Medical Terminology word-parts course (2026-09-26) does not change that: it links to the
-  practice room only as a course-end action, and no HOSA practice area resolves to a lesson.
+  The HOSA Medical Terminology course does not change that. Since the practice remediation
+  (2026-09-26) and the anatomy module (2026-09-27, local commits), a practice-room weak area in word
+  roots, prefixes, suffixes or anatomy links to the lesson that teaches it; that is navigation, not a
+  concept-drill mapping, and it writes nothing.
 - Thresholds: `PRACTICING_MASTERY_MIN` **70** and `DRILL_PASS_THRESHOLD` **70** — equal numbers,
   distinct product concepts. DUE ≠ WEAK.
 
@@ -776,9 +779,10 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 57** as of 2026-09-26 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
+- **REGISTERED = 58** as of 2026-09-27 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
   `hosa-medterm-session-safety:smoke`, `hosa-medterm-targeted-practice:smoke`,
-  `hosa-medterm-remediation:smoke` and `hosa-result-next-steps:smoke`); it read 45 when
+  `hosa-medterm-remediation:smoke`, `hosa-result-next-steps:smoke` and
+  `hosa-medterm-anatomy:smoke`); it read 45 when
   re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
@@ -853,7 +857,14 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 ## Current next action
 
-**HOSA LEARNING (owner direction, 2026-09-26).** The owner paused repeated DECA acceptance reviews
+**HOSA LEARNING, 2026-09-27.** The Medical Terminology anatomy module is a local commit on top of
+the local HOSA stack (see *HOSA Medical Terminology anatomy* below the archive boundary); a human
+subject-accuracy review, or an explicit owner waiver, is required before any push. The owner's
+stated order after it: Physiology, then Pathophysiology, then HOSA end-to-end QA, then human
+medical-content review, then merge and push, then design. Each step starts only when the owner asks.
+
+**Recorded 2026-09-26** (the session-builder hang named here was fixed at `6e365e9`; word-part
+practice, remediation and the anatomy module followed). **HOSA LEARNING (owner direction, 2026-09-26).** The owner paused repeated DECA acceptance reviews
 ("We are done with repeated DECA acceptance reviews for now") and made HOSA learning the development
 priority, without restarting Debate or DECA development. The first step, the Medical Terminology
 word-parts course, is a local commit (see *Education state*). **Pre-existing bug found while doing
@@ -926,6 +937,67 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology anatomy — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build`, a dev
+server and a browser session are forbidden in the cloud workspace; the lessons, the lessons index,
+Event HQ, the practice page, the room and the practice setup screen were rendered server-side in the
+guard only). **The gap:** the practice bank's 30 anatomy questions (bank unchanged: 180 questions, six
+canonical areas × 30) had no lesson; the practice room marked anatomy "not taught yet" and an anatomy
+weak area said no lesson existed. **Census** (all 30, each classified by concept, skill and owning
+lesson in `scripts/hosa-medterm-anatomy-smoke.ts`): direction terms and anatomical position 5, body
+planes 1, body cavities 3, heart chambers, septum and vessels 4, airway and breathing muscle 3,
+digestive tract 3, urinary tract 2, bones by region 4, muscles, tendons and ligaments 2,
+nervous-system organisation 2, skin as an organ 1. **The change:** a second module of the Medical
+Terminology course, `hosa-medterm-anatomy` ("Anatomy", prerequisite `hosa-medterm-word-parts`),
+with four published concept lessons chained on from `hosa-medical-prefixes`:
+`hosa-anatomy-body-map` → `hosa-anatomy-heart-and-lungs` → `hosa-anatomy-digestive-and-urinary` →
+`hosa-anatomy-bones-muscles-nerves-skin` → end. Each has the course's shape (what it is, an early
+example, steps, a worked weak/strong example labelled "(Our example, not an official test
+question.)", a misconception and common mistakes) and seven explained checks with hints (one
+guided, five practice, one "Final check"; 28 in all); the checks save nothing and claim no mastery.
+Written for beginners aged 12 to 17: structures and where they are, plus the few plain facts about
+what a structure does that the bank asks (which chamber pumps to the body, the breathing muscle,
+where most nutrients are absorbed, where gas exchange happens); no diagnosis, treatment or clinical
+advice, no numbers, no HOSA rule. **Alignment:** ANATOMY QUESTIONS 30, TAUGHT 30, NOT YET TAUGHT 0.
+For each question the guard finds the fact that answers it stated in one sentence of its owning
+lesson's teaching text (checks, weak answers, prompts and mistakes as stated are excluded) and finds
+the tempting wrong fact stated nowhere in the module. **Practice:** a third choice, "Anatomy from the
+course" (`/training/hosa/practice?focus=anatomy`, exactly the canonical `anatomy` area, marked
+taught, never auto-starts). Its 30-question pool offers 10, 20 or 30 questions; the room now tells
+the engine how many questions each area has, and a length chosen for a larger pool is kept and
+restored when the learner switches back. The official 50-question format stays with "All Medical
+Terminology". The body map lesson links back to anatomy practice and the last anatomy lesson ends in
+it; `hosa-medical-prefixes` keeps its word-part practice link beside its next-lesson link.
+**Remediation:** `HOSA_MEDTERM_AREA_TEACHING_OWNERS.anatomy = "hosa-anatomy-body-map"`; an anatomy
+weak area reads "Study anatomy in the Anatomy lessons, starting with “Body Map: Directions, Planes
+and Cavities”". Physiology and pathophysiology keep "CompeteReady does not have a lesson for this
+area yet." and stay marked "not taught yet" (false coverage 0 for each). **Test results:** no exact
+mapping from a test-result weak area to the anatomy lessons exists, so none was added. **Entry
+points:** HOSA Learn, Event HQ's Lessons row and the lessons index name the anatomy lessons.
+**Provenance:** AI-drafted. Label "AI-generated CompeteReady lesson, not an official HOSA lesson or
+test item — not yet reviewed by a person" (`STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE` in
+`lib/education/tracks/hosa.ts`), rendered in each lesson header. **A human subject-accuracy review
+(or an explicit owner waiver) is required before push.** Taught beyond what the bank asks, as
+context: the liver as the largest internal organ (the lesson's misconception, set against the skin as
+the largest organ), the clavicle, the cranium, the midsagittal plane, costal cartilage, the epidermis
+and dermis, and what makes something an organ. **Review:** independent accuracy (one reviewer per
+lesson), product and QA/security reviews raised 56 findings; adversarial verifiers confirmed 47
+(3 major: the Body Map treated proximal/distal as usable on the head, its Final check had a second
+defensible answer, and the rib cage was called all bone) and rejected 9. All 47 were fixed before
+the commit, and a second independent check of those fixes passed with 5 minor notes, also fixed. **Guard:** `npm run hosa-medterm-anatomy:smoke` (18 checks; the bank's SHA-256 is pinned
+so a changed bank must be re-censused). 38 of 38 deliberate mutations of the lessons, registry,
+practice wiring, engine, bank and guard were caught. Content snapshot marker
+`HOSA-MEDTERM-ANATOMY-V1`, updated for exactly the four new slugs. Pins deliberately updated:
+`education-registry` (31 lessons, 10 modules, the HOSA chain end), `education-migration`,
+`concept-lesson-schema`, `learning-content-integrity`, `hosa-medterm-lessons`,
+`hosa-medterm-targeted-practice` (the room may import the bank for the per-area counts only),
+`hosa-medterm-remediation` (anatomy now has an owner) and `hosa-result-next-steps`. **Known limits:**
+the fourth lesson covers four systems in one sitting; four anatomy questions are function-flavoured
+and the anatomy choice's disclosure says so; the practice setup screen was not exercised in a
+browser; the HOSA deck page still follows the viewer's selected track (deferred by the owner).
+REGISTERED = 58.
 
 ## HOSA test-result next steps — 2026-09-26 — LOCAL COMMIT
 

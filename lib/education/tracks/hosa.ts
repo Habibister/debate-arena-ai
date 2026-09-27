@@ -1,4 +1,4 @@
-// HOSA — authored concept lessons: Medical Terminology word parts (Branch A).
+// HOSA — authored concept lessons: Medical Terminology word parts and anatomy (Branch A).
 //
 // Registered the same way the Debate and DECA concept lessons are: this file imports
 // `LEARNING_SKILL_CATALOG`, selects entries by slug, and hands the ORIGINAL objects to the canonical
@@ -11,13 +11,15 @@
 // room drills 180 original questions, half of them on word roots, prefixes and suffixes, and until
 // now no lesson taught any of it: a HOSA beginner met the questions before the teaching. The approved
 // curriculum's Branch A (docs/curriculum/03-hosa-course.md §3A) covers knowledge-test events, and
-// word parts are the foundation every other Medical Terminology topic is read through.
+// word parts are the foundation every other Medical Terminology topic is read through. The anatomy
+// module comes second: it teaches the room's anatomy questions, and its structure names are read
+// through those word parts. Physiology and disease (pathophysiology) have no lessons yet.
 //
 // WHAT IT DELIBERATELY DOES NOT CLAIM. No entry carries a `skillSlug` or a `practiceDrill`. The
 // practice room's evidence model is HOSA's own review-only ladder, not a drill area this registry can
-// name, and the lessons' checks save nothing. The course's link to that room is a course-end action
-// (lib/education/hosa-medterm-practice.ts), the same seam the DECA role-play course uses, so a lesson
-// here never presents itself as the place a record starts.
+// name, and the lessons' checks save nothing. The course's links to that room are course-end and
+// module-end actions (lib/education/hosa-medterm-practice.ts), the same seam the DECA role-play
+// course uses, so a lesson here never presents itself as the place a record starts.
 //
 // TWO HOSA CATALOG ENTRIES STAY HELD and are deliberately absent below:
 //
@@ -25,7 +27,7 @@
 //                               (docs/M14_LEARNING_QUALITY_AUDIT.md), which covers its subject.
 //   hosa-healthcare-ethics      not audited or rewritten by this change. It teaches no Medical
 //                               Terminology, so it has no place in this course, and it stays held
-//                               until it has had the same review these four lessons will need.
+//                               until it has had the same review these lessons will need.
 //
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
@@ -55,6 +57,22 @@ export const STABLE_TEACHING_HOSA_PROVENANCE: SourceFreshnessMetadata = Object.f
 });
 
 /**
+ * Provenance for the anatomy module: the same tier and the same honesty about who wrote it, with the
+ * label also saying outright that this is not official HOSA material. The anatomy lessons teach the
+ * subject matter of questions a HOSA test could ask, so a learner could otherwise mistake them for a
+ * HOSA lesson or HOSA test items. The header renders this label verbatim.
+ *
+ * Like the word-part label, it changes only after a human subject-accuracy review, or an explicit
+ * owner waiver, is recorded in the authoring record in lib/learning-content.ts.
+ */
+export const STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
+  authority: "stable-teaching",
+  freshness: "stable",
+  organization: "CompeteReady",
+  sourceLabel: "AI-generated CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person"
+});
+
+/**
  * The HOSA catalog slugs this file publishes, in teaching order.
  *
  * Exported so a suite can prove that this list and `HELD_HOSA_CATALOG_SLUGS` PARTITION the HOSA
@@ -64,7 +82,11 @@ export const PUBLISHED_HOSA_SLUGS = [
   "hosa-medical-terminology-basics",
   "hosa-medical-word-roots",
   "hosa-medical-suffixes",
-  "hosa-medical-prefixes"
+  "hosa-medical-prefixes",
+  "hosa-anatomy-body-map",
+  "hosa-anatomy-heart-and-lungs",
+  "hosa-anatomy-digestive-and-urinary",
+  "hosa-anatomy-bones-muscles-nerves-skin"
 ] as const;
 
 /** The HOSA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
@@ -118,10 +140,15 @@ const medicalTerminologyBasics = selectHosaCatalogLesson("hosa-medical-terminolo
 const medicalWordRoots = selectHosaCatalogLesson("hosa-medical-word-roots");
 const medicalSuffixes = selectHosaCatalogLesson("hosa-medical-suffixes");
 const medicalPrefixes = selectHosaCatalogLesson("hosa-medical-prefixes");
+const anatomyBodyMap = selectHosaCatalogLesson("hosa-anatomy-body-map");
+const anatomyHeartAndLungs = selectHosaCatalogLesson("hosa-anatomy-heart-and-lungs");
+const anatomyDigestiveAndUrinary = selectHosaCatalogLesson("hosa-anatomy-digestive-and-urinary");
+const anatomyBonesMusclesNervesSkin = selectHosaCatalogLesson("hosa-anatomy-bones-muscles-nerves-skin");
 
 /** Exported for the smoke suite's strict-identity proof against the catalog. */
 export const PUBLISHED_HOSA_SOURCES = {
-  medicalTerminologyBasics, medicalWordRoots, medicalSuffixes, medicalPrefixes
+  medicalTerminologyBasics, medicalWordRoots, medicalSuffixes, medicalPrefixes,
+  anatomyBodyMap, anatomyHeartAndLungs, anatomyDigestiveAndUrinary, anatomyBonesMusclesNervesSkin
 } as const;
 
 /**
@@ -130,8 +157,9 @@ export const PUBLISHED_HOSA_SOURCES = {
  * there. Roots come next because they say what a term is about; suffixes before prefixes because the
  * suffix is where a term's meaning starts, and the prefix lesson closes by putting all three together.
  *
- * `nextLessonId` on the last lesson is null: it is the end of the course written so far, and the
- * course-end action hands the learner to the event's practice room from there.
+ * The anatomy module follows the prefixes lesson (below), so the word-part module ends at prefixes
+ * and the course continues. Each module's last lesson links to the practice room with that module's
+ * areas preselected (lib/education/hosa-medterm-practice.ts).
  */
 export const HOSA_MEDTERM_BASICS_LESSON: EducationRegistryEntry = {
   id: "hosa-medical-terminology-basics",
@@ -189,13 +217,87 @@ export const HOSA_MEDTERM_PREFIXES_LESSON: EducationRegistryEntry = {
   source: medicalPrefixes,
   sourceKind: "concept-education-lesson",
   legacySlugs: [],
-  nextLessonId: null,
+  nextLessonId: "hosa-anatomy-body-map",
   provenance: STABLE_TEACHING_HOSA_PROVENANCE
+};
+
+/**
+ * The anatomy module, in the order a beginner needs it: the body map first (direction terms, planes
+ * and cavities), because every later lesson places structures with it; then the heart and lungs, the
+ * digestive and urinary tracts, and bones, muscles, nerves and skin. The four were derived from a
+ * census of the practice bank's 30 anatomy questions, and each lesson owns the questions that census
+ * assigned to it (scripts/hosa-medterm-anatomy-smoke.ts).
+ *
+ * `nextLessonId` on the last lesson is null: it is the end of the course written so far, and the
+ * course-end action hands the learner to anatomy practice from there.
+ */
+export const HOSA_ANATOMY_BODY_MAP_LESSON: EducationRegistryEntry = {
+  id: "hosa-anatomy-body-map",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-anatomy",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: anatomyBodyMap,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-anatomy-heart-and-lungs",
+  provenance: STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE
+};
+
+export const HOSA_ANATOMY_HEART_AND_LUNGS_LESSON: EducationRegistryEntry = {
+  id: "hosa-anatomy-heart-and-lungs",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-anatomy",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: anatomyHeartAndLungs,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-anatomy-digestive-and-urinary",
+  provenance: STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE
+};
+
+export const HOSA_ANATOMY_DIGESTIVE_AND_URINARY_LESSON: EducationRegistryEntry = {
+  id: "hosa-anatomy-digestive-and-urinary",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-anatomy",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: anatomyDigestiveAndUrinary,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-anatomy-bones-muscles-nerves-skin",
+  provenance: STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE
+};
+
+export const HOSA_ANATOMY_BONES_MUSCLES_NERVES_SKIN_LESSON: EducationRegistryEntry = {
+  id: "hosa-anatomy-bones-muscles-nerves-skin",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-anatomy",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: anatomyBonesMusclesNervesSkin,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: null,
+  provenance: STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE
 };
 
 export const HOSA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
   HOSA_MEDTERM_BASICS_LESSON,
   HOSA_MEDTERM_WORD_ROOTS_LESSON,
   HOSA_MEDTERM_SUFFIXES_LESSON,
-  HOSA_MEDTERM_PREFIXES_LESSON
+  HOSA_MEDTERM_PREFIXES_LESSON,
+  HOSA_ANATOMY_BODY_MAP_LESSON,
+  HOSA_ANATOMY_HEART_AND_LUNGS_LESSON,
+  HOSA_ANATOMY_DIGESTIVE_AND_URINARY_LESSON,
+  HOSA_ANATOMY_BONES_MUSCLES_NERVES_SKIN_LESSON
 ];

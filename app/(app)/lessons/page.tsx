@@ -152,7 +152,7 @@ export default async function LessonsIndexPage({ searchParams }: { searchParams:
                       label: "Question practice",
                       value: "Available on the event page",
                       state: "available" as const,
-                      detail: "Original Medical Terminology questions, each answer explained. The course’s last lesson links there. Separate from these checks."
+                      detail: "Original Medical Terminology questions, each answer explained. The last lesson of each module in this course links there. Separate from these checks."
                     }]
                   : [])
             ]

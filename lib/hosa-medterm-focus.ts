@@ -2,12 +2,12 @@
 // has taught.
 //
 // THE GAP THIS CLOSES. The practice room (/training/hosa/practice) drills one bank of 180 original
-// questions across the six canonical areas in lib/hosa-medterm.ts. The four-lesson course teaches the
-// word-part half of it (word roots, prefixes, suffixes) and nothing of the other half (anatomy,
-// physiology, pathophysiology). Until now the room could only serve the whole bank, so a learner who
-// had just finished the course met questions on topics no lesson had taught, with no way to say
-// "only what I have learned". This module is the one list the practice page, the engine and the
-// course's last lesson read for that choice.
+// questions across the six canonical areas in lib/hosa-medterm.ts. The course teaches the word-part
+// half of it (word roots, prefixes, suffixes) in its first module and the anatomy area in its second,
+// and nothing yet of physiology or pathophysiology. Until the targeted choices existed the room could
+// only serve the whole bank, so a learner who had just finished a module met questions on topics no
+// lesson had taught, with no way to say "only what I have learned". This module is the one list the
+// practice page, the engine and the course's module-end lessons read for that choice.
 //
 // NOT A SECOND TAXONOMY. The areas stay the six canonical ones. A choice here is a NAME for a subset
 // of them (or for all of them), typed against `MedTermArea` so an id that is not a canonical area does
@@ -18,14 +18,15 @@
 //
 // WHICH AREAS THE COURSE TEACHES is a fact about the lessons, not about the bank, and it is asserted
 // from the lessons: scripts/hosa-medterm-targeted-practice-smoke.ts reads the word part every bank
-// question tests and checks that the four lessons name it (they name most word-root, prefix and suffix
-// parts and no anatomy, physiology or disease term), so `HOSA_MEDTERM_TAUGHT_AREAS` cannot silently
-// gain an area no lesson covers. When the course grows a lesson on one of the other areas, that suite
-// says so by name and this list is what changes.
+// question tests and checks that the word-part lessons name it, and scripts/hosa-medterm-anatomy-smoke.ts
+// checks, question by question, that the anatomy lessons teach what each anatomy question needs. No
+// lesson names a physiology or disease topic, so `HOSA_MEDTERM_TAUGHT_AREAS` cannot silently gain an
+// area no lesson covers. When the course grows a module on one of the other areas, those suites say so
+// by name and these lists are what change.
 //
-// THIS IS COMPETEREADY'S TEACHING ORGANISATION. The grouping "word parts from the course" versus "all
-// Medical Terminology" is how CompeteReady organises practice around its own lessons. It is not an
-// official HOSA category, and the copy says so.
+// THIS IS COMPETEREADY'S TEACHING ORGANISATION. The groupings "word parts from the course", "anatomy
+// from the course" and "all Medical Terminology" are how CompeteReady organises practice around its
+// own lessons. They are not official HOSA categories, and the copy says so.
 //
 // NO PROGRESS MODEL. A choice changes which questions a session draws from and nothing else: no new
 // stored skill, no mastery, no readiness, no XP semantics. What the room records is unchanged.
@@ -41,15 +42,25 @@ export const HOSA_MEDTERM_PRACTICE_ROOM = "/training/hosa/practice";
 /** The query parameter that preselects a choice on the practice room. Never starts a session. */
 export const HOSA_MEDTERM_FOCUS_PARAM = "focus";
 
-/** The two choices a beginner can make. The ids are URL values, never shown as such to the learner. */
-export type MedTermFocusId = "word-parts" | "all";
+/** The three choices a beginner can make. The ids are URL values, never shown as such to the learner. */
+export type MedTermFocusId = "word-parts" | "anatomy" | "all";
 
 /**
- * The canonical areas the current four-lesson course teaches. Typed against the bank's own union, so a
+ * The canonical areas the course's word-part module teaches. Typed against the bank's own union, so a
  * misspelt or foreign id is a compile error; proved against the lesson text by the targeted-practice
- * suite, so an area no lesson teaches cannot sit here quietly.
+ * suite.
  */
-export const HOSA_MEDTERM_TAUGHT_AREAS: readonly MedTermArea[] = Object.freeze(["word-roots", "prefixes", "suffixes"]);
+export const HOSA_MEDTERM_WORD_PART_AREAS: readonly MedTermArea[] = Object.freeze(["word-roots", "prefixes", "suffixes"]);
+
+/** The canonical area the course's anatomy module teaches, proved question by question by the anatomy suite. */
+export const HOSA_MEDTERM_ANATOMY_AREAS: readonly MedTermArea[] = Object.freeze(["anatomy"]);
+
+/**
+ * Every canonical area a published lesson of the course teaches: the word-part areas and anatomy.
+ * Physiology and pathophysiology are absent because no lesson teaches them yet, so the practice room
+ * still marks them "not taught yet".
+ */
+export const HOSA_MEDTERM_TAUGHT_AREAS: readonly MedTermArea[] = Object.freeze([...HOSA_MEDTERM_WORD_PART_AREAS, ...HOSA_MEDTERM_ANATOMY_AREAS]);
 
 export type MedTermFocus = Readonly<{
   id: MedTermFocusId;
@@ -59,6 +70,11 @@ export type MedTermFocus = Readonly<{
   summary: string;
   /** True only when every area in the choice has a published lesson in the current course. */
   taught: boolean;
+  /**
+   * The course module whose lessons teach this choice, or null for the every-area choice. The module's
+   * last lesson links here with this choice preselected (lib/education/hosa-medterm-practice.ts).
+   */
+  moduleId: string | null;
   /** The marker shown beside the choice, as text (paired with an icon, never colour alone). */
   coverage: string;
   /** What the learner is told before starting: what is taught, and what is not taught yet. */
@@ -73,19 +89,32 @@ export const MEDTERM_FOCUS_CHOICES: readonly MedTermFocus[] = Object.freeze([
     label: "Word parts from the course",
     summary: "Word roots, prefixes and suffixes: the three kinds of word part the Medical Terminology course teaches.",
     taught: true,
+    moduleId: "hosa-medterm-word-parts",
     coverage: "Taught in the current course",
     disclosure:
       "Most of these questions use word parts the lessons teach. Some use word parts the lessons have not taught yet, and every answer is explained.",
-    areas: HOSA_MEDTERM_TAUGHT_AREAS
+    areas: HOSA_MEDTERM_WORD_PART_AREAS
+  }),
+  Object.freeze({
+    id: "anatomy" as const,
+    label: "Anatomy from the course",
+    summary: "Body directions, planes and cavities, and the main structures of the heart, lungs, digestive and urinary tracts, bones, muscles, nerves and skin.",
+    taught: true,
+    moduleId: "hosa-medterm-anatomy",
+    coverage: "Taught in the current course",
+    disclosure:
+      "These questions ask what the body’s main structures are and where they are, plus a few plain facts about what a structure does, such as which muscle you breathe with. The anatomy lessons teach all of them. Other questions on how the body works (physiology) and disease are not in this choice. Every answer is explained.",
+    areas: HOSA_MEDTERM_ANATOMY_AREAS
   }),
   Object.freeze({
     id: "all" as const,
     label: "All Medical Terminology",
-    summary: "Word parts plus anatomy, physiology and disease (pathophysiology), all mixed together.",
+    summary: "Word parts, anatomy, physiology and disease (pathophysiology), all mixed together.",
     taught: false,
+    moduleId: null,
     coverage: "Includes topics not taught yet",
     disclosure:
-      "The course has no lessons on anatomy, physiology or disease (pathophysiology) yet, so expect questions on topics you have not studied here. Every answer is explained.",
+      "The course has no lessons on physiology or disease (pathophysiology) yet, so expect questions on topics you have not studied here. Every answer is explained.",
     areas: null
   })
 ]);
@@ -127,14 +156,17 @@ export function medTermFocusRequestAreas(id: MedTermFocusId): MedTermArea[] | un
 /**
  * Names the choice a session's stored areas correspond to, so a resumed session is labelled by what
  * it really covers rather than by what was just asked for. An empty list is the route's every-area
- * session. A set equal to the taught areas is the word-parts choice. Anything else is a selection this
- * UI never makes, and it is named by its areas instead.
+ * session. A set equal to a targeted choice's areas, in any order, is that choice. Anything else is a
+ * selection this UI never makes, and it is named by its areas instead.
  */
 export function medTermFocusForAreas(requested: readonly string[]): MedTermFocusId | null {
   const set = new Set(requested);
   if (set.size === 0) return "all";
-  const taught = new Set<string>(HOSA_MEDTERM_TAUGHT_AREAS);
-  if (set.size === taught.size && [...set].every((area) => taught.has(area))) return "word-parts";
+  for (const choice of MEDTERM_FOCUS_CHOICES) {
+    if (!choice.areas) continue;
+    const areas = new Set<string>(choice.areas);
+    if (set.size === areas.size && [...set].every((area) => areas.has(area))) return choice.id;
+  }
   return null;
 }
 

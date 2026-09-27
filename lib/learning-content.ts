@@ -3309,6 +3309,632 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       )
     }
   },
+  // ---- HOSA MEDICAL TERMINOLOGY: ANATOMY -----------------------------------------------------------
+  //
+  // The second module of the same Branch A course (docs/curriculum/03-hosa-course.md §3A), following
+  // the word-part lessons above. It teaches the anatomy the Medical Terminology practice bank already
+  // asks about (lib/hosa-medterm.ts, area "anatomy", 30 questions), and nothing chosen from general
+  // anatomy knowledge: the four lessons were derived from a census of those 30 questions, and
+  // scripts/hosa-medterm-anatomy-smoke.ts proves, question by question, that the fact each one needs
+  // is taught in the lesson that owns it.
+  //
+  // STRUCTURE, NOT FUNCTION OR DISEASE. The bank's anatomy area tests structures, locations, regions,
+  // cavities, planes, direction terms and structural relationships. These lessons teach those, plus
+  // the few plain statements of purpose the bank's anatomy items themselves rely on (the left ventricle
+  // pumps blood to the body, the alveoli are where gas is exchanged, most nutrients are absorbed in the
+  // small intestine, the nephron is the kidney's filtering unit, the diaphragm is the main muscle of
+  // breathing). How the body works (physiology) and how disease changes it (pathophysiology) are not
+  // taught here, and nothing diagnoses an illness or describes a treatment. This is preparation for a
+  // knowledge test, not medical advice.
+  //
+  // CONSISTENT WITH THE PRACTICE BANK. Every fact a bank question needs is stated here the way the
+  // bank's own reviewed explanation states it. The checks are original CompeteReady teaching items,
+  // deliberately NOT copies of bank items, and the worked examples say so in the learner's own view.
+  //
+  // NO OFFICIAL CLAIMS. Nothing here states a HOSA rule, test format, timing, weighting, score or
+  // coverage. A stable-teaching lesson is never a rules source (docs/curriculum/00-principles-and-sources.md).
+  //
+  // AUTHORING RECORD. All four were AI-drafted in a Claude Code session on 2026-09-26 and have NOT yet
+  // had a human content review, so their provenance label says they are AI-generated, not official HOSA
+  // material, and not yet reviewed by a person (set in the education registry's HOSA track file). The
+  // repository's source policy requires a subject-accuracy review before release; record that review,
+  // or an owner waiver, here before changing the label or pushing these lessons.
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-anatomy-body-map",
+    description: "Describe where a structure is with paired direction terms, the three body planes and the body cavities.",
+    category: "Health science",
+    order: 7,
+    lesson: {
+      title: "Body Map: Directions, Planes and Cavities",
+      slug: "hosa-anatomy-body-map-lesson",
+      summary: "Use paired direction terms, the three body planes and the main body cavities to say exactly where a structure is.",
+      estimatedMinutes: 12,
+      content: lesson(
+        "Describe where one structure is compared with another using paired direction terms, name the plane that divides the body into given parts, and name the cavity that holds an organ.",
+        "Your nose is above your mouth. In anatomy you say the nose is superior to the mouth. Your ears are farther from the middle of your face than your eyes are, so the ears are lateral to the eyes. Anatomy has its own direction words so that everyone describes the same place in the same way, however a person is standing or lying.\n\nEvery direction word assumes one starting pose, called anatomical position: standing upright and facing forward, arms at the sides, palms facing forward. Directions are always given as if the body were in that pose. Left and right always mean the person’s own left and right, not yours as you look at them.\n\nThe direction words come in opposite pairs, so learning one word in a pair tells you the other. If superior means toward the head, inferior means toward the feet. The lesson then adds two more tools for placing a structure: the three planes that divide the body, and the cavities that hold the organs.",
+        "Many anatomy questions are really questions about these words. Once you know them, you can place a structure you have only just met. The later lessons in this module use them too, for example to say which side of the heart a chamber is on and where one part of the brain sits.",
+        [
+          "Picture the body in anatomical position: upright, facing you, arms at the sides, palms forward.",
+          "Find the pair the direction word belongs to, and say what its opposite means.",
+          "Compare the two structures: which one is nearer the head, the front, the midline or the surface? On an arm or a leg, which one is nearer where the limb joins the trunk?",
+          "For a plane, say which two parts it separates. For a cavity, first ask whether the organ is inside the skull (the cranial cavity) or inside the backbone (the spinal cavity). If not, start from the diaphragm: the thoracic cavity is above it, and the abdominal and pelvic cavities are below it."
+        ],
+        {
+          prompt: "A diagram says the shoulder is proximal to the hand. What does that tell you? (Our example, not an official test question.)",
+          weakAnswer: "Proximal means close, so the shoulder is close to the hand.",
+          strongAnswer: "Proximal and distal compare two places on a limb by how near each one is to where the limb joins the trunk. The shoulder is where the arm joins the trunk, so it is proximal to the hand, even though it is at the other end of the arm. The hand is distal to the shoulder.",
+          whyItWorks: "Reading proximal as “close to” leads to a false statement: the shoulder is at the opposite end of the arm from the hand. The strong answer measures both places from the same fixed point, where the limb joins the trunk, which is how the terms are defined."
+        },
+        q(
+          "In anatomical position, where is the chin compared with the nose?",
+          ["Superior to the nose", "Lateral to the nose", "Inferior to the nose", "Deep to the nose"],
+          "Inferior to the nose",
+          "Which of the two is nearer the feet?",
+          "Inferior means toward the feet, or below, and the chin is below the nose, so it is inferior to the nose. Superior would put it above. Lateral means away from the midline, but the chin and nose both sit on the midline. Deep describes distance below the body surface, but the chin and the nose are both at the surface.",
+          "Direction terms"
+        ),
+        [
+          q(
+            "Which pair of direction terms are opposites?",
+            ["Superior and anterior", "Superficial and deep", "Medial and proximal", "Lateral and distal"],
+            "Superficial and deep",
+            "The right pair describes one kind of direction, measured two opposite ways.",
+            "Superficial means near the body surface and deep means farther inside, so they are opposites. Superior (toward the head) pairs with inferior, anterior (front) with posterior, medial (toward the midline) with lateral, and proximal with distal.",
+            "Direction terms"
+          ),
+          q(
+            "A straight cut across the body at the waist separates the upper part from the lower part. Which plane is that?",
+            ["A sagittal plane", "A frontal (coronal) plane", "An anterior plane", "A transverse plane"],
+            "A transverse plane",
+            "One of these planes is also called the horizontal plane.",
+            "A transverse plane divides the body into upper and lower parts. A sagittal plane divides it into left and right, and a frontal (coronal) plane into front and back. Anterior is a direction word meaning toward the front, not the name of a plane.",
+            "Body planes"
+          ),
+          q(
+            "What does the thoracic cavity hold?",
+            ["The heart and lungs", "The brain and spinal cord", "The stomach and liver", "The urinary bladder"],
+            "The heart and lungs",
+            "The thoracic cavity is the chest, above the diaphragm.",
+            "The thoracic cavity is the chest cavity above the diaphragm, and it holds the heart and lungs. The brain is in the cranial cavity and the spinal cord in the spinal cavity. The stomach and liver are in the abdominal cavity, below the diaphragm, and the urinary bladder is in the pelvic cavity.",
+            "Body cavities"
+          ),
+          q(
+            "Where is the knee compared with the ankle?",
+            ["Distal to it", "Superficial to it", "Proximal to it", "Deep to it"],
+            "Proximal to it",
+            "Which of the two is nearer the hip, where the leg joins the trunk?",
+            "Proximal means nearer the trunk, or the point where a limb attaches. The knee is nearer the hip, where the leg joins the trunk, than the ankle is, so the knee is proximal to the ankle. Distal is the opposite: the ankle is distal to the knee. Superficial and deep compare how near the body surface two structures are, which does not tell the knee and the ankle apart.",
+            "Direction terms"
+          ),
+          q(
+            "The breastbone (sternum) is at the front of the chest and the spinal column (the backbone) is at the back. Where is the sternum compared with the spinal column?",
+            ["Posterior to it", "Medial to it", "Deep to it", "Anterior to it"],
+            "Anterior to it",
+            "Anterior and posterior describe front and back.",
+            "Anterior means toward the front of the body, and the sternum is at the front while the spinal column is at the back, so the sternum is anterior to the spinal column. Posterior would put it behind. Deep describes distance from the surface, and medial describes closeness to the midline.",
+            "Direction terms"
+          )
+        ],
+        [
+          q(
+            "In anatomical position the palms face forward. Where is the thumb compared with the little finger?",
+            ["Medial to it", "Lateral to it", "Superficial to it", "Posterior to it"],
+            "Lateral to it",
+            "Stand with your palms forward and look at which side of the hand the thumb is on.",
+            "With the palms facing forward, the thumb is on the outer side of the hand, farther from the body’s midline than the little finger, so it is lateral to it. It would look medial only if the palms were turned backward, which is why every direction assumes anatomical position. Superficial describes nearness to the body surface, and the thumb and the little finger are both at the surface of the hand, so it does not tell them apart. Posterior means toward the back.",
+            "Anatomical position"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Five pairs of direction terms",
+              body: "Superior means toward the head, or above, and inferior means toward the feet, or below. The nose is superior to the mouth.\n\nAnterior means toward the front of the body and posterior toward the back. They are also called ventral and dorsal. The breastbone (sternum) is anterior to the heart, and the spinal column (the backbone) is posterior to it.\n\nMedial means toward the midline, the imaginary line down the middle of the body, and lateral means away from it. The nose is medial to the eyes, and the ears are lateral to them.\n\nProximal means nearer the trunk (the main part of the body: the chest, belly and back), or nearer the point where a limb attaches, and distal means farther from it. They describe places along an arm or a leg. To compare two parts of the head, such as the eyes and the mouth, use the other pairs, such as superior and inferior. The elbow is proximal to the wrist, and the fingers are distal to it.\n\nSuperficial means near the body surface and deep means farther inside. The skin is superficial to the muscles."
+            },
+            {
+              heading: "Three planes",
+              body: "A plane is an imaginary flat surface that cuts the body into two parts. Anatomy uses three main planes.\n\nA sagittal plane divides the body into left and right parts. One that runs exactly down the middle, making equal left and right halves, is called the midsagittal plane.\n\nA frontal plane, also called a coronal plane, divides the body into front and back parts.\n\nA transverse plane, also called a horizontal plane, divides the body into upper and lower parts."
+            },
+            {
+              heading: "The body cavities",
+              body: "A body cavity is a space inside the body that holds organs.\n\nThe cranial cavity, inside the skull, holds the brain. The spinal cavity, inside the backbone (the column of bones called vertebrae), holds the spinal cord.\n\nThe thoracic cavity is the chest. It holds the heart and lungs, and the rib cage surrounds it. Its floor is the diaphragm, a dome-shaped muscle that separates the thoracic cavity above from the abdominal cavity below.\n\nThe abdominal cavity holds the stomach, the liver and most of the intestines. Below it is the pelvic cavity, inside the pelvis (the ring of bones formed by the hip bones and the base of the spine), which holds organs including the urinary bladder. Together the abdominal and pelvic cavities are called the abdominopelvic cavity."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Where is the urinary bladder?",
+              strong: "In the pelvic cavity, the lowest part of the abdominopelvic cavity, below the abdominal cavity.",
+              explanation: "The bladder sits low in the trunk, inside the pelvis, so it is in the pelvic cavity, the lowest part of the abdominopelvic cavity, below the abdominal cavity."
+            },
+            {
+              setup: "A cut down the middle of the body, from between the eyes to between the feet. Which plane?",
+              strong: "A sagittal plane, which divides the body into left and right. Because it runs exactly down the middle, it is the midsagittal plane.",
+              explanation: "Say which two parts the cut separates, then name the plane: left and right is sagittal, front and back is frontal (coronal), upper and lower is transverse."
+            }
+          ],
+          misconception: {
+            wrongModel: "Left and right mean the left and right side of the picture.",
+            whyItFails: "Anatomy diagrams usually show a person facing you, so the person’s left side is on your right. Reading left and right from the page puts structures on the wrong side of the body.",
+            betterModel: "Always use the person’s own left and right. Picture yourself in the diagram, facing out, and name the sides from there."
+          },
+          commonMistakes: [
+            {
+              mistake: "Reading proximal and distal as “close to” and “far from” each other.",
+              whyItFails: "Both terms measure distance from where the limb joins the trunk, not from each other. “The wrist is proximal to the fingers” says the wrist is nearer the trunk than the fingers are. It says nothing about how close the wrist is to the fingers.",
+              fix: "On an arm or a leg, ask which of the two structures is nearer where the limb joins the trunk. That one is proximal."
+            },
+            {
+              mistake: "Mixing up the frontal and sagittal planes.",
+              whyItFails: "They run at right angles to each other. A frontal plane runs from side to side and separates front from back. A sagittal plane runs from front to back and separates left from right.",
+              fix: "Say which two parts the plane separates before you name it."
+            },
+            {
+              mistake: "Putting the stomach in the chest cavity.",
+              whyItFails: "The diaphragm is the boundary. The heart and lungs are above it, in the thoracic cavity. The stomach and liver are below it, in the abdominal cavity, even though they sit high in the abdomen.",
+              fix: "Find the diaphragm first, then ask whether the organ is above it or below it."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-anatomy-heart-and-lungs",
+    description: "Name the heart’s chambers, tell the kinds of blood vessels apart, and follow the airway from the nose to the alveoli.",
+    category: "Health science",
+    order: 8,
+    lesson: {
+      title: "Heart and Lungs: Where Blood and Air Go",
+      slug: "hosa-anatomy-heart-and-lungs-lesson",
+      summary: "Name the four chambers of the heart, tell arteries, veins and capillaries apart, and follow air from the nose to the alveoli.",
+      estimatedMinutes: 11,
+      content: lesson(
+        "Name the heart’s four chambers and the wall between its two sides, tell arteries, veins and capillaries apart, and follow air from the nose to the alveoli.",
+        "Put your hand flat on the middle of your chest. Behind your breastbone, between your two lungs, is your heart. In the body map lesson’s words, the heart is posterior to the breastbone and medial to the lungs. It is a muscular pump with four hollow chambers. The two upper chambers are the atria (one is called an atrium), and they receive blood coming back to the heart. The two lower chambers are the ventricles, and they pump blood out. Blood passes from each atrium down into the ventricle below it, on the same side. A muscular wall called the septum runs down the middle and separates the right side of the heart from the left side.\n\nEach ventricle sends blood to a different place. The right ventricle pumps blood to the lungs. The left ventricle pumps oxygen-rich blood into the aorta, the largest artery in the body, and from there out to the rest of the body. Right and left mean the person’s own right and left, just as in the body map lesson.\n\nThe lungs sit on either side of the heart, inside the thoracic cavity. Air reaches them through a branching set of tubes that ends in tiny air sacs, and the diaphragm below them is the main muscle of breathing.",
+        "Questions on the heart and lungs often turn on one word: atrium or ventricle, artery or vein, trachea or esophagus. Knowing where each structure sits on the path of blood or air lets you tell them apart instead of guessing.",
+        [
+          "Decide which path the question is about: blood through the heart and vessels, or air through the airway.",
+          "Place the structure on that path: what comes before it and what comes after it?",
+          "For a heart chamber, say whether it is an atrium (upper) or a ventricle (lower), and which side it is on.",
+          "For a blood vessel, ask whether it carries blood away from the heart or back to it."
+        ],
+        {
+          prompt: "A student labels a heart diagram that shows the heart as if the person is facing you. They write “left ventricle” on the lower chamber on the left side of the page. Is the label right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. It is the lower chamber and it is on the left, so it is the left ventricle.",
+          strongAnswer: "No. When the person faces you, their left side is on your right. The lower chamber on the left of the page is on the person’s right side, so it is the right ventricle. The left ventricle is the lower chamber on the right of the page.",
+          whyItWorks: "The weak answer reads left and right from the page. The strong answer uses the person’s own left and right, which is how every heart chamber is named."
+        },
+        q(
+          "Where does the right ventricle pump its blood next?",
+          ["The rest of the body", "The aorta", "The lungs", "The left atrium"],
+          "The lungs",
+          "Each ventricle sends blood to a different place. Which one goes to the body?",
+          "The right ventricle pumps blood to the lungs. It is the left ventricle that pumps blood into the aorta and out to the rest of the body. Blood reaches the left atrium only after it has been through the lungs, so the left atrium is not the next stop.",
+          "Heart chambers"
+        ),
+        [
+          q(
+            "What are the two lower chambers of the heart called?",
+            ["The atria", "The ventricles", "The alveoli", "The capillaries"],
+            "The ventricles",
+            "The upper chambers receive blood. The lower ones pump it out.",
+            "The two lower chambers are the ventricles, which pump blood out of the heart. The atria are the two upper chambers. Alveoli are air sacs in the lungs, and capillaries are the smallest blood vessels, so neither is a heart chamber.",
+            "Heart chambers"
+          ),
+          q(
+            "A blood vessel carries blood back toward the heart. What kind of vessel is it?",
+            ["An artery", "An arteriole", "The aorta", "A vein"],
+            "A vein",
+            "Arteries and veins are named by direction.",
+            "Veins carry blood back toward the heart, so this vessel is a vein. Arteries carry blood away from the heart, arterioles are the smallest arteries, and the aorta is the largest artery, so all three carry blood away.",
+            "Blood vessels"
+          ),
+          q(
+            "Put the airway in order, going in from the throat.",
+            [
+              "Pharynx, larynx, trachea, bronchi, alveoli",
+              "Larynx, pharynx, bronchi, trachea, alveoli",
+              "Pharynx, trachea, larynx, alveoli, bronchi",
+              "Trachea, pharynx, larynx, bronchi, alveoli"
+            ],
+            "Pharynx, larynx, trachea, bronchi, alveoli",
+            "The voice box sits at the top of the windpipe.",
+            "Air passes the pharynx, larynx, trachea, bronchi and alveoli in that order. The pharynx is the throat, the larynx (voice box) sits at the top of the trachea (windpipe), the trachea splits into the two bronchi, and the bronchi branch into smaller and smaller tubes that end at the alveoli. The other orders put the larynx before the pharynx, the trachea before the larynx, or the alveoli before the bronchi.",
+            "Airway"
+          ),
+          q(
+            "Tiny air sacs sit at the very ends of the smallest airways, each one wrapped in capillaries. What are they called?",
+            ["Bronchi", "Pleura", "Alveoli", "Atria"],
+            "Alveoli",
+            "They are where oxygen and carbon dioxide pass between the air and the blood.",
+            "The alveoli are the tiny air sacs at the ends of the airways. Oxygen and carbon dioxide pass between the air inside them and the blood in the capillaries around them. The bronchi are the larger airways that lead toward them. The pleura is the thin membrane that covers each lung, not an air sac, and the atria are heart chambers.",
+            "Airway"
+          ),
+          q(
+            "Which structure lies just below the lungs and is the main muscle of breathing?",
+            ["The pleura", "The septum", "The trachea", "The diaphragm"],
+            "The diaphragm",
+            "It is also the boundary between two body cavities.",
+            "The diaphragm is the dome-shaped muscle below the lungs, and it is the main muscle of breathing. It also separates the thoracic cavity from the abdominal cavity. The pleura is the thin membrane around each lung, the septum is the wall inside the heart, and the trachea is the windpipe.",
+            "Airway"
+          )
+        ],
+        [
+          q(
+            "Which statement about the aorta is correct?",
+            [
+              "It is the largest vein, and it returns blood to the heart",
+              "It carries blood from the right ventricle to the lungs",
+              "It is the largest artery, and it leaves the left ventricle",
+              "It is a capillary that joins an artery to a vein"
+            ],
+            "It is the largest artery, and it leaves the left ventricle",
+            "Which ventricle pumps blood out to the body?",
+            "The aorta is the largest artery in the body, and it leaves the left ventricle, carrying blood out to the body. It is not a vein, because it carries blood away from the heart. The right ventricle sends blood to the lungs, not into the aorta, and capillaries are the smallest vessels, not the largest.",
+            "Blood vessels"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "The four chambers and the septum",
+              body: "Right atrium and left atrium: the two upper chambers. They receive blood coming back to the heart, and each passes it down to the ventricle below it, on the same side.\n\nRight ventricle and left ventricle: the two lower chambers. They pump blood out. The right ventricle pumps blood to the lungs, and the left ventricle pumps oxygen-rich blood into the aorta and out to the body.\n\nSeptum: the muscular wall that separates the right side of the heart from the left side.\n\nPericardium: the sac that surrounds the heart. You met it in the prefixes lesson: peri- means around."
+            },
+            {
+              heading: "Arteries, veins and capillaries",
+              body: "Arteries carry blood away from the heart. The aorta, which leaves the left ventricle, is the largest artery in the body. The smallest arteries are called arterioles.\n\nVeins carry blood back toward the heart. The smallest veins are called venules.\n\nCapillaries are the smallest blood vessels of all, and they connect the arterioles to the venules, forming the bridge between arteries and veins."
+            },
+            {
+              heading: "The airway, from throat to air sacs",
+              body: "Air comes in through the nose or mouth and passes the pharynx, the throat. Next is the larynx, the voice box. Below it is the trachea, the windpipe, which carries air down into the chest.\n\nThe trachea splits into two bronchi, one for each lung. The bronchi branch into smaller and smaller tubes, and at their ends are the alveoli, tiny air sacs wrapped in capillaries. The alveoli are where oxygen and carbon dioxide are exchanged with the blood.\n\nEach lung is covered by a thin membrane called the pleura. Below the lungs is the diaphragm, the dome-shaped muscle that is the main muscle of breathing."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "The trachea and the esophagus both run down the neck. Which is which?",
+              strong: "The trachea is the windpipe, and it carries air to the lungs. The esophagus is the food tube, and it lies behind the trachea and carries food to the stomach.",
+              explanation: "Both are tubes in the neck, so place each on its path: air goes to the lungs, food goes to the stomach."
+            },
+            {
+              setup: "The smallest blood vessels in the body.",
+              weak: "Arterioles, because they are the smallest arteries.",
+              strong: "Capillaries. Arterioles and venules are small, but the capillaries between them are smaller still.",
+              explanation: "Arterioles are the smallest arteries and venules the smallest veins. Capillaries connect the two, and they are the smallest vessels of all."
+            }
+          ],
+          misconception: {
+            wrongModel: "Arteries carry oxygen-rich blood and veins carry oxygen-poor blood, so that is how you tell them apart.",
+            whyItFails: "Arteries and veins are named by direction, not by oxygen. The vessels that carry blood from the right ventricle to the lungs are arteries, yet the blood in them is oxygen-poor.",
+            betterModel: "Ask which way the blood is going. Away from the heart means an artery; back toward the heart means a vein."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping the atria and the ventricles.",
+              whyItFails: "They are different chambers with different jobs. The atria are the upper chambers that receive blood, and the ventricles are the lower chambers that pump it out.",
+              fix: "Link the ventricles with pumping out: both the aorta and the vessels to the lungs leave from a ventricle."
+            },
+            {
+              mistake: "Calling the trachea the voice box.",
+              whyItFails: "The voice box is the larynx, which sits at the top of the trachea. The trachea is the windpipe below it.",
+              fix: "Follow the airway in order: pharynx, larynx, trachea, bronchi, alveoli."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-anatomy-digestive-and-urinary",
+    description: "Follow food through the digestive tract and urine through the urinary tract, naming each structure in order.",
+    category: "Health science",
+    order: 9,
+    lesson: {
+      title: "Food and Urine: The Digestive and Urinary Tracts",
+      slug: "hosa-anatomy-digestive-and-urinary-lesson",
+      summary: "Follow food from the mouth to the large intestine and urine from the kidneys to the outside, and tell apart the tubes and tiny units that are easy to mix up.",
+      estimatedMinutes: 11,
+      content: lesson(
+        "Put the organs of the digestive tract and the urinary tract in order, say where along each path a structure sits, and tell apart structures with similar names.",
+        "Follow a bite of apple. You chew and swallow it, and it passes the pharynx (throat) and goes down the esophagus, a muscular tube behind the trachea, to the stomach. From the stomach it moves into the small intestine, where most nutrients are absorbed. What is left moves on into the large intestine, and the waste finally leaves the body through the rectum and anus.\n\nThat path is the digestive tract: one long tube from the mouth to the anus. Some digestive organs, such as the liver, the gallbladder and the pancreas, sit beside the tube and connect to it, but food never passes through them.\n\nThe urinary tract is a second, separate path. The kidneys make urine, tubes carry it to the bladder, which stores it, and one more tube carries it out of the body. Learning both paths in order is the quickest way to place any organ on them.",
+        "Many anatomy questions ask what connects to what, or where along a path something sits. If you know each path in order, you can answer by position instead of by memorising each organ on its own, and you can see straight away when an answer puts an organ on the wrong path.",
+        [
+          "Decide which path the question is about: food through the digestive tract, or urine through the urinary tract.",
+          "Say the path in order, from start to finish.",
+          "Find the structure in the question on that path, and name what comes just before it and just after it.",
+          "If two names look alike, such as ureter and urethra, check each one against its place on the path."
+        ],
+        {
+          prompt: "A question asks which tube carries urine from a kidney to the bladder, and a student answers “the urethra”. Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. The urethra is the urine tube, so it must carry urine from the kidney.",
+          strongAnswer: "No. There are two kinds of urine tube. A ureter runs from each kidney down to the bladder, so there are two ureters. The urethra is a single tube that carries urine from the bladder to the outside of the body. From kidney to bladder is the ureter.",
+          whyItWorks: "The weak answer mixes up the two names as if they were one tube. The strong answer places each tube on the urinary path, which is a reliable way to tell apart names that differ by only a few letters."
+        },
+        q(
+          "Food has just left the stomach. Where does it go next?",
+          ["The large intestine", "The small intestine", "The esophagus", "The liver"],
+          "The small intestine",
+          "Say the path in order: esophagus, stomach, then what?",
+          "After the stomach comes the small intestine, where most nutrients are absorbed. The large intestine comes after the small intestine, and the esophagus comes before the stomach. Food never passes through the liver, which sits beside the digestive tract.",
+          "Digestive tract"
+        ),
+        [
+          q(
+            "Which of these organs sits beside the digestive tract instead of being part of the tube that food passes through?",
+            ["The esophagus", "The pancreas", "The stomach", "The large intestine"],
+            "The pancreas",
+            "Food passes through three of these. Which one does it never enter?",
+            "The pancreas sits beside the digestive tract and connects to it, but food never passes through it. The esophagus, the stomach and the large intestine are all part of the tube that food moves along.",
+            "Digestive tract"
+          ),
+          q(
+            "What is the first part of the large intestine called?",
+            ["The appendix", "The rectum", "The cecum", "The esophagus"],
+            "The cecum",
+            "The appendix hangs from it.",
+            "The cecum is the pouch that forms the first part of the large intestine, and the appendix is attached to it. The appendix is a small pouch, not the start of the large intestine itself. The rectum is at the end of the large intestine, and the esophagus is before the stomach.",
+            "Digestive tract"
+          ),
+          q(
+            "Why is the small intestine called “small”?",
+            [
+              "It is shorter than the large intestine",
+              "It absorbs fewer nutrients than the large intestine",
+              "It comes after the large intestine",
+              "It is narrower than the large intestine"
+            ],
+            "It is narrower than the large intestine",
+            "Small does not mean short here.",
+            "The small intestine is narrower than the large intestine, and that is what small refers to. It is actually much longer. It is also where most nutrients are absorbed, and it comes before the large intestine, not after it.",
+            "Digestive tract"
+          ),
+          q(
+            "Villi are tiny finger-like projections. Where are they found?",
+            ["Lining the small intestine", "Inside the kidney", "At the ends of the smallest airways", "In the brain and nerves"],
+            "Lining the small intestine",
+            "Each of these four places has its own tiny structure with a look-alike name. Which system were villi listed under?",
+            "Villi line the small intestine, covering its inner wall. The tiny filtering units inside the kidney are nephrons, the tiny air sacs at the ends of the smallest airways are alveoli, and the working units of the brain and nerves are nerve cells, called neurons.",
+            "Tiny units"
+          ),
+          q(
+            "How many ureters does a typical person have, and where do they run?",
+            [
+              "Two, one from each kidney to the bladder",
+              "One, from the bladder to the outside of the body",
+              "Two, one from each kidney to the outside of the body",
+              "One, from both kidneys to the bladder"
+            ],
+            "Two, one from each kidney to the bladder",
+            "Place the ureter on the urinary path: what comes just before it, and what comes just after it?",
+            "There are two ureters, one from each kidney down to the bladder. The single tube from the bladder to the outside is the urethra, not a ureter. Urine always reaches the bladder before it leaves the body.",
+            "Urinary tract"
+          )
+        ],
+        [
+          q(
+            "Put the urinary tract in order, from where urine is made to where it leaves the body.",
+            [
+              "Kidney, urethra, bladder, ureter",
+              "Bladder, kidney, ureter, urethra",
+              "Kidney, bladder, ureter, urethra",
+              "Kidney, ureter, bladder, urethra"
+            ],
+            "Kidney, ureter, bladder, urethra",
+            "The bladder sits between two different kinds of tube: one brings urine in, and the other carries it out of the body.",
+            "Urine is made in the kidney, runs down a ureter to the bladder, is stored in the bladder, and leaves the body through the urethra. The other orders put the bladder before the kidney, the bladder before the ureter, or the urethra before the bladder.",
+            "Urinary tract"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "The digestive tract, in order",
+              body: "Mouth, then pharynx (throat), then esophagus: the muscular tube that carries food down to the stomach. It lies behind the trachea.\n\nStomach, then small intestine. The small intestine is a long, narrow, coiled tube where most nutrients are absorbed. Its lining is covered in tiny finger-like projections called villi.\n\nLarge intestine: wider and shorter than the small intestine, and most of it is the colon. Its first part is a pouch called the cecum, and the appendix, a small narrow pouch, is attached to the cecum. The large intestine ends at the rectum and anus.\n\nBeside the tract, not part of it: the liver, the gallbladder and the pancreas. They connect to the tract, but food does not pass through them."
+            },
+            {
+              heading: "The urinary tract, in order",
+              body: "Kidneys: two organs toward the back (posterior) of the abdomen, one on each side of the spine. Each kidney contains a very large number of tiny filtering units called nephrons, which make urine.\n\nUreters: two tubes, one from each kidney down to the bladder.\n\nUrinary bladder: the organ in the pelvic cavity that stores urine.\n\nUrethra: a single tube that carries urine from the bladder out of the body."
+            },
+            {
+              heading: "Four tiny units, four systems",
+              body: "Several organs contain huge numbers of one tiny working unit, and the units’ names are easy to mix up.\n\nAlveolus (plural alveoli): a tiny air sac in the lungs.\n\nVillus (plural villi): a tiny finger-like projection lining the small intestine.\n\nNephron: a tiny filtering unit in the kidney.\n\nNeuron: a nerve cell, the working unit of the nervous system.\n\nWhen a question names one of these, check which system it belongs to before you answer."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "The appendix is attached to which part of the digestive tract?",
+              weak: "The small intestine, because the appendix is small too.",
+              strong: "The large intestine. The appendix hangs from the cecum, which is the first part of the large intestine.",
+              explanation: "Place the appendix on the path: it is at the start of the large intestine, just after the small intestine ends."
+            },
+            {
+              setup: "Where are most nutrients absorbed?",
+              strong: "In the small intestine, whose lining is covered in villi.",
+              explanation: "The large intestine is wider, but most absorption of nutrients happens earlier on the path, in the small intestine."
+            }
+          ],
+          misconception: {
+            wrongModel: "The large intestine is longer than the small intestine, so it must be where most nutrients are absorbed.",
+            whyItFails: "“Large” and “small” describe width, not length. The small intestine is the narrower tube, but it is much longer, and it is where most nutrients are absorbed.",
+            betterModel: "Read small and large as narrow and wide. Then place each part on the path: stomach, small intestine, large intestine."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping the ureter and the urethra.",
+              whyItFails: "The names differ by a few letters, but the tubes are in different places. Two ureters carry urine into the bladder, and one urethra carries it out.",
+              fix: "Say the urinary path in order: kidney, ureter, bladder, urethra."
+            },
+            {
+              mistake: "Putting the liver on the path that food travels.",
+              whyItFails: "The liver is a digestive organ, but it sits beside the tract. Food goes from the stomach straight into the small intestine.",
+              fix: "Keep two lists: the tube food passes through, and the organs beside it."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-anatomy-bones-muscles-nerves-skin",
+    description: "Name the main bones by region, tell tendons from ligaments, divide the nervous system, and place the skin among the organs.",
+    category: "Health science",
+    order: 10,
+    lesson: {
+      title: "Bones, Muscles, Nerves and Skin",
+      slug: "hosa-anatomy-bones-muscles-nerves-skin-lesson",
+      summary: "Name the main bones by region, tell tendons, ligaments and cartilage apart, divide the nervous system and the brain, and learn why the skin counts as an organ.",
+      estimatedMinutes: 12,
+      content: lesson(
+        "Name the main bones by body region, say what tendons and ligaments connect, divide the nervous system into its central and peripheral parts, place the parts of the brain, and describe the skin as an organ.",
+        "Bend your arm and feel your upper arm. Under the skin is muscle, and under the muscle is bone. Most muscles are attached to bones by tendons, tough cords of tissue. Where two bones meet at a joint, bands called ligaments hold them together. The names matter because questions often ask exactly what joins what.\n\nThis lesson covers four systems: the skeleton that gives the body its frame, the muscles that move it, the nervous system that controls it, and the skin that covers it. The skeletal system is the bones, plus the cartilage and ligaments at the joints. The muscular system is the muscles, most of them attached to the bones by tendons. The nervous system is the brain, the spinal cord and the nerves. The integumentary system is the skin, together with the hair and nails.\n\nThe direction words from the body map lesson come back here. You will use them to say where the cerebellum sits compared with the rest of the brain.",
+        "Questions on these systems often offer a very similar wrong answer: a ligament for a tendon, the wrist bones for the ankle bones, the peripheral nervous system for the central one. Knowing what each structure connects to, and where it sits, is what tells the right answer from the near miss.",
+        [
+          "Decide which system the question is about: bones, muscles, nerves or skin.",
+          "For a bone, name the body region first, then the bone in that region.",
+          "For a connecting tissue, ask what it joins: muscle to bone is a tendon, bone to bone is a ligament.",
+          "For the nervous system, ask whether the structure is the brain or spinal cord (central) or a nerve outside them (peripheral).",
+          "For a position question, use the direction pairs from the body map lesson."
+        ],
+        {
+          prompt: "A diagram of the knee labels a tough band that joins the thigh bone to the shinbone. Is it a tendon or a ligament? (Our example, not an official test question.)",
+          weakAnswer: "A tendon. Tendons are the tough cords you find around the knee.",
+          strongAnswer: "A ligament. Check what it joins: the thigh bone (femur) and the shinbone (tibia) are both bones, and tissue that joins a bone to a bone is a ligament. A tendon joins a muscle to a bone.",
+          whyItWorks: "The weak answer goes by where the tissue is, but tendons and ligaments are both found around the knee. The strong answer asks what the band connects, which is the only thing that decides its name."
+        },
+        q(
+          "A tough cord attaches the biceps muscle to a bone of the forearm. What is it called?",
+          ["A ligament", "Cartilage", "A tendon", "A nerve"],
+          "A tendon",
+          "What does it join: muscle to bone, or bone to bone?",
+          "A tendon joins a muscle to a bone, and this cord joins the biceps muscle to a bone, so it is a tendon. A ligament joins a bone to a bone. Cartilage is the smooth tissue covering the ends of bones in many joints, and a nerve carries signals rather than joining one structure to another.",
+          "Tendons and ligaments"
+        ),
+        [
+          q(
+            "Which group of bones sits in the ankle?",
+            ["The carpals", "The tarsals", "The phalanges", "The vertebrae"],
+            "The tarsals",
+            "Carpals and tarsals are a matching pair, one near the hand and one near the foot.",
+            "The tarsals are the bones of the ankle. The carpals are the matching bones of the wrist. The phalanges are the bones of the fingers and toes, and the vertebrae form the spinal column.",
+            "Bones"
+          ),
+          q(
+            "What do the skull and the rib cage have in common?",
+            [
+              "Both are made of cartilage",
+              "Both are part of the spinal column",
+              "Both are found in the limbs",
+              "Both enclose and protect organs"
+            ],
+            "Both enclose and protect organs",
+            "Think about what sits inside each one.",
+            "The skull encloses and protects the brain, and the rib cage encloses and protects the heart and lungs. Both are made mainly of bone, not cartilage. The spinal column is made of the vertebrae, and neither the skull nor the ribs is in the arms or legs.",
+            "Bones"
+          ),
+          q(
+            "Which of these is part of the peripheral nervous system?",
+            ["A nerve in the arm", "The brain", "The spinal cord", "The cerebellum"],
+            "A nerve in the arm",
+            "The central nervous system is the brain and the spinal cord. What is left?",
+            "A nerve in the arm is outside the brain and spinal cord, so it is part of the peripheral nervous system, which is all the nerves outside those two. The brain and the spinal cord make up the central nervous system, and the cerebellum is part of the brain.",
+            "Nervous system"
+          ),
+          q(
+            "Which part of the brain is the largest?",
+            ["The cerebellum", "The brainstem", "The cerebrum", "The spinal cord"],
+            "The cerebrum",
+            "The cerebellum is a smaller part that sits below and behind the largest one. Which part is that?",
+            "The cerebrum is the largest part of the brain. The cerebellum is a smaller part below and behind it, and the brainstem connects the rest of the brain to the spinal cord. The spinal cord is not part of the brain at all, though it is part of the central nervous system.",
+            "Nervous system"
+          ),
+          q(
+            "The skin counts as an organ. Which body system is it part of?",
+            ["The skeletal system", "The nervous system", "The digestive system", "The integumentary system"],
+            "The integumentary system",
+            "This system also includes the hair and nails.",
+            "The skin belongs to the integumentary system, together with the hair and nails. The skeletal system is the bones and the cartilage and ligaments at the joints, the nervous system is the brain, spinal cord and nerves, and the digestive system is the tract that food passes through, with the organs beside it.",
+            "Skin"
+          )
+        ],
+        [
+          q(
+            "Where is the cerebellum compared with the cerebrum?",
+            ["Superior and anterior to it", "Inferior and posterior to it", "Superior and posterior to it", "Inferior and anterior to it"],
+            "Inferior and posterior to it",
+            "Two direction words give two facts: is it above or below the cerebrum, and in front of it or behind it?",
+            "The cerebellum lies below and behind the cerebrum. Below is inferior and behind is posterior, so it is inferior and posterior to the cerebrum. Superior would put it above the cerebrum, and anterior would put it in front, so each other choice gets at least one of the two directions wrong.",
+            "Nervous system"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Bones by region",
+              body: "Head and trunk: the skull encloses the brain, and the part of the skull around the brain is called the cranium. The vertebrae stack on top of one another to form the spinal column, which encloses the spinal cord. The ribs join the vertebrae at the back, and most of them connect to the breastbone (sternum) at the front through short strips of cartilage. Together they form the rib cage, which encloses and protects the heart and lungs.\n\nUpper limb (shoulder to fingers): the clavicle is the collarbone, which runs from the breastbone to the shoulder. The humerus is the upper arm bone. The carpals are the small bones of the wrist, and the phalanges are the bones of the fingers.\n\nLower limb (thigh to toes): the femur, the thigh bone, is the longest and strongest bone in the body. The tibia is the shinbone. The tarsals are the bones of the ankle, and the toe bones are also called phalanges.\n\nA memory aid: tarsals and toes both start with t, so the tarsals are the ones at the foot end of the body, in the ankle. The carpals are in the wrist."
+            },
+            {
+              heading: "Muscles and what joins them",
+              body: "Tendons join muscles to bones. Ligaments join bones to other bones at a joint. Cartilage is a firm, smooth, flexible tissue that covers the ends of bones in many joints.\n\nBy mass, the largest muscle in the body is the gluteus maximus, in the buttock. The longest muscle is a different one: the sartorius, a long, narrow muscle that runs across the front of the thigh. The biceps brachii is on the front of the upper arm. The diaphragm, from the heart and lungs lesson, is a muscle too."
+            },
+            {
+              heading: "The nervous system and the brain",
+              body: "The central nervous system (CNS) is the brain and the spinal cord. The peripheral nervous system (PNS) is all the nerves outside them, which reach the rest of the body.\n\nThe cerebrum is the largest part of the brain. The cerebellum is a smaller part that lies below and behind the cerebrum. In the words of the body map lesson, the cerebellum is inferior and posterior to the cerebrum. The brainstem connects the rest of the brain to the spinal cord."
+            },
+            {
+              heading: "Skin: the largest organ",
+              body: "The skin is an organ, and it is the largest organ of the body. With the hair and nails, it makes up the integumentary system.\n\nThe outer layer of the skin is the epidermis, and the layer beneath it is the dermis. An organ is a body part made of two or more kinds of tissue working together. The skin’s layers are made of different tissues, which is why it counts as an organ. The word parts from earlier lessons explain the names: epi- means upon, and derm means skin.\n\nDo not confuse the largest organ of all with the largest organ inside the body, which is the liver."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Where is the cerebellum?",
+              strong: "Below and behind the cerebrum. In anatomy terms, it is inferior and posterior to the cerebrum.",
+              explanation: "Two direction words give two facts. Check each one against its pair: inferior is toward the feet, and posterior is toward the back."
+            },
+            {
+              setup: "The longest bone in the body.",
+              weak: "The humerus, because the arm is long.",
+              strong: "The femur, the thigh bone. It is the longest and strongest bone in the body.",
+              explanation: "The humerus is the upper arm bone. The thigh bone is longer, so the femur is the answer."
+            }
+          ],
+          misconception: {
+            wrongModel: "The biggest thing inside the body must be the largest organ.",
+            whyItFails: "The skin is an organ too, and it is the largest organ of all. The liver is only the largest organ inside the body.",
+            betterModel: "Read the question closely: “the largest organ” means the skin, and “the largest internal organ” means the liver."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping tendons and ligaments.",
+              whyItFails: "Both are tough bands of tissue near joints, so position does not tell them apart. Only what they join does.",
+              fix: "Tendons join muscle to bone. Ligaments join bone to bone."
+            },
+            {
+              mistake: "Swapping the carpals and the tarsals.",
+              whyItFails: "They are matching groups of small bones, one in the wrist and one in the ankle, and their names look and sound almost the same.",
+              fix: "Learn them as a pair, and use the letter t: tarsals and toes both start with it, so the tarsals are in the ankle and the carpals are in the wrist."
+            },
+            {
+              mistake: "Counting the spinal cord as part of the peripheral nervous system.",
+              whyItFails: "The spinal cord runs down the back, away from the head, so it can seem to belong with the nerves. It is part of the central nervous system.",
+              fix: "The central nervous system is the brain plus the spinal cord. Everything else is peripheral."
+            }
+          ]
+        }
+      )
+    }
+  },
   {
     organization: "HOSA",
     track: "HOSA",

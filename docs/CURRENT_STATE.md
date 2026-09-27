@@ -1,6 +1,6 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-09-27, public product scope (Debate and DECA only, HOSA dormant; then the
+_Last updated: 2026-09-27, the production prerender build repair, public product scope (Debate and DECA only, HOSA dormant; then the
 two-track cleanup: Debate metrics by track ownership, DECA-only coach copy, CLAUDE.md scope) and HOSA lines
 only (the Medical Terminology word-parts course, its anatomy, physiology and pathophysiology
 modules, their practice and HOSA test-result next steps). Every other
@@ -883,8 +883,11 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 **PUBLIC SCOPE, 2026-09-27 (supersedes the HOSA paragraph below).** CompeteReady publicly supports
 only Debate and DECA; HOSA is dormant (see *Public product scope* below the archive boundary). The
-deactivation and the two-track cleanup on top of it are local commits, not pushed. The owner plans to
-push them and then stop track-architecture work. **Next, only when the owner asks:** pushing is the
+deactivation and the two-track cleanup on top of it are local commits; the cleanup commit `36e8c44` was
+pushed unchanged to the remote branch `product/debate-deca-focus` at the owner's request, and its Vercel
+build failed during prerender. The repair of that build (*Production prerender build repair* below the
+archive boundary) is a further local commit on top, not pushed. The owner plans to
+push and then stop track-architecture work. **Next, only when the owner asks:** pushing is the
 owner's action; then the website review covers Debate and DECA only. HOSA's website-review debt is
 parked with the dormant code. Restoring HOSA starts by adding it back to `PUBLIC_TRACK_IDS` and then
 reviewing each surface listed in that section.
@@ -979,6 +982,68 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## Production prerender build repair — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified. Baseline: the two-track
+cleanup commit `36e8c44` (next section), which the owner had pushed unchanged to the remote branch
+`product/debate-deca-focus`; its Vercel production build compiled and then failed during prerender.
+Owner prompt "FIX CURRENT VERCEL PRODUCTION BUILD": repair only the deterministic build blockers, no
+redesign, no product behavior change.
+
+**Root cause: one client component, one layout, no boundary.** All 17 failing routes (`/admin`,
+`/compete`, `/dashboard`, `/debate`, `/lessons`, `/onboarding/diagnostic`, `/profile/edit`, `/profile`,
+`/resources`, `/settings`, `/skills`, `/study-arcade`, `/study-arcade/review`, `/study`, `/teams`,
+`/tests`, `/training`) are exactly the static-path pages under `app/(app)` with no route segment
+config. Their one layout, `app/(app)/layout.tsx`, mounts the client `TrainingTrackProvider`
+(`components/training/training-track-context.tsx`), which calls `useSearchParams()`. Nothing above it
+was a Suspense boundary (`app/(app)/loading.tsx` sits below the layout), so Next's static pass failed
+every one of those pages with `missing-suspense-with-csr-bailout`. No page calls `useSearchParams`
+itself; the only other caller in the repo, `components/auth/sign-in-form.tsx`, already sits under
+Suspense in `app/(auth)/signin/page.tsx`. The pages enter the static pass at all because
+`lib/track-server.ts` catches every error from `getServerSession` and `cookies()`, Next's
+dynamic-usage signal included; Next records the read (`revalidate = 0`) before raising that signal, so
+the routes were, and remain, dynamic at runtime and the static pass only ever wasted a render. `/home`,
+the coach and assignment pages and every `[param]` page never enter the static pass (`force-dynamic`
+or a dynamic segment). `/api/ai/health` has only a GET handler and no segment config, so the build
+called it; `requireUser()` read `headers()`, and the route's catch logged Next's dynamic-usage error
+as an unhandled 500. Next then treated the route as dynamic, so that line was noise, not a failure.
+
+**Fix: two files, no product behavior change.** `app/(app)/layout.tsx` wraps the provider, and with
+it the shell and every (app) page, in ONE `<Suspense>` whose fallback (`ShellFallback`) is the
+existing accessible `LoadingState` (`role="status"`, spinner stilled by the reduced-motion rule) with
+the title "Loading..." and no track, progress or product claim. It is the single shared boundary for
+the whole (app) tree: no page became a client component, no page gained `force-dynamic`, and
+`lib/track-server.ts` is unchanged, so the smoke suites that import it under tsx keep their offline
+behavior. Because every (app) route renders per request, the fallback is never served to a learner.
+`app/api/ai/health/route.ts` adds `export const dynamic = "force-dynamic"` beside
+`runtime = "nodejs"`; auth first, rate limit second, the provider-order report and the `?test=1` live
+check are unchanged, and no secret is returned.
+
+**Validation (2026-09-27, local; no `.env` exists and the build needed none).** A baseline
+`npm run build` at `36e8c44` reproduced the Vercel failure exactly: the same 17 pages under
+"Export encountered errors", the same `/api/ai/health` line, exit 1. On the fix: `npx tsc --noEmit`
+clean; eslint on both changed files clean; `public-tracks:smoke` 43/43; `track-context:smoke` 26/26
+(its T7i/T7j pins on the layout still match); `tracks:smoke` and `nav-a11y:smoke` pass;
+`npm run build` exits 0 with no prerender error and no `[api]` line, and the route table lists every
+(app) route and `/api/ai/health` as dynamic (ƒ). The only static routes are `/`, `/_not-found`,
+`/api/health`, `/forgot-password`, `/signin` and `/signup`, the same set that was static before. The
+58-suite safe battery: 52 pass and the 6 known baseline failures are unchanged (`coach-evidence`
+S3-15d, `debate-mastery` 24, `deca-mastery` PA7, `hosa-medterm-evidence` PA7, `hosa-practice-scope`
+10c, `skills-compat` 2), the same set as at `36e8c44`. Not run: `security:smoke`, `judge-shape`,
+`auth`, `team`, `assignment`, `avatar`, a dev server, a browser, any provider, any database write or
+seed. Independent AI review (not a human review): four read-only lenses (Next.js correctness,
+product and accessibility, security, completeness), each finding then challenged by two adversarial
+verifiers against the Next 14.2.18 source and the build logs. No blocker, no major; six minor notes,
+five refuted as hypothetical or pre-existing, one recorded below.
+
+**Residual (recorded, not changed).** The static pass still evaluates the 17 pages once with a
+signed-out layout before Next discards the render; none of them failed locally without a database.
+The reason is the swallowing catch in `lib/track-server.ts`; it stays because the smoke suites depend
+on it and because the routes are dynamic regardless. The other GET-only API routes were not touched:
+the build reported none of them. Pre-existing and unchanged: `app/api/health/route.ts` reads only
+`process.env`, so Next still prerenders it as a static route and its presence flags (database URL,
+NextAuth URL and secret, OpenAI key) are frozen at build time rather than read per request.
 
 ## Two-track cleanup: Debate metrics by track ownership — 2026-09-27 — LOCAL COMMIT
 

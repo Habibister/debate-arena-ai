@@ -5,6 +5,10 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 import { extractJson, getCostMode, getProviderOrder, providerModel, runProviderCompletion } from "@/lib/ai-providers";
 
 export const runtime = "nodejs";
+// Every response depends on the request (the session headers, the caller's IP), so the route must
+// never be attempted as a static page. Without this the build's static pass called the handler,
+// hit `headers()` inside requireUser() and logged a dynamic-usage error.
+export const dynamic = "force-dynamic";
 
 /**
  * Safe AI health check. Reports which provider is selected and whether a Gemini key is present —

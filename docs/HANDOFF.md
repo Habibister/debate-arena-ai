@@ -1,6 +1,6 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-27, public product scope (Debate and DECA only, HOSA dormant) and HOSA lines
+_Last updated: 2026-09-27, the production prerender build repair, public product scope (Debate and DECA only, HOSA dormant) and HOSA lines
 only (the Medical Terminology word-parts course, its anatomy,
 physiology and pathophysiology modules, their practice, the practice-to-lesson remediation, HOSA test-result next
 steps, and the owner review repairs with the owner's review waiver). Every other
@@ -14,6 +14,17 @@ below the boundary.
 
 ## What is complete
 
+- **Production prerender build repair — LOCAL COMMIT ONLY (2026-09-27), on top of the two-track
+  cleanup.** Not pushed, not deployed, not Production-verified, not browser-verified. The Vercel build
+  of `36e8c44` (pushed unchanged to the remote branch `product/debate-deca-focus`) compiled and then
+  failed prerendering 17 `(app)` pages with "useSearchParams() should be wrapped in a suspense
+  boundary", and logged a dynamic-usage error for `/api/ai/health`. One cause: the client
+  `TrainingTrackProvider` mounted by `app/(app)/layout.tsx` reads `useSearchParams()` with no Suspense
+  boundary above it. The fix is one `<Suspense>` in that layout with a neutral, accessible
+  `LoadingState` fallback, plus `export const dynamic = "force-dynamic"` on the health route. Nothing
+  else changed: no page became a client component, `lib/track-server.ts` is untouched, product
+  behavior is unchanged. `npm run build` now exits 0 with every `(app)` route dynamic. Details, the
+  mechanism and the validation record: *Production prerender build repair* in `docs/CURRENT_STATE.md`.
 - **Two-track cleanup — LOCAL COMMIT ONLY (2026-09-27), on top of the public-scope commit.** Not
   pushed, not deployed, not Production-verified, not browser-verified. Every number presented as
   Debate activity (Home and Dashboard judged rounds, guided line, current-scoring average, Debate
@@ -1296,7 +1307,10 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 **Public scope, 2026-09-27 (supersedes the HOSA paragraphs below).** CompeteReady publicly supports
 only Debate and DECA; HOSA is dormant. The deactivation and the two-track cleanup are two local
-commits on top of `74bd119`, not pushed. Next, only when the owner asks: pushing is the owner's
+commits on top of `74bd119`; the cleanup commit `36e8c44` was pushed unchanged to the remote branch
+`product/debate-deca-focus` at the owner's request, and its Vercel build failed during prerender. The
+production prerender build repair is a third local commit on top, not pushed and not on that remote
+branch. Next, only when the owner asks: pushing is the owner's
 action, after which the owner stops track-architecture work; then the screen-by-screen website review
 and design phase with the owner covers Debate and DECA only. Do not add HOSA curriculum or reopen Debate or DECA
 curriculum. To restore HOSA later: add it back to `PUBLIC_TRACK_IDS`, then review each surface in

@@ -55,6 +55,7 @@
     "hosa-result-next-steps:smoke": "tsx scripts/hosa-result-next-steps-smoke.ts",
     "hosa-medterm-anatomy:smoke": "tsx scripts/hosa-medterm-anatomy-smoke.ts",
     "hosa-medterm-physiology:smoke": "tsx scripts/hosa-medterm-physiology-smoke.ts",
+    "hosa-medterm-pathophysiology:smoke": "tsx scripts/hosa-medterm-pathophysiology-smoke.ts",
     "review-ladder:smoke": "tsx scripts/review-ladder-smoke.ts",
     "coach-evidence:smoke": "tsx scripts/coach-evidence-smoke.ts",
     "clash-activation:smoke": "tsx scripts/seed-debate-clash-skill-smoke.ts",

@@ -1,9 +1,10 @@
 // HOSA Medical Terminology — where the course hands a learner to practice, and back.
 //
 // THE GAP THIS CLOSES. The Medical Terminology practice room (/training/hosa/practice) drills 180
-// original questions. The course teaches three parts of them: four lessons on word parts (word roots,
-// prefixes, suffixes), then four on anatomy, then four on physiology. A concept lesson whose chain
-// ends renders "You've reached the end of this course so far" and nothing else. This module names the
+// original questions. The course has lessons for all four parts of them: four on word parts (word
+// roots, prefixes, suffixes), then four on anatomy, four on physiology and five on pathophysiology. A
+// concept lesson whose chain ends renders "You've reached the end of this course so far" and nothing
+// else. This module names the
 // honest onward steps: the event's own practice room, opened with what the lessons just taught already
 // selected.
 //
@@ -21,10 +22,10 @@
 //
 // PRACTICE FEEDBACK -> LESSON -> PRACTICE. The practice room's results name the areas a learner
 // missed questions in. For a taught area this module names the published lesson where its teaching
-// starts, and the room links there; that lesson links back to practice on its own module. The areas
-// no lesson teaches (pathophysiology) get a plain statement that no lesson exists yet,
-// never a nearby lesson. Every link in that chain is checked here, and a broken one yields no action
-// at all rather than a guess.
+// starts, and the room links there; that lesson links back to practice on its own module. Every one
+// of the six canonical areas now has such a lesson. An area with no declared owner would get a plain
+// statement that no lesson exists yet, never a nearby lesson. Every link in that chain is checked
+// here, and a broken one yields no action at all rather than a guess.
 //
 // Pure: no React, no Prisma, no network, no filesystem, no environment, no browser API.
 
@@ -56,7 +57,7 @@ export type HosaPracticeLink = Readonly<{ href: string; label: string; detail: s
  * change it, and starts nothing until they press start. The copy then says what no lesson has taught
  * yet, so nothing there is a surprise: about a fifth of the word-part questions use parts the course
  * does not cover (for example -centesis, retro-, pseudo-). The room's every-area choice also adds
- * anatomy and physiology, which the lessons after this one teach, and disease, which no lesson does.
+ * anatomy, physiology and disease (pathophysiology), which the lessons after this one teach.
  *
  * It was the course-end action until the anatomy module followed the word-part lessons. It now shows
  * on the word-part module's last lesson beside "Next lesson".
@@ -65,7 +66,7 @@ export const HOSA_MEDTERM_PRACTICE_ENTRY: HosaPracticeLink = Object.freeze({
   href: medTermFocusHref("word-parts"),
   label: "Practise the word parts from this course",
   detail:
-    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with the word parts from this course already selected. Most of its word-root, prefix and suffix questions use what this course teaches, and some use word parts it has not taught yet. Switching there to "${medTermFocus("all").label}" adds questions on anatomy, physiology and disease. The lessons after this one are about anatomy and physiology, and disease has no lessons yet. Every answer is explained.`
+    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with the word parts from this course already selected. Most of its word-root, prefix and suffix questions use what this course teaches, and some use word parts it has not taught yet. Switching there to "${medTermFocus("all").label}" adds questions on anatomy, physiology and disease. The lessons after this one teach anatomy, physiology and disease (pathophysiology). Every answer is explained.`
 });
 
 /**
@@ -87,14 +88,14 @@ export const HOSA_MEDTERM_PRACTICE_RETURN: HosaPracticeLink = Object.freeze({
  * selected: the bank's 30 anatomy questions, every one of which the anatomy lessons teach
  * (scripts/hosa-medterm-anatomy-smoke.ts). It was the course-end action until the physiology module
  * followed the anatomy lessons, and now shows on the anatomy module's last lesson beside "Next
- * lesson". The copy says the lessons after this one teach physiology, and that disease is not taught,
- * because the every-area choice adds both.
+ * lesson". The copy says the lessons after this one teach physiology and then disease, because the
+ * every-area choice adds both.
  */
 export const HOSA_MEDTERM_ANATOMY_PRACTICE_ENTRY: HosaPracticeLink = Object.freeze({
   href: medTermFocusHref("anatomy"),
   label: "Practise the anatomy from this course",
   detail:
-    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with "${medTermFocus("anatomy").label}" already selected: questions on body directions, planes and cavities and on the structures these lessons name. Switching there to "${medTermFocus("all").label}" mixes in word parts, physiology and disease. The lessons after this one are about physiology, and disease has no lessons yet. Every answer is explained, and nothing starts until you press start.`
+    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with "${medTermFocus("anatomy").label}" already selected: questions on body directions, planes and cavities and on the structures these lessons name. Switching there to "${medTermFocus("all").label}" mixes in word parts, physiology and disease. The lessons after this one are about physiology and then disease (pathophysiology). Every answer is explained, and nothing starts until you press start.`
 });
 
 /**
@@ -110,16 +111,18 @@ export const HOSA_MEDTERM_ANATOMY_PRACTICE_RETURN: HosaPracticeLink = Object.fre
 });
 
 /**
- * The onward step at the end of the physiology module, which is also the end of the course written so
- * far. It opens the practice room with the physiology choice selected: the bank's 30 physiology
- * questions, every one of which the physiology lessons teach (scripts/hosa-medterm-physiology-smoke.ts).
- * Disease is named as not taught, because the every-area choice adds it.
+ * The onward step at the end of the physiology module. It opens the practice room with the physiology
+ * choice selected: the bank's 30 physiology questions, every one of which the physiology lessons teach
+ * (scripts/hosa-medterm-physiology-smoke.ts). It was the course-end action until the pathophysiology
+ * module followed the physiology lessons, and now shows on the physiology module's last lesson beside
+ * "Next lesson". The copy says the lessons after this one teach disease, because the every-area
+ * choice adds it.
  */
 export const HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY: HosaPracticeLink = Object.freeze({
   href: medTermFocusHref("physiology"),
   label: "Practise the physiology from this course",
   detail:
-    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with "${medTermFocus("physiology").label}" already selected: questions on how the healthy body works, which these lessons teach. Switching there to "${medTermFocus("all").label}" mixes in word parts, anatomy and disease, and disease has no lessons yet. Every answer is explained, and nothing starts until you press start.`
+    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with "${medTermFocus("physiology").label}" already selected: questions on how the healthy body works, which these lessons teach. Switching there to "${medTermFocus("all").label}" mixes in word parts, anatomy and disease. The lessons after this one are about disease (pathophysiology). Every answer is explained, and nothing starts until you press start.`
 });
 
 /**
@@ -135,6 +138,33 @@ export const HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_RETURN: HosaPracticeLink = Object.
 });
 
 /**
+ * The onward step at the end of the pathophysiology module, which is also the end of the course. It
+ * opens the practice room with the pathophysiology choice selected: the bank's 30 pathophysiology
+ * questions, every one of which the pathophysiology lessons teach
+ * (scripts/hosa-medterm-pathophysiology-smoke.ts). It claims no completion: the copy says what the
+ * questions are and what the every-area choice adds, and it repeats that this is knowledge for a
+ * test, not a way to judge anyone's health.
+ */
+export const HOSA_MEDTERM_PATHOPHYSIOLOGY_PRACTICE_ENTRY: HosaPracticeLink = Object.freeze({
+  href: medTermFocusHref("pathophysiology"),
+  label: "Practise the pathophysiology from this course",
+  detail:
+    `The Medical Terminology practice uses original questions, not official HOSA test items. This link opens it with "${medTermFocus("pathophysiology").label}" already selected: questions on what common disease terms mean and why the change happens, which these lessons teach. Switching there to "${medTermFocus("all").label}" mixes in word parts, anatomy and physiology, which the earlier lessons of this course teach, though a few word-part questions use word parts no lesson has taught yet. This is knowledge for a test, not a way to judge anyone’s health. Every answer is explained, and nothing starts until you press start.`
+});
+
+/**
+ * The way back to pathophysiology practice from the lesson where pathophysiology teaching starts.
+ * Pathophysiology practice mixes questions from every pathophysiology lesson, and the copy says so,
+ * because this lesson comes before the others.
+ */
+export const HOSA_MEDTERM_PATHOPHYSIOLOGY_PRACTICE_RETURN: HosaPracticeLink = Object.freeze({
+  href: medTermFocusHref("pathophysiology"),
+  label: "Practise the pathophysiology from this course",
+  detail:
+    "This opens Medical Terminology practice with pathophysiology already selected. It mixes questions from every pathophysiology lesson, so many of its questions are about topics a later lesson in this course teaches. Every answer is explained, and nothing starts until you press start."
+});
+
+/**
  * The two links of each practice choice a course module leads to: at the module's end, and back from
  * an owning lesson inside it. Keyed by the practice choice, and resolved to a module through that
  * choice's `moduleId`, so no lesson id appears here.
@@ -143,7 +173,8 @@ const MODULE_PRACTICE_LINKS: Readonly<Partial<Record<MedTermFocusId, { end: Hosa
   Object.freeze({
     "word-parts": { end: HOSA_MEDTERM_PRACTICE_ENTRY, back: HOSA_MEDTERM_PRACTICE_RETURN },
     anatomy: { end: HOSA_MEDTERM_ANATOMY_PRACTICE_ENTRY, back: HOSA_MEDTERM_ANATOMY_PRACTICE_RETURN },
-    physiology: { end: HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY, back: HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_RETURN }
+    physiology: { end: HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY, back: HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_RETURN },
+    pathophysiology: { end: HOSA_MEDTERM_PATHOPHYSIOLOGY_PRACTICE_ENTRY, back: HOSA_MEDTERM_PATHOPHYSIOLOGY_PRACTICE_RETURN }
   });
 
 /** The targeted practice choice whose lessons are this module's, or null. Exactly one, or none. */
@@ -200,21 +231,22 @@ type MedTermAreaId = (typeof HOSA_MEDTERM_TAUGHT_AREAS)[number];
  * the part every bank question tests, so a wrong pairing fails there. Anatomy is taught across the
  * whole anatomy module, so its entry is the module's first lesson, and the remediation names the
  * module: `scripts/hosa-medterm-anatomy-smoke.ts` proves, question by question, that the module
- * teaches what every anatomy question needs. Physiology is the same across the physiology module:
- * its entry is that module's first lesson, and `scripts/hosa-medterm-physiology-smoke.ts` proves the
- * module teaches what every physiology question needs.
+ * teaches what every anatomy question needs. Physiology and pathophysiology are the same across their
+ * modules: each entry is that module's first lesson, and `scripts/hosa-medterm-physiology-smoke.ts`
+ * and `scripts/hosa-medterm-pathophysiology-smoke.ts` prove each module teaches what every one of its
+ * area's questions needs.
  *
- * DELIBERATELY ABSENT: pathophysiology. No lesson teaches it yet, so it has no owner, and the
- * practice results say so instead of pointing at another lesson. The course's first
- * lesson, "How Medical Words Are Built", names examples of all three part kinds but owns none of
- * them, so it is not an owner either.
+ * All six canonical areas now have an owner. An area with none would get the plain no-lesson
+ * statement, never another lesson in its place. The course's first lesson, "How Medical Words Are
+ * Built", names examples of all three part kinds but owns none of them, so it is not an owner.
  */
 export const HOSA_MEDTERM_AREA_TEACHING_OWNERS: Readonly<Partial<Record<MedTermAreaId, string>>> = Object.freeze({
   "word-roots": "hosa-medical-word-roots",
   prefixes: "hosa-medical-prefixes",
   suffixes: "hosa-medical-suffixes",
   anatomy: "hosa-anatomy-body-map",
-  physiology: "hosa-physiology-staying-in-balance"
+  physiology: "hosa-physiology-staying-in-balance",
+  pathophysiology: "hosa-pathophysiology-how-tissue-changes"
 });
 
 /** What the practice results say for an area that no published lesson teaches. */
@@ -282,8 +314,9 @@ export type HosaMedTermRemediation =
  * false, so the results show the weak area alone.
  *
  * ONE LESSON OR A WHOLE MODULE. A word-part area is taught by one lesson, which the action names. A
- * module whose practice choice is this one area alone (anatomy, physiology) teaches it across all its lessons, so
- * the action names the module and the lesson it starts with, and the owner must be that first lesson.
+ * module whose practice choice is this one area alone (anatomy, physiology, pathophysiology) teaches
+ * it across all its lessons, so the action names the module and the lesson it starts with, and the
+ * owner must be that first lesson.
  *
  * `areaLabel` is the canonical area label from the practice room, so the action names the same area
  * the results line above it names.

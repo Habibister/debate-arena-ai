@@ -1,7 +1,7 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy
-and physiology modules, their practice, the practice-to-lesson remediation and HOSA test-result next
+_Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy,
+physiology and pathophysiology modules, their practice, the practice-to-lesson remediation and HOSA test-result next
 steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
@@ -13,6 +13,25 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA Medical Terminology pathophysiology — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not
+  deployed, not Production-verified, not browser-verified. The fourth and last planned module of the
+  Medical Terminology course, `hosa-medterm-pathophysiology`, after physiology: five published
+  concept lessons (`hosa-pathophysiology-how-tissue-changes` →
+  `hosa-pathophysiology-blood-flow-and-oxygen` → `hosa-pathophysiology-heart-and-pressure` →
+  `hosa-pathophysiology-defences` → `hosa-pathophysiology-breathing-kidneys-glucose`), each with a
+  worked example and seven explained checks (35 in all, ending in a "Final check"), teaching all 30
+  of the bank's pathophysiology questions (TAUGHT 30, NOT YET TAUGHT 0; bank unchanged). Meaning and
+  basic mechanism only; no diagnosis, treatment, advice, self-diagnosis framing or measured values.
+  A fifth practice choice, "Pathophysiology from the course" (`?focus=pathophysiology`, pool 30,
+  never auto-starts); pathophysiology weak areas open the Pathophysiology lessons at How Tissue
+  Changes, so all six practice areas now resolve to a lesson or fail closed. The "All Medical
+  Terminology" copy says every area has lessons, keeps the word-part caveat, and separates the
+  practice bank from official HOSA coverage. No test result maps to pathophysiology, so none was
+  linked. AI-drafted and labelled "not an official HOSA lesson or test item — not yet reviewed by a
+  person": **a qualified human subject-accuracy review of the whole curriculum is required before
+  push.** Guard: `npm run hosa-medterm-pathophysiology:smoke` (20 checks). Details: *HOSA Medical
+  Terminology pathophysiology* in `docs/CURRENT_STATE.md`; review package in
+  `/mnt/project-files/reports/2026-09-27-hosa-medterm-pathophysiology.md`.
 - **HOSA Medical Terminology physiology — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not
   deployed, not Production-verified, not browser-verified. A third module of the Medical Terminology
   course, `hosa-medterm-physiology`, after anatomy: four published concept lessons
@@ -22,7 +41,8 @@ below the boundary.
   of the bank's physiology questions (TAUGHT 30, NOT YET TAUGHT 0; bank unchanged). Normal function
   only; one measured value (the resting adult heart-rate range, with its caveat). A fourth practice choice,
   "Physiology from the course" (`?focus=physiology`, never auto-starts); physiology weak areas open
-  the Physiology lessons at Staying in Balance; pathophysiology still has no lesson and says so. No
+  the Physiology lessons at Staying in Balance; pathophysiology still had no lesson and said so (true
+  when written; it has lessons since the pathophysiology module above). No
   test result maps to physiology, so none was linked. AI-drafted and labelled "not an official HOSA
   lesson or test item — not yet reviewed by a person": **a qualified human subject-accuracy review
   is required before push.** Guard: `npm run hosa-medterm-physiology:smoke` (18 checks). Details:
@@ -35,7 +55,8 @@ below the boundary.
   (28 in all, ending in a "Final check"), teaching all 30 of the bank's anatomy questions (TAUGHT 30,
   NOT YET TAUGHT 0; bank unchanged). A third practice choice, "Anatomy from the course"
   (`?focus=anatomy`, never auto-starts, 10/20/30 questions); anatomy weak areas open the Anatomy
-  lessons at the body map; physiology and pathophysiology still have no lesson and say so. No test
+  lessons at the body map; physiology and pathophysiology still had no lesson and said so (true when
+  written; both have lessons since the modules above). No test
   result maps to anatomy, so none was linked. AI-drafted and labelled "not an official HOSA lesson
   or test item — not yet reviewed by a person": **human subject-accuracy review or an explicit
   owner waiver is required before push** (superseded on 2026-09-27 by the owner's plan: one
@@ -60,8 +81,9 @@ below the boundary.
   weak area and, for a word-part area, link the ONE published lesson that teaches it (word roots to
   `hosa-medical-word-roots`, prefixes to `hosa-medical-prefixes`, suffixes to
   `hosa-medical-suffixes`; declared in `lib/education/hosa-medterm-practice.ts`, checked server-side,
-  failing closed when any link in the chain is missing). Anatomy, physiology and pathophysiology say
-  "CompeteReady does not have a lesson for this area yet." and link nothing in its place. The Word
+  failing closed when any link in the chain is missing). Anatomy, physiology and pathophysiology said
+  "CompeteReady does not have a lesson for this area yet." and linked nothing in its place (true when
+  written; since 2026-09-27 each has an owning lesson, see the module items above). The Word
   Roots and Suffixes lessons now link back to word-part practice (Prefixes already ends the course
   there); nothing starts until the learner presses start. The old record
   `/skills/hosa-medical-terminology-1` now redirects to the Word Roots lesson through the existing
@@ -76,7 +98,8 @@ below the boundary.
 - **HOSA targeted Medical Terminology practice — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not
   deployed, not Production-verified, not browser-verified. The practice room now offers "Word parts
   from the course" (word roots, prefixes, suffixes: taught by the course) and "All Medical
-  Terminology" (every area: adds anatomy, physiology and disease, not taught yet), says which is
+  Terminology" (every area: adds anatomy, physiology and disease, not taught yet when written; all
+  three have lessons since 2026-09-27), says which is
   which before the learner starts, and attributes the grouping to CompeteReady, not HOSA. The
   course's last lesson links to `/training/hosa/practice?focus=word-parts`, which preselects the
   taught choice and starts nothing. The engine sends the choice's canonical area ids, or none for
@@ -142,22 +165,27 @@ below the boundary.
 
 ## What remains open
 
-- **HOSA learning gaps after the word-parts course (2026-09-26, updated after the physiology module
-  on 2026-09-27).** Nothing teaches the pathophysiology area of the Medical Terminology bank yet (30
-  of 180 questions); the practice results say so for that area. The anatomy and physiology modules
-  (local commits) await one qualified human subject-accuracy review of the whole curriculum before
-  push; the owner has said they cannot be that reviewer. "Clinical abbreviations" and
+- **HOSA learning gaps after the word-parts course (2026-09-26, updated after the pathophysiology
+  module on 2026-09-27).** All six areas of the Medical Terminology practice bank now have lessons
+  (a few word-part questions still use word parts the lessons do not teach). The anatomy,
+  physiology and pathophysiology modules (local commits) await one qualified human subject-accuracy
+  review of the whole curriculum before push; the owner has said they cannot be that reviewer, and
+  AI review never counts as it. The shared course-end note ("This is the last lesson written for
+  this course so far. More are being authored") now also shows after the final pathophysiology
+  lesson although no further Medical Terminology module is planned; it was left unchanged because
+  the same component serves DECA and Debate (`components/lessons/concept-education-lesson-view.tsx`),
+  and is a product decision for the owner's website review. "Clinical abbreviations" and
   "Terminology in patient scenarios" (`/skills/hosa-medical-terminology-2` and `-3`) have no lesson.
   `hosa-patient-communication` and `hosa-healthcare-ethics` stay held; the communication course is
   still one reading-only lesson; the other HOSA events carry identity only.
   `origin/hosa-codex-transfer` is unmerged and was not used. Repaired in the local stack: the
   session-builder hang (`6e365e9`), focusing practice on word parts (`804a8d2`), weak areas linking to
   lessons, the old `-1` record and the hub row (practice remediation), the HOSA test-result next
-  steps and the anatomy and physiology modules (above). Still open on that page: a HOSA deck page follows the viewer's selected track, so a
+  steps and the anatomy, physiology and pathophysiology modules (above). Still open on that page: a HOSA deck page follows the viewer's selected track, so a
   learner now on DECA or Debate is sent to their own Study Arcade from a matched HOSA deck; the HOSA
   generator tells such a learner it is "matched to your selected track". **Stale pins found, not changed:**
   `skills-compat` items 4, 4b, 6 and 28 and `hosa-practice-scope` 43b (pins the registered smoke
-  inventory at 36; 59 now) are masked by earlier failures in the same suites (item 2 and 10c), which
+  inventory at 36; 60 now) are masked by earlier failures in the same suites (item 2 and 10c), which
   fail identically at `01bbaa1`.
 - **REBUTTAL LIVE P0 — CONTAINED LOCALLY, NOT IN PRODUCTION.** A teaching-to-drill-to-mastery audit
   (2026-09-01) found the `rebuttal` drill area writing durable `debate-rebuttal` mastery on material
@@ -983,11 +1011,11 @@ scope, which dotenv-reads `<repo>/.env`. Constructing a `PrismaClient` triggers 
 
 **Four counts. Never collapse them.**
 
-- **REGISTERED = 59** — every `*:smoke` script in `package.json`, as of 2026-09-27 (52 at
+- **REGISTERED = 60** — every `*:smoke` script in `package.json`, as of 2026-09-27 (52 at
   `01bbaa1`, plus `hosa-medterm-lessons:smoke`, `hosa-medterm-session-safety:smoke`,
   `hosa-medterm-targeted-practice:smoke`, `hosa-medterm-remediation:smoke`,
-  `hosa-result-next-steps:smoke`, `hosa-medterm-anatomy:smoke` and
-  `hosa-medterm-physiology:smoke`); it read 45
+  `hosa-result-next-steps:smoke`, `hosa-medterm-anatomy:smoke`,
+  `hosa-medterm-physiology:smoke` and `hosa-medterm-pathophysiology:smoke`); it read 45
   when re-derived on 2026-09-09. **The three
   derived counts below were computed against 36 and are STALE. Re-derive before relying on them; do
   not subtract from 45 to guess.**
@@ -1153,11 +1181,12 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-**HOSA, 2026-09-27.** The anatomy and physiology modules are local commits. The owner's plan: keep
-all HOSA medical work local, build Pathophysiology next, then one HOSA Medical Terminology
-end-to-end QA and one qualified human subject-accuracy review of the whole curriculum before the
-stack is pushed (the owner cannot be that reviewer), then merge and push, then design. Start each
-only when the owner asks. The HOSA deck page following the viewer's selected track stays deferred
+**HOSA, 2026-09-27.** The anatomy, physiology and pathophysiology modules are local commits;
+pathophysiology is the last planned Medical Terminology module. The owner's plan: one HOSA Medical
+Terminology end-to-end QA, then one qualified human subject-accuracy review of the whole curriculum
+before the stack is pushed (the owner cannot be that reviewer; AI review never counts), then a
+screen-by-screen website review with the owner, fixes, then design. Start each only when the owner
+asks; do not start another curriculum module. The HOSA deck page following the viewer's selected track stays deferred
 by the owner.
 
 **Recorded 2026-09-26** (its recommended steps were done in the local stack: `6e365e9`, `804a8d2`,

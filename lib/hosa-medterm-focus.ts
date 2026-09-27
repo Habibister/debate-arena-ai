@@ -3,8 +3,8 @@
 //
 // THE GAP THIS CLOSES. The practice room (/training/hosa/practice) drills one bank of 180 original
 // questions across the six canonical areas in lib/hosa-medterm.ts. The course teaches the word-part
-// half of it (word roots, prefixes, suffixes) in its first module, the anatomy area in its second and
-// the physiology area in its third, and nothing yet of pathophysiology. Until the targeted choices
+// half of it (word roots, prefixes, suffixes) in its first module, the anatomy area in its second, the
+// physiology area in its third and the pathophysiology area in its fourth. Until the targeted choices
 // existed the room could only serve the whole bank, so a learner who had just finished a module met
 // questions on topics no lesson had taught, with no way to say "only what I have learned". This module
 // is the one list the practice page, the engine and the course's module-end lessons read for that
@@ -21,15 +21,20 @@
 // from the lessons: scripts/hosa-medterm-targeted-practice-smoke.ts reads the word part every bank
 // question tests and checks that the word-part lessons name it, and scripts/hosa-medterm-anatomy-smoke.ts
 // checks, question by question, that the anatomy lessons teach what each anatomy question needs, and
-// scripts/hosa-medterm-physiology-smoke.ts does the same for the physiology lessons. No lesson teaches
-// a disease topic, so `HOSA_MEDTERM_TAUGHT_AREAS` cannot silently gain an area no lesson covers. When
-// the course grows a module on pathophysiology, those suites say so by name and these lists are what
-// change.
+// scripts/hosa-medterm-physiology-smoke.ts and scripts/hosa-medterm-pathophysiology-smoke.ts do the
+// same for the physiology and pathophysiology lessons. `HOSA_MEDTERM_TAUGHT_AREAS` names only areas
+// those suites prove a module teaches.
+//
+// EVERY AREA TAUGHT IS A CLAIM ABOUT THIS BANK ONLY. With the pathophysiology module, each of the six
+// areas has lessons, so the every-area choice is marked taught. That says the course has lessons for
+// every area of CompeteReady's own 180-question practice bank, and nothing more: some word-part
+// questions still use parts no lesson teaches (the choice says so), and nothing here describes what
+// an official HOSA test covers.
 //
 // THIS IS COMPETEREADY'S TEACHING ORGANISATION. The groupings "word parts from the course", "anatomy
-// from the course", "physiology from the course" and "all Medical Terminology" are how CompeteReady
-// organises practice around its own lessons. They are not official HOSA categories, and the copy says
-// so.
+// from the course", "physiology from the course", "pathophysiology from the course" and "all Medical
+// Terminology" are how CompeteReady organises practice around its own lessons. They are not official
+// HOSA categories, and the copy says so.
 //
 // NO PROGRESS MODEL. A choice changes which questions a session draws from and nothing else: no new
 // stored skill, no mastery, no readiness, no XP semantics. What the room records is unchanged.
@@ -45,8 +50,8 @@ export const HOSA_MEDTERM_PRACTICE_ROOM = "/training/hosa/practice";
 /** The query parameter that preselects a choice on the practice room. Never starts a session. */
 export const HOSA_MEDTERM_FOCUS_PARAM = "focus";
 
-/** The four choices a beginner can make. The ids are URL values, never shown as such to the learner. */
-export type MedTermFocusId = "word-parts" | "anatomy" | "physiology" | "all";
+/** The five choices a beginner can make. The ids are URL values, never shown as such to the learner. */
+export type MedTermFocusId = "word-parts" | "anatomy" | "physiology" | "pathophysiology" | "all";
 
 /**
  * The canonical areas the course's word-part module teaches. Typed against the bank's own union, so a
@@ -61,15 +66,20 @@ export const HOSA_MEDTERM_ANATOMY_AREAS: readonly MedTermArea[] = Object.freeze(
 /** The canonical area the course's physiology module teaches, proved question by question by the physiology suite. */
 export const HOSA_MEDTERM_PHYSIOLOGY_AREAS: readonly MedTermArea[] = Object.freeze(["physiology"]);
 
+/** The canonical area the course's pathophysiology module teaches, proved question by question by the pathophysiology suite. */
+export const HOSA_MEDTERM_PATHOPHYSIOLOGY_AREAS: readonly MedTermArea[] = Object.freeze(["pathophysiology"]);
+
 /**
- * Every canonical area a published lesson of the course teaches: the word-part areas, anatomy and
- * physiology. Pathophysiology is absent because no lesson teaches it yet, so the practice room still
- * marks it "not taught yet".
+ * Every canonical area a published lesson of the course teaches: the word-part areas, anatomy,
+ * physiology and pathophysiology. That is all six areas of the practice bank, so the practice room
+ * marks none of them "not taught yet". It says a module teaches each area, not that every word-part
+ * question's part is taught (the word-part choice says some are not).
  */
 export const HOSA_MEDTERM_TAUGHT_AREAS: readonly MedTermArea[] = Object.freeze([
   ...HOSA_MEDTERM_WORD_PART_AREAS,
   ...HOSA_MEDTERM_ANATOMY_AREAS,
-  ...HOSA_MEDTERM_PHYSIOLOGY_AREAS
+  ...HOSA_MEDTERM_PHYSIOLOGY_AREAS,
+  ...HOSA_MEDTERM_PATHOPHYSIOLOGY_AREAS
 ]);
 
 export type MedTermFocus = Readonly<{
@@ -128,14 +138,25 @@ export const MEDTERM_FOCUS_CHOICES: readonly MedTermFocus[] = Object.freeze([
     areas: HOSA_MEDTERM_PHYSIOLOGY_AREAS
   }),
   Object.freeze({
+    id: "pathophysiology" as const,
+    label: "Pathophysiology from the course",
+    summary: "How disease changes the body’s normal function: tissue change, blood flow and oxygen, the heart and circulation, the body’s defences, and breathing, the kidneys and blood glucose.",
+    taught: true,
+    moduleId: "hosa-medterm-pathophysiology",
+    coverage: "Taught in the current course",
+    disclosure:
+      "These questions ask what common disease terms mean and why the change happens. The pathophysiology lessons teach all of them. Questions on word parts, on where structures are (anatomy) and on how the healthy body works (physiology) are not in this choice. Every answer is explained. This is knowledge for a test, not a way to judge anyone’s health.",
+    areas: HOSA_MEDTERM_PATHOPHYSIOLOGY_AREAS
+  }),
+  Object.freeze({
     id: "all" as const,
     label: "All Medical Terminology",
     summary: "Word parts, anatomy, physiology and disease (pathophysiology), all mixed together.",
-    taught: false,
+    taught: true,
     moduleId: null,
-    coverage: "Includes topics not taught yet",
+    coverage: "Every area of this practice has lessons in the current course",
     disclosure:
-      "The course has no lessons on disease (pathophysiology) yet, so expect questions on topics you have not studied here. Every answer is explained.",
+      "Each of the six areas in this practice has lessons in the course: word roots, prefixes, suffixes, anatomy, physiology and pathophysiology. A few word-part questions still use word parts the lessons have not taught, and every answer is explained. These are CompeteReady’s own practice questions, not official HOSA test items, so this does not describe what a HOSA test covers.",
     areas: null
   })
 ]);

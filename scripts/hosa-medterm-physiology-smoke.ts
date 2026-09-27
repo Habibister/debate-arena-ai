@@ -22,12 +22,14 @@
  *   D. The learner checks test the lessons, explain every answer, give no position or length tell,
  *      copy no bank question, save nothing and claim no mastery.
  *   E. No official HOSA claim, one sourced number only, no diagnosis or treatment, no other track.
- *   F. The learning graph: word parts -> anatomy -> physiology -> physiology practice, with the right
- *      link on the right lesson, and a practice choice that serves only physiology questions and
- *      starts nothing by itself. Anatomy keeps its own practice link at the end of its module.
+ *   F. The learning graph: word parts -> anatomy -> physiology -> pathophysiology, with physiology
+ *      practice at the end of its module, the right link on the right lesson, and a practice choice
+ *      that serves only physiology questions and starts nothing by itself. Anatomy keeps its own
+ *      practice link at the end of its module.
  *   G. Remediation: a physiology weakness opens the physiology lessons, anatomy still opens anatomy,
  *      every link checked, failing closed.
- *   H. Pathophysiology stays untaught: no owner, no lesson, no disease named in these lessons.
+ *   H. No disease is named in these lessons: pathophysiology belongs to its own module, which
+ *      scripts/hosa-medterm-pathophysiology-smoke.ts owns.
  *   I. The question bank itself is unchanged: coverage was earned by teaching, not by editing items.
  */
 import assert from "node:assert/strict";
@@ -179,6 +181,16 @@ const PHYSIOLOGY_ORDER = [
   "hosa-physiology-breathing-and-digestion",
   "hosa-physiology-nerves-and-muscles"
 ] as const;
+// The module after this one, which scripts/hosa-medterm-pathophysiology-smoke.ts owns. Named here only
+// for the order of the course and where the last physiology lesson leads.
+const PATHOPHYSIOLOGY_ORDER = [
+  "hosa-pathophysiology-how-tissue-changes",
+  "hosa-pathophysiology-blood-flow-and-oxygen",
+  "hosa-pathophysiology-heart-and-pressure",
+  "hosa-pathophysiology-defences",
+  "hosa-pathophysiology-breathing-kidneys-glucose"
+] as const;
+const PATHOPHYSIOLOGY_MODULE = "hosa-medterm-pathophysiology";
 type PhysiologyLesson = (typeof PHYSIOLOGY_ORDER)[number];
 const [BALANCE, HEART_BLOOD, BREATH_FOOD, NERVE_MUSCLE] = PHYSIOLOGY_ORDER;
 const [BODY_MAP, , , FRAME] = ANATOMY_ORDER;
@@ -439,12 +451,13 @@ async function main() {
 
   // ---- A. registration -----------------------------------------------------------------------------
   await check("A. the physiology module follows anatomy in one course, one chain, by reference", () => {
-    const order = [...WORD_PART_ORDER, ...ANATOMY_ORDER, ...PHYSIOLOGY_ORDER];
-    assert.deepEqual([...PUBLISHED_HOSA_SLUGS], order, "A1. the track file publishes word parts, anatomy, then physiology");
+    const order = [...WORD_PART_ORDER, ...ANATOMY_ORDER, ...PHYSIOLOGY_ORDER, ...PATHOPHYSIOLOGY_ORDER];
+    assert.deepEqual([...PUBLISHED_HOSA_SLUGS], order, "A1. the track file publishes word parts, anatomy, physiology, then pathophysiology");
     assert.deepEqual(HOSA_PUBLISHED_LESSONS.map((e) => e.id), order, "A1b. and registers them in that order");
     const course = EDUCATION_COURSES.find((c) => c.id === HOSA_MEDTERM_STUDY_COURSE);
     assert.ok(course && course.track === "HOSA", "A2. the Medical Terminology course exists on the HOSA track");
-    assert.deepEqual(course.moduleIds, ["hosa-medterm-word-parts", ANATOMY_MODULE, PHYSIOLOGY_MODULE], "A2b. with the physiology module after anatomy");
+    assert.deepEqual(course.moduleIds, ["hosa-medterm-word-parts", ANATOMY_MODULE, PHYSIOLOGY_MODULE, PATHOPHYSIOLOGY_MODULE],
+      "A2b. with the physiology module after anatomy, and pathophysiology after it");
     const physiologyModule = getEducationModule(PHYSIOLOGY_MODULE);
     assert.ok(physiologyModule && physiologyModule.courseId === HOSA_MEDTERM_STUDY_COURSE && physiologyModule.track === "HOSA",
       "A2c. the module belongs to that course");
@@ -465,7 +478,8 @@ async function main() {
       assert.equal(entry.variant, "concept", `A4e. ${id} is a concept lesson`);
       assert.equal(entry.visibility, "learner", `A4f. ${id} is learner-visible`);
       assert.equal(entry.practiceState, "available", `A4g. ${id} has its own checks`);
-      assert.equal(entry.nextLessonId, PHYSIOLOGY_ORDER[index + 1] ?? null, `A5. ${id} chains to the next physiology lesson, the last to nothing`);
+      assert.equal(entry.nextLessonId, PHYSIOLOGY_ORDER[index + 1] ?? PATHOPHYSIOLOGY_ORDER[0],
+        `A5. ${id} chains to the next physiology lesson, the last into the pathophysiology module`);
       assert.equal(entry.skillSlug, undefined, `A5b. ${id} claims no skill`);
       assert.equal(entry.practiceDrill, undefined, `A5c. ${id} names no drill`);
       const original = LEARNING_SKILL_CATALOG.find((c) => c.slug === id);
@@ -481,7 +495,8 @@ async function main() {
       assert.equal(getEducationLesson(id)?.moduleId, ANATOMY_MODULE, `A7f. control: ${id} stays in the anatomy module`);
     }
     const ends = educationLessonsForTrack("HOSA").filter((e) => e.courseId === HOSA_MEDTERM_STUDY_COURSE && e.nextLessonId === null);
-    assert.deepEqual(ends.map((e) => e.id), [NERVE_MUSCLE], "A8. the course has exactly one end, the last physiology lesson");
+    assert.deepEqual(ends.map((e) => e.id), [PATHOPHYSIOLOGY_ORDER[PATHOPHYSIOLOGY_ORDER.length - 1]],
+      "A8. the course has exactly one end, the last pathophysiology lesson, not a physiology one");
     assert.deepEqual(
       educationLessonsForTrack("HOSA").filter((e) => e.courseId === HOSA_MEDTERM_STUDY_COURSE).map((e) => e.id),
       order, "A8b. and the course lists its lessons in chain order");
@@ -832,7 +847,10 @@ async function main() {
       assert.equal(hosaCourseEndAction(entry.id) !== null, isEnd, `F1. ${entry.id}: course-end action only at the course's end`);
       assert.ok(!(hosaCourseEndAction(entry.id) && decaCourseEndAction(entry.id)), `F1b. ${entry.id}: at most one course-end action`);
     }
-    assert.equal(hosaCourseEndAction(NERVE_MUSCLE), HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY, "F2. the last physiology lesson ends in physiology practice");
+    assert.equal(getEducationLesson(NERVE_MUSCLE)?.nextLessonId, PATHOPHYSIOLOGY_ORDER[0], "F2. the last physiology lesson continues into pathophysiology");
+    assert.equal(hosaCourseEndAction(NERVE_MUSCLE), null, "F2a0. so it is no longer the course end");
+    assert.equal(hosaLessonPracticeReturn(NERVE_MUSCLE), HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY,
+      "F2a1. and it keeps its physiology practice link, now beside the next lesson");
     assert.equal(hosaCourseEndAction(FRAME), null, "F2a. the last anatomy lesson is no longer the course end");
     assert.equal(hosaLessonPracticeReturn(FRAME), HOSA_MEDTERM_ANATOMY_PRACTICE_ENTRY,
       "F2b. it keeps its anatomy practice link, now beside the next lesson");
@@ -851,16 +869,23 @@ async function main() {
       assert.ok(Object.isFrozen(link), `F4. "${link.label}" is frozen`);
       const copy = `${link.label} ${link.detail}`;
       assert.ok(!/record|saved|\bsave|mastery|progress|nothing is|score|\bready\b/i.test(copy), `F4b. "${link.label}" makes no persistence or mastery claim`);
-      assert.ok(!/(?:covers?|teach(?:es)?)\s+(?:pathophysiology|disease)/i.test(copy), `F4c. "${link.label}" claims no disease teaching`);
+      assert.ok(!/disease has no lessons|no lessons on disease/i.test(copy), `F4c. "${link.label}" no longer says disease is untaught`);
       assert.ok(!/physiology and disease have no lessons|no lessons? on physiology/i.test(copy), `F4d. "${link.label}" no longer says physiology is untaught`);
     }
+    // The physiology links may say the lessons AFTER them teach disease; they must not say these lessons do.
+    const claimsDisease = /\b(?:these|the physiology) lessons\b[^.]{0,40}\b(?:cover|teach|explain)\w*\b[^.]{0,20}\b(?:pathophysiology|disease)\b/i;
+    for (const link of [HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY, HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_RETURN]) {
+      assert.ok(!claimsDisease.test(`${link.label} ${link.detail}`), `F4e. "${link.label}" claims no disease teaching for the physiology lessons`);
+    }
+    assert.ok(claimsDisease.test("These lessons also teach disease."), "F4f. control: the scan catches a disease claim for these lessons");
+    assert.ok(!claimsDisease.test("The lessons after this one are about disease (pathophysiology)."), "F4g. control: and passes a true statement about the later lessons");
     assert.match(HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY.detail, /original questions, not official HOSA test items/, "F5. the end copy says the questions are original");
-    assert.match(HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY.detail, /disease has no lessons yet/, "F5b. and names what is not taught yet");
+    assert.match(HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY.detail, /The lessons after this one are about disease \(pathophysiology\)/, "F5b. and says disease comes next");
     assert.match(HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY.detail, /nothing starts until you press start/, "F5c. and that nothing starts on arrival");
-    assert.match(HOSA_MEDTERM_ANATOMY_PRACTICE_ENTRY.detail, /The lessons after this one are about physiology, and disease has no lessons yet/,
-      "F5d. the anatomy end copy says physiology comes next and only disease is untaught");
-    assert.match(HOSA_MEDTERM_PRACTICE_ENTRY.detail, /The lessons after this one are about anatomy and physiology, and disease has no lessons yet/,
-      "F5d2. and so does the word-part end copy");
+    assert.match(HOSA_MEDTERM_ANATOMY_PRACTICE_ENTRY.detail, /The lessons after this one are about physiology and then disease \(pathophysiology\)/,
+      "F5d. the anatomy end copy says physiology and then disease come next");
+    assert.match(HOSA_MEDTERM_PRACTICE_ENTRY.detail, /The lessons after this one teach anatomy, physiology and disease \(pathophysiology\)/,
+      "F5d2. and the word-part end copy names all three later modules");
     assert.match(HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_RETURN.detail, /a later lesson in this course teaches/, "F5e. the return copy says later lessons teach more");
   });
 
@@ -898,7 +923,7 @@ async function main() {
         const continueAt = html.indexOf(`href="/lessons/${entry.nextLessonId}"`);
         assert.ok(continueAt >= 0, `F6i. ${id} continues to ${entry.nextLessonId}`);
         const practiceAt = html.indexOf(`href="${HOSA_MEDTERM_PRACTICE_ROOM}`);
-        if (id === BALANCE) assert.ok(practiceAt > continueAt, `F6j. ${id} offers physiology practice after its next-lesson link`);
+        if (id === BALANCE || id === NERVE_MUSCLE) assert.ok(practiceAt > continueAt, `F6j. ${id} offers physiology practice after its next-lesson link`);
         else assert.equal(practiceAt, -1, `F6j. ${id} does not jump ahead to practice`);
         assert.ok(!text.includes("end of this course so far"), `F6j2. ${id} does not say the course ends here`);
       } else {
@@ -912,17 +937,22 @@ async function main() {
     assert.ok(frame.indexOf(`href="${HOSA_MEDTERM_ANATOMY_PRACTICE_ENTRY.href}"`) > continueAt, "F6n. and still offers anatomy practice after that link");
     assert.ok(!frame.includes(`href="${HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY.href}"`), "F6n2. not physiology practice, which it does not teach");
     assert.ok(!visible(frame).includes("end of this course so far"), "F6o. and no longer says the course ends there");
+    const last = render(NERVE_MUSCLE);
+    const onward = last.indexOf(`href="/lessons/${PATHOPHYSIOLOGY_ORDER[0]}"`);
+    assert.ok(onward >= 0, "F6p. the last physiology lesson continues into the first pathophysiology lesson");
+    assert.ok(last.indexOf(`href="${HOSA_MEDTERM_PHYSIOLOGY_PRACTICE_ENTRY.href}"`) > onward, "F6q. and offers physiology practice after that link");
+    assert.ok(!visible(last).includes("end of this course so far"), "F6r. and no longer says the course ends there");
   });
 
   await check("F7. HOSA Learn, Event HQ and the lessons index lead through anatomy to physiology", () => {
     const learn = learnerPathForTrack("HOSA").find((stage) => stage.id === "learn");
     assert.equal(learn?.href, "/lessons?track=hosa", "F7. Learn opens the HOSA lessons catalog");
-    assert.match(learn?.note ?? "", /word parts, anatomy and physiology/, "F7b. and names the physiology lessons");
+    assert.match(learn?.note ?? "", /word parts, anatomy, physiology and pathophysiology/, "F7b. and names the physiology lessons");
     assert.match(learn?.note ?? "", /reading-only communication lesson/, "F7c. while still saying the communication lesson is reading only");
     const hq = read("app/(app)/training/[track]/event/[eventSlug]/page.tsx");
     const hosaEntry = hq.slice(hq.indexOf('"hosa/medical-terminology"'), hq.indexOf('"deca/'));
     assert.ok(hosaEntry.length > 0, "F7d. control: the HOSA Event HQ entry was located");
-    assert.match(hosaEntry, /label: "Lessons", detail: "[^"]*then the anatomy and physiology the practice asks about[^"]*", href: "\/lessons\?track=hosa"/,
+    assert.match(hosaEntry, /label: "Lessons", detail: "[^"]*then the anatomy, physiology and pathophysiology the practice asks about[^"]*", href: "\/lessons\?track=hosa"/,
       "F7e. Event HQ's lessons row names the physiology lessons");
     const index = stripComments(read("app/(app)/lessons/page.tsx"));
     assert.match(index, /The last lesson of each module in this course links there\./, "F7f. the index card says which lessons link to practice");
@@ -931,8 +961,8 @@ async function main() {
 
   await check("F8. the physiology choice is taught, serves only physiology questions, and starts nothing", async () => {
     const physiology = medTermFocus("physiology");
-    assert.deepEqual(MEDTERM_FOCUS_CHOICES.map((c) => c.id), ["word-parts", "anatomy", "physiology", "all"],
-      "F8. four choices: word parts, anatomy, physiology, all");
+    assert.deepEqual(MEDTERM_FOCUS_CHOICES.map((c) => c.id), ["word-parts", "anatomy", "physiology", "pathophysiology", "all"],
+      "F8. five choices: word parts, anatomy, physiology, pathophysiology, all");
     assert.deepEqual(physiology.areas, ["physiology"], "F8b. the physiology choice is exactly the physiology area");
     assert.deepEqual(physiology.areas, HOSA_MEDTERM_PHYSIOLOGY_AREAS, "F8c. through its named list");
     assert.equal(physiology.taught, true, "F8d. it is marked taught");
@@ -941,13 +971,14 @@ async function main() {
     assert.deepEqual(medTermFocus("anatomy").areas, HOSA_MEDTERM_ANATOMY_AREAS, "F8f2. control: and the anatomy choice anatomy only");
     assert.equal(medTermFocus("anatomy").moduleId, ANATOMY_MODULE, "F8f3. control: taught by the anatomy module");
     assert.match(medTermFocus("anatomy").disclosure, /physiology\) and disease are not in this choice/, "F8f4. control: whose disclosure is still true");
-    assert.deepEqual(HOSA_MEDTERM_TAUGHT_AREAS, [...HOSA_MEDTERM_WORD_PART_AREAS, "anatomy", "physiology"], "F8g. taught areas: word parts, anatomy, physiology");
+    assert.deepEqual(HOSA_MEDTERM_TAUGHT_AREAS, [...HOSA_MEDTERM_WORD_PART_AREAS, "anatomy", "physiology", "pathophysiology"],
+      "F8g. taught areas: word parts, anatomy, physiology, pathophysiology");
     assert.deepEqual(medTermFocusRequestAreas("physiology"), ["physiology"], "F8h. a request carries the physiology area");
     assert.equal(medTermFocusForAreas(["physiology"]), "physiology", "F8i. a stored physiology session is named as the physiology choice");
     assert.equal(medTermContinuedForOtherChoice(true, ["physiology"], "physiology"), false, "F8j. so continuing one under that choice is not flagged");
     assert.equal(medTermContinuedForOtherChoice(true, ["physiology"], "anatomy"), true, "F8k. but continuing one under another choice is");
     assert.equal(medTermFocusForAreas(["anatomy", "physiology"]), null, "F8l. control: anatomy plus physiology is no single choice");
-    assert.equal(medTermFocusForAreas(["physiology", "pathophysiology"]), null, "F8l2. control: physiology plus an untaught area is no choice");
+    assert.equal(medTermFocusForAreas(["physiology", "pathophysiology"]), null, "F8l2. control: physiology plus pathophysiology is no single choice");
     assert.match(physiology.disclosure, /The physiology lessons teach all of them/, "F8m. the choice says the lessons teach every question in it");
     assert.match(physiology.disclosure, /\(anatomy\) and on disease are not in this choice/, "F8m2. and that anatomy and disease are not in it");
     assert.ok(!/record|saved|\bsave\b|mastery|progress|score|readiness|ready\b/i.test(`${physiology.label} ${physiology.summary} ${physiology.coverage} ${physiology.disclosure}`),
@@ -983,7 +1014,7 @@ async function main() {
     const html = decode(renderToStaticMarkup(React.createElement(HosaMedTermEngine, { official: true, areas: catalog, initialFocus: "physiology" })));
     const text = visible(html);
     const radios = [...html.matchAll(/<input[^>]*type="radio"[^>]*>/g)].map((m) => m[0]);
-    assert.equal(radios.length, 4, "F10. four choices as radio buttons");
+    assert.equal(radios.length, 5, "F10. five choices as radio buttons");
     const checked = radios.filter((r) => /\bchecked\b/.test(r));
     assert.ok(checked.length === 1 && checked[0].includes('value="physiology"'), "F10b. physiology is the one selected");
     assert.ok(text.includes("The link you followed preselected Physiology from the course"), "F10c. the learner is told what the link did");
@@ -993,7 +1024,7 @@ async function main() {
     assert.ok(text.includes("Physiology from the course has 30 different questions"), "F10f. and says why longer sessions are not offered");
     assert.ok(!text.includes("Physiology (not taught yet)") && !text.includes("Anatomy (not taught yet)"),
       "F10g. physiology and anatomy are no longer marked untaught");
-    assert.ok(text.includes("Pathophysiology (not taught yet)"), "F10h. pathophysiology still is");
+    assert.ok(!text.includes("(not taught yet)"), "F10h. and no area is marked untaught any more");
     assert.ok(!html.includes("Question 1 of"), "F10i. no session is running: the setup screen is showing");
     const plain = decode(renderToStaticMarkup(React.createElement(HosaMedTermEngine, { official: true, areas: catalog })));
     assert.ok(/<input[^>]*value="all"[^>]*checked|<input[^>]*checked[^>]*value="all"/.test(plain), "F10j. control: with nothing preselected, every area stays the default");
@@ -1069,18 +1100,22 @@ async function main() {
     assert.ok(Object.isFrozen(HOSA_MEDTERM_AREA_TEACHING_OWNERS), "G7. the owner map is frozen, so a stray write cannot reassign physiology");
   });
 
-  // ---- H. pathophysiology stays untaught -------------------------------------------------------------
-  await check("H. pathophysiology keeps no owner, no lesson, and no false claim", () => {
-    assert.ok(!("pathophysiology" in HOSA_MEDTERM_AREA_TEACHING_OWNERS), "H1. pathophysiology has no teaching owner");
-    assert.deepEqual(hosaMedTermRemediation("pathophysiology", "Pathophysiology"),
-      { area: "pathophysiology", kind: "no-lesson", message: HOSA_MEDTERM_NO_LESSON_MESSAGE }, "H1b. it gets the plain no-lesson statement");
-    assert.ok(!(HOSA_MEDTERM_TAUGHT_AREAS as readonly string[]).includes("pathophysiology"), "H1c. it is not a taught area");
-    assert.ok(MEDTERM_FOCUS_CHOICES.every((c) => c.areas === null || !c.areas.includes("pathophysiology")), "H1d. no targeted choice serves it");
-    assert.ok(EDUCATION_COURSES.find((c) => c.id === HOSA_MEDTERM_STUDY_COURSE)!.moduleIds.every((m) => !/patho|disease/i.test(m)),
-      "H1e. and the course has no module for it");
-    assert.match(medTermFocus("all").disclosure, /no lessons on disease \(pathophysiology\) yet/, "H2. the every-area choice says so");
-    assert.ok(!/no lessons on physiology/.test(medTermFocus("all").disclosure), "H2a. and no longer says physiology is untaught");
-    assert.equal(medTermFocus("all").taught, false, "H2b. and is not marked taught");
+  // ---- H. no disease in these lessons -----------------------------------------------------------------
+  // Pathophysiology now has its own module after this one, and scripts/hosa-medterm-pathophysiology-smoke.ts
+  // owns its census, choice and remediation. What this suite still owns is that the PHYSIOLOGY lessons
+  // teach normal function only, so none of the disease teaching leaks back into them.
+  await check("H. the physiology lessons name no disease, and pathophysiology belongs to its own module", () => {
+    const pathoOwner = HOSA_MEDTERM_AREA_TEACHING_OWNERS.pathophysiology;
+    assert.equal(pathoOwner, PATHOPHYSIOLOGY_ORDER[0], "H1. pathophysiology is owned by the first lesson of its own module");
+    assert.ok(!(PHYSIOLOGY_ORDER as readonly string[]).includes(pathoOwner ?? ""), "H1a. not by a physiology lesson");
+    assert.equal(getEducationLesson(pathoOwner ?? "")?.moduleId, PATHOPHYSIOLOGY_MODULE, "H1b. and that lesson sits in the pathophysiology module");
+    const patho = hosaMedTermRemediation("pathophysiology", "Pathophysiology");
+    assert.ok(patho?.kind === "lesson" && patho.lessonId === pathoOwner, "H1c. so a pathophysiology weakness opens that module, not physiology");
+    assert.ok(MEDTERM_FOCUS_CHOICES.filter((c) => c.areas?.includes("pathophysiology")).every((c) => c.id === "pathophysiology"),
+      "H1d. only the pathophysiology choice serves it among the targeted choices");
+    assert.ok(!/no lessons on (?:physiology|disease)/.test(medTermFocus("all").disclosure), "H2. the every-area choice says neither area is untaught");
+    assert.deepEqual(hosaMedTermRemediation("not-an-area", "Not an area"), { area: "not-an-area", kind: "no-lesson", message: HOSA_MEDTERM_NO_LESSON_MESSAGE },
+      "H2a. control: an undeclared area still gets the plain no-lesson statement");
     // The physiology lessons teach normal function. They name none of the conditions the
     // pathophysiology questions test, so nothing here reads as disease coverage.
     for (const id of PHYSIOLOGY_ORDER) {
@@ -1128,7 +1163,7 @@ async function main() {
     assert.ok(db.touches.every((t) => t === "$transaction"), "J3. and only its transaction was used");
   });
 
-  console.log(`\nhosa-medterm-physiology:smoke passed (${checks} checks). Four physiology lessons teach all 30 physiology questions; pathophysiology remains untaught.\n`);
+  console.log(`\nhosa-medterm-physiology:smoke passed (${checks} checks). Four physiology lessons teach all 30 physiology questions and name no disease; pathophysiology has its own module.\n`);
 }
 
 main().catch((error) => {

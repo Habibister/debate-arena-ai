@@ -531,16 +531,17 @@ async function main() {
     assert.equal(hosaMedTermRemediation("word-roots", "Word roots")?.kind, "lesson", "E1. word roots still resolve to their lesson");
     assert.equal(hosaMedTermRemediation("prefixes", "Prefixes")?.kind, "lesson", "E1b. prefixes");
     assert.equal(hosaMedTermRemediation("suffixes", "Suffixes")?.kind, "lesson", "E1c. suffixes");
-    // Anatomy and physiology gained their lessons after this suite was written (the anatomy and
-    // physiology modules), so they now open them; scripts/hosa-medterm-anatomy-smoke.ts and
-    // scripts/hosa-medterm-physiology-smoke.ts own those loops. Pathophysiology still has none.
+    // Anatomy, physiology and pathophysiology gained their lessons after this suite was written, so
+    // they now open them; scripts/hosa-medterm-anatomy-smoke.ts, scripts/hosa-medterm-physiology-smoke.ts
+    // and scripts/hosa-medterm-pathophysiology-smoke.ts own those loops. An area the bank does not
+    // declare still has no lesson.
     const anatomy = hosaMedTermRemediation("anatomy", "Anatomy");
     assert.ok(anatomy?.kind === "lesson" && anatomy.lessonId === "hosa-anatomy-body-map", "E1d. anatomy opens the anatomy lessons");
     const physiology = hosaMedTermRemediation("physiology", "Physiology");
     assert.ok(physiology?.kind === "lesson" && physiology.lessonId === "hosa-physiology-staying-in-balance", "E1d1. physiology opens the physiology lessons");
-    for (const [id, label] of [["pathophysiology", "Pathophysiology"]]) {
-      assert.equal(hosaMedTermRemediation(id, label)?.kind, "no-lesson", `E1d2. ${id} still has no lesson`);
-    }
+    const pathophysiology = hosaMedTermRemediation("pathophysiology", "Pathophysiology");
+    assert.ok(pathophysiology?.kind === "lesson" && pathophysiology.lessonId === "hosa-pathophysiology-how-tissue-changes",
+      "E1d2. pathophysiology opens the pathophysiology lessons");
     assert.equal(hosaLessonPracticeLink("hosa-medical-word-roots")?.href, "/training/hosa/practice?focus=word-parts", "E2. a lesson still returns to word-part practice");
     assert.deepEqual(resolveSkillsSlug("hosa-medical-terminology-1"), { kind: "canonical-redirect", lessonId: "hosa-medical-word-roots", via: "allowlist" },
       "E3. the old Word roots record still opens its lesson");

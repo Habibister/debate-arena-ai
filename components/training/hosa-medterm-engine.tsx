@@ -266,9 +266,9 @@ export function HosaMedTermEngine({
   remediation?: readonly Remediation[];
 }) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
-  // What to practise: the taught word parts, anatomy or physiology, or every area. Sent to the server as
-  // the canonical area ids of the choice (or omitted for every area), where the same validated
-  // contract applies.
+  // What to practise: the taught word parts, anatomy, physiology or pathophysiology, or every area.
+  // Sent to the server as the canonical area ids of the choice (or omitted for every area), where the
+  // same validated contract applies.
   const [focus, setFocus] = useState<MedTermFocusId>(initialFocus ?? DEFAULT_MEDTERM_FOCUS);
   // The official format (50 questions, 60 minutes) is a whole-event test, so matching it is offered,
   // labelled and timed only for the every-area choice; a targeted session is practice on its areas.

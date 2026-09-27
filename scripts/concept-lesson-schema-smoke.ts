@@ -222,8 +222,9 @@ function main() {
     // lessons. Nine Debate, eleven DECA, four HOSA.
     // The HOSA anatomy module raised it 24 -> 28. Nine Debate, eleven DECA, eight HOSA.
     // The HOSA physiology module raised it 28 -> 32. Nine Debate, eleven DECA, twelve HOSA.
-    assert.equal(published.length, 32,
-      `control: exactly thirty-two published concept lessons — found ${published.length}. If a lesson was ` +
+    // The HOSA pathophysiology module raised it 32 -> 37. Nine Debate, eleven DECA, seventeen HOSA.
+    assert.equal(published.length, 37,
+      `control: exactly thirty-seven published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -293,7 +294,7 @@ function main() {
     // lessons (teachingSections, additionalExamples, a misconception and commonMistakes) and the same
     // refusals for the same reasons. They too were AI-drafted and no person has reviewed them yet.
     // The HOSA physiology module added four more with that same shape, likewise AI-drafted and not yet
-    // reviewed by a person.
+    // reviewed by a person. The HOSA pathophysiology module added five more, on the same terms.
     assert.deepEqual(populated.map((e) => e.id).sort(), [
       "debate-answer-types",
       "debate-clash",
@@ -323,6 +324,11 @@ function main() {
       "hosa-medical-suffixes",
       "hosa-medical-terminology-basics",
       "hosa-medical-word-roots",
+      "hosa-pathophysiology-blood-flow-and-oxygen",
+      "hosa-pathophysiology-breathing-kidneys-glucose",
+      "hosa-pathophysiology-defences",
+      "hosa-pathophysiology-heart-and-pressure",
+      "hosa-pathophysiology-how-tissue-changes",
       "hosa-physiology-breathing-and-digestion",
       "hosa-physiology-heart-and-blood",
       "hosa-physiology-nerves-and-muscles",
@@ -727,7 +733,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 32, "O7. control: all thirty-two published lessons were rendered");
+    assert.equal(publishedAll.length, 37, "O7. control: all thirty-seven published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

@@ -4553,6 +4553,778 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       )
     }
   },
+  // ---- HOSA MEDICAL TERMINOLOGY: PATHOPHYSIOLOGY ---------------------------------------------------
+  //
+  // The fourth and last planned module of the same Branch A course (docs/curriculum/03-hosa-course.md
+  // §3A), following the physiology lessons above. It teaches what the Medical Terminology practice bank
+  // already asks about disease (lib/hosa-medterm.ts, area "pathophysiology", 30 questions), and nothing
+  // chosen from general pathology knowledge: the five lessons were derived from a census of those 30
+  // questions, and scripts/hosa-medterm-pathophysiology-smoke.ts proves, question by question, that the
+  // fact each one needs is taught in the lesson that owns it.
+  //
+  // MEANING AND MECHANISM ONLY, TO THE BANK'S DEPTH. Each lesson reasons from normal to changed: the
+  // structure (anatomy), its normal job (physiology), what changes, and the term that names the change.
+  // Nothing here diagnoses anyone, lists symptoms to check, describes a treatment or a medicine, or says
+  // when to seek care. Examples are about "a person" or a tissue, never the learner, and every lesson
+  // says it is knowledge for a test, not a way to judge anyone's health. This is preparation for a
+  // knowledge test, not medical advice.
+  //
+  // NO NUMBERS. The only digit in the module is the "1" in the name "type 1 diabetes". No measured
+  // value is stated, in digits or in words.
+  //
+  // CONSISTENT WITH THE PRACTICE BANK. Every fact a bank question needs is stated here the way the
+  // bank's own reviewed explanation states it. Where the lessons add a narrower term (hypoxemia, named
+  // as a word some textbooks use for low blood oxygen, while hypoxia stays the broad term as in pp-08) or
+  // leave part of the bank's explanation out (pp-01's risk-factor framing, pp-24's thirst), the report
+  // for this module lists it for the human reviewer.
+  // The checks are original CompeteReady teaching items, deliberately NOT copies of bank items, and the
+  // worked examples say so in the learner's own view.
+  //
+  // NO OFFICIAL CLAIMS. Nothing here states a HOSA rule, test format, timing, weighting, score or
+  // coverage. A stable-teaching lesson is never a rules source (docs/curriculum/00-principles-and-sources.md).
+  //
+  // AUTHORING RECORD. All five were AI-drafted in a Claude Code session on 2026-09-27 and have NOT yet
+  // had a human content review, so their provenance label says they are AI-generated, not official HOSA
+  // material, and not yet reviewed by a person (set in the education registry's HOSA track file). The
+  // repository's source policy requires a subject-accuracy review before release. The owner's plan
+  // (2026-09-27) is one qualified human subject-accuracy review of the whole Medical Terminology
+  // curriculum before the stack is pushed. Record that review here, by reviewer and date,
+  // before changing the label or pushing these lessons. Independent AI review before the local
+  // commit is not a human review and does not replace one.
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-pathophysiology-how-tissue-changes",
+    description: "Say what acute and chronic mean, how atrophy differs from hypertrophy, how necrosis differs from apoptosis, and how benign and malignant tumors behave.",
+    category: "Health science",
+    order: 15,
+    lesson: {
+      title: "How Tissue Changes: Words for What Goes Wrong",
+      slug: "hosa-pathophysiology-how-tissue-changes-lesson",
+      summary: "Learn the first words of pathophysiology: acute and chronic, cells that shrink or grow (atrophy, hypertrophy), the two main ways cells die (necrosis, apoptosis), and tumors that stay in place or invade (benign, malignant).",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Say what acute and chronic mean, explain atrophy, hypertrophy and hyperplasia, tell necrosis from apoptosis, and describe how a benign tumor differs from a malignant one.",
+        "Pathophysiology is the study of how disease changes the body’s normal function. The anatomy lessons named the body’s structures, and the physiology lessons explained how they normally work. This module asks the next question: what changes when something goes wrong, and what is that change called?\n\nHere is the idea in one example. A leg muscle normally keeps its size because it is used every day. If the leg cannot be moved for a long time, the muscle is no longer used, and its fibers shrink. The name for that change is atrophy. Every lesson in this module reasons the same way: start from the normal job, say what changed, then name the change.\n\nThis first lesson teaches words that describe changes in cells and tissues anywhere in the body: how quickly a problem starts and how long it lasts, cells that shrink or grow, the two main and very different ways cells die, and tumors that stay in place or invade.",
+        "Many disease terms are built from these few ideas. If you can say whether cells shrank, grew, multiplied or died, and whether a change is sudden or lasting, you can often reason out a term you have not memorized and check it against the word parts from the first module. This is knowledge for a test, not a way to judge anyone’s health.",
+        [
+          "Start from normal: say what the tissue or its cells normally do, using the anatomy and physiology lessons.",
+          "Say what changed: did cells shrink, grow, multiply, die or spread, and did it happen suddenly or over a long time?",
+          "Name the change with the term that matches it, and check the term’s word parts.",
+          "Check the partner term too, so you do not pick the opposite: acute or chronic, atrophy or hypertrophy, necrosis or apoptosis, benign or malignant."
+        ],
+        {
+          prompt: "A student reads that a leg muscle became thinner after the leg could not be moved for a long time, and writes that its fibers must have divided into more, smaller fibers. Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. The muscle changed, and when tissue changes its cells divide, so the fibers must have split into more small ones.",
+          strongAnswer: "No. Normally the muscle keeps its size because it is used. Here the change is disuse, and the result is atrophy: the existing muscle fibers decrease in size as their protein content falls. The fibers do not multiply. Each one has become smaller, and an increase in the number of cells would be a different change, called hyperplasia.",
+          whyItWorks: "The weak answer assumes every change means cells dividing. The strong answer starts from the normal state, names what changed (disuse), and matches the result to the term for it: smaller fibers with less protein, which is atrophy."
+        },
+        q(
+          "A tumor stays in the tissue where it formed. It does not grow into the tissue around it or travel anywhere else. Which word describes how it behaves?",
+          ["Malignant", "Benign", "Chronic", "Necrotic"],
+          "Benign",
+          "Ask whether it invades or spreads. This one does neither.",
+          "Benign describes a tumor that does not invade nearby tissue and does not spread to distant parts of the body. Malignant is the opposite: a malignant tumor invades nearby tissue and can spread. Chronic describes how long a condition lasts, not how a tumor behaves, and necrotic describes tissue that has died.",
+          "Benign and malignant"
+        ),
+        [
+          q(
+            "Which description fits a chronic condition?",
+            ["It starts suddenly and is over quickly", "It is always more severe than an acute one", "It lasts a long time or keeps coming back", "It affects only one kind of cell in the body"],
+            "It lasts a long time or keeps coming back",
+            "Chronic is about time. What does it say about how long a condition lasts?",
+            "Chronic means a condition lasts a long time or keeps coming back. Starting suddenly and being over quickly describes an acute condition. Severity is not what the two words compare, so a chronic condition is not automatically more severe than an acute one, and neither word says which cells are affected.",
+            "Acute and chronic"
+          ),
+          q(
+            "A leg that could not be moved for a long time now has thinner muscles. What happens to the muscle fibers in this kind of change?",
+            ["Each fiber decreases in size as its protein content falls", "Each fiber divides into several smaller fibers", "The fibers are gradually replaced by fluid collecting between the cells", "Each fiber grows larger to make up for less use"],
+            "Each fiber decreases in size as its protein content falls",
+            "Think about the name for tissue that shrinks from disuse, and what happens inside each fiber.",
+            "This is atrophy from disuse: each existing fiber decreases in size as its protein content falls. The fibers do not divide into more fibers, which would be an increase in number, and they are not replaced by fluid. Growing larger would be hypertrophy, the opposite change.",
+            "Atrophy"
+          ),
+          q(
+            "Which term names an increase in the number of cells in a tissue?",
+            ["Hypertrophy", "Atrophy", "Hyperplasia", "Necrosis"],
+            "Hyperplasia",
+            "Both hyper- words mean more. Which ending is about forming new cells?",
+            "Hyperplasia is an increase in the number of cells: hyper- means above normal, and -plasia means formation. Hypertrophy is an increase in the size of existing cells, atrophy is a decrease in size, and necrosis is cell death.",
+            "Hypertrophy and hyperplasia"
+          ),
+          q(
+            "Cells in a tissue die after their blood supply is cut off. Their membranes break down, their contents spill out, and the area becomes inflamed. Which kind of cell death is this?",
+            ["Apoptosis", "Necrosis", "Atrophy", "Metastasis"],
+            "Necrosis",
+            "Was this a tidy, regulated removal, or uncontrolled death after a severe injury?",
+            "Necrosis is uncontrolled cell death that follows injury, such as a loss of blood supply, and the spilled contents of the dying cells provoke inflammation. Apoptosis is regulated, programmed cell death that clears cells away tidily. Atrophy is shrinking, not death, and metastasis is the spread of a malignant tumor.",
+            "Necrosis and apoptosis"
+          ),
+          q(
+            "A textbook describes a tumor whose cells have grown into the tissue around it and have also spread to a distant part of the body. Which word describes this tumor?",
+            ["Benign", "Atrophic", "Acute", "Malignant"],
+            "Malignant",
+            "Look at what the tumor has done to the tissue around it, and where it has gone.",
+            "Malignant describes a tumor that invades nearby tissue and can spread to distant sites, and spread to a distant site is called metastasis. A benign tumor stays where it formed. Atrophic describes tissue that has shrunk, and acute describes a condition that starts suddenly and is short-lived.",
+            "Benign and malignant"
+          )
+        ],
+        [
+          q(
+            "A student says acute and chronic tell you how severe a condition is. What do the two words actually compare?",
+            ["How serious it is compared with other conditions", "Which organ or tissue of the body it affects", "How suddenly it starts and how long it lasts", "Whether an organism such as a bacterium caused it"],
+            "How suddenly it starts and how long it lasts",
+            "Acute and chronic are a pair. What do they compare?",
+            "Acute and chronic compare timing: an acute condition comes on suddenly and is short-lived, while a chronic one lasts a long time or keeps coming back. Severity is not what they compare, and neither word says which organ is affected or what caused it.",
+            "Acute and chronic"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Acute and chronic: how quickly and how long",
+              body: "Two words describe the timing of a condition, not its cause. Acute means a condition comes on suddenly and is short-lived; chronic means it lasts a long time or keeps coming back.\n\nAcute is defined by timing, not severity. Some glossaries also describe an acute condition as severe, but a mild problem can be acute and a chronic one can be mild or serious, so severity is not what separates the two. The two words answer two questions: how quickly did it start, and how long does it last?"
+            },
+            {
+              heading: "Cells that shrink or grow: atrophy and hypertrophy",
+              body: "Normally, a tissue keeps roughly the size its work needs. When that work changes, its cells can change size.\n\nAtrophy is a decrease in the size of a tissue or organ. In atrophy from disuse, such as a leg muscle that cannot be moved for a long time, the existing muscle fibers decrease in size as their protein content falls. The fibers are still there, but each one has become smaller. In some other tissues, atrophy can also lower the number of cells. Disuse, aging, poor nutrition and loss of the nerve supply to a muscle can all cause atrophy.\n\nHypertrophy is an increase in the size of existing cells, which makes the tissue larger. Hyperplasia is different: it is an increase in the number of cells. The prefix hyper- (above normal) is the same in both, so read the rest of the word. The ending -trophy comes from a word for nourishment or development: in hypertrophy, the cells already there grow larger. The ending -plasia means formation, so hyperplasia is the formation of extra cells.\n\nHypertrophy can be a normal response, as when regular exercise enlarges skeletal muscle. It can also be part of a problem. When heart muscle has to pump against abnormally high pressure for a long time, called chronic pressure overload, its existing muscle cells increase in size and the heart wall thickens. The thickened wall itself can then become part of the problem."
+            },
+            {
+              heading: "Two main ways cells die: necrosis and apoptosis",
+              body: "Cells die in normal life as well as in disease, but not always in the same way.\n\nApoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are cleared away without setting off inflammation. It happens in normal life, for example to remove cells the body no longer needs, as well as in disease.\n\nNecrosis is uncontrolled cell death that follows injury, and it often provokes inflammation. A severe injury, such as a loss of blood supply, damages a cell so badly that its outer membrane breaks down and its contents spill into the surrounding tissue, and those spilled contents set off inflammation. The word is built from necr/o (death) and -osis (an abnormal condition)."
+            },
+            {
+              heading: "Tumors that stay in place or invade: benign and malignant",
+              body: "Normally, cells divide only when the body needs new ones, and they stay in their own tissue. A tumor is an abnormal mass of tissue that forms when cells keep dividing when they should not. The suffix -oma, from the word-part lessons, means a tumor or mass.\n\nA benign tumor does not invade nearby tissue and does not spread to distant parts of the body: it stays where it formed.\n\nA malignant tumor invades nearby tissue and can spread to distant sites, carried in the blood or the lymph. Spread to a distant site is called metastasis.\n\nWhat most reliably separates the two is behavior: whether the tumor invades nearby tissue and can spread. Size or growth rate alone does not tell benign and malignant apart."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "A condition started suddenly and was over within a short time. Acute or chronic?",
+              strong: "Acute: it came on suddenly and was short-lived.",
+              explanation: "Acute describes timing. How serious it was does not change the word."
+            },
+            {
+              setup: "Heart muscle keeps pumping against abnormally high pressure for a long time, and its wall thickens. Which word names the change in its cells?",
+              strong: "Hypertrophy: the existing muscle cells increase in size.",
+              explanation: "The wall thickens mainly because each muscle cell is bigger, not because there are more muscle cells. More cells would be hyperplasia."
+            }
+          ],
+          misconception: {
+            wrongModel: "A malignant tumor is simply a bigger or faster-growing tumor.",
+            whyItFails: "Benign and malignant describe behavior, not size. Size or growth rate alone does not tell them apart: what separates them is whether the tumor invades nearby tissue and can spread.",
+            betterModel: "A benign tumor stays where it formed and does not invade or spread. A malignant tumor invades nearby tissue and can spread to distant sites."
+          },
+          commonMistakes: [
+            {
+              mistake: "Reading acute and chronic as a measure of how severe a condition is.",
+              whyItFails: "Acute and chronic compare timing: a sudden start and a short course against a long or returning one. A mild problem can be acute, and severity is not what separates the two.",
+              fix: "Ask two questions: how quickly did it start, and how long does it last? Sudden and short is acute; long-lasting or returning is chronic."
+            },
+            {
+              mistake: "Mixing up hypertrophy and hyperplasia.",
+              whyItFails: "Both start with hyper- (above normal), so the prefix does not tell them apart.",
+              fix: "Read the ending: hypertrophy is bigger cells, and hyperplasia is more cells."
+            },
+            {
+              mistake: "Thinking all cell death is necrosis.",
+              whyItFails: "Apoptosis is programmed cell death that happens in normal life too, and it clears cells away tidily.",
+              fix: "Severe injury, spilled contents and inflammation point to necrosis; tidy, regulated removal points to apoptosis."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-pathophysiology-blood-flow-and-oxygen",
+    description: "Explain ischemia and infarction, hypoxia and anemia, and how plaque, a thrombus or an embolus can narrow or block a blood vessel.",
+    category: "Health science",
+    order: 16,
+    lesson: {
+      title: "When Blood Flow and Oxygen Fall Short",
+      slug: "hosa-pathophysiology-blood-flow-and-oxygen-lesson",
+      summary: "Learn what happens when a tissue gets too little blood or too little oxygen: ischemia and infarction, hypoxia and anemia, and how atherosclerosis, a thrombus or an embolus can narrow or block the way.",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Explain ischemia, infarction, hypoxia and anemia, and describe how atherosclerosis, a thrombus and an embolus reduce or block blood flow.",
+        "The body’s tissues depend on a steady supply of blood. The physiology lessons showed that red blood cells carry oxygen, held by hemoglobin, and that the blood delivers it to the body’s tissues. This lesson asks what happens when that supply falls short, either because too little blood arrives or because the blood carries too little oxygen.\n\nHere is the chain in one example. Normally, an artery delivers blood to a region of heart muscle. If the artery becomes narrowed, less blood arrives, and that reduced flow is ischemia. If the flow stays too low for long enough, the muscle cells in that region die, and that area of tissue death is an infarction.\n\nThe lesson follows that chain: first what reduced flow and low oxygen are called, then what can narrow or block a blood vessel.",
+        "Many problems of the heart, the brain and other organs come back to this chain: a vessel narrows or is blocked, the tissue beyond it gets too little blood, and cells are injured or die. If you can place a term on that chain, you can tell apart words that sound alike. This is knowledge for a test, not a way to judge anyone’s health.",
+        [
+          "Start from normal: which vessel, or which part of the blood, normally delivers the oxygen?",
+          "Say what changed: is too little blood arriving, or is the blood carrying too little oxygen?",
+          "Follow the change one step on: reduced flow first, then tissue death if the flow stays too low for too long.",
+          "Name each step with its term, and check the word parts: hypo- with ox for low oxygen, an- with -emia for anemia."
+        ],
+        {
+          prompt: "A student writes: “Ischemia and infarction mean the same thing, because both are about the blood supply to the heart.” Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. Both words are about the heart not getting blood, so they are two names for one thing.",
+          strongAnswer: "No. Normally an artery delivers enough blood to the tissue it supplies. Ischemia is the first change: inadequate blood flow, so the tissue gets too little oxygen. An infarction is what can follow if that loss of blood supply lasts long enough: an area of tissue death. Neither word is only about the heart, because both can happen in other organs too; an infarction in heart muscle is called a myocardial infarction.",
+          whyItWorks: "The weak answer notices that both words involve blood supply and stops there. The strong answer places each word on the chain from normal flow to reduced flow to tissue death, which is what tells them apart."
+        },
+        q(
+          "A tissue is getting too little blood because the artery that supplies it has narrowed, but its cells are still alive. Which term names this?",
+          ["Infarction", "Anemia", "Ischemia", "Embolus"],
+          "Ischemia",
+          "The cells have not died yet. Which term names the reduced flow itself?",
+          "Ischemia means inadequate blood flow to a tissue, and the cells here are short of oxygen but still alive. Infarction is the tissue death that can follow if the flow stays too low for too long. Anemia is too few healthy red blood cells or too little hemoglobin, and an embolus is material that travels in the blood and lodges in a vessel away from where it came from.",
+          "Ischemia and infarction"
+        ),
+        [
+          q(
+            "A new word is built from hypo- (below normal), ox (oxygen) and -ia (a condition). What does it describe?",
+            ["An abnormally low level of oxygen", "An abnormally high level of oxygen", "A condition of low blood sugar", "A condition of low blood pressure"],
+            "An abnormally low level of oxygen",
+            "Read each part in turn: below normal, oxygen, a condition.",
+            "Hypoxia is built from hypo- (below normal), ox (oxygen) and -ia (a condition), so it means an abnormally low level of oxygen. A high level would need hyper-, not hypo-. Low blood sugar is hypoglycemia, where glyc means sugar, and low blood pressure is hypotension.",
+            "Hypoxia"
+          ),
+          q(
+            "A person’s blood has too little hemoglobin, although blood flow through the body is normal. What is most directly reduced?",
+            ["The blood’s ability to form a clot at a cut", "The speed at which nerve signals travel", "The density and strength of the bones", "The blood’s oxygen-carrying capacity"],
+            "The blood’s oxygen-carrying capacity",
+            "Think about what hemoglobin holds on to.",
+            "This is anemia: with too little hemoglobin, the blood’s oxygen-carrying capacity is reduced, even though the blood flows normally. Clotting depends on platelets and fibrin, nerve signals on neurons, and bone strength on the bones themselves, so none of them is the most direct effect.",
+            "Anemia"
+          ),
+          q(
+            "In atherosclerosis, what narrows the lumen of an artery?",
+            ["A clot that forms in a vein and travels to the artery", "Fatty plaque that builds up within the artery wall", "Fluid collecting in the tissue outside the artery", "The artery wall becoming more elastic"],
+            "Fatty plaque that builds up within the artery wall",
+            "Look for the change that happens inside the wall of the artery itself.",
+            "In atherosclerosis, fatty plaque builds up within the artery wall and narrows the lumen, the channel the blood flows through. A clot that travels from somewhere else is an embolus, fluid collecting outside a vessel is not plaque, and atherosclerosis makes the artery wall stiffer, not more elastic.",
+            "Atherosclerosis"
+          ),
+          q(
+            "A piece of a clot breaks away from the vein where it formed, travels in the blood and lodges in a smaller vessel elsewhere in the body. What is the traveling piece called?",
+            ["A thrombus", "A plaque", "An embolus", "An infarction"],
+            "An embolus",
+            "One of these clot words names a clot that stays where it formed. This piece did not stay.",
+            "An embolus is material that travels through the circulation and lodges away from where it came from, and a piece that has broken off a clot is a common example. A thrombus is a clot that stays at the place it formed, plaque builds up within an artery wall, and an infarction is tissue death from loss of blood supply.",
+            "Thrombus and embolus"
+          ),
+          q(
+            "An artery is blocked, and the region of tissue it supplies receives no blood for long enough that its cells die. What is that area of dead tissue called?",
+            ["Ischemia", "Hypoxia", "Infarction", "Atherosclerosis"],
+            "Infarction",
+            "The cells here have died. Which term names the death, not the reduced flow?",
+            "An infarction is an area of tissue death caused by loss of blood supply. Ischemia is the reduced flow that comes before it, while the cells are still alive; hypoxia is a low level of oxygen, and atherosclerosis is plaque narrowing an artery, one thing that can reduce the flow.",
+            "Ischemia and infarction"
+          )
+        ],
+        [
+          q(
+            "Blood is flowing normally to a tissue, yet the tissue is short of oxygen because the blood arriving carries too little. Which answer could explain this?",
+            ["Hypoxia caused by anemia", "Ischemia caused by a narrowed artery", "Infarction caused by an embolus", "Atherosclerosis caused by a thrombus"],
+            "Hypoxia caused by anemia",
+            "The flow is normal, so the problem is in what the blood carries.",
+            "Hypoxia can happen when blood flow is normal if the blood carries too little oxygen, and anemia, with too few healthy red blood cells or too little hemoglobin, is one cause. Ischemia and an embolus both reduce flow, which the question rules out, and an infarction is tissue death. Atherosclerosis is plaque in an artery wall, not something a clot causes.",
+            "Hypoxia and anemia"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Too little blood: ischemia and infarction",
+              body: "Normally, arteries deliver a steady flow of blood, and with it oxygen and nutrients, to the body’s tissues. Ischemia means inadequate blood flow to a tissue, so the tissue gets too little oxygen.\n\nIf ischemia is severe or lasts long enough, cells begin to die. An infarction is an area of tissue death caused by loss of blood supply. The tissue death in an infarction is necrosis, the uncontrolled, injury-caused cell death from the first lesson. A myocardial infarction, commonly called a heart attack, is an infarction in the heart muscle: my/o (muscle) and cardi (heart).\n\nSo ischemia is reduced flow, and infarction is the tissue death that can follow when the flow stays too low for too long."
+            },
+            {
+              heading: "Too little oxygen: hypoxia and anemia",
+              body: "Hypoxia means an abnormally low level of oxygen, built from hypo- (below normal), ox (oxygen) and -ia (a condition). Hypoxia is the broad word for too little oxygen, used for low oxygen in the blood as well as in the tissues. Some textbooks keep hypoxia for the tissues and use the related word hypoxemia, with -emia (a blood condition), for low oxygen in the blood. Ischemia leaves a tissue short of oxygen, but hypoxia can also happen when blood flow is normal, if the blood arriving carries too little oxygen.\n\nOne way that happens is anemia. Anemia means too few healthy red blood cells or too little hemoglobin, so the blood’s oxygen-carrying capacity is reduced. The word is an- (without) plus -emia (a blood condition). In anemia the blood can flow normally, but with less hemoglobin to hold oxygen, each amount of blood carries less oxygen than it should."
+            },
+            {
+              heading: "What narrows or blocks a vessel: plaque, thrombus and embolus",
+              body: "Normally, the inside of an artery is an open channel called the lumen, and blood flows through it freely.\n\nIn atherosclerosis, fatty plaque builds up within the artery wall and narrows the lumen, so less blood can flow past it to the tissue downstream. The artery wall can also become stiffer. The suffix -sclerosis (hardening) is from the word-part lessons, and athero- refers to the fatty deposits. A narrowed artery can cause ischemia in the tissue it supplies.\n\nA vessel can also be blocked by a clot. The physiology lessons showed that platelets and fibrin form a clot to seal a cut vessel. A thrombus is a clot that forms inside a blood vessel and stays at the place it formed. An embolus is material that travels through the circulation and lodges away from where it came from, blocking a vessel there. An embolus is often a piece of a thrombus that has broken off, but other material, such as fat or air, can also travel and lodge.\n\nWherever it lodges, an embolus can block the blood flow beyond it: the start of ischemia, and possibly an infarction."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "A clot forms in a leg vein and stays attached where it formed. What is it called?",
+              strong: "A thrombus: a clot that forms inside a blood vessel and stays at the place it formed.",
+              explanation: "If a piece broke off and traveled, that piece would be an embolus."
+            },
+            {
+              setup: "Which word names the reduced blood flow, and which names the tissue death that can follow?",
+              strong: "Ischemia is the reduced flow; infarction is the tissue death that can follow if the flow stays too low for too long.",
+              explanation: "Put the two on one chain: a narrowed or blocked vessel, then ischemia, then infarction."
+            }
+          ],
+          misconception: {
+            wrongModel: "If a tissue is short of oxygen, its blood supply must be blocked.",
+            whyItFails: "Reduced flow is one cause, but not the only one. Blood can flow normally and still carry too little oxygen, as in anemia.",
+            betterModel: "Hypoxia is too little oxygen, whatever the cause. Ischemia is one cause (too little blood arriving), and anemia is another (too little hemoglobin, so the blood carries less oxygen in total)."
+          },
+          commonMistakes: [
+            {
+              mistake: "Using thrombus and embolus as if they were the same.",
+              whyItFails: "A thrombus stays at the place it formed. An embolus travels in the blood and lodges somewhere else.",
+              fix: "Ask whether it moved: a clot that stayed put is a thrombus, and material that traveled and lodged is an embolus."
+            },
+            {
+              mistake: "Thinking plaque sits on the outside of an artery.",
+              whyItFails: "Plaque builds up within the artery wall, which narrows the channel inside.",
+              fix: "Picture the lumen getting smaller from the inside."
+            },
+            {
+              mistake: "Calling any reduced blood flow an infarction.",
+              whyItFails: "An infarction is tissue death. Reduced flow while the cells are still alive is ischemia.",
+              fix: "Keep the word infarction for tissue that has died from loss of blood supply."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-pathophysiology-heart-and-pressure",
+    description: "Explain hypertension and edema, why a very fast rhythm can lower cardiac output, what heart failure means, and how low blood volume and shock leave tissues short of blood.",
+    category: "Health science",
+    order: 17,
+    lesson: {
+      title: "Heart, Pressure and Fluid",
+      slug: "hosa-pathophysiology-heart-and-pressure-lesson",
+      summary: "Learn what hypertension and edema are, why a very fast or irregular rhythm can lower cardiac output, what heart failure does and does not mean, and how low blood volume and shock leave tissues short of blood.",
+      estimatedMinutes: 16,
+      content: lesson(
+        "Define hypertension and edema, explain why a very fast or irregular rhythm can lower cardiac output, say what heart failure means, and explain how low blood volume and shock reduce circulation.",
+        "The physiology lessons showed the heart filling between beats and pumping blood out through the arteries, and they defined cardiac output as heart rate multiplied by stroke volume. This lesson asks what happens when the pressure in the vessels, the heart’s filling and pumping, or the amount of blood changes in a way that causes a problem.\n\nHere is one example. Normally, the ventricles fill with blood between beats and then pump it out. If the heart beats extremely fast, there may not be enough time between beats for the ventricles to fill, so each beat pumps out less. A faster heart can then move less blood, not more.\n\nThe lesson covers pressure that stays too high, fluid that collects in the tissues, a rhythm too fast to fill, a heart that cannot keep up, and circulation that falls short everywhere at once.",
+        "Many terms about the heart and circulation describe one of a few changes: too much pressure, too little filling, too little pumping or too little blood. Tracing which one changed lets you explain a term instead of guessing between names that sound alike. This is knowledge for a test, not a way to judge anyone’s health.",
+        [
+          "Start from normal: blood pressure, the heart’s filling and pumping, and the amount of blood in the circulation.",
+          "Say which of those changed, and which way: pressure too high, filling too short, pumping too weak, or too little blood.",
+          "Follow the effect: less blood out of the heart, fluid pushed into the tissues, or tissues everywhere short of blood.",
+          "Name the result, and check that the term’s word parts agree."
+        ],
+        {
+          prompt: "A student says: “Heart failure means the heart has stopped beating.” Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. Failure means it has stopped working, so the heart is not beating any more.",
+          strongAnswer: "No. Normally the heart fills between beats and pumps enough blood to keep every tissue supplied. In heart failure, the heart cannot fill or pump effectively enough to maintain adequate circulation, but it keeps beating. What changed is that the blood it moves falls short of what the body needs, and pressure can build up behind it.",
+          whyItWorks: "The weak answer reads the everyday meaning of failure. The strong answer compares the heart with its normal job and says exactly what changed: not whether it beats, but whether it moves enough blood."
+        },
+        q(
+          "Blood pressure that stays high every time it is measured over many months, not only during exercise, is described by which term?",
+          ["Hypotension", "Hypertension", "Atherosclerosis", "Edema"],
+          "Hypertension",
+          "Is the pressure above or below normal, and does it stay that way?",
+          "Hypertension is blood pressure that stays persistently high over time, and hyper- means above normal. Hypotension would be low blood pressure. Atherosclerosis is plaque in an artery wall, not a pressure, and edema is swelling from fluid in the tissues.",
+          "Hypertension"
+        ),
+        [
+          q(
+            "Fluid collects in the spaces between cells faster than it is carried away, and the tissue swells. What is this called?",
+            ["Ischemia", "Anemia", "Edema", "Hypoxia"],
+            "Edema",
+            "The clue is fluid and swelling, not blood flow or oxygen.",
+            "Edema is swelling caused by a buildup of excess fluid trapped in the tissues, which happens when fluid collects faster than it is carried away. Ischemia is reduced blood flow, anemia is too few healthy red blood cells or too little hemoglobin, and hypoxia is a low level of oxygen.",
+            "Edema"
+          ),
+          q(
+            "During an extremely fast heart rhythm, why can each beat pump out less blood than usual?",
+            ["There is too little time between beats for the ventricles to fill", "The valves stop closing, so the blood flows backwards through the heart", "The blood suddenly loses its hemoglobin", "The arteries stop carrying blood away from the heart"],
+            "There is too little time between beats for the ventricles to fill",
+            "Think about what happens between beats, before each one pumps.",
+            "There is too little time between beats for the ventricles to fill, so each beat has less blood to pump out and stroke volume falls. The valves still close, the blood keeps its hemoglobin, and the arteries still carry blood away; what changed is the filling time.",
+            "Rhythm and filling"
+          ),
+          q(
+            "Which statement about heart failure is accurate?",
+            ["It means the heart has stopped beating and will not restart", "It means the heart beats faster than it should", "It is another name for a blocked artery that supplies the heart muscle", "It keeps beating but moves too little blood for the body’s needs"],
+            "It keeps beating but moves too little blood for the body’s needs",
+            "Compare the everyday meaning of failure with what the heart is actually doing.",
+            "In heart failure, the heart keeps beating but cannot fill or pump effectively enough to maintain adequate circulation, so it moves too little blood for the body’s needs. It has not stopped. A heart rate that is too fast is a rhythm problem, and a blocked artery supplying the heart is a different problem, although it can be one cause of heart failure.",
+            "Heart failure"
+          ),
+          q(
+            "A person loses a large amount of body water. Why can this eventually lower blood pressure?",
+            ["The heart loses the electrical signal that starts each beat", "Less blood is circulating, so less returns to the heart", "Red blood cells stop carrying oxygen", "The arteries become far more elastic"],
+            "Less blood is circulating, so less returns to the heart",
+            "Blood pressure depends partly on how much blood there is to push.",
+            "Losing body water lowers plasma volume, so less blood is circulating and less returns to the heart, and each beat pumps out less. The body can hold pressure up at first, but if the loss is severe enough, pressure falls. The heart’s electrical signal, the oxygen carried by red blood cells and the elasticity of the arteries are not what changed.",
+            "Low blood volume"
+          ),
+          q(
+            "How is shock different from ischemia in one leg?",
+            ["Shock is always caused by bleeding, and ischemia never is", "Shock affects only the brain", "In shock, too little blood reaches many tissues at once", "Shock is a sudden fright that speeds up the heart"],
+            "In shock, too little blood reaches many tissues at once",
+            "Compare how much of the body is affected in each.",
+            "In shock, inadequate perfusion is body-wide, so too little blood reaches many tissues at once, while ischemia in one leg affects only the tissue supplied by the narrowed or blocked artery. Shock has more than one cause, not only bleeding, and as a medical term it does not mean a fright.",
+            "Shock"
+          )
+        ],
+        [
+          q(
+            "Why can heart failure lead to edema?",
+            ["The heart muscle itself produces extra fluid that seeps into the skin", "Red blood cells burst and spill their contents into the tissues", "The arteries become so elastic that they stretch and fill with fluid", "Pressure builds up behind the heart and pushes fluid into the tissues"],
+            "Pressure builds up behind the heart and pushes fluid into the tissues",
+            "Follow the blood that the heart cannot move forward.",
+            "Pressure builds up behind a heart that cannot fill or pump well enough, in the veins bringing blood to it, and that raised pressure pushes more fluid out of the capillaries into the tissues. The heart muscle does not produce fluid, red blood cells do not burst to cause it, and the arteries do not stretch and fill with fluid.",
+            "Heart failure and edema"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Pressure that stays high: hypertension",
+              body: "Blood pressure is the force of the blood pushing against the walls of the arteries. It rises and falls during the day, for example during exercise, and that is normal.\n\nHypertension is blood pressure that stays persistently high over time, not a brief rise. The word is hyper- (above normal) plus tension (pressure). Over a long time, a heart pumping against that higher pressure is under chronic pressure overload, the situation from the first lesson in which its existing muscle cells can enlarge and its wall can thicken."
+            },
+            {
+              heading: "Fluid in the wrong place: edema",
+              body: "Normally, some fluid seeps out of the capillaries into the spaces between cells, and that fluid is carried back into the circulation, so tissues stay about the same size.\n\nEdema is swelling caused by a buildup of excess fluid trapped in the tissues. It happens when fluid collects in the tissues faster than it is carried away. A heart that cannot pump well enough is one way that can happen, as the heart failure section below explains."
+            },
+            {
+              heading: "Too fast to fill: rhythm problems",
+              body: "An arrhythmia is an abnormal heart rhythm: too fast, too slow or irregular. The prefix a- means without, so the word literally means without rhythm, and tachycardia, from the word-part lessons, is a fast heart rate.\n\nA very fast or irregular rhythm can leave the ventricles too little time to fill between beats, so stroke volume can fall. Because cardiac output is heart rate multiplied by stroke volume, a faster rate does not automatically mean more output. Cardiac output falls only if the drop in stroke volume outweighs the faster rate; a moderate rise in heart rate does not by itself lower cardiac output, and during exercise the faster rate normally raises it."
+            },
+            {
+              heading: "A pump that cannot keep up: heart failure",
+              body: "Heart failure means the heart cannot fill or pump effectively enough to maintain adequate circulation. The name can mislead: the heart has not stopped. It keeps beating, but the blood it moves falls short of what the body needs.\n\nThe problem can be in pumping (the muscle contracts too weakly), in filling (the muscle does not relax properly, so the chamber does not fill properly), or both. Either way, less blood moves forward than the body needs, and pressure can build up behind the heart, which can push fluid into the tissues and cause the edema described above."
+            },
+            {
+              heading: "Too little blood everywhere: low volume and shock",
+              body: "The amount of blood in the circulation matters as much as the pump. Severe dehydration can lower blood pressure, mainly because circulating blood volume falls: losing body water lowers the volume of plasma, so less blood returns to the heart and each beat pumps out less. At first, a faster heart rate and narrowing of blood vessels can hold blood pressure up, but if the loss is severe enough, that compensation is not enough and blood pressure falls.\n\nPerfusion is the flow of blood through a tissue’s capillaries. In shock, inadequate perfusion is body-wide, so many tissues are underperfused at once: too little blood reaches the tissues throughout the body. That is different from a shortfall in one area, as when a single artery is narrowed or blocked. Shock can have more than one cause, such as a severe loss of blood volume or a heart that cannot pump enough. As a medical term, shock does not mean a fright or an electric shock: it means circulation failing throughout the body."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Blood pressure rises briefly while a person runs, then settles again. Is that hypertension?",
+              strong: "No. Hypertension is blood pressure that stays persistently high over time, not a brief rise during exercise.",
+              explanation: "A short rise that settles is part of normal function. The word needs the pressure to stay high."
+            },
+            {
+              setup: "Why is shock more than a problem in one part of the body?",
+              strong: "Because in shock, inadequate perfusion is body-wide, so many tissues are underperfused at once.",
+              explanation: "Ischemia in one leg is a shortfall in one area. Shock is a shortfall everywhere at once."
+            }
+          ],
+          misconception: {
+            wrongModel: "A faster heart always pumps more blood.",
+            whyItFails: "Cardiac output is heart rate multiplied by stroke volume. A very fast rhythm can leave too little time to fill, so stroke volume can fall far enough that output drops.",
+            betterModel: "A moderate rise in heart rate usually raises cardiac output. A very fast or irregular rhythm can lower it, because filling time runs short."
+          },
+          commonMistakes: [
+            {
+              mistake: "Reading shock as a fright.",
+              whyItFails: "As a medical term, shock means circulation failing throughout the body.",
+              fix: "Think of shock as too little blood reaching many tissues at once."
+            },
+            {
+              mistake: "Calling any high blood pressure reading hypertension.",
+              whyItFails: "Blood pressure rises for a short time during exercise or excitement, and that is normal.",
+              fix: "Hypertension needs pressure that stays persistently high over time."
+            },
+            {
+              mistake: "Thinking edema is extra blood.",
+              whyItFails: "Edema is fluid that has left the vessels and collected in the tissues, not blood inside the vessels.",
+              fix: "Picture the spaces between cells holding more fluid than is carried away."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-pathophysiology-defences",
+    description: "Explain how inflammation can harm healthy tissue, why a fever is a raised set point, how autoimmunity, allergy and immunodeficiency differ, and how infection differs from colonization.",
+    category: "Health science",
+    order: 18,
+    lesson: {
+      title: "When the Body’s Defences Misfire",
+      slug: "hosa-pathophysiology-defences-lesson",
+      summary: "Learn how the body’s defences can go wrong (inflammation that harms healthy tissue, and immune responses aimed at the wrong target, too strong or too weak), why a fever is a controlled rise toward a raised set point, and the difference between infection and harmless colonization.",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Explain how excessive inflammation injures healthy tissue, why a fever is a raised set point, how autoimmunity, allergy and immunodeficiency differ, and what separates infection from colonization.",
+        "The physiology lessons showed that white blood cells defend the body and that the immune system produces antibodies. A defence has to aim at the right target, with the right strength, for the right length of time. This lesson looks at what happens when one of those goes wrong.\n\nHere is the idea in one example. Normally, pollen is harmless, and the immune system leaves it alone. In an allergy, the immune system reacts to pollen as if it were a threat, and the response is far out of proportion to it. The target is harmless and the response is exaggerated, and that is what makes it an allergy.\n\nFor the immune terms in this lesson (inflammation, autoimmunity, allergy and immunodeficiency), ask three questions: what is the defence aimed at, how strong is the response, and how long does it last?",
+        "Several terms about the immune system sound alike but describe opposite problems: a response aimed at the body itself, a response that is too strong, or a response that is too weak. Asking what the target is and how strong the response is keeps them apart. This is knowledge for a test, not a way to judge anyone’s health.",
+        [
+          "Start from normal: the immune system attacks harmful invaders, leaves the body’s own healthy tissue alone, and does not attack harmless substances.",
+          "Say what the defence is aimed at: an invader, a harmless substance, or the body’s own tissue.",
+          "Say how strong the response is, and whether it has gone on too long.",
+          "Name the term that matches the target and the strength, and check its word parts."
+        ],
+        {
+          prompt: "A student says that arthritis must be an infection, because the word ends in -itis. Is that reasoning right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. Words that end in -itis are infections, so arthritis is an infection of a joint.",
+          strongAnswer: "No. The suffix -itis means inflammation, so arthritis is inflammation of a joint. Inflammation is the body’s response to many things, including injury, allergy and an autoimmune attack as well as infection, so the word alone does not say that an organism is involved. To call something an infection, organisms must have invaded and multiplied in the tissue.",
+          whyItWorks: "The weak answer turns the suffix into a cause. The strong answer reads the suffix for what it says, inflammation, and remembers that inflammation has several possible causes, of which infection is only one."
+        },
+        q(
+          "A person’s immune system produces a strong response every spring to tree pollen, which is harmless to most people. Which term fits?",
+          ["Autoimmunity", "Immunodeficiency", "Infection", "Allergy"],
+          "Allergy",
+          "Name the target first, then ask whether the response fits it.",
+          "An allergy is an immune response that is exaggerated toward a normally harmless substance, here pollen. Autoimmunity would target the body’s own tissue, immunodeficiency is a response that is too weak, and infection means organisms invading and multiplying in tissue.",
+          "Allergy"
+        ),
+        [
+          q(
+            "In which condition does the immune system attack the body’s own healthy tissue?",
+            ["Autoimmunity", "Allergy", "Immunodeficiency", "Colonization"],
+            "Autoimmunity",
+            "Look for the prefix that means self.",
+            "In autoimmunity, the immune system attacks the body’s own healthy tissue because self-tolerance has been lost, and auto- means self. An allergy targets a harmless outside substance, immunodeficiency is a response too weak to protect the body, and colonization is organisms living on the body without invading it.",
+            "Autoimmunity"
+          ),
+          q(
+            "During a fever, a person shivers even though their temperature is already above normal. Why?",
+            ["The set point has been lowered below normal", "The body has lost the ability to sweat", "The set point has been raised, so the body warms itself toward it", "The temperature control in the brain has stopped working altogether"],
+            "The set point has been raised, so the body warms itself toward it",
+            "Negative feedback always works toward the set point. What must have happened to it?",
+            "In a fever the set point has been raised, so the body warms itself toward the new target, for example by shivering. The body can still sweat, the temperature control is working, not broken, and a lowered set point would make the body cool itself instead.",
+            "Fever"
+          ),
+          q(
+            "Why do infections tend to be more frequent or harder to clear in immunodeficiency?",
+            ["The immune system attacks the body’s own tissue", "The body cannot mount an adequate immune response", "The immune system overreacts to harmless substances", "Too many red blood cells are made"],
+            "The body cannot mount an adequate immune response",
+            "Is this a response aimed at the wrong target, or one that is too weak?",
+            "In immunodeficiency, the body cannot mount an adequate immune response, so infections a working immune system would control can take hold. Attacking the body’s own tissue is autoimmunity and overreacting to harmless substances is allergy, both the opposite kind of problem, and red blood cells carry oxygen rather than fight infection.",
+            "Immunodeficiency"
+          ),
+          q(
+            "Inflammation is normally protective. How can it end up harming healthy tissue?",
+            ["Its increased blood flow carries oxygen away from the area", "It sends fewer white blood cells to the injured area", "It stops the body from repairing any tissue ever again", "Its cells and mediators also injure nearby healthy cells"],
+            "Its cells and mediators also injure nearby healthy cells",
+            "Think about how well targeted the weapons of inflammation are.",
+            "When inflammation is excessive or goes on too long, its activated immune cells and inflammatory mediators also injure nearby healthy cells, because they are not perfectly targeted. The increased blood flow brings oxygen to the area rather than carrying it away, more white blood cells gather there, not fewer, and the body does not lose the ability to repair tissue.",
+            "Inflammation"
+          ),
+          q(
+            "Bacteria are found living on a person’s skin, but they have not invaded the tissue and are causing no damage or inflammation. What is this called?",
+            ["Infection", "Inflammation", "Colonization", "Immunodeficiency"],
+            "Colonization",
+            "The bacteria are present, but have they invaded or multiplied in tissue?",
+            "Colonization is when organisms live on or in the body without invading or damaging its tissue. Infection would need them to invade and multiply in the tissue and provoke a response. Inflammation is the body’s response, which is not happening here, and immunodeficiency is an immune response that is too weak.",
+            "Infection and colonization"
+          )
+        ],
+        [
+          q(
+            "A student sees a word ending in -itis and concludes that an organism must be involved. What does -itis actually tell you?",
+            ["Inflammation, which has several possible causes", "That bacteria have invaded the tissue", "That the immune system is too weak", "That the tissue has died from loss of blood supply"],
+            "Inflammation, which has several possible causes",
+            "The word-part lessons gave -itis one meaning. Was it infection?",
+            "The suffix -itis means inflammation, which has several possible causes: an injury, an allergy or an autoimmune attack can cause it with no organism involved, and infection is only one cause. Invading bacteria would be an infection, a weak immune system is immunodeficiency, and tissue death from loss of blood supply is an infarction.",
+            "Inflammation and infection"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Inflammation: protective, until it is not",
+              body: "Inflammation is the body’s local response to injury or infection. Blood flow to the area increases, and white blood cells gather there to clear away damaged cells and invaders. Inflammation is normally protective.\n\nThe weapons it uses are not perfectly targeted, though. When inflammation becomes excessive or goes on too long, the activated immune cells and the chemical signals they release, called inflammatory mediators, can also injure nearby healthy cells. The activated immune cells also release digestive enzymes and reactive chemicals meant to destroy invaders, and these act on healthy cells as well as damaged ones.\n\nThe word-part lessons taught that -itis means inflammation. It does not mean infection. Inflammation has several possible causes: it can follow an injury, an allergy or an autoimmune attack with no organism involved at all, and an infection is one possible cause of inflammation, not the same thing."
+            },
+            {
+              heading: "Fever: a raised set point",
+              body: "Unlike the other topics in this lesson, a fever is not a defence going wrong: the temperature control is working, aimed at a higher target. The physiology lessons showed that body temperature is held near a set point by negative feedback. In a fever, substances called pyrogens raise the body’s thermoregulatory set point, which is held in a part of the brain called the hypothalamus. Pyrogens are released, for example, when the body responds to an infection. The body then actively warms itself toward the new, higher target, for example by shivering, just as negative feedback always works toward the set point.\n\nSo a fever is not temperature control breaking down, and it is not the body failing to cool. The control is still working, but the set point has been raised, so the body warms itself toward a higher target."
+            },
+            {
+              heading: "Wrong target or wrong strength: autoimmunity, allergy and immunodeficiency",
+              body: "Normally, the immune system recognizes the body’s own tissues and leaves them alone, a property called self-tolerance.\n\nIn an autoimmune disorder, the immune system attacks the body’s own healthy tissue, because self-tolerance has been lost. The prefix auto- means self. The target is wrong: it is the body itself.\n\nAn allergy is an immune response that is exaggerated toward a normally harmless substance, such as pollen. The target is something harmless from outside, and the strength is wrong: the response is out of proportion.\n\nIn immunodeficiency, the body cannot mount an adequate immune response, so infections can be more frequent, more severe or harder to clear, including ones a working immune system would normally control. Here the target is right, but the response is too weak.\n\nAutoimmunity and allergy are problems of a response that is misdirected or excessive. Immunodeficiency is the opposite problem: a response that is too weak."
+            },
+            {
+              heading: "Infection or colonization?",
+              body: "Many bacteria live on the skin and in the body without doing any harm. Colonization is when organisms live on or in the body, for example on the skin, without invading or damaging its tissue.\n\nInfection is when organisms invade and multiply in the host’s tissue and provoke a response from the host, such as inflammation. The host is the body the organisms are living in. An infection does not always make a person feel ill, and some infections cause no noticeable effects at all.\n\nSo finding bacteria somewhere is not enough to call it an infection. The question is whether they have invaded the tissue and multiplied there, and whether the body is mounting a response such as inflammation."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "A person’s immune response is too weak to clear an infection that most people’s immune systems would control. Which term fits?",
+              strong: "Immunodeficiency: the body cannot mount an adequate immune response.",
+              explanation: "The target is right, but the strength is too low. That is the opposite of allergy and autoimmunity."
+            },
+            {
+              setup: "During a fever, why does the body make extra heat, for example by shivering, even though it is already warmer than usual?",
+              strong: "Because the set point has been raised, and negative feedback works toward the new, higher target.",
+              explanation: "The temperature control is still working. It is aiming at a different target."
+            }
+          ],
+          misconception: {
+            wrongModel: "Inflammation and infection are the same thing.",
+            whyItFails: "Inflammation is the body’s response. Infection is organisms invading and multiplying in tissue. Inflammation can happen with no organism at all, after an injury, an allergy or an autoimmune attack.",
+            betterModel: "Infection is one possible cause of inflammation. Read -itis as inflammation, then ask what caused it."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping autoimmunity and allergy.",
+              whyItFails: "Both are immune responses that cause harm, but they aim at different targets.",
+              fix: "Autoimmunity targets the body’s own tissue (auto- means self); allergy targets something harmless from outside."
+            },
+            {
+              mistake: "Thinking a fever means temperature control has broken down.",
+              whyItFails: "In a fever the set point is raised, and the body actively warms itself toward it.",
+              fix: "Describe a fever as a raised set point, not a failure to cool."
+            },
+            {
+              mistake: "Calling any bacteria on the body an infection.",
+              whyItFails: "Many bacteria live on the skin without invading tissue, and that is colonization.",
+              fix: "Ask whether the organisms have invaded and multiplied in tissue and provoked a response."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-pathophysiology-breathing-kidneys-glucose",
+    description: "Explain why narrowed airways make breathing out hard, how retained carbon dioxide lowers pH, why fluid in the alveoli blocks gas exchange, what failing kidney filtration does, and how type 1 diabetes and high blood glucose change the body.",
+    category: "Health science",
+    order: 19,
+    lesson: {
+      title: "Breathing, Kidneys and Blood Glucose",
+      slug: "hosa-pathophysiology-breathing-kidneys-glucose-lesson",
+      summary: "Learn what changes when airways narrow, when carbon dioxide is not cleared, when the alveoli fill with fluid, when kidney filtration fails, and when the body cannot make enough insulin.",
+      estimatedMinutes: 16,
+      content: lesson(
+        "Explain obstructive airway disease, respiratory acidosis and blocked gas exchange, the most direct result of failing kidney filtration, what type 1 diabetes changes, and why high blood glucose increases urine output.",
+        "The physiology lessons showed three balancing jobs: the lungs exchange oxygen and carbon dioxide, the kidneys filter the blood and take back what the body needs, and the pancreas releases insulin to lower blood glucose. This lesson asks what happens when one of those jobs cannot be done.\n\nHere is one example. Normally, the kidney tubules reabsorb nearly all the glucose that is filtered out of the blood, so almost none is left in the urine. When blood glucose is high enough, more glucose is filtered than the tubules can take back, and the extra glucose stays in the urine, pulling water with it. A change in blood glucose, which the pancreas regulates, shows up in a different organ, the kidneys.\n\nThe lesson follows each topic in turn: airways and alveoli, carbon dioxide and pH, the kidneys, and blood glucose.",
+        "Questions about disease often ask why one change leads to another. If you can trace the chain from the normal job to the change and on to its result, you can answer a question about a condition you have never studied by name. This is knowledge for a test, not a way to judge anyone’s health.",
+        [
+          "Start from normal: say which organ does the job and how, from the physiology lessons.",
+          "Say what changed: a narrowed airway, fluid in the alveoli, failing filtration, or too little insulin.",
+          "Follow the result one step on: what builds up, what falls, or what is lost.",
+          "Name the result, and check the direction: does pH fall or rise, and does blood glucose rise or fall?"
+        ],
+        {
+          prompt: "A student says: “If the lungs cannot get rid of carbon dioxide, the blood becomes less acidic, so its pH rises.” Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. Carbon dioxide is a waste gas, so keeping it in must make the blood less acidic.",
+          strongAnswer: "No. Normally breathing clears carbon dioxide as the body makes it. When the lungs cannot clear it adequately, the retained carbon dioxide combines with water to form carbonic acid, so hydrogen ions build up and blood pH falls. The blood becomes more acidic, not less, and this is respiratory acidosis.",
+          whyItWorks: "The weak answer guesses the direction. The strong answer follows the chain from the normal job to the change, retained carbon dioxide, to the acid it forms, and reads the direction from that: more acid means a lower pH."
+        },
+        q(
+          "In an obstructive airway disease, which part of breathing is usually hardest?",
+          ["Breathing out, as the airways narrow further", "Breathing in, as the diaphragm cannot contract", "Neither, as only gas exchange is affected", "Both equally, as the chest wall is rigid"],
+          "Breathing out, as the airways narrow further",
+          "Think about what happens to the airways as the chest empties.",
+          "Breathing out is usually hardest in an obstructive airway disease, because the narrowed airways narrow further as the chest empties, so air is hard to move out. The diaphragm still contracts, the problem is in the airways rather than in gas exchange alone, and the chest wall is not rigid.",
+          "Obstructive airways"
+        ),
+        [
+          q(
+            "Carbon dioxide builds up in the blood because breathing cannot clear it. Which way does blood pH move, and what is the result called?",
+            ["pH rises: respiratory alkalosis", "pH falls: respiratory acidosis", "pH rises: respiratory acidosis", "pH falls: respiratory alkalosis"],
+            "pH falls: respiratory acidosis",
+            "Carbon dioxide forms an acid when it combines with water.",
+            "Retained carbon dioxide combines with water to form carbonic acid, so hydrogen ions build up and pH falls. A falling pH means more acid, which is acidosis, and because a breathing problem caused it, it is respiratory acidosis. A rising pH would be alkalosis, so both halves of the answer have to agree.",
+            "Respiratory acidosis"
+          ),
+          q(
+            "Fluid fills many alveoli. Why does less oxygen reach the blood?",
+            ["The fluid raises the oxygen level in the alveoli", "The diaphragm stops contracting", "Blood races through the lungs too fast for oxygen to cross into it", "The fluid blocks gas exchange across the alveolar wall"],
+            "The fluid blocks gas exchange across the alveolar wall",
+            "Oxygen has to cross from the air to the blood. What is in the way?",
+            "The fluid blocks gas exchange across the alveolar wall: oxygen has a longer path to cross, or cannot reach the wall, so less crosses into the blood. Fluid does not raise the oxygen level, the diaphragm keeps working, and blood racing through the lungs is not what changed.",
+            "Blocked gas exchange"
+          ),
+          q(
+            "Kidney filtration has almost stopped. What is the most direct result?",
+            ["The blood can no longer clot", "The lungs stop exchanging gases", "Wastes build up in the blood", "The liver stops making bile"],
+            "Wastes build up in the blood",
+            "Think about what the kidneys normally remove from the blood.",
+            "When kidney filtration is severely impaired, wastes build up in the blood, because the kidneys can no longer clear them into the urine adequately, and fluid and electrolyte balance is disturbed too. None of the others is the most direct result: clotting, gas exchange and making bile are handled mainly by the blood’s clotting system, the lungs and the liver.",
+            "Kidney filtration"
+          ),
+          q(
+            "Why does blood glucose stay high in type 1 diabetes?",
+            ["The body cannot produce enough insulin", "The body produces far too much insulin", "The thyroid gland releases too much glucagon", "The stomach stops digesting any food"],
+            "The body cannot produce enough insulin",
+            "Which hormone lowers blood glucose, and which cells make it?",
+            "The body cannot produce enough insulin in type 1 diabetes, because the pancreas’s insulin-making beta cells are lost, and without enough insulin blood glucose stays high. Too much insulin would lower blood glucose, the thyroid gland does not release glucagon, and digestion is not what changed.",
+            "Type 1 diabetes"
+          ),
+          q(
+            "Why can very high blood glucose make the kidneys produce more urine?",
+            ["Glucose irritates the bladder wall so it empties more often", "Glucose that stays in the filtrate pulls water into urine", "Glucose blocks both ureters so urine backs up", "Glucose stops the kidneys from filtering blood"],
+            "Glucose that stays in the filtrate pulls water into urine",
+            "Normally the tubules take back nearly all filtered glucose. What if there is too much to take back?",
+            "When more glucose is filtered than the kidney tubules can reabsorb, the glucose that cannot be reabsorbed stays in the filtrate and pulls water into the urine with it by osmosis, so more urine is made. Glucose does not irritate or block the urinary tract, and the kidneys keep filtering.",
+            "Glucose and urine"
+          )
+        ],
+        [
+          q(
+            "Airways are narrowed and breathing out is hard. In this case, carbon dioxide is also not being cleared well. Which pair of results fits?",
+            ["More oxygen enters the blood and blood pH rises", "Air moves out freely and blood pH falls", "Wastes build up and pH rises", "Air is trapped and blood pH falls"],
+            "Air is trapped and blood pH falls",
+            "Follow two chains: what happens to the air, and what the retained carbon dioxide forms.",
+            "With narrowed airways, air is hard to move out and can be trapped in the lungs, and carbon dioxide that is not cleared forms carbonic acid, so blood pH falls. Less oxygen enters, not more, air does not move out freely, and pH does not rise when acid builds up.",
+            "Breathing and pH"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Air that is hard to get out: obstructive airways",
+              body: "Normally, air moves freely in and out through open airways. In an obstructive airway disease, narrowed airways raise the resistance to airflow, which makes it hard to move air out. The narrowing can come from tightening of the muscle in the airway walls, swelling of the airway lining, or mucus.\n\nBreathing out suffers most, because the airways tend to narrow further as the chest empties. Air can then be trapped in the lungs."
+            },
+            {
+              heading: "Carbon dioxide that is not cleared: respiratory acidosis",
+              body: "The physiology lessons showed that breathing clears carbon dioxide and that the kidneys help keep the body’s pH in balance. When the lungs cannot clear carbon dioxide adequately, the retained carbon dioxide combines with water to form carbonic acid, so hydrogen ions build up and blood pH falls. A falling pH means the blood is becoming more acidic, which is called acidosis. Because this acidosis is caused by a breathing problem, it is called respiratory acidosis. Acidosis can also come from causes that have nothing to do with breathing."
+            },
+            {
+              heading: "Fluid in the alveoli: blocked gas exchange",
+              body: "Oxygen crosses from the air in the alveoli into the blood in the capillaries by diffusion, across a very thin wall. When fluid or mucus fills the alveoli, it blocks gas exchange across the alveolar wall: the gas has a longer path to cross, or cannot reach the wall at all, so less oxygen crosses into the blood. The problem is at the exchange surface, not in the airways leading to it."
+            },
+            {
+              heading: "Kidneys that cannot filter: wastes build up",
+              body: "Normally, the kidneys filter the blood, clear its wastes into the urine and help keep fluid and electrolytes in balance. When kidney filtration is severely impaired, waste products accumulate in the blood, because the wastes the kidneys would normally clear, such as urea, are not removed well enough. The balance of fluid and electrolytes is disturbed as well. That build-up of wastes in the blood is the most direct result of failing filtration."
+            },
+            {
+              heading: "Too little insulin: type 1 diabetes and high blood glucose",
+              body: "The physiology lessons showed that the pancreas releases insulin to lower blood glucose. In type 1 diabetes, the insulin-producing beta cells of the pancreas are lost, so the body cannot produce enough insulin and blood glucose stays high. In most cases the beta cells are destroyed by the body’s own immune system, which is an autoimmune process like those in the defences lesson. Other forms of diabetes work differently, and this lesson does not cover them. High blood glucose is called hyperglycemia: hyper- (above normal), glyc (sugar) and -emia (a blood condition).\n\nHigh blood glucose then changes the kidneys’ work. Normally the kidney tubules reabsorb nearly all the glucose that is filtered. When blood glucose is high enough, more glucose is filtered than the kidney tubules can reabsorb, so glucose stays in the filtrate and pulls water into the urine with it. It does this by osmosis: water moves toward the side where more is dissolved. More urine is made as a result."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Why does failing kidney filtration leave wastes in the blood rather than in the urine?",
+              strong: "Because the kidneys normally clear those wastes from the blood into the urine, and when filtration fails they stay behind in the blood.",
+              explanation: "Start from the kidneys’ normal job, clearing wastes, and the result of losing it follows."
+            },
+            {
+              setup: "Is high blood glucose in type 1 diabetes caused by too much glucagon or by too little insulin?",
+              strong: "Too little insulin: the insulin-producing beta cells are lost, so the body cannot produce enough insulin.",
+              explanation: "Insulin is the hormone that lowers blood glucose, so losing it leaves glucose high."
+            }
+          ],
+          misconception: {
+            wrongModel: "If the body is short of oxygen, the problem must be in the airways.",
+            whyItFails: "Oxygen can travel down open airways and still fail to cross into the blood if fluid fills the alveoli, and anemia or reduced blood flow can leave tissues short of oxygen too.",
+            betterModel: "Follow the path: the airways, then the alveoli and gas exchange, then the blood carrying the oxygen. Ask where along that path the problem is."
+          },
+          commonMistakes: [
+            {
+              mistake: "Getting the direction of pH backwards.",
+              whyItFails: "Retained carbon dioxide forms carbonic acid, and more acid means a lower pH.",
+              fix: "Say “more acid, lower pH”: carbon dioxide that is not cleared makes pH fall."
+            },
+            {
+              mistake: "Thinking an obstructive disease makes it hardest to breathe in.",
+              whyItFails: "The airways narrow further as the chest empties, so breathing out suffers most.",
+              fix: "In an obstructive airway disease, the main trouble is getting air out."
+            },
+            {
+              mistake: "Thinking glucose damages or blocks the urinary tract to make more urine.",
+              whyItFails: "Glucose that the tubules cannot reabsorb stays in the filtrate and pulls water into the urine by osmosis.",
+              fix: "Follow the water: extra glucose in the filtrate holds extra water there."
+            }
+          ]
+        }
+      )
+    }
+  },
   {
     organization: "HOSA",
     track: "HOSA",

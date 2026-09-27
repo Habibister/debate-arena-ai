@@ -2,11 +2,14 @@
  * HOSA Medical Terminology targeted practice — a beginner can practise the word parts the course
  * taught, the room says what is not taught yet, and the word-part module's last lesson lands there.
  *
- * The course's anatomy module added a third choice, "Anatomy from the course", and its physiology
- * module a fourth, "Physiology from the course". This suite keeps owning the word-part choice and the
- * shape every choice shares; scripts/hosa-medterm-anatomy-smoke.ts and
- * scripts/hosa-medterm-physiology-smoke.ts own the other two and prove, question by question, that
- * their lessons teach them.
+ * The course's anatomy module added a third choice, "Anatomy from the course", its physiology module
+ * a fourth, "Physiology from the course", and its pathophysiology module a fifth, "Pathophysiology from
+ * the course". This suite keeps owning the word-part choice and the shape every choice shares;
+ * scripts/hosa-medterm-anatomy-smoke.ts, scripts/hosa-medterm-physiology-smoke.ts and
+ * scripts/hosa-medterm-pathophysiology-smoke.ts own the other three and prove, question by question,
+ * that their lessons teach them. With the fifth, every area has lessons, so the every-area choice is
+ * marked taught; the pathophysiology suite owns the wording that keeps that a claim about the
+ * practice bank only.
  *
  * Run with: npm run hosa-medterm-targeted-practice:smoke
  *
@@ -25,9 +28,9 @@
  *      really is.
  *   B. Which areas the course teaches is read from the lessons, not from area names: the word part
  *      every bank question tests is looked for in the four word-part lessons' text. The word-part
- *      areas are the areas whose parts those lessons name; anatomy and physiology are taught by
- *      their own modules (their own suites); and no lesson of the course names a disease term the
- *      bank tests, so an untaught area cannot be added to the taught list quietly.
+ *      areas are the areas whose parts those lessons name; anatomy, physiology and pathophysiology
+ *      are taught by their own modules (their own suites); and any area outside those would have to
+ *      be named by no lesson, so an untaught area cannot be added to the taught list quietly.
  *   C. Module CTA -> targeted word-part practice -> eligible questions from the existing bank: the
  *      word-part module's last lesson links to the word-parts choice, whose areas give the builder a
  *      pool of exactly the word-part areas' questions, and nothing else.
@@ -143,7 +146,7 @@ import {
   medTermFocusHref,
   medTermFocusRequestAreas
 } from "../lib/hosa-medterm-focus";
-import { HOSA_MEDTERM_PRACTICE_ENTRY, hosaCourseEndAction, hosaLessonPracticeLink } from "../lib/education/hosa-medterm-practice";
+import { HOSA_MEDTERM_PATHOPHYSIOLOGY_PRACTICE_ENTRY, HOSA_MEDTERM_PRACTICE_ENTRY, hosaCourseEndAction, hosaLessonPracticeLink } from "../lib/education/hosa-medterm-practice";
 import { educationLessonsForTrack, getEducationLesson } from "../lib/education/registry";
 import { isConceptEducationLessonEntry } from "../lib/education/types";
 
@@ -198,13 +201,16 @@ async function main() {
 
   // ---- A. the choices are names for canonical areas ------------------------------------------------
   await check("A. the practice choices carry only canonical areas, and the URL value resolves only to a known choice", () => {
-    assert.deepEqual(MEDTERM_FOCUS_CHOICES.map((c) => c.id), ["word-parts", "anatomy", "physiology", "all"],
-      "A1. exactly four choices: the taught word parts, the taught anatomy, the taught physiology, and everything");
+    assert.deepEqual(MEDTERM_FOCUS_CHOICES.map((c) => c.id), ["word-parts", "anatomy", "physiology", "pathophysiology", "all"],
+      "A1. exactly five choices: the taught word parts, anatomy, physiology and pathophysiology, and everything");
     assert.ok(Object.isFrozen(MEDTERM_FOCUS_CHOICES) && MEDTERM_FOCUS_CHOICES.every((c) => Object.isFrozen(c)), "A1b. frozen");
     for (const area of HOSA_MEDTERM_TAUGHT_AREAS) assert.ok(isMedTermArea(area), `A2. taught area "${area}" is a canonical area`);
     assert.equal(new Set(HOSA_MEDTERM_TAUGHT_AREAS).size, HOSA_MEDTERM_TAUGHT_AREAS.length, "A2b. listed once each");
-    assert.ok(HOSA_MEDTERM_TAUGHT_AREAS.length > 0 && HOSA_MEDTERM_TAUGHT_AREAS.length < AREA_IDS.length,
-      "A2c. a proper, non-empty subset of the six, so the targeted choices and every area really differ");
+    // Every area has a module now. The targeted choices and every area still differ: each targeted
+    // choice serves one module's areas, and only the every-area choice mixes them in one session.
+    assert.deepEqual([...HOSA_MEDTERM_TAUGHT_AREAS].sort(), [...AREA_IDS].sort(), "A2c. each of the six areas has a module that teaches it");
+    assert.ok(MEDTERM_FOCUS_CHOICES.filter((c) => c.areas !== null).every((c) => c.areas!.length < AREA_IDS.length),
+      "A2d. and no targeted choice serves all six, so every area is still its own choice");
     const wordParts = medTermFocus("word-parts");
     const all = medTermFocus("all");
     assert.deepEqual(wordParts.areas, HOSA_MEDTERM_WORD_PART_AREAS, "A3. the word-parts choice is exactly the word-part areas");
@@ -215,7 +221,7 @@ async function main() {
     assert.ok(targeted.every((c) => c.taught && c.areas!.every((area) => TAUGHT.has(area))), "A3d. every targeted choice is taught, and serves only taught areas");
     assert.deepEqual(targeted.flatMap((c) => c.areas!).sort(), [...TAUGHT].sort(), "A3e. and together they cover each taught area exactly once");
     assert.equal(all.areas, null, "A4. the every-area choice names no areas");
-    assert.equal(all.taught, false, "A4b. and is not marked taught");
+    assert.equal(all.taught, true, "A4b. and is marked taught, because every area has lessons (the pathophysiology suite pins that this is about the practice bank only)");
     assert.deepEqual(medTermFocusRequestAreas("word-parts"), [...HOSA_MEDTERM_WORD_PART_AREAS], "A5. a word-part request carries the word-part areas");
     assert.notEqual(medTermFocusRequestAreas("word-parts"), HOSA_MEDTERM_WORD_PART_AREAS, "A5b. as a copy, never the frozen list itself");
     assert.equal(medTermFocusRequestAreas("all"), undefined, "A5c. and the every-area request omits areas, the route's existing path");
@@ -223,21 +229,23 @@ async function main() {
     // The URL value: only a known id, exactly spelt, as a single value.
     assert.equal(medTermFocusFromParam("word-parts"), "word-parts", "A7. the course's value preselects the word parts");
     assert.equal(medTermFocusFromParam("all"), "all", "A7b. and the every-area value resolves");
-    for (const bogus of ["Word-Parts", "word-parts ", "", "Anatomy", "Physiology", "pathophysiology", "prefixes", "hosa-medical-terminology", undefined, null, ["word-parts"], ["word-parts", "all"]]) {
+    for (const bogus of ["Word-Parts", "word-parts ", "", "Anatomy", "Physiology", "Pathophysiology", "disease", "prefixes", "hosa-medical-terminology", undefined, null, ["word-parts"], ["word-parts", "all"]]) {
       assert.equal(medTermFocusFromParam(bogus as string), null, `A8. ${JSON.stringify(bogus)} preselects nothing`);
       assert.equal(isMedTermFocusId(bogus), false, `A8b. and is not a choice`);
     }
     assert.equal(isMedTermFocusId(42), false, "A8c. a non-string is never a choice");
-    assert.throws(() => medTermFocus("pathophysiology" as never), /unknown Medical Terminology practice choice/, "A8d. an unknown id fails closed");
+    assert.throws(() => medTermFocus("disease" as never), /unknown Medical Terminology practice choice/, "A8d. an unknown id fails closed");
     // A stored selection maps back to the choice it really is, in any order, and to none otherwise.
     assert.equal(medTermFocusForAreas([]), "all", "A9. no stored areas is the every-area session");
     assert.equal(medTermFocusForAreas([...HOSA_MEDTERM_WORD_PART_AREAS].reverse()), "word-parts", "A9b. the word-part set, in any order, is the word-parts choice");
     assert.equal(medTermFocusForAreas(["word-roots"]), null, "A9c. one word-part area alone is not the word-parts choice");
-    assert.equal(medTermFocusForAreas([...HOSA_MEDTERM_WORD_PART_AREAS, "pathophysiology"]), null, "A9d. the word-part set plus an untaught area is not it either");
+    assert.equal(medTermFocusForAreas([...HOSA_MEDTERM_WORD_PART_AREAS, "pathophysiology"]), null, "A9d. the word-part set plus pathophysiology is not it either");
     assert.equal(medTermFocusForAreas([...HOSA_MEDTERM_WORD_PART_AREAS, "physiology"]), null, "A9d1. nor plus another taught area");
-    assert.equal(medTermFocusForAreas([...HOSA_MEDTERM_TAUGHT_AREAS]), null, "A9d2. nor is every taught area together, which no choice offers");
+    assert.equal(medTermFocusForAreas([...HOSA_MEDTERM_TAUGHT_AREAS]), null,
+      "A9d2. nor is every taught area listed one by one, which no choice sends (the every-area choice omits areas)");
     assert.equal(medTermFocusForAreas(["anatomy"]), "anatomy", "A9d3. the anatomy area alone is the anatomy choice");
     assert.equal(medTermFocusForAreas(["physiology"]), "physiology", "A9d4. the physiology area alone is the physiology choice");
+    assert.equal(medTermFocusForAreas(["pathophysiology"]), "pathophysiology", "A9d5. the pathophysiology area alone is the pathophysiology choice");
     assert.equal(medTermFocusForAreas(["anatomy", "physiology", "pathophysiology"]), null, "A9e. nor is the non-word-part half");
     assert.equal(medTermFocusHref("word-parts"), `${HOSA_MEDTERM_PRACTICE_ROOM}?${HOSA_MEDTERM_FOCUS_PARAM}=word-parts`, "A10. the preselecting link is the room plus the value");
     // What an issued session is called, and when a continued session must be flagged: decided here, not in the engine.
@@ -246,7 +254,8 @@ async function main() {
     assert.equal(medTermCoverageLabel([...HOSA_MEDTERM_WORD_PART_AREAS].reverse(), labelOf), "Word parts from the course", "A11b. and so is a word-part session, in any order");
     assert.equal(medTermCoverageLabel(["anatomy"], labelOf), "Anatomy from the course", "A11b2. and an anatomy session");
     assert.equal(medTermCoverageLabel(["physiology"], labelOf), "Physiology from the course", "A11b3. and a physiology session");
-    assert.equal(medTermCoverageLabel(["pathophysiology"], labelOf), "Pathophysiology", "A11c. one other area is named by its label");
+    assert.equal(medTermCoverageLabel(["pathophysiology"], labelOf), "Pathophysiology from the course", "A11b4. and a pathophysiology session");
+    assert.equal(medTermCoverageLabel(["word-roots"], labelOf), "Word roots", "A11c. one area that is no choice by itself is named by its label");
     assert.equal(medTermCoverageLabel(["anatomy", "physiology", "anatomy"], labelOf), "Anatomy and Physiology", "A11d. several are listed once each, in words");
     assert.equal(medTermContinuedForOtherChoice(true, [], "word-parts"), true, "A12. an every-area session continued under the word-parts choice is flagged");
     assert.equal(medTermContinuedForOtherChoice(true, [...HOSA_MEDTERM_WORD_PART_AREAS], "word-parts"), false, "A12b. a word-part session continued under the same choice is not");
@@ -259,7 +268,7 @@ async function main() {
   const course = courseText();
   const taughtShare = new Map<string, { mentioned: number; quoted: number; total: number }>();
   let taughtWordPartQuestions = 0;
-  await check("B. the word-part areas are the areas whose tested word parts the four word-part lessons name; no lesson names a physiology or disease term", () => {
+  await check("B. the word-part areas are the areas whose tested word parts the four word-part lessons name; every other area is taught by its own module", () => {
     assert.deepEqual(course.wordPartLessonIds, WORD_PART_LESSONS, "B0. control: the four published word-part lessons were read");
     assert.deepEqual(course.lessonIds.slice(0, 4), WORD_PART_LESSONS, "B0a. and they open the course, before the anatomy module's lessons");
     assert.ok(course.lessonIds.length > WORD_PART_LESSONS.length, "B0a2. control: the anatomy lessons were read too, for B3");
@@ -284,10 +293,12 @@ async function main() {
           `B2b. the lessons name most of the parts ${area} tests (${mentioned} of ${questions.length}), so it is taught`);
         taughtWordPartQuestions += mentioned;
       } else if (TAUGHT.has(area)) {
-        // Anatomy and physiology questions ask about structures and functions, not quoted word parts,
-        // so a part scan cannot read them. scripts/hosa-medterm-anatomy-smoke.ts and
-        // scripts/hosa-medterm-physiology-smoke.ts prove, question by question, that their modules teach each one.
-        assert.ok(area === "anatomy" || area === "physiology", `B2c. the only taught areas outside the word parts are anatomy and physiology (${area})`);
+        // Anatomy, physiology and pathophysiology questions ask about structures, functions and
+        // disease, not mainly about quoted word parts, so a part scan cannot prove them taught.
+        // scripts/hosa-medterm-anatomy-smoke.ts, scripts/hosa-medterm-physiology-smoke.ts and
+        // scripts/hosa-medterm-pathophysiology-smoke.ts prove, question by question, that their modules teach each one.
+        assert.ok(area === "anatomy" || area === "physiology" || area === "pathophysiology",
+          `B2c. the only taught areas outside the word parts are anatomy, physiology and pathophysiology (${area})`);
         assert.equal(medTermFocus(area).moduleId, `hosa-medterm-${area}`, `B2d. and the ${area} choice names the module that teaches it`);
       } else {
         assert.equal(mentioned, 0,
@@ -307,7 +318,12 @@ async function main() {
     assert.equal(partToken("-centesis").test(course.wordPartText), false, "B5d. control: a part the lessons do not teach is really absent (-centesis)");
     assert.equal(partToken("cardi").test(course.wordPartText), true, "B5e. control: a part they do teach is really present (cardi)");
     assert.ok(MEDTERM_BANK.filter((q) => q.area === "physiology" || q.area === "pathophysiology").some((q) => testedPart(q)),
-      "B5f. control: some physiology or disease questions quote a term, so B3 reads something");
+      "B5f. control: some physiology or disease questions quote a term, so the part scan reads something");
+    // Before the pathophysiology module, B3 held pathophysiology untaught because no lesson named a term
+    // its questions quote. That scan now finds such terms, so the old guard would have caught the
+    // module's arrival rather than let the area be marked taught with no teaching behind it.
+    assert.ok(taughtShare.get("pathophysiology")!.quoted > 0 && taughtShare.get("pathophysiology")!.mentioned > 0,
+      `B5g. control: the course now names terms the pathophysiology questions quote (${taughtShare.get("pathophysiology")!.mentioned} of ${taughtShare.get("pathophysiology")!.quoted})`);
   });
 
   // ---- C. module CTA -> targeted word-part practice -> eligible questions from the bank ------------
@@ -359,7 +375,7 @@ async function main() {
       return find(el.props?.children, type);
     };
     // D1. the page reads the URL value and hands it to the room; an unknown value hands nothing.
-    for (const [param, expected] of [["word-parts", "word-parts"], ["anatomy", "anatomy"], ["physiology", "physiology"], ["all", "all"], ["pathophysiology", null], [undefined, null], [["word-parts", "all"], null]] as const) {
+    for (const [param, expected] of [["word-parts", "word-parts"], ["anatomy", "anatomy"], ["physiology", "physiology"], ["pathophysiology", "pathophysiology"], ["all", "all"], ["disease", null], [undefined, null], [["word-parts", "all"], null]] as const) {
       const page = await TrackPracticePage({ params: { track: "hosa" }, searchParams: { focus: param as string } });
       const room = find(page, HosaEventPrep);
       assert.ok(room, `D1. the HOSA practice page mounts the room (focus=${JSON.stringify(param)})`);
@@ -379,24 +395,26 @@ async function main() {
     const fromCourse = decode(renderToStaticMarkup(React.createElement(HosaMedTermEngine, { official: true, areas: catalog, initialFocus: "word-parts" })));
     const text = visible(fromCourse);
     const radios = [...fromCourse.matchAll(/<input[^>]*type="radio"[^>]*>/g)].map((m) => m[0]);
-    assert.equal(radios.length, 4, "D3. four choices, as radio buttons in one group");
+    assert.equal(radios.length, 5, "D3. five choices, as radio buttons in one group");
     assert.ok(radios.every((r) => r.includes('name="medterm-practice-choice"')), "D3b. in one group");
     const checked = radios.filter((r) => /\bchecked\b/.test(r));
     assert.equal(checked.length, 1, "D3c. exactly one is selected");
     assert.ok(checked[0].includes('value="word-parts"'), "D3d. the word parts from the course, as the link asked");
     assert.ok(text.includes("What do you want to practise?"), "D4. the question a beginner is asked");
     assert.ok(text.includes("Word parts from the course") && text.includes("Anatomy from the course") && text.includes("Physiology from the course") &&
-      text.includes("All Medical Terminology"), "D4b. all four choices by name");
+      text.includes("Pathophysiology from the course") && text.includes("All Medical Terminology"), "D4b. all five choices by name");
     assert.ok(text.includes("Taught in the current course"), "D4c. the taught marker");
-    assert.ok(text.includes("Includes topics not taught yet"), "D4d. and the not-taught marker");
+    assert.ok(text.includes("Every area of this practice has lessons in the current course") && !text.includes("Includes topics not taught yet"),
+      "D4d. and the every-area marker says each area has lessons, not that everything is taught");
     for (const area of catalog) {
       const expected = TAUGHT.has(area.id) ? area.label : `${area.label} (not taught yet)`;
       assert.ok(text.includes(expected), `D4e. "${expected}" is listed as what the learner will see`);
     }
     assert.ok(text.includes(`You will see: ${catalog.filter((a) => WORD_PARTS.has(a.id)).map((a) => a.label).join(", ")}.`),
       "D4f. the word-parts choice lists exactly the word-part areas");
-    assert.ok(text.includes("no lessons on disease (pathophysiology) yet"), "D4g. the every-area choice says what is not taught yet, before the learner starts");
-    assert.ok(!text.includes("no lessons on anatomy") && !text.includes("no lessons on physiology"), "D4g2. and no longer says anatomy or physiology is untaught");
+    assert.ok(text.includes("A few word-part questions still use word parts the lessons have not taught"),
+      "D4g. the every-area choice says what is still not taught, before the learner starts");
+    assert.ok(!/no lessons on (?:anatomy|physiology|disease)/.test(text), "D4g2. and no longer says any area has no lessons");
     assert.ok(text.includes("Some use word parts the lessons have not taught yet"), "D4h. and the word-parts choice says some parts are not taught yet");
     assert.ok(text.includes(HOSA_MEDTERM_FOCUS_ATTRIBUTION) && /not an official HOSA category/.test(text), "D4i. the grouping is attributed to CompeteReady, not to HOSA");
     assert.ok(text.includes("The link you followed preselected Word parts from the course"), "D5. the learner is told the link preselected it");
@@ -431,8 +449,9 @@ async function main() {
     assert.ok(notePrefix === "The link you followed preselected" && text.includes(notePrefix), "D8b0. the note's words are known and shown when a link preselected a choice");
     assert.ok(!plain.includes(notePrefix) && !/preselected/i.test(plain), "D8b. and no link note is shown when nothing was preselected");
     assert.ok(plain.includes("Match official format") && plain.includes("50 questions (official)"), "D8c. the official format is offered and labelled for every area");
-    assert.ok(plain.includes("Includes topics not taught yet") && plain.includes("Pathophysiology (not taught yet)"), "D8d. and the not-taught disclosure is still there");
-    assert.ok(!plain.includes("Anatomy (not taught yet)") && !plain.includes("Physiology (not taught yet)"), "D8d2. and marks anatomy and physiology taught now");
+    assert.ok(plain.includes("Every area of this practice has lessons in the current course") && plain.includes("A few word-part questions still use word parts the lessons have not taught"),
+      "D8d. and the every-area disclosure still names what is untaught");
+    assert.ok(!plain.includes("(not taught yet)"), "D8d2. and no area is marked untaught any more");
     const generic = visible(renderToStaticMarkup(React.createElement(HosaMedTermEngine, { official: false, areas: catalog, initialFocus: "all" })));
     assert.ok(!generic.includes("Match official format") && !generic.includes("is offered for All Medical Terminology only"), "D8e. control: generic practice offers no official format either way");
     // D9. the engine never starts a session on its own and never hand-lists an area.
@@ -532,7 +551,7 @@ async function main() {
     // E6. an unsupported area is refused before the database is touched.
     const before = db.sessions.length;
     for (const [label, body] of [
-      ["an untaught area beside an unsupported one", { count: 10, areas: ["pathophysiology", "not-an-area"] }],
+      ["a real area beside an unsupported one", { count: 10, areas: ["pathophysiology", "not-an-area"] }],
       ["a choice id used as an area", { count: 10, areas: ["word-parts"] }],
       ["an empty selection", { count: 10, areas: [] }]
     ] as const) {
@@ -561,7 +580,7 @@ async function main() {
       assert.deepEqual(continued.json.requestedAreas, [], "E7d. reported with its own areas (every area), not the word parts just asked for");
       assert.equal(medTermFocusForAreas(continued.json.requestedAreas ?? []), "all", "E7e. which the engine names as All Medical Terminology");
       assert.equal(db.sessions.length, before, "E7f. and no new session was created");
-      assert.deepEqual(itemAreas(continued.json), ["pathophysiology", "pathophysiology"], "E7g. control: its items are the earlier session's, from an untaught area");
+      assert.deepEqual(itemAreas(continued.json), ["pathophysiology", "pathophysiology"], "E7g. control: its items are the earlier session's, from an area the word parts do not include");
     } finally {
       activeSession = null;
     }
@@ -603,20 +622,26 @@ async function main() {
       }
     }
     // The course never claims to cover what it does not.
-    // Anatomy and physiology are taught now (their own suites prove it), so only disease stays in the scan.
-    const claim = /(?:covers?|teach(?:es)?|includes?)\s+(?:all|every|the whole)\s+(?:of\s+)?(?:medical terminology|(?:the\s+)?(?:practice|question) bank)|(?:covers?|teach(?:es)?)\s+(?:pathophysiology|disease)/i;
-    assert.ok(!claim.test(course.text), "F4. no lesson claims to cover all of Medical Terminology, or disease");
+    // Every area has lessons now (their own suites prove it), so the scan keeps only the whole-subject
+    // claims: some word-part questions still use parts no lesson teaches, and nothing here describes
+    // what an official HOSA test covers.
+    const claim = /(?:covers?|teach(?:es)?|includes?)\s+(?:all|every|the whole)\s+(?:of\s+)?(?:medical terminology|(?:the\s+)?(?:practice|question) bank)|everything (?:HOSA|the test|Medical Terminology)/i;
+    assert.ok(!claim.test(course.text), "F4. no lesson claims to cover all of Medical Terminology or the whole bank");
     assert.ok(!claim.test(`${HOSA_MEDTERM_PRACTICE_ENTRY.label} ${HOSA_MEDTERM_PRACTICE_ENTRY.detail}`), "F4b. nor does the course's onward step");
     assert.ok(!claim.test(MEDTERM_FOCUS_CHOICES.map((c) => `${c.label} ${c.summary} ${c.coverage} ${c.disclosure}`).join(" ")), "F4c. nor does any choice");
-    for (const text of ["This course covers disease.", "The lessons teach all of Medical Terminology.", "It includes the whole question bank."]) {
+    for (const text of ["Everything HOSA Medical Terminology tests is taught.", "The lessons teach all of Medical Terminology.", "It includes the whole question bank."]) {
       assert.ok(claim.test(text), `F4d. control: the scan catches "${text}"`);
     }
     const all = medTermFocus("all");
-    assert.match(`${all.coverage} ${all.disclosure}`, /not taught yet/, "F5. the every-area choice says its extra topics are not taught yet");
-    assert.match(HOSA_MEDTERM_PRACTICE_ENTRY.detail, /disease has no lessons yet/, "F5b. and the onward step says the same before the learner leaves the lesson");
+    assert.match(all.disclosure, /A few word-part questions still use word parts the lessons have not taught/, "F5. the every-area choice says what is still untaught");
+    assert.match(HOSA_MEDTERM_PRACTICE_ENTRY.detail, /some use word parts it has not taught yet/, "F5b. and the onward step says the same before the learner leaves the lesson");
     const wordParts = medTermFocus("word-parts");
     assert.equal(/have not taught yet/.test(wordParts.disclosure), [...WORD_PARTS].some((area) => taughtShare.get(area)!.mentioned < 30),
       "F5c. the word-parts choice says some parts are untaught exactly while some are");
+    assert.equal(/have not taught/.test(all.disclosure), [...WORD_PARTS].some((area) => taughtShare.get(area)!.mentioned < 30),
+      "F5c2. and so does the every-area choice, exactly while some are");
+    assert.equal(/no lesson has taught yet/.test(HOSA_MEDTERM_PATHOPHYSIOLOGY_PRACTICE_ENTRY.detail), [...WORD_PARTS].some((area) => taughtShare.get(area)!.mentioned < 30),
+      "F5c3. and so does the pathophysiology course-end link, exactly while some are");
     for (const choice of MEDTERM_FOCUS_CHOICES) {
       const copy = `${choice.label} ${choice.summary} ${choice.coverage} ${choice.disclosure}`;
       assert.ok(!/record|saved|\bsave\b|mastery|progress|score|readiness|\bready\b/i.test(copy), `F6. the "${choice.id}" copy makes no persistence, mastery or readiness claim`);
@@ -627,7 +652,7 @@ async function main() {
   });
 
   console.log(`\nhosa-medterm-targeted-practice: ${checks} checks passed. A HOSA beginner can practise the word parts the ` +
-    "course taught, the anatomy or physiology it taught, or all Medical Terminology, is told what is not taught yet before starting, " +
+    "course taught, the anatomy, physiology or pathophysiology it taught, or all Medical Terminology, is told what is not taught yet before starting, " +
     "reaches the word-part choice from the word-part module's last lesson, and the route serves a targeted session from " +
     "the selected canonical areas only.\n");
 }

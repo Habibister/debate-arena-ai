@@ -55,9 +55,10 @@ import { getEducationLesson } from "../lib/education/registry";
  */
 // HOSA-MEDTERM-WORD-PARTS-V1 pinned four HOSA Medical Terminology lessons that were AI-drafted and have
 // had no human content review yet. HOSA-MEDTERM-ANATOMY-V1 added the four anatomy lessons of the same
-// course, and HOSA-MEDTERM-PHYSIOLOGY-V1 adds its four physiology lessons, all likewise AI-drafted and
-// not yet reviewed by a person. Pinning freezes their bytes; it is not an approval.
-const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-PHYSIOLOGY-V1";
+// course, HOSA-MEDTERM-PHYSIOLOGY-V1 its four physiology lessons, and HOSA-MEDTERM-PATHOPHYSIOLOGY-V1
+// adds its five pathophysiology lessons, all likewise AI-drafted and not yet reviewed by a person.
+// Pinning freezes their bytes; it is not an approval.
+const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-PATHOPHYSIOLOGY-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 

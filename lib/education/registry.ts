@@ -16,7 +16,7 @@
 //
 // None of those three legacy modules imports anything from `lib/education/`, so there is no cycle,
 // and none of them was modified to make this work. `tracks/deca.ts` (P1-B1) and `tracks/hosa.ts`
-// (HOSA Medical Terminology word parts, anatomy and physiology) sit beside `tracks/debate.ts` in that chain and follow the
+// (HOSA Medical Terminology word parts, anatomy, physiology and pathophysiology) sit beside `tracks/debate.ts` in that chain and follow the
 // same by-reference rule.
 //
 // `app/(app)/lessons/**` consumes the helpers below for MIGRATED lessons only (M13E1B). The three
@@ -103,13 +103,15 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     // knowledge-test event CompeteReady routes: Medical Terminology. FIRST among the HOSA courses
     // because it is the one with a live practice room behind it, so it is where a HOSA beginner
     // starts. Word parts come first, then anatomy, which reads its structure names through them, then
-    // physiology, which says how those structures normally work. Created no larger than its modules
-    // need; the disease (pathophysiology) area the practice room also asks about is not taught yet and
-    // gets no empty module here.
+    // physiology, which says how those structures normally work, then pathophysiology, which says how
+    // that normal function changes in disease. Created no larger than its modules need: each module
+    // teaches one or more of the practice room's areas, and together they have lessons for every area
+    // of the room's own question bank (a few word-part questions still use parts no lesson teaches),
+    // not every HOSA event or healthcare topic.
     id: "hosa-medterm-study",
     track: "HOSA",
     label: "HOSA Medical Terminology Study (Branch A)",
-    moduleIds: ["hosa-medterm-word-parts", "hosa-medterm-anatomy", "hosa-medterm-physiology"]
+    moduleIds: ["hosa-medterm-word-parts", "hosa-medterm-anatomy", "hosa-medterm-physiology", "hosa-medterm-pathophysiology"]
   },
   {
     id: "hosa-clinical-skill-communication",
@@ -224,6 +226,18 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     prerequisiteId: "hosa-medterm-anatomy"
   },
   {
+    // What the Medical Terminology practice bank asks about disease, derived from a census of its 30
+    // pathophysiology questions: the general words for tissue change, then blood flow and oxygen, the
+    // heart, pressure and fluid, the body's defences, and breathing, the kidneys and blood glucose.
+    // Meaning and mechanism only, reasoned from normal function: no diagnosis, treatment or advice.
+    id: "hosa-medterm-pathophysiology",
+    courseId: "hosa-medterm-study",
+    track: "HOSA",
+    label: "Pathophysiology",
+    outcome: "Explain what common disease terms mean by reasoning from normal structure and function to what changes, without diagnosing or treating anyone.",
+    prerequisiteId: "hosa-medterm-physiology"
+  },
+  {
     id: "hosa-communication-layer",
     courseId: "hosa-clinical-skill-communication",
     track: "HOSA",
@@ -300,9 +314,9 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // DECA catalog entries stay absent.
   ...DECA_PUBLISHED_LESSONS,
   // The HOSA CONCEPT lessons, held by reference from the catalog through lib/education/tracks/hosa.ts:
-  // the Medical Terminology course (word parts, then anatomy, then physiology), ahead of the
-  // communication lesson because it is the HOSA course with practice behind it. The two held HOSA
-  // catalog entries stay absent.
+  // the Medical Terminology course (word parts, then anatomy, physiology and pathophysiology), ahead
+  // of the communication lesson because it is the HOSA course with practice behind it. The two held
+  // HOSA catalog entries stay absent.
   ...HOSA_PUBLISHED_LESSONS,
   {
     id: "how-hosa-scenario-interaction-works",

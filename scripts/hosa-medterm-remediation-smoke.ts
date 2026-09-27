@@ -22,16 +22,21 @@
  *      module teaches every anatomy question. Physiology questions quote no term, so the reading
  *      cannot place them; their owner is where the physiology module starts, and
  *      scripts/hosa-medterm-physiology-smoke.ts proves that module teaches every physiology question.
- *      Pathophysiology has no lesson that names its terms, so it has no owner.
- *   B. The resolver: word roots, prefixes and suffixes each resolve to their own lesson, and anatomy
- *      and physiology to their modules' first lessons, with a label naming the same area and lesson; the untaught areas
- *      get the plain no-lesson statement; and a broken link anywhere in the chain (owner held, moved
- *      track, return withdrawn) closes the whole action rather than falling back to anything.
+ *      The pathophysiology questions that quote a term quote one or two per lesson across the whole
+ *      pathophysiology module, so the reading names no single lesson; its owner is where that module
+ *      starts, and scripts/hosa-medterm-pathophysiology-smoke.ts proves the module teaches every
+ *      pathophysiology question. Every canonical area has an owner now.
+ *   B. The resolver: word roots, prefixes and suffixes each resolve to their own lesson, and anatomy,
+ *      physiology and pathophysiology to their modules' first lessons, with a label naming the same
+ *      area and lesson; an area outside the bank's six gets the plain no-lesson statement at most,
+ *      never a lesson; and a broken link anywhere in the chain (owner held, moved track, return
+ *      withdrawn) closes the whole action rather than falling back to anything.
  *   C. ACTUAL EVIDENCE: a session is submitted through the real route; its weak areas render in the
- *      results with each area's own action, the untaught area's statement, and no lesson for an area
- *      the server resolved nothing for.
- *   D. The return: each owner lesson links to the practice choice that includes its area (word-part
- *      practice, anatomy practice, or physiology practice), whose pool has that area's bank questions; the lesson page
+ *      results with each area's own action, a no-lesson statement rendered plainly when the server
+ *      resolves one (a planted control, since every real area has a lesson now), and no lesson for an
+ *      area the server resolved nothing for.
+ *   D. The return: each owner lesson links to the practice choice that includes its area (word-part,
+ *      anatomy, physiology or pathophysiology practice), whose pool has that area's bank questions; the lesson page
  *      wires it; opening a lesson writes nothing and starts nothing.
  *   E. The old record /skills/hosa-medical-terminology-1 opens the Word Roots lesson instead of
  *      saying there is nothing to read; its untaught siblings keep their honest page.
@@ -158,7 +163,9 @@ const EXPECTED_OWNER: Record<string, string> = {
   // Where the anatomy module starts; the action names the module (hosa-medterm-anatomy-smoke G).
   anatomy: "hosa-anatomy-body-map",
   // Where the physiology module starts; the action names the module (hosa-medterm-physiology-smoke G).
-  physiology: "hosa-physiology-staying-in-balance"
+  physiology: "hosa-physiology-staying-in-balance",
+  // Where the pathophysiology module starts; the action names the module (hosa-medterm-pathophysiology-smoke G).
+  pathophysiology: "hosa-pathophysiology-how-tissue-changes"
 };
 /** The practice choice that serves an area: word-part, anatomy or physiology practice. */
 const choiceFor = (area: string) => {
@@ -226,6 +233,7 @@ async function main() {
     const counts = namingCounts();
     const derived: Record<string, string> = {};
     for (const area of AREA_IDS) {
+      if (area === "pathophysiology") continue; // spread across its module's lessons; placed below
       const perLesson = [...counts.get(area)!.entries()].sort((a, b) => b[1] - a[1]);
       const [best, runnerUp] = perLesson;
       if (best[1] === 0) continue; // no lesson names any of this area's tested terms
@@ -242,9 +250,23 @@ async function main() {
     const starts = inModule.filter((e) => !inModule.some((other) => other.nextLessonId === e.id));
     assert.equal(starts.length, 1, "A1c. the physiology module has one first lesson");
     derived.physiology = starts[0].id;
+    // The pathophysiology questions that quote a term quote disease terms taught one or two per lesson
+    // across the pathophysiology module, so no single lesson names most of them. Every lesson that
+    // names one is in that module, and, like physiology, the owner is where that module starts
+    // (hosa-medterm-pathophysiology-smoke C proves the module teaches each question).
+    const pathoModule = choiceFor("pathophysiology").moduleId;
+    const pathoNamers = [...counts.get("pathophysiology")!.entries()].filter(([, n]) => n > 0).map(([id]) => id);
+    assert.ok(pathoNamers.length > 1, `A1d. the quoted pathophysiology terms are named across several lessons (${pathoNamers.join(", ")})`);
+    assert.ok(pathoNamers.every((id) => getEducationLesson(id)?.moduleId === pathoModule),
+      "A1e. and only by lessons of the pathophysiology module");
+    const pathoLessons = courseLessons().filter((e) => e.moduleId === pathoModule);
+    const pathoStarts = pathoLessons.filter((e) => !pathoLessons.some((other) => other.nextLessonId === e.id));
+    assert.equal(pathoStarts.length, 1, "A1f. the pathophysiology module has one first lesson");
+    derived.pathophysiology = pathoStarts[0].id;
     assert.deepEqual(derived, EXPECTED_OWNER,
-      "A2. the reading gives word roots, prefixes and suffixes each their own lesson, anatomy and physiology their modules' first lessons, and nothing else an owner");
+      "A2. the reading gives word roots, prefixes and suffixes each their own lesson, and anatomy, physiology and pathophysiology their modules' first lessons");
     assert.deepEqual({ ...HOSA_MEDTERM_AREA_TEACHING_OWNERS }, derived, "A3. the declared owners are exactly that reading");
+    assert.deepEqual(UNTAUGHT, [], "A4a. every canonical area is taught now, so none is left without an owner");
     for (const area of UNTAUGHT) {
       assert.ok([...counts.get(area)!.values()].every((n) => n === 0), `A4. no lesson names a ${area} term the bank tests`);
       assert.ok(!(area in HOSA_MEDTERM_AREA_TEACHING_OWNERS), `A4b. so ${area} has no owner`);
@@ -276,15 +298,20 @@ async function main() {
       assert.equal(action.lessonTitle, title, `B1d. named by the lesson's own title`);
       assert.ok(action.label.toLowerCase().includes(LABEL.get(area)!.toLowerCase()) && action.label.includes(title),
         `B1e. the label names the same area and the same lesson ("${action.label}")`);
-      const STEM: Record<string, string> = { "word-roots": "root", prefixes: "prefix", suffixes: "suffix", anatomy: "anatom", physiology: "physiolog" };
+      // Word-start stems, so "pathophysiology" is not read as naming physiology.
+      const STEM: Record<string, RegExp> = { "word-roots": /\broot/i, prefixes: /\bprefix/i, suffixes: /\bsuffix/i, anatomy: /\banatom/i,
+        physiology: /\bphysiolog/i, pathophysiology: /\bpathophysiolog/i };
       for (const other of [...TAUGHT].filter((a) => a !== area)) {
-        assert.ok(!action.label.toLowerCase().includes(STEM[other]), `B1f. the ${area} label does not name ${other}`);
+        assert.ok(!STEM[other].test(action.label), `B1f. the ${area} label does not name ${other}`);
       }
     }
     for (const area of UNTAUGHT) {
       const action = hosaMedTermRemediation(area, LABEL.get(area)!);
       assert.deepEqual(action, { area, kind: "no-lesson", message: HOSA_MEDTERM_NO_LESSON_MESSAGE }, `B2. ${area} gets the plain no-lesson statement and no link`);
     }
+    // With every area taught, only an area outside the bank's six can reach the no-lesson statement.
+    assert.deepEqual(hosaMedTermRemediation("not-an-area", "Not an area"),
+      { area: "not-an-area", kind: "no-lesson", message: HOSA_MEDTERM_NO_LESSON_MESSAGE }, "B2a. an undeclared area gets the plain statement, never a lesson");
     assert.equal(HOSA_MEDTERM_NO_LESSON_MESSAGE, "CompeteReady does not have a lesson for this area yet.", "B2b. in Melo's words");
     for (const junk of ["not-an-area", "Word roots", "word-roots ", "__proto__", "constructor", "toString"]) {
       assert.notEqual(hosaMedTermRemediation(junk, "Anything")?.kind, "lesson", `B3. "${junk}" never inherits a lesson`);
@@ -320,6 +347,10 @@ async function main() {
       assert.equal(hosaMedTermRemediation("physiology", "Physiology"), null, "B7e. physiology owner held: no action, and no false 'no lesson' claim");
     });
     assert.equal(hosaMedTermRemediation("physiology", "Physiology")?.kind, "lesson", "B7f. restored");
+    withEntry("hosa-pathophysiology-how-tissue-changes", { visibility: "internal" } as Partial<EducationRegistryEntry>, () => {
+      assert.equal(hosaMedTermRemediation("pathophysiology", "Pathophysiology"), null, "B7g. pathophysiology owner held: no action, and no false 'no lesson' claim");
+    });
+    assert.equal(hosaMedTermRemediation("pathophysiology", "Pathophysiology")?.kind, "lesson", "B7h. restored");
     assert.ok(hosaMedTermRemediation("word-roots", "Word roots")?.kind === "lesson", "B8. every control restored the registry");
   });
 
@@ -407,10 +438,21 @@ async function main() {
     assert.ok(/physiology/i.test(visible(physiologyLinks[0][2])) && visible(physiologyLinks[0][2]).includes("Staying in Balance: Feedback, Hormones and the Kidneys"),
       "C4j. labelled with the same area and that lesson");
     assert.ok(!physiologyItem.includes(HOSA_MEDTERM_NO_LESSON_MESSAGE), "C4k. and no longer says no lesson exists");
-    assert.ok(!/href=/.test(pathoItem), "C5. the pathophysiology weakness links to nothing");
-    assert.ok(visible(pathoItem).includes(HOSA_MEDTERM_NO_LESSON_MESSAGE), "C5b. it says no lesson exists yet");
-    assert.ok(visible(pathoItem).includes(`keep practising it with ${medTermFocus("all").label}`), "C5c. and offers only the neutral way to keep practising");
-    assert.ok(/aria-hidden="true"/.test(pathoItem), "C5d. the statement pairs an icon with its text, never colour alone");
+    const pathoLinks = [...pathoItem.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)];
+    assert.equal(pathoLinks.length, 1, "C4l. the pathophysiology weakness offers exactly one link");
+    assert.equal(pathoLinks[0][1], "/lessons/hosa-pathophysiology-how-tissue-changes?track=hosa", "C4m. to the lesson where the pathophysiology module starts");
+    assert.ok(/pathophysiology/i.test(visible(pathoLinks[0][2])) && visible(pathoLinks[0][2]).includes("How Tissue Changes: Words for What Goes Wrong"),
+      "C4n. labelled with the same area and that lesson");
+    assert.ok(!pathoItem.includes(HOSA_MEDTERM_NO_LESSON_MESSAGE), "C4o. and no longer says no lesson exists");
+    // Every real area has a lesson now, so the no-lesson rendering is exercised with a planted
+    // statement: the view must still show it plainly, with no link, if the server ever resolves one.
+    const planted = remediation.map((r) => (r.area === "pathophysiology" ? { area: r.area, kind: "no-lesson" as const, message: HOSA_MEDTERM_NO_LESSON_MESSAGE } : r));
+    const plantedHtml = decode(renderToStaticMarkup(React.createElement(WeakAreasReview, { result, remediation: planted })));
+    const plantedPatho = [...plantedHtml.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/g)].map((m) => m[1])[3];
+    assert.ok(!/href=/.test(plantedPatho), "C5. control: a weakness the server resolves to no lesson links to nothing");
+    assert.ok(visible(plantedPatho).includes(HOSA_MEDTERM_NO_LESSON_MESSAGE), "C5b. it says no lesson exists yet");
+    assert.ok(visible(plantedPatho).includes(`keep practising it with ${medTermFocus("all").label}`), "C5c. and offers only the neutral way to keep practising");
+    assert.ok(/aria-hidden="true"/.test(plantedPatho), "C5d. the statement pairs an icon with its text, never colour alone");
     assert.ok(visible(html).includes("A lesson opens on its own page, so these results close"), "C6. the learner is told a lesson replaces these results");
 
     // Fail closed in the view: a missing entry shows the area alone; a duplicate never picks one.
@@ -420,13 +462,14 @@ async function main() {
     assert.ok(!/href=/.test(bareRoots) && !bareRoots.includes(HOSA_MEDTERM_NO_LESSON_MESSAGE),
       "C7. with no action resolved for word roots, it shows neither another area's lesson nor a no-lesson claim");
     assert.equal(weakAreaRemediation("word-roots", [...remediation, remediation[0]]), null, "C7b. two entries for one area pick neither");
-    assert.equal(weakAreaRemediation("pathophysiology", remediation.filter((r) => r.kind === "lesson")), null, "C7c. an untaught area never borrows a taught area's lesson");
+    assert.equal(weakAreaRemediation("pathophysiology", remediation.filter((r) => r.area !== "pathophysiology")), null,
+      "C7c. an area with no resolved action never borrows another area's lesson");
     const onlyUntaught = decode(renderToStaticMarkup(React.createElement(WeakAreasReview, {
       result: { weakAreas: [{ area: "pathophysiology", label: "Pathophysiology", missed: 2, total: 3 }], evidenceStatus: "below-threshold" },
-      remediation
+      remediation: planted
     })));
     assert.ok(!/href=/.test(onlyUntaught) && (onlyUntaught.match(new RegExp(escape(HOSA_MEDTERM_NO_LESSON_MESSAGE), "g")) ?? []).length === 1,
-      "C8. pathophysiology alone: one plain statement, no link, no lesson note");
+      "C8. control: a planted no-lesson area alone gets one plain statement, no link, no lesson note");
     assert.ok(!onlyUntaught.includes("A lesson opens on its own page"), "C8b. and no note about lessons that are not offered");
 
     // The learner sees these results only on the engine's results screen, so that screen must render
@@ -486,7 +529,9 @@ async function main() {
     assert.equal(hosaLessonPracticeReturn("hosa-anatomy-bones-muscles-nerves-skin")?.href, medTermFocusHref("anatomy"),
       "D3a. the anatomy module's last lesson, now followed by the physiology module, carries anatomy's module-end link");
     assert.equal(hosaLessonPracticeReturn("hosa-medical-terminology-basics"), null, "D3b. the structure lesson, which owns no area, gets none");
-    const MODULE_ENDS = ["hosa-anatomy-bones-muscles-nerves-skin"];
+    assert.equal(hosaLessonPracticeReturn("hosa-physiology-nerves-and-muscles")?.href, medTermFocusHref("physiology"),
+      "D3a2. the physiology module's last lesson, now followed by the pathophysiology module, carries physiology's module-end link");
+    const MODULE_ENDS = ["hosa-anatomy-bones-muscles-nerves-skin", "hosa-physiology-nerves-and-muscles"];
     for (const entry of EDUCATION_LESSONS.filter((e) => !Object.values(EXPECTED_OWNER).includes(e.id) && !MODULE_ENDS.includes(e.id))) {
       assert.equal(hosaLessonPracticeReturn(entry.id), null, `D3c. ${entry.id} offers no practice return`);
     }
@@ -603,24 +648,25 @@ async function main() {
     }
     const engine = stripComments(read("components/training/hosa-medterm-engine.tsx"));
     assert.ok(!engine.includes("lib/education"), "H2. the client engine imports nothing from lib/education");
-    assert.ok(!engine.includes("hosa-medical-") && !engine.includes("hosa-anatomy-") && !engine.includes("hosa-physiology-"), "H2b. and names no lesson itself");
+    assert.ok(!engine.includes("hosa-medical-") && !engine.includes("hosa-anatomy-") && !engine.includes("hosa-physiology-") && !engine.includes("hosa-pathophysiology-"),
+      "H2b. and names no lesson itself");
     const prep = stripComments(read("components/training/hosa-event-prep.tsx"));
     assert.deepEqual([...new Set(prep.match(/from "@\/lib\/education\/[a-z-]+"/g) ?? [])], ['from "@/lib/education/hosa-medterm-practice"'],
       "H3. the room reaches exactly one curriculum module");
     const resolverSrc = stripComments(read("lib/education/hosa-medterm-practice.ts"));
     assert.ok(!resolverSrc.includes('@/lib/hosa-medterm"'), "H4. the resolver never loads the question bank");
-    // Anatomy and physiology have lessons now, so only the untaught area stays in the scan.
-    const claim = /(?:covers?|teach(?:es)?)\s+(?:all|every|the whole)\s+(?:of\s+)?medical terminology|lesson for (?:pathophysiology|disease)|(?:pathophysiology|disease) lesson/i;
+    // Every area has lessons now, so the scan keeps only whole-subject claims.
+    const claim = /(?:covers?|teach(?:es)?)\s+(?:all|every|the whole)\s+(?:of\s+)?medical terminology|everything (?:HOSA|the test|Medical Terminology)/i;
     const copy = [HOSA_MEDTERM_PRACTICE_RETURN.detail, HOSA_MEDTERM_NO_LESSON_MESSAGE,
       ...AREA_IDS.map((a) => JSON.stringify(hosaMedTermRemediation(a, LABEL.get(a)!)))].join("\n");
-    assert.ok(!claim.test(copy), "H5. no action claims the course covers everything, or that an untaught area has a lesson");
-    assert.ok(claim.test("The pathophysiology lesson explains it."), "H5b. control: the scan catches such a claim");
+    assert.ok(!claim.test(copy), "H5. no action claims the course covers everything");
+    assert.ok(claim.test("The course teaches all of Medical Terminology."), "H5b. control: the scan catches such a claim");
     const pkg = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
     assert.equal(pkg.scripts["hosa-medterm-remediation:smoke"], "tsx scripts/hosa-medterm-remediation-smoke.ts", "H6. this suite is registered");
     assert.ok(!db.touches.some((t) => t !== "$transaction"), `H7. the database stand-in saw only the route's transaction (${db.touches.join(", ")})`);
   });
 
-  console.log(`\nhosa-medterm-remediation: ${checks} checks passed. Practice results offer, for each weak word-part area, the one published lesson that teaches it (read from the lessons' own text), and for anatomy and physiology the lesson where each module starts, labelled with the same area and lesson, and that lesson leads back to the practice choice that includes the area; pathophysiology gets the plain statement that no lesson exists yet and link to nothing; any broken link in the chain removes the action. The old Word roots record opens the Word Roots lesson, the HOSA hub's practice row opens the Medical Terminology Event HQ instead of looping through /skills, and HOSA test results say event category while DECA keeps cluster.`);
+  console.log(`\nhosa-medterm-remediation: ${checks} checks passed. Practice results offer, for each weak word-part area, the one published lesson that teaches it (read from the lessons' own text), and for anatomy, physiology and pathophysiology the lesson where each module starts, labelled with the same area and lesson, and that lesson leads back to the practice choice that includes the area; an area outside the bank's six gets at most the plain statement that no lesson exists and links to nothing; any broken link in the chain removes the action. The old Word roots record opens the Word Roots lesson, the HOSA hub's practice row opens the Medical Terminology Event HQ instead of looping through /skills, and HOSA test results say event category while DECA keeps cluster.`);
 }
 
 main().catch((error) => {

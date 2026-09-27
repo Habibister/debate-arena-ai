@@ -1,4 +1,5 @@
-// HOSA — authored concept lessons: Medical Terminology word parts, anatomy and physiology (Branch A).
+// HOSA — authored concept lessons: Medical Terminology word parts, anatomy, physiology and
+// pathophysiology (Branch A).
 //
 // Registered the same way the Debate and DECA concept lessons are: this file imports
 // `LEARNING_SKILL_CATALOG`, selects entries by slug, and hands the ORIGINAL objects to the canonical
@@ -14,8 +15,9 @@
 // word parts are the foundation every other Medical Terminology topic is read through. The anatomy
 // module comes second: it teaches the room's anatomy questions, and its structure names are read
 // through those word parts. The physiology module comes third: it teaches the room's physiology
-// questions, how the healthy body works, on top of the structures the anatomy lessons named. Disease
-// (pathophysiology) has no lessons yet.
+// questions, how the healthy body works, on top of the structures the anatomy lessons named. The
+// pathophysiology module comes fourth and last: it teaches the room's disease questions, how that
+// normal function changes, reasoning from the anatomy and physiology before it.
 //
 // WHAT IT DELIBERATELY DOES NOT CLAIM. No entry carries a `skillSlug` or a `practiceDrill`. The
 // practice room's evidence model is HOSA's own review-only ladder, not a drill area this registry can
@@ -91,6 +93,22 @@ export const STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE: SourceFreshnessMetadata
 });
 
 /**
+ * Provenance for the pathophysiology module: the same tier, the same label and the same gate as
+ * anatomy and physiology. These lessons teach what common disease terms mean and the basic mechanism
+ * the practice bank's pathophysiology questions need, never diagnosis or treatment, so the label says
+ * they are AI-generated, not official HOSA material, and not yet reviewed by a person. A separate
+ * constant keeps this module's review status independent: when the qualified human subject-accuracy
+ * review of the whole Medical Terminology curriculum (the owner's 2026-09-27 plan) is recorded for
+ * these lessons in the authoring record in lib/learning-content.ts, only this label changes.
+ */
+export const STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
+  authority: "stable-teaching",
+  freshness: "stable",
+  organization: "CompeteReady",
+  sourceLabel: "AI-generated CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person"
+});
+
+/**
  * The HOSA catalog slugs this file publishes, in teaching order.
  *
  * Exported so a suite can prove that this list and `HELD_HOSA_CATALOG_SLUGS` PARTITION the HOSA
@@ -108,7 +126,12 @@ export const PUBLISHED_HOSA_SLUGS = [
   "hosa-physiology-staying-in-balance",
   "hosa-physiology-heart-and-blood",
   "hosa-physiology-breathing-and-digestion",
-  "hosa-physiology-nerves-and-muscles"
+  "hosa-physiology-nerves-and-muscles",
+  "hosa-pathophysiology-how-tissue-changes",
+  "hosa-pathophysiology-blood-flow-and-oxygen",
+  "hosa-pathophysiology-heart-and-pressure",
+  "hosa-pathophysiology-defences",
+  "hosa-pathophysiology-breathing-kidneys-glucose"
 ] as const;
 
 /** The HOSA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
@@ -170,12 +193,19 @@ const physiologyStayingInBalance = selectHosaCatalogLesson("hosa-physiology-stay
 const physiologyHeartAndBlood = selectHosaCatalogLesson("hosa-physiology-heart-and-blood");
 const physiologyBreathingAndDigestion = selectHosaCatalogLesson("hosa-physiology-breathing-and-digestion");
 const physiologyNervesAndMuscles = selectHosaCatalogLesson("hosa-physiology-nerves-and-muscles");
+const pathophysiologyHowTissueChanges = selectHosaCatalogLesson("hosa-pathophysiology-how-tissue-changes");
+const pathophysiologyBloodFlowAndOxygen = selectHosaCatalogLesson("hosa-pathophysiology-blood-flow-and-oxygen");
+const pathophysiologyHeartAndPressure = selectHosaCatalogLesson("hosa-pathophysiology-heart-and-pressure");
+const pathophysiologyDefences = selectHosaCatalogLesson("hosa-pathophysiology-defences");
+const pathophysiologyBreathingKidneysGlucose = selectHosaCatalogLesson("hosa-pathophysiology-breathing-kidneys-glucose");
 
 /** Exported for the smoke suite's strict-identity proof against the catalog. */
 export const PUBLISHED_HOSA_SOURCES = {
   medicalTerminologyBasics, medicalWordRoots, medicalSuffixes, medicalPrefixes,
   anatomyBodyMap, anatomyHeartAndLungs, anatomyDigestiveAndUrinary, anatomyBonesMusclesNervesSkin,
-  physiologyStayingInBalance, physiologyHeartAndBlood, physiologyBreathingAndDigestion, physiologyNervesAndMuscles
+  physiologyStayingInBalance, physiologyHeartAndBlood, physiologyBreathingAndDigestion, physiologyNervesAndMuscles,
+  pathophysiologyHowTissueChanges, pathophysiologyBloodFlowAndOxygen, pathophysiologyHeartAndPressure,
+  pathophysiologyDefences, pathophysiologyBreathingKidneysGlucose
 } as const;
 
 /**
@@ -327,8 +357,9 @@ export const HOSA_ANATOMY_BONES_MUSCLES_NERVES_SKIN_LESSON: EducationRegistryEnt
  * bank's 30 physiology questions, and each lesson owns the questions that census assigned to it
  * (scripts/hosa-medterm-physiology-smoke.ts).
  *
- * `nextLessonId` on the last lesson is null: it is the end of the course written so far, and the
- * course-end action hands the learner to physiology practice from there.
+ * The last physiology lesson leads on to the pathophysiology module (below), so the physiology
+ * module ends at nerves and muscles, and that lesson's module-end action hands the learner to
+ * physiology practice from there.
  */
 export const HOSA_PHYSIOLOGY_STAYING_IN_BALANCE_LESSON: EducationRegistryEntry = {
   id: "hosa-physiology-staying-in-balance",
@@ -386,8 +417,96 @@ export const HOSA_PHYSIOLOGY_NERVES_AND_MUSCLES_LESSON: EducationRegistryEntry =
   source: physiologyNervesAndMuscles,
   sourceKind: "concept-education-lesson",
   legacySlugs: [],
-  nextLessonId: null,
+  nextLessonId: "hosa-pathophysiology-how-tissue-changes",
   provenance: STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE
+};
+
+/**
+ * The pathophysiology module, the course's fourth and last planned module, in the order a beginner
+ * needs it: the general words first (acute and chronic, cells that shrink, grow or die, benign and
+ * malignant tumors), because the later lessons lean on necrosis and hypertrophy; then blood flow and
+ * oxygen, the heart, pressure and fluid, the body's defences, and breathing, the kidneys and blood
+ * glucose. The five were derived from a census of the practice bank's 30 pathophysiology questions,
+ * and each lesson owns the questions that census assigned to it
+ * (scripts/hosa-medterm-pathophysiology-smoke.ts).
+ *
+ * `nextLessonId` on the last lesson is null: it is the end of the course, and the course-end action
+ * hands the learner to pathophysiology practice from there. The end of this course is not the end of
+ * HOSA: it covers the Medical Terminology practice bank, not every HOSA event or healthcare topic.
+ */
+export const HOSA_PATHOPHYSIOLOGY_HOW_TISSUE_CHANGES_LESSON: EducationRegistryEntry = {
+  id: "hosa-pathophysiology-how-tissue-changes",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-pathophysiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: pathophysiologyHowTissueChanges,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-pathophysiology-blood-flow-and-oxygen",
+  provenance: STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PATHOPHYSIOLOGY_BLOOD_FLOW_AND_OXYGEN_LESSON: EducationRegistryEntry = {
+  id: "hosa-pathophysiology-blood-flow-and-oxygen",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-pathophysiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: pathophysiologyBloodFlowAndOxygen,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-pathophysiology-heart-and-pressure",
+  provenance: STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PATHOPHYSIOLOGY_HEART_AND_PRESSURE_LESSON: EducationRegistryEntry = {
+  id: "hosa-pathophysiology-heart-and-pressure",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-pathophysiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: pathophysiologyHeartAndPressure,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-pathophysiology-defences",
+  provenance: STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PATHOPHYSIOLOGY_DEFENCES_LESSON: EducationRegistryEntry = {
+  id: "hosa-pathophysiology-defences",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-pathophysiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: pathophysiologyDefences,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-pathophysiology-breathing-kidneys-glucose",
+  provenance: STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PATHOPHYSIOLOGY_BREATHING_KIDNEYS_GLUCOSE_LESSON: EducationRegistryEntry = {
+  id: "hosa-pathophysiology-breathing-kidneys-glucose",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-pathophysiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: pathophysiologyBreathingKidneysGlucose,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: null,
+  provenance: STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE
 };
 
 export const HOSA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
@@ -402,5 +521,10 @@ export const HOSA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
   HOSA_PHYSIOLOGY_STAYING_IN_BALANCE_LESSON,
   HOSA_PHYSIOLOGY_HEART_AND_BLOOD_LESSON,
   HOSA_PHYSIOLOGY_BREATHING_AND_DIGESTION_LESSON,
-  HOSA_PHYSIOLOGY_NERVES_AND_MUSCLES_LESSON
+  HOSA_PHYSIOLOGY_NERVES_AND_MUSCLES_LESSON,
+  HOSA_PATHOPHYSIOLOGY_HOW_TISSUE_CHANGES_LESSON,
+  HOSA_PATHOPHYSIOLOGY_BLOOD_FLOW_AND_OXYGEN_LESSON,
+  HOSA_PATHOPHYSIOLOGY_HEART_AND_PRESSURE_LESSON,
+  HOSA_PATHOPHYSIOLOGY_DEFENCES_LESSON,
+  HOSA_PATHOPHYSIOLOGY_BREATHING_KIDNEYS_GLUCOSE_LESSON
 ];

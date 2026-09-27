@@ -83,6 +83,19 @@ export function isRetiredOrganization(org: string | null | undefined): boolean {
   return Boolean(track && isTrackRetired(track.id));
 }
 
+/** The organizations of the dormant tracks (HOSA, Model UN), for database filters. */
+export const RETIRED_ORGANIZATIONS: Organization[] = TRACKS.filter((t) => isTrackRetired(t.id)).map((t) => t.organization);
+
+/**
+ * Where-fragments for judged-round metrics, by canonical organization ownership. A number presented as
+ * Debate activity counts only the Debate track's own rounds (DEBATE_ROUND_WHERE). An account-level view
+ * (the coach's student progress, round evidence for an assignment) counts every round except a dormant
+ * track's (NON_DORMANT_ROUND_WHERE): DECA and track-less organizations stay in, HOSA and Model UN drop
+ * out. A dormant track's rows stay readable in history and replay, but never add to either.
+ */
+export const DEBATE_ROUND_WHERE = { organization: trackById("GENERAL_DEBATE").organization };
+export const NON_DORMANT_ROUND_WHERE = { organization: { notIn: RETIRED_ORGANIZATIONS } };
+
 /** "Debate or DECA": the public tracks' short names, for the neutral chooser's wording. */
 export const PUBLIC_TRACKS_PHRASE = ACTIVE_TRACKS.map((t) => t.short).join(" or ");
 

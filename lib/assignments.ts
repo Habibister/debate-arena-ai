@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { deckSummaries } from "@/lib/study-content";
 import { canAccessCoachTools, isAdmin } from "@/lib/roles";
 import { assignmentTypeAllowedForOrganization, contentAllowedForOrganization } from "@/lib/track-content";
-import { isRetiredOrganization } from "@/lib/training-tracks";
+import { NON_DORMANT_ROUND_WHERE, isRetiredOrganization } from "@/lib/training-tracks";
 import type { assignmentCreateSchema, assignmentSubmitSchema } from "@/lib/validators";
 import type { z } from "zod";
 
@@ -388,6 +388,8 @@ async function validateEvidence(params: { assignment: Awaited<ReturnType<typeof 
         status: "JUDGED",
         // A guided lesson round is coached practice, not a completed debate round (lib/guided-rounds.ts).
         ...INDEPENDENT_ROUND_WHERE,
+        // A dormant track's judged session (HOSA, Model UN) is the learner's record, not evidence.
+        ...NON_DORMANT_ROUND_WHERE,
         OR: [{ createdById: userId }, { studentId: userId }, { opponentUserId: userId }],
         ...(assignment.type === "REBUTTAL_PRACTICE" ? { format: "PRACTICE_REBUTTAL" } : {})
       },
@@ -486,6 +488,7 @@ export async function getStudentEvidenceOptions(userId: string, assignmentType: 
       where: {
         status: "JUDGED",
         ...INDEPENDENT_ROUND_WHERE,
+        ...NON_DORMANT_ROUND_WHERE,
         OR: [{ createdById: userId }, { studentId: userId }, { opponentUserId: userId }],
         ...(assignmentType === "REBUTTAL_PRACTICE" ? { format: "PRACTICE_REBUTTAL" } : {})
       },
@@ -497,8 +500,9 @@ export async function getStudentEvidenceOptions(userId: string, assignmentType: 
     // number beside a piece of assignment evidence reads as a grade. The value is real but formative,
     // so it is named the way the ballot names it. A round with no score keeps the completion-only
     // label — the old form emitted a trailing space there, and nothing is invented to fill the gap.
-    // Qualification is untouched: the `where` above still governs eligibility (ownership + JUDGED
-    // status + format), and no score threshold has ever gated Debate-round evidence.
+    // Qualification is untouched by that relabel: the `where` above governs eligibility (ownership,
+    // JUDGED status, an independent round from a non-dormant track, format), and no score threshold
+    // has ever gated Debate-round evidence.
     return debates.map((debate) => ({
       id: debate.id,
       label:

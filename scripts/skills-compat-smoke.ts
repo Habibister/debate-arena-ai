@@ -481,11 +481,22 @@ async function main() {
   // but that form self-heals once HEAD advances, so the real protection is this IMMUTABLE pin. The
   // assignment type catalogue defines what each assignment MEANS to a coach and a learner; A3b-3
   // changed only a picker label and must not have touched it.
+  //
+  // Re-pinned 2026-09-27 with the owner's explicit approval, and narrowly: CompeteReady publicly
+  // offers only Debate and DECA, so the practice-test description no longer names HOSA. The file must
+  // equal the IMMUTABLE baseline with exactly that one line substituted — any other edit still fails.
   const PRE_M15_A3B3_SC = "e652cbe365c7dc6faa618d989f51d4232adb381d";
+  const APPROVED_PRACTICE_TEST_COPY: readonly [string, string] = [
+    'description: "Students complete a generated DECA/HOSA practice test and submit the completed test.",',
+    'description: "Students complete a generated DECA practice test and submit the completed test.",'
+  ];
+  const assignmentTypesAtBaseline = execSync(`git show ${PRE_M15_A3B3_SC}:'lib/assignment-types.ts'`, { encoding: "utf8" });
+  assert.equal(assignmentTypesAtBaseline.split(APPROVED_PRACTICE_TEST_COPY[0]).length - 1, 1,
+    "27A3-C. control: the baseline carries the replaced line exactly once");
   assert.equal(
-    nowSha("lib/assignment-types.ts"),
-    execSync(`git show ${PRE_M15_A3B3_SC}:'lib/assignment-types.ts' | shasum -a 256`, { encoding: "utf8" }).split(" ")[0],
-    "27A3. lib/assignment-types.ts is byte-identical to the IMMUTABLE A3b-3 baseline, not merely to HEAD");
+    read("lib/assignment-types.ts"),
+    assignmentTypesAtBaseline.replace(APPROVED_PRACTICE_TEST_COPY[0], APPROVED_PRACTICE_TEST_COPY[1]),
+    "27A3. lib/assignment-types.ts is the IMMUTABLE A3b-3 baseline with only the owner-approved practice-test copy changed");
 
 
   // ---- 27P. what the /lessons index hash was protecting, asserted exactly -------------------------

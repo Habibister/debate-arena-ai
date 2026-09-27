@@ -35,7 +35,7 @@ export const ASSIGNMENT_TYPE_META: Record<
   },
   PRACTICE_TEST: {
     label: "Take practice test",
-    description: "Students complete a generated DECA/HOSA practice test and submit the completed test.",
+    description: "Students complete a generated DECA practice test and submit the completed test.",
     requiresTarget: false,
     evidenceLabel: "Completed practice test ID"
   },

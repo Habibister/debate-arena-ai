@@ -14,6 +14,18 @@ below the boundary.
 
 ## What is complete
 
+- **Two-track cleanup — LOCAL COMMIT ONLY (2026-09-27), on top of the public-scope commit.** Not
+  pushed, not deployed, not Production-verified, not browser-verified. Every number presented as
+  Debate activity (Home and Dashboard judged rounds, guided line, current-scoring average, Debate
+  record, Debate learning-path state) counts only Debate-owned rounds (`DEBATE_ROUND_WHERE` in
+  `lib/training-tracks.ts`): a historical judged HOSA session stays readable in history and replay and
+  adds 0, and a DECA role-play no longer counts as a Debate round either. XP and Practice sessions have
+  no track in the schema, so they say "across all your tracks" under every track. The coach
+  student-progress count and Debate-round assignment evidence drop dormant rounds, HOSA and Model UN
+  (`NON_DORMANT_ROUND_WHERE`), and keep DECA as before. The practice-test assignment copy is DECA-only
+  (owner-approved re-pin of `skills-compat` 27A3). `CLAUDE.md` names the two public tracks. Guard:
+  `public-tracks:smoke` (43 checks). Details, the exact pin list and the residual debt: *Two-track
+  cleanup* in `docs/CURRENT_STATE.md`.
 - **Public product scope: Debate and DECA only, HOSA dormant — LOCAL COMMIT ONLY (2026-09-27).** Not
   pushed, not deployed, not Production-verified, not browser-verified. Owner decision: CompeteReady
   publicly supports only General Debate and DECA. One list, `PUBLIC_TRACK_IDS` in
@@ -214,17 +226,19 @@ below the boundary.
 
 ## What remains open
 
-- **Public product scope — debt and owner decisions, recorded only (2026-09-27).**
-  `lib/assignment-types.ts` still describes the practice-test assignment as a "generated DECA/HOSA
-  practice test" to coaches (the file is byte-pinned by `deca-mastery` 24-28 and `skills-compat`
-  27/27A3; changing it needs an owner-approved re-pin). `POST /api/ai/readiness` (byte-pinned) and
-  `POST /api/signup` still accept organization HOSA by direct call; no page sends it, and a HOSA
-  signup resolves to the chooser. The seeded demo HOSA account and a "DECA/HOSA" demo bio remain in
-  `prisma/seed.ts` (no seed run). Mock Trial and Public Speaking are still offered in the profile and
-  team pickers although no track backs them. Judged-round counts on Debate Home and Dashboard are
-  account-wide. `CLAUDE.md` still describes four tracks (not edited; owner's call). An unresolved
-  learner's shell uses Debate's visual accent. `/api/hosa/medterm/*` stays callable directly
-  (dormant). The HOSA website-review debt below is parked with the dormant code.
+- **Public product scope — debt and owner decisions, recorded only (2026-09-27, updated by the
+  two-track cleanup).** `POST /api/ai/readiness` (byte-pinned) and `POST /api/signup` still accept
+  organization HOSA by direct call; no page sends it, and a HOSA signup resolves to the chooser. The
+  seeded demo HOSA account and a "DECA/HOSA" demo bio remain in `prisma/seed.ts` (no seed run). Mock
+  Trial and Public Speaking are still offered in the profile and team pickers although no track backs
+  them. An unresolved learner's shell uses Debate's visual accent. `/api/hosa/medterm/*` stays
+  callable directly (dormant). The Dashboard's "Recommended bot" (and the arena's "Next bot") come
+  from a heuristic that still reads the account-wide XP and frozen `wins` counters, so a historical
+  HOSA session or DECA XP can move the named bot up; the rating itself is never shown. The
+  coach "Debate performance" panel counts DECA role-plays too (pre-existing, kept unchanged), so it
+  and the learner's Debate record count different rounds for a student with DECA role-plays. The HOSA website-review debt below
+  is parked with the dormant code. (Resolved by the cleanup: the account-wide judged-round counts,
+  the "DECA/HOSA" assignment copy and the four-tracks line in `CLAUDE.md`.)
 - **HOSA official alignment — WEBSITE/PRODUCT REVIEW DEBT, recorded only (2026-09-27).** Owner-reported
   from the official HOSA 2026–2027 Medical Terminology guideline (not re-verified from this
   workspace): the event covers roots, prefixes and suffixes, anatomy, physiology, pathophysiology and
@@ -1089,6 +1103,12 @@ this disclosure is not a reason to reopen B2.3, and alias binding must never be 
 
 ## Current safe validation commands
 
+**Owner boundary (2026-09-27): never run `security:smoke` unless the owner asks for it.** It is one of
+the fourteen transitive env readers below (it reaches `.env` through `lib/api`), so it is outside the
+standing safe-test boundary; the public-scope pass ran it and the owner flagged that. A cleanup or
+audit pass also skips `judge-shape` (live provider) and the direct env loaders `auth`, `team`,
+`assignment` and `avatar`, and never reads `.env`, `.env.local` or any secret.
+
 **Audit safety follows the COMPLETE EXECUTION PATH, not the entry file.** A suite whose own source
 never mentions `.env` still reads it if anything in its transitive closure does. Two classifications
 were made from top-level source text and both were wrong; do not repeat that method.
@@ -1275,9 +1295,10 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 ## Exact next action
 
 **Public scope, 2026-09-27 (supersedes the HOSA paragraphs below).** CompeteReady publicly supports
-only Debate and DECA; HOSA is dormant. The deactivation is a local commit on top of `74bd119`, not
-pushed. Next, only when the owner asks: pushing is the owner's action; then the website review with
-the owner covers Debate and DECA only. Do not add HOSA curriculum or reopen Debate or DECA
+only Debate and DECA; HOSA is dormant. The deactivation and the two-track cleanup are two local
+commits on top of `74bd119`, not pushed. Next, only when the owner asks: pushing is the owner's
+action, after which the owner stops track-architecture work; then the screen-by-screen website review
+and design phase with the owner covers Debate and DECA only. Do not add HOSA curriculum or reopen Debate or DECA
 curriculum. To restore HOSA later: add it back to `PUBLIC_TRACK_IDS`, then review each surface in
 the *Public product scope* section of `docs/CURRENT_STATE.md` and update `public-tracks:smoke`.
 

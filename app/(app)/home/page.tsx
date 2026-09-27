@@ -18,7 +18,7 @@ import { getActiveTrack } from "@/lib/track-server";
 import { recentCompletedTestsQuery, trackPracticeRecord, type TrackPracticeRecord } from "@/lib/learner-record";
 import { flaggedTestForTrack, weakAreasForTrack } from "@/lib/track-recommendations";
 import { decaHomeSuggestionForLearner } from "@/lib/education/deca-home-suggestion";
-import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
+import { DEBATE_ROUND_WHERE, trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -77,10 +77,12 @@ export default async function HomePage({ searchParams }: { searchParams: { track
   // "Judged rounds" counts INDEPENDENT rounds only. A guided lesson round (practiceMode LESSON) is
   // stored and shown as learning history, but it is coached practice on a curriculum-limited ballot,
   // not an independent completed round, so it is counted separately (lib/guided-rounds.ts).
+  // Both are shown only as the Debate record, so both count only the Debate track's own rounds: a
+  // judged session from another track (a dormant HOSA session, a DECA role-play) never adds to them.
   const [judgedDebateCount, guidedExerciseCount, reviewsDue] = session?.user?.id
     ? await Promise.all([
-        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE } }),
-        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON" } }),
+        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE, ...DEBATE_ROUND_WHERE } }),
+        prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON", ...DEBATE_ROUND_WHERE } }),
         countDueReviews(session.user.id, activeTrack?.organization).catch(() => 0)
       ])
     : [0, 0, 0];

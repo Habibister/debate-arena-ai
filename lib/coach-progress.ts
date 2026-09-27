@@ -2,6 +2,7 @@ import { isCurrentScoringEra } from "@/lib/debate-scoring-era";
 import { HttpError } from "@/lib/api";
 import { INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
 import { prisma } from "@/lib/prisma";
+import { NON_DORMANT_ROUND_WHERE } from "@/lib/training-tracks";
 import { debateMasteryHeld } from "@/lib/debate-drills";
 
 function average(values: number[]) {
@@ -111,8 +112,13 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
   // practice on a curriculum-limited ballot: it has no whole-round score and its feedback names only
   // the taught skills, so it enters neither the judged-round count, the average, nor "latest judge
   // feedback" (lib/guided-rounds.ts). It still appears in the recent list below, labelled.
+  // A dormant track's judged session (HOSA, Model UN) is history only: it stays in the recent list below
+  // and in the student's replay, but never enters the count, the average or the latest feedback.
+  // Every other organization still counts here, DECA role-plays included, exactly as before. The
+  // learner's own Debate record counts only Debate rounds (DEBATE_ROUND_WHERE), so for a student
+  // with judged DECA role-plays the two views count different rounds.
   const judgedDebates = await prisma.debate.findMany({
-    where: { studentId, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE },
+    where: { studentId, status: "JUDGED", ...INDEPENDENT_ROUND_WHERE, ...NON_DORMANT_ROUND_WHERE },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -153,12 +159,14 @@ export async function getCoachStudentProgress(viewerUserId: string, studentId: s
   // `wins` itself is still returned: it is a real stored value, it is untouched history, and no
   // UI reads it after this change. Relabelling the remaining historical "Wins" surfaces is A3b.
   // CURRENT SCORING ERA ONLY, and the SAME boundary the dashboard uses — one shared constant so the
-  // coach and the student can never be shown averages over different populations. The transcript
-  // judge withdrew a false weighing score on 2026-09-07 and renormalised the ballot, so rows either
-  // side of it are not comparable; a mixed average would show a coach a decline the product created.
-  // `judgedDebates` itself is NOT filtered: the round count, the latest round and the history list
-  // still include every stored round. Only the average is scoped, and it stays null when the student
-  // has no rounds yet under the current semantics rather than reporting 0.
+  // coach and the student can never be shown averages over different scoring eras (which
+  // organizations each view counts differs; see the query above). The transcript judge withdrew a
+  // false weighing score on 2026-09-07 and renormalised the ballot, so rows either side of it are not
+  // comparable; a mixed average would show a coach a decline the product created.
+  // `judgedDebates` itself is NOT era-filtered: the round count and the latest round include every
+  // independent, non-dormant judged round, and the history list every stored round. Only the average
+  // is era-scoped, and it stays null when the student has no rounds yet under the current semantics
+  // rather than reporting 0.
   const averageDebateScore = average(
     judgedDebates
       .filter((d) => isCurrentScoringEra(d.completedAt))

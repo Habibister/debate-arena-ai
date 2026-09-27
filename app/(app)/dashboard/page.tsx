@@ -26,7 +26,7 @@ import { nearestAiPersona } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
-import { isRetiredOrganization, trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
+import { DEBATE_ROUND_WHERE, isRetiredOrganization, trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
 import { weakAreasForTrack } from "@/lib/track-recommendations";
 import { recentCompletedTestsQuery, trackPracticeRecord, type TrackPracticeRecord } from "@/lib/learner-record";
@@ -111,23 +111,28 @@ export default async function DashboardPage() {
     activeOrg && session?.user?.id ? await trackPracticeRecord(session.user.id, activeOrg) : null;
   const isDebateTrack = activeTrack?.id === "GENERAL_DEBATE";
   // Debate-only concepts (judged rounds, ballot averages, the bot heuristic, the Debate record card)
-  // are rendered only under Debate. They are still computed — the queries are account-wide and other
-  // surfaces pin their shape — but a DECA or HOSA page never presents them as that track's record.
+  // are rendered only under Debate. They are still computed under every track — other surfaces pin
+  // their shape — and the judged-round queries count only the Debate track's rounds
+  // (DEBATE_ROUND_WHERE); a DECA page never presents them as its record. The bot heuristic's XP and
+  // wins inputs are the account-wide counters (below).
   const showDebateRecord = isDebateTrack || !activeTrack;
   // INDEPENDENT rounds only: a guided lesson round (practiceMode LESSON) is coached practice on a
   // curriculum-limited ballot and is counted on its own line, never as a judged round
   // (lib/guided-rounds.ts). It still counts as ACTIVITY below — the learner really did practise.
+  // These are the Debate record, so they count only the Debate track's own rounds: a judged session
+  // from another track (a dormant HOSA session, a DECA role-play) never adds to them.
   const judgedDebateCount = session?.user?.id
     ? await prisma.debate.count({
         where: {
           studentId: session.user.id,
           status: "JUDGED",
-          ...INDEPENDENT_ROUND_WHERE
+          ...INDEPENDENT_ROUND_WHERE,
+          ...DEBATE_ROUND_WHERE
         }
       })
     : 0;
   const guidedExerciseCount = session?.user?.id
-    ? await prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON" } })
+    ? await prisma.debate.count({ where: { studentId: session.user.id, status: "JUDGED", practiceMode: "LESSON", ...DEBATE_ROUND_WHERE } })
     : 0;
   // Real evidence for the dashboard: the average judge score across this student's judged rounds.
   // Null (shown as "—") until at least one round has actually been judged — never a synthetic number.
@@ -149,6 +154,7 @@ export default async function DashboardPage() {
             status: "JUDGED",
             overallScore: { not: null },
             ...INDEPENDENT_ROUND_WHERE,
+            ...DEBATE_ROUND_WHERE,
             ...scoringEra.where
           }
         })
@@ -219,10 +225,12 @@ export default async function DashboardPage() {
           })
       : [];
   // Real signals for the learning path (no fabricated progress).
-  // Under DECA/HOSA the learning-path state is decided by THAT track's activity only; XP and the
-  // judged/guided counts are account-wide and would call a learner "active" on Debate rounds.
+  // Each track's learning-path state is decided by THAT track's activity only. XP is account-wide (a
+  // DECA test or a dormant HOSA session earns it too), so it never makes a Debate learner "active":
+  // the only Debate activity that earns XP is a judged Debate round, which is counted directly. A
+  // seeded demo account keeps its sample XP.
   const hasActivity = showDebateRecord
-    ? (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0 || guidedExerciseCount > 0
+    ? (demo && (xp ?? 0) > 0) || recentTests.length > 0 || judgedDebateCount > 0 || guidedExerciseCount > 0
     : recentTests.length > 0 || (trackRecord?.recordedSkills ?? 0) > 0;
   // Work on a dormant track's team (HOSA) can no longer be started or submitted, so it is never the
   // learner's next step.
@@ -353,8 +361,10 @@ export default async function DashboardPage() {
             and the XP line also named lessons — which award no XP at all (the only writers of this
             counter are the Debate judge route and the PracticeTest grade route). "Scored" is the
             honest umbrella: it covers a judged round and a graded set, and promises neither. */}
-        <StatCard label="XP" value={String(xp)} detail={showDebateRecord ? "Earn XP from scored training in your track." : "Earn XP from scored training — counted across all your tracks."} icon={Medal} />
-        <StatCard label="Practice sessions" value={String(streak)} detail={showDebateRecord ? "Scored training in your track, counted as it happens." : "Scored activities across all your tracks, counted as they happen — not only this track."} icon={Flame} />
+        {/* Both counters are account-wide (a DECA test or a dormant HOSA session moves them too), so
+            every track, Debate included, says so rather than presenting them as this track's record. */}
+        <StatCard label="XP" value={String(xp)} detail="Earn XP from scored training — counted across all your tracks." icon={Medal} />
+        <StatCard label="Practice sessions" value={String(streak)} detail="Scored activities across all your tracks, counted as they happen — not only this track." icon={Flame} />
         {trackHasPracticeTests(activeTrack?.id) && activeTrack ? (
           <StatCard
             label="Practice average"

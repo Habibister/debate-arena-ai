@@ -1,6 +1,7 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-09-27, public product scope (Debate and DECA only, HOSA dormant) and HOSA lines
+_Last updated: 2026-09-27, public product scope (Debate and DECA only, HOSA dormant; then the
+two-track cleanup: Debate metrics by track ownership, DECA-only coach copy, CLAUDE.md scope) and HOSA lines
 only (the Medical Terminology word-parts course, its anatomy, physiology and pathophysiology
 modules, their practice and HOSA test-result next steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
@@ -46,6 +47,10 @@ non-executable. Rewrite this region after each milestone; append history below t
   refuse new HOSA practice and generation with 410. The HOSA lines below describe dormant content.
   Details, the direct-route table and the recorded debt: *Public product scope: Debate and DECA only,
   HOSA dormant* below the archive boundary. Guard: `npm run public-tracks:smoke`.
+  **Two-track cleanup (second local commit on top):** every number presented as Debate activity counts
+  only Debate-owned rounds (a historical judged HOSA session stays readable in history and replay and
+  adds 0), the coach practice-test copy is DECA-only, and `CLAUDE.md` names the two public tracks. See
+  *Two-track cleanup* below the archive boundary.
 - **DECA P1 — FROZEN at `77a8fab`, 2026-09-09. Freeze result P0 = 0, P1 = 0.** The DECA learning
   architecture is coherent end to end for its supported scope: LEARN → PRACTICE → MASTERY →
   REVIEW/REMEDIATE → SIMULATE → PRACTICE FEEDBACK → REVIEW PREP → RETRY. **12 DECA lessons published,
@@ -878,7 +883,8 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 **PUBLIC SCOPE, 2026-09-27 (supersedes the HOSA paragraph below).** CompeteReady publicly supports
 only Debate and DECA; HOSA is dormant (see *Public product scope* below the archive boundary). The
-deactivation is a local commit, not pushed. **Next, only when the owner asks:** pushing is the
+deactivation and the two-track cleanup on top of it are local commits, not pushed. The owner plans to
+push them and then stop track-architecture work. **Next, only when the owner asks:** pushing is the
 owner's action; then the website review covers Debate and DECA only. HOSA's website-review debt is
 parked with the dormant code. Restoring HOSA starts by adding it back to `PUBLIC_TRACK_IDS` and then
 reviewing each surface listed in that section.
@@ -973,6 +979,107 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## Two-track cleanup: Debate metrics by track ownership — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (no build, dev server or
+browser; pages were rendered server-side in smoke suites). Baseline: the public-scope commit
+`55b8765` (next section). Owner prompt "FINAL TWO-TRACK CLEANUP"; after it the owner plans to push
+and stop track-architecture work.
+
+**Debate metrics count only Debate rounds.** `lib/training-tracks.ts` adds `RETIRED_ORGANIZATIONS`,
+`DEBATE_ROUND_WHERE` (the General Debate track's organization, `DEBATE`) and
+`NON_DORMANT_ROUND_WHERE` (`organization notIn RETIRED_ORGANIZATIONS`, i.e. not HOSA or Model UN),
+both derived from the track list. Home "Judged rounds" and "Guided exercises", and the Dashboard judged-round count, guided line,
+current-scoring average and Debate record card use `DEBATE_ROUND_WHERE`: a historical judged HOSA
+session adds 0. By the same canonical ownership a judged DECA role-play, a legacy Model UN session
+and a row with a track-less organization (Mock Trial, Public Speaking: legacy rows from the old
+organization picker, and Retry on such a replay still creates new ones) no longer count as Debate
+either; before, all of them did. They stay in history and replay. The Dashboard's Debate learning-path state no longer treats
+account-wide XP as Debate activity, because a HOSA session or a DECA test earns XP too; judged and
+guided Debate rounds count directly, and a seeded demo account keeps its sample XP. XP and Practice
+sessions have no track in the schema (`XPLog` and `User.streak` carry no organization), so they stay
+account-wide and now say so under every track, Debate included: "counted across all your tracks",
+and on the XP card "N practice sessions completed across all your tracks — not only this one."
+
+**Account-level views drop dormant rounds, DECA unchanged.** The coach student-progress judged
+count, average and latest feedback, and Debate-round and rebuttal assignment evidence (the options
+list and the submission check) use `NON_DORMANT_ROUND_WHERE`: HOSA and Model UN sessions are excluded,
+and DECA role-plays and track-less rows count exactly as before. So for a student with judged DECA
+role-plays the coach's "Debate performance" panel and the learner's own Debate record now count
+different rounds (before, both counted every round, HOSA included). Historical HOSA rows stay listed in `/debates/history`, the coach's recent
+list and the profile, and their replay stays readable. Nothing deleted, no migration, no write.
+
+**Coach copy.** The practice-test assignment type reads "Students complete a generated DECA practice
+test and submit the completed test." Among the public tracks only a DECA team can be given one; HOSA
+teams are dormant and refused.
+
+**CLAUDE.md.** Only the "four training tracks" statement changed: the public product is General
+Debate and DECA (`PUBLIC_TRACK_IDS`); HOSA and Model UN remain retired/dormant internal code.
+
+**Pins changed.** Owner-approved re-pin for the copy; the others encoded the old queries or copy.
+- `skills-compat` 27A3 (immutable pin of `lib/assignment-types.ts` against `e652cbe`): the file must
+  equal that baseline with exactly the one approved line replaced; new control 27A3-C proves the
+  baseline holds the old line exactly once.
+- `coached-performance` KA (Home, Dashboard and coach judged-count query shapes) and KC (the Home
+  and Dashboard guided count).
+- `learner-record` R8r (Dashboard activity rule) and R11b/R11c (XP card: no "in your track", no
+  per-track branch).
+- `judge-shape` A4b-2/A4b-3 (XP card copy). Not run (live provider); both regexes were checked against
+  the component source on their own.
+- Not edited, HEAD-relative: `deca-mastery` 24-28 and `skills-compat` 27 compare
+  `lib/assignment-types.ts` with HEAD, so they fail on the uncommitted tree and pass once committed.
+
+**Guard.** `public-tracks:smoke` has 43 checks (new M0-M6). Its debate stand-in evaluates each
+query's `where` over stored rows with a strict evaluator that throws on any shape it does not know.
+It proves: a judged HOSA session stays readable (`/debate/<id>` goes to the replay, the replay shows
+the transcript and ballot, history links it) and adds 0 to Home, Dashboard, the average (with a
+scoring-era boundary set) and the learning path; a real Debate round and a guided exercise still
+count and a judged DECA role-play does not count as Debate; DECA Home and Dashboard render
+byte-identically with or without other tracks' judged rows; the coach view and assignment evidence
+drop HOSA and Model UN and keep Debate and DECA; the coach copy is DECA-only. Fourteen source
+mutations that each reintroduce one leak were all caught.
+
+**Validation.** No build, dev server, browser, provider call, database write or seed. Not run:
+`security:smoke`, `judge-shape`, `auth`, `team`, `assignment`, `avatar`. `tsc --noEmit` clean. eslint
+on the 12 changed code files: only the 11 "rule definition not found" errors in
+`coached-performance-smoke.ts` that exist at `55b8765`. `public-tracks` 43/43, `coached-performance`
+109 controls, `learner-record` 12/12, `track-context` 26/26 and `tracks` pass. The 58-suite safe
+battery (the 63-suite list minus the five env-reading suites above; `judge-shape` was never in it)
+passes except the six baseline suites (`coach-evidence` S3-15d, `debate-mastery` 24, `deca-mastery`
+PA7, `hosa-medterm-evidence` PA7, `hosa-practice-scope` 10c/43b, `skills-compat` 2), whose soft-mode
+failure sets match `55b8765` apart from the two HEAD-relative pins on `lib/assignment-types.ts`
+(`deca-mastery` 24-28, `skills-compat` 27), which pass once the change is committed. The 62
+`judge-shape` source-text assertions that read the changed files were run on their own, without the
+suite's provider or env paths, and pass. **Review:** an independent AI review (four lenses, each
+finding checked by an adversarial AI verifier; not a human review) found no blocker and 13 minor
+items: stale comments, a misleading fragment name (now `NON_DORMANT_ROUND_WHERE`), a missing DECA row
+in the Debate check, and disclosures. All were addressed; the Recommended-bot heuristic is recorded
+below rather than changed.
+
+**Behaviour changes to know about (intended, by canonical ownership):** Debate "Judged rounds", the
+guided line and the average no longer include DECA role-plays, legacy Model UN sessions or
+track-less rows; a Debate learner whose only scored work is DECA (a test or a role-play) now sees
+"Complete your first activity so recommendations can adapt." on the Debate Dashboard instead of
+"Continue your path"; Model UN sessions also leave the coach counts and Debate-round evidence.
+
+**Recorded, not done:** the Dashboard's "Recommended bot" comes from an internal heuristic
+(`calculateDebateRating`) that still reads the account-wide XP and the frozen `wins` counter, so a
+historical HOSA session (or DECA XP) can move the bot it names up. The rating number is never
+shown, but the bot is; its judged-round input is now Debate-only. The arena's "Next bot" after a
+judged round (`/api/debates/<id>/judge`) reads the same counters. Fixing either needs per-track XP
+from `XPLog` and a decision on the unattributable `wins`, which is owner-level. The coach "Debate
+performance" panel counts DECA role-plays too (pre-existing; kept, since DECA behaviour was to stay
+unchanged); the coach's "has any activity" flag and XP stay account-wide. Earlier debt stands:
+`POST /api/ai/readiness`, `POST /api/signup` and `/api/hosa/medterm/*` by direct call, the seed's demo
+HOSA account, Mock Trial and Public Speaking in pickers, the unresolved learner's visual accent, and
+`debateDiagnosisLesson`.
+
+**Process correction.** The public-scope pass (next section) ran `security:smoke`. That suite reaches
+`.env` through Prisma (`lib/api`) and is outside the owner's standing safe-test boundary; it was not
+run in this pass and must not be run without the owner's ask. The direct env loaders (`auth`, `team`,
+`assignment`, `avatar`) and `judge-shape` were excluded too. No `.env` or `.env.local` exists in this
+workspace.
 
 ## Public product scope: Debate and DECA only, HOSA dormant — 2026-09-27 — LOCAL COMMIT
 
@@ -1079,7 +1186,9 @@ re-pin); the seeded demo HOSA account and a "DECA/HOSA" demo bio in `prisma/seed
 Mock Trial and Public Speaking are still offered in the profile and team pickers although no track
 backs them; judged-round counts on Debate Home/Dashboard are account-wide and would include a judged
 HOSA session if one exists; `CLAUDE.md` still describes four tracks (not edited by this pass); an
-unresolved learner's shell still uses Debate's visual accent (no claim, unchanged).
+unresolved learner's shell still uses Debate's visual accent (no claim, unchanged). **Later the same
+day the two-track cleanup (section above) resolved the judged-round counts, the assignment copy and
+`CLAUDE.md`, and recorded that running `security:smoke` here was outside the safe-test boundary.**
 
 ## HOSA Medical Terminology owner review repairs — 2026-09-27 — LOCAL COMMIT
 

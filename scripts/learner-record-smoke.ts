@@ -193,7 +193,9 @@ check("R8. Dashboard: Debate-only concepts render only under Debate; DECA/HOSA g
   assert.match(dash, /\(showDebateRecord \? "Debater" : "Student"\)/, "R8l no 'Debater' fallback on a DECA/HOSA page");
   assert.match(dash, /demo && showDebateRecord \? demoSampleLessons/, "R8m Debate demo rows never render under DECA/HOSA");
   assert.match(dash, /demo && showDebateRecord \? demoSampleMastery : \[\]/, "R8m2 nor do the demo mastery percentages (Debate skill names)");
-  assert.match(dash, /const hasActivity = showDebateRecord\s*\? \(xp \?\? 0\) > 0 \|\| recentTests\.length > 0 \|\| judgedDebateCount > 0 \|\| guidedExerciseCount > 0\s*: recentTests\.length > 0 \|\| \(trackRecord\?\.recordedSkills \?\? 0\) > 0;/, "R8r under DECA/HOSA the learning-path state comes from that track's activity only (tests, recorded drills) — never XP or Debate rounds");
+  // 2026-09-27 (two-track focus): Debate's branch no longer reads account-wide XP either (a DECA test or
+  // a dormant HOSA session earns XP too); a seeded demo account keeps its sample XP.
+  assert.match(dash, /const hasActivity = showDebateRecord\s*\? \(demo && \(xp \?\? 0\) > 0\) \|\| recentTests\.length > 0 \|\| judgedDebateCount > 0 \|\| guidedExerciseCount > 0\s*: recentTests\.length > 0 \|\| \(trackRecord\?\.recordedSkills \?\? 0\) > 0;/, "R8r each track's learning-path state comes from that track's activity only — never another track's XP or rounds");
   assert.match(dash, /trackHasPracticeTests\(activeTrack\?\.id\) && activeTrack \? \(trackRecord && trackRecord\.testsCompleted > 0 \? "None flagged in recent tests" : "No test taken yet"\) : "Not started yet"/, "R8s the weak-skill tile names tests only on a track that has them; Debate keeps its neutral copy");
   assert.match(dash, /actionHref=\{activeTrack \? `\/tests\?track=\$\{activeTrack\.slug\}` : "\/tests"\}/, "R8n the tests empty state keeps the track");
   assert.match(dash, /Generate a \$\{activeTrack\.short\} test to unlock/, "R8o and names only this track");
@@ -273,8 +275,10 @@ check("R10. /skills no longer promises DECA a mastery-lesson product it does not
 check("R11. the XP card and the learning path stop attributing Debate to other tracks", () => {
   const xp = stripComments(read("components/app/xp-progress-card.tsx"));
   assert.match(xp, /completed across all your tracks — not only this one\./, "R11a account-wide wording exists");
-  assert.match(xp, /completed — scored training in your track\./, "R11b Debate's wording is preserved");
-  assert.match(xp, /const accountWide = trackId !== undefined && trackId !== "GENERAL_DEBATE";/, "R11c chosen by the effective track");
+  // 2026-09-27 (two-track focus): the counter is account-wide for every track, so Debate no longer
+  // presents it as "in your track" either (another track's sessions would read as Debate's).
+  assert.ok(!/in your track/.test(xp), "R11b no track, Debate included, is told the account-wide counter is its own");
+  assert.ok(!/accountWide/.test(xp), "R11c one wording for every track, not chosen per track");
   assert.match(stripComments(read(DASH)), /<XpProgressCard xp=\{xp\} rank=\{rank\} streak=\{streak\} trackId=\{activeTrack\?\.id\} \/>/, "R11d the dashboard passes it");
   const lp = stripComments(read("components/onboarding/learning-path.tsx"));
   assert.match(lp, /\{showBeginner && effectiveTrack === "GENERAL_DEBATE" \? \(/, "R11e the Debate glossary renders only under Debate");

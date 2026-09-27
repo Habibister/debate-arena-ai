@@ -23,6 +23,11 @@
  *      a `?track=` naming HOSA), and the APIs refuse new HOSA practice with 410 before any provider call.
  *   N. The app shell (desktop nav, mobile bottom bar, More menu, track chip) offers no HOSA entry.
  *   T. Dormant HOSA teams: no new team, no new member, no assignment nudge, and truthful coach copy.
+ *   M. Judged-round metrics count by canonical track ownership: a historical judged HOSA session stays
+ *      readable in history and replay but adds 0 to every Debate count and activity state (Home,
+ *      Dashboard, the Debate record, the average, the learning path); dormant sessions add 0 to the
+ *      coach's round count and to assignment evidence; a real Debate round still counts and a DECA
+ *      role-play is not a Debate round; DECA renders identically; the coach copy is DECA-only.
  *   G. The HOSA code and data are still there (not deleted).
  *   W. Nothing in the whole run attempted a database write.
  */
@@ -72,13 +77,63 @@ const viewer: { id: string; organization: string | null; cookie: string | null; 
 // test needs are set per case in `rows`.
 const rows: {
   debate: Record<string, unknown> | null;
+  /** Stored debate rows, newest first, that debate count/findMany/aggregate/findFirst are evaluated over. */
+  debates: Array<Record<string, unknown>>;
   practiceTest: Record<string, unknown> | null;
   team: Record<string, unknown> | null;
+  assignment: Record<string, unknown> | null;
   assignments: Array<Record<string, unknown>>;
   coachTeams: Array<Record<string, unknown>>;
-} = { debate: null, practiceTest: null, team: null, assignments: [], coachTeams: [] };
+} = { debate: null, debates: [], practiceTest: null, team: null, assignment: null, assignments: [], coachTeams: [] };
+// The viewer's account-wide counters (User.xp / User.streak): every track's scored work moves them.
+const viewerStats = { xp: 0, streak: 0 };
 const writes: string[] = [];
 const WRITE = /^(create|createMany|update|updateMany|upsert|delete|deleteMany|\$executeRaw|\$executeRawUnsafe)$/;
+
+// A small, STRICT evaluator of the Prisma `where` shapes the judged-round queries use. Anything it does
+// not understand throws, so a query that changes shape fails this suite instead of passing vacuously.
+// Null handling follows SQL, as Prisma does: `not`, `in` and `notIn` never match a NULL column.
+type Where = Record<string, unknown>;
+const FILTER_OPERATORS = new Set(["equals", "not", "in", "notIn", "gte", "gt", "lte", "lt"]);
+const same = (a: unknown, b: unknown) => (a instanceof Date && b instanceof Date ? a.getTime() === b.getTime() : a === b);
+function matchesField(value: unknown, filter: unknown, key: string): boolean {
+  if (filter === null || typeof filter !== "object" || filter instanceof Date) return same(value ?? null, filter);
+  const entries = Object.entries(filter as Record<string, unknown>);
+  for (const [op] of entries) if (!FILTER_OPERATORS.has(op)) throw new Error(`debate stand-in: unsupported filter ${key}.${op}`);
+  const present = value !== null && value !== undefined;
+  return entries.every(([op, arg]) => {
+    if (op === "equals") return same(value ?? null, arg);
+    if (op === "not") return arg === null ? present : present && !same(value, arg);
+    if (op === "in") return present && (arg as unknown[]).some((a) => same(value, a));
+    if (op === "notIn") return present && !(arg as unknown[]).some((a) => same(value, a));
+    if (!present) return false;
+    if (op === "gte") return Number(value) >= Number(arg);
+    if (op === "gt") return Number(value) > Number(arg);
+    if (op === "lte") return Number(value) <= Number(arg);
+    return Number(value) < Number(arg);
+  });
+}
+function matchesWhere(row: Record<string, unknown>, where: Where): boolean {
+  return Object.entries(where).every(([key, filter]) => {
+    if (key === "OR") return (filter as Where[]).some((w) => matchesWhere(row, w));
+    if (key === "AND") return (Array.isArray(filter) ? (filter as Where[]) : [filter as Where]).every((w) => matchesWhere(row, w));
+    if (!(key in row)) throw new Error(`debate stand-in: the fixture has no "${key}" field to filter on`);
+    return matchesField(row[key], filter, key);
+  });
+}
+function debateRows(args?: { where?: Where; take?: number }): Array<Record<string, unknown>> {
+  const matched = rows.debates.filter((row) => matchesWhere(row, args?.where ?? {}));
+  return typeof args?.take === "number" ? matched.slice(0, args.take) : matched;
+}
+function debateAggregate(args: { where?: Where; _avg?: Record<string, boolean> } & Record<string, unknown>) {
+  const unsupported = Object.keys(args).filter((k) => k !== "where" && k !== "_avg");
+  if (unsupported.length > 0 || Object.keys(args._avg ?? {}).some((k) => k !== "overallScore")) {
+    throw new Error(`debate stand-in: unsupported aggregate ${JSON.stringify(Object.keys(args))}`);
+  }
+  const scores = debateRows({ where: args.where }).map((r) => r.overallScore).filter((s): s is number => typeof s === "number");
+  return { _avg: { overallScore: scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null } };
+}
+
 function modelProxy(model: string) {
   return new Proxy({}, {
     get(_t, method: string) {
@@ -88,14 +143,23 @@ function modelProxy(model: string) {
           throw new Error(`database write attempted: ${model}.${method}`);
         };
       }
+      if (model === "debate") {
+        if (method === "count") return async (args?: { where?: Where }) => debateRows({ where: args?.where }).length;
+        if (method === "findMany") return async (args?: { where?: Where; take?: number }) => debateRows(args);
+        if (method === "aggregate") return async (args: { where?: Where; _avg?: Record<string, boolean> }) => debateAggregate(args);
+        if (method === "findUnique" || method === "findFirst") {
+          return async (args?: { where?: Where }) => rows.debate ?? debateRows({ where: args?.where })[0] ?? null;
+        }
+      }
       if (method === "findMany" && model === "assignment") return async () => rows.assignments;
       if (method === "findMany" || method === "groupBy") return async () => [];
       if (method === "count") return async () => 0;
       if (method === "aggregate") return async () => ({ _avg: {}, _sum: {}, _count: {}, _max: {}, _min: {} });
       if (method === "findUnique" || method === "findFirst" || method === "findUniqueOrThrow" || method === "findFirstOrThrow") {
         return async () => {
-          if (model === "user") return { id: viewer.id, name: "Riley Park", displayName: "Riley Park", username: "riley", xp: 0, streak: 0, wins: 0, rank: "BRONZE", organization: viewer.organization, preferredOrganization: viewer.organization, email: "riley@example.test" };
+          if (model === "user") return { id: viewer.id, name: "Riley Park", displayName: "Riley Park", username: "riley", xp: viewerStats.xp, streak: viewerStats.streak, wins: 0, rank: "BRONZE", organization: viewer.organization, preferredOrganization: viewer.organization, email: "riley@example.test" };
           if (model === "debate") return rows.debate;
+          if (model === "assignment") return rows.assignment;
           if (model === "practiceTest") return rows.practiceTest;
           if (model === "team") return rows.team;
           if (model === "coach") return { teams: rows.coachTeams };
@@ -150,6 +214,19 @@ stub("lib/ai-providers", {
   }
 });
 stub("lib/rate-limit", { enforceRateLimit: async () => undefined, RateLimitError: class RateLimitError extends Error {} });
+// The current-scoring-era boundary is UNSET in the repository, so every judged-round average is "—" and
+// the average queries never run. `eraStart` stays null (the real behavior) except inside the checks
+// that set an activation instant to prove WHICH rounds an average is taken over.
+type EraModule = { currentScoringEraScope: () => unknown; isCurrentScoringEra: (completedAt: Date | null | undefined) => boolean };
+const realEra = require(path.join(REPO, "lib/debate-scoring-era.ts")) as EraModule & Record<string, unknown>;
+const eraStart: { current: Date | null } = { current: null };
+stub("lib/debate-scoring-era", {
+  ...realEra,
+  currentScoringEraScope: () =>
+    eraStart.current ? { eligible: true, where: { completedAt: { gte: eraStart.current } } } : realEra.currentScoringEraScope(),
+  isCurrentScoringEra: (completedAt: Date | null | undefined) =>
+    eraStart.current ? Boolean(completedAt) && completedAt!.getTime() >= eraStart.current.getTime() : realEra.isCurrentScoringEra(completedAt)
+});
 
 // tsconfig jsx=preserve => classic React.createElement, so React must be global before components load.
 (globalThis as { React?: unknown }).React = React;
@@ -633,6 +710,200 @@ async function main() {
     assert.match(form, /title="Your teams are on a track that is no longer offered\."/);
   });
 
+  // ---- M. judged-round metrics count by canonical track ownership ----------------------------------------
+  // A historical judged HOSA session is the learner's record: it stays readable in history and replay, but
+  // it adds nothing to any number presented as Debate activity. A real Debate round still counts, and DECA
+  // is unchanged. Every query below runs against the same stored rows through the strict `where` evaluator.
+  const JUDGED_AT = new Date("2026-09-20T12:00:00Z");
+  const judgedSession = (id: string, organization: string, eventType: string, overallScore: number | null, topic: string, minutesAgo: number, extra: Record<string, unknown> = {}) => {
+    const debateOrg = organization === "DEBATE";
+    const at = new Date(JUDGED_AT.getTime() - minutesAgo * 60_000);
+    return {
+      id, organization, eventType, topic, format: "PARLIAMENTARY", level: "BEGINNER", practiceMode: "DEBATE", status: "JUDGED",
+      studentId: viewer.id, createdById: viewer.id, opponentUserId: null, student: null, opponentUser: null,
+      studentSide: debateOrg ? "GOVERNMENT" : "AFFIRMATIVE", opponentSide: debateOrg ? "OPPOSITION" : "NEGATIVE",
+      aiPersona: debateOrg ? "Coach Ada" : null, assistedPractice: false,
+      overallScore, logicScore: null, evidenceScore: null, rebuttalScore: null, persuasionScore: null, clarityScore: null, communicationScore: null,
+      strengths: [`Strength noted on ${id}`], weaknesses: [], recommendations: [],
+      createdAt: new Date(at.getTime() - 3_600_000), updatedAt: at, completedAt: at,
+      messages: [{ id: `${id}_m1`, role: debateOrg ? "GOVERNMENT" : "AFFIRMATIVE", authorId: viewer.id, round: 1, content: `Opening speech for ${id}.`, createdAt: at }],
+      ...extra
+    };
+  };
+  // Newest first, as every query orders them. The HOSA session is the newest, so a leak would also make
+  // it the coach's "latest feedback".
+  const HOSA_JUDGED = judgedSession("d_hosa_judged", "HOSA", "HEALTH_SCIENCE_EVENT", 20, "Explain a new diagnosis to a worried patient", 0);
+  const DEBATE_JUDGED = judgedSession("d_debate_judged", "DEBATE", "PARLIAMENTARY_DEBATE", 80, "This house would ban homework", 60);
+  const DEBATE_GUIDED = judgedSession("d_debate_guided", "DEBATE", "PARLIAMENTARY_DEBATE", null, "This house would extend the school day", 120, { practiceMode: "LESSON" });
+  const DECA_JUDGED = judgedSession("d_deca_judged", "DECA", "ROLEPLAY", 60, "Pitch a loyalty program to a store manager", 180);
+  // A legacy Model UN committee session: the other dormant track, excluded by the same rule.
+  const MUN_JUDGED = judgedSession("d_mun_judged", "MODEL_UN", "MODEL_UN_COMMITTEE", 10, "Committee on clean water access", 240);
+  const ERA_SET = new Date("2026-01-01T00:00:00Z");
+  /** The value printed under a Fact or StatCard label, or null when that label is not on the page. */
+  const labeledValue = (html: string, label: string): string | null => decode(html).match(new RegExp(`>${label}</p><p[^>]*>([^<]*)</p>`))?.[1] ?? null;
+  const resetRecord = () => {
+    rows.debates = [];
+    rows.assignment = null;
+    viewerStats.xp = 0;
+    viewerStats.streak = 0;
+    eraStart.current = null;
+  };
+
+  await check("M0. the Debate metric filters come from the canonical track list, and the stand-in refuses a query shape it does not know", () => {
+    const tracks = require(path.join(REPO, "lib/training-tracks.ts")) as Record<string, unknown>;
+    assert.deepEqual(tracks.DEBATE_ROUND_WHERE, { organization: trackById("GENERAL_DEBATE").organization });
+    assert.deepEqual([...(tracks.RETIRED_ORGANIZATIONS as string[])].sort(), ["HOSA", "MODEL_UN"]);
+    assert.deepEqual(tracks.NON_DORMANT_ROUND_WHERE, { organization: { notIn: tracks.RETIRED_ORGANIZATIONS } });
+    rows.debates = [HOSA_JUDGED];
+    try {
+      assert.throws(() => debateRows({ where: { organization: { contains: "HOSA" } } }), /unsupported filter/);
+      assert.throws(() => debateRows({ where: { team: { organization: "HOSA" } } }), /no "team" field/);
+      assert.throws(() => debateRows({ where: { student: { is: { organization: "HOSA" } } } }), /unsupported filter student.is/);
+      assert.throws(() => debateRows({ where: { noSuchField: 1 } }), /no "noSuchField" field/);
+      assert.deepEqual(debateRows({ where: { organization: { notIn: ["HOSA"] } } }), [], "control: the evaluator filters");
+    } finally {
+      resetRecord();
+    }
+  });
+  await check("M1. a historical judged HOSA session stays readable: /debate sends it to its replay, the replay renders it, history lists it", async () => {
+    setViewer("debate");
+    rows.debates = [HOSA_JUDGED];
+    const writesBefore = writes.length;
+    try {
+      assert.equal(await redirectOf("app/(app)/debate/[debateId]/page.tsx", { params: { debateId: HOSA_JUDGED.id } }), redirectTo(`/debates/${HOSA_JUDGED.id}/replay`));
+      const replay = visible(await render("app/(app)/debates/[debateId]/replay/page.tsx", { params: { debateId: HOSA_JUDGED.id } }));
+      assert.ok(!/Replay unavailable/.test(replay), "the replay is not refused");
+      assert.ok(replay.includes(HOSA_JUDGED.topic), "the replay shows the session");
+      assert.match(replay, /Opening speech for d_hosa_judged\./, "with its transcript");
+      assert.match(replay, /Practice ballot score: 20/, "and its stored ballot");
+      const history = await render("app/(app)/debates/history/page.tsx");
+      assert.ok(hrefs(history).includes(`/debates/${HOSA_JUDGED.id}/replay`), "history still links its replay");
+      assert.equal(writes.length, writesBefore, "reading history wrote nothing");
+    } finally {
+      resetRecord();
+    }
+  });
+  // Scope note: the Dashboard's internal bot-matching heuristic still reads the account-wide XP and
+  // frozen wins counters (recorded debt), so the "Recommended bot" label is deliberately not asserted.
+  await check("M2. ... and it adds 0 to every Debate count and activity state: Home, Dashboard, the Debate record, the average and the learning path", async () => {
+    setViewer("debate");
+    rows.debates = [HOSA_JUDGED];
+    // What that HOSA ballot really earned on the account-wide counters.
+    viewerStats.xp = 40;
+    viewerStats.streak = 1;
+    eraStart.current = ERA_SET;
+    try {
+      const home = await render("app/(app)/home/page.tsx");
+      assert.equal(labeledValue(home, "Judged rounds"), "0", "Home: Judged rounds");
+      assert.equal(labeledValue(home, "Guided exercises"), null, "Home: no guided line");
+      const dashHtml = await render("app/(app)/dashboard/page.tsx");
+      const dash = visible(dashHtml);
+      assert.equal(labeledValue(dashHtml, "Judged rounds"), "0", "Dashboard: Judged rounds");
+      assert.match(dash, /Avg practice ballot score \(current scoring\) —\./, "Dashboard: the HOSA ballot is not averaged");
+      assert.match(dash, /No judged rounds yet/, "Debate record heading");
+      assert.match(dash, /0 judged rounds · avg practice ballot score \(current scoring\) —/, "Debate record summary");
+      assert.match(dash, /Complete your first activity so recommendations can adapt\./, "the HOSA session's XP does not make the Debate path active");
+      // The account-wide counters still show the real session, and say it is account-wide.
+      assert.equal(labeledValue(home, "Practice sessions"), "1");
+      assert.equal(labeledValue(dashHtml, "XP"), "40");
+      assert.match(dash, /1 practice session completed across all your tracks — not only this one\./);
+      assert.match(dash, /Earn XP from scored training — counted across all your tracks\./);
+      assert.ok(!/in your track/.test(`${dash} ${visible(home)}`), "no account-wide counter is presented as Debate's own");
+    } finally {
+      resetRecord();
+    }
+  });
+  await check("M3. a real judged Debate round still counts normally, and a guided Debate exercise keeps its own line", async () => {
+    setViewer("debate");
+    // A judged DECA role-play is DECA's, not Debate's: it must not reach the Debate count or average either.
+    rows.debates = [HOSA_JUDGED, DEBATE_JUDGED, DEBATE_GUIDED, DECA_JUDGED];
+    viewerStats.xp = 60;
+    viewerStats.streak = 3;
+    try {
+      const home = await render("app/(app)/home/page.tsx");
+      assert.equal(labeledValue(home, "Judged rounds"), "1", "Home: the Debate round counts");
+      assert.equal(labeledValue(home, "Guided exercises"), "1", "Home: the guided exercise counts on its own line");
+      // Unchanged fail-closed state: with no scoring-era boundary set, no average is shown.
+      assert.match(visible(await render("app/(app)/dashboard/page.tsx")), /1 judged round · avg practice ballot score \(current scoring\) —/);
+      eraStart.current = ERA_SET;
+      const dashHtml = await render("app/(app)/dashboard/page.tsx");
+      const dash = visible(dashHtml);
+      assert.equal(labeledValue(dashHtml, "Judged rounds"), "1", "Dashboard: the Debate round counts");
+      assert.match(dash, /Avg practice ballot score \(current scoring\) 80\. 1 guided exercise completed, not counted here\./, "the average is the Debate round's own ballot (80): not 50 with the HOSA ballot, not 70 with the DECA one");
+      assert.match(dash, /1 judged round · avg practice ballot score \(current scoring\) 80/);
+      assert.ok(!/Complete your first activity/.test(dash), "a real Debate round makes the Debate path active");
+    } finally {
+      resetRecord();
+    }
+  });
+  await check("M4. DECA is unchanged: its Home and Dashboard render identically with or without other tracks' judged sessions", async () => {
+    setViewer("deca");
+    viewerStats.xp = 60;
+    viewerStats.streak = 3;
+    eraStart.current = ERA_SET;
+    try {
+      const baseHome = await render("app/(app)/home/page.tsx");
+      const baseDash = await render("app/(app)/dashboard/page.tsx");
+      rows.debates = [HOSA_JUDGED, DEBATE_JUDGED, DECA_JUDGED];
+      const home = await render("app/(app)/home/page.tsx");
+      const dash = await render("app/(app)/dashboard/page.tsx");
+      assert.equal(home, baseHome, "DECA Home is byte-identical");
+      assert.equal(dash, baseDash, "DECA Dashboard is byte-identical");
+      assert.equal(labeledValue(home, "Judged rounds"), null, "DECA Home shows no judged-round count");
+      assert.match(visible(home), /Practice tests completed/, "DECA Home shows DECA's own record");
+      assert.ok(!/Judged rounds|Debate record|judged rounds?\b/.test(visible(dash)), "DECA Dashboard shows no Debate record");
+      assert.match(visible(dash), /DECA record/);
+    } finally {
+      resetRecord();
+    }
+  });
+  await check("M5. the coach view and assignment evidence treat HOSA and Model UN sessions as history only; Debate and DECA rounds count as before", async () => {
+    setViewer("debate");
+    rows.debates = [HOSA_JUDGED, DEBATE_JUDGED, DECA_JUDGED, MUN_JUDGED];
+    eraStart.current = ERA_SET;
+    const writesBefore = writes.length;
+    try {
+      const { getCoachStudentProgress } = require(path.join(REPO, "lib/coach-progress.ts")) as {
+        getCoachStudentProgress: (viewerId: string, studentId: string, role?: string) => Promise<{
+          debate: { judgedRounds: number; averageScore: number | null; recent: Array<{ id: string }>; latestFeedback: { strengths: string[] } | null };
+        }>;
+      };
+      const progress = await getCoachStudentProgress("user_admin", viewer.id, "ADMIN");
+      assert.equal(progress.debate.judgedRounds, 2, "the Debate and DECA rounds count, the HOSA and Model UN sessions do not");
+      assert.equal(progress.debate.averageScore, 70, "the average is (80 + 60) / 2, without the dormant ballots");
+      assert.deepEqual(progress.debate.latestFeedback?.strengths, DEBATE_JUDGED.strengths, "the latest feedback is not the HOSA ballot's");
+      assert.deepEqual(progress.debate.recent.map((d) => d.id), [HOSA_JUDGED.id, DEBATE_JUDGED.id, DECA_JUDGED.id, MUN_JUDGED.id], "the dormant sessions stay in the coach's recent history");
+      const assignments = require(path.join(REPO, "lib/assignments.ts")) as {
+        getStudentEvidenceOptions: (userId: string, type: string) => Promise<Array<{ id: string }>>;
+        completeAssignment: (p: { assignmentId: string; userId: string; input: Record<string, unknown> }) => Promise<unknown>;
+      };
+      const options = await assignments.getStudentEvidenceOptions(viewer.id, "DEBATE_ROUND");
+      assert.deepEqual(options.map((o) => o.id), [DEBATE_JUDGED.id, DECA_JUDGED.id], "the HOSA and Model UN sessions are not offered as evidence");
+      rows.assignment = { id: "asg_round", type: "DEBATE_ROUND", targetId: null, team: { id: "team_debate", name: "Debate team", organization: "DEBATE", coach: null }, submissions: [] };
+      await assert.rejects(assignments.completeAssignment({ assignmentId: "asg_round", userId: viewer.id, input: { evidenceId: HOSA_JUDGED.id, notes: null } }),
+        (error: { status?: number }) => error.status === 403, "a HOSA session is refused as evidence");
+      assert.equal(writes.length, writesBefore, "refused before any write");
+      // Control: a real Debate round is accepted (and reaches the write stand-in, which throws).
+      await assert.rejects(assignments.completeAssignment({ assignmentId: "asg_round", userId: viewer.id, input: { evidenceId: DEBATE_JUDGED.id, notes: null } }),
+        /database write attempted: assignmentSubmission\.upsert/);
+    } finally {
+      writes.length = writesBefore;
+      resetRecord();
+    }
+  });
+  await check("M6. coach assignment copy names the current product: the practice-test type is DECA-only, and no type mentions HOSA", () => {
+    const { ASSIGNMENT_TYPE_META } = require(path.join(REPO, "lib/assignment-types.ts")) as {
+      ASSIGNMENT_TYPE_META: Record<string, { label: string; description: string; evidenceLabel: string }>;
+    };
+    assert.equal(ASSIGNMENT_TYPE_META.PRACTICE_TEST.description, "Students complete a generated DECA practice test and submit the completed test.");
+    for (const [type, meta] of Object.entries(ASSIGNMENT_TYPE_META)) {
+      assert.ok(!/HOSA/.test(`${meta.label} ${meta.description} ${meta.evidenceLabel}`), `${type} names no HOSA`);
+    }
+    // The wording is true: among the public tracks, only a DECA team can be given a practice test.
+    const { assignmentTypesForOrganization } = require(path.join(REPO, "lib/track-content.ts")) as { assignmentTypesForOrganization: (org: string) => string[] };
+    assert.deepEqual(ACTIVE_TRACKS.filter((t) => assignmentTypesForOrganization(t.organization).includes("PRACTICE_TEST")).map((t) => t.id), ["DECA"]);
+  });
+
   // ---- G. the HOSA code and data are still there --------------------------------------------------------
   await check("G. HOSA is dormant, not deleted: curriculum, bank, decks, components and routes remain", () => {
     assert.ok(EDUCATION_LESSONS.filter((e) => e.track === "HOSA").length >= 17, "the Medical Terminology lessons remain");
@@ -658,7 +929,7 @@ async function main() {
     assert.deepEqual(writes, [], "no page, API or redirect attempted a database write");
   });
 
-  console.log(`\nPublic-tracks smoke passed: ${checks} checks. CompeteReady offers exactly Debate and DECA; a HOSA-saved or new learner gets "Choose Debate or DECA" and is never converted; Debate and DECA learners see 0 HOSA surfaces; every direct HOSA entry redirects once to its general page; the shell offers no HOSA entry; HOSA teams take no new team, member or assignment nudge; the APIs refuse new HOSA practice and generation with 410 before any provider call; nothing was written and HOSA's code and data remain.`);
+  console.log(`\nPublic-tracks smoke passed: ${checks} checks. CompeteReady offers exactly Debate and DECA; a HOSA-saved or new learner gets "Choose Debate or DECA" and is never converted; Debate and DECA learners see 0 HOSA surfaces; every direct HOSA entry redirects once to its general page; the shell offers no HOSA entry; HOSA teams take no new team, member or assignment nudge; a historical HOSA session stays readable but adds 0 to Debate metrics; the APIs refuse new HOSA practice and generation with 410 before any provider call; nothing was written and HOSA's code and data remain.`);
 }
 
 main().catch((error) => {

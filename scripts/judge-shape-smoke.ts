@@ -738,9 +738,13 @@ async function main() {
   // narrower than the number it describes. A4b-1 above still forbids the lessons claim, which was
   // the defect these assertions were written to hold shut; what they pin now is that the copy names
   // SCORED activity and nothing weaker.
-  assert.ok(/completed — scored training in your track\./.test(cardSrc),
-    "A4b-2. the populated state names scored training, the class of thing that actually writes it");
-  assert.ok(/Complete a scored activity in your track to start your record\./.test(cardSrc),
+  // 2026-09-27 (two-track focus): the counter is account-wide, so every track, Debate included, now
+  // reads the account-wide wording ("in your track" would present another track's sessions, such as a
+  // dormant HOSA session, as Debate's). The populated state names the counter itself; the empty state
+  // still asks for a SCORED activity.
+  assert.ok(/practice \$\{streak === 1 \? "session" : "sessions"\} completed across all your tracks — not only this one\./.test(cardSrc),
+    "A4b-2. the populated state names completed practice sessions, account-wide");
+  assert.ok(/Complete a scored activity to start your record\./.test(cardSrc),
     "A4b-3. and the empty state asks for a scored activity, not a lesson");
   assert.ok(!/\b(lesson|read|watch|study)\b/i.test(cardSrc),
     "A4b-3b. and neither state credits an unscored activity");

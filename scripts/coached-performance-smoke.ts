@@ -840,12 +840,14 @@ function main() {
 
   check("KA. guided rows cannot enter independent completed-round totals (Home, Dashboard, coach view, assignment credit)", () => {
     const home = stripComments(read("app/(app)/home/page.tsx"));
-    assert.ok(/prisma\.debate\.count\(\{ where: \{ studentId: session\.user\.id, status: "JUDGED", \.\.\.INDEPENDENT_ROUND_WHERE \} \}\)/.test(home), "Home 'Judged rounds' counts independent rounds only");
+    // Since 2026-09-27 (two-track focus) the Debate record also counts only the Debate track's own
+    // rounds (DEBATE_ROUND_WHERE), and the coach view every round but a dormant track's; guided rows stay out.
+    assert.ok(/prisma\.debate\.count\(\{ where: \{ studentId: session\.user\.id, status: "JUDGED", \.\.\.INDEPENDENT_ROUND_WHERE, \.\.\.DEBATE_ROUND_WHERE \} \}\)/.test(home), "Home 'Judged rounds' counts independent Debate rounds only");
     const dashboard = stripComments(read("app/(app)/dashboard/page.tsx"));
-    assert.ok(/status: "JUDGED",\s*\.\.\.INDEPENDENT_ROUND_WHERE\s*\}\s*\}\)/.test(dashboard), "Dashboard 'Judged rounds' counts independent rounds only");
+    assert.ok(/status: "JUDGED",\s*\.\.\.INDEPENDENT_ROUND_WHERE,\s*\.\.\.DEBATE_ROUND_WHERE\s*\}\s*\}\)/.test(dashboard), "Dashboard 'Judged rounds' counts independent Debate rounds only");
     assert.ok(/calculateDebateRating\(\{ xp, wins, judgedDebates: judgedDebateCount \}\)/.test(dashboard), "control: the bot heuristic reads that filtered count");
     const coach = stripComments(read("lib/coach-progress.ts"));
-    assert.ok(/where: \{ studentId, status: "JUDGED", \.\.\.INDEPENDENT_ROUND_WHERE \}/.test(coach), "coach judged-round performance is independent rounds only");
+    assert.ok(/where: \{ studentId, status: "JUDGED", \.\.\.INDEPENDENT_ROUND_WHERE, \.\.\.NON_DORMANT_ROUND_WHERE \}/.test(coach), "coach judged-round performance is independent rounds only, without a dormant track's");
     assert.ok(/const judgedRounds = judgedDebates\.length;/.test(coach) && /const latest = judgedDebates\[0\]/.test(coach), "control: count and latest feedback derive from that filtered list");
     const assignments = stripComments(read("lib/assignments.ts"));
     assert.equal((assignments.match(/\.\.\.INDEPENDENT_ROUND_WHERE/g) ?? []).length, 2, "assignment evidence (submit + options) excludes guided rounds");
@@ -878,7 +880,7 @@ function main() {
     const coach = stripComments(read("lib/coach-progress.ts"));
     assert.ok(/where: \{ studentId \},\s*orderBy: \{ createdAt: "desc" \},\s*take: 5,\s*select: \{ id: true, topic: true, status: true, overallScore: true, practiceMode: true, createdAt: true \}/.test(coach), "coach recent rounds list every round and carry the marker");
     for (const file of ["app/(app)/home/page.tsx", "app/(app)/dashboard/page.tsx"]) {
-      assert.ok(/status: "JUDGED", practiceMode: "LESSON" \}/.test(stripComments(read(file))), `${file} counts guided exercises on their own line`);
+      assert.ok(/status: "JUDGED", practiceMode: "LESSON", \.\.\.DEBATE_ROUND_WHERE \}/.test(stripComments(read(file))), `${file} counts guided (Debate) exercises on their own line`);
     }
     assert.ok(/hasActivity = [^;]*guidedExerciseCount > 0/.test(stripComments(read("app/(app)/dashboard/page.tsx"))), "a guided round still counts as activity");
   });

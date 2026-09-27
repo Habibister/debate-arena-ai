@@ -9,9 +9,11 @@ CompeteReady trains students for **real competitive events** with practice that 
 is actually run and scored. The promise is honesty: real round structure, rubrics grounded in official
 guidelines, and never fake progress.
 
-## The four training tracks
+## The training tracks
 
-**General Debate** (Public Forum + parliamentary), **DECA**, **HOSA**, **Model UN**. Tracks are
+The public product is **General Debate** (Public Forum + parliamentary) and **DECA**, defined once by
+`PUBLIC_TRACK_IDS` in `lib/training-tracks.ts`. **HOSA** and **Model UN** remain in the code as
+retired/dormant internal implementation that no learner is offered. Tracks are
 **isolated**: a student in one track never sees another track's content presented as their training.
 Isolation is enforced end-to-end (pages, APIs, coach dashboards) and covered by `npm run tracks:smoke`.
 Never weaken it.

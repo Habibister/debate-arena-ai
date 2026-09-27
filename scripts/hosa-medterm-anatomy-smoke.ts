@@ -441,9 +441,9 @@ async function main() {
     assert.match(label, /^AI-generated CompeteReady lesson\b/, "A9c. AI-generated CompeteReady instruction");
     assert.match(label, /not an official HOSA lesson or test item/, "A9d. and not an official HOSA lesson or test item");
     assert.match(label, /not yet reviewed by a person/, "A9e. and not yet reviewed by a person");
-    // The word-part label is untouched by this module.
-    assert.equal(STABLE_TEACHING_HOSA_PROVENANCE.sourceLabel, "AI-generated CompeteReady lesson — not yet reviewed by a person",
-      "A9f. control: the word-part lessons keep their own label");
+    // The word-part label is its own constant, untouched by this module.
+    assert.equal(STABLE_TEACHING_HOSA_PROVENANCE.sourceLabel, "AI-generated CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person",
+      "A9f. control: the word-part lessons keep their own constant, with the same wording");
     // The authoring record in the catalog says the same, and names the review gate.
     const catalog = read("lib/learning-content.ts");
     const record = catalog.slice(catalog.indexOf("---- HOSA MEDICAL TERMINOLOGY: ANATOMY"), catalog.indexOf(`slug: "${BODY_MAP}"`));

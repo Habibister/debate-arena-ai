@@ -407,6 +407,8 @@ async function main() {
     // the label, and only after a human review or an owner waiver is recorded there.
     assert.match(STABLE_TEACHING_HOSA_PROVENANCE.sourceLabel ?? "", /^AI-generated\b/, "A7f. the label says the lessons are AI-generated");
     assert.match(STABLE_TEACHING_HOSA_PROVENANCE.sourceLabel ?? "", /not yet reviewed by a person/, "A7g. and that no person has reviewed them yet");
+    assert.match(STABLE_TEACHING_HOSA_PROVENANCE.sourceLabel ?? "", /not an official HOSA lesson or test item/,
+      "A7g2. and that they are not official HOSA lessons or test items");
     assert.match(read("lib/learning-content.ts"), /have NOT yet had a human content review/,
       "A7h. which is what the authoring record still says");
     const course = EDUCATION_COURSES.find((c) => c.id === HOSA_MEDTERM_STUDY_COURSE);
@@ -897,6 +899,14 @@ async function main() {
     assert.ok(/check your current event guideline for event-specific requirements/.test(hubText),
       "F3k. and still defers to the learner's own guideline");
     assert.ok(!hub.includes("/training/hosa/practice"), "F3l. and still never routes into the practice room itself");
+    // hosa-practice-scope 38b pins the same rule but never runs past its baseline failure 10c, which
+    // is how a DECA sentence in the shared practice-source note reached the HOSA hub unnoticed.
+    assert.ok(!hubText.includes("DECA"), "F3m. the HOSA hub names no DECA material");
+    assert.ok(hubText.includes("Original questions written for practice, not official HOSA test items."),
+      "F3n. and states HOSA's own practice source");
+    const decaHubText = visible(renderToStaticMarkup(React.createElement(TrackHubPage, { params: { track: "deca" } })));
+    assert.ok(decaHubText.includes("not official DECA prompts") && !decaHubText.includes("HOSA test items"),
+      "F3o. control: the DECA hub keeps its own practice-source sentence");
   });
 
   await check("F4. the new modules stay pure", () => {

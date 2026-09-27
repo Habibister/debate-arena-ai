@@ -2765,7 +2765,8 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
   //
   // AUTHORING RECORD. The first entry replaces a thin held draft under the same slug. All four were
   // AI-drafted in a Claude Code session on 2026-09-26 and have NOT yet had a human content review, so
-  // their provenance label reads "AI-generated CompeteReady lesson — not yet reviewed by a person"
+  // their provenance label reads "AI-generated CompeteReady lesson, not an official HOSA lesson or test
+  // item — not yet reviewed by a person"
   // (set in the education registry's HOSA track file). Record a review or an owner waiver here before
   // changing that label.
   {

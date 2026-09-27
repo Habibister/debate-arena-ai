@@ -122,7 +122,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   "Question practice" row in place of "Skill drills"; the HOSA hub copy names the word-parts
   lessons. **Provenance:** stable teaching material. The lesson text was **AI-drafted and has had
   no human content review** (independent AI reviewer passes only), so its source label reads
-  "AI-generated CompeteReady lesson — not yet reviewed by a person" and the lesson header shows it.
+  "AI-generated CompeteReady lesson — not yet reviewed by a person" and the lesson header shows it
+  (since the 2026-09-27 end-to-end QA it reads "AI-generated CompeteReady lesson, not an official
+  HOSA lesson or test item — not yet reviewed by a person", the words the other three modules use).
   **Before any push, the owner decides on a human subject review or an explicit waiver:**
   `docs/curriculum/00-principles-and-sources.md` asks for a subject-accuracy pass before a lesson
   ships and clinical review before content carrying medical claims is released. After a review or
@@ -134,8 +136,8 @@ non-executable. Rewrite this region after each milestone; append history below t
   "Word roots" suggestion (`hosa-medical-terminology-1`) to `hosa-medical-word-roots` through the
   hand-audited `HOSA_SEEDED_TOPIC_LESSON` map in `lib/education/test-result-recommendations.ts`;
   "Clinical abbreviations" and "Terminology in patient scenarios" are still named without a link,
-  because no lesson teaches them. The older record page `/skills/hosa-medical-terminology-1` still
-  says there is nothing to read. Guard: `npm run hosa-medterm-lessons:smoke` (14 checks). It ties
+  because no lesson teaches them. The older record page `/skills/hosa-medical-terminology-1` said
+  there was nothing to read; since `1f3f4e1` it redirects to the Word Roots lesson. Guard: `npm run hosa-medterm-lessons:smoke` (14 checks). It ties
   the lessons to the practice bank both ways: each of the bank's 90 word-part questions tests a part
   the lessons teach with the bank's own meaning (71) or a part listed as not taught yet (19); every
   definition a lesson gives a word part is one of the phrasings listed for that part in the suite,
@@ -860,15 +862,16 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 ## Current next action
 
-**HOSA LEARNING, 2026-09-27.** The Medical Terminology anatomy, physiology and pathophysiology
-modules are local commits on top of the local HOSA stack (see *HOSA Medical Terminology
-pathophysiology*, *physiology* and *anatomy* below the archive boundary). Pathophysiology is the last
-planned module of the Medical Terminology course; it does not make the course cover every HOSA event
-or everything a HOSA test may ask. The owner's plan (2026-09-27): one HOSA Medical Terminology
-end-to-end QA, then one qualified human subject-accuracy review of the whole curriculum (word parts,
-anatomy, physiology, pathophysiology) before the stack is pushed; the owner has said they cannot be
-that reviewer and AI review never counts as it. Then a screen-by-screen website review with the
-owner, fixes, and design. Each step starts only when the owner asks.
+**HOSA LEARNING, 2026-09-27 (after the end-to-end QA).** The owner accepted `116c6af` and froze the
+HOSA Medical Terminology curriculum: 17 lessons in four modules (word parts, anatomy, physiology,
+pathophysiology). Pathophysiology is the last planned module; the course does not cover every HOSA
+event or everything a HOSA test may ask. The final end-to-end QA is a local commit on top (see *HOSA
+Medical Terminology end-to-end QA* below the archive boundary). **Next, only when the owner asks:**
+one qualified human subject-accuracy review of the whole curriculum before the stack is pushed (the
+owner has said they cannot be that reviewer; AI review never counts as it), using the reviewer
+inventory in `/mnt/project-files/reports/2026-09-27-hosa-medterm-e2e-qa.md`; then corrections; then a
+screen-by-screen website review with the owner (the debt listed under *What remains open* in
+`docs/HANDOFF.md`), fixes, and design. Do not add HOSA curriculum.
 
 **Recorded 2026-09-26** (the session-builder hang named here was fixed at `6e365e9`; word-part
 practice, remediation and the anatomy module followed). **HOSA LEARNING (owner direction, 2026-09-26).** The owner paused repeated DECA acceptance reviews
@@ -944,6 +947,47 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology end-to-end QA — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build`, a dev
+server and a browser are forbidden in the cloud workspace; pages were rendered server-side with the
+database, auth and request headers stubbed). The owner's final end-to-end completion QA of the frozen
+17-lesson Medical Terminology course, baseline `116c6af`. No lesson text changed and no curriculum was
+added. **Method:** seven independent read-only AI investigators (course order, practice choices,
+remediation, test results, discovery surfaces, labels and isolation, debt and reviewer inventory)
+traced every edge of the learner journeys from code and server renders; every reported defect went to
+two adversarial AI verifiers. This is AI QA, not a human review. **Result:** all 17 lessons are
+reachable in one chain, word parts (4) → anatomy (4) → physiology (4) → pathophysiology (5), with no
+loop, duplicate, backward Next or held draft shown as published. The five practice choices each send
+exactly their own areas (word parts 90 questions, anatomy, physiology and pathophysiology 30 each,
+"All Medical Terminology" 180 with the pre-targeting request unchanged), and none starts a session by
+itself. Each of the six areas resolves to its published owner lesson and back to that module's
+practice, or fails closed. HOSA result actions stay on HOSA (no `/debate`, bare `/skills` or DECA
+"cluster" wording). **Two repairs, both deterministic:** (1) the four word-part lessons' label lacked
+"not an official HOSA lesson or test item", which the other 13 carry; `STABLE_TEACHING_HOSA_PROVENANCE`
+now reads "AI-generated CompeteReady lesson, not an official HOSA lesson or test item — not yet
+reviewed by a person" (pins updated in the lessons, anatomy, physiology and pathophysiology suites;
+new check A7g2). (2) A cross-track leak: the shared Track settings note
+(`components/training/track-controls.tsx`, from `eb12b7f` on main) told HOSA hub learners their
+practice was "Original scenarios … not official DECA prompts", although HOSA has no scenario practice.
+HOSA now reads "Original questions written for practice, not official HOSA test items." DECA and
+Debate keep the sentence byte for byte (the Debate hub also shows the DECA wording; recorded, not
+touched). The existing guard `hosa-practice-scope` 38b ("the HOSA hub still leaks no DECA surface")
+had been failing since `eb12b7f`, hidden behind that suite's baseline failure 10c; it passes now, and
+`hosa-medterm-lessons` F3m–F3o pin the rule in a suite that runs to the end. **Recorded, not
+repaired:** the website-review debt under *What remains open* in `docs/HANDOFF.md`. "Clinical
+abbreviations" and "Terminology in patient scenarios" are optional future content, not required for
+this course: the practice bank has no such area and no course copy promises them. **Verification:**
+typecheck clean; lint clean on the changed files; 56 of the 62 safe suites pass, and the six failures
+are the known baseline (coach-evidence S3-15d, debate-mastery 24, deca-mastery PA7,
+hosa-medterm-evidence PA7, hosa-practice-scope 10c, skills-compat 2); under soft asserts
+`hosa-practice-scope` now records two failures (10c, 43b) instead of three. Report with the edge
+census, the reviewer inventory and the debt split: `/mnt/project-files/reports/2026-09-27-hosa-medterm-e2e-qa.md`.
+An independent AI QA reviewer and an AI product reviewer then passed the diff (not a human review);
+their nits (a duplicated check id, a stale label line in `docs/HANDOFF.md`, a check message) were
+applied.
+The human subject-accuracy review of the whole curriculum remains the gate before any push.
 
 ## HOSA Medical Terminology pathophysiology — 2026-09-27 — LOCAL COMMIT
 

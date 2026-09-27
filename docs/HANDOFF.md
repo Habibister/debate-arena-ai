@@ -13,6 +13,18 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA Medical Terminology end-to-end QA — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not
+  deployed, not Production-verified, not browser-verified. The owner froze the curriculum at `116c6af`
+  (17 lessons, four modules). AI QA of every learner journey (discover, learn, practise, feedback,
+  remediate, practise again), each defect checked by two adversarial AI verifiers; not a human
+  review. All 17 lessons reachable in order; five practice choices send exactly their areas and never
+  auto-start; all six areas remediate to their owner lesson or fail closed; HOSA result actions stay on
+  HOSA. Two repairs: the word-part lessons' label now also says "not an official HOSA lesson or test
+  item", like the other 13; and the HOSA hub's Track settings note no longer says "not official DECA
+  prompts" (HOSA now reads "Original questions written for practice, not official HOSA test items";
+  DECA and Debate unchanged). That leak had been caught by `hosa-practice-scope` 38b since `eb12b7f`
+  but hidden behind its baseline failure 10c; `hosa-medterm-lessons` F3m–F3o now pin it. No lesson
+  text changed. Report: `/mnt/project-files/reports/2026-09-27-hosa-medterm-e2e-qa.md`.
 - **HOSA Medical Terminology pathophysiology — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not
   deployed, not Production-verified, not browser-verified. The fourth and last planned module of the
   Medical Terminology course, `hosa-medterm-pathophysiology`, after physiology: five published
@@ -123,8 +135,10 @@ below the boundary.
   links to the existing practice room `/training/hosa/practice`. HOSA's Learn stage, Event HQ, hub
   and lessons index now lead to the course, and a HOSA test result's seeded "Word roots" suggestion
   links to the roots lesson. No skill, drill, mastery or write path was added. The
-  lesson text is **AI-drafted with no human content review**; its label on the page says "AI-generated
-  CompeteReady lesson — not yet reviewed by a person". Do not describe it as human-reviewed. **Before
+  lesson text is **AI-drafted with no human content review**; its label on the page said "AI-generated
+  CompeteReady lesson — not yet reviewed by a person" (since the 2026-09-27 end-to-end QA: "AI-generated
+  CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person", like
+  the other three modules). Do not describe it as human-reviewed. **Before
   any push the owner decides on a human subject review or an explicit waiver** (superseded on
   2026-09-27 by the owner's plan: one qualified human subject-accuracy review of the whole Medical
   Terminology curriculum before the stack is pushed). Details: *Education
@@ -186,7 +200,26 @@ below the boundary.
   generator tells such a learner it is "matched to your selected track". **Stale pins found, not changed:**
   `skills-compat` items 4, 4b, 6 and 28 and `hosa-practice-scope` 43b (pins the registered smoke
   inventory at 36; 60 now) are masked by earlier failures in the same suites (item 2 and 10c), which
-  fail identically at `01bbaa1`.
+  fail identically at `01bbaa1`. (`hosa-practice-scope` 38b, the HOSA hub's no-DECA check, was masked
+  the same way and was a real leak; repaired in the 2026-09-27 end-to-end QA.) **Website-review debt
+  from that QA, recorded and not repaired (for the owner's screen-by-screen review):** the lessons
+  index cards carry no AI-generated label (each lesson header does); the HOSA hub's "Guided
+  information" row still names only word parts and the communication lesson; older copy that
+  overreaches: the practice room's "Everything you need before test day", "Mirrors the HOSA Medical
+  Terminology Round One written test" under the 50-question option, Event HQ's "Study topics" listing
+  the bank's six areas with no qualifier, the hub's Event HQ row promising "drills, and simulations",
+  and Home's "Practice your event" always opening the Medical Terminology room; the results page's
+  "regenerate a shorter test" and "retry a shorter set" although 10 questions is the minimum; an empty
+  "Recommended videos and resources" card for some HOSA categories; practice-test questions and
+  explanations shown with no AI label; `/skills/hosa-medical-terminology` still says there is nothing
+  to read (reached only by typed URL); the coach lesson picker offers the seeded "Clinical
+  abbreviations" and "Terminology in patient scenarios" rows; the practice-room note that opening a
+  lesson closes the results sits after the links; the older test grader matches the shared skill name
+  "Medical Terminology", so any Medical Terminology miss can recommend Word Roots (one verifier
+  upheld it as debt, one refuted it; pinned as designed today); the Debate hub still shows the DECA
+  practice-source sentence. "Clinical abbreviations" and "Terminology in patient scenarios" are
+  optional future content, not required for this course: the bank has no such area and no course copy
+  promises them, and adding them would need a sourced owner decision.
 - **REBUTTAL LIVE P0 — CONTAINED LOCALLY, NOT IN PRODUCTION.** A teaching-to-drill-to-mastery audit
   (2026-09-01) found the `rebuttal` drill area writing durable `debate-rebuttal` mastery on material
   the published curriculum does not teach: 11 of 30 items not derivable from any learner-visible
@@ -1181,13 +1214,14 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-**HOSA, 2026-09-27.** The anatomy, physiology and pathophysiology modules are local commits;
-pathophysiology is the last planned Medical Terminology module. The owner's plan: one HOSA Medical
-Terminology end-to-end QA, then one qualified human subject-accuracy review of the whole curriculum
-before the stack is pushed (the owner cannot be that reviewer; AI review never counts), then a
-screen-by-screen website review with the owner, fixes, then design. Start each only when the owner
-asks; do not start another curriculum module. The HOSA deck page following the viewer's selected track stays deferred
-by the owner.
+**HOSA, 2026-09-27 (after the end-to-end QA).** The owner froze the Medical Terminology curriculum at
+`116c6af`; the end-to-end QA is a local commit on top. Next, only when the owner asks: one qualified
+human subject-accuracy review of the whole curriculum before the stack is pushed (the owner cannot be
+that reviewer; AI review never counts), using the reviewer inventory in
+`/mnt/project-files/reports/2026-09-27-hosa-medterm-e2e-qa.md`; then corrections; then a
+screen-by-screen website review with the owner (the debt under *What remains open*), fixes, then
+design. Do not add HOSA curriculum. The HOSA deck page following the viewer's selected track stays
+deferred by the owner.
 
 **Recorded 2026-09-26** (its recommended steps were done in the local stack: `6e365e9`, `804a8d2`,
 `1f3f4e1`; the human content review is still open). **HOSA LEARNING is the development priority (owner direction, 2026-09-26).** Debate and DECA

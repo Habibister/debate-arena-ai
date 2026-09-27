@@ -49,15 +49,18 @@ import type { ConceptEducationLessonSource, EducationRegistryEntry } from "@/lib
  *
  * THE LABEL SAYS WHO WROTE THEM. The four lessons were AI-drafted and no person has reviewed them yet
  * (the authoring record in lib/learning-content.ts), and CLAUDE.md requires AI-generated material to
- * be labeled as such. The lesson header renders `sourceLabel` verbatim, so it says both facts. After a
- * human content review, or an explicit owner waiver, is recorded there, the label can change to the
- * plain "CompeteReady authored lesson" form the reviewed DECA and Debate lessons use.
+ * be labeled as such. The lesson header renders `sourceLabel` verbatim, so it says both facts. It also
+ * says the lessons are not official HOSA material, in the same words as the anatomy, physiology and
+ * pathophysiology labels (added in the 2026-09-27 end-to-end QA): word parts are half of the practice
+ * bank, so a learner could mistake these lessons for HOSA material just as easily. After a human
+ * content review, or an explicit owner waiver, is recorded there, the label can change to the plain
+ * "CompeteReady authored lesson" form the reviewed DECA and Debate lessons use.
  */
 export const STABLE_TEACHING_HOSA_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
   authority: "stable-teaching",
   freshness: "stable",
   organization: "CompeteReady",
-  sourceLabel: "AI-generated CompeteReady lesson — not yet reviewed by a person"
+  sourceLabel: "AI-generated CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person"
 });
 
 /**

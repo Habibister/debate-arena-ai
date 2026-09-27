@@ -42,10 +42,19 @@ export function TrackControls({ trackId }: { trackId: TrainingTrack }) {
           the one source that exists is stated. No source system is built here; when verified past
           prompts exist, a real selector can return with behaviour behind it. */}
       <p className="text-sm font-semibold">AI-generated CompeteReady practice</p>
-      <p className="text-xs text-muted-foreground">
-        Original scenarios written for practice and labelled as such — not official DECA prompts.
-        Verified past competition prompts are not available for this event yet.
-      </p>
+      {/* HOSA has no scenario practice (its role-play is withdrawn) and must never name another
+          organization's material: its practice is original questions, stated in the bank's own words
+          (lib/education/hosa-medterm-practice.ts). DECA and Debate keep their sentence unchanged. */}
+      {trackId === "HOSA" ? (
+        <p className="text-xs text-muted-foreground">
+          Original questions written for practice, not official HOSA test items.
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Original scenarios written for practice and labelled as such — not official DECA prompts.
+          Verified past competition prompts are not available for this event yet.
+        </p>
+      )}
     </div>
   );
 }

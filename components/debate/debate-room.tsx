@@ -12,7 +12,7 @@ import Link from "next/link";
 import { normalizeAccessibility } from "@/lib/accessibility";
 import { LEARNING_PROFILE_KEY, normalizeLearningProfile } from "@/lib/learning-path";
 import { DEFAULT_TRACK, trackById, trackBySlug } from "@/lib/training-tracks";
-import { AI_DEBATE_PERSONAS } from "@/lib/ai-personas";
+import { AI_DEBATE_PERSONAS, PUBLIC_AI_PERSONAS } from "@/lib/ai-personas";
 import {
   DEBATE_CATEGORIES,
   FORMAT_CARDS,
@@ -546,7 +546,7 @@ export function DebateRoom({ track, guidedLessonId }: { track?: string; guidedLe
               <Badge className="border border-blue-400/30 bg-blue-500/10 text-blue-100">Bot ladder</Badge>
             </div>
             <div className="grid gap-2 md:grid-cols-2">
-              {AI_DEBATE_PERSONAS.map((persona) => (
+              {PUBLIC_AI_PERSONAS.map((persona) => (
                 <button
                   key={persona.id}
                   type="button"

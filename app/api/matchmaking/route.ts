@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, parseJson, trackNotOffered, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { matchmakingRequestSchema } from "@/lib/validators";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
     }
 
     const input = await parseJson(request, matchmakingRequestSchema);
+    if (isRetiredOrganization(input.organization)) {
+      return trackNotOffered();
+    }
     const matchedStudent = await prisma.user.findFirst({
       where: {
         id: { not: session.user.id },

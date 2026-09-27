@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
 import { getOfficialTestFormat } from "@/lib/competition-specs";
 import { getActiveTrack } from "@/lib/track-server";
-import { trackHasPracticeTests } from "@/lib/training-tracks";
+import { PUBLIC_PRACTICE_TEST_ORGANIZATIONS, trackHasPracticeTests } from "@/lib/training-tracks";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 
 const testSteps = [
   { title: "Generate", detail: "Choose 10, 25, 50, or a 100-question mixed exam.", icon: Sparkles },
@@ -44,7 +45,25 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
   if (!isAssignment && activeTrack && !trackHasPracticeTests(activeTrack.id)) {
     redirect(`/study-arcade?track=${activeTrack.slug}`);
   }
+  // No public track resolved (not chosen yet, or a saved selection naming a dormant track such as HOSA)
+  // and no assignment: the neutral chooser, never an unlocked generator. An assigned test still renders.
+  if (!isAssignment && !activeTrack) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border bg-card p-5">
+          <Badge variant="secondary">Practice tests</Badge>
+          <h1 className="page-title mt-3">Practice tests</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">Original practice tests for the track you train in.</p>
+        </div>
+        <ChooseTrackState context="Practice tests follow the track you choose." />
+      </div>
+    );
+  }
   const lockedOrganization = activeTrack?.id === "DECA" ? "DECA" : activeTrack?.id === "HOSA" ? "HOSA" : undefined;
+  // With nothing locked (an assigned test), the generator offers the PUBLIC practice-test organizations;
+  // when that is exactly one (DECA today) the header names it, never a dormant track.
+  const offeredOrganization =
+    lockedOrganization ?? (PUBLIC_PRACTICE_TEST_ORGANIZATIONS.length === 1 ? PUBLIC_PRACTICE_TEST_ORGANIZATIONS[0] : undefined);
   // Registry-driven official test shape (HOSA MT: 50 questions / 60 minutes). Null when the
   // registry has no timed multiple-choice round for the organization — generator is unchanged.
   const officialFormat = lockedOrganization ? await getOfficialTestFormat(lockedOrganization) : null;
@@ -64,12 +83,12 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
             serving. Where no organization is locked (an assigned test, or no resolved track) the
             generator really does offer both, and the copy still says both. */}
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{lockedOrganization ?? "DECA and HOSA"}</Badge>
+          <Badge variant="secondary">{offeredOrganization ?? "DECA and HOSA"}</Badge>
           {activeTrack ? <Badge variant="outline">Training in: {activeTrack.label}</Badge> : null}
         </div>
         <h1 className="page-title mt-3">Practice tests</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          {HEADER_DESCRIPTION[lockedOrganization ?? "BOTH"]}
+          {HEADER_DESCRIPTION[offeredOrganization ?? "BOTH"]}
         </p>
 {/* OWNER QA REPAIR 3C — the attribution here is per ORGANIZATION, because the two specs are
             different KINDS of document.
@@ -137,7 +156,7 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
               <p className="mt-2 font-semibold">{EVENT_OPTIONS.DECA.map((event) => event.label).join(", ")}</p>
             </div>
           ) : null}
-          {!activeTrack || activeTrack.id === "HOSA" ? (
+          {(activeTrack ? activeTrack.id === "HOSA" : PUBLIC_PRACTICE_TEST_ORGANIZATIONS.includes("HOSA")) ? (
             <div className="rounded-lg border bg-background p-4">
               <p className="text-sm font-semibold text-muted-foreground">HOSA</p>
               <p className="mt-2 font-semibold">{EVENT_OPTIONS.HOSA.map((event) => event.label).join(", ")}</p>
@@ -159,7 +178,7 @@ export default async function TestsPage({ searchParams }: { searchParams: { trac
       <Link href={(studyTrack ? `/study-arcade?track=${studyTrack.slug}` : "/study-arcade") as Route} className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted">
         <Layers3 className="mt-1 h-5 w-5 text-primary" aria-hidden />
         <span>
-          <span className="block font-semibold">{studyTrack ? `Study ${studyTrack.label} terms before testing` : "Study DECA/HOSA terms before testing"}</span>
+          <span className="block font-semibold">{studyTrack ? `Study ${studyTrack.label} terms before testing` : "Study terms before testing"}</span>
           <span className="mt-1 block text-sm leading-6 text-muted-foreground">
             Open original flashcard decks with definitions, examples, quick checks, and external video resources.
           </span>

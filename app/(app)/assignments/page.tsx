@@ -11,6 +11,7 @@ import { LocalDate } from "@/components/ui/local-date";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
@@ -38,15 +39,20 @@ export default async function AssignmentsPage() {
   }
 
   const assignments = await getStudentAssignments(session.user.id);
+  // Unfinished work on a dormant track's team (HOSA) can no longer be started or submitted, so it is
+  // listed on its own, as a record, rather than as due or active work.
+  const dormant = (assignment: (typeof assignments)[number]) =>
+    isRetiredOrganization(assignment.team.organization) && statusForSubmission(assignment.submissions[0]) !== "COMPLETED";
+  const open = assignments.filter((assignment) => !dormant(assignment));
 
   const groups = [
     {
       title: "Due soon",
-      rows: assignments.filter((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED" && isDueSoon(assignment.dueDate))
+      rows: open.filter((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED" && isDueSoon(assignment.dueDate))
     },
     {
       title: "Active",
-      rows: assignments.filter(
+      rows: open.filter(
         (assignment) =>
           statusForSubmission(assignment.submissions[0]) !== "COMPLETED" &&
           !isDueSoon(assignment.dueDate) &&
@@ -55,11 +61,15 @@ export default async function AssignmentsPage() {
     },
     {
       title: "Past due",
-      rows: assignments.filter((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED" && isPastDue(assignment.dueDate))
+      rows: open.filter((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED" && isPastDue(assignment.dueDate))
     },
     {
       title: "Completed",
-      rows: assignments.filter((assignment) => statusForSubmission(assignment.submissions[0]) === "COMPLETED")
+      rows: open.filter((assignment) => statusForSubmission(assignment.submissions[0]) === "COMPLETED")
+    },
+    {
+      title: "No longer offered",
+      rows: assignments.filter(dormant)
     }
   ];
 
@@ -101,8 +111,8 @@ export default async function AssignmentsPage() {
                         </span>
                       </span>
                       <span className="flex flex-wrap items-center gap-2">
-                        <Badge variant={status === "COMPLETED" ? "secondary" : status === "IN_PROGRESS" ? "accent" : "outline"}>
-                          {assignmentStatusLabel(status)}
+                        <Badge variant={dormant(assignment) ? "outline" : status === "COMPLETED" ? "secondary" : status === "IN_PROGRESS" ? "accent" : "outline"}>
+                          {dormant(assignment) ? "No longer offered" : assignmentStatusLabel(status)}
                         </Badge>
                         <Badge variant="outline">{dueLabel(assignment.dueDate)}</Badge>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />

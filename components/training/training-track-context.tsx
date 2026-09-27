@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Organization } from "@prisma/client";
-import { DEFAULT_TRACK, normalizeTrack, TRACK_COOKIE, trackById, type TrainingTrack } from "@/lib/training-tracks";
+import { ACTIVE_TRACKS, DEFAULT_TRACK, normalizeTrack, TRACK_COOKIE, trackById, type TrainingTrack } from "@/lib/training-tracks";
 import { parseTrackSelectionCookie, pickActiveTrack, trackSelectionCookieValue, type TrackSource } from "@/lib/track-precedence";
 import { routeTrackSlugFor } from "@/lib/track-route";
 
@@ -105,6 +105,9 @@ export function TrainingTrackProvider({ inputs = NO_INPUTS, children }: { inputs
       ownTrack: own,
       selectedTrack: selected,
       setTrack: (next) => {
+        // Only a public track can be selected. An unknown or dormant id (HOSA) is ignored rather than
+        // normalized: normalizing turned it into Debate, a silent conversion nobody chose.
+        if (!ACTIVE_TRACKS.some((t) => t.id === next)) return;
         const normalized = normalizeTrack(next);
         setSelection(trackById(normalized).slug);
         writeTrackCookie(normalized, inputs.selectionScope);

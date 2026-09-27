@@ -4,7 +4,7 @@
  * Run with: npm run hosa-medterm-lessons:smoke
  *
  * NO DATABASE, NO PROVIDER, NO ENV, NO WRITES. This suite imports the lesson catalog, the education
- * registry, the Medical Terminology question bank and two components, and renders markup through
+ * registry, the Medical Terminology question bank and three components, and renders markup through
  * `react-dom/server`. The lessons index is checked from its source instead of rendered: it resolves
  * its track through lib/track-server, which reaches @prisma/client, and loading that client reads
  * <repo>/.env at module scope wherever one exists. Check F5 proves the database client never loaded.
@@ -24,6 +24,9 @@
  *      position or length alone, and each explanation argues for its own key.
  *   E. They make no official HOSA claim and carry no other track's vocabulary.
  *   F. Every learner surface that should lead to them does, and the HOSA ones still overclaim nothing.
+ *      HOSA is DORMANT (owner decision 2026-09-27): the course stays in code, but the HOSA hub is not a
+ *      public page. F3 pins that it redirects to /training, and keeps the hub's practice-source note
+ *      (its TrackControls block) checked as the dormant component it now is.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -35,6 +38,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 (globalThis as { React?: unknown }).React = React;
 const { ConceptEducationLessonView } = require("../components/lessons/concept-education-lesson-view");
 const TrackHubPage = require("../app/(app)/training/[track]/page").default;
+const { TrackControls } = require("../components/training/track-controls");
 
 import { LEARNING_SKILL_CATALOG } from "../lib/learning-content";
 import { MEDTERM_BANK } from "../lib/hosa-medterm";
@@ -894,7 +898,7 @@ async function main() {
     assert.ok(!thirdRow.test(unguarded), "F2l. control: an unguarded drill row is caught");
   });
 
-  await check("F3. HOSA's Learn stage, Event HQ and hub lead to the lessons without overclaiming", () => {
+  await check("F3. HOSA's Learn stage and Event HQ lead to the lessons without overclaiming; the dormant HOSA hub redirects to /training", () => {
     const learn = learnerPathForTrack("HOSA").find((stage) => stage.id === "learn");
     assert.equal(learn?.href, "/lessons?track=hosa", "F3a. Learn opens the HOSA lessons catalog");
     assert.equal(learn?.state, "available", "F3b. and is available now that it holds checked lessons");
@@ -910,16 +914,27 @@ async function main() {
     assert.ok(hosaEntry.includes('href: "/training/hosa/practice"'), "F3h. the practice room is still listed");
     assert.ok(!/mastery/i.test(hosaEntry), "F3i. the review-only entry still makes no mastery claim");
 
-    const hub = renderToStaticMarkup(React.createElement(TrackHubPage, { params: { track: "hosa" } }));
-    const hubText = visible(hub);
-    assert.ok(hubText.includes("Start with medical word parts"), "F3j. the HOSA hub names the word-part lessons");
-    assert.ok(/check your current event guideline for event-specific requirements/.test(hubText),
-      "F3k. and still defers to the learner's own guideline");
-    assert.ok(!hub.includes("/training/hosa/practice"), "F3l. and still never routes into the practice room itself");
+    // HOSA is DORMANT (owner decision 2026-09-27): the HOSA hub is no longer a public page. It redirects
+    // (307, replace) to the general training page before rendering anything, so none of its HOSA rows
+    // (the word-part lessons row, the guideline deferral, the practice-source note) can reach a learner,
+    // and it can never route into the practice room. F3j-F3l pinned those rows as rendered; the exact
+    // redirect is what a learner now gets instead.
+    let hubDigest = "rendered";
+    try {
+      renderToStaticMarkup(React.createElement(TrackHubPage, { params: { track: "hosa" } }));
+    } catch (error) {
+      hubDigest = String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+    }
+    assert.equal(hubDigest, "NEXT_REDIRECT;replace;/training;307;",
+      "F3j. dormant: the HOSA hub redirects to /training (307, replace) instead of rendering any HOSA row");
     // hosa-practice-scope 38b pins the same rule but never runs past its baseline failure 10c, which
-    // is how a DECA sentence in the shared practice-source note reached the HOSA hub unnoticed.
-    assert.ok(!hubText.includes("DECA"), "F3m. the HOSA hub names no DECA material");
-    assert.ok(hubText.includes("Original questions written for practice, not official HOSA test items."),
+    // is how a DECA sentence in the shared practice-source note reached the HOSA hub unnoticed. The
+    // note is the hub's TrackControls block, rendered here with the prop the hub passed (trackId =
+    // track.id), so the dormant HOSA branch still names no DECA material and states its own source.
+    const hosaSourceNote = visible(renderToStaticMarkup(React.createElement(TrackControls, { trackId: "HOSA" })));
+    assert.ok(hosaSourceNote.includes("Practice source"), "F3m0. control: the practice-source block rendered");
+    assert.ok(!hosaSourceNote.includes("DECA"), "F3m. the dormant HOSA practice-source note names no DECA material");
+    assert.ok(hosaSourceNote.includes("Original questions written for practice, not official HOSA test items."),
       "F3n. and states HOSA's own practice source");
     const decaHubText = visible(renderToStaticMarkup(React.createElement(TrackHubPage, { params: { track: "deca" } })));
     assert.ok(decaHubText.includes("not official DECA prompts") && !decaHubText.includes("HOSA test items"),
@@ -951,7 +966,8 @@ async function main() {
     `${bankWordParts.length - taughtQuestions} test parts listed here as not taught yet. The 24 original checks each explain ` +
     "why their key is right, the lessons state no HOSA rule, and the word-part module ends in the event's practice room, " +
     "with the word parts preselected, before the course continues into anatomy. The practice room is what the " +
-    "lessons index, the Learn stage, Event HQ and the HOSA hub all lead to without claiming what that room records.");
+    "lessons index, the Learn stage and Event HQ lead to without claiming what that room records; HOSA is dormant, so " +
+    "its hub is not a public page and redirects to /training.");
 }
 
 main().catch((error) => {

@@ -3,6 +3,7 @@ import type { Route } from "next";
 import { getServerSession } from "next-auth";
 import { BookOpenCheck, Gamepad2, Layers3, PlayCircle, RotateCcw, Sparkles } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 import { ConceptDrills } from "@/components/training/concept-drills";
 import { DebateDrills } from "@/components/training/debate-drills";
 import { DRILL_AREAS, drillAreaFromQuery, progressTrackingForAreas } from "@/lib/debate-drills";
@@ -25,6 +26,23 @@ export default async function StudyArcadePage({
   searchParams: { track?: string; area?: string; focus?: string };
 }) {
   const activeTrack = await getActiveTrack(searchParams.track);
+  // No public track resolved (not chosen yet, or a saved selection naming a dormant track such as HOSA):
+  // the neutral chooser. Without it this page listed every deck in the catalog, dormant tracks' decks
+  // included, beside both public tracks' drills.
+  if (!activeTrack) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border bg-card p-5">
+          <Badge variant="secondary">Study Arcade</Badge>
+          <h1 className="page-title mt-3">Study Arcade</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">
+            Skill drills, flashcard decks and review games for the track you train in.
+          </p>
+        </div>
+        <ChooseTrackState context="Drills, decks and reviews follow the track you choose." />
+      </div>
+    );
+  }
   // `?area=` is untrusted URL text. It is narrowed against the real Debate drill areas — never cast —
   // and anything unknown, empty or belonging to another track simply yields `undefined`, which leaves
   // the drill on its existing "mixed" default. It is applied ONLY to the Debate component, so a

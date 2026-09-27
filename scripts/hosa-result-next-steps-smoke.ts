@@ -1,6 +1,8 @@
 /**
  * HOSA test-result next steps — every card on a graded HOSA practice test either links a HOSA
- * destination that does what its label says, or states plainly that nothing exists yet.
+ * destination that does what its label says, or states plainly that nothing exists yet. HOSA is now
+ * DORMANT (owner decision 2026-09-27): the results page withholds all of those cards for a HOSA record
+ * (section C), and the cards survive as dormant internals that this suite still checks directly.
  *
  * Run with: npm run hosa-result-next-steps:smoke
  *
@@ -27,11 +29,13 @@
  *      always a statement; the retake opens HOSA's generator. Each link in that chain fails closed.
  *   B. Flashcards: a deck only when a flagged area IS that deck's name or one of its cards' terms, in
  *      any recorded order; otherwise HOSA's own deck list. Never another deck.
- *   C. The rendered page, for HOSA records built from the bank: every link on it is a HOSA
- *      destination (or an external resource), each card says what its link opens, and the statements
- *      link nothing. A learner whose selected track is DECA gets the same links. KNOWN LIMIT, recorded
- *      rather than hidden: a HOSA deck page (/study/hosa-*) follows the viewer's selected track, so
- *      that learner is sent to their own Study Arcade from it (the deck route is not changed here).
+ *   C. HOSA is DORMANT (owner decision 2026-09-27). The rendered page, for HOSA records built from
+ *      the bank, is the learner's record only: score, weak areas and every question, one note saying
+ *      the track has no next steps, and one link — the general "Back to practice tests" (/tests). No
+ *      card, deck, lesson, retake, video or "Generate another" is offered, and no HOSA deck page opens
+ *      for any learner. The next-step cards themselves are dormant internals: rendered directly with
+ *      the props the page passed them, every link on them is a HOSA destination (or an external
+ *      resource), each card says what its link opens, and the statements link nothing.
  *   D. DECA and every other organization keep exactly the cards they had.
  *   E. The Medical Terminology loop from 1f3f4e1 is unchanged, and the destinations are real.
  *   F. No new model, no scoring or mastery change, one module decides.
@@ -125,6 +129,12 @@ import {
 import { hosaMedTermRemediation, hosaLessonPracticeLink } from "../lib/education/hosa-medterm-practice";
 import { resolveSkillsSlug } from "../lib/education/skills-compat";
 import { getEducationLesson } from "../lib/education/registry";
+import { trackByOrganization } from "../lib/training-tracks";
+import type { ResultNextStep } from "../lib/education/test-result-recommendations";
+import { NextStepCard, NextStepNote } from "../components/app/next-step-card";
+import { RecommendedVideos } from "../components/resources/recommended-videos";
+import { ResultRecommendationsCard } from "../components/tests/result-recommendations";
+import { BookOpenCheck, ClipboardList, MessageSquareText, Target, type LucideIcon } from "lucide-react";
 
 // ---- fixtures: the seed's HOSA suggestion rows and the grader's rule, both read back from source ------
 const SEED_ROWS = [
@@ -237,6 +247,80 @@ function card(html: string, title: string): { href: string | null; text: string 
   const block = html.slice(html.lastIndexOf("<div", at), html.indexOf("</div></div>", at) + 12);
   return { href: null, text: visible(block) };
 }
+
+/**
+ * HOSA is DORMANT (owner decision 2026-09-27). A HOSA result page stays readable as the learner's
+ * record but withholds every next step, so the page no longer renders the cards this suite pinned.
+ * The resolver, the flashcard rule and the cards they fed are dormant internals, kept in the repo; this
+ * renders them directly, with exactly the props the results page passed them in its hosaNext branch
+ * (74bd119), so the per-card contract (C2-C11) still runs against the same records.
+ *
+ * `stored` is the record's lessons as the page's normalizeLessonRecommendations would pass them: every
+ * row built by storedFor() carries a string lessonSlug and reason, so the page's filter keeps all of
+ * them, and the rows are passed through unchanged.
+ */
+function renderDormantHosaNextSteps(record: ReturnType<typeof buildRecord>): string {
+  const workOn = testResultRecommendationsForLearner({
+    organization: record.organization,
+    weakAreas: record.weakAreas,
+    stored: record.recommendations.lessons
+  });
+  const hosaNext = hosaResultNextSteps({ recommendations: workOn, eventCluster: record.eventCluster, weakAreas: record.weakAreas });
+  assert.ok(hosaNext, `fixture: the dormant resolver still answers for the HOSA record ${record.id}`);
+  const studyStep = weakTermsStudyStep({
+    organization: record.organization,
+    weakAreas: record.weakAreas,
+    eventCluster: record.eventCluster,
+    eventType: record.eventType
+  });
+  // The page's local ResultNextStepCard, restated: a link step is a NextStepCard, a statement a NextStepNote.
+  const stepCard = (step: ResultNextStep, icon: LucideIcon, tone?: "primary" | "secondary" | "accent") =>
+    step.kind === "link"
+      ? React.createElement(NextStepCard, { key: step.title, title: step.title, description: step.description, href: step.href as never, icon, tone })
+      : React.createElement(NextStepNote, { key: step.title, title: step.title, description: step.description, icon, tone });
+  const element = React.createElement(
+    "div",
+    null,
+    React.createElement(
+      "div",
+      null,
+      stepCard(hosaNext!.practice, BookOpenCheck, "secondary"),
+      React.createElement(NextStepCard, {
+        title: studyStep.title,
+        description: studyStep.description,
+        href: studyStep.href as never,
+        icon: Target,
+        tone: "accent"
+      }),
+      stepCard(hosaNext!.retake, ClipboardList)
+    ),
+    React.createElement(
+      "div",
+      null,
+      React.createElement(RecommendedVideos, {
+        organization: "HOSA",
+        skillTags: [...record.weakAreas, record.eventCluster ?? record.eventType],
+        title: "Recommended videos and resources"
+      }),
+      stepCard(hosaNext!.speaking, MessageSquareText, "secondary")
+    ),
+    React.createElement(ResultRecommendationsCard, {
+      recommendations: workOn,
+      trackLabel: trackByOrganization(record.organization)?.label ?? record.organization
+    })
+  );
+  return decode(renderToStaticMarkup(element));
+}
+
+/** What a dormant HOSA result shows in place of every next step (app/(app)/tests/[testId]/results/page.tsx). */
+const DORMANT_RESULT_NOTE =
+  "This track is no longer offered, so this result has no next steps. Your score, weak areas and answers stay here as your record.";
+/** Every next-step surface the page rendered for a HOSA result before HOSA went dormant. */
+const WITHHELD_ON_DORMANT_RESULT = [
+  "Practice weak skills", "Practise Medical Terminology", "No practice linked yet", "No weak skills flagged",
+  "Study weak terms", "Browse study decks", "Generate a retake", "No speaking practice yet", "Practice speaking",
+  "Generate another", "What to work on", "Recommended videos and resources", "External resources"
+];
 
 const HOSA_SCENARIOS: Scenario[] = [
   { name: "mt-missed-medical-terminology", organization: "HOSA", eventType: "HEALTH_SCIENCE_EVENT", category: "Medical Terminology", count: 10, wrong: ["Medical terminology"] },
@@ -384,7 +468,8 @@ async function main() {
 
   // ---- C. the rendered page ------------------------------------------------------------------------------
   const rendered = new Map<string, string>();
-  await check("C. rendered HOSA results link only HOSA destinations, each card does what it says, statements link nothing", async () => {
+  const internals = new Map<string, string>();
+  await check("C. dormant: a rendered HOSA result is a record with no next steps and no HOSA link; the dormant resolver's cards, rendered directly, still link only HOSA destinations and do what they say", async () => {
     for (const s of HOSA_SCENARIOS) {
       const record = buildRecord(s);
       viewer.organization = "HOSA";
@@ -393,22 +478,40 @@ async function main() {
       assert.equal(redirectedTo, null, `C0. ${s.name}: a HOSA learner's own result renders in place`);
       rendered.set(s.name, html);
       assert.deepEqual([...new Set(db.touches)].sort(), ["practiceTest", "xPLog"], `C0b. ${s.name}: the page reads the test and its ledger row, nothing else`);
-      for (const a of anchorsOf(html)) {
-        assert.ok(hosaDestination(a.href), `C1. ${s.name}: "${a.text}" -> ${a.href} is a HOSA destination`);
+      // ---- The page (HOSA is dormant): the record stays readable, every next step is withheld. ----
+      assert.deepEqual(anchorsOf(html).map((a) => [a.href, a.text]), [["/tests", "Back to practice tests"]],
+        `C1. dormant: ${s.name}: the only link on a HOSA result is the general "Back to practice tests" -> /tests`);
+      assert.ok(!anchorsOf(html).some((a) => /track=hosa|\/training\/|\/lessons\/|\/study|\/skills|\/debate/.test(a.href)),
+        `C1b. dormant: ${s.name}: no link reaches HOSA training, a lesson, a deck, /skills or /debate, and none is HOSA-scoped`);
+      for (const title of WITHHELD_ON_DORMANT_RESULT) {
+        assert.ok(!html.includes(`>${title}<`), `C12. dormant: ${s.name}: the "${title}" next step is withheld`);
+      }
+      const pageText = visible(html);
+      assert.equal(pageText.split(DORMANT_RESULT_NOTE).length - 1, 1, `C12b. dormant: ${s.name}: the page says once, in words, that this track has no next steps`);
+      assert.ok(pageText.includes("Weak Skill Detection") && pageText.includes(`${record.score}%`) &&
+                pageText.includes(`Question ${record.questions.length}`),
+        `C12c. dormant: ${s.name}: the score, weak areas and every answered question stay readable as the record`);
+      assert.ok(!/Practice speaking|judged roleplay|debate response/i.test(pageText), `C3c. ${s.name}: no speaking or debate promise anywhere on the page`);
+
+      // ---- The dormant internals: the resolver's cards for this record, rendered directly. ----
+      const steps = renderDormantHosaNextSteps(record);
+      internals.set(s.name, steps);
+      for (const a of anchorsOf(steps)) {
+        assert.ok(hosaDestination(a.href), `C1c. ${s.name}: dormant card "${a.text}" -> ${a.href} is a HOSA destination`);
       }
       for (const banned of ["/skills", "/debate", "/tests", "/study"]) {
-        assert.ok(!anchorsOf(html).some((a) => a.href === banned || a.href.startsWith(`${banned}?`) && !a.href.includes("track=hosa")), `C1b. ${s.name}: nothing opens ${banned}`);
+        assert.ok(!anchorsOf(steps).some((a) => a.href === banned || a.href.startsWith(`${banned}?`) && !a.href.includes("track=hosa")), `C1d. ${s.name}: no dormant card opens ${banned}`);
       }
       const weak = record.weakAreas;
-      const practice = card(html, weak.length && storedFor(weak).some((r) => HOSA_SEEDED_TOPIC_LESSON.has(r.lessonSlug)) ? "Practice weak skills"
+      const practice = card(steps, weak.length && storedFor(weak).some((r) => HOSA_SEEDED_TOPIC_LESSON.has(r.lessonSlug)) ? "Practice weak skills"
         : s.category === "Medical Terminology" ? "Practise Medical Terminology" : weak.length ? "No practice linked yet" : "No weak skills flagged");
-      const speaking = card(html, "No speaking practice yet");
-      const retake = card(html, "Generate a retake");
-      const study = anchorsOf(html).find((a) => a.text.startsWith("Study weak terms") || a.text.startsWith("Browse study decks"));
+      const speaking = card(steps, "No speaking practice yet");
+      const retake = card(steps, "Generate a retake");
+      const study = anchorsOf(steps).find((a) => a.text.startsWith("Study weak terms") || a.text.startsWith("Browse study decks"));
       assert.ok(study, `C2. ${s.name}: the flashcard card is a link`);
       assert.equal(speaking.href, null, `C3. ${s.name}: speaking is a statement with no link`);
       assert.ok(speaking.text.includes("CompeteReady does not have HOSA speaking or role-play practice yet."), `C3b. ${s.name}: saying none exists`);
-      assert.ok(!/Practice speaking|judged roleplay|debate response/i.test(visible(html)), `C3c. ${s.name}: no speaking or debate promise anywhere`);
+      assert.ok(!/Practice speaking|judged roleplay|debate response/i.test(visible(steps)), `C3d. ${s.name}: no speaking or debate promise on any dormant card`);
       assert.equal(retake.href, "/tests?track=hosa", `C4. ${s.name}: the retake opens HOSA's generator`);
       assert.ok(retake.text.includes(`choose “${s.category}” there`) && !/shorter/.test(retake.text), `C4b. ${s.name}: and says which category to choose there`);
       switch (s.name) {
@@ -441,37 +544,47 @@ async function main() {
       }
       // A statement is not a link and never looks like one.
       for (const title of ["No speaking practice yet", "No practice linked yet", "No weak skills flagged"]) {
-        assert.ok(!anchorsOf(html).some((a) => a.text.startsWith(title)), `C11. ${s.name}: "${title}" is never inside a link`);
+        assert.ok(!anchorsOf(steps).some((a) => a.text.startsWith(title)), `C11. ${s.name}: "${title}" is never inside a link`);
       }
     }
-    // The page's own "What to work on" and back links stay HOSA's too (checked above for every anchor).
+    // Non-vacuous: the dormant cards the page withholds really exist and really link HOSA destinations,
+    // so C1/C12 are an absence of real content, not of content that was never there.
+    const linkedHosa = [...internals.values()].flatMap((h) => anchorsOf(h)).filter((a) => hosaDestination(a.href) && a.href.startsWith("/"));
+    assert.ok(linkedHosa.length >= HOSA_SCENARIOS.length * 2, `C13. control: the withheld dormant cards carry ${linkedHosa.length} HOSA links the page no longer shows`);
+    for (const [name, steps] of internals) {
+      const found = WITHHELD_ON_DORMANT_RESULT.filter((title) => steps.includes(`>${title}<`));
+      assert.ok(["Generate a retake", "No speaking practice yet", "What to work on", "Recommended videos and resources"].every((t) => found.includes(t)),
+        `C13b. control: ${name}: C12's element-text check does find the withheld cards where they are rendered (${found.join(", ")})`);
+    }
   });
 
-  await check("C'. the same HOSA result, opened by a learner whose selected track is DECA, carries the same HOSA-scoped links; a deck page still follows that learner's track (known limit)", async () => {
+  await check("C'. dormant: the same HOSA result, opened by a learner whose selected track is DECA, is the same record with the same links; no HOSA deck page opens for any learner", async () => {
     const record = buildRecord(HOSA_SCENARIOS[2]);
     viewer.organization = "DECA";
     viewer.cookie = "deca";
     const first = await renderResults(record);
-    assert.equal(first.redirectedTo, `/tests/${record.id}/results?track=hosa`, "C'1. control: the page stamps the record's track first");
+    assert.equal(first.redirectedTo, null, "C'1. dormant: the page no longer stamps ?track=hosa onto a HOSA result; it renders in place");
     const { html, redirectedTo } = await renderResults(record, "hosa");
-    assert.equal(redirectedTo, null, "C'2. then renders");
+    assert.equal(redirectedTo, null, "C'2. and a stale ?track=hosa link renders the same record in place");
+    assert.equal(html, first.html, "C'2b. dormant: identical with or without ?track=hosa");
     assert.deepEqual(anchorsOf(html).map((a) => a.href), anchorsOf(rendered.get(HOSA_SCENARIOS[2].name)!).map((a) => a.href), "C'3. every link is the one a HOSA learner gets");
-    // Every one of those links is scoped by its path or `?track=hosa`, except a deck page: the deck
-    // route follows the viewer's selected track (its own isolation guard, the same for DECA decks, not
-    // changed here). Recorded, so this guard claims only what it checks and notices if that changes.
+    // HOSA is dormant, so the result links no HOSA deck at all; the deck its dormant flashcard card
+    // would name (C7c) is a dormant page that redirects every learner to the general Study page.
     const deckLinks = anchorsOf(html).filter((a) => /^\/study\/hosa-/.test(a.href));
-    assert.equal(deckLinks.length, 1, "C'4. control: the result links one matched HOSA deck");
+    assert.equal(deckLinks.length, 0, "C'4. dormant: the result links no HOSA deck");
     const { default: DeckPage } = require("../app/(app)/study/[deck]/page") as {
       default: (p: { params: { deck: string }; searchParams: { assignmentId?: string } }) => Promise<unknown>;
     };
-    const deckSlug = deckLinks[0].href.slice("/study/".length);
+    const dormantDeck = anchorsOf(internals.get(HOSA_SCENARIOS[2].name)!).find((a) => /^\/study\/hosa-/.test(a.href));
+    assert.equal(dormantDeck?.href, "/study/hosa-infection-control", "C'4a. control: the dormant flashcard card for this record names a real HOSA deck");
+    const deckSlug = dormantDeck!.href.slice("/study/".length);
     let deckRedirect = "";
     try {
       await DeckPage({ params: { deck: deckSlug }, searchParams: {} });
     } catch (error) {
       deckRedirect = String((error as { digest?: string }).digest ?? "");
     }
-    assert.ok(deckRedirect.includes(";/study;"), `C'4b. KNOWN LIMIT: for this learner the deck page sends them to /study (${deckRedirect || "rendered"})`);
+    assert.equal(deckRedirect, "NEXT_REDIRECT;replace;/study;307;", `C'4b. dormant: for a DECA learner the HOSA deck page redirects to /study (${deckRedirect || "rendered"})`);
     viewer.organization = "HOSA";
     viewer.cookie = null;
     let hosaViewerRedirect = "";
@@ -480,7 +593,8 @@ async function main() {
     } catch (error) {
       hosaViewerRedirect = String((error as { digest?: string }).digest ?? "");
     }
-    assert.equal(hosaViewerRedirect, "", "C'4c. while a HOSA learner, who takes HOSA tests, opens it");
+    assert.equal(hosaViewerRedirect, "NEXT_REDIRECT;replace;/study;307;",
+      `C'4c. dormant: a learner who signed up for HOSA is redirected to /study too; the HOSA deck page opens for no one (${hosaViewerRedirect || "rendered"})`);
   });
 
   // ---- D. DECA and the others keep what they had --------------------------------------------------------
@@ -598,7 +712,7 @@ async function main() {
   });
 
   console.log(
-    `\nhosa-result-next-steps: ${checks} checks passed. On a graded HOSA test, "Practice weak skills" opens the HOSA lesson the grader's suggestion links, else Medical Terminology practice for a Medical Terminology test, else says nothing is linked yet and links nothing; the flashcard card opens only a deck a flagged area names exactly, else HOSA's own deck list; the speaking card says HOSA has no speaking practice instead of opening /debate; and the retake opens HOSA's generator. Every link on a rendered HOSA result is HOSA-scoped, and a learner whose selected track is DECA gets the same links; known limit, recorded in C': a HOSA deck page itself still follows that learner's selected track. DECA's cards are unchanged.`
+    `\nhosa-result-next-steps: ${checks} checks passed. On a graded HOSA test, "Practice weak skills" opens the HOSA lesson the grader's suggestion links, else Medical Terminology practice for a Medical Terminology test, else says nothing is linked yet and links nothing; the flashcard card opens only a deck a flagged area names exactly, else HOSA's own deck list; the speaking card says HOSA has no speaking practice instead of opening /debate; and the retake opens HOSA's generator. Those cards are now dormant internals, checked directly: HOSA is dormant, so a rendered HOSA result is the learner's record with one note, no next step and one general link (/tests), the same for a learner whose selected track is DECA, and a HOSA deck page redirects every learner to /study. DECA's cards are unchanged.`
   );
 }
 

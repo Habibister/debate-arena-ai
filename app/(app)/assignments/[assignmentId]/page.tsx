@@ -11,6 +11,7 @@ import { LocalDate } from "@/components/ui/local-date";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignmentDetail, getStudentEvidenceOptions } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,9 @@ export default async function StudentAssignmentDetailPage({ params }: { params: 
   const coachName =
     assignment.team.coach?.user?.displayName ?? assignment.team.coach?.user?.name ?? assignment.team.coach?.user?.username ?? "your coach";
   const manualReflectionAllowed = assignment.type === "FLASHCARD_DECK" || assignment.type === "REVIEW_GAME";
+  // A dormant track's team (HOSA, Model UN): the assignment stays visible as a record, but it cannot be
+  // started or submitted (lib/assignments.ts refuses both), so no action is offered.
+  const dormantTrack = isRetiredOrganization(assignment.team.organization);
 
   return (
     <div className="space-y-6">
@@ -97,13 +101,21 @@ export default async function StudentAssignmentDetailPage({ params }: { params: 
             </CardContent>
           </Card>
 
-          <StudentAssignmentActions
-            assignmentId={assignment.id}
-            type={assignment.type}
-            status={status}
-            evidenceOptions={evidenceOptions}
-            manualReflectionAllowed={manualReflectionAllowed}
-          />
+          {dormantTrack ? (
+            <Card>
+              <CardContent className="p-5 text-sm leading-6 text-muted-foreground">
+                This team&apos;s track is no longer offered, so this assignment cannot be started or submitted.
+              </CardContent>
+            </Card>
+          ) : (
+            <StudentAssignmentActions
+              assignmentId={assignment.id}
+              type={assignment.type}
+              status={status}
+              evidenceOptions={evidenceOptions}
+              manualReflectionAllowed={manualReflectionAllowed}
+            />
+          )}
         </div>
       </div>
 

@@ -1,5 +1,10 @@
+import { isTrackRetired, type TrainingTrack } from "@/lib/training-tracks";
+
 export type AiDebatePersona = {
   id: string;
+  /** The track a persona is written for, when it is track-specific. A dormant track's persona stays
+   *  resolvable by id (stored rounds name it) but is never offered or recommended. */
+  track?: TrainingTrack;
   name: string;
   initials: string;
   rating: number;
@@ -145,6 +150,7 @@ export const AI_DEBATE_PERSONAS: AiDebatePersona[] = [
   },
   {
     id: "hosa-judge",
+    track: "HOSA",
     name: "HOSA Judge",
     initials: "HJ",
     rating: 1200,
@@ -158,12 +164,15 @@ export const AI_DEBATE_PERSONAS: AiDebatePersona[] = [
   }
 ];
 
+/** The personas a learner may pick or be recommended: every persona except a dormant track's (HOSA). */
+export const PUBLIC_AI_PERSONAS: AiDebatePersona[] = AI_DEBATE_PERSONAS.filter((persona) => !persona.track || !isTrackRetired(persona.track));
+
 export function getAiPersona(id?: string | null) {
   return AI_DEBATE_PERSONAS.find((persona) => persona.id === id) ?? AI_DEBATE_PERSONAS[2];
 }
 
 export function nearestAiPersona(rating: number) {
-  return AI_DEBATE_PERSONAS.reduce((closest, persona) =>
+  return PUBLIC_AI_PERSONAS.reduce((closest, persona) =>
     Math.abs(persona.rating - rating) < Math.abs(closest.rating - rating) ? persona : closest
   );
 }

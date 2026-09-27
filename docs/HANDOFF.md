@@ -1,6 +1,7 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
-_Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy,
+_Last updated: 2026-09-27, public product scope (Debate and DECA only, HOSA dormant) and HOSA lines
+only (the Medical Terminology word-parts course, its anatomy,
 physiology and pathophysiology modules, their practice, the practice-to-lesson remediation, HOSA test-result next
 steps, and the owner review repairs with the owner's review waiver). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
@@ -13,6 +14,20 @@ below the boundary.
 
 ## What is complete
 
+- **Public product scope: Debate and DECA only, HOSA dormant — LOCAL COMMIT ONLY (2026-09-27).** Not
+  pushed, not deployed, not Production-verified, not browser-verified. Owner decision: CompeteReady
+  publicly supports only General Debate and DECA. One list, `PUBLIC_TRACK_IDS` in
+  `lib/training-tracks.ts`, drives every picker and resolver. HOSA is dormant, not deleted: its
+  curriculum, bank, decks, tests, components, `/api/hosa/medterm/*` and every learner record stay; no
+  migration, seed or database write. HOSA is gone from signup, onboarding, profile, team creation,
+  `/training`, the tests generator, the opponent picker and the landing copy. A saved HOSA learner
+  (organization or selection) resolves to the new neutral "Choose Debate or DECA" state on Home,
+  Dashboard, Lessons, Study Arcade, Tests, Resources and Skills, and is never converted. Direct HOSA
+  entry routes redirect once to their general page; completed HOSA test results and replays stay
+  readable as records without next steps. APIs refuse new HOSA practice, generation, teams and team
+  joins with 410 before any provider call or write. Debate and DECA learners see the same pages as
+  before (side-by-side SSR against `74bd119`). Guard: `npm run public-tracks:smoke` (36 checks).
+  Details and the direct-route table: *Public product scope* in `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology owner review repairs — LOCAL COMMIT ONLY (2026-09-27).** Not pushed,
   not deployed, not Production-verified, not browser-verified. **HUMAN SUBJECT-ACCURACY REVIEW:
   WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27.** The owner reviewed all 17
@@ -199,6 +214,17 @@ below the boundary.
 
 ## What remains open
 
+- **Public product scope — debt and owner decisions, recorded only (2026-09-27).**
+  `lib/assignment-types.ts` still describes the practice-test assignment as a "generated DECA/HOSA
+  practice test" to coaches (the file is byte-pinned by `deca-mastery` 24-28 and `skills-compat`
+  27/27A3; changing it needs an owner-approved re-pin). `POST /api/ai/readiness` (byte-pinned) and
+  `POST /api/signup` still accept organization HOSA by direct call; no page sends it, and a HOSA
+  signup resolves to the chooser. The seeded demo HOSA account and a "DECA/HOSA" demo bio remain in
+  `prisma/seed.ts` (no seed run). Mock Trial and Public Speaking are still offered in the profile and
+  team pickers although no track backs them. Judged-round counts on Debate Home and Dashboard are
+  account-wide. `CLAUDE.md` still describes four tracks (not edited; owner's call). An unresolved
+  learner's shell uses Debate's visual accent. `/api/hosa/medterm/*` stays callable directly
+  (dormant). The HOSA website-review debt below is parked with the dormant code.
 - **HOSA official alignment — WEBSITE/PRODUCT REVIEW DEBT, recorded only (2026-09-27).** Owner-reported
   from the official HOSA 2026–2027 Medical Terminology guideline (not re-verified from this
   workspace): the event covers roots, prefixes and suffixes, anatomy, physiology, pathophysiology and
@@ -1247,6 +1273,13 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 ```
 
 ## Exact next action
+
+**Public scope, 2026-09-27 (supersedes the HOSA paragraphs below).** CompeteReady publicly supports
+only Debate and DECA; HOSA is dormant. The deactivation is a local commit on top of `74bd119`, not
+pushed. Next, only when the owner asks: pushing is the owner's action; then the website review with
+the owner covers Debate and DECA only. Do not add HOSA curriculum or reopen Debate or DECA
+curriculum. To restore HOSA later: add it back to `PUBLIC_TRACK_IDS`, then review each surface in
+the *Public product scope* section of `docs/CURRENT_STATE.md` and update `public-tracks:smoke`.
 
 **HOSA, 2026-09-27 (after the owner review repairs).** The owner froze the Medical Terminology
 curriculum at `116c6af`; the end-to-end QA and the owner review repairs are local commits on top.

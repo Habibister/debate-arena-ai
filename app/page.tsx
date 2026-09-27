@@ -49,7 +49,7 @@ const featureCards = [
   },
   {
     title: "AI Judging",
-    description: "Separate scoring engines for debate, DECA, HOSA, and shared speaking-skill growth.",
+    description: "Separate scoring engines for debate, DECA, and shared speaking-skill growth.",
     icon: Medal
   },
   {
@@ -87,7 +87,7 @@ export default function HomePage() {
             <Badge variant="secondary">Mastery learning for competitive speaking</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">CompeteReady</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Train students for Debate, DECA, and HOSA with AI opponents, AI judging, adaptive lessons,
+              Train students for Debate and DECA with AI opponents, AI judging, adaptive lessons,
               practice tests, mastery tracking, and coach visibility.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -119,7 +119,7 @@ export default function HomePage() {
                   +{XP_REWARDS.debateCompleted}
                 </p>
                 {/* "Debate XP" named a per-track currency that does not exist: XP is one account-wide
-                    counter, and the judge route pays this same amount for a DECA or HOSA session too.
+                    counter, and the judge route pays this same amount for a DECA session too.
                     It is also capped — only the first few completions each day pay. The label now says
                     what the number is, and the cap it lives under, instead of assigning it to a track. */}
                 <p className="text-xs font-semibold text-muted-foreground">
@@ -144,7 +144,7 @@ export default function HomePage() {
         <SectionHeading
           eyebrow="Training platform"
           title="A production-ready foundation for adaptive competitive practice"
-          description="The app includes live debate flows, original DECA and HOSA tests, flexible rubrics, mastery lessons, Prisma data models, NextAuth, OpenAI service functions, and responsive product surfaces."
+          description="The app includes live debate flows, original DECA tests, flexible rubrics, mastery lessons, Prisma data models, NextAuth, OpenAI service functions, and responsive product surfaces."
         />
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {featureCards.map((feature) => {

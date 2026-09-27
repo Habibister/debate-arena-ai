@@ -11,15 +11,15 @@ import { Input } from "@/components/ui/input";
 
 // Only organizations with a real training track are offered here, because this choice now RESOLVES
 // the learner's track (see lib/track-server.ts, M14 Phase 1a).
-// MODEL_UN is soft-removed from the product (code/data retained) — not offered at signup.
+// MODEL_UN and HOSA are soft-removed from the product (code/data retained) — not offered at signup.
+// CompeteReady publicly supports Debate and DECA only (PUBLIC_TRACK_IDS in lib/training-tracks.ts).
 // PUBLIC_SPEAKING was removed for the same reason: lib/training-tracks.ts defines no Public Speaking
 // track and no Public Speaking lesson is registered, so choosing it led nowhere. It is NOT silently
 // mapped to Debate — the option is simply gone, and the resolver treats the value as absent if an
 // existing record still carries it.
 const organizations: Array<{ value: Organization; label: string }> = [
   { value: "DEBATE", label: "Debate" },
-  { value: "DECA", label: "DECA" },
-  { value: "HOSA", label: "HOSA" }
+  { value: "DECA", label: "DECA" }
 ];
 
 function usernameFromDisplayName(value: string) {

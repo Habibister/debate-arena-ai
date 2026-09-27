@@ -50,15 +50,41 @@ export const TRACKS: TrackInfo[] = [
   }
 ];
 
-// Soft-removed tracks: hidden from every user-facing selection surface but fully retained in code and
-// data (components, /api/ai/mun/* routes, skills, specs, user history). Reversible — revival requires
-// picking a real conference and sourcing it. Lookups by id/slug/organization still resolve so existing
-// records (history, dashboards, coach views) keep honest labels.
-export const RETIRED_TRACKS: TrainingTrack[] = ["MODEL_UN"];
-export const ACTIVE_TRACKS: TrackInfo[] = TRACKS.filter((t) => !RETIRED_TRACKS.includes(t.id));
+// THE PUBLIC PRODUCT (owner decision, 2026-09-27): CompeteReady publicly supports exactly these tracks.
+// This list is the single source of truth for what a learner can select, see in navigation, or be
+// routed into; every picker, chooser and route guard reads it through ACTIVE_TRACKS / isTrackRetired.
+export const PUBLIC_TRACK_IDS: readonly TrainingTrack[] = ["GENERAL_DEBATE", "DECA"];
+
+// Soft-removed (dormant) tracks: every track that is not public. Hidden from every user-facing selection
+// surface but fully retained in code and data (components, API routes, skills, specs, curricula, user
+// history). Reversible: a track returns by being added back to PUBLIC_TRACK_IDS.
+//   • MODEL_UN — revival requires picking a real conference and sourcing it.
+//   • HOSA (2026-09-27) — the Medical Terminology course, its practice bank, tests and decks stay in code.
+// Lookups by id/slug/organization still resolve so existing records (history, dashboards, coach views)
+// keep honest labels; the resolvers in lib/track-precedence.ts never return a dormant track, so a saved
+// selection or signup organization naming one leaves the learner unresolved (the neutral chooser),
+// never silently converted to another track.
+export const RETIRED_TRACKS: TrainingTrack[] = TRACKS.map((t) => t.id).filter((id) => !PUBLIC_TRACK_IDS.includes(id));
+export const ACTIVE_TRACKS: TrackInfo[] = TRACKS.filter((t) => PUBLIC_TRACK_IDS.includes(t.id));
 export function isTrackRetired(id: TrainingTrack): boolean {
   return RETIRED_TRACKS.includes(id);
 }
+
+/**
+ * Does this organization belong to a dormant (retired) track? True only for an organization that HAS a
+ * track and that track is retired (HOSA, MODEL_UN). Organizations with no track at all (PUBLIC_SPEAKING,
+ * MOCK_TRIAL), shared tags and unknown values answer false, so callers keep their existing behavior for
+ * them. Used to refuse dormant-track content and records wherever a page or route would otherwise
+ * offer a way back in.
+ */
+export function isRetiredOrganization(org: string | null | undefined): boolean {
+  if (!org) return false;
+  const track = TRACKS.find((t) => t.organization === org);
+  return Boolean(track && isTrackRetired(track.id));
+}
+
+/** "Debate or DECA": the public tracks' short names, for the neutral chooser's wording. */
+export const PUBLIC_TRACKS_PHRASE = ACTIVE_TRACKS.map((t) => t.short).join(" or ");
 
 // --- Per-track capability ----------------------------------------------------------------------
 // What a track actually offers, stated once, so no navigation surface can advertise a destination
@@ -82,6 +108,13 @@ const TRACKS_WITH_PRACTICE_TESTS: readonly TrainingTrack[] = ["DECA", "HOSA"];
 export function trackHasPracticeTests(track: TrainingTrack | null | undefined): boolean {
   return !track || TRACKS_WITH_PRACTICE_TESTS.includes(track);
 }
+
+/**
+ * The practice-test organizations the PUBLIC product offers (DECA today; HOSA is dormant). A generator
+ * that is not locked to a resolved track offers exactly these, and copy that names "every organization
+ * with tests" names exactly these, so a dormant track's tests are never offered.
+ */
+export const PUBLIC_PRACTICE_TEST_ORGANIZATIONS = (["DECA", "HOSA"] as const).filter((org) => !isRetiredOrganization(org));
 
 export const DEFAULT_TRACK: TrainingTrack = "GENERAL_DEBATE";
 // The learner's CURRENT SELECTION: a non-auth cookie holding `<slug>.<scope>`, where the scope binds
@@ -122,7 +155,9 @@ export function trackToOrganization(id: TrainingTrack): Organization {
 // Direct-URL isolation: is `contentOrg` (a deck/resource organization) allowed for the active track?
 // With no selected track the user is browsing broadly, so everything is allowed; otherwise the
 // content must belong to the selected track's organization — knowing a URL never exposes another org.
+// A dormant track's content is never allowed, resolved or not: it is not part of the public product.
 export function trackAllowsOrganization(track: TrackInfo | null | undefined, contentOrg: string): boolean {
+  if (isRetiredOrganization(contentOrg)) return false;
   return !track || track.organization === contentOrg;
 }
 

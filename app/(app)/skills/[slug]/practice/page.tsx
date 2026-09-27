@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { DebateWritingPractice } from "@/components/skills/debate-writing-practice";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDebateSkillScenario } from "@/lib/debate-skill-practice";
 import { resolveSkillsSlug } from "@/lib/education/skills-compat";
+import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,6 +35,13 @@ export default function DebateSkillWritingPracticePage({ params }: { params: { s
   // Unknown, or a canonical lesson whose practice lives inside the lesson rather than here.
   if (resolution.kind !== "compatibility") {
     notFound();
+  }
+
+  // A record owned by a dormant track (HOSA, Model UN) is not a public entry point, exactly as on
+  // /skills/<slug>: it goes to the skills index. Nothing is written.
+  const ownerTrack = trackByOrganization(resolution.track);
+  if (ownerTrack && isTrackRetired(ownerTrack.id)) {
+    redirect("/skills");
   }
 
   const back = (

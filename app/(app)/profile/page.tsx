@@ -13,7 +13,7 @@ import { GUIDED_ROUND_LABEL } from "@/lib/guided-rounds";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveActiveTrack } from "@/lib/track-server";
-import { trackByOrganization } from "@/lib/training-tracks";
+import { isRetiredOrganization, trackByOrganization } from "@/lib/training-tracks";
 import { cn, titleCase } from "@/lib/utils";
 
 function organizationLabel(value?: string | null) {
@@ -65,7 +65,7 @@ export default async function ProfilePage() {
       studentDebates: {
         orderBy: { createdAt: "desc" },
         take: 3,
-        select: { id: true, topic: true, status: true, overallScore: true, practiceMode: true, createdAt: true }
+        select: { id: true, topic: true, status: true, overallScore: true, practiceMode: true, organization: true, createdAt: true }
       }
     }
   });
@@ -80,8 +80,12 @@ export default async function ProfilePage() {
   const signupOrganization = user.preferredOrganization ?? user.organization;
   const signupTrack = trackByOrganization(signupOrganization);
   // Shown only when it says something the line above does not.
+  // A dormant track's organization (HOSA) is still the learner's real signup record, so it is shown,
+  // named as no longer offered rather than as a track they can train.
   const signupOrganizationLabel =
-    signupOrganization && signupTrack?.id !== activeTrack?.id ? organizationLabel(signupOrganization) : null;
+    signupOrganization && signupTrack?.id !== activeTrack?.id
+      ? `${organizationLabel(signupOrganization)}${isRetiredOrganization(signupOrganization) ? " (no longer offered)" : ""}`
+      : null;
 
   const displayName = user.displayName ?? user.name ?? "Student";
   const username = user.username ?? "new_student";
@@ -188,7 +192,9 @@ export default async function ProfilePage() {
             <CardContent className="space-y-3">
               {user.studentDebates.length > 0 ? (
                 user.studentDebates.map((debate) => (
-                  <Link key={debate.id} href={`/debate/${debate.id}`} className="block rounded-md border bg-background p-4 transition hover:bg-muted">
+                  // A dormant track's session (HOSA) is a record, not something to reopen: it links to
+                  // history, where it is labeled as no longer offered.
+                  <Link key={debate.id} href={(isRetiredOrganization(debate.organization) ? "/debates/history" : `/debate/${debate.id}`) as Route} className="block rounded-md border bg-background p-4 transition hover:bg-muted">
                     <p className="font-semibold">{debate.topic}</p>
                     {/* A3b-2: was "· {n}% judge score". The percent sign made a formative practice
                         number read like a graded mastery percentage, and "judge score" implied a
@@ -220,6 +226,18 @@ export default async function ProfilePage() {
                   const answered = test.questions.reduce((total, question) => total + question._count.answers, 0);
                   const graded = typeof test.score === "number" && test.status === "COMPLETED";
                   const state = graded ? `${test.score}% score` : answered > 0 ? `In progress — ${answered} answered` : "Not started";
+                  // A dormant track's test (HOSA): a graded one stays readable as the learner's own
+                  // record; an unfinished one cannot be continued, so it is labeled and not linked.
+                  if (isRetiredOrganization(test.organization) && !graded) {
+                    return (
+                      <div key={test.id} className="block rounded-md border bg-background p-4">
+                        <p className="font-semibold">
+                          {test.organization} {test.eventCluster ?? "practice"}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">No longer offered</p>
+                      </div>
+                    );
+                  }
                   return (
                     <Link
                       key={test.id}
@@ -234,7 +252,7 @@ export default async function ProfilePage() {
                   );
                 })
               ) : (
-                <p className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">No practice tests yet. Generate a DECA or HOSA set to fill this in.</p>
+                <p className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">No practice tests yet. Generate a DECA set to fill this in.</p>
               )}
             </CardContent>
           </Card>

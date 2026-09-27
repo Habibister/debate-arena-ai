@@ -42,6 +42,7 @@ import { educationLessonsForTrack } from "../lib/education/registry";
 import { weakAreasForTrack } from "../lib/track-recommendations";
 import { pickActiveTrack, activeTrackFromOrganization } from "../lib/track-server";
 import { parseTrackSelectionCookie } from "../lib/track-precedence";
+import { dormantTrackParamRedirect } from "../lib/track-route";
 import { getRoleplayLesson } from "../lib/roleplay-lessons";
 import React, { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -233,7 +234,11 @@ async function main() {
 
   // Pages are wired to filter (not just banner). The guided-lessons index is its own /lessons page now,
   // but it stays track-scoped (lessonsForTrack) with an honest empty state for tracks without lessons.
-  assert.ok(readFileSync("app/(app)/skills/page.tsx", "utf8").includes("track={activeTrack?.id}"), "skills page filters by track");
+  // HOSA dormancy (2026-09-27): the skill list is rendered only for a RESOLVED public track and is passed
+  // that track's id; with no public track the page renders the neutral chooser instead of an unfiltered
+  // or empty list. Stronger than the old `track={activeTrack?.id}` scan, which accepted an undefined track.
+  assert.ok(/\{activeTrack \? \(\s*<SkillPath [^>]*track=\{activeTrack\.id\}[^>]*\/>\s*\) : \(\s*<ChooseTrackState\b/.test(readFileSync("app/(app)/skills/page.tsx", "utf8")),
+    "skills page filters by track (and renders the neutral chooser, not an unfiltered list, when no public track resolves)");
   assert.ok(readFileSync("app/(app)/tests/page.tsx", "utf8").includes('activeTrack.id === "DECA"'), "tests page filters by track");
   const lessonsIndex = readFileSync("app/(app)/lessons/page.tsx", "utf8");
   assert.ok(lessonsIndex.includes("lessonsForTrack") && lessonsIndex.includes("getActiveTrack"), "guided-lessons index is track-scoped");
@@ -248,15 +253,24 @@ async function main() {
 
   // 1. Selected track survives navigation without relying only on ?track= — a preference cookie is the
   // fallback, and the URL param overrides it on a track-specific route.
-  assert.equal(resolveTrackFromSlugs("hosa", undefined)?.id, "HOSA", "?track= resolves the track");
-  assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "HOSA stays HOSA via cookie when ?track= is absent");
+  // HOSA is dormant since 2026-09-27, so the live-track fixtures below use DECA; HOSA joins Model UN in
+  // the retired-track cases.
+  assert.equal(resolveTrackFromSlugs("deca", undefined)?.id, "DECA", "?track= resolves the track");
+  assert.equal(resolveTrackFromSlugs("hosa", undefined), undefined, "?track= resolves the track: dormant — ?track=hosa resolves no track");
+  assert.equal(resolveTrackFromSlugs(undefined, "deca")?.id, "DECA", "DECA stays DECA via cookie when ?track= is absent");
+  assert.equal(resolveTrackFromSlugs(undefined, "hosa"), undefined, "HOSA stays HOSA via cookie when ?track= is absent: dormant — a hosa cookie resolves no track");
   assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "URL track overrides the cookie on a track-specific route");
-  // Soft-removed (retired) tracks: MUN never resolves as the active selection — a stale retired URL
-  // falls back to the cookie, a stale retired cookie falls back to browse-all, and a stored retired
+  assert.equal(resolveTrackFromSlugs("deca", "debate")?.id, "DECA", "URL track overrides a LIVE cookie on a track-specific route");
+  // Soft-removed (retired) tracks: MUN and HOSA never resolve as the active selection — a stale retired
+  // URL falls back to the cookie, a stale retired cookie falls back to browse-all, and a stored retired
   // track normalizes to the default. Code and data stay retained; only the selection is refused.
-  assert.equal(resolveTrackFromSlugs("model-un", "hosa")?.id, "HOSA", "retired URL track falls back to the cookie");
-  assert.equal(resolveTrackFromSlugs("model-un", "model-un"), undefined, "retired URL + retired cookie -> browse-all");
-  assert.equal(resolveTrackFromSlugs(undefined, "model-un"), undefined, "stale retired cookie -> browse-all, never MUN content");
+  assert.equal(resolveTrackFromSlugs("model-un", "deca")?.id, "DECA", "retired URL track falls back to the cookie");
+  assert.equal(resolveTrackFromSlugs("hosa", "deca")?.id, "DECA", "retired URL track falls back to the cookie: dormant hosa URL -> the DECA cookie");
+  for (const retired of ["model-un", "hosa"]) {
+    assert.equal(resolveTrackFromSlugs(retired, retired), undefined, `retired URL + retired cookie -> browse-all (${retired})`);
+    assert.equal(resolveTrackFromSlugs(undefined, retired), undefined, `stale retired cookie -> browse-all, never ${retired} content`);
+  }
+  assert.equal(resolveTrackFromSlugs("model-un", "hosa"), undefined, "retired URL + a different retired cookie -> browse-all (Model UN URL, dormant HOSA cookie)");
   assert.equal(normalizeTrack("MODEL_UN"), "GENERAL_DEBATE", "stored retired track falls back to the default track");
   assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "no query + no cookie -> no track (browse-all allowed)");
   assert.equal(resolveTrackFromSlugs(undefined, "garbage"), undefined, "unknown cookie slug -> no track (never a wrong track)");
@@ -302,7 +316,9 @@ async function main() {
 
   // Resolution priority + deep-link-vs-preference separation.
   assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "explicit route track wins over saved preference (deep link controls context)");
-  assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "saved preference used when no route track");
+  assert.equal(resolveTrackFromSlugs("deca", "debate")?.id, "DECA", "explicit route track wins over a LIVE saved preference (deep link controls context)");
+  assert.equal(resolveTrackFromSlugs(undefined, "deca")?.id, "DECA", "saved preference used when no route track");
+  assert.equal(resolveTrackFromSlugs(undefined, "hosa"), undefined, "saved preference used when no route track: dormant — a saved hosa preference resolves nothing");
   assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "unresolved when neither route nor preference (caller fails closed / onboarding)");
 
   // Contract centralized in one resolver that only READS the preference cookie (deep link cannot overwrite it).
@@ -645,7 +661,11 @@ async function main() {
 
   // A1. Direct-URL track isolation: a HOSA user cannot open a DECA deck just by knowing the URL.
   assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "DECA"), false, "HOSA track disallows a DECA deck via direct URL");
-  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "HOSA"), true, "HOSA track allows HOSA decks");
+  // HOSA is dormant (2026-09-27): a track's own decks are still allowed (DECA fixture), but a dormant
+  // organization's decks are allowed for NO track, including its own and browse-all.
+  assert.equal(trackAllowsOrganization(trackBySlug("deca"), "DECA"), true, "DECA track allows DECA decks");
+  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "HOSA"), false, "HOSA track allows HOSA decks: dormant — no track, not even HOSA's own, allows HOSA decks");
+  assert.equal(trackAllowsOrganization(undefined, "HOSA"), false, "dormant: browse-all (no selected track) does not allow a HOSA deck either");
   assert.equal(trackAllowsOrganization(trackBySlug("deca"), "HOSA"), false, "DECA track disallows a HOSA deck via direct URL");
   assert.equal(trackAllowsOrganization(undefined, "DECA"), true, "no selected track -> browse-all allowed");
   const deckPage = readFileSync("app/(app)/study/[deck]/page.tsx", "utf8");
@@ -674,11 +694,18 @@ async function main() {
   // (The DECA practice hub → /training/deca/practice with "Start a DECA role play" is asserted above.)
 
   // A3. Unfinished practice is filtered by the selected track (records still kept in history).
-  const mixedDebates = [{ organization: "DEBATE" }, { organization: "MODEL_UN" }, { organization: "HOSA" }];
+  // DECA added to the fixture (2026-09-27) so a live non-Debate row is present on both sides of the filter.
+  const mixedDebates = [{ organization: "DEBATE" }, { organization: "MODEL_UN" }, { organization: "HOSA" }, { organization: "DECA" }];
   const gdOnly = mixedDebates.filter((d) => trackAllowsOrganization(trackBySlug("debate"), d.organization));
   assert.deepEqual(gdOnly.map((d) => d.organization), ["DEBATE"], "General Debate dashboard shows only General Debate unfinished sessions");
+  const decaOnly = mixedDebates.filter((d) => trackAllowsOrganization(trackBySlug("deca"), d.organization));
+  assert.deepEqual(decaOnly.map((d) => d.organization), ["DECA"], "DECA dashboard shows only DECA unfinished sessions");
+  // Model UN and HOSA are dormant: trackAllowsOrganization refuses a dormant organization for every track,
+  // so even a (no longer resolvable) dormant track would list none of its own unfinished sessions.
   const munOnly = mixedDebates.filter((d) => trackAllowsOrganization(trackBySlug("model-un"), d.organization));
-  assert.deepEqual(munOnly.map((d) => d.organization), ["MODEL_UN"], "Model UN dashboard shows only Model UN unfinished sessions");
+  assert.deepEqual(munOnly.map((d) => d.organization), [], "Model UN dashboard shows only Model UN unfinished sessions: dormant — a dormant Model UN track lists none, not even its own");
+  const hosaOnly = mixedDebates.filter((d) => trackAllowsOrganization(trackBySlug("hosa"), d.organization));
+  assert.deepEqual(hosaOnly.map((d) => d.organization), [], "dormant: a dormant HOSA track lists no unfinished sessions, not even HOSA's own");
   const dashSrc = readFileSync("app/(app)/dashboard/page.tsx", "utf8");
   assert.ok(dashSrc.includes("trackAllowsOrganization(activeTrack, debate.organization)"), "dashboard filters unfinished sessions by the active track");
 
@@ -908,19 +935,25 @@ async function main() {
 
   // ---- 14/15/16. active-track resolution contract ------------------------------------------------------
   // Route context wins over an incompatible saved track (positive AND negative control).
-  assert.equal(resolveTrackFromSlugs("hosa", "deca")?.id, "HOSA", "explicit route track beats an incompatible saved track");
-  assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "and in the other direction");
-  assert.equal(resolveTrackFromSlugs(undefined, "hosa")?.id, "HOSA", "saved track is used only when the route says nothing");
+  // HOSA is dormant (2026-09-27), so the two live public tracks are the fixtures here.
+  assert.equal(resolveTrackFromSlugs("debate", "deca")?.id, "GENERAL_DEBATE", "explicit route track beats an incompatible saved track");
+  assert.equal(resolveTrackFromSlugs("hosa", "deca")?.id, "DECA", "explicit route track beats an incompatible saved track: dormant — a hosa route is no route, so the saved DECA track applies");
+  assert.equal(resolveTrackFromSlugs("deca", "debate")?.id, "DECA", "and in the other direction");
+  assert.equal(resolveTrackFromSlugs("deca", "hosa")?.id, "DECA", "and in the other direction (a dormant hosa cookie never outranks a route)");
+  assert.equal(resolveTrackFromSlugs(undefined, "deca")?.id, "DECA", "saved track is used only when the route says nothing");
+  assert.equal(resolveTrackFromSlugs(undefined, "hosa"), undefined, "saved track is used only when the route says nothing: dormant — a saved hosa track is not used");
   assert.equal(resolveTrackFromSlugs(undefined, undefined), undefined, "no context resolves to nothing at all");
   // Unresolved never silently becomes a real track.
-  for (const bogus of ["", "nope", "model-un"]) {
+  for (const bogus of ["", "nope", "model-un", "hosa"]) {
     const r = resolveTrackFromSlugs(bogus, undefined);
     assert.ok(r === undefined || !isTrackRetired(r.id), `unresolved/retired route track never yields a live track: ${bogus}`);
   }
   assert.notEqual(resolveTrackFromSlugs("nope", undefined)?.id, TRACKS[0].id, "unresolved context never defaults to the first configured track");
   // Track-scoped filtering is only permissive when there is genuinely NO selected track.
   assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "DECA"), false, "a selected track blocks another org's content");
-  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "HOSA"), true, "positive control: its own org is allowed");
+  assert.equal(trackAllowsOrganization(trackBySlug("deca"), "DEBATE"), false, "a selected live track blocks another org's content");
+  assert.equal(trackAllowsOrganization(trackBySlug("deca"), "DECA"), true, "positive control: its own org is allowed");
+  assert.equal(trackAllowsOrganization(trackBySlug("hosa"), "HOSA"), false, "positive control: its own org is allowed: dormant — HOSA's own org is refused");
   assert.equal(trackAllowsOrganization(undefined, "DECA"), true, "browse-all is reserved for genuinely no selection");
 
   // ---- 17/18. lesson + Navigator fact isolation ----------------------------------------------------------
@@ -1138,23 +1171,46 @@ async function main() {
   // RENDERED, because the defect was a universal promise in prose, not a missing flag.
   // LessonsIndexPage is an async server component (M14 Phase 1a made track resolution async), so it
   // is invoked and awaited to obtain the element rather than passed to createElement directly.
-  const m11r5IndexHosa = visibleTextOf(renderToStaticMarkup(
-    (await (LessonsIndexPage as never as (p: unknown) => Promise<never>)({ searchParams: { track: "hosa" } })) as never));
-  for (const universal of [
-    "shows a weak example next to a strong one", "worked weak-vs-strong", "then practice it",
-    "end with hands-on practice", "ends with hands-on practice", "Most end with written practice"
-  ]) {
-    assert.ok(!m11r5IndexHosa.includes(universal),
-      `the lessons index makes no universal promise about every lesson ("${universal}")`);
+  // HOSA dormancy (2026-09-27): `?track=hosa` resolves no track, so that request renders the neutral
+  // "Choose Debate or DECA" state and no HOSA card. The page's own copy is therefore proven on a PUBLIC
+  // track's index (DECA), and the HOSA request is asserted to be the dormant neutral state. (In the app
+  // the middleware strips the dormant parameter first; the page never honours it either way.)
+  const renderLessonsIndex = async (track: string) => renderToStaticMarkup(
+    (await (LessonsIndexPage as never as (p: unknown) => Promise<never>)({ searchParams: { track } })) as never);
+  const m11r5IndexHosaHtml = await renderLessonsIndex("hosa");
+  const m11r5IndexHosa = visibleTextOf(m11r5IndexHosaHtml);
+  const m11r5IndexDecaHtml = await renderLessonsIndex("deca");
+  const m11r5IndexDeca = visibleTextOf(m11r5IndexDecaHtml);
+  for (const [label, text] of [["DECA", m11r5IndexDeca], ["?track=hosa", m11r5IndexHosa]] as const) {
+    for (const universal of [
+      "shows a weak example next to a strong one", "worked weak-vs-strong", "then practice it",
+      "end with hands-on practice", "ends with hands-on practice", "Most end with written practice"
+    ]) {
+      assert.ok(!text.includes(universal),
+        `the lessons index makes no universal promise about every lesson ("${universal}", ${label})`);
+    }
   }
-  assert.ok(m11r5IndexHosa.includes("shows the learning activities available for that topic"),
+  assert.ok(m11r5IndexDeca.includes("shows the learning activities available for that topic"),
     "it describes what it actually does instead");
-  // The HOSA card says what its own lesson is, using the LESSON'S authored note.
+  // The dormant request: the neutral two-track chooser, linking only the public hubs.
+  assert.equal(dormantTrackParamRedirect("/lessons", "?track=hosa"), "/lessons",
+    "dormant: the middleware drops ?track=hosa from /lessons (same path, no parameter)");
+  assert.ok(m11r5IndexHosaHtml.includes('id="choose-track-heading"') && m11r5IndexHosa.includes("Choose Debate or DECA"),
+    "it describes what it actually does instead: dormant — ?track=hosa renders the neutral \"Choose Debate or DECA\" state");
+  const m11r5IndexHosaHrefs = [...m11r5IndexHosaHtml.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
+  assert.deepEqual(m11r5IndexHosaHrefs.filter((h) => h.startsWith("/training")),
+    ["/training/debate", "/training/deca"], "dormant: the neutral state links exactly the two public hubs");
+  assert.ok(!/HOSA|Medical Terminology/.test(m11r5IndexHosa) && !m11r5IndexHosaHrefs.some((h) => /hosa/i.test(h)),
+    "dormant: ?track=hosa renders no HOSA text and no HOSA link");
+  // The HOSA card's own note (dormant internals: the registry still authors it, and the index would
+  // still derive a card's note from its lesson's `practiceStatus` — never from a slug).
   const m11r5IndexLesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
   assert.notEqual(m11r5IndexLesson.practiceStatus, "available", "the HOSA lesson is the withdrawn-practice one");
   const m11r5CardNote = m11r5IndexLesson.practiceStatus === "available" ? "" : m11r5IndexLesson.practiceUnavailable.cardNote;
-  assert.ok(m11r5CardNote.length > 0 && m11r5IndexHosa.includes(m11r5CardNote),
-    "the card renders the lesson's own authored note, not a page-level guess");
+  assert.ok(m11r5CardNote.length > 0 && !m11r5IndexHosa.includes(m11r5CardNote) && !m11r5IndexDeca.includes(m11r5CardNote),
+    "the card renders the lesson's own authored note, not a page-level guess: dormant — the HOSA note is authored but rendered on no public index");
+  assert.ok(/unavailableNote: l\.practiceStatus === "available" \? undefined : l\.practiceUnavailable\.cardNote/.test(m11r5Strip(readFileSync("app/(app)/lessons/page.tsx", "utf8"))),
+    "the index still takes a card's note from the lesson's own practiceStatus and authored cardNote");
   for (const required of ["communication-only", "interactive scenario is temporarily unavailable",
                           "never teaches or scores hands-on procedures"]) {
     assert.ok(m11r5CardNote.includes(required), `the HOSA card note states "${required}"`);
@@ -1164,8 +1220,6 @@ async function main() {
   assert.ok(!m11r5IndexSrc.includes("how-hosa-scenario-interaction-works"),
     "and the index hardcodes no lesson slug to decide it");
   // Control: the available DECA lesson carries no note at all, so the notice is not universal.
-  const m11r5IndexDeca = visibleTextOf(renderToStaticMarkup(
-    (await (LessonsIndexPage as never as (p: unknown) => Promise<never>)({ searchParams: { track: "deca" } })) as never));
   assert.equal(getRoleplayLesson("how-deca-roleplay-works")!.practiceStatus, "available", "the DECA lesson is available");
   assert.ok(!m11r5IndexDeca.includes("temporarily unavailable"), "so its card shows no unavailable note");
   // P1-B1 REACHABILITY. The app shell deliberately hides /lessons for non-Debate tracks, so the ONLY
@@ -1191,8 +1245,8 @@ async function main() {
   for (const foreign of ["General Debate", "HOSA", "Patient Communication"]) {
     assert.ok(!m11r5IndexDeca.includes(foreign), `P1-B1c. the DECA lesson index never shows "${foreign}"`);
   }
-  assert.ok(m11r5IndexHosa.includes(m11r5IndexLesson.slug === "how-hosa-scenario-interaction-works" ? "Patient Communication" : ""),
-    "the HOSA card itself is still listed");
+  assert.ok(!m11r5IndexHosa.includes("Patient Communication") && !m11r5IndexHosaHtml.includes(`/lessons/${m11r5IndexLesson.slug}`),
+    "the HOSA card itself is still listed: dormant — ?track=hosa lists no HOSA card and links no HOSA lesson");
 
   // ---- M11R5A Issue 2: no self-link out of a fail-closed family state ----
   (globalThis as { React?: unknown }).React = React;
@@ -1234,69 +1288,42 @@ async function main() {
     assert.ok(found, `the ${id} track is registered`);
     return found!.slug;
   };
-  const m11r5Hosa = m11r5Hub(m11r5SlugOf("HOSA"));
-  assert.ok(!m11r5Hosa.includes("/training/hosa/practice"), "the HOSA hub does not route into the generic practice room");
-  assert.ok(!m11r5Hosa.includes("Start HOSA practice"), "and offers no generic HOSA practice CTA");
-  assert.ok(m11r5Hosa.includes("Start from your event, not a generic room"),
-    "it states in words where it sends learners instead, rather than leaving a gap");
-  const m11r5HosaText = m11r5Hosa.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
-  assert.ok(!/<(a|button)\b[^>]*>(?:(?!<\/(?:a|button)>)[\s\S])*Start from your event, not a generic room/.test(m11r5Hosa),
-    "and that statement is not itself clickable");
-  // M11R5A — THE honesty contract for this card. /training/hosa/practice is a SEPARATE surface this
-  // page does not own: it still mounts real HOSA practice and is reachable from Event HQ. So while
-  // that is true, the hub must not tell learners HOSA practice is unavailable or unrecorded. If the
-  // practice room is ever genuinely withdrawn, this check stops applying on its own.
-  const m11r5PracticeRoute = m11r5Strip(readFileSync("app/(app)/training/[track]/practice/page.tsx", "utf8"));
-  // M11R6 narrowed this route to the verified Medical Terminology exam; that practice is still live
-  // and still recorded, so the hub's honesty contract below still applies.
-  const m11r5PracticeLives = /HosaEventPrep/.test(m11r5PracticeRoute);
-  if (m11r5PracticeLives) {
-    for (const falseClaim of [
-      "Interactive HOSA practice is temporarily unavailable",
-      "HOSA practice is temporarily unavailable",
-      "Nothing is recorded",
-      "no part of this counts as completed"
-    ]) {
-      assert.ok(!m11r5HosaText.includes(falseClaim),
-        `while /training/hosa/practice still mounts practice, the hub must not claim "${falseClaim}"`);
+  // HOSA DORMANCY (owner decision 2026-09-27). The HOSA hub no longer renders for anyone: the page's
+  // retired-track guard redirects /training/hosa to the track chooser (a temporary 307 replace redirect,
+  // never permanentRedirect) before a single HOSA branch is evaluated. The M11R5/M11R5A/M11R5C checks
+  // that inspected the RENDERED HOSA hub (no generic practice CTA, non-clickable recovery statement,
+  // registry-derived lesson/event wording, 44px recovery links, no DECA leak) guarded markup that no
+  // request can produce any more, so they are replaced by the redirect contract below; the hub's
+  // dormant HOSA branch stays in source, unreachable.
+  const m11r5HubRedirect = (slug: string): string | null => {
+    try {
+      m11r5Hub(slug);
+      return null;
+    } catch (error) {
+      const digest = (error as { digest?: string }).digest ?? "";
+      if (!digest.startsWith("NEXT_REDIRECT")) throw error;
+      return digest;
     }
-  }
-  // The one unavailability the hub DOES state is the lesson's own, and it must match the registry.
+  };
+  assert.equal(m11r5HubRedirect(m11r5SlugOf("HOSA")), "NEXT_REDIRECT;replace;/training;307;",
+    "the HOSA hub does not route into the generic practice room: dormant — /training/hosa renders nothing and redirects (307) to /training");
+  assert.equal(m11r5HubRedirect(m11r5SlugOf("MODEL_UN")), "NEXT_REDIRECT;replace;/training;307;",
+    "dormant control: /training/model-un takes the same redirect");
+  // Structural guarantee that NONE of the hub's HOSA branch can render: the retired guard (which now
+  // covers HOSA) runs before the first HOSA-specific expression in the component.
+  const m11r5HubCode = m11r5Strip(readFileSync("app/(app)/training/[track]/page.tsx", "utf8"));
+  const m11r5GuardAt = m11r5HubCode.search(/if \(isTrackRetired\(track\.id\)\) \{\s*redirect\("\/training"\);/);
+  const m11r5FirstHosaBranchAt = m11r5HubCode.indexOf('track.id === "HOSA"');
+  assert.ok(m11r5GuardAt !== -1 && m11r5FirstHosaBranchAt !== -1 && m11r5GuardAt < m11r5FirstHosaBranchAt,
+    "dormant: the hub's retired-track redirect precedes every HOSA branch, so no HOSA hub markup is reachable");
+  assert.ok(isTrackRetired("HOSA"), "dormant: HOSA is a retired track, which is what the hub guard reads");
+  // The dormant internals this hub used to read still hold (CLASS 2): the lesson registry still marks the
+  // HOSA lesson's scenario as withdrawn, and the verified event is still Medical Terminology.
   const m11r5HubLesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
-  assert.equal(
-    m11r5HosaText.includes("its interactive scenario is temporarily unavailable"),
-    m11r5HubLesson.practiceStatus !== "available",
-    "the hub states the lesson's scenario as unavailable exactly when the registry says it is"
-  );
-  assert.ok(m11r5Hosa.includes('href="/training/hosa/events"'), "the hub offers event browsing as recovery");
-  assert.ok(m11r5Hosa.includes(`href="/lessons/${m11r5HubLesson.slug}"`), "and the informational lesson, by its own slug");
-  assert.ok(existsSync("app/(app)/training/[track]/events/page.tsx"), "the event-browsing recovery route exists");
-  // M11R5A Issue 3: both NEW recovery links are structurally identifiable and carry a >=44px target.
-  const m11r5Recovery = [...m11r5Hosa.matchAll(/<a\b[^>]*data-hosa-recovery="(events|lesson)"[^>]*>/g)];
-  assert.equal(m11r5Recovery.length, 2, "both hub recovery links are structurally identifiable");
-  for (const [tag, which] of m11r5Recovery.map((m) => [m[0], m[1]] as const)) {
-    assert.ok(/min-h-11/.test(tag), `the ${which} recovery link carries the 44px minimum height`);
-    assert.ok(/h-auto/.test(tag), `and lets its label wrap without shrinking below it (${which})`);
-    assert.ok(/focus-ring/.test(tag), `and keeps a visible keyboard focus treatment (${which})`);
-    assert.ok(/href="\/(training\/hosa\/events|lessons\/how-hosa-scenario-interaction-works)"/.test(tag),
-      `and stays track-internal (${which})`);
-  }
-  assert.ok(!/<a\b[^>]*data-hosa-recovery[^>]*>(?:(?!<\/a>)[\s\S])*<(?:a|button)\b/.test(m11r5Hosa),
-    "neither recovery link nests another interactive element");
-  assert.ok(!m11r5Hosa.includes("/training/deca/"), "and the HOSA hub still leaks no DECA surface");
-  // ---- M11R5C item E: the hub promises nothing HOSA's only lesson cannot deliver ----
-  for (const universal of ["worked weak-vs-strong examples, then practice it", "then practice it"]) {
-    assert.ok(!m11r5HosaText.includes(universal),
-      `the HOSA hub makes no universal lesson-practice promise ("${universal}")`);
-  }
-  assert.ok(m11r5HosaText.includes("Guided information"), "HOSA's lessons entry is labelled as information");
-  assert.ok(/check your current event guideline for event-specific requirements/.test(m11r5HosaText),
-    "and points at the learner's own guideline for what their event requires");
-  assert.ok(m11r5Hosa.includes(`/lessons?track=${m11r5SlugOf("HOSA")}`), "while still linking to the lessons index");
-  // The verified event named on the hub comes from the registry, not from this page.
+  assert.notEqual(m11r5HubLesson.practiceStatus, "available", "the HOSA lesson's interactive scenario is still withdrawn in the registry");
   const m11r5HubEvent = hosaEventById("medical-terminology")!;
-  assert.ok(m11r5HosaText.includes(`${m11r5HubEvent.name} practice is available from its Event HQ page`),
-    "the hub says where the verified event's practice actually is");
+  assert.equal(m11r5HubEvent.name, "Medical Terminology", "the verified HOSA event the hub read from the registry is unchanged");
+  assert.ok(existsSync("app/(app)/training/[track]/events/page.tsx"), "the event-browsing route exists");
   // Other tracks are untouched — the control that proves the checks above are HOSA-specific.
   const m11r5Deca = m11r5Hub(m11r5SlugOf("DECA"));
   assert.ok(m11r5Deca.includes("/training/deca/practice") && m11r5Deca.includes("Start a DECA role play"),
@@ -1439,15 +1466,22 @@ async function main() {
   const PA = (routeSlug: string | null, organization: unknown, cookieSlug: string | null) =>
     pickActiveTrack({ routeSlug, organization: organization as never, cookieSlug });
 
+  // HOSA DORMANCY (2026-09-27): HOSA is no longer a live track, so the live-track fixtures below use
+  // Debate and DECA (a dormant organization or cookie would compete with nothing, making precedence
+  // checks vacuous), and HOSA joins Model UN in every retired-track case.
   // 1. An explicit, valid `?track=` wins over every other source.
-  assert.equal(PA("deca", "HOSA", "hosa").track?.id, "DECA", "P1a-1. explicit ?track= beats organization and cookie");
-  assert.equal(PA("deca", "HOSA", "hosa").source, "route", "P1a-1b. and reports itself as a route resolution");
-  assert.equal(PA("hosa", "DEBATE", "deca").track?.id, "HOSA", "P1a-1c. explicit ?track= wins in the other direction too");
+  assert.equal(PA("deca", "DEBATE", "debate").track?.id, "DECA", "P1a-1. explicit ?track= beats organization and cookie");
+  assert.equal(PA("deca", "DEBATE", "debate").source, "route", "P1a-1b. and reports itself as a route resolution");
+  assert.equal(PA("debate", "DECA", "deca").track?.id, "GENERAL_DEBATE", "P1a-1c. explicit ?track= wins in the other direction too");
+  assert.equal(PA("hosa", "DEBATE", "deca").track?.id, "DECA", "P1a-1c. dormant: an explicit ?track=hosa wins nothing — the DECA selection applies");
+  assert.equal(PA("hosa", "DEBATE", "deca").source, "preference", "P1a-1d. dormant: and the resolution is reported as the selection, not the route");
 
   // 2. Each supported persisted organization resolves to its own track.
   assert.equal(PA(null, "DEBATE", null).track?.id, "GENERAL_DEBATE", "P1a-2. persisted DEBATE resolves to General Debate");
   assert.equal(PA(null, "DECA", null).track?.id, "DECA", "P1a-3. persisted DECA resolves to DECA");
-  assert.equal(PA(null, "HOSA", null).track?.id, "HOSA", "P1a-4. persisted HOSA resolves to HOSA");
+  assert.equal(PA(null, "HOSA", null).track, undefined, "P1a-4. persisted HOSA resolves to HOSA: dormant — it resolves no track (never converted to Debate/DECA)");
+  assert.equal(PA(null, "HOSA", null).resolved, false, "P1a-4c. dormant: a HOSA signup organization leaves the learner UNRESOLVED");
+  assert.equal(PA(null, "HOSA", null).source, "none", "P1a-4d. dormant: and reports source 'none'");
   assert.equal(PA(null, "DECA", null).source, "organization", "P1a-4b. and reports itself as an organization resolution");
 
   // 3. SUPERSEDED (Owner QA Repair 2). Phase 1a ranked the organization above the cookie because the
@@ -1455,9 +1489,12 @@ async function main() {
   //    VALIDATED selection — `parseTrackSelectionCookie` rejects legacy, malformed and other-account
   //    values before anything reaches here — so the learner's own selection outranks the signup
   //    organization, which is what lets "Switch track" mean what it says.
-  assert.equal(PA(null, "DECA", "hosa").track?.id, "HOSA", "P1a-5. the learner's validated selection beats the persisted organization");
-  assert.equal(PA(null, "HOSA", "debate").track?.id, "GENERAL_DEBATE", "P1a-5b. and again in the other direction");
-  assert.equal(PA(null, "DECA", "hosa").source, "preference", "P1a-5c. and reports itself as the selection");
+  assert.equal(PA(null, "DECA", "debate").track?.id, "GENERAL_DEBATE", "P1a-5. the learner's validated selection beats the persisted organization");
+  assert.equal(PA(null, "DEBATE", "deca").track?.id, "DECA", "P1a-5b. and again in the other direction");
+  assert.equal(PA(null, "DECA", "debate").source, "preference", "P1a-5c. and reports itself as the selection");
+  assert.equal(PA(null, "HOSA", "debate").track?.id, "GENERAL_DEBATE", "P1a-5h. a live selection still applies for a learner whose signup organization is dormant HOSA");
+  assert.equal(PA(null, "DECA", "hosa").track?.id, "DECA", "P1a-5i. dormant: a hosa selection is no selection — the organization decides");
+  assert.equal(PA(null, "DECA", "hosa").source, "organization", "P1a-5j. dormant: and the resolution is reported as the organization");
   //    The organization is the FALLBACK, and a real one: with no selection it decides.
   assert.equal(PA(null, "DECA", null).track?.id, "DECA", "P1a-5d. with no selection the organization decides");
   //    The guard that makes P1a-5 safe: an unscoped (legacy) or foreign-scoped cookie is not a selection.
@@ -1466,11 +1503,12 @@ async function main() {
   assert.equal(parseTrackSelectionCookie("debate.0123456789abcdef", "0123456789abcdef"), "debate", "P1a-5g. the learner's own scoped selection parses");
 
   // 4. An unsupported / missing / malformed organization is treated as ABSENT and must not override a
-  //    valid cookie. PUBLIC_SPEAKING and MOCK_TRIAL have no track; MODEL_UN's is retired.
-  for (const org of ["PUBLIC_SPEAKING", "MOCK_TRIAL", "MODEL_UN", "NOT_AN_ORG", "", null, undefined]) {
-    assert.equal(PA(null, org, "hosa").track?.id, "HOSA",
+  //    valid cookie. PUBLIC_SPEAKING and MOCK_TRIAL have no track; MODEL_UN's and (since 2026-09-27)
+  //    HOSA's are retired.
+  for (const org of ["PUBLIC_SPEAKING", "MOCK_TRIAL", "MODEL_UN", "HOSA", "NOT_AN_ORG", "", null, undefined]) {
+    assert.equal(PA(null, org, "deca").track?.id, "DECA",
       `P1a-6. unsupported organization ${JSON.stringify(org)} falls through to the valid cookie`);
-    assert.equal(PA(null, org, "hosa").source, "preference",
+    assert.equal(PA(null, org, "deca").source, "preference",
       `P1a-6b. and the resolution is reported as the cookie preference for ${JSON.stringify(org)}`);
     assert.equal(activeTrackFromOrganization(org as never), undefined,
       `P1a-6c. and it maps to no track at all: ${JSON.stringify(org)}`);
@@ -1481,33 +1519,38 @@ async function main() {
   assert.equal(PA(null, null, null).resolved, false, "P1a-8. nothing to resolve stays UNRESOLVED (fail-closed default)");
   assert.equal(PA(null, null, null).source, "none", "P1a-8b. and reports source 'none' — never a guessed track");
   assert.equal(PA(null, null, "model-un").resolved, false, "P1a-9. a retired cookie slug is still treated as absent");
+  assert.equal(PA(null, null, "hosa").resolved, false, "P1a-9b. dormant: a hosa cookie slug is treated as absent too");
 
   // 6. Unauthenticated behaviour is unchanged: no organization is available, so route then cookie.
-  assert.equal(PA("hosa", null, null).track?.id, "HOSA", "P1a-10. signed-out ?track= still resolves");
-  assert.equal(PA(null, null, "hosa").track?.id, "HOSA", "P1a-11. signed-out cookie still resolves");
+  assert.equal(PA("deca", null, null).track?.id, "DECA", "P1a-10. signed-out ?track= still resolves");
+  assert.equal(PA("hosa", null, null).resolved, false, "P1a-10b. dormant: a signed-out ?track=hosa resolves nothing");
+  assert.equal(PA(null, null, "deca").track?.id, "DECA", "P1a-11. signed-out cookie still resolves");
 
   // 7. An INVALID query value cannot override a valid persisted organization.
-  for (const bad of ["", "  ", "not-a-track", "model-un", "../deca", "DECA;", null]) {
-    assert.equal(PA(bad, "HOSA", null).track?.id, "HOSA",
+  //    (Persisted organization is DEBATE: with HOSA dormant, it is the live organization whose track no
+  //    malformed "deca"-like value could coincidentally produce.)
+  for (const bad of ["", "  ", "not-a-track", "model-un", "hosa", "../deca", "DECA;", null]) {
+    assert.equal(PA(bad, "DEBATE", null).track?.id, "GENERAL_DEBATE",
       `P1a-12. invalid ?track=${JSON.stringify(bad)} cannot override the persisted organization`);
   }
 
   // 8. NON-VACUOUS CONTROLS — each proves the assertion above would catch a real regression.
   //    Swapping the selection changes the answer, so P1a-5 is not passing by coincidence.
-  assert.notEqual(PA(null, "DECA", "hosa").track?.id, PA(null, "DECA", "debate").track?.id,
+  assert.notEqual(PA(null, "DECA", "debate").track?.id, PA(null, "DECA", "deca").track?.id,
     "P1a-C1. control: changing only the selection changes the resolved track");
   //    Removing the selection changes the answer to the organization, so P1a-5 really is precedence.
   assert.equal(PA(null, "DECA", null).track?.id, "DECA",
     "P1a-C2. control: dropping the selection hands the decision to the organization");
-  assert.notEqual(PA(null, "DECA", "hosa").source, PA(null, "DECA", null).source,
+  assert.notEqual(PA(null, "DECA", "debate").source, PA(null, "DECA", null).source,
     "P1a-C3. control: the reported source differs between a selection hit and an organization hit");
   //    A valid route slug must be doing the work in P1a-1, not the organization.
-  assert.notEqual(PA("deca", "HOSA", "hosa").track?.id, PA(null, "HOSA", "hosa").track?.id,
+  assert.notEqual(PA("deca", "DEBATE", "debate").track?.id, PA(null, "DEBATE", "debate").track?.id,
     "P1a-C4. control: removing the route slug changes the winner");
   //    A supported organization must actually map, or P1a-6 would pass for the wrong reason.
-  for (const org of ["DEBATE", "DECA", "HOSA"]) {
+  for (const org of ["DEBATE", "DECA"]) {
     assert.ok(activeTrackFromOrganization(org as never), `P1a-C5. control: ${org} does map to a live track`);
   }
+  assert.equal(activeTrackFromOrganization("HOSA" as never), undefined, "P1a-C5. control: HOSA does map to a live track: dormant — HOSA maps to none");
 
   // 9. The resolver still never writes, and now reads the session through a per-request cache so a
   //    page that already loaded a session does not pay a second user lookup.
@@ -1520,9 +1563,12 @@ async function main() {
   const signUpForm = readFileSync("components/auth/sign-up-form.tsx", "utf8");
   const signUpOptions = signUpForm.slice(signUpForm.indexOf("const organizations"), signUpForm.indexOf("];", signUpForm.indexOf("const organizations")));
   assert.ok(!/value:\s*"PUBLIC_SPEAKING"/.test(signUpOptions), "P1a-16. Public Speaking is not selectable at signup");
-  for (const org of ["DEBATE", "DECA", "HOSA"]) {
+  for (const org of ["DEBATE", "DECA"]) {
     assert.ok(new RegExp(`value:\\s*"${org}"`).test(signUpOptions), `P1a-17. ${org} remains selectable at signup`);
   }
+  assert.ok(!/value:\s*"HOSA"/.test(signUpOptions), "P1a-17. HOSA remains selectable at signup: dormant — HOSA is not offered at signup");
+  assert.deepEqual([...signUpOptions.matchAll(/value:\s*"([A-Z_]+)"/g)].map((m) => m[1]), ["DEBATE", "DECA"],
+    "P1a-17b. dormant: the signup organizations are exactly the public tracks' (Debate, DECA)");
   assert.ok(!/value:\s*"MODEL_UN"/.test(signUpOptions), "P1a-18. and Model UN stays unoffered");
   // Control: the extractor really is reading the option list, so P1a-16 cannot pass vacuously.
   assert.ok(/value:\s*"DEBATE"/.test(signUpOptions) && signUpOptions.includes("Debate"),
@@ -1531,7 +1577,7 @@ async function main() {
   assert.ok(!signUpForm.includes('"PUBLIC_SPEAKING", label'), "P1a-19. and it is not relabelled into another option");
 
 
-  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect), PLUS M11R7 (DECA timing scoped to the family our record sources it for, with a clock-free shared timeline, and both browsing surfaces naming their groupings as CompeteReady training groups), PLUS M11R5 (HOSA lesson absence scoped to our research record, lessons index promising only what exists via a status-derived per-card notice, and a HOSA hub that states unavailability non-interactively with real event-browsing and lesson recovery while Debate and DECA keep their practice CTAs).");
+  console.log("Tracks smoke tests passed: 4 tracks, slug/org mapping (+ reverse), safe normalize, org-based filtering (no leakage, honest empty states), honest source labels, debate->track-org propagation, org-specific AI, study filter, dashboard path, assignment track display, routes present, existing systems preserved, PLUS global track cookie resolver, HOSA resource isolation, Model UN practice, Model UN + General Debate dashboard filtering, full-screen focus mode, accessibility overlay, removed placeholders, direct-URL deck isolation, DECA-not-parliamentary redirect + role-play config, track-filtered unfinished sessions, HOSA rebuttal-free mastery, coach dashboard isolation, track-aware study hero, non-debate practice shell + org Side Coach prompts, user-facing session metadata + legacy handling, coach-dashboard routing, assignment track compatibility (UI + server), and CompeteReady branding, PLUS the fail-closed HOSA Event Navigator (HOSA-only route, unknown ids resolve to nothing, one sourced event, honest partial cards, no cross-track leakage) and the family-first DECA Event Navigator (own registry and parameter, Individual Series never the default, out-of-scope families never routed into the role-play lesson), PLUS the M10 regression pass (canonical hubs, per-track selector parameters with cross-track identifiers rejected in both directions, missing/repeated/unknown/malformed inputs selecting nothing, no first-record fallback, route-track-beats-saved-track resolution, HOSA and DECA fact isolation with positive controls, communication-only clinical routing, desktop + mobile reachability with no hover dependency, stable slugs and Event HQ unchanged, and no new persistence, API or redirect), PLUS M11R7 (DECA timing scoped to the family our record sources it for, with a clock-free shared timeline, and both browsing surfaces naming their groupings as CompeteReady training groups), PLUS M11R5 (HOSA lesson absence scoped to our research record, lessons index promising only what exists via a status-derived per-card notice, while Debate and DECA keep their practice CTAs), PLUS HOSA dormancy (HOSA is retired alongside Model UN: its slug, cookie and signup organization resolve no track, its content is allowed for no track, /training/hosa redirects (307) to /training, ?track=hosa on /lessons renders the neutral Debate-or-DECA chooser, and signup offers Debate and DECA only).");
 }
 
 main();

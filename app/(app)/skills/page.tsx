@@ -3,6 +3,7 @@ import type { Route } from "next";
 import { ArrowRight } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { SkillPath } from "@/components/skills/skill-path";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
@@ -52,7 +53,13 @@ export default async function SkillsPage({ searchParams }: { searchParams: { tra
         }
       />
 
-      <SkillPath showSampleProgress={showSampleProgress} track={activeTrack?.id} />
+      {/* No public track resolved (not chosen yet, or a saved selection naming a dormant track): the
+          neutral chooser in place of an empty skill list. */}
+      {activeTrack ? (
+        <SkillPath showSampleProgress={showSampleProgress} track={activeTrack.id} />
+      ) : (
+        <ChooseTrackState context="Skills follow the track you choose." />
+      )}
 
       {/* Practice finds the gap; Learn supplies the reteaching. Stated as the relationship it is,
           rather than folding the lesson catalog back into this page as though lessons were drills. */}

@@ -16,6 +16,7 @@ import { authOptions } from "@/lib/auth";
 import { getLastActivityForUsers } from "@/lib/coach-progress";
 import { getTeamsForCoach } from "@/lib/teams";
 import { canAccessCoachTools } from "@/lib/roles";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -142,14 +143,23 @@ export default async function CoachPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">Join code</p>
-                  <p className="mt-1 font-mono text-lg font-bold tracking-wide">{team.joinCode ?? "—"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Share this join code with students. They join from their dashboard using this code.</p>
+              {isRetiredOrganization(team.organization) ? (
+                // A dormant track's team (HOSA) stays visible as a record, but it is no longer offered:
+                // students cannot join it and new work cannot be assigned to it.
+                <p className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
+                  This team&apos;s track is no longer offered. Its members and history are kept, but new students cannot join
+                  and new work cannot be assigned.
+                </p>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Join code</p>
+                    <p className="mt-1 font-mono text-lg font-bold tracking-wide">{team.joinCode ?? "—"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Share this join code with students. They join from their dashboard using this code.</p>
+                  </div>
+                  {team.joinCode ? <CopyButton value={team.joinCode} /> : null}
                 </div>
-                {team.joinCode ? <CopyButton value={team.joinCode} /> : null}
-              </div>
+              )}
 
               {team.members.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Students will appear here after they join your team.</p>

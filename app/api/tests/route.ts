@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, trackNotOffered, unauthorized } from "@/lib/api";
 import { clientIp, sessionUserId } from "@/lib/api-auth";
 import { generatePracticeQuestions } from "@/lib/ai";
 import { authOptions } from "@/lib/auth";
@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { buildFallbackPracticeQuestions } from "@/lib/test-question-bank";
 import { practiceTestCreateSchema } from "@/lib/validators";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const runtime = "nodejs";
 
@@ -67,6 +68,9 @@ export async function POST(request: Request) {
     await enforceRateLimit({ userId, ip: clientIp(request), workload: "heavy" });
 
     const input = await parseJson(request, practiceTestCreateSchema);
+    if (isRetiredOrganization(input.organization)) {
+      return trackNotOffered();
+    }
     const fallbackQuestions = buildFallbackPracticeQuestions({
       organization: input.organization,
       eventType: input.eventType,

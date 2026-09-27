@@ -66,7 +66,9 @@ export default async function DebatePage({ searchParams }: { searchParams: { tra
         </div>
       ) : null}
 
-      <DebateRoom track={searchParams.track} guidedLessonId={guidedRubric ? guidedLessonId : undefined} />
+      {/* The RESOLVED track, never the raw query: a dormant track's slug (?track=hosa) must not reach the
+          room, which would otherwise set up that organization's opponent and judge. */}
+      <DebateRoom track={activeTrack?.slug} guidedLessonId={guidedRubric ? guidedLessonId : undefined} />
 
       <RubricBreakdown organization="DEBATE" eventType="PUBLIC_FORUM" />
     </div>

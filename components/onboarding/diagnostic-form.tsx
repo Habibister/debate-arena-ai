@@ -7,7 +7,7 @@ import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ACTIVE_TRACKS, type TrainingTrack } from "@/lib/training-tracks";
+import { ACTIVE_TRACKS, PUBLIC_TRACKS_PHRASE, type TrainingTrack } from "@/lib/training-tracks";
 import { useTrainingTrack } from "@/components/training/training-track-context";
 import {
   CONFIDENCE_QUESTIONS,
@@ -32,7 +32,7 @@ const SESSIONS: Array<{ id: SessionLength; label: string }> = [
 
 export function DiagnosticForm() {
   const router = useRouter();
-  const { track, setTrack } = useTrainingTrack();
+  const { track, effectiveTrack, setTrack } = useTrainingTrack();
   const [profile, setProfile] = useState<LearningProfile>({ ...DEFAULT_PROFILE, track });
   const [saving, setSaving] = useState(false);
   // Owner QA Repair 2: the select is pre-filled from the learner's current track — and, for a learner
@@ -40,6 +40,10 @@ export function DiagnosticForm() {
   // a learner who never chose a track was silently given General Debate. Only a track the learner
   // actually picked here is written; an untouched select changes nothing.
   const [trackChosen, setTrackChosen] = useState(false);
+  // With no public track resolved (none chosen yet, or a saved selection naming a dormant track such as
+  // HOSA) the select starts on a "Choose Debate or DECA" placeholder rather than showing the default as
+  // if it were theirs, and the path is built only once the learner has picked one.
+  const needsTrackChoice = !effectiveTrack && !trackChosen;
 
   const set = (patch: Partial<LearningProfile>) => setProfile((c) => ({ ...c, ...patch }));
   const setConfidence = (key: ConfidenceKey, value: Confidence) => setProfile((c) => ({ ...c, confidence: { ...c.confidence, [key]: value } }));
@@ -64,13 +68,18 @@ export function DiagnosticForm() {
         <label className="text-sm font-semibold" htmlFor="track">Training track</label>
         <select
           id="track"
-          value={profile.track}
+          value={needsTrackChoice ? "" : profile.track}
           onChange={(e) => {
             setTrackChosen(true);
             set({ track: e.target.value as TrainingTrack });
           }}
           className="h-10 w-full rounded-md border bg-background px-3 text-sm"
         >
+          {needsTrackChoice ? (
+            <option value="" disabled>
+              Choose {PUBLIC_TRACKS_PHRASE}
+            </option>
+          ) : null}
           {ACTIVE_TRACKS.map((t) => (
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
@@ -179,13 +188,14 @@ export function DiagnosticForm() {
       </section>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" onClick={save} disabled={saving}>
+        <Button type="button" onClick={save} disabled={saving || needsTrackChoice}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
           Build my learning path
         </Button>
         <Link href="/dashboard" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
           Skip for now
         </Link>
+        {needsTrackChoice ? <p className="w-full text-sm text-muted-foreground">Choose a training track above to build your path.</p> : null}
       </div>
     </div>
   );

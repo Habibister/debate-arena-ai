@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { MIN_CARDS } from "@/lib/study-games";
 import { flashcardsForDeck } from "@/lib/study-content";
 import { getActiveTrack } from "@/lib/track-server";
-import { trackAllowsOrganization } from "@/lib/training-tracks";
+import { isRetiredOrganization, trackAllowsOrganization } from "@/lib/training-tracks";
 
 export default async function StudyDeckGamesPage({ params, searchParams }: { params: { deck: string }; searchParams: { assignmentId?: string } }) {
   const cards = flashcardsForDeck(params.deck);
@@ -18,9 +18,9 @@ export default async function StudyDeckGamesPage({ params, searchParams }: { par
   }
 
   // Direct-URL isolation for the games route too (same rule as the deck page); assigned activities
-  // (?assignmentId=) open under the assignment's context and are exempt.
+  // (?assignmentId=) open under the assignment's context and are exempt, except a dormant track's deck.
   const activeTrack = await getActiveTrack();
-  if (!searchParams.assignmentId && !trackAllowsOrganization(activeTrack, cards[0].organization)) {
+  if (isRetiredOrganization(cards[0].organization) || (!searchParams.assignmentId && !trackAllowsOrganization(activeTrack, cards[0].organization))) {
     redirect("/study");
   }
 

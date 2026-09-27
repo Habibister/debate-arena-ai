@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { deckSummaries } from "@/lib/study-content";
 import { canAccessCoachTools, isAdmin } from "@/lib/roles";
 import { assignmentTypeAllowedForOrganization, contentAllowedForOrganization } from "@/lib/track-content";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 import type { assignmentCreateSchema, assignmentSubmitSchema } from "@/lib/validators";
 import type { z } from "zod";
 
@@ -149,6 +150,11 @@ export async function createAssignment(params: { coachUserId: string; role?: Rol
     if (invalid.length > 0) {
       throw new HttpError("Selected students must already belong to the selected team.", 403);
     }
+  }
+
+  // A dormant track's team (HOSA, Model UN) keeps its data, but no new work is assigned to it.
+  if (isRetiredOrganization(team.organization)) {
+    throw new HttpError("This team's track is no longer offered, so new work cannot be assigned to it.", 410);
   }
 
   // The team's track — not the coach's UI preference — decides which assignment types are valid.
@@ -322,8 +328,17 @@ export async function getStudentAssignmentDetail(params: { assignmentId: string;
   return assignment;
 }
 
+// An assignment on a dormant track's team (HOSA, Model UN) stays visible, but it cannot be started or
+// submitted: its activity leads into practice the public product no longer offers. Nothing is written.
+function refuseDormantTeam(assignment: { team: { organization: string } }) {
+  if (isRetiredOrganization(assignment.team.organization)) {
+    throw new HttpError("This team's track is no longer offered, so this assignment cannot be started or submitted.", 410);
+  }
+}
+
 export async function startAssignment(params: { assignmentId: string; userId: string }) {
   const assignment = await getStudentAssignmentDetail(params);
+  refuseDormantTeam(assignment);
   const existing = assignment.submissions[0];
 
   if (existing?.status === "COMPLETED") {
@@ -393,11 +408,17 @@ async function validateEvidence(params: { assignment: Awaited<ReturnType<typeof 
   if (assignment.type === "PRACTICE_TEST") {
     const test = await prisma.practiceTest.findFirst({
       where: { id: input.evidenceId, userId, status: "COMPLETED" },
-      select: { id: true }
+      select: { id: true, organization: true }
     });
 
     if (!test) {
       throw new HttpError("Choose a completed practice test that belongs to you.", 403);
+    }
+
+    // A dormant track's test (HOSA) is the learner's own record, but it is not evidence for work in a
+    // public track.
+    if (isRetiredOrganization(test.organization)) {
+      throw new HttpError("That practice test is from a track that is no longer offered. Choose another completed test.", 403);
     }
 
     return {
@@ -434,6 +455,7 @@ async function validateEvidence(params: { assignment: Awaited<ReturnType<typeof 
 
 export async function completeAssignment(params: { assignmentId: string; userId: string; input: SubmitInput }) {
   const assignment = await getStudentAssignmentDetail(params);
+  refuseDormantTeam(assignment);
   const evidence = await validateEvidence({ assignment, userId: params.userId, input: params.input });
 
   return prisma.assignmentSubmission.upsert({
@@ -494,7 +516,7 @@ export async function getStudentEvidenceOptions(userId: string, assignmentType: 
       take: 20,
       select: { id: true, organization: true, eventType: true, eventCluster: true, score: true, completedAt: true }
     });
-    return tests.map((test) => ({
+    return tests.filter((test) => !isRetiredOrganization(test.organization)).map((test) => ({
       id: test.id,
       label: `${test.organization} ${test.eventCluster ?? test.eventType} ${typeof test.score === "number" ? `(${test.score}%)` : ""}`,
       detail: test.completedAt ? `Completed ${test.completedAt.toLocaleDateString()}` : "Completed test"

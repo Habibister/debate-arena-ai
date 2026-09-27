@@ -1,6 +1,7 @@
 import { ClipboardCheck, FileQuestion, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PUBLIC_PRACTICE_TEST_ORGANIZATIONS } from "@/lib/training-tracks";
 
 /**
  * `organization` is the SAME locked organization that locks the generator above this card. It only
@@ -44,7 +45,7 @@ export function TestBuilderPreview({ organization }: { organization?: "DECA" | "
               {/* Track-scoped like the header above it. The provider is deliberately not named here:
                   this line claimed OpenAI, which is not what the generation chain runs, and a page
                   cannot state a provider it does not select. */}
-              The API route generates original {organization ?? "DECA and HOSA"} questions.
+              The API route generates original {organization ?? PUBLIC_PRACTICE_TEST_ORGANIZATIONS.join(" and ")} questions.
             </p>
           </div>
         </div>

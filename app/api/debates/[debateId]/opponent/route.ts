@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, trackNotOffered, unauthorized } from "@/lib/api";
 import { clientIp } from "@/lib/api-auth";
 import { generateOpponentSpeech } from "@/lib/openai-debate";
 import { authOptions } from "@/lib/auth";
@@ -8,6 +8,7 @@ import { countDebateSpeeches, getNextSpeech, getSideLabel, parseFormatConfig } f
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { opponentTurnRequestSchema } from "@/lib/validators";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,12 @@ export async function POST(request: Request, { params }: { params: { debateId: s
 
     if (!debate) {
       throw new HttpError("Debate not found", 404);
+    }
+
+    // A dormant track's session (HOSA, Model UN) cannot be continued: history already says so, and
+    // this refuses the same thing at the API. Nothing is generated or written; the row is untouched.
+    if (isRetiredOrganization(debate.organization)) {
+      return trackNotOffered();
     }
 
     if (debate.mode !== "AI") {

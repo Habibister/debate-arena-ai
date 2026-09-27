@@ -10,6 +10,7 @@ import { listAssignmentContentOptions } from "@/lib/assignments";
 import { authOptions } from "@/lib/auth";
 import { canAccessCoachTools } from "@/lib/roles";
 import { getTeamsForCoach } from "@/lib/teams";
+import { PUBLIC_TRACKS_PHRASE, isRetiredOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,12 @@ export default async function NewAssignmentPage() {
     );
   }
 
-  const [teams, content] = await Promise.all([getTeamsForCoach(session.user.id), listAssignmentContentOptions()]);
+  const [allTeams, content] = await Promise.all([getTeamsForCoach(session.user.id), listAssignmentContentOptions()]);
+  // A team whose organization is a dormant track (HOSA, Model UN) keeps its members and history, but new
+  // work cannot be assigned to it: that track is not part of the public product. createAssignment
+  // refuses it on the server as well.
+  const teams = allTeams.filter((team) => !isRetiredOrganization(team.organization));
+  const dormantTeamCount = allTeams.length - teams.length;
 
   return (
     <div className="space-y-6">
@@ -52,7 +58,15 @@ export default async function NewAssignmentPage() {
         </div>
       </div>
 
-      {teams.length === 0 ? (
+      {teams.length === 0 && dormantTeamCount > 0 ? (
+        <EmptyState
+          icon={Users}
+          title="Your teams are on a track that is no longer offered."
+          description={`Their members and history are kept, but new work can only be assigned to ${PUBLIC_TRACKS_PHRASE} teams. Create a ${PUBLIC_TRACKS_PHRASE} team to assign work.`}
+          actionLabel="Open coach dashboard"
+          actionHref="/coach"
+        />
+      ) : teams.length === 0 ? (
         <EmptyState
           icon={Users}
           title="Create a team before assigning work."
@@ -61,7 +75,15 @@ export default async function NewAssignmentPage() {
           actionHref="/coach"
         />
       ) : (
-        <CreateAssignmentForm teams={teams} decks={content.decks} lessons={content.lessons} />
+        <>
+          {dormantTeamCount > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {dormantTeamCount === 1 ? "One of your teams is" : `${dormantTeamCount} of your teams are`} on a track that is no longer
+              offered, so {dormantTeamCount === 1 ? "it is" : "they are"} not listed here.
+            </p>
+          ) : null}
+          <CreateAssignmentForm teams={teams} decks={content.decks} lessons={content.lessons} />
+        </>
       )}
 
       <EmptyState

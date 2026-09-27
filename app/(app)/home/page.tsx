@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Fact } from "@/components/ui/fact";
 import { PageHeader } from "@/components/ui/page-header";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 import { authOptions } from "@/lib/auth";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { GUIDED_ROUND_LABEL, INDEPENDENT_ROUND_WHERE } from "@/lib/guided-rounds";
@@ -37,6 +38,23 @@ export default async function HomePage({ searchParams }: { searchParams: { track
         select: { displayName: true, name: true, streak: true, wins: true }
       })
     : null;
+
+  // No public track resolved: a learner who has not chosen yet, or one whose saved selection or signup
+  // organization names a dormant track (HOSA). They get the neutral chooser, not a Debate-shaped page:
+  // no Debate quick actions, no judged-round record, no resumable session from a dormant track.
+  if (!activeTrack) {
+    const greetingName = (user?.name ?? user?.displayName)?.split(" ")[0] ?? "there";
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          eyebrow="Home"
+          heading={<h1 className="display-title">{`Ready to train, ${greetingName}?`}</h1>}
+          description="Choose a track and Home shows your next step, quick actions and record for it."
+        />
+        <ChooseTrackState />
+      </div>
+    );
+  }
 
   // C5B1: the "Recommended next" weak area comes ONLY from the resolved track's own graded tests.
   // No resolved track -> none (fail closed), so a prior HOSA test can never surface on Debate Home.

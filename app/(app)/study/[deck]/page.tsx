@@ -7,7 +7,7 @@ import { FlashcardStudy } from "@/components/study/flashcard-study";
 import { buttonVariants } from "@/components/ui/button";
 import { flashcardsForDeck } from "@/lib/study-content";
 import { getActiveTrack } from "@/lib/track-server";
-import { trackAllowsOrganization } from "@/lib/training-tracks";
+import { isRetiredOrganization, trackAllowsOrganization } from "@/lib/training-tracks";
 
 export default async function StudyDeckPage({ params, searchParams }: { params: { deck: string }; searchParams: { assignmentId?: string } }) {
   const cards = flashcardsForDeck(params.deck);
@@ -23,8 +23,10 @@ export default async function StudyDeckPage({ params, searchParams }: { params: 
   // the track-filtered study list rather than exposing another organization's content.
   // Exception: an assigned activity (?assignmentId=) opens under the ASSIGNMENT's track context, so it
   // is never redirected into the student's personal-track study list.
+  // A dormant track's deck (HOSA) is not part of the public product, so it bounces even with an
+  // assignment: nothing a learner can follow may lead back into it.
   const activeTrack = await getActiveTrack();
-  if (!searchParams.assignmentId && !trackAllowsOrganization(activeTrack, organization)) {
+  if (isRetiredOrganization(organization) || (!searchParams.assignmentId && !trackAllowsOrganization(activeTrack, organization))) {
     redirect("/study");
   }
 

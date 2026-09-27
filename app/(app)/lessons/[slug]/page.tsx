@@ -151,10 +151,15 @@ export default async function LessonPage({ params, searchParams }: { params: { s
       : concept
         ? trackById(concept.entry.track)
         : undefined;
-  // A retired owner could never satisfy the redirect below (the resolver never returns a retired
-  // track), so it is refused outright rather than looping. No published lesson is owned by one.
-  if (!owner || isTrackRetired(owner.id)) {
+  if (!owner) {
     notFound();
+  }
+  // A lesson owned by a dormant track (HOSA; its Medical Terminology course stays in code) is not part
+  // of the public product. Its URL goes to the lessons index, which shows the learner's own public track
+  // or the neutral chooser. It could never satisfy the canonical redirect below (the resolver never
+  // returns a dormant track), so it leaves BEFORE that redirect, and /lessons never redirects back.
+  if (isTrackRetired(owner.id)) {
+    redirect("/lessons" as Route);
   }
   // The URL must say the same thing the content does. If this render would otherwise resolve to a
   // different track than the lesson's own — a DECA learner opening a HOSA lesson link, or a bare URL

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export default async function PracticeTestPage({
   params,
@@ -49,6 +50,13 @@ export default async function PracticeTestPage({
 
   if (test.status === "COMPLETED") {
     redirect(`/tests/${test.id}/results`);
+  }
+
+  // An unfinished test from a dormant track (HOSA) cannot be continued: those tests are not part of the
+  // public product. It goes to the tests page (the learner's public track, or the neutral chooser). A
+  // completed one stays readable above, as the learner's own record.
+  if (isRetiredOrganization(test.organization)) {
+    redirect("/tests");
   }
 
   return (

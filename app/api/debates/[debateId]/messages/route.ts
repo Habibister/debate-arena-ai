@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, trackNotOffered, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { countDebateSpeeches, getNextSpeech, getSideLabel, parseFormatConfig } from "@/lib/debate-formats";
 import { prisma } from "@/lib/prisma";
 import { assessStudentSpeech } from "@/lib/speech-quality";
 import { debateMessageCreateSchema } from "@/lib/validators";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const runtime = "nodejs";
 
@@ -79,6 +80,11 @@ export async function POST(request: Request, { params }: { params: { debateId: s
 
     if (debate.status === "JUDGED" || debate.status === "ARCHIVED") {
       throw new HttpError("This debate is already complete", 409);
+    }
+
+    // A dormant track's session (HOSA, Model UN) cannot be continued; nothing is written.
+    if (isRetiredOrganization(debate.organization)) {
+      return trackNotOffered();
     }
 
     const input = await parseJson(request, debateMessageCreateSchema);

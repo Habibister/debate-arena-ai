@@ -874,7 +874,7 @@ function main() {
     const history = stripComments(read("lib/debate-history.ts"));
     assert.ok(/where: \{ studentId: userId \},\s*orderBy: \{ createdAt: "desc" \},\s*select: \{[^}]*practiceMode: true/.test(history), "getStudentDebates lists every round and carries the marker");
     const profile = stripComments(read("app/(app)/profile/page.tsx"));
-    assert.ok(/studentDebates: \{\s*orderBy: \{ createdAt: "desc" \},\s*take: 3,\s*select: \{ id: true, topic: true, status: true, overallScore: true, practiceMode: true, createdAt: true \}/.test(profile), "profile recent debates list every round and carry the marker");
+    assert.ok(/studentDebates: \{\s*orderBy: \{ createdAt: "desc" \},\s*take: 3,\s*select: \{ id: true, topic: true, status: true, overallScore: true, practiceMode: true, organization: true, createdAt: true \}/.test(profile), "profile recent debates list every round and carry the marker (organization is read only to label a dormant track's row, never to filter)");
     const coach = stripComments(read("lib/coach-progress.ts"));
     assert.ok(/where: \{ studentId \},\s*orderBy: \{ createdAt: "desc" \},\s*take: 5,\s*select: \{ id: true, topic: true, status: true, overallScore: true, practiceMode: true, createdAt: true \}/.test(coach), "coach recent rounds list every round and carry the marker");
     for (const file of ["app/(app)/home/page.tsx", "app/(app)/dashboard/page.tsx"]) {

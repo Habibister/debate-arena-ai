@@ -80,6 +80,26 @@ async function main() {
   assert.notEqual(roomRedirect, "/training/hosa/room", "9c. and is not this route (no redirect loop)");
   assert.ok(!roomRedirect!.includes("/practice"), "9d. and is not the practice route either");
   assert.ok(existsSync(`app/(app)/training/[track]/events/page.tsx`), "9e. and the destination route exists");
+  // HOSA is DORMANT (owner decision 2026-09-27). The HOSA fallback above is dormant internals, kept
+  // for if HOSA is ever public again; what a learner hitting /training/hosa/room gets TODAY is the
+  // dormant-track rule, checked first: one 307 redirect to the general training page, before the
+  // HOSA fallback and before RoleplayRoom can mount.
+  const retiredRedirectAt = room.search(/if \(isTrackRetired\(track\.id\)\) redirect\("\/training"\);/);
+  const hosaFallbackAt = room.search(/track\.id === "HOSA"\s*\)?\s*redirect\(HOSA_ROOM_FALLBACK\)/);
+  assert.ok(retiredRedirectAt !== -1 && hosaFallbackAt !== -1 && retiredRedirectAt < hosaFallbackAt,
+    "9f. dormant: the room's dormant-track redirect to /training runs before the HOSA fallback");
+  {
+    const RoleplayRoomPage = require("../app/(app)/training/[track]/room/page").default as
+      (p: { params: { track: string } }) => Promise<unknown>;
+    let roomDigest = "rendered";
+    try {
+      await RoleplayRoomPage({ params: { track: "hosa" } });
+    } catch (error) {
+      roomDigest = String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+    }
+    assert.equal(roomDigest, "NEXT_REDIRECT;replace;/training;307;",
+      "9g. dormant: /training/hosa/room redirects to /training (307, replace), not to the HOSA fallback");
+  }
   // Debate keeps its own room, which was never this route.
   assert.ok(existsSync("components/debate/debate-room.tsx"), "10b. the Debate room component is untouched");
   assert.ok(code(read(PRACTICE_ROUTE)).includes("DebateRoom"), "10c. and Debate practice still mounts it");
@@ -159,15 +179,32 @@ async function main() {
   const hosaSlug = trackBySlug("hosa")!.slug;
   const TrackHubPage = require("../app/(app)/training/[track]/page").default;
   const CompetePage = require("../app/(app)/compete/page").default;
-  const hubText = visible(renderToStaticMarkup(
-    createElement(TrackHubPage as never, { params: { track: hosaSlug } } as never) as never));
+  const { TrackControls } = require("../components/training/track-controls") as
+    { TrackControls: (p: { trackId: string }) => unknown };
+  // HOSA is DORMANT (owner decision 2026-09-27): the HOSA hub is no longer a public page. It redirects
+  // (307, replace) to the general training page before rendering anything, so no HOSA hub content —
+  // withdrawn role examples included — can reach a learner. That exact redirect is what 31-33 and 38b
+  // now pin for the hub, in place of scanning its rendered text.
+  let hubDigest = "rendered";
+  try {
+    renderToStaticMarkup(createElement(TrackHubPage as never, { params: { track: hosaSlug } } as never) as never);
+  } catch (error) {
+    hubDigest = String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+  }
+  assert.equal(hubDigest, "NEXT_REDIRECT;replace;/training;307;",
+    "31/32/33. dormant: the HOSA hub redirects to /training (307, replace) instead of rendering any HOSA surface");
+  // The hub's one extracted HOSA child is its practice-source block (TrackControls, which the hub
+  // mounted with trackId = track.id). Rendered directly, the dormant HOSA branch still offers none of
+  // the withdrawn behaviour and names no other track.
+  const hubControlsText = visible(renderToStaticMarkup(
+    createElement(TrackControls as never, { trackId: "HOSA" } as never) as never));
   // CompetePage is an async server component (M14 Phase 1a made track resolution async), so it is
   // invoked and awaited to obtain the element rather than passed to createElement directly.
   const competeText = visible(renderToStaticMarkup(
     (await (CompetePage as never as (p: unknown) => Promise<never>)({ searchParams: { track: hosaSlug } })) as never));
   const WITHDRAWN_ROLES = ["anxious about a new diagnosis", "worried about a child's fever", "post-op patient",
                            "dental anxiety", "shaken bystander", "health science student"];
-  for (const surface of [["HOSA hub", hubText], ["Compete", competeText]] as const) {
+  for (const surface of [["the HOSA practice-source block", hubControlsText], ["Compete", competeText]] as const) {
     for (const role of WITHDRAWN_ROLES) {
       assert.ok(!surface[1].includes(role), `31. no withdrawn patient-role example on ${surface[0]} ("${role}")`);
     }
@@ -176,8 +213,20 @@ async function main() {
     assert.ok(!/scored (patient|clinical) interaction/i.test(surface[1]),
       `33. no AI-scored patient interaction offered on ${surface[0]}`);
   }
-  assert.ok(competeText.includes("Find your HOSA event"), "14c. Compete's HOSA entry renders");
-  assert.ok(hubText.length > 200 && competeText.length > 200, "31b. both surfaces actually rendered");
+  // Compete with ?track=hosa resolves no public track (a dormant slug resolves to nothing), so it shows
+  // its existing neutral "Choose your track first" state: no HOSA entry, no HOSA link, and no other
+  // track's arena guessed in its place.
+  assert.ok(competeText.includes("Choose your track first") && !competeText.includes("Find your HOSA event") &&
+            !/HOSA/.test(competeText),
+    "14c. dormant: Compete with ?track=hosa shows the neutral \"Choose your track first\" state and no HOSA entry");
+  assert.ok(!/Guided DECA Role-Play|Full Debate Round|Training in:/.test(competeText),
+    "14d. dormant: and it guesses no Debate or DECA arena in HOSA's place");
+  const competeDecaText = visible(renderToStaticMarkup(
+    (await (CompetePage as never as (p: unknown) => Promise<never>)({ searchParams: { track: "deca" } })) as never));
+  assert.ok(competeDecaText.includes("Guided DECA Role-Play") && !competeDecaText.includes("Choose your track first"),
+    "14e. control: Compete with ?track=deca still renders DECA's arena, so 14c is not a page that always shows the empty state");
+  assert.ok(hubControlsText.includes("Practice source") && competeText.includes("Compete shows the scored activities"),
+    "31b. both surfaces actually rendered");
 
   // ---- 34-36. The authored lesson and Medical Terminology provenance are unchanged ------------------
   const lesson = getRoleplayLesson("how-hosa-scenario-interaction-works")!;
@@ -194,7 +243,11 @@ async function main() {
   // ---- 38, 43. Isolation and no schema/dependency drift ---------------------------------------------
   assert.ok(!compete.includes("/training/deca/") || /DECA/.test(compete),
     "38. Compete still scopes each track's arena to that track");
-  assert.ok(!hubText.includes("DECA"), "38b. the HOSA hub still leaks no DECA surface");
+  // 38b — dormant: the HOSA hub renders nothing at all (its exact /training redirect is pinned in
+  // 31/32/33 above), so it cannot leak DECA; the hub's HOSA practice-source block, rendered directly
+  // with the prop the hub passed, still names no DECA material.
+  assert.ok(hubDigest === "NEXT_REDIRECT;replace;/training;307;" && !hubControlsText.includes("DECA"),
+    "38b. dormant: the HOSA hub redirects to /training and its HOSA practice-source block leaks no DECA surface");
   const pkg = JSON.parse(read("package.json")) as { scripts: Record<string, string>; dependencies?: unknown };
   assert.ok(pkg.scripts["hosa-practice-scope:smoke"], "43. this suite is registered");
   const smokes = Object.keys(pkg.scripts).filter((k) => k.endsWith(":smoke"));

@@ -42,7 +42,7 @@ function buildRecommendations(input: {
     steps.push("Run a clarity-focused speaking rep.");
   }
   if (input.completedTests === 0) {
-    steps.push("Complete one DECA/HOSA practice test.");
+    steps.push("Complete one DECA practice test.");
   }
   if (input.judgedRounds === 0) {
     steps.push("Run one AI debate round to get a judge ballot.");

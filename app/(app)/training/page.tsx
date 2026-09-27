@@ -36,8 +36,8 @@ export default async function TrainingPage() {
         description="Each track has its own lessons, practice and competition. Pick one and the training tools update to match it — you see what that track actually offers, not a fixed list every track is assumed to have. You can switch tracks anytime."
       />
 
-      {/* Three active tracks. Model UN is soft-removed and never reaches ACTIVE_TRACKS. */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* The public tracks (Debate and DECA). Model UN and HOSA are dormant and never reach ACTIVE_TRACKS. */}
+      <div className="grid gap-4 lg:grid-cols-2">
         {ACTIVE_TRACKS.map((track) => {
           const Icon = ICONS[track.id];
           const stages = learnerPathForTrack(track.id);

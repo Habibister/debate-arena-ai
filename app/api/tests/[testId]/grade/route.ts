@@ -1,10 +1,11 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { apiError, HttpError, parseJson, unauthorized } from "@/lib/api";
+import { apiError, HttpError, parseJson, trackNotOffered, unauthorized } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { lockUserRow } from "@/lib/practice-session";
 import { practiceTestGradeSchema } from "@/lib/validators";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 import { awardXpInTransaction, rewardAmountForCompletion, utcDayBounds } from "@/lib/xp";
 import { decaDiagnosticRoutesForLearner } from "@/lib/education/deca-diagnostic-bridge";
 
@@ -35,6 +36,12 @@ export async function POST(request: Request, { params }: { params: { testId: str
 
     if (test.status === "COMPLETED") {
       throw new HttpError("Practice test has already been graded", 409);
+    }
+
+    // An unfinished test from a dormant track (HOSA) is not graded: grading writes a score and XP for
+    // practice the public product no longer offers. The row itself is left exactly as it is.
+    if (isRetiredOrganization(test.organization)) {
+      return trackNotOffered();
     }
 
     const questionIds = new Set(test.questions.map((question) => question.id));

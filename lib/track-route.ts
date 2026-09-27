@@ -76,6 +76,27 @@ export const TRACK_PARAM_ROUTES = [
 
 // A lesson page carries the lesson's OWN track in `?track=` (the page redirects to add it when the
 // URL disagrees with the content), so the shell reads the parameter on every `/lessons/<slug>` too.
+/**
+ * DORMANT-TRACK ENTRY LINKS (owner decision, 2026-09-27: CompeteReady publicly supports Debate and DECA).
+ * A `?track=` naming a dormant track (`hosa`, `model-un`) is an old way back into a track the product no
+ * longer offers. No page honours it (the resolvers never return a dormant track), but the URL still
+ * named it, so the middleware sends the learner to the SAME path with that parameter removed: the page
+ * then renders their own public track, or the neutral "Choose Debate or DECA" state. Pure and total:
+ * it writes nothing (no cookie, no selection), keeps every other parameter, and returns null when there
+ * is nothing to remove, so its own output never redirects again.
+ */
+export function dormantTrackParamRedirect(pathname: string, search: string): string | null {
+  const params = new URLSearchParams(search);
+  const named = params.getAll("track").some((slug) => {
+    const info = trackBySlug(slug);
+    return Boolean(info && isTrackRetired(info.id));
+  });
+  if (!named) return null;
+  params.delete("track");
+  const rest = params.toString();
+  return rest ? `${pathname}?${rest}` : pathname;
+}
+
 const LESSON_ROUTE = /^\/lessons\/[^/]+$/;
 
 /**

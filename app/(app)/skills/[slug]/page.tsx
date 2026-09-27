@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, Archive, Info, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -51,6 +51,12 @@ export default function SkillCompatibilityPage({ params }: { params: { slug: str
   // moved a learner reading a DECA-owned record into another track's catalog. A retired owner (Model
   // UN) has no catalog to return to, so it keeps the unscoped list.
   const ownerTrack = trackByOrganization(resolution.track);
+  // A record owned by a dormant track (HOSA, Model UN) is not a public entry point: its only action
+  // led into that track. It goes to the skills index instead (the learner's own public track, or the
+  // neutral chooser). Nothing is written.
+  if (ownerTrack && isTrackRetired(ownerTrack.id)) {
+    redirect("/skills");
+  }
   const backHref = (ownerTrack && !isTrackRetired(ownerTrack.id) ? `/lessons?track=${ownerTrack.slug}` : "/lessons") as Route;
   const backLabel = ownerTrack && !isTrackRetired(ownerTrack.id) ? `${ownerTrack.label} lessons` : "Lessons";
   const retired = resolution.track === "MODEL_UN";

@@ -23,6 +23,10 @@ const { RoleplayLessonPractice } = require("../components/lessons/roleplay-lesso
 const { getLesson } = require("../lib/lessons");
 const { getRoleplayLesson } = require("../lib/roleplay-lessons");
 const { SkillPath } = require("../components/skills/skill-path");
+const { HosaEventNavigator } = require("../components/training/hosa-event-navigator");
+const { ChooseTrackState } = require("../components/training/choose-track-state");
+const { hosaEventById } = require("../lib/hosa-events");
+const { ACTIVE_TRACKS } = require("../lib/training-tracks");
 
 const decode = (h: string) =>
   h.replace(/&#x27;|&#39;/g, "'").replace(/&quot;|&ldquo;|&rdquo;/g, '"').replace(/&amp;/g, "&");
@@ -32,6 +36,43 @@ const visible = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").t
 const route = (track: string, searchParams?: Record<string, unknown>) =>
   render(React.createElement(EventNavigatorPage, { params: { track }, searchParams } as never));
 const hub = (track: string) => render(React.createElement(TrackHubPage, { params: { track } } as never));
+
+// ---- HOSA is DORMANT (owner decision 2026-09-27) ---------------------------------------------------
+// Only Debate and DECA are public. A dormant track's public entry — its hub and its Event Navigator
+// route — redirects (307, replace) to the general training page before rendering anything. Next's
+// redirect() throws an error whose digest names the exact destination, so that digest is pinned.
+const REDIRECT_TO_TRAINING = "NEXT_REDIRECT;replace;/training;307;";
+/** Runs a render and returns the redirect digest it threw, or "rendered" when it did not redirect. */
+const redirectDigest = (renderIt: () => unknown): string => {
+  try {
+    renderIt();
+    return "rendered";
+  } catch (error) {
+    return String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+  }
+};
+/**
+ * The HOSA Event Navigator COMPONENT is dormant internals and stays covered. Its page no longer renders
+ * it, so every HOSA navigator state is produced in two steps: (1) the page route itself, with the same
+ * search params, is asserted to redirect to /training; (2) the component is rendered directly with the
+ * exact props the page passed it (app/(app)/training/[track]/events/page.tsx: `initialEventId=
+ * {selected?.id ?? null} unknownEventId={unknownId ?? null}`, from the page's own single-string param
+ * rule). The page shell (its h1, badges and back link) is not part of that output.
+ */
+const hosaNavigator = (searchParams?: Record<string, unknown>) => {
+  assert.equal(redirectDigest(() => route("hosa", searchParams)), REDIRECT_TO_TRAINING,
+    `dormant: /training/hosa/events${searchParams ? ` with ${JSON.stringify(searchParams)}` : ""} redirects to /training (307, replace) instead of rendering`);
+  const raw = searchParams?.event;
+  const requested = typeof raw === "string" && raw.trim() ? raw.trim() : undefined;
+  const selected = hosaEventById(requested);
+  return render(React.createElement(HosaEventNavigator, {
+    initialEventId: selected?.id ?? null,
+    unknownEventId: requested && !selected ? requested : null
+  } as never));
+};
+/** DECA keeps its real page route unchanged; HOSA reaches its dormant component as described above. */
+const navigator = (track: "hosa" | "deca", searchParams?: Record<string, unknown>) =>
+  track === "hosa" ? hosaNavigator(searchParams) : route(track, searchParams);
 
 function main() {
   const results: string[] = [];
@@ -48,11 +89,25 @@ function main() {
   assert.ok(decaHub.includes('href="/training/deca/events"'), "the DECA hub links to its Navigator");
   assert.ok(decaHub.includes("/training/deca/event/hotel-lodging-management"), "the DECA Event HQ link is unchanged");
   assert.ok(!/\/training\/hosa|Medical Terminology/.test(decaHub), "the DECA hub shows no HOSA content");
-  const hosaHub = hub("hosa");
-  assert.ok(hosaHub.includes('href="/training/hosa/events"'), "the HOSA hub links to its Navigator");
-  assert.ok(hosaHub.includes("/training/hosa/event/medical-terminology"), "the HOSA Event HQ link is unchanged");
-  assert.ok(!/\/training\/deca|Performance Indicator/.test(hosaHub), "the HOSA hub shows no DECA content");
-  ok("all three canonical hubs render with correct, track-local navigation");
+  // Dormant: the HOSA hub renders nothing — no Navigator link, no Event HQ link, no content of any
+  // track. It redirects (307, replace) to the general training page.
+  const hosaHubDigest = redirectDigest(() => hub("hosa"));
+  assert.equal(hosaHubDigest, REDIRECT_TO_TRAINING,
+    "dormant: the HOSA hub redirects to /training (307, replace) instead of rendering its Navigator, Event HQ or any content");
+  // Dormant: HOSA is absent from track navigation. Every chooser is built from ACTIVE_TRACKS, and the
+  // neutral chooser — rendered — offers exactly the two public hubs.
+  assert.deepEqual((ACTIVE_TRACKS as Array<{ slug: string }>).map((t) => t.slug), ["debate", "deca"],
+    "dormant: the public track list every chooser reads is Debate and DECA only (no HOSA)");
+  const chooser = render(React.createElement(ChooseTrackState, {} as never));
+  assert.deepEqual(Array.from(chooser.matchAll(/href="(\/training[^"]*)"/g)).map((m) => m[1]), ["/training/debate", "/training/deca"],
+    "dormant: the neutral chooser links exactly the Debate and DECA hubs, never /training/hosa");
+  assert.ok(visible(chooser).includes("Choose Debate or DECA") && !/HOSA|Medical Terminology/.test(chooser),
+    "dormant: and its wording names Debate and DECA and no HOSA track");
+  const trainingChooser = readFileSync("app/(app)/training/page.tsx", "utf8");
+  assert.ok(/ACTIVE_TRACKS\.map\(/.test(trainingChooser) && trainingChooser.includes("href={`/training/${track.slug}`") &&
+            !/["'`]\/training\/hosa/.test(trainingChooser),
+    "dormant: the /training chooser builds its track links from that public list and hardcodes no HOSA link");
+  ok("the Debate and DECA hubs render with correct, track-local navigation; the dormant HOSA hub redirects to /training and no chooser offers it");
 
   // Debate's Navigator route stays closed.
   let debateClosed = false;
@@ -61,6 +116,10 @@ function main() {
   ok("/training/debate/events fails closed");
 
   // ================= Navigator states, both tracks =================
+  // DECA runs through its real page route exactly as before. HOSA is dormant: every HOSA state below
+  // first asserts that /training/hosa/events (with the same params) redirects to /training, then checks
+  // the dormant HosaEventNavigator component rendered with the props that page used to pass (see
+  // `hosaNavigator` above).
   const cases = [
     { track: "hosa", param: "event", valid: "medical-terminology", foreign: "individual-series", label: "HOSA" },
     { track: "deca", param: "family", valid: "individual-series", foreign: "medical-terminology", label: "DECA" }
@@ -68,14 +127,14 @@ function main() {
 
   for (const c of cases) {
     const listAnchor = c.track === "hosa" ? "Find your event" : "Find your event family";
-    const initial = route(c.track);
+    const initial = navigator(c.track);
     assert.ok(initial.includes(listAnchor), `${c.label} Navigator initial state renders its list`);
     assert.ok(!initial.includes("We do not have verified details"), `${c.label} missing parameter selects no record`);
     const head = (h: string) => h.slice(0, h.indexOf(listAnchor));
     assert.equal(visible(head(initial)).includes("Where to train"), false, `${c.label} missing parameter renders no detail card`);
 
     // Valid selection (positive control).
-    const valid = route(c.track, { [c.param]: c.valid });
+    const valid = navigator(c.track, { [c.param]: c.valid });
     assert.ok(visible(head(valid)).length > 0 && head(valid).includes("Where to train"), `${c.label} resolves its own valid identifier`);
 
     // The other track's identifier, and the other track's parameter name, both select nothing.
@@ -84,7 +143,7 @@ function main() {
       ["the other track's parameter", { [c.param === "event" ? "family" : "event"]: c.valid }],
       ["a repeated parameter", { [c.param]: [c.valid, c.foreign] }]
     ] as const) {
-      const html = route(c.track, sp as Record<string, unknown>);
+      const html = navigator(c.track, sp as Record<string, unknown>);
       const detail = head(html);
       assert.ok(html.includes(listAnchor), `${c.label} keeps the list after ${desc}`);
       assert.ok(!detail.includes("Where to train"), `${c.label} selects no record for ${desc}`);
@@ -97,7 +156,7 @@ function main() {
 
     // Malformed identifiers -> honest unknown state with recovery, never a silent redirect.
     for (const bad of ["not-a-record", "   ", "../medical-terminology", "0"]) {
-      const html = route(c.track, { [c.param]: bad });
+      const html = navigator(c.track, { [c.param]: bad });
       const detail = head(html);
       assert.ok(!detail.includes("Where to train"), `${c.label} selects nothing for ${JSON.stringify(bad)}`);
       assert.ok(html.includes(listAnchor), `${c.label} offers list recovery for ${JSON.stringify(bad)}`);
@@ -144,10 +203,11 @@ function main() {
   }
 
   // ================= track-specific detail regressions =================
-  const mt = route("hosa", { event: "medical-terminology" });
+  // HOSA detail below is the dormant component (its route redirect is asserted inside hosaNavigator).
+  const mt = hosaNavigator({ event: "medical-terminology" });
   assert.ok(mt.includes("Official HOSA source") && mt.includes("Current for 2025-26") && mt.includes("Last verified July 5, 2026"),
     "Medical Terminology keeps its approved provenance");
-  const partial = route("hosa", { event: "hosa-bowl" });
+  const partial = hosaNavigator({ event: "hosa-bowl" });
   assert.ok(!partial.includes("Official HOSA source") && !partial.includes("Last verified"), "a partial HOSA event inherits no provenance");
   assert.ok(visible(partial).includes("Complete current details not yet verified"), "and says so in words");
   // M11R9: this was `"Don't see your event?".replace("'", "'")` — a transform whose output equals
@@ -188,7 +248,7 @@ function main() {
   assert.ok(/grid-cols-4[^"]*lg:hidden|lg:hidden[^"]*grid-cols-4/.test(shell), "the bottom bar is a mobile-only region");
   assert.ok(shell.includes('{ href: "/training"'), "desktop navigation also reaches /training");
   assert.ok(!/onMouseEnter|onMouseOver|hover:block|group-hover:(block|flex)/.test(shell), "no navigation depends on hover");
-  ok("both desktop and mobile navigation reach /training, the only path to either Navigator");
+  ok("both desktop and mobile navigation reach /training, the only path to the DECA Navigator (HOSA's is dormant and redirects)");
 
   // ---- FINAL DECA CLEANUP: the Skills index lists the four recorded areas, rendered ----------------
   //
@@ -277,17 +337,28 @@ function main() {
     ["DECA selected family", route("deca", { family: "team-decision-making" })],
     ["DECA unresolved PSC", route("deca", { family: "professional-selling-and-consulting" })],
     ["DECA unknown family", route("deca", { family: "not-a-family" })],
-    ["HOSA default", route("hosa")],
-    ["HOSA selected Medical Terminology", route("hosa", { event: "medical-terminology" })],
-    ["HOSA partial event", route("hosa", { event: "hosa-bowl" })],
-    ["HOSA unknown event", route("hosa", { event: "not-an-event" })]
+    ["HOSA default", hosaNavigator()],
+    ["HOSA selected Medical Terminology", hosaNavigator({ event: "medical-terminology" })],
+    ["HOSA partial event", hosaNavigator({ event: "hosa-bowl" })],
+    ["HOSA unknown event", hosaNavigator({ event: "not-an-event" })]
   ];
   for (const [label, html] of m11r9States) {
     assert.ok(html.includes("<button"), `${label}: really rendered interactive controls (the scans below mean something)`);
     assert.equal(paragraphInButton(html), 0, `${label}: no button contains a paragraph`);
     assert.equal(nestedInteractive(html), 0, `${label}: no button contains another interactive element`);
     const levels = headingLevels(html);
-    assert.equal(levels.filter((l) => l === 1).length, 1, `${label}: exactly one h1`);
+    if (label.startsWith("HOSA")) {
+      // Dormant: the HOSA page shell (and its h1) no longer renders — its route redirects to /training,
+      // asserted inside hosaNavigator. The component rendered directly owns no h1 and opens at h2, so its
+      // outline nests under any host page's single h1 without skipping a level.
+      assert.equal(levels.filter((l) => l === 1).length, 0,
+        `${label}: dormant — the navigator component (its page redirects) renders no h1 of its own`);
+      assert.equal(levels[0], 2, `${label}: dormant — and its outline opens at h2, directly beneath a host page's h1`);
+      assert.ok(!skipsALevel([1, ...levels]),
+        `${label}: dormant — beneath an h1 its outline skips no level (h1 ${levels.map((l) => `h${l}`).join(" ")})`);
+    } else {
+      assert.equal(levels.filter((l) => l === 1).length, 1, `${label}: exactly one h1`);
+    }
     assert.ok(!skipsALevel(levels), `${label}: the heading outline skips no level (${levels.map((l) => `h${l}`).join(" ")})`);
     assert.ok(levels.length >= 3, `${label}: the page really has a section outline`);
     // Every result button keeps a useful accessible name from its own visible text.
@@ -312,7 +383,7 @@ function main() {
 
     for (const [label, html, selectedParam] of [
       ["DECA", route("deca"), route("deca", { family: "team-decision-making" })],
-      ["HOSA", route("hosa"), route("hosa", { event: "medical-terminology" })]
+      ["HOSA", hosaNavigator(), hosaNavigator({ event: "medical-terminology" })]
     ] as const) {
       const resultButtons = (markup: string) =>
         (markup.match(/<button\b[^>]*aria-pressed=[^>]*>/g) ?? []);
@@ -371,8 +442,8 @@ function main() {
     assert.ok(h3WithoutH2([1, 3]), "control: an h3 with no preceding h2 is rejected");
     assert.ok(!h3WithoutH2([1, 2, 3, 3]), "control: and an h3 after an h2 is accepted");
 
-    // PRODUCTION — every canonical hub, rendered for real.
-    for (const slug of ["debate", "deca", "hosa"] as const) {
+    // PRODUCTION — every public hub, rendered for real.
+    for (const slug of ["debate", "deca"] as const) {
       const html = hub(slug);
       const levels = headingLevels(html);
       const outline = headingTags(html).join(" ");
@@ -382,11 +453,15 @@ function main() {
       assert.ok(!skipsALevel(levels), `${slug} hub: the heading outline skips no level (${outline})`);
       assert.ok(!h3WithoutH2(levels), `${slug} hub: every h3 sits beneath a preceding h2 (${outline})`);
     }
-    console.log("  ok  all three track hubs render one h1, real h2 sections, and no skipped heading level");
+    // Dormant: the HOSA hub no longer renders at all, so it has no heading outline to check; what a
+    // learner gets instead is the redirect to the general training page.
+    assert.equal(redirectDigest(() => hub("hosa")), REDIRECT_TO_TRAINING,
+      "hosa hub: dormant — it redirects to /training (307, replace) and renders no outline of its own");
+    console.log("  ok  the Debate and DECA track hubs render one h1, real h2 sections, and no skipped heading level; the dormant HOSA hub redirects to /training");
   }
 
   console.log(
-    "\nNav/a11y smoke passed: all three hubs render track-local navigation with Start Debate on /debate and both Event HQ links unchanged; /training/debate/events fails closed. Each Navigator resolves only its own identifier through its own parameter — a foreign id shows the honest unknown state, while the other track's parameter and a repeated parameter are treated as absent, and malformed input always keeps list + hub recovery without a silent redirect. Search inputs carry real labels with unique ids, selection uses real buttons with aria-pressed, navigation uses links, lists are semantic, and no state renders a duplicate id, a tooltip-only fact, a hover-only control, a fixed pixel width, whitespace-nowrap, or an unnecessary live region. Status wording survives with every styling class stripped, and no machine code reaches learner text. Medical Terminology keeps its provenance while partial events inherit none; TDM shows no weighting; PSC and the prepared/written/online families never link into role-play practice; the withdrawn HOSA practice renders no control at all. NOTE: this is SSR + markup proof only — real viewport layout, focus order and screen-reader output are NOT verified here."
+    "\nNav/a11y smoke passed: the Debate and DECA hubs render track-local navigation with Start Debate on /debate and both Event HQ links unchanged; /training/debate/events fails closed. HOSA is dormant: its hub and every /training/hosa/events state redirect to /training (307, replace), the public track list and the neutral chooser offer only Debate and DECA, and the dormant HOSA Navigator component is still checked directly with the props its page used to pass. Each Navigator resolves only its own identifier through its own parameter — a foreign id shows the honest unknown state, while the other track's parameter and a repeated parameter are treated as absent, and malformed input always keeps list + hub recovery without a silent redirect. Search inputs carry real labels with unique ids, selection uses real buttons with aria-pressed, navigation uses links, lists are semantic, and no state renders a duplicate id, a tooltip-only fact, a hover-only control, a fixed pixel width, whitespace-nowrap, or an unnecessary live region. Status wording survives with every styling class stripped, and no machine code reaches learner text. In the dormant HOSA component, Medical Terminology keeps its provenance while partial events inherit none; TDM shows no weighting; PSC and the prepared/written/online families never link into role-play practice; the withdrawn HOSA practice renders no control at all. NOTE: this is SSR + markup proof only — real viewport layout, focus order and screen-reader output are NOT verified here."
   );
 }
 

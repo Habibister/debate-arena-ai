@@ -9,6 +9,7 @@ import { UserAvatar } from "@/components/profile/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 type ProfileFormUser = {
   username: string | null;
@@ -23,12 +24,12 @@ type ProfileFormUser = {
   level: Level;
 };
 
-// MODEL_UN is soft-removed from the product (code/data retained) — not selectable here. Existing
-// profiles that already have it keep their data untouched.
+// MODEL_UN and HOSA are soft-removed from the product (code/data retained) — not selectable here.
+// Existing profiles that already have one keep it untouched: the select shows it as a disabled
+// "no longer offered" entry, so saving the form never converts it, and choosing another is explicit.
 const organizations: Array<{ value: Organization; label: string }> = [
   { value: "DEBATE", label: "Debate" },
   { value: "DECA", label: "DECA" },
-  { value: "HOSA", label: "HOSA" },
   { value: "MOCK_TRIAL", label: "Mock Trial" },
   { value: "PUBLIC_SPEAKING", label: "Public Speaking" }
 ];
@@ -163,6 +164,11 @@ export function ProfileEditForm({ user }: { user: ProfileFormUser }) {
             className="mt-2 h-10 w-full rounded-md border bg-background px-3 text-sm"
           >
             <option value="">No preference</option>
+            {preferredOrganization && isRetiredOrganization(preferredOrganization) ? (
+              <option value={preferredOrganization} disabled>
+                Previous organization (no longer offered)
+              </option>
+            ) : null}
             {organizations.map((organization) => (
               <option key={organization.value} value={organization.value}>
                 {organization.label}

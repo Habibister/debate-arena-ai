@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError, parseJson } from "@/lib/api";
+import { apiError, parseJson, trackNotOffered } from "@/lib/api";
 import { clientIp, requireUser } from "@/lib/api-auth";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +8,7 @@ import { defaultSupportLevel, guidedRubricFor } from "@/lib/education/coaching";
 import { guidedLessonIdOf } from "@/lib/guided-rounds";
 import { authoredDecaRubricIds, generateSideCoachResponse, sideCoachUnavailable } from "@/lib/side-coach";
 import { sideCoachRequestSchema } from "@/lib/validators";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export const runtime = "nodejs";
 
@@ -69,6 +70,10 @@ export async function POST(request: Request) {
     const user = await requireUser();
     await enforceRateLimit({ userId: user.id, ip: clientIp(request), workload: "conversation" });
     const input = await parseJson(request, sideCoachRequestSchema);
+    // A dormant track (HOSA) is not coached: refused before any write or provider call.
+    if (isRetiredOrganization(input.organization)) {
+      return trackNotOffered();
+    }
 
     // M11R8: rubric ids opt a request into the structured authored contract and are interpolated
     // into a model instruction, so an id that is not exactly the authored set fails HERE — before

@@ -7,12 +7,11 @@ import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// MODEL_UN is soft-removed from the product (code/data retained) — new teams cannot select it.
-// Existing MUN teams keep working; their data is untouched.
+// MODEL_UN and HOSA are soft-removed from the product (code/data retained) — new teams cannot select
+// them. Existing teams keep their data untouched.
 const organizations: Array<{ value: Organization; label: string }> = [
   { value: "DEBATE", label: "Debate" },
   { value: "DECA", label: "DECA" },
-  { value: "HOSA", label: "HOSA" },
   { value: "MOCK_TRIAL", label: "Mock Trial" },
   { value: "PUBLIC_SPEAKING", label: "Public Speaking" }
 ];

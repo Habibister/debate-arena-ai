@@ -15,7 +15,7 @@ const barlow = Barlow_Condensed({
 
 export const metadata: Metadata = {
   title: "CompeteReady",
-  description: "AI-powered training for Debate, DECA, and HOSA — AI opponents, AI judging, and mastery tracking."
+  description: "AI-powered training for Debate and DECA — AI opponents, AI judging, and mastery tracking."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

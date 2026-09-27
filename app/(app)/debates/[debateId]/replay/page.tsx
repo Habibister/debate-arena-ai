@@ -15,7 +15,7 @@ import { HttpError } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { getAttemptsForMotion, getDebateReplay, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
 import { resolveActiveTrack } from "@/lib/track-server";
-import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
+import { isRetiredOrganization, isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -306,7 +306,9 @@ export default async function DebateReplayPage({
         </Card>
       ) : null}
 
-      {isOwner ? (
+      {/* A dormant track's round (HOSA, Model UN) stays readable here, but "retry" would start new
+          practice in a track the product no longer offers, so it is not offered. */}
+      {isOwner && !isRetiredOrganization(debate.organization) ? (
         <RetryMotionButton
           config={{
             organization: debate.organization,

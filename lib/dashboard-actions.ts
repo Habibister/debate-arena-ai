@@ -19,7 +19,7 @@ export function nextStepsForTrack(track?: TrackInfo | null): DashboardAction[] {
     // No selected track → generic browse-all set.
     return [
       { key: "practice", title: "Start an AI round", description: "Get a topic, speak through the round, and receive judge feedback.", href: "/debate" },
-      { key: "tests", title: "Generate a practice test", description: "Train DECA or HOSA with original questions and explanations.", href: "/tests" },
+      { key: "tests", title: "Generate a practice test", description: "Train DECA with original questions and explanations.", href: "/tests" },
       { key: "skills", title: "Open mastery lessons", description: "Work through examples, guided practice, and a check on what you learned.", href: "/skills" },
       { key: "study", title: "Study weak terms", description: "Use flashcards and video resources before your next test.", href: "/study" }
     ];

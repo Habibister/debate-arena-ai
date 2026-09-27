@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { Library, PlayCircle } from "lucide-react";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 import { Badge } from "@/components/ui/badge";
 import { getActiveTrack } from "@/lib/track-server";
 
@@ -31,7 +32,13 @@ export default async function ResourcesPage({ searchParams }: { searchParams: { 
         </p>
       </div>
 
-      <RecommendedVideos organization={activeTrack?.organization} title="Video resource shelf" limit={12} />
+      {/* No public track resolved (not chosen yet, or a saved selection naming a dormant track): the
+          neutral chooser instead of a shelf with nothing track-specific on it. */}
+      {activeTrack ? (
+        <RecommendedVideos organization={activeTrack.organization} title="Video resource shelf" limit={12} />
+      ) : (
+        <ChooseTrackState context="The video shelf follows the track you choose." />
+      )}
 
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
         <PlayCircle className="h-3.5 w-3.5" aria-hidden />

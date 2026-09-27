@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { dormantTrackParamRedirect } from "@/lib/track-route";
 
 const protectedPrefixes = [
   "/home",
@@ -26,6 +27,14 @@ function isProtectedPath(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // A dormant track named in `?track=` (HOSA, Model UN) is dropped with a redirect to the same page,
+  // before anything else: no track is selected and nothing is written. See lib/track-route.ts.
+  const dormant = dormantTrackParamRedirect(pathname, search);
+  if (dormant) {
+    return NextResponse.redirect(new URL(dormant, request.url));
+  }
+
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
   if (!token && isProtectedPath(pathname)) {

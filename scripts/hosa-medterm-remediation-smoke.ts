@@ -38,10 +38,13 @@
  *   D. The return: each owner lesson links to the practice choice that includes its area (word-part,
  *      anatomy, physiology or pathophysiology practice), whose pool has that area's bank questions; the lesson page
  *      wires it; opening a lesson writes nothing and starts nothing.
- *   E. The old record /skills/hosa-medical-terminology-1 opens the Word Roots lesson instead of
- *      saying there is nothing to read; its untaught siblings keep their honest page.
- *   F. The HOSA hub's practice row opens the Medical Terminology Event HQ, whose page lists the
- *      practice room, instead of looping through /skills; DECA and Debate keep their rows.
+ *   E. The old record /skills/hosa-medical-terminology-1 still permanently redirects to the Word Roots
+ *      lesson URL (the lesson page, not rendered here, sends a dormant HOSA lesson on to /lessons). Its
+ *      siblings are HOSA-owned compatibility records: HOSA is DORMANT (owner decision 2026-09-27), so
+ *      the page redirects them to /skills instead of rendering a HOSA page.
+ *   F. The HOSA hub is dormant too: it redirects to /training and renders no row. The Medical
+ *      Terminology Event HQ entry (dormant code) still lists the practice room; DECA and Debate keep
+ *      their hub rows.
  *   G. HOSA test results say "event category", never DECA's "cluster"; DECA's wording is unchanged.
  *   H. No new model, no mastery or readiness word, the client engine imports no curriculum module.
  */
@@ -550,7 +553,7 @@ async function main() {
   });
 
   // ---- E. the old record ------------------------------------------------------------------------------
-  await check("E. the old Word roots record opens the Word Roots lesson; its untaught siblings keep their honest page", async () => {
+  await check("E. the old Word roots record still redirects to the Word Roots lesson URL; its dormant HOSA siblings redirect to /skills", async () => {
     const r = resolveSkillsSlug("hosa-medical-terminology-1");
     assert.deepEqual(r, { kind: "canonical-redirect", lessonId: "hosa-medical-word-roots", via: "allowlist" }, "E1. the record redirects to the Word Roots lesson");
     assert.equal(CANONICAL_REDIRECTS["hosa-medical-terminology-1"], HOSA_SEEDED_TOPIC_LESSON.get("hosa-medical-terminology-1"),
@@ -566,27 +569,44 @@ async function main() {
     }
     assert.ok(digest.includes("/lessons/hosa-medical-word-roots"), `E2. the page itself sends the learner there (${digest})`);
     for (const sibling of ["hosa-medical-terminology-2", "hosa-medical-terminology-3"]) {
-      assert.equal(resolveSkillsSlug(sibling).kind, "compatibility", `E3. ${sibling} keeps the compatibility state`);
-      const html = decode(renderToStaticMarkup(SkillPage({ params: { slug: sibling } }) as React.ReactElement));
-      assert.ok(visible(html).includes("No written lesson here yet"), `E3b. ${sibling} still says plainly there is no lesson`);
-      assert.ok(!html.includes("/lessons/hosa-medical-word-roots"), `E3c. and is not pointed at the Word Roots lesson`);
+      const resolution = resolveSkillsSlug(sibling);
+      assert.equal(resolution.kind, "compatibility", `E3. ${sibling} keeps the compatibility state`);
+      assert.equal(resolution.kind === "compatibility" ? resolution.track : null, "HOSA", `E3a. owned by HOSA, a dormant track`);
+      // HOSA is DORMANT (owner decision 2026-09-27): a compatibility record it owns is not a public entry
+      // point, so the page no longer renders its "no written lesson" state (whose only action led into
+      // HOSA). It redirects (307, replace) to the skills index instead.
+      let siblingDigest = "rendered";
+      try {
+        SkillPage({ params: { slug: sibling } });
+      } catch (error) {
+        siblingDigest = String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+      }
+      assert.equal(siblingDigest, "NEXT_REDIRECT;replace;/skills;307;",
+        `E3b. dormant: ${sibling} redirects to /skills (307, replace) instead of rendering a HOSA page`);
+      // The record's own (dormant) action, which the page rendered as its one link, still does not
+      // borrow the Word Roots lesson.
+      assert.ok(resolution.kind === "compatibility" && !resolution.destination.href.includes("/lessons/hosa-medical-word-roots"),
+        `E3c. and its record is not pointed at the Word Roots lesson (${resolution.kind === "compatibility" ? resolution.destination.href : "none"})`);
     }
   });
 
   // ---- F. the hub row ----------------------------------------------------------------------------------
-  await check("F. the HOSA hub's practice row opens the Medical Terminology Event HQ, not a loop through /skills", () => {
+  await check("F. the dormant HOSA hub redirects to /training instead of rendering any row; DECA and Debate keep their rows", () => {
     const TrackHubPage = require("../app/(app)/training/[track]/page").default as React.FunctionComponent<{ params: { track: string } }>;
     const hub = (slug: string) => decode(renderToStaticMarkup(React.createElement(TrackHubPage, { params: { track: slug } })));
     const anchors = (html: string) => [...html.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({ href: m[1], text: visible(m[2]) }));
-    const hosa = hub("hosa");
-    const hosaLinks = anchors(hosa);
-    const row = hosaLinks.find((a) => a.text.startsWith("Medical Terminology practice"));
-    assert.ok(row, "F1. the HOSA hub names its practice for what it is");
-    assert.equal(row!.href, "/training/hosa/event/medical-terminology", "F1b. and opens the Medical Terminology Event HQ");
-    assert.ok(row!.text.includes("every answer explained"), "F1c. saying what the practice is");
-    assert.ok(!hosaLinks.some((a) => a.href.startsWith("/skills")), "F2. no HOSA hub link loops through /skills");
-    assert.ok(!visible(hosa).includes("Skill drills"), "F2b. and no row promises drills HOSA does not have");
-    assert.ok(!hosa.includes("/training/hosa/practice"), "F2c. the hub still never routes into the practice room itself");
+    // HOSA is DORMANT (owner decision 2026-09-27): the HOSA hub is not a public page. It redirects
+    // (307, replace) to the general training page before rendering anything, so no HOSA row (the
+    // Medical Terminology practice row F1-F1c pinned, a /skills loop, a drills promise, a link into
+    // the practice room) can reach a learner.
+    let hosaDigest = "rendered";
+    try {
+      hub("hosa");
+    } catch (error) {
+      hosaDigest = String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+    }
+    assert.equal(hosaDigest, "NEXT_REDIRECT;replace;/training;307;",
+      "F1. dormant: the HOSA hub redirects to /training (307, replace), so it renders no HOSA row, no /skills loop and no practice-room link");
     const eventHq = stripComments(read("app/(app)/training/[track]/event/[eventSlug]/page.tsx"));
     const hosaHq = eventHq.slice(eventHq.indexOf('"hosa/medical-terminology"'), eventHq.indexOf('"deca/hotel-lodging-management"'));
     assert.ok(hosaHq.includes('href: "/training/hosa/practice"'), "F3. the Event HQ it opens lists the practice room");
@@ -666,7 +686,7 @@ async function main() {
     assert.ok(!db.touches.some((t) => t !== "$transaction"), `H7. the database stand-in saw only the route's transaction (${db.touches.join(", ")})`);
   });
 
-  console.log(`\nhosa-medterm-remediation: ${checks} checks passed. Practice results offer, for each weak word-part area, the one published lesson that teaches it (read from the lessons' own text), and for anatomy, physiology and pathophysiology the lesson where each module starts, labelled with the same area and lesson, and that lesson leads back to the practice choice that includes the area; an area outside the bank's six gets at most the plain statement that no lesson exists and links to nothing; any broken link in the chain removes the action. The old Word roots record opens the Word Roots lesson, the HOSA hub's practice row opens the Medical Terminology Event HQ instead of looping through /skills, and HOSA test results say event category while DECA keeps cluster.`);
+  console.log(`\nhosa-medterm-remediation: ${checks} checks passed. Practice results offer, for each weak word-part area, the one published lesson that teaches it (read from the lessons' own text), and for anatomy, physiology and pathophysiology the lesson where each module starts, labelled with the same area and lesson, and that lesson leads back to the practice choice that includes the area; an area outside the bank's six gets at most the plain statement that no lesson exists and links to nothing; any broken link in the chain removes the action. The old Word roots record still redirects to the Word Roots lesson URL, its dormant HOSA siblings redirect to /skills, the dormant HOSA hub redirects to /training while DECA and Debate keep their rows, and HOSA test results say event category while DECA keeps cluster.`);
 }
 
 main().catch((error) => {

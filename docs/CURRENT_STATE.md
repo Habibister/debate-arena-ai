@@ -1,7 +1,8 @@
 # CURRENT STATE — AUTHORITATIVE
 
-_Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy,
-physiology and pathophysiology modules, their practice and HOSA test-result next steps). Every other
+_Last updated: 2026-09-27, public product scope (Debate and DECA only, HOSA dormant) and HOSA lines
+only (the Medical Terminology word-parts course, its anatomy, physiology and pathophysiology
+modules, their practice and HOSA test-result next steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -37,6 +38,14 @@ non-executable. Rewrite this region after each milestone; append history below t
 
 ## Education state
 
+- **PUBLIC PRODUCT SCOPE — Debate and DECA only; HOSA DORMANT (owner decision, 2026-09-27; LOCAL
+  COMMIT, not pushed or deployed).** `PUBLIC_TRACK_IDS` in `lib/training-tracks.ts` is the one list.
+  HOSA is kept as dormant internal code and data (nothing deleted, no migration): no learner is
+  offered it, a saved HOSA preference resolves to the neutral "Choose Debate or DECA" state and is
+  never converted, direct HOSA entry routes redirect once to their area's general page, and the APIs
+  refuse new HOSA practice and generation with 410. The HOSA lines below describe dormant content.
+  Details, the direct-route table and the recorded debt: *Public product scope: Debate and DECA only,
+  HOSA dormant* below the archive boundary. Guard: `npm run public-tracks:smoke`.
 - **DECA P1 — FROZEN at `77a8fab`, 2026-09-09. Freeze result P0 = 0, P1 = 0.** The DECA learning
   architecture is coherent end to end for its supported scope: LEARN → PRACTICE → MASTERY →
   REVIEW/REMEDIATE → SIMULATE → PRACTICE FEEDBACK → REVIEW PREP → RETRY. **12 DECA lessons published,
@@ -867,6 +876,13 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 ## Current next action
 
+**PUBLIC SCOPE, 2026-09-27 (supersedes the HOSA paragraph below).** CompeteReady publicly supports
+only Debate and DECA; HOSA is dormant (see *Public product scope* below the archive boundary). The
+deactivation is a local commit, not pushed. **Next, only when the owner asks:** pushing is the
+owner's action; then the website review covers Debate and DECA only. HOSA's website-review debt is
+parked with the dormant code. Restoring HOSA starts by adding it back to `PUBLIC_TRACK_IDS` and then
+reviewing each surface listed in that section.
+
 **HOSA LEARNING, 2026-09-27 (after the owner review repairs).** The owner reviewed the whole
 17-lesson Medical Terminology curriculum with AI assistance, sent four corrections, and chose the
 waiver route instead of a qualified human reviewer: **HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY
@@ -957,6 +973,113 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## Public product scope: Debate and DECA only, HOSA dormant — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build`, a dev
+server and a browser were not used for this pass; pages were rendered server-side in smoke suites).
+Baseline: GitHub `main` at `74bd119` (the owner merged the HOSA Medical Terminology stack).
+**Owner decision (2026-09-27): CompeteReady publicly supports only General Debate and DECA.** HOSA is
+removed from the public product and kept as dormant internal code that can be restored. Nothing was
+deleted: the HOSA curriculum (17 Medical Terminology lessons and the older HOSA lesson), the 180-item
+bank, decks, tests, components, `/api/hosa/medterm/*`, reports and every learner record stay as they
+are. No migration, no seed, no database write.
+
+**One canonical definition.** `PUBLIC_TRACK_IDS = ["GENERAL_DEBATE", "DECA"]` in
+`lib/training-tracks.ts`; `RETIRED_TRACKS` (now HOSA and Model UN) and `ACTIVE_TRACKS` derive from it,
+with `isRetiredOrganization`, `PUBLIC_TRACKS_PHRASE` ("Debate or DECA") and
+`PUBLIC_PRACTICE_TEST_ORGANIZATIONS` (`["DECA"]`). HOSA stays in the `TrainingTrack` type and the
+Prisma `Organization` enum. Restoring HOSA means adding it back to `PUBLIC_TRACK_IDS` (then reviewing
+the per-surface changes below, which were written to follow that list).
+
+**Saved HOSA learners fail closed, never converted.** The resolvers already never returned a retired
+track, so a HOSA signup organization, a stored `hosa` selection or a `hosa` route slug now resolves to
+UNRESOLVED. An explicit Debate or DECA selection still wins. `setTrack` ignores a non-public id (it used
+to normalize it to Debate). Unresolved learners get the new neutral `ChooseTrackState`
+(`components/training/choose-track-state.tsx`, "Choose Debate or DECA", one link per public hub, writes
+nothing) on Home, Dashboard (plus teams and an assigned-work summary), Lessons, Study Arcade, Tests
+(unless an assignment), Resources and Skills; Compete keeps its existing "Choose your track first".
+The app shell (desktop nav, mobile bottom bar, More menu) never had a HOSA entry; its track chip
+reads "Choose a track" for a HOSA-saved learner.
+Home and Dashboard no longer show a Debate-shaped record to an unresolved learner. Study Arcade no
+longer lists every deck (HOSA's included) to an unresolved learner. Onboarding starts on a "Choose
+Debate or DECA" placeholder and builds a path only after a real choice.
+
+**Pickers and copy.** HOSA removed from signup, profile edit (a stored dormant value shows as a
+disabled "Previous organization (no longer offered)" and is preserved), coach team creation, the
+/training chooser (two cards, two columns), the tests generator (DECA only when nothing is locked),
+the opponent picker and recommended bot (`PUBLIC_AI_PERSONAS`; `hosa-judge` still resolves by id), the
+landing page, site description, profile, dashboard and coach-progress copy.
+
+**Direct routes (one rule: a dormant track's public entry redirects once, 307, to its area's general
+page, with no `?track=` and no selection written).**
+
+| Route | Behaviour now |
+| --- | --- |
+| `/training/hosa`, `/events`, `/event/<slug>`, `/practice`, `/room` | redirect `/training` |
+| `/lessons/<HOSA-owned lesson>` (19: the 18 registry lessons and the withdrawn scenario-interaction lesson) | redirect `/lessons` (was a 404 for a retired owner) |
+| `/skills/<HOSA or Model UN compatibility record>` and its `/practice` page | redirect `/skills` |
+| `/skills/<slug that canonically redirects to a HOSA lesson>` | permanent redirect to the lesson URL, which redirects `/lessons` |
+| `/study/<HOSA deck>`, `/study/<HOSA deck>/games` | redirect `/study` (then `/study-arcade`), even with an assignment |
+| `/tests/<id>` unfinished HOSA test | redirect `/tests` |
+| `/tests/<id>/results` completed HOSA test | STILL READABLE as the learner's record; every next step, "Generate another" and recommendations withheld, one note instead |
+| `/debate/<id>` HOSA or Model UN session | judged: redirect to its replay; otherwise redirect `/debates/history` |
+| `/debates/<id>/replay` HOSA session | STILL READABLE; "retry" not offered |
+| `/debates/history` | unchanged: HOSA rows labeled "No longer offered", no Continue |
+| any page with `?track=hosa` | middleware redirects to the same page without it (`dormantTrackParamRedirect`) |
+| `/assignments`, Dashboard "Assigned Work" | an unfinished assignment on a HOSA team is listed under "No longer offered", never as due or active work and never as the learner's next step |
+| `/assignments/<id>` on a HOSA team | STILL READABLE; a note replaces Start and Submit |
+| `/coach` HOSA team card | roster and history shown; the join code and Copy button are replaced by "This team's track is no longer offered…" |
+| `/api/hosa/medterm/{session,check,submit}` | UNCHANGED and still reachable by a signed-in user who calls them directly (dormant; no page links them) |
+| `POST /api/ai/readiness` | UNCHANGED and still accepts organization HOSA (the route is byte-pinned by `coach-evidence`; no page sends HOSA) |
+
+**APIs.** New HOSA practice and generation are refused with 410 (`TRACK_NOT_OFFERED_BODY`,
+`lib/api.ts`) after auth, rate limiting and parsing and before any provider call or write:
+`POST /api/tests`, `/api/ai/{practice-questions,roleplay-turn,lesson,topic,opponent,judge,side-coach}`
+and `/api/matchmaking` (organization HOSA); `/api/tests/<id>/grade` and
+`/api/debates/<id>/{opponent,messages}` for a dormant-organization record (`POST /api/debates`,
+`/api/debates/<id>/judge`, `/api/ai/hosa-scenario` and `/api/ai/judge-hosa` already refused HOSA).
+Teams: `createTeam` refuses a HOSA team and `joinTeamByCode` refuses to enrol anyone new in one (410);
+existing teams and members are untouched. Assignments: dormant-organization teams are not offered in
+the coach form (a coach with only dormant teams is told so, not told to create a first team) and
+`createAssignment`, `startAssignment` and `completeAssignment` refuse them (410); HOSA tests are not
+offered as practice-test evidence. A completed HOSA result also withholds its stored next-attempt
+advice and its lesson count.
+
+**Guards.** New `npm run public-tracks:smoke` (36 checks): public tracks = Debate + DECA; HOSA
+organization, cookie and route resolve to unresolved and are never converted; HOSA absent from every
+picker; new and HOSA-saved learners see "Choose Debate or DECA" and 0 HOSA surfaces on the primary
+pages; Debate and DECA learners see 0 HOSA surfaces; the rendered app shell offers no HOSA entry for
+six viewer types; every direct HOSA entry redirects once, without loops; the APIs return 410 before
+any provider call; HOSA teams take no new team, member or assignment nudge; no write is attempted in
+the whole run; HOSA code and data remain. Ten source mutations of the review fixes were each caught.
+Twelve existing suites were updated where they pinned the old public HOSA behaviour (the HOSA hub,
+lessons, room and deck assertions now assert the dormant redirect, and the dormant internals are
+rendered directly where a suite still checks them): `tracks`, `track-context`, `nav-a11y`,
+`hosa-practice-scope`, `hosa-result-next-steps`, the six `hosa-medterm-*` curriculum/practice suites
+(`lessons`, `anatomy`, `physiology`, `pathophysiology`, `targeted-practice`, `remediation`) and one
+pin in `coached-performance`. **Validation:** `tsc --noEmit` clean; eslint on the 69 changed files
+shows only the 12 "rule definition not found" errors that exist at `74bd119`; the 63-suite safe
+battery passes except the six baseline suites (`coach-evidence` S3-15d, `debate-mastery` 24,
+`deca-mastery` PA7, `hosa-medterm-evidence` PA7, `hosa-practice-scope` 10c/43b, `skills-compat` 2),
+whose soft-mode failure sets are identical to `74bd119`; `security:smoke` passes. `judge-shape`
+(live provider) and the database suites' online parts were not run. **Review:** an independent AI
+review (leakage sweep, saved-HOSA learner, Debate/DECA regression with side-by-side SSR against
+`74bd119`, test integrity, security), each finding checked by an adversarial AI verifier; not a
+human review. No blocker; nine confirmed findings (one major: a HOSA assignment could permanently
+occupy a DECA learner's Dashboard next step), all fixed in this commit.
+
+**Recorded, not done (owner decisions / debt):** `POST /api/ai/readiness` and `POST /api/signup`
+still accept organization HOSA by direct call (readiness is byte-pinned; a HOSA signup resolves to the
+chooser); `debateDiagnosisLesson` still resolves any learner-visible lesson id with no track check
+(pre-existing, frozen Debate path; a HOSA lesson link would now land on `/lessons`); coach-facing assignment type copy still says
+"generated DECA/HOSA practice test" (`lib/assignment-types.ts` is pinned byte-identical to an immutable
+baseline by `deca-mastery` 24-28 and `skills-compat` 27/27A3, so changing it needs an owner-approved
+re-pin); the seeded demo HOSA account and a "DECA/HOSA" demo bio in `prisma/seed.ts` (no seed run);
+Mock Trial and Public Speaking are still offered in the profile and team pickers although no track
+backs them; judged-round counts on Debate Home/Dashboard are account-wide and would include a judged
+HOSA session if one exists; `CLAUDE.md` still describes four tracks (not edited by this pass); an
+unresolved learner's shell still uses Debate's visual accent (no claim, unchanged).
 
 ## HOSA Medical Terminology owner review repairs — 2026-09-27 — LOCAL COMMIT
 

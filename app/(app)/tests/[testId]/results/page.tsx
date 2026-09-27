@@ -23,7 +23,7 @@ import {
   type ResultNextStep
 } from "@/lib/education/test-result-recommendations";
 import { resolveActiveTrack } from "@/lib/track-server";
-import { isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
+import { isRetiredOrganization, isTrackRetired, trackByOrganization } from "@/lib/training-tracks";
 import { cn } from "@/lib/utils";
 
 type RecommendationPayload = {
@@ -181,6 +181,10 @@ export default async function PracticeTestResultsPage({
   // never moved into another track's catalog by a generic "Back".
   const backHref = (recordTrack && !isTrackRetired(recordTrack.id) ? `/tests?track=${recordTrack.slug}` : "/tests") as Route;
   const backLabel = recordTrack && !isTrackRetired(recordTrack.id) ? `Back to ${recordTrack.label} practice tests` : "Back to practice tests";
+  // A dormant track's result (HOSA) stays readable as the learner's own record: score, weak areas and
+  // every question with its explanation. What it no longer gets is a way back into that track, so every
+  // "what next" (lessons, decks, videos, a retake, "Generate another") is withheld for one plain note.
+  const dormantRecord = isRetiredOrganization(test.organization);
 
   return (
     <div className="space-y-6">
@@ -198,10 +202,12 @@ export default async function PracticeTestResultsPage({
               {test.eventCluster ?? test.eventType} · {test.difficulty.toLowerCase()} · {test.questionCount} questions
             </p>
           </div>
-          <Link href={backHref} className={buttonVariants({ variant: "outline" })}>
-            <RotateCcw className="h-4 w-4" aria-hidden />
-            Generate another
-          </Link>
+          {dormantRecord ? null : (
+            <Link href={backHref} className={buttonVariants({ variant: "outline" })}>
+              <RotateCcw className="h-4 w-4" aria-hidden />
+              Generate another
+            </Link>
+          )}
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-[0.65fr_1.35fr]">
           <div className="rounded-lg border bg-background p-5">
@@ -218,13 +224,16 @@ export default async function PracticeTestResultsPage({
               <p className="mt-3 text-sm font-semibold">Weak skills</p>
               <p className="mt-1 text-2xl font-bold">{test.weakAreas.length}</p>
             </div>
-            <div className="rounded-lg border bg-background p-4">
-              <BookOpenCheck className="h-5 w-5 text-secondary" aria-hidden />
-              {/* Counts the distinct lessons this page links — never a lesson with nothing behind it, and never
-                  the same lesson twice because two sources named it. */}
-              <p className="mt-3 text-sm font-semibold">Lessons</p>
-              <p className="mt-1 text-2xl font-bold">{workOn.lessonCount}</p>
-            </div>
+            {/* A dormant record links no lesson, so it shows no lesson count. */}
+            {dormantRecord ? null : (
+              <div className="rounded-lg border bg-background p-4">
+                <BookOpenCheck className="h-5 w-5 text-secondary" aria-hidden />
+                {/* Counts the distinct lessons this page links — never a lesson with nothing behind it, and never
+                    the same lesson twice because two sources named it. */}
+                <p className="mt-3 text-sm font-semibold">Lessons</p>
+                <p className="mt-1 text-2xl font-bold">{workOn.lessonCount}</p>
+              </div>
+            )}
             {/* M15 S1A A4a — three states, and the third is the important one. A MISSING ledger row
                 is not proof of an award and not proof that the limit was hit: tests graded before
                 A4a have no row at all. So the tile is omitted rather than inventing either claim.
@@ -249,6 +258,18 @@ export default async function PracticeTestResultsPage({
         </div>
       </div>
 
+      {dormantRecord ? (
+        <Card>
+          <CardContent className="flex items-start gap-3 p-5 text-sm leading-6 text-muted-foreground">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <p>
+              This track is no longer offered, so this result has no next steps. Your score, weak areas and answers stay
+              here as your record.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+      <>
       <div className="grid gap-4 lg:grid-cols-3">
         {hosaNext ? (
           <ResultNextStepCard step={hosaNext.practice} icon={BookOpenCheck} tone="secondary" />
@@ -298,8 +319,10 @@ export default async function PracticeTestResultsPage({
           />
         )}
       </div>
+      </>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+      <div className={cn("grid gap-4", dormantRecord ? null : "lg:grid-cols-[0.8fr_1.2fr]")}>
         <div>
           <Card>
             <CardHeader>
@@ -320,13 +343,19 @@ export default async function PracticeTestResultsPage({
                   <p className="text-sm leading-6 text-muted-foreground">{weakAreaExplanation(test.organization)}</p>
                 </div>
               ) : (
-                <EmptyState icon={CheckCircle2} title="No weak areas detected" description="Strong performance on this attempt. Move up a difficulty level or switch event categories." className="min-h-32" />
+                <EmptyState
+                  icon={CheckCircle2}
+                  title="No weak areas detected"
+                  description={dormantRecord ? "No weak areas were flagged on this attempt." : "Strong performance on this attempt. Move up a difficulty level or switch event categories."}
+                  className="min-h-32"
+                />
               )}
-              {recommendations.note ? <p className="mt-4 text-sm leading-6 text-muted-foreground">{resultNoteForOrganization(recommendations.note, test.organization)}</p> : null}
+              {/* The stored note is advice for a next attempt, which a dormant record does not have. */}
+              {!dormantRecord && recommendations.note ? <p className="mt-4 text-sm leading-6 text-muted-foreground">{resultNoteForOrganization(recommendations.note, test.organization)}</p> : null}
             </CardContent>
           </Card>
         </div>
-        <ResultRecommendationsCard recommendations={workOn} trackLabel={recordTrack?.label ?? test.organization} />
+        {dormantRecord ? null : <ResultRecommendationsCard recommendations={workOn} trackLabel={recordTrack?.label ?? test.organization} />}
       </div>
 
       <div className="space-y-4">

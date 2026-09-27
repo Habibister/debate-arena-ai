@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Progress } from "@/components/ui/progress";
 import { LEVELS } from "@/lib/constants";
 import { EVENT_OPTIONS } from "@/lib/rubrics";
+import { PUBLIC_PRACTICE_TEST_ORGANIZATIONS } from "@/lib/training-tracks";
 import { testingClustersForOrganization } from "@/lib/testing";
 import { cn } from "@/lib/utils";
 
@@ -55,11 +56,12 @@ async function createPracticeTest(input: {
 }
 
 // `lockedOrganization` pins the generator to the selected track's organization (DECA or HOSA) so a
-// HOSA user can never switch to DECA content, and vice versa. Omitted → the user may choose (used only
-// on the no-track browse-all tests page).
+// HOSA user can never switch to DECA content, and vice versa. Omitted → the user may choose among the
+// PUBLIC practice-test organizations only (an assigned test with no track resolved); a dormant track's
+// tests are never offered. With one public organization (DECA today) there is nothing to choose.
 export function PracticeTestGenerator({ lockedOrganization , officialFormat }: { lockedOrganization?: TestingOrganization ; officialFormat?: OfficialTestFormatProps | null }) {
   const router = useRouter();
-  const initialOrg: TestingOrganization = lockedOrganization ?? "DECA";
+  const initialOrg: TestingOrganization = lockedOrganization ?? PUBLIC_PRACTICE_TEST_ORGANIZATIONS[0] ?? "DECA";
   const [organization, setOrganization] = useState<TestingOrganization>(initialOrg);
   const [eventType, setEventType] = useState(EVENT_OPTIONS[initialOrg][0].value);
   const [eventCluster, setEventCluster] = useState(testingClustersForOrganization(initialOrg)[0]);
@@ -128,11 +130,16 @@ export function PracticeTestGenerator({ lockedOrganization , officialFormat }: {
             <span className="font-semibold">Organization</span>
             <span className="ml-2 text-muted-foreground">{lockedOrganization} · matched to your selected track</span>
           </div>
+        ) : PUBLIC_PRACTICE_TEST_ORGANIZATIONS.length < 2 ? (
+          <div className="rounded-md border bg-background p-3 text-sm">
+            <span className="font-semibold">Organization</span>
+            <span className="ml-2 text-muted-foreground">{organization}</span>
+          </div>
         ) : (
         <div>
           <p className="mb-3 text-sm font-semibold">Organization</p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {(["DECA", "HOSA"] as const).map((item) => (
+            {PUBLIC_PRACTICE_TEST_ORGANIZATIONS.map((item) => (
               <button
                 key={item}
                 type="button"

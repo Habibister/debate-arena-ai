@@ -58,6 +58,21 @@ export function hosaWithdrawn() {
   return NextResponse.json(HOSA_WITHDRAWN_BODY, { status: HOSA_WITHDRAWN_STATUS });
 }
 
+// DORMANT TRACKS (owner decision, 2026-09-27): CompeteReady publicly supports Debate and DECA only.
+// A request to generate, continue or grade practice for a dormant track's organization (HOSA; see
+// isRetiredOrganization in lib/training-tracks.ts) is refused with 410, after auth, rate limiting and
+// parsing (the order every AI route keeps) and before any provider call or database write. The
+// dormant track's code and records stay; only new public practice in it is refused.
+export const TRACK_NOT_OFFERED_STATUS = 410;
+export const TRACK_NOT_OFFERED_BODY = {
+  unavailable: true,
+  error: "This track is no longer offered. CompeteReady supports Debate and DECA."
+} as const;
+
+export function trackNotOffered() {
+  return NextResponse.json(TRACK_NOT_OFFERED_BODY, { status: TRACK_NOT_OFFERED_STATUS });
+}
+
 export function forbidden(message = "Forbidden") {
   return NextResponse.json({ error: message }, { status: 403 });
 }

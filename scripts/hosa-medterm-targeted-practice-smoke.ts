@@ -34,9 +34,11 @@
  *   C. Module CTA -> targeted word-part practice -> eligible questions from the existing bank: the
  *      word-part module's last lesson links to the word-parts choice, whose areas give the builder a
  *      pool of exactly the word-part areas' questions, and nothing else.
- *   D. The practice page hands the URL value to the room and the room to the engine, which renders
- *      the choices with "taught in the current course" against "not taught yet", preselects the
- *      link's choice, offers the official format only for every area, and starts nothing by itself.
+ *   D. HOSA is DORMANT (owner decision 2026-09-27): the practice page redirects to /training for every
+ *      value and mounts no room. The room and engine stay in code: the page's resolver gives the room
+ *      the URL value and the room gives it to the engine, which renders the choices with "taught in the
+ *      current course" against "not taught yet", preselects the link's choice, offers the official
+ *      format only for every area, and starts nothing by itself.
  *   E. The route, called for real: a targeted request creates a session whose stored areas are the
  *      selection and whose items are all bank questions from the selected areas; a one-area request
  *      never includes another area; an omitted selection still draws from more than the taught
@@ -357,7 +359,7 @@ async function main() {
   });
 
   // ---- D. the page, the room and the engine ---------------------------------------------------------
-  await check("D. the practice page hands the choice to the engine, which shows taught against not taught and starts nothing", async () => {
+  await check("D. the dormant HOSA practice page redirects to /training; the room it used to mount hands the choice to the engine, which shows taught against not taught and starts nothing", async () => {
     const { HosaEventPrep } = require("../components/training/hosa-event-prep") as { HosaEventPrep: (props: { focus?: string | null }) => Promise<React.ReactElement> };
     const { HosaMedTermEngine, sessionTimeLimitSeconds, preselectionNote } = require("../components/training/hosa-medterm-engine") as {
       HosaMedTermEngine: React.FunctionComponent<Record<string, unknown>>;
@@ -374,13 +376,29 @@ async function main() {
       if (el.type === type) return el;
       return find(el.props?.children, type);
     };
-    // D1. the page reads the URL value and hands it to the room; an unknown value hands nothing.
+    // D1. HOSA is DORMANT (owner decision 2026-09-27): /training/hosa/practice is not a public page. For
+    // every focus value, known or not, it redirects (307, replace) to the general training page and
+    // mounts no room. The room and engine stay in code, so the hand-off the page used to make is still
+    // checked: the page's own resolver (D10 pins that the page source still calls it) gives the value,
+    // the room is given exactly that, as the page passed it, and the engine preselects it.
     for (const [param, expected] of [["word-parts", "word-parts"], ["anatomy", "anatomy"], ["physiology", "physiology"], ["pathophysiology", "pathophysiology"], ["all", "all"], ["disease", null], [undefined, null], [["word-parts", "all"], null]] as const) {
-      const page = await TrackPracticePage({ params: { track: "hosa" }, searchParams: { focus: param as string } });
-      const room = find(page, HosaEventPrep);
-      assert.ok(room, `D1. the HOSA practice page mounts the room (focus=${JSON.stringify(param)})`);
-      assert.equal(room!.props.focus, expected, `D1b. and hands it ${JSON.stringify(expected)} for focus=${JSON.stringify(param)}`);
+      let digest = "rendered";
+      try {
+        await TrackPracticePage({ params: { track: "hosa" }, searchParams: { focus: param as string } });
+      } catch (error) {
+        digest = String((error as { digest?: unknown }).digest ?? `threw without a redirect digest: ${String(error)}`);
+      }
+      assert.equal(digest, "NEXT_REDIRECT;replace;/training;307;",
+        `D1. dormant: the HOSA practice page redirects to /training (307, replace) and mounts no room (focus=${JSON.stringify(param)})`);
+      const resolved = medTermFocusFromParam(param as string);
+      assert.equal(resolved, expected, `D1b. the page's resolver gives ${JSON.stringify(expected)} for focus=${JSON.stringify(param)}`);
+      const prep = await HosaEventPrep({ focus: resolved });
+      const handed = find(prep, HosaMedTermEngine);
+      assert.ok(handed, `D1c. the room, given that value as the page used to pass it, mounts the engine (focus=${JSON.stringify(param)})`);
+      assert.equal(handed!.props.initialFocus, expected, `D1d. and preselects ${JSON.stringify(expected)} for focus=${JSON.stringify(param)}`);
     }
+    assert.equal(calls.filter((c) => c === "getActiveSpec").length, 8, "D1e. control: each of the eight rooms read the (stubbed) spec once");
+    calls.length = 0;
     // D2. the room hands the engine the canonical areas from the server, and the choice, and starts nothing.
     const room = await HosaEventPrep({ focus: "word-parts" });
     const engine = find(room, HosaMedTermEngine);
@@ -654,7 +672,7 @@ async function main() {
   console.log(`\nhosa-medterm-targeted-practice: ${checks} checks passed. A HOSA beginner can practise the word parts the ` +
     "course taught, the anatomy, physiology or pathophysiology it taught, or all Medical Terminology, is told what is not taught yet before starting, " +
     "reaches the word-part choice from the word-part module's last lesson, and the route serves a targeted session from " +
-    "the selected canonical areas only.\n");
+    "the selected canonical areas only. HOSA is dormant, so the practice page itself redirects to /training.\n");
 }
 
 main().catch((error) => {

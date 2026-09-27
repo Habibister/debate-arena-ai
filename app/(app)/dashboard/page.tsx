@@ -13,6 +13,7 @@ import { XpProgressCard } from "@/components/app/xp-progress-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { RecommendedVideos } from "@/components/resources/recommended-videos";
 import { JoinTeamCard, type StudentTeam } from "@/components/teams/join-team-card";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 import { LearningPath } from "@/components/onboarding/learning-path";
 import { ResumeDebatesCard, type ResumeDebate } from "@/components/debate/resume-debates-card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ import { nearestAiPersona } from "@/lib/ai-personas";
 import { assignmentStatusLabel, assignmentTypeLabel, statusForSubmission } from "@/lib/assignment-types";
 import { getStudentAssignments } from "@/lib/assignments";
 import { getStudentDebates, isLegacyPracticeRecord, isUnfinished, practiceTypeLabel, showsOpponentMeta, sideLabel } from "@/lib/debate-history";
-import { trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
+import { isRetiredOrganization, trackAllowsOrganization, trackByOrganization, trackHasPracticeTests } from "@/lib/training-tracks";
 import { getActiveTrack } from "@/lib/track-server";
 import { weakAreasForTrack } from "@/lib/track-recommendations";
 import { recentCompletedTestsQuery, trackPracticeRecord, type TrackPracticeRecord } from "@/lib/learner-record";
@@ -223,7 +224,11 @@ export default async function DashboardPage() {
   const hasActivity = showDebateRecord
     ? (xp ?? 0) > 0 || recentTests.length > 0 || judgedDebateCount > 0 || guidedExerciseCount > 0
     : recentTests.length > 0 || (trackRecord?.recordedSkills ?? 0) > 0;
-  const pendingAssignment = assignments.some((assignment) => statusForSubmission(assignment.submissions[0]) !== "COMPLETED");
+  // Work on a dormant track's team (HOSA) can no longer be started or submitted, so it is never the
+  // learner's next step.
+  const pendingAssignment = assignments.some(
+    (assignment) => !isRetiredOrganization(assignment.team.organization) && statusForSubmission(assignment.submissions[0]) !== "COMPLETED"
+  );
   const studentTeams: StudentTeam[] = studentTeamRows.map((row) => ({
     membershipId: row.id,
     teamId: row.team.id,
@@ -232,6 +237,46 @@ export default async function DashboardPage() {
     coachName:
       row.team.coach?.user?.displayName ?? row.team.coach?.user?.name ?? row.team.coach?.user?.username ?? "your coach"
   }));
+
+  // No public track resolved: a learner who has not chosen yet, or one whose saved selection or signup
+  // organization names a dormant track (HOSA). They get the neutral chooser plus the account-level
+  // pieces that belong to no track (teams, assigned work), never a Debate-shaped record or a
+  // resumable session from a dormant track.
+  if (!activeTrack) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border bg-card p-5">
+          <Badge variant="secondary">Student dashboard</Badge>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <UserAvatar username={user?.username ?? session?.user?.username ?? "student"} displayName={user?.displayName ?? user?.name ?? session?.user?.displayName ?? "Student"} avatarUrl={avatarUrl} size="lg" />
+            <div>
+              <h1 className="page-title">Welcome back, {displayName}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Choose a track and this dashboard shows your record, next steps and resources for it.</p>
+            </div>
+          </div>
+        </div>
+        <ChooseTrackState />
+        {role === "STUDENT" ? <JoinTeamCard teams={studentTeams} /> : null}
+        {role === "STUDENT" ? (
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CardTitle as="h2">Assigned Work</CardTitle>
+                <Link href={"/assignments" as Route} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  View all
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              {assignments.length > 0
+                ? `${assignments.length} ${assignments.length === 1 ? "assignment" : "assignments"} from your teams. Open them under Assignments.`
+                : "No assignments yet. When a coach assigns work to one of your teams, it will show up here."}
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -338,6 +383,7 @@ export default async function DashboardPage() {
             {assignments.length > 0 ? (
               assignments.slice(0, 3).map((assignment) => {
                 const status = statusForSubmission(assignment.submissions[0]);
+                const dormant = isRetiredOrganization(assignment.team.organization) && status !== "COMPLETED";
                 return (
                   <Link
                     key={assignment.id}
@@ -350,8 +396,8 @@ export default async function DashboardPage() {
                         {assignmentTypeLabel(assignment.type)} · {assignment.team.name}
                       </span>
                     </span>
-                    <Badge variant={status === "COMPLETED" ? "secondary" : status === "IN_PROGRESS" ? "accent" : "outline"}>
-                      {assignmentStatusLabel(status)}
+                    <Badge variant={dormant ? "outline" : status === "COMPLETED" ? "secondary" : status === "IN_PROGRESS" ? "accent" : "outline"}>
+                      {dormant ? "No longer offered" : assignmentStatusLabel(status)}
                     </Badge>
                   </Link>
                 );
@@ -469,7 +515,7 @@ export default async function DashboardPage() {
         <EmptyState
           icon={ClipboardList}
           title="No completed practice tests yet"
-          description={activeTrack ? `Generate a ${activeTrack.short} test to unlock score history, weak-area detection, and recommended lessons.` : "Generate a DECA or HOSA test to unlock score history, weak-skill detection, and recommended lessons."}
+          description={activeTrack ? `Generate a ${activeTrack.short} test to unlock score history, weak-area detection, and recommended lessons.` : "Generate a DECA test to unlock score history, weak-skill detection, and recommended lessons."}
           actionLabel="Create first test"
           actionHref={activeTrack ? `/tests?track=${activeTrack.slug}` : "/tests"}
         />

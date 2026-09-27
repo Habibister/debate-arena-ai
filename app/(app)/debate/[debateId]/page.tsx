@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { defaultSupportLevel, guidedRubricFor } from "@/lib/education/coaching";
 import { guidedLessonIdOf } from "@/lib/guided-rounds";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 export default async function DebateArenaPage({ params }: { params: { debateId: string } }) {
   // Guided-ness is read from the STORED round (lib/guided-rounds.ts): practiceMode LESSON plus the
@@ -70,6 +71,12 @@ export default async function DebateArenaPage({ params }: { params: { debateId: 
 
   if (!debate) {
     notFound();
+  }
+  // A dormant track's session (HOSA, Model UN) cannot be continued: that practice is not part of the
+  // public product. A judged one opens as the read-only replay; anything else goes to history, which
+  // labels it as no longer offered. Nothing is written.
+  if (isRetiredOrganization(debate.organization)) {
+    redirect(debate.status === "JUDGED" ? `/debates/${debate.id}/replay` : "/debates/history");
   }
 
   return (

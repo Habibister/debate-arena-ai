@@ -25,7 +25,9 @@
  *   F. The learning graph: word parts -> anatomy -> physiology -> pathophysiology, with physiology
  *      practice at the end of its module, the right link on the right lesson, and a practice choice
  *      that serves only physiology questions and starts nothing by itself. Anatomy keeps its own
- *      practice link at the end of its module.
+ *      practice link at the end of its module. HOSA is dormant, so the practice page itself now
+ *      redirects to /training (F9 asserts that) and the room it used to render is checked directly
+ *      with the same prop.
  *   G. Remediation: a physiology weakness opens the physiology lessons, anatomy still opens anatomy,
  *      every link checked, failing closed.
  *   H. No disease is named in these lessons: pathophysiology belongs to its own module, which
@@ -994,7 +996,7 @@ async function main() {
     assert.ok(!DISEASE.test(`${physiology.label} ${physiology.summary} ${physiology.disclosure}`.replace(/on disease/, "")),
       "F8o. and names no disease topic as part of it");
 
-    // The page hands the URL value to the room, which hands it to the engine with per-area counts.
+    // The URL value reaches the room, which hands it to the engine with per-area counts.
     const { HosaEventPrep } = require("../components/training/hosa-event-prep");
     const engineModule = require("../components/training/hosa-medterm-engine");
     const { HosaMedTermEngine, medTermCountOptions, medTermPoolSize } = engineModule;
@@ -1006,9 +1008,23 @@ async function main() {
       if (el.type === type) return el;
       return find(el.props?.children, type);
     };
-    const page = await TrackPracticePage({ params: { track: "hosa" }, searchParams: { focus: "physiology" } });
-    assert.equal(find(page, HosaEventPrep)?.props.focus, "physiology", "F9. the practice page hands the room the physiology choice");
-    const room = await HosaEventPrep({ focus: "physiology" });
+    // HOSA is DORMANT: the practice page no longer renders the room for a learner. It redirects (307,
+    // never permanent) to the general training page. The room stays in the repo, so it is rendered
+    // directly with exactly the prop the page used to pass it,
+    // `focus={medTermFocusFromParam(searchParams?.[HOSA_MEDTERM_FOCUS_PARAM])}`, and the wiring from the
+    // link's query value to the engine is still checked below.
+    const practiceQuery: Record<string, string | string[] | undefined> = { focus: "physiology" };
+    let practiceOutcome = "rendered";
+    try {
+      await TrackPracticePage({ params: { track: "hosa" }, searchParams: practiceQuery });
+    } catch (error) {
+      practiceOutcome = String((error as { digest?: unknown }).digest ?? error);
+    }
+    assert.equal(practiceOutcome, "NEXT_REDIRECT;replace;/training;307;",
+      "F9. dormant: the HOSA practice page redirects to /training (307) instead of handing the room the physiology choice");
+    const focus = medTermFocusFromParam(practiceQuery[HOSA_MEDTERM_FOCUS_PARAM]);
+    assert.equal(focus, "physiology", "F9a. the query value the page used to read still names the physiology choice");
+    const room = await HosaEventPrep({ focus });
     const engine = find(room, HosaMedTermEngine);
     assert.equal(engine?.props.initialFocus, "physiology", "F9b. the room preselects it");
     const catalog = engine!.props.areas as Array<{ id: string; label: string; questionCount?: number }>;

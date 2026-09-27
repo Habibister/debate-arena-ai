@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { RoleplayRoom } from "@/components/rooms/roleplay-room";
 import { getOfficialPrepFormat } from "@/lib/competition-specs";
-import { trackBySlug } from "@/lib/training-tracks";
+import { isTrackRetired, trackBySlug } from "@/lib/training-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,9 @@ const HOSA_ROOM_FALLBACK = "/training/hosa/events";
 export default async function RoleplayRoomPage({ params }: { params: { track: string } }) {
   const track = trackBySlug(params.track);
   if (!track) notFound();
+  // A dormant track (HOSA, Model UN) goes to the track chooser in one step, like every other
+  // /training/<dormant>/* route. The HOSA fallback below is kept for if HOSA is ever public again.
+  if (isTrackRetired(track.id)) redirect("/training");
   if (track.id === "HOSA") redirect(HOSA_ROOM_FALLBACK);
   if (track.id !== "DECA") redirect(`/training/${params.track}/practice`);
 

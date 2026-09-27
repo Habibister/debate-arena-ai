@@ -3,6 +3,7 @@ import type { Organization } from "@prisma/client";
 import { HttpError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { canAccessCoachTools } from "@/lib/roles";
+import { isRetiredOrganization } from "@/lib/training-tracks";
 
 // Unambiguous alphabet (no 0/O/1/I/L) so join codes are easy to read aloud and type.
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -72,6 +73,11 @@ export async function createTeam(params: {
   schoolOrClub?: string | null;
 }) {
   assertCoach(params.role);
+  // A dormant track (HOSA, Model UN) is not part of the public product, so no new team is created for
+  // it. Existing teams and their members are untouched.
+  if (isRetiredOrganization(params.organization)) {
+    throw new HttpError("This track is no longer offered, so new teams cannot be created for it.", 410);
+  }
 
   // A coach owns teams through their Coach profile; create it on first use.
   const coach = await prisma.coach.upsert({
@@ -122,10 +128,16 @@ export async function getTeamsForCoach(userId: string) {
 export async function joinTeamByCode(params: { userId: string; joinCode: string }) {
   const code = normalizeJoinCode(params.joinCode);
 
-  const team = await prisma.team.findUnique({ where: { joinCode: code }, select: { id: true, name: true } });
-  if (!team) {
+  const found = await prisma.team.findUnique({ where: { joinCode: code }, select: { id: true, name: true, organization: true } });
+  if (!found) {
     throw new HttpError("That join code was not found.", 404);
   }
+  // A dormant track's team keeps its members, but no new learner is enrolled into a track the product
+  // no longer offers.
+  if (isRetiredOrganization(found.organization)) {
+    throw new HttpError("This team's track is no longer offered, so it cannot be joined.", 410);
+  }
+  const team = { id: found.id, name: found.name };
 
   const existing = await prisma.teamMember.findUnique({
     where: { teamId_userId: { teamId: team.id, userId: params.userId } },

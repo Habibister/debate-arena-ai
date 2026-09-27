@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Fact } from "@/components/ui/fact";
 import { PageHeader } from "@/components/ui/page-header";
+import { ChooseTrackState } from "@/components/training/choose-track-state";
 import { StatusChip } from "@/components/ui/status-chip";
 import { cn } from "@/lib/utils";
 import { getActiveTrack } from "@/lib/track-server";
@@ -58,6 +59,20 @@ const CHIP: Record<LessonAvailability["state"], "success" | "unavailable" | "inf
 // DECA/HOSA show their role-play course. Fail closed to an honest empty state when a track has none.
 export default async function LessonsIndexPage({ searchParams }: { searchParams: { track?: string } }) {
   const activeTrack = await getActiveTrack(searchParams.track);
+  // No public track resolved (not chosen yet, or a saved selection naming a dormant track such as HOSA):
+  // the neutral chooser, never another track's lessons and never an empty "switch tracks" catalog.
+  if (!activeTrack) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          badges={<Badge variant="secondary">Guided lessons</Badge>}
+          heading={<h1 className="page-title">Learn how your event works</h1>}
+          description={<p>Lessons are organized by track. Choose one to see its courses.</p>}
+        />
+        <ChooseTrackState context="Your lessons follow the track you choose." />
+      </div>
+    );
+  }
   const canonicalTrack = educationTrack(activeTrack?.id);
   const cards: LessonCard[] = [
     ...lessonsForTrack(activeTrack?.slug).map((l) => ({

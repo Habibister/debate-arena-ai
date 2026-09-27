@@ -57,8 +57,12 @@ import { getEducationLesson } from "../lib/education/registry";
 // had no human content review yet. HOSA-MEDTERM-ANATOMY-V1 added the four anatomy lessons of the same
 // course, HOSA-MEDTERM-PHYSIOLOGY-V1 its four physiology lessons, and HOSA-MEDTERM-PATHOPHYSIOLOGY-V1
 // adds its five pathophysiology lessons, all likewise AI-drafted and not yet reviewed by a person.
-// Pinning freezes their bytes; it is not an approval.
-const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-PATHOPHYSIOLOGY-V1";
+// HOSA-MEDTERM-OWNER-REPAIRS-V1 records the owner-review corrections of 2026-09-27 to four of those
+// lessons (hosa-pathophysiology-blood-flow-and-oxygen, hosa-pathophysiology-how-tissue-changes,
+// hosa-pathophysiology-heart-and-pressure, hosa-physiology-nerves-and-muscles). The owner waived the
+// human subject-accuracy review; a waiver is not a review. Pinning freezes their bytes; it is not an
+// approval.
+const LEARNING_CONTENT_BASELINE = "HOSA-MEDTERM-OWNER-REPAIRS-V1";
 
 const BASELINE_PATH = "scripts/learning-content-baseline.json";
 

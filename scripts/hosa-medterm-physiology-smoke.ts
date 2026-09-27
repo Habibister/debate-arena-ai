@@ -30,7 +30,10 @@
  *      every link checked, failing closed.
  *   H. No disease is named in these lessons: pathophysiology belongs to its own module, which
  *      scripts/hosa-medterm-pathophysiology-smoke.ts owns.
- *   I. The question bank itself is unchanged: coverage was earned by teaching, not by editing items.
+ *   I. The question bank is the one the census classified: coverage was earned by teaching, not by
+ *      editing items. The one edit since is the owner's correction of pathophysiology item pp-08.
+ *   K. The owner-review correction (2026-09-27) holds: hormones usually act more slowly than nerve
+ *      signals and their effects often last longer, never the unqualified "more slowly but for longer".
  */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -195,10 +198,11 @@ type PhysiologyLesson = (typeof PHYSIOLOGY_ORDER)[number];
 const [BALANCE, HEART_BLOOD, BREATH_FOOD, NERVE_MUSCLE] = PHYSIOLOGY_ORDER;
 const [BODY_MAP, , , FRAME] = ANATOMY_ORDER;
 
-// The bank as it stood when the physiology lessons were written (6fb7887, unchanged since 3d1cd9f).
-// The census below classifies THESE questions; a changed bank has to be re-censused, never quietly
-// re-matched.
-const BANK_SHA256 = "ab80e811fb740772418f41d8e4f0e6d1a9bad794c264a135d726beb53d908cc2";
+// The bank as it stood when the physiology lessons were written (6fb7887, unchanged since 3d1cd9f),
+// with one later edit outside this module: the owner review (2026-09-27) corrected pathophysiology item
+// pp-08's question and explanation. No physiology question changed. The census below classifies THESE
+// questions; a changed bank has to be re-censused, never quietly re-matched.
+const BANK_SHA256 = "7ee961eb102eb957a537e1c759cfd455e53d3148a5f884976c426792dd0670da";
 
 // ---- B/C. the census ----------------------------------------------------------------------------------
 // One row per concept the bank's physiology questions need. Each question names its owner lesson and
@@ -327,8 +331,12 @@ const CENSUS: readonly Concept[] = [
         never: [/\bsignal (?:jumps|crosses)\b[^.]{0,20}\bas (?:electricity|an electrical current)\b/i] },
       "ph-25": { owner: NERVE_MUSCLE, facts: [[/\bsympathetic activity prepares the body\b/i, /\braising heart rate and shifting blood toward skeletal muscle\b/i]],
         never: [/\bsympathetic\b[^.]{0,40}\bslows? the heart/i, /\bparasympathetic\b[^.]{0,40}\braising heart rate/i] },
-      "ph-28": { owner: NERVE_MUSCLE, facts: [[/\bhormones travel in the bloodstream and act more slowly but for longer\b/i]],
-        never: [/\bhormones?\b[^.]{0,40}\btravel along (?:the )?axons?\b/i, /\bhormones?\b[^.]{0,40}\bwithin milliseconds\b/i, /\bhormones? act only on the gland\b/i] }
+      "ph-28": { owner: NERVE_MUSCLE, facts: [[/\bhormones travel in the bloodstream\b/i],
+        [/\bcompared with nerve signals, hormones usually act more slowly and their effects often last longer\b/i]],
+        never: [/\bhormones?\b[^.]{0,40}\btravel along (?:the )?axons?\b/i, /\bhormones?\b[^.]{0,40}\bwithin milliseconds\b/i, /\bhormones? act only on the gland\b/i,
+          // Owner review, 2026-09-27: too absolute for the lessons. The bank's own key keeps this
+          // wording under a question that says "normally"; the lessons qualify it.
+          /\bacts? more slowly but for longer\b/i] }
     }
   },
   {
@@ -1148,11 +1156,11 @@ async function main() {
       "H3f. control: plain speed words in normal-function teaching are not mistaken for disease");
   });
 
-  // ---- I. the bank is unchanged ---------------------------------------------------------------------
+  // ---- I. the bank is the census bank (plus the owner's pp-08 correction) ---------------------------
   await check("I. the practice bank is byte-for-byte the bank the census classified", () => {
     assert.equal(MEDTERM_BANK.length, 180, "I1. 180 questions");
     assert.equal(createHash("sha256").update(JSON.stringify(MEDTERM_BANK)).digest("hex"), BANK_SHA256,
-      "I2. unchanged: coverage was earned by teaching, not by editing questions");
+      "I2. unchanged since the census, apart from the owner's pp-08 correction: coverage was earned by teaching, not by editing questions");
   });
 
   await check("J. the suite is registered and never loaded the real database client", () => {
@@ -1161,6 +1169,21 @@ async function main() {
     const database = Object.keys(require.cache).filter((file) => /[\\/]lib[\\/]prisma\.ts$/.test(file) && require.cache[file]?.exports?.prisma !== prismaStandIn);
     assert.deepEqual(database, [], "J2. lib/prisma was only ever the in-memory stand-in");
     assert.ok(db.touches.every((t) => t === "$transaction"), "J3. and only its transaction was used");
+  });
+
+  // ---- K. the owner-review correction (2026-09-27) --------------------------------------------------
+  await check("K. the owner-review correction holds: hormone timing is qualified in the lessons", () => {
+    const ph28 = taughtIndex().get("ph-28")!.taught;
+    const unqualified = "Compared with nerve signals, hormones travel in the bloodstream and act more slowly but for longer.";
+    assert.ok((ph28.never ?? []).some((p) => p.test(unqualified)), "K1. control: the old, unqualified wording is caught");
+    const corrected = "Compared with nerve signals, hormones usually act more slowly and their effects often last longer.";
+    assert.ok(statesFact([corrected], ph28.facts[1]) && !(ph28.never ?? []).some((p) => p.test(corrected)),
+      "K1b. control: the corrected wording states the fact and is not caught");
+    const nerve = sourceOf(NERVE_MUSCLE);
+    const receptors = teachingSentences(NERVE_MUSCLE).find((s) => /\bonly cells with the right receptors respond to it\b/i.test(s));
+    assert.ok(receptors, "K2. the receptor explanation is kept");
+    assert.ok(allQuestions(nerve).every((q) => !/\bmore slowly but for longer\b/i.test(`${q.hint} ${q.explanation}`)),
+      "K3. no check's hint or feedback states the unqualified wording");
   });
 
   console.log(`\nhosa-medterm-physiology:smoke passed (${checks} checks). Four physiology lessons teach all 30 physiology questions and name no disease; pathophysiology has its own module.\n`);

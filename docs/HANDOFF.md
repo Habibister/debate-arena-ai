@@ -1,8 +1,8 @@
 # CURRENT HANDOFF — AUTHORITATIVE
 
 _Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy,
-physiology and pathophysiology modules, their practice, the practice-to-lesson remediation and HOSA test-result next
-steps). Every other
+physiology and pathophysiology modules, their practice, the practice-to-lesson remediation, HOSA test-result next
+steps, and the owner review repairs with the owner's review waiver). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -13,6 +13,20 @@ below the boundary.
 
 ## What is complete
 
+- **HOSA Medical Terminology owner review repairs — LOCAL COMMIT ONLY (2026-09-27).** Not pushed,
+  not deployed, not Production-verified, not browser-verified. **HUMAN SUBJECT-ACCURACY REVIEW:
+  WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27.** The owner reviewed all 17
+  lessons with AI assistance and chose the waiver route instead of a qualified human reviewer; a
+  waiver is not a review, so the label still says "not yet reviewed by a person" and no reviewer is
+  named. Four corrections, one pass: hypoxia is low oxygen in the tissues and hypoxemia low oxygen in
+  the blood (bank item `pp-08` now asks about the tissues; choices and key unchanged); hormones
+  "usually act more slowly and their effects often last longer"; apoptosis is "usually cleared away
+  with little or no inflammation"; acute is a rapid or sudden onset with a relatively short course,
+  chronic is long-lasting or recurring, and neither word alone gives severity. 17 lessons, five
+  practice choices, six remediation owners and 180 bank items unchanged; DECA and Debate untouched.
+  Snapshot marker `HOSA-MEDTERM-OWNER-REPAIRS-V1`. With this pass the owner considers the HOSA
+  curriculum phase finished. Details: *HOSA Medical Terminology owner review repairs* in
+  `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology end-to-end QA — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not
   deployed, not Production-verified, not browser-verified. The owner froze the curriculum at `116c6af`
   (17 lessons, four modules). AI QA of every learner journey (discover, learn, practise, feedback,
@@ -41,7 +55,9 @@ below the boundary.
   practice bank from official HOSA coverage. No test result maps to pathophysiology, so none was
   linked. AI-drafted and labelled "not an official HOSA lesson or test item — not yet reviewed by a
   person": **a qualified human subject-accuracy review of the whole curriculum is required before
-  push.** Guard: `npm run hosa-medterm-pathophysiology:smoke` (20 checks). Details: *HOSA Medical
+  push** (superseded on 2026-09-27: the owner waived that review; see the owner review repairs
+  above). Guard: `npm run hosa-medterm-pathophysiology:smoke` (20 checks; 21 since the owner review
+  repairs). Details: *HOSA Medical
   Terminology pathophysiology* in `docs/CURRENT_STATE.md`; review package in
   `/mnt/project-files/reports/2026-09-27-hosa-medterm-pathophysiology.md`.
 - **HOSA Medical Terminology physiology — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not
@@ -57,7 +73,9 @@ below the boundary.
   when written; it has lessons since the pathophysiology module above). No
   test result maps to physiology, so none was linked. AI-drafted and labelled "not an official HOSA
   lesson or test item — not yet reviewed by a person": **a qualified human subject-accuracy review
-  is required before push.** Guard: `npm run hosa-medterm-physiology:smoke` (18 checks). Details:
+  is required before push** (superseded on 2026-09-27: the owner waived that review; see the owner
+  review repairs above). Guard: `npm run hosa-medterm-physiology:smoke` (18 checks; 19 since the
+  owner review repairs). Details:
   *HOSA Medical Terminology physiology* in `docs/CURRENT_STATE.md`.
 - **HOSA Medical Terminology anatomy — LOCAL COMMIT ONLY (2026-09-27).** Not pushed, not deployed,
   not Production-verified, not browser-verified. A second module of the Medical Terminology course,
@@ -73,7 +91,8 @@ below the boundary.
   or test item — not yet reviewed by a person": **human subject-accuracy review or an explicit
   owner waiver is required before push** (superseded on 2026-09-27 by the owner's plan: one
   qualified human subject-accuracy review of the whole Medical Terminology curriculum before the
-  stack is pushed). Guard: `npm run hosa-medterm-anatomy:smoke` (18 checks).
+  stack is pushed; that plan was in turn superseded the same day by the owner's waiver, see the
+  owner review repairs above). Guard: `npm run hosa-medterm-anatomy:smoke` (18 checks).
   Details: *HOSA Medical Terminology anatomy* in `docs/CURRENT_STATE.md`.
 - **HOSA test-result next steps — LOCAL COMMIT ONLY (2026-09-26).** Not pushed, not deployed, not
   Production-verified, not browser-verified. On a graded HOSA test, "Practice weak skills" opens the
@@ -141,7 +160,8 @@ below the boundary.
   the other three modules). Do not describe it as human-reviewed. **Before
   any push the owner decides on a human subject review or an explicit waiver** (superseded on
   2026-09-27 by the owner's plan: one qualified human subject-accuracy review of the whole Medical
-  Terminology curriculum before the stack is pushed). Details: *Education
+  Terminology curriculum before the stack is pushed; later that day the owner waived that review
+  instead, see the owner review repairs above). Details: *Education
   state* in `docs/CURRENT_STATE.md`. Guard: `npm run hosa-medterm-lessons:smoke`, mutation-tested:
   30 of 34 wrong-content edits fail it; the four that pass (a wrong choice that is also correct, a
   wrong root meaning inside an example gloss, a negated gloss) only a human reader catches.
@@ -179,12 +199,26 @@ below the boundary.
 
 ## What remains open
 
+- **HOSA official alignment — WEBSITE/PRODUCT REVIEW DEBT, recorded only (2026-09-27).** Owner-reported
+  from the official HOSA 2026–2027 Medical Terminology guideline (not re-verified from this
+  workspace): the event covers roots, prefixes and suffixes, anatomy, physiology, pathophysiology and
+  occupations related to the health field, and the written test plan weights "Roots, Prefixes,
+  Suffixes and Combining Forms" at 45% and eleven body overview and body system categories at 5% each.
+  CompeteReady's 180-question practice bank uses its own organization (six areas of 30: word roots,
+  prefixes, suffixes, anatomy, physiology, pathophysiology) and must NOT be described as reproducing
+  the official HOSA weighting; no such claim was added. The existing copy "Mirrors the HOSA Medical
+  Terminology Round One written test" (listed below) now conflicts with that plan and belongs to the
+  same review. **HEALTH-FIELD OCCUPATIONS COVERAGE: OWNER DECISION DURING WEBSITE REVIEW.** No
+  lesson teaches occupations and none was authored. Also for that review, optional: bank item
+  `ph-28` still keys "act more slowly but for longer" (under a stem that says "normally"), a
+  shade stronger than the corrected lesson wording; changing a key's text changes how answers already
+  given are graded.
 - **HOSA learning gaps after the word-parts course (2026-09-26, updated after the pathophysiology
   module on 2026-09-27).** All six areas of the Medical Terminology practice bank now have lessons
-  (a few word-part questions still use word parts the lessons do not teach). The anatomy,
-  physiology and pathophysiology modules (local commits) await one qualified human subject-accuracy
-  review of the whole curriculum before push; the owner has said they cannot be that reviewer, and
-  AI review never counts as it. The shared course-end note ("This is the last lesson written for
+  (a few word-part questions still use word parts the lessons do not teach). The owner waived the
+  human subject-accuracy review of the whole curriculum on 2026-09-27 (HUMAN SUBJECT-ACCURACY REVIEW:
+  WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27); the lessons stay labelled "not
+  yet reviewed by a person". The shared course-end note ("This is the last lesson written for
   this course so far. More are being authored") now also shows after the final pathophysiology
   lesson although no further Medical Terminology module is planned; it was left unchanged because
   the same component serves DECA and Debate (`components/lessons/concept-education-lesson-view.tsx`),
@@ -1214,17 +1248,21 @@ git ls-remote origin refs/heads/main && git rev-parse origin/main && git rev-par
 
 ## Exact next action
 
-**HOSA, 2026-09-27 (after the end-to-end QA).** The owner froze the Medical Terminology curriculum at
-`116c6af`; the end-to-end QA is a local commit on top. Next, only when the owner asks: one qualified
-human subject-accuracy review of the whole curriculum before the stack is pushed (the owner cannot be
-that reviewer; AI review never counts), using the reviewer inventory in
-`/mnt/project-files/reports/2026-09-27-hosa-medterm-e2e-qa.md`; then corrections; then a
-screen-by-screen website review with the owner (the debt under *What remains open*), fixes, then
-design. Do not add HOSA curriculum. The HOSA deck page following the viewer's selected track stays
-deferred by the owner.
+**HOSA, 2026-09-27 (after the owner review repairs).** The owner froze the Medical Terminology
+curriculum at `116c6af`; the end-to-end QA and the owner review repairs are local commits on top.
+HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27. With
+the repair pass clean, the owner considers the HOSA curriculum phase finished. Next, only when the
+owner asks: pushing the local stack is the owner's action; then the screen-by-screen website review
+with the owner, starting from the debt under *What remains open* (including the official HOSA
+alignment entry and the health-field occupations decision), fixes, then design. Do not add HOSA
+curriculum. The HOSA deck page following the viewer's selected track stays deferred by the owner.
+
+**Recorded 2026-09-27 after the end-to-end QA, superseded the same day by the owner's waiver:** one
+qualified human subject-accuracy review of the whole curriculum before push, then corrections, then
+the website review.
 
 **Recorded 2026-09-26** (its recommended steps were done in the local stack: `6e365e9`, `804a8d2`,
-`1f3f4e1`; the human content review is still open). **HOSA LEARNING is the development priority (owner direction, 2026-09-26).** Debate and DECA
+`1f3f4e1`; the human content review was later waived by the owner on 2026-09-27, see above). **HOSA LEARNING is the development priority (owner direction, 2026-09-26).** Debate and DECA
 development stay stopped. The Medical Terminology word-parts course is a local commit awaiting the
 owner's review and push decision. **Recommended next HOSA task, for the owner to decide:** fix the
 `areas` hang in `POST /api/hosa/medterm/session` (validate against `MEDTERM_AREAS`, guard the empty
@@ -1290,7 +1328,14 @@ next education milestone, those files win over any task pointer that disagrees.
 - Do not describe the B2.1 or B2.2 educational bytes as human-reviewed, human-approved or externally
   reviewed. External human content review was **WAIVED BY THE OWNER**; a waiver is not a review.
 - Do not describe the four HOSA Medical Terminology word-part lessons as human-reviewed. They were
-  AI-drafted and checked only by independent AI reviewers and the smoke suites.
+  AI-drafted and checked by independent AI reviewers, the smoke suites and, on 2026-09-27, the
+  AI-assisted owner review (the human subject-accuracy review was waived by the owner).
+- Do not describe any of the 17 HOSA Medical Terminology lessons as human reviewed, clinician
+  reviewed or reviewed by a medical professional, and name no reviewer. HUMAN SUBJECT-ACCURACY
+  REVIEW: WAIVED BY OWNER; AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27. A waiver is not a review,
+  and it covers the lesson text as of the owner review repairs only.
+- Do not describe the Medical Terminology practice bank as reproducing the official HOSA test plan
+  weighting.
 
 # PREVIOUS HANDOFF ARCHIVE — NON-AUTHORITATIVE
 

@@ -55,6 +55,12 @@ import type { ConceptEducationLessonSource, EducationRegistryEntry } from "@/lib
  * bank, so a learner could mistake these lessons for HOSA material just as easily. After a human
  * content review, or an explicit owner waiver, is recorded there, the label can change to the plain
  * "CompeteReady authored lesson" form the reviewed DECA and Debate lessons use.
+ *
+ * DECIDED 2026-09-27 for all four HOSA labels in this file: HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY
+ * OWNER, after an AI-assisted owner review. A waiver is not a review and no person reviewed the
+ * lessons, so every HOSA label stays as it is: AI-generated, not official HOSA material, not yet
+ * reviewed by a person. Only a real human subject-accuracy review, recorded in the authoring record,
+ * would let a label change.
  */
 export const STABLE_TEACHING_HOSA_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
   authority: "stable-teaching",
@@ -70,7 +76,8 @@ export const STABLE_TEACHING_HOSA_PROVENANCE: SourceFreshnessMetadata = Object.f
  * HOSA lesson or HOSA test items. The header renders this label verbatim.
  *
  * Like the word-part label, it changes only after a human subject-accuracy review, or an explicit
- * owner waiver, is recorded in the authoring record in lib/learning-content.ts.
+ * owner waiver, is recorded in the authoring record in lib/learning-content.ts. The owner waived the
+ * review on 2026-09-27; a waiver is not a review, so this label stays (see the word-part label above).
  */
 export const STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
   authority: "stable-teaching",
@@ -86,7 +93,9 @@ export const STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE: SourceFreshnessMetadata = 
  * person. A separate constant keeps the physiology module's review status independent: when a
  * qualified human subject-accuracy review is recorded for these lessons in the authoring record in
  * lib/learning-content.ts (the owner's 2026-09-27 plan: one such review of the whole Medical
- * Terminology curriculum before the stack is pushed), only this label changes.
+ * Terminology curriculum before the stack is pushed), only this label changes. That plan was
+ * superseded the same day: the owner waived the review, and a waiver is not a review, so this label
+ * stays (see the word-part label above).
  */
 export const STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
   authority: "stable-teaching",
@@ -102,7 +111,9 @@ export const STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE: SourceFreshnessMetadata
  * they are AI-generated, not official HOSA material, and not yet reviewed by a person. A separate
  * constant keeps this module's review status independent: when the qualified human subject-accuracy
  * review of the whole Medical Terminology curriculum (the owner's 2026-09-27 plan) is recorded for
- * these lessons in the authoring record in lib/learning-content.ts, only this label changes.
+ * these lessons in the authoring record in lib/learning-content.ts, only this label changes. That plan
+ * was superseded the same day: the owner waived the review, and a waiver is not a review, so this
+ * label stays (see the word-part label above).
  */
 export const STABLE_TEACHING_HOSA_PATHOPHYSIOLOGY_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
   authority: "stable-teaching",

@@ -411,6 +411,23 @@ async function main() {
       "A7g2. and that they are not official HOSA lessons or test items");
     assert.match(read("lib/learning-content.ts"), /have NOT yet had a human content review/,
       "A7h. which is what the authoring record still says");
+    // Owner decision, 2026-09-27: the human subject-accuracy review was waived after an AI-assisted
+    // owner review. Every module's authoring record says so, and the label above still says no person
+    // has reviewed the lessons, because a waiver is not a review.
+    // Comment lines are joined first, so a record may wrap the wording across "//" lines.
+    const records = read("lib/learning-content.ts").replace(/\n[ \t]*\/\/ ?/g, " ").replace(/\s+/g, " ");
+    const waivers = [...records.matchAll(
+      /HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER(?: \(2026-09-27\))?\. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27\./g
+    )].map((m) => m.index ?? -1);
+    assert.equal(waivers.length, 4,
+      "A7h2. the owner's waiver and the dated AI-assisted owner review appear together, once per module record");
+    const firstLessons = ["hosa-medical-terminology-basics", "hosa-anatomy-body-map", "hosa-physiology-staying-in-balance",
+      "hosa-pathophysiology-how-tissue-changes"].map((slug) => records.indexOf(`slug: "${slug}"`));
+    firstLessons.forEach((at, i) => {
+      const from = i === 0 ? 0 : firstLessons[i - 1];
+      assert.ok(at > from && waivers.filter((w) => w > from && w < at).length === 1,
+        `A7h3. module ${i + 1}'s authoring record, just before its first lesson, carries that wording`);
+    });
     const course = EDUCATION_COURSES.find((c) => c.id === HOSA_MEDTERM_STUDY_COURSE);
     assert.ok(course && course.track === "HOSA", "A8. the course exists on the HOSA track");
     assert.deepEqual(course.moduleIds, ["hosa-medterm-word-parts", "hosa-medterm-anatomy", "hosa-medterm-physiology", "hosa-medterm-pathophysiology"],

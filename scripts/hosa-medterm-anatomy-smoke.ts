@@ -29,7 +29,8 @@
  *      since by the next two modules, are scripts/hosa-medterm-physiology-smoke.ts's and
  *      scripts/hosa-medterm-pathophysiology-smoke.ts's; this suite checks only that the anatomy
  *      lessons themselves still teach none of it, and that neither area is served from anatomy.
- *   I. The question bank itself is unchanged: coverage was earned by teaching, not by editing items.
+ *   I. The question bank is the one the census classified: coverage was earned by teaching, not by
+ *      editing items. The one edit since is the owner's correction of pathophysiology item pp-08.
  */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -189,9 +190,11 @@ const PATHOPHYSIOLOGY_ORDER = [
 ] as const;
 const [BODY_MAP, HEART_LUNGS, FOOD_URINE, FRAME] = ANATOMY_ORDER;
 
-// The bank as it stood when the anatomy lessons were written (3d1cd9f). The census below classifies
-// THESE questions; a changed bank has to be re-censused, never quietly re-matched.
-const BANK_SHA256 = "ab80e811fb740772418f41d8e4f0e6d1a9bad794c264a135d726beb53d908cc2";
+// The bank as it stood when the anatomy lessons were written (3d1cd9f), with one later edit outside
+// this module: the owner review (2026-09-27) corrected pathophysiology item pp-08's question and
+// explanation. No anatomy question changed. The census below classifies THESE questions; a changed bank
+// has to be re-censused, never quietly re-matched.
+const BANK_SHA256 = "7ee961eb102eb957a537e1c759cfd455e53d3148a5f884976c426792dd0670da";
 
 // ---- B/C. the census ----------------------------------------------------------------------------------
 // One row per concept the bank's anatomy questions need. Each question names its owner lesson and the
@@ -973,11 +976,11 @@ async function main() {
     assert.ok(FUNCTION_AND_DISEASE.test("An infarction is tissue death."), "H3c. control: and a disease term");
   });
 
-  // ---- I. the bank is unchanged ---------------------------------------------------------------------
+  // ---- I. the bank is the census bank (plus the owner's pp-08 correction) ---------------------------
   await check("I. the practice bank is byte-for-byte the bank the census classified", () => {
     assert.equal(MEDTERM_BANK.length, 180, "I1. 180 questions");
     assert.equal(createHash("sha256").update(JSON.stringify(MEDTERM_BANK)).digest("hex"), BANK_SHA256,
-      "I2. unchanged: coverage was earned by teaching, not by editing questions");
+      "I2. unchanged since the census, apart from the owner's pp-08 correction: coverage was earned by teaching, not by editing questions");
   });
 
   await check("J. the suite is registered and never loaded the real database client", () => {

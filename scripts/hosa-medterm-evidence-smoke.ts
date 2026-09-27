@@ -697,6 +697,7 @@ async function main() {
     "35d4. a completed retry returns before the transactional review call");
 
   // ---- 31f. the bank CONTENT is additive-only — every pre-existing item byte-identical ------------
+  // (apart from the owner's pinned correction of pp-08's question and explanation, 2026-09-27).
   // Until M14 Phase 2a this asserted the WHOLE bank slice was byte-identical to PRE_M13E1F. Phase 2a
   // deliberately appends word-root items (audit G2), so a whole-slice hash would forbid an approved
   // change rather than protect anything. The protection is NARROWED, never removed: every item that
@@ -723,12 +724,31 @@ async function main() {
   assert.equal(parentItems.length, 54, "31f. control: the parent commit really held 54 item literals");
   assert.ok(currentItems.length >= parentItems.length, "31f2. the bank never shrank");
 
+  // OWNER CORRECTIONS. The only pre-existing items allowed to differ from the parent commit, each pinned
+  // to its exact corrected literal. pp-08 (owner review, 2026-09-27): the question asked for low BLOOD
+  // oxygen while keying Hypoxia, which is low oxygen in the TISSUES; low blood oxygen is hypoxemia.
+  // Only the question and explanation text changed. The id, area, choices and key did not, so an
+  // answer already given grades the same. Any other edit to pp-08, or to any other original item,
+  // still fails below.
+  const OWNER_CORRECTED: Readonly<Record<string, string>> = {
+    "pp-08": `{ id: "pp-08", area: "pathophysiology", question: "Which term describes an abnormally low level of oxygen in the tissues?", choices: ["Hypoxia", "Hyperkalemia", "Hypertrophy", "Hemostasis"], correctAnswer: "Hypoxia", explanation: "'Hypoxia' is low oxygen in the tissues; low oxygen in the blood is 'hypoxemia'. 'Hypertrophy' is enlargement; 'hemostasis' is stopping bleeding." }`
+  };
+  const expectedOriginal = (parentLine: string) => OWNER_CORRECTED[idOf(parentLine)] ?? parentLine;
+  const withoutText = (line: string) => line.replace(/question: "[^"]*"/, "").replace(/explanation: "[^"]*"/, "");
+  for (const [id, corrected] of Object.entries(OWNER_CORRECTED)) {
+    const parentLine = parentItems.find((line) => idOf(line) === id);
+    assert.ok(parentLine && idOf(corrected) === id, `31f2b. control: owner correction ${id} names an original item`);
+    assert.notEqual(corrected, parentLine, `31f2c. control: owner correction ${id} really differs from the parent`);
+    assert.equal(withoutText(corrected), withoutText(parentLine!),
+      `31f2d. owner correction ${id} changes only its question and explanation text (same id, area, choices and key)`);
+  }
+
   // (a) Every pre-existing item survives byte-identical, in its original relative order.
   const currentById = new Map(currentItems.map((line) => [idOf(line), line]));
   for (const parentLine of parentItems) {
     const id = idOf(parentLine);
-    assert.equal(currentById.get(id), parentLine,
-      `31f3. pre-existing item ${id} is byte-identical to the parent commit (id, area, question, choices, answer, explanation)`);
+    assert.equal(currentById.get(id), expectedOriginal(parentLine),
+      `31f3. pre-existing item ${id} is byte-identical to the parent commit (id, area, question, choices, answer, explanation), or to its pinned owner correction`);
   }
   const parentOrder = parentItems.map(idOf);
   const currentOrderOfParentIds = currentItems.map(idOf).filter((id) => parentOrder.includes(id));
@@ -781,10 +801,12 @@ async function main() {
   for (const area of MEDTERM_AREAS.map((a) => a.id)) {
     const parentArea = parentItems.filter((line) => line.includes(`area: "${area}"`));
     const currentArea = currentItems.filter((line) => line.includes(`area: "${area}"`));
-    // Every ORIGINAL item survives byte-identical and in order; only additions differ.
-    const currentOriginals = currentArea.filter((line) => parentArea.includes(line));
-    assert.deepEqual(currentOriginals, parentArea,
-      `31f7b. every original ${area} item is byte-identical to the parent commit and keeps its order`);
+    // Every ORIGINAL item survives byte-identical (or as its pinned owner correction) and in order;
+    // only additions differ.
+    const expectedArea = parentArea.map(expectedOriginal);
+    const currentOriginals = currentArea.filter((line) => expectedArea.includes(line));
+    assert.deepEqual(currentOriginals, expectedArea,
+      `31f7b. every original ${area} item is byte-identical to the parent commit (or its pinned owner correction) and keeps its order`);
     assert.equal(parentArea.length, 9, `31f7c. control: the parent commit really held exactly 9 ${area} items`);
     assert.equal(currentArea.length, DEPTH_TARGET, `31f7d. and ${area} now holds ${DEPTH_TARGET}`);
   }
@@ -792,8 +814,9 @@ async function main() {
   for (const { idPrefix } of ADDITIVE_ALLOWLIST) {
     for (let n = 1; n <= 9; n += 1) {
       const id = `${idPrefix}-0${n}`;
-      assert.equal(currentById.get(id), parentItems.find((line) => idOf(line) === id),
-        `31f8. ${id} is unchanged`);
+      const parentLine = parentItems.find((line) => idOf(line) === id);
+      assert.equal(currentById.get(id), parentLine === undefined ? undefined : expectedOriginal(parentLine),
+        `31f8. ${id} is unchanged${id in OWNER_CORRECTED ? " apart from its pinned owner correction" : ""}`);
     }
   }
   // Non-vacuous controls: each rule rejects the mutation it exists to reject.
@@ -895,7 +918,7 @@ async function main() {
       /mastery/i.test("Guided lessons feeding the same mastery record."));
 
   console.log(
-    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items — ids, areas, questions, choices, answers and explanations — are byte-identical and keep their order (one trailing comma is normalised on both sides, which control 31f-C1c proves cannot mask a content edit), and the only deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30), 21 suffix items (sf-10..sf-30), 21 anatomy items (an-10..an-30), 21 physiology items (ph-10..ph-30) and 21 pathophysiology items (pp-10..pp-30) — taking ALL SIX HOSA areas to 30 and the HOSA bank to 180. Review status: every slice is AI-authored and human-reviewed and approved — 2a word-roots, 2b prefixes, 2c suffixes, 2d anatomy, 2e physiology and 2f pathophysiology. HOSA bank parity is achieved and human-reviewed. That is still NOT G2 closure — the audit's G2 finding also covers the Debate and DECA banks, since expanded to 30 per area under their own suites' controls - nothing here asserts anything about those two banks. The Event HQ page is additionally held honest: no learner-facing copy may claim this review-only skill feeds a mastery record. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
+    `HOSA-medterm-evidence smoke passed: Medical Terminology review eligibility is now scored from a duplicate-resistant evidence set — first answer per distinct valid question id, attributed to its own bank area — and needs ${HOSA_MEDTERM_REQUIRED_UNIQUE} distinct questions across ${HOSA_MEDTERM_REQUIRED_AREAS} areas before spaced review is touched at all. All three fabrication paths are closed: one correct question scored 100% and passed, and now records nothing; the duplicate bypass scored 76% and is now insufficient; a focused 20-question word-roots session now serves 20 DISTINCT items with no padding and clears the count floor, yet is still refused on breadth alone. A displayed 70 that is exactly 69.57% no longer passes. The registry's official-scale score is derived from the evidence score and withheld entirely when the evidence does not qualify. Weak areas come from the evidence set, so an uncovered area is never called clean. The unprovable reviewScheduled claim is gone and no learner copy says saved, recorded, scheduled or updated. The skill stays REVIEW-ONLY: no MasteryProgress, no mastery level, no XP anywhere in the path, proven against a stub that throws on any mastery write. The bank is additive-only against the parent commit: all 54 pre-existing items keep their ids, areas, choices, answers and order and are byte-identical, apart from the owner's pinned 2026-09-27 correction of pp-08's question and explanation (one trailing comma is normalised on both sides, which control 31f-C1c proves cannot mask a content edit), and the only other deltas are the allowlisted additions — 21 word-root items (wr-10..wr-30), 21 prefix items (pr-10..pr-30), 21 suffix items (sf-10..sf-30), 21 anatomy items (an-10..an-30), 21 physiology items (ph-10..ph-30) and 21 pathophysiology items (pp-10..pp-30) — taking ALL SIX HOSA areas to 30 and the HOSA bank to 180. Review status: every slice is AI-authored and human-reviewed and approved — 2a word-roots, 2b prefixes, 2c suffixes, 2d anatomy, 2e physiology and 2f pathophysiology. HOSA bank parity is achieved and human-reviewed. That is still NOT G2 closure — the audit's G2 finding also covers the Debate and DECA banks, since expanded to 30 per area under their own suites' controls - nothing here asserts anything about those two banks. The Event HQ page is additionally held honest: no learner-facing copy may claim this review-only skill feeds a mastery record. ${controlsRun.length} controls each demonstrated the failure they exist to demonstrate.`
   );
 }
 

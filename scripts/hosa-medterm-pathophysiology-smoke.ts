@@ -37,7 +37,11 @@
  *   H. "All Medical Terminology" is truthful now that every area has lessons: it claims coverage of
  *      CompeteReady's own practice bank only, says some word parts are still untaught, and never claims
  *      official HOSA coverage or completion.
- *   I. The question bank itself is unchanged: coverage was earned by teaching, not by editing items.
+ *   I. The question bank is the one the census classified: coverage was earned by teaching, not by
+ *      editing items. The one edit since the lessons were written is the owner's correction of pp-08.
+ *   K. The owner-review corrections (2026-09-27) hold: hypoxia (tissues) is kept distinct from
+ *      hypoxemia (blood), in the lessons and in pp-08; apoptosis is usually, not always, cleared without
+ *      inflammation; and acute and chronic describe timing, with no aside that acute can mean severe.
  *
  * KNOWN LIMITS (also printed at the end of a run). This guard is not a subject-accuracy review:
  *   1. A census fact proves that a sentence with those words is in the owner lesson's teaching. It
@@ -49,7 +53,8 @@
  *   4. The treatment, clinical and self-diagnosis scans are word lists. A paraphrase can pass them.
  *   5. It does not judge whether a distractor is plausible, a hint helpful, or a lesson clear.
  *   6. It renders on the server only. Nothing here is a browser check.
- * The owner's release gate is one qualified human subject-accuracy review of the whole curriculum.
+ * The owner first planned one qualified human subject-accuracy review of the whole curriculum; on
+ * 2026-09-27 the owner waived it after an AI-assisted owner review. A waiver is not a review.
  */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -219,9 +224,11 @@ const [BALANCE, , , NERVE_MUSCLE] = PHYSIOLOGY_ORDER;
 const [BODY_MAP] = ANATOMY_ORDER;
 
 // The bank as it stood when the pathophysiology lessons were written (908853d, unchanged since
-// 3d1cd9f). The census below classifies THESE questions; a changed bank has to be re-censused, never
+// 3d1cd9f), with one later edit: the owner review (2026-09-27) corrected pp-08's question and
+// explanation (hypoxia is low oxygen in the tissues; low blood oxygen is hypoxemia), and pp-08 was
+// re-censused below. The census classifies THESE questions; a changed bank has to be re-censused, never
 // quietly re-matched.
-const BANK_SHA256 = "ab80e811fb740772418f41d8e4f0e6d1a9bad794c264a135d726beb53d908cc2";
+const BANK_SHA256 = "7ee961eb102eb957a537e1c759cfd455e53d3148a5f884976c426792dd0670da";
 
 // The line every pathophysiology lesson ends its "why it matters" with.
 const SAFETY_LINE = "This is knowledge for a test, not a way to judge anyone’s health.";
@@ -390,7 +397,8 @@ const CENSUS: readonly Concept[] = [
     concept: "Acute and chronic",
     skill: "Say what acute and chronic describe: how quickly a condition starts and how long it lasts",
     questions: {
-      "pp-09": { owner: TISSUE, facts: [[/\bacute means a condition comes on suddenly and is short-lived\b/i, /\bchronic means it lasts a long time or keeps coming back\b/i]] }
+      "pp-09": { owner: TISSUE, facts: [[/\bacute mainly describes a rapid or sudden onset and a relatively short course\b/i],
+        [/\bchronic describes something long-lasting or recurring\b/i], [/\bneither word by itself tells you how severe a condition is\b/i]] }
     }
   },
   {
@@ -407,7 +415,7 @@ const CENSUS: readonly Concept[] = [
     skill: "Tell necrosis from apoptosis",
     questions: {
       "pp-26": { owner: TISSUE, facts: [[/\bnecrosis is uncontrolled cell death that follows injury, and it often provokes inflammation\b/i],
-        [/\bapoptosis is programmed cell death: a regulated process\b/i]] }
+        [/\bapoptosis is programmed cell death: a regulated process\b/i, /\busually cleared away with little or no inflammation\b/i]] }
     }
   },
   {
@@ -431,7 +439,8 @@ const CENSUS: readonly Concept[] = [
     concept: "Hypoxia and anemia",
     skill: "Say what low oxygen and low oxygen-carrying capacity are called, and read hypoxia's word parts",
     questions: {
-      "pp-08": { owner: FLOW, facts: [[/\bhypoxia means an abnormally low level of oxygen\b/i, /\bhypo- \(below normal\), ox \(oxygen\)/i]] },
+      "pp-08": { owner: FLOW, facts: [[/\bhypoxia means an abnormally low level of oxygen in the body’s tissues\b/i, /\bhypo- \(below normal\), ox \(oxygen\)/i],
+        [/\bhypoxemia\b/i, /\bmeans an abnormally low level of oxygen in the blood\b/i], [/\bnot interchangeable\b/i, /\bhypoxemia describes the blood\b/i, /\bhypoxia describes the tissues\b/i]] },
       "pp-02": { owner: FLOW, facts: [[/\banemia means too few healthy red blood cells or too little hemoglobin, so the blood’s oxygen-carrying capacity is reduced\b/i]] }
     }
   },
@@ -750,7 +759,7 @@ async function main() {
     // Each fact is also the bank's own answer: the key's distinctive words appear in the taught fact.
     const keyWords: Readonly<Record<string, RegExp>> = {
       "pp-01": /persistently high/i, "pp-02": /oxygen-carrying capacity/i, "pp-03": /insulin/i, "pp-04": /loss of blood supply/i,
-      "pp-06": /does not invade/i, "pp-07": /inadequate blood flow/i, "pp-09": /short-lived/i, "pp-11": /set point/i,
+      "pp-06": /does not invade/i, "pp-07": /inadequate blood flow/i, "pp-09": /sudden/i, "pp-11": /set point/i,
       "pp-12": /own healthy tissue/i, "pp-13": /normally harmless substance/i, "pp-14": /cannot mount an adequate immune response/i,
       "pp-15": /narrow/i, "pp-20": /acid/i, "pp-21": /blocks gas exchange across the alveolar wall/i,
       "pp-22": /accumulate in the blood/i, "pp-23": /circulating blood volume falls/i, "pp-24": /pulls water into the urine/i,
@@ -1101,8 +1110,8 @@ async function main() {
       "Atherosclerosis makes the artery wall stiffer.",
       "So a fever is not temperature control breaking down, and it is not the body failing to cool.",
       "Immunodeficiency is the opposite problem: a response that is too weak.",
-      "Apoptosis clears cells away tidily, without provoking inflammation.",
-      "Apoptosis does not trigger inflammation.",
+      "Apoptosis usually clears cells away tidily, without provoking inflammation.",
+      "Apoptosis does not usually trigger inflammation.",
       "Hypertrophy means larger cells, not more cells.",
       "Hypertrophy is not more cells but bigger cells.",
       "Malignant is the opposite: a malignant tumor invades nearby tissue and can spread.",
@@ -1418,11 +1427,11 @@ async function main() {
       "H4b. control: an area-level untaught claim is caught");
   });
 
-  // ---- I. the bank is unchanged ---------------------------------------------------------------------
+  // ---- I. the bank is the census bank (plus the owner's pp-08 correction) ---------------------------
   await check("I. the practice bank is byte-for-byte the bank the census classified", () => {
     assert.equal(MEDTERM_BANK.length, 180, "I1. 180 questions");
     assert.equal(createHash("sha256").update(JSON.stringify(MEDTERM_BANK)).digest("hex"), BANK_SHA256,
-      "I2. unchanged: coverage was earned by teaching, not by editing questions");
+      "I2. unchanged since the census, apart from the owner's pp-08 correction: coverage was earned by teaching, not by editing questions");
   });
 
   await check("J. the suite is registered and never loaded the real database client", () => {
@@ -1433,10 +1442,65 @@ async function main() {
     assert.ok(db.touches.every((t) => t === "$transaction"), "J3. and only its transaction was used");
   });
 
+  // ---- K. the owner-review corrections (2026-09-27) -------------------------------------------------
+  // The owner reviewed the whole course and sent four corrections. Three are in this module. The census
+  // above requires the corrected wording; these patterns keep the old wording from coming back anywhere
+  // the module means to be true, hints and feedback included. Each has a planted example of the old
+  // wording and a control that the corrected wording passes.
+  await check("K. the owner-review corrections hold: hypoxia and hypoxemia kept apart, apoptosis qualified, acute and chronic without the severity aside", () => {
+    const HYPOXIA_AS_BLOOD = [
+      /\bhypoxia\b[^.;]{0,80}\bused for low oxygen in the blood\b/i,
+      /\bhypoxia (?:is|means|describes)\b[^.;,]{0,40}\b(?:low|lowered|reduced) (?:level of )?(?:blood oxygen|oxygen in the blood)\b/i,
+      /\bhypoxia is the broad (?:word|term)\b/i,
+      /\bhypoxia and hypoxemia (?:are|mean) (?:the same|interchangeable|synonyms)\b/i,
+      /\bhypoxemia (?:is|means|describes)\b[^.;,]{0,40}\boxygen in the (?:body’s )?tissues?\b/i
+    ];
+    const APOPTOSIS_ALWAYS_QUIET = [
+      /\bapoptosis\b(?:(?!\b(?:usually|typically|generally|mostly|normally|often|little)\b)[^.;])*?\b(?:without (?:setting off|provoking|triggering|causing)|(?:never|does not|doesn’t) (?:sets? off|provokes?|triggers?|causes?)) (?:any )?inflammation\b/i
+    ];
+    const ACUTE_AS_SEVERE_ASIDE = [/\bglossar(?:y|ies)\b[^.;]{0,60}\bacute\b[^.;]{0,40}\bsevere\b/i];
+    const OLD = [...HYPOXIA_AS_BLOOD, ...APOPTOSIS_ALWAYS_QUIET, ...ACUTE_AS_SEVERE_ASIDE];
+    for (const sentence of moduleAffirmativeSentences()) {
+      const hit = OLD.find((p) => p.test(sentence));
+      assert.equal(hit, undefined, `K1. no pathophysiology lesson says "${sentence.slice(0, 90)}" (${hit?.source ?? ""})`);
+    }
+    const pp08 = MEDTERM_BANK.find((q) => q.id === "pp-08")!;
+    assert.equal(pp08.question, "Which term describes an abnormally low level of oxygen in the tissues?", "K2. pp-08 asks for low oxygen in the tissues");
+    assert.equal(pp08.correctAnswer, "Hypoxia", "K2b. and still keys Hypoxia, so an answer already given grades the same");
+    assert.deepEqual(pp08.choices, ["Hypoxia", "Hyperkalemia", "Hypertrophy", "Hemostasis"], "K2c. with its choices unchanged");
+    assert.match(pp08.explanation, /low oxygen in the tissues; low oxygen in the blood is 'hypoxemia'/, "K2d. and its explanation keeps the two words apart");
+    for (const q of MEDTERM_BANK) {
+      assert.ok(!(/\b(?:low|lowered|reduced) (?:level of )?(?:blood oxygen|oxygen in the blood)\b/i.test(q.question) && q.correctAnswer === "Hypoxia"),
+        `K2e. no bank question asks for low blood oxygen and keys Hypoxia (${q.id})`);
+    }
+    // Controls: each pattern catches the old wording and passes the corrected wording.
+    const planted: ReadonlyArray<readonly [RegExp[], string]> = [
+      [HYPOXIA_AS_BLOOD, "Hypoxia is the broad word for too little oxygen, used for low oxygen in the blood as well as in the tissues."],
+      [HYPOXIA_AS_BLOOD, "Hypoxia means an abnormally low level of oxygen in the blood."],
+      [HYPOXIA_AS_BLOOD, "Hypoxia and hypoxemia mean the same thing."],
+      [HYPOXIA_AS_BLOOD, "Hypoxemia means an abnormally low level of oxygen in the tissues."],
+      [APOPTOSIS_ALWAYS_QUIET, "Apoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are cleared away without setting off inflammation."],
+      [APOPTOSIS_ALWAYS_QUIET, "Apoptosis never causes inflammation."],
+      [ACUTE_AS_SEVERE_ASIDE, "Some glossaries also describe an acute condition as severe, but a mild problem can be acute."]
+    ];
+    for (const [patterns, sentence] of planted) {
+      assert.ok(patterns.some((p) => p.test(sentence)), `K3. control: the old wording "${sentence.slice(0, 70)}" is caught`);
+    }
+    for (const sentence of [
+      "Hypoxia means an abnormally low level of oxygen in the body’s tissues, built from hypo- (below normal), ox (oxygen) and -ia (a condition).",
+      "The related word hypoxemia, built with -emia (a blood condition), means an abnormally low level of oxygen in the blood.",
+      "The two words are not interchangeable: hypoxemia describes the blood, and hypoxia describes the tissues.",
+      "Apoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are usually cleared away with little or no inflammation.",
+      "Neither word by itself tells you how severe a condition is: a mild problem can be acute, and a chronic one can be mild or serious."
+    ]) {
+      assert.equal(OLD.find((p) => p.test(sentence)), undefined, `K3b. control: the corrected wording "${sentence.slice(0, 70)}" passes`);
+    }
+  });
+
   console.log("\n       KNOWN LIMITS: this guard is not a subject-accuracy review. It proves each fact is worded in the owner");
   console.log("       lesson's teaching, not that the fact is medically correct; it catches only the wrong statements it lists;");
   console.log("       it checks no fact the lessons add beyond the bank; its treatment and self-diagnosis scans are word lists;");
-  console.log("       it does not judge distractors, hints or clarity; it renders on the server only. Human review is required.");
+  console.log("       it does not judge distractors, hints or clarity; it renders on the server only. It is not a human review; the owner waived that review on 2026-09-27.");
   console.log(`\nhosa-medterm-pathophysiology:smoke passed (${checks} checks). Five pathophysiology lessons teach all 30 pathophysiology questions.\n`);
 }
 

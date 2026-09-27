@@ -2769,6 +2769,18 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
   // item — not yet reviewed by a person"
   // (set in the education registry's HOSA track file). Record a review or an owner waiver here before
   // changing that label.
+  //
+  // OWNER WAIVER (2026-09-27), for all 17 lessons of the Medical Terminology course: the four word-part
+  // lessons below and the anatomy, physiology and pathophysiology lessons after them.
+  // HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27.
+  // The project owner reviewed the complete learner-facing text of the 17 lessons with AI assistance
+  // and sent four corrections, applied in one repair pass on 2026-09-27: hypoxia kept distinct from
+  // hypoxemia (with practice-bank item pp-08 in lib/hosa-medterm.ts), hormone timing qualified,
+  // apoptosis and inflammation qualified, and acute and chronic simplified. That owner review is not a
+  // human subject-accuracy review, and a waiver is not a review: never describe these lessons as
+  // reviewed by a person, a clinician or a medical professional, and name no reviewer. The label stays
+  // as it is: AI-generated, not official HOSA material, not yet reviewed by a person. The waiver covers
+  // the lesson text as of that repair; a later change to that text needs its own review decision.
   {
     organization: "HOSA",
     track: "HOSA",
@@ -3340,6 +3352,9 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
   // material, and not yet reviewed by a person (set in the education registry's HOSA track file). The
   // repository's source policy requires a subject-accuracy review before release; record that review,
   // or an owner waiver, here before changing the label or pushing these lessons.
+  // HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER (2026-09-27). AI-ASSISTED OWNER REVIEW: COMPLETED
+  // 2026-09-27. See the owner waiver record above the word-part lessons. A waiver is not a review, so
+  // the label is unchanged.
   {
     organization: "HOSA",
     track: "HOSA",
@@ -3966,10 +3981,11 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
   // AUTHORING RECORD. All four were AI-drafted in a Claude Code session on 2026-09-27 and have NOT yet
   // had a human content review, so their provenance label says they are AI-generated, not official HOSA
   // material, and not yet reviewed by a person (set in the education registry's HOSA track file). The
-  // repository's source policy requires a subject-accuracy review before release. The owner's plan
-  // (2026-09-27) is one qualified human subject-accuracy review of the whole Medical Terminology
-  // curriculum before the stack is pushed. Record that review here, by reviewer and date,
-  // before changing the label or pushing these lessons. Before the local commit, independent AI
+  // repository's source policy requires a subject-accuracy review before release, and a review or an
+  // owner waiver is recorded here before changing the label or pushing these lessons.
+  // HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER (2026-09-27). AI-ASSISTED OWNER REVIEW: COMPLETED
+  // 2026-09-27. See the owner waiver record above the word-part lessons. A waiver is not a review, so
+  // the label is unchanged. Before the local commit, independent AI
   // reviewers (one per lesson for accuracy, plus bank alignment, product, QA and security) raised 30
   // findings, and most of the wording they flagged was corrected: platelets as cell fragments, why
   // carbon dioxide drives breathing, the cardiac-output feedback, the atrial phases, hints that gave
@@ -4455,7 +4471,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             ["A hormone", "A reflex", "A signal along a neuron", "A neurotransmitter crossing a synapse"],
             "A hormone",
             "Nerve signals are fast and brief. The other kind of messenger is carried in the blood.",
-            "A hormone travels in the bloodstream and acts more slowly but for longer than a nerve signal, so a slow, long-lasting message carried in the blood is most likely a hormone. A reflex, a signal along a neuron and a neurotransmitter crossing a synapse are all part of nerve signalling, which acts within a fraction of a second.",
+            "A hormone travels in the bloodstream, and compared with a nerve signal it usually acts more slowly and its effects often last longer, so a slow, long-lasting message carried in the blood is most likely a hormone. A reflex, a signal along a neuron and a neurotransmitter crossing a synapse are all part of nerve signalling, which acts within a fraction of a second.",
             "Nerves and hormones"
           ),
           q(
@@ -4509,7 +4525,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             },
             {
               heading: "Nerves and hormones compared",
-              body: "Nerves and hormones both carry messages, but in different ways. A nerve signal travels along neurons and acts within a fraction of a second, on the exact cells it reaches. Compared with nerve signals, hormones travel in the bloodstream and act more slowly but for longer. A hormone reaches every part of the body the blood does, but only cells with the right receptors respond to it."
+              body: "Nerves and hormones both carry messages, but in different ways. A nerve signal travels along neurons and acts within a fraction of a second, on the exact cells it reaches. Hormones travel in the bloodstream. Compared with nerve signals, hormones usually act more slowly and their effects often last longer. A hormone reaches every part of the body the blood does, but only cells with the right receptors respond to it."
             },
             {
               heading: "How a muscle contracts",
@@ -4574,10 +4590,11 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
   // value is stated, in digits or in words.
   //
   // CONSISTENT WITH THE PRACTICE BANK. Every fact a bank question needs is stated here the way the
-  // bank's own reviewed explanation states it. Where the lessons add a narrower term (hypoxemia, named
-  // as a word some textbooks use for low blood oxygen, while hypoxia stays the broad term as in pp-08) or
+  // bank's own reviewed explanation states it. Where the lessons add a related term (hypoxemia, low
+  // oxygen in the blood, kept distinct from hypoxia, low oxygen in the tissues; the owner review of
+  // 2026-09-27 corrected pp-08 to match) or
   // leave part of the bank's explanation out (pp-01's risk-factor framing, pp-24's thirst), the report
-  // for this module lists it for the human reviewer.
+  // for this module lists it for review.
   // The checks are original CompeteReady teaching items, deliberately NOT copies of bank items, and the
   // worked examples say so in the learner's own view.
   //
@@ -4587,11 +4604,12 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
   // AUTHORING RECORD. All five were AI-drafted in a Claude Code session on 2026-09-27 and have NOT yet
   // had a human content review, so their provenance label says they are AI-generated, not official HOSA
   // material, and not yet reviewed by a person (set in the education registry's HOSA track file). The
-  // repository's source policy requires a subject-accuracy review before release. The owner's plan
-  // (2026-09-27) is one qualified human subject-accuracy review of the whole Medical Terminology
-  // curriculum before the stack is pushed. Record that review here, by reviewer and date,
-  // before changing the label or pushing these lessons. Independent AI review before the local
-  // commit is not a human review and does not replace one.
+  // repository's source policy requires a subject-accuracy review before release, and a review or an
+  // owner waiver is recorded here before changing the label or pushing these lessons.
+  // HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER (2026-09-27). AI-ASSISTED OWNER REVIEW: COMPLETED
+  // 2026-09-27. See the owner waiver record above the word-part lessons. A waiver is not a review, so
+  // the label is unchanged. Independent AI review before the local commit
+  // is not a human review and does not replace one.
   {
     organization: "HOSA",
     track: "HOSA",
@@ -4685,7 +4703,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
           teachingSections: [
             {
               heading: "Acute and chronic: how quickly and how long",
-              body: "Two words describe the timing of a condition, not its cause. Acute means a condition comes on suddenly and is short-lived; chronic means it lasts a long time or keeps coming back.\n\nAcute is defined by timing, not severity. Some glossaries also describe an acute condition as severe, but a mild problem can be acute and a chronic one can be mild or serious, so severity is not what separates the two. The two words answer two questions: how quickly did it start, and how long does it last?"
+              body: "Two words describe the timing of a condition, not its cause. Acute mainly describes a rapid or sudden onset and a relatively short course. Chronic describes something long-lasting or recurring: it lasts a long time or keeps coming back.\n\nNeither word by itself tells you how severe a condition is: a mild problem can be acute, and a chronic one can be mild or serious. The two words answer two questions: how quickly did it start, and how long does it last?"
             },
             {
               heading: "Cells that shrink or grow: atrophy and hypertrophy",
@@ -4693,7 +4711,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             },
             {
               heading: "Two main ways cells die: necrosis and apoptosis",
-              body: "Cells die in normal life as well as in disease, but not always in the same way.\n\nApoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are cleared away without setting off inflammation. It happens in normal life, for example to remove cells the body no longer needs, as well as in disease.\n\nNecrosis is uncontrolled cell death that follows injury, and it often provokes inflammation. A severe injury, such as a loss of blood supply, damages a cell so badly that its outer membrane breaks down and its contents spill into the surrounding tissue, and those spilled contents set off inflammation. The word is built from necr/o (death) and -osis (an abnormal condition)."
+              body: "Cells die in normal life as well as in disease, but not always in the same way.\n\nApoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are usually cleared away with little or no inflammation. It happens in normal life, for example to remove cells the body no longer needs, as well as in disease.\n\nNecrosis is uncontrolled cell death that follows injury, and it often provokes inflammation. A severe injury, such as a loss of blood supply, damages a cell so badly that its outer membrane breaks down and its contents spill into the surrounding tissue, and those spilled contents set off inflammation. The word is built from necr/o (death) and -osis (an abnormal condition)."
             },
             {
               heading: "Tumors that stay in place or invade: benign and malignant",
@@ -4781,7 +4799,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             ["An abnormally low level of oxygen", "An abnormally high level of oxygen", "A condition of low blood sugar", "A condition of low blood pressure"],
             "An abnormally low level of oxygen",
             "Read each part in turn: below normal, oxygen, a condition.",
-            "Hypoxia is built from hypo- (below normal), ox (oxygen) and -ia (a condition), so it means an abnormally low level of oxygen. A high level would need hyper-, not hypo-. Low blood sugar is hypoglycemia, where glyc means sugar, and low blood pressure is hypotension.",
+            "Hypoxia is built from hypo- (below normal), ox (oxygen) and -ia (a condition), so it means an abnormally low level of oxygen. The word is used for the body’s tissues; low oxygen in the blood is hypoxemia. A high level would need hyper-, not hypo-. Low blood sugar is hypoglycemia, where glyc means sugar, and low blood pressure is hypotension.",
             "Hypoxia"
           ),
           q(
@@ -4813,7 +4831,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             ["Ischemia", "Hypoxia", "Infarction", "Atherosclerosis"],
             "Infarction",
             "The cells here have died. Which term names the death, not the reduced flow?",
-            "An infarction is an area of tissue death caused by loss of blood supply. Ischemia is the reduced flow that comes before it, while the cells are still alive; hypoxia is a low level of oxygen, and atherosclerosis is plaque narrowing an artery, one thing that can reduce the flow.",
+            "An infarction is an area of tissue death caused by loss of blood supply. Ischemia is the reduced flow that comes before it, while the cells are still alive; hypoxia is a low level of oxygen in the tissues, and atherosclerosis is plaque narrowing an artery, one thing that can reduce the flow.",
             "Ischemia and infarction"
           )
         ],
@@ -4835,7 +4853,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             },
             {
               heading: "Too little oxygen: hypoxia and anemia",
-              body: "Hypoxia means an abnormally low level of oxygen, built from hypo- (below normal), ox (oxygen) and -ia (a condition). Hypoxia is the broad word for too little oxygen, used for low oxygen in the blood as well as in the tissues. Some textbooks keep hypoxia for the tissues and use the related word hypoxemia, with -emia (a blood condition), for low oxygen in the blood. Ischemia leaves a tissue short of oxygen, but hypoxia can also happen when blood flow is normal, if the blood arriving carries too little oxygen.\n\nOne way that happens is anemia. Anemia means too few healthy red blood cells or too little hemoglobin, so the blood’s oxygen-carrying capacity is reduced. The word is an- (without) plus -emia (a blood condition). In anemia the blood can flow normally, but with less hemoglobin to hold oxygen, each amount of blood carries less oxygen than it should."
+              body: "Hypoxia means an abnormally low level of oxygen in the body’s tissues, built from hypo- (below normal), ox (oxygen) and -ia (a condition). The related word hypoxemia, built with -emia (a blood condition), means an abnormally low level of oxygen in the blood. The two words are not interchangeable: hypoxemia describes the blood, and hypoxia describes the tissues. Hypoxemia is one cause of hypoxia, but not the only one. Ischemia leaves a tissue short of oxygen, but hypoxia can also happen when blood flow is normal, if the blood arriving carries too little oxygen.\n\nOne way that happens is anemia. Anemia means too few healthy red blood cells or too little hemoglobin, so the blood’s oxygen-carrying capacity is reduced. The word is an- (without) plus -emia (a blood condition). In anemia the blood can flow normally, but with less hemoglobin to hold oxygen, each amount of blood carries less oxygen than it should."
             },
             {
               heading: "What narrows or blocks a vessel: plaque, thrombus and embolus",
@@ -4857,7 +4875,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
           misconception: {
             wrongModel: "If a tissue is short of oxygen, its blood supply must be blocked.",
             whyItFails: "Reduced flow is one cause, but not the only one. Blood can flow normally and still carry too little oxygen, as in anemia.",
-            betterModel: "Hypoxia is too little oxygen, whatever the cause. Ischemia is one cause (too little blood arriving), and anemia is another (too little hemoglobin, so the blood carries less oxygen in total)."
+            betterModel: "Hypoxia is too little oxygen in the tissues, whatever the cause. Ischemia is one cause (too little blood arriving), and anemia is another (too little hemoglobin, so the blood carries less oxygen in total)."
           },
           commonMistakes: [
             {
@@ -4923,7 +4941,7 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
             ["Ischemia", "Anemia", "Edema", "Hypoxia"],
             "Edema",
             "The clue is fluid and swelling, not blood flow or oxygen.",
-            "Edema is swelling caused by a buildup of excess fluid trapped in the tissues, which happens when fluid collects faster than it is carried away. Ischemia is reduced blood flow, anemia is too few healthy red blood cells or too little hemoglobin, and hypoxia is a low level of oxygen.",
+            "Edema is swelling caused by a buildup of excess fluid trapped in the tissues, which happens when fluid collects faster than it is carried away. Ischemia is reduced blood flow, anemia is too few healthy red blood cells or too little hemoglobin, and hypoxia is a low level of oxygen in the tissues.",
             "Edema"
           ),
           q(

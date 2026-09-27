@@ -4591,7 +4591,7 @@
             ],
             "correctAnswer": "An abnormally low level of oxygen",
             "hint": "Read each part in turn: below normal, oxygen, a condition.",
-            "explanation": "Hypoxia is built from hypo- (below normal), ox (oxygen) and -ia (a condition), so it means an abnormally low level of oxygen. A high level would need hyper-, not hypo-. Low blood sugar is hypoglycemia, where glyc means sugar, and low blood pressure is hypotension.",
+            "explanation": "Hypoxia is built from hypo- (below normal), ox (oxygen) and -ia (a condition), so it means an abnormally low level of oxygen. The word is used for the body’s tissues; low oxygen in the blood is hypoxemia. A high level would need hyper-, not hypo-. Low blood sugar is hypoglycemia, where glyc means sugar, and low blood pressure is hypotension.",
             "skillTag": "Hypoxia"
           },
           {
@@ -4643,7 +4643,7 @@
             ],
             "correctAnswer": "Infarction",
             "hint": "The cells here have died. Which term names the death, not the reduced flow?",
-            "explanation": "An infarction is an area of tissue death caused by loss of blood supply. Ischemia is the reduced flow that comes before it, while the cells are still alive; hypoxia is a low level of oxygen, and atherosclerosis is plaque narrowing an artery, one thing that can reduce the flow.",
+            "explanation": "An infarction is an area of tissue death caused by loss of blood supply. Ischemia is the reduced flow that comes before it, while the cells are still alive; hypoxia is a low level of oxygen in the tissues, and atherosclerosis is plaque narrowing an artery, one thing that can reduce the flow.",
             "skillTag": "Ischemia and infarction"
           }
         ],
@@ -4669,7 +4669,7 @@
           },
           {
             "heading": "Too little oxygen: hypoxia and anemia",
-            "body": "Hypoxia means an abnormally low level of oxygen, built from hypo- (below normal), ox (oxygen) and -ia (a condition). Hypoxia is the broad word for too little oxygen, used for low oxygen in the blood as well as in the tissues. Some textbooks keep hypoxia for the tissues and use the related word hypoxemia, with -emia (a blood condition), for low oxygen in the blood. Ischemia leaves a tissue short of oxygen, but hypoxia can also happen when blood flow is normal, if the blood arriving carries too little oxygen.\n\nOne way that happens is anemia. Anemia means too few healthy red blood cells or too little hemoglobin, so the blood’s oxygen-carrying capacity is reduced. The word is an- (without) plus -emia (a blood condition). In anemia the blood can flow normally, but with less hemoglobin to hold oxygen, each amount of blood carries less oxygen than it should."
+            "body": "Hypoxia means an abnormally low level of oxygen in the body’s tissues, built from hypo- (below normal), ox (oxygen) and -ia (a condition). The related word hypoxemia, built with -emia (a blood condition), means an abnormally low level of oxygen in the blood. The two words are not interchangeable: hypoxemia describes the blood, and hypoxia describes the tissues. Hypoxemia is one cause of hypoxia, but not the only one. Ischemia leaves a tissue short of oxygen, but hypoxia can also happen when blood flow is normal, if the blood arriving carries too little oxygen.\n\nOne way that happens is anemia. Anemia means too few healthy red blood cells or too little hemoglobin, so the blood’s oxygen-carrying capacity is reduced. The word is an- (without) plus -emia (a blood condition). In anemia the blood can flow normally, but with less hemoglobin to hold oxygen, each amount of blood carries less oxygen than it should."
           },
           {
             "heading": "What narrows or blocks a vessel: plaque, thrombus and embolus",
@@ -4691,7 +4691,7 @@
         "misconception": {
           "wrongModel": "If a tissue is short of oxygen, its blood supply must be blocked.",
           "whyItFails": "Reduced flow is one cause, but not the only one. Blood can flow normally and still carry too little oxygen, as in anemia.",
-          "betterModel": "Hypoxia is too little oxygen, whatever the cause. Ischemia is one cause (too little blood arriving), and anemia is another (too little hemoglobin, so the blood carries less oxygen in total)."
+          "betterModel": "Hypoxia is too little oxygen in the tissues, whatever the cause. Ischemia is one cause (too little blood arriving), and anemia is another (too little hemoglobin, so the blood carries less oxygen in total)."
         },
         "commonMistakes": [
           {
@@ -5125,7 +5125,7 @@
             ],
             "correctAnswer": "Edema",
             "hint": "The clue is fluid and swelling, not blood flow or oxygen.",
-            "explanation": "Edema is swelling caused by a buildup of excess fluid trapped in the tissues, which happens when fluid collects faster than it is carried away. Ischemia is reduced blood flow, anemia is too few healthy red blood cells or too little hemoglobin, and hypoxia is a low level of oxygen.",
+            "explanation": "Edema is swelling caused by a buildup of excess fluid trapped in the tissues, which happens when fluid collects faster than it is carried away. Ischemia is reduced blood flow, anemia is too few healthy red blood cells or too little hemoglobin, and hypoxia is a low level of oxygen in the tissues.",
             "skillTag": "Edema"
           },
           {
@@ -5381,7 +5381,7 @@
         "teachingSections": [
           {
             "heading": "Acute and chronic: how quickly and how long",
-            "body": "Two words describe the timing of a condition, not its cause. Acute means a condition comes on suddenly and is short-lived; chronic means it lasts a long time or keeps coming back.\n\nAcute is defined by timing, not severity. Some glossaries also describe an acute condition as severe, but a mild problem can be acute and a chronic one can be mild or serious, so severity is not what separates the two. The two words answer two questions: how quickly did it start, and how long does it last?"
+            "body": "Two words describe the timing of a condition, not its cause. Acute mainly describes a rapid or sudden onset and a relatively short course. Chronic describes something long-lasting or recurring: it lasts a long time or keeps coming back.\n\nNeither word by itself tells you how severe a condition is: a mild problem can be acute, and a chronic one can be mild or serious. The two words answer two questions: how quickly did it start, and how long does it last?"
           },
           {
             "heading": "Cells that shrink or grow: atrophy and hypertrophy",
@@ -5389,7 +5389,7 @@
           },
           {
             "heading": "Two main ways cells die: necrosis and apoptosis",
-            "body": "Cells die in normal life as well as in disease, but not always in the same way.\n\nApoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are cleared away without setting off inflammation. It happens in normal life, for example to remove cells the body no longer needs, as well as in disease.\n\nNecrosis is uncontrolled cell death that follows injury, and it often provokes inflammation. A severe injury, such as a loss of blood supply, damages a cell so badly that its outer membrane breaks down and its contents spill into the surrounding tissue, and those spilled contents set off inflammation. The word is built from necr/o (death) and -osis (an abnormal condition)."
+            "body": "Cells die in normal life as well as in disease, but not always in the same way.\n\nApoptosis is programmed cell death: a regulated process in which a cell takes itself apart tidily, and the pieces are usually cleared away with little or no inflammation. It happens in normal life, for example to remove cells the body no longer needs, as well as in disease.\n\nNecrosis is uncontrolled cell death that follows injury, and it often provokes inflammation. A severe injury, such as a loss of blood supply, damages a cell so badly that its outer membrane breaks down and its contents spill into the surrounding tissue, and those spilled contents set off inflammation. The word is built from necr/o (death) and -osis (an abnormal condition)."
           },
           {
             "heading": "Tumors that stay in place or invade: benign and malignant",
@@ -5950,7 +5950,7 @@
             ],
             "correctAnswer": "A hormone",
             "hint": "Nerve signals are fast and brief. The other kind of messenger is carried in the blood.",
-            "explanation": "A hormone travels in the bloodstream and acts more slowly but for longer than a nerve signal, so a slow, long-lasting message carried in the blood is most likely a hormone. A reflex, a signal along a neuron and a neurotransmitter crossing a synapse are all part of nerve signalling, which acts within a fraction of a second.",
+            "explanation": "A hormone travels in the bloodstream, and compared with a nerve signal it usually acts more slowly and its effects often last longer, so a slow, long-lasting message carried in the blood is most likely a hormone. A reflex, a signal along a neuron and a neurotransmitter crossing a synapse are all part of nerve signalling, which acts within a fraction of a second.",
             "skillTag": "Nerves and hormones"
           },
           {
@@ -6023,7 +6023,7 @@
           },
           {
             "heading": "Nerves and hormones compared",
-            "body": "Nerves and hormones both carry messages, but in different ways. A nerve signal travels along neurons and acts within a fraction of a second, on the exact cells it reaches. Compared with nerve signals, hormones travel in the bloodstream and act more slowly but for longer. A hormone reaches every part of the body the blood does, but only cells with the right receptors respond to it."
+            "body": "Nerves and hormones both carry messages, but in different ways. A nerve signal travels along neurons and acts within a fraction of a second, on the exact cells it reaches. Hormones travel in the bloodstream. Compared with nerve signals, hormones usually act more slowly and their effects often last longer. A hormone reaches every part of the body the blood does, but only cells with the right receptors respond to it."
           },
           {
             "heading": "How a muscle contracts",

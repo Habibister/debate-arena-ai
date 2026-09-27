@@ -129,6 +129,11 @@ non-executable. Rewrite this region after each milestone; append history below t
   `docs/curriculum/00-principles-and-sources.md` asks for a subject-accuracy pass before a lesson
   ships and clinical review before content carrying medical claims is released. After a review or
   waiver is recorded in the authoring record in `lib/learning-content.ts`, the label can change.
+  **Decided 2026-09-27, for all 17 Medical Terminology lessons: HUMAN SUBJECT-ACCURACY REVIEW:
+  WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27.** The waiver is recorded in the
+  authoring records. A waiver is not a review, so the label stays "not yet reviewed by a person";
+  never describe these lessons as reviewed by a person, a clinician or a medical professional (see
+  *HOSA Medical Terminology owner review repairs* below the archive boundary).
   Reviewed-content baseline updated for exactly the four affected slugs
   (`hosa-medical-terminology-basics` changed; `hosa-medical-word-roots`, `hosa-medical-suffixes` and
   `hosa-medical-prefixes` added); `LEARNING_CONTENT_BASELINE` pinned to
@@ -862,16 +867,21 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 ## Current next action
 
-**HOSA LEARNING, 2026-09-27 (after the end-to-end QA).** The owner accepted `116c6af` and froze the
-HOSA Medical Terminology curriculum: 17 lessons in four modules (word parts, anatomy, physiology,
-pathophysiology). Pathophysiology is the last planned module; the course does not cover every HOSA
-event or everything a HOSA test may ask. The final end-to-end QA is a local commit on top (see *HOSA
-Medical Terminology end-to-end QA* below the archive boundary). **Next, only when the owner asks:**
-one qualified human subject-accuracy review of the whole curriculum before the stack is pushed (the
-owner has said they cannot be that reviewer; AI review never counts as it), using the reviewer
-inventory in `/mnt/project-files/reports/2026-09-27-hosa-medterm-e2e-qa.md`; then corrections; then a
-screen-by-screen website review with the owner (the debt listed under *What remains open* in
-`docs/HANDOFF.md`), fixes, and design. Do not add HOSA curriculum.
+**HOSA LEARNING, 2026-09-27 (after the owner review repairs).** The owner reviewed the whole
+17-lesson Medical Terminology curriculum with AI assistance, sent four corrections, and chose the
+waiver route instead of a qualified human reviewer: **HUMAN SUBJECT-ACCURACY REVIEW: WAIVED BY
+OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27.** The corrections are one local commit on top
+of the end-to-end QA (see *HOSA Medical Terminology owner review repairs* below the archive
+boundary). With that pass clean, the owner considers the HOSA curriculum phase finished. **Next, only
+when the owner asks:** pushing the local stack is the owner's action; then a screen-by-screen website
+review with the owner, starting from the debt under *What remains open* in `docs/HANDOFF.md` (which
+now also records the official HOSA 2026–2027 Medical Terminology scope and test-plan weighting and
+the health-field occupations decision), then fixes and design. Do not add HOSA curriculum. Never
+describe these lessons as human-reviewed, clinician-reviewed or reviewed by a medical professional.
+
+**Recorded 2026-09-27 after the end-to-end QA, superseded the same day by the owner's waiver:** the
+plan was one qualified human subject-accuracy review of the whole curriculum before the stack was
+pushed, then corrections, then the website review.
 
 **Recorded 2026-09-26** (the session-builder hang named here was fixed at `6e365e9`; word-part
 practice, remediation and the anatomy module followed). **HOSA LEARNING (owner direction, 2026-09-26).** The owner paused repeated DECA acceptance reviews
@@ -947,6 +957,73 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology owner review repairs — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build`, a dev
+server and a browser are forbidden for this pass). Baseline `6e6e22f`. The owner reviewed the
+complete learner-facing text of the 17 lessons (from the export
+`/mnt/project-files/reports/2026-09-27-hosa-medterm-owner-review.md`) with AI assistance, judged that
+the curriculum should not be rewritten, and sent four corrections. This was the one focused repair
+pass: no new lesson, no architecture change, no broad AI review. **Owner decision:** HUMAN
+SUBJECT-ACCURACY REVIEW: WAIVED BY OWNER. AI-ASSISTED OWNER REVIEW: COMPLETED 2026-09-27. That review
+is not a human subject-accuracy review, and a waiver is not a review. The label stays "AI-generated
+CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person", no
+reviewer is named, and the waiver is recorded in the four authoring records in
+`lib/learning-content.ts` (the word-part record holds the full text). This replaces the owner's
+earlier plan (2026-09-27) of one qualified human reviewer before push. **Corrections:**
+(1) *Hypoxia and hypoxemia* (`hosa-pathophysiology-blood-flow-and-oxygen`): hypoxia is now an
+abnormally low level of oxygen in the body's tissues and hypoxemia an abnormally low level of oxygen
+in the blood, "not interchangeable"; hypoxemia is one cause of hypoxia, not the only one. The lesson
+had called hypoxia the broad word for both. The same narrowing went into a word-part check
+explanation, the infarction check explanation, the misconception's better model and the edema check
+explanation in `hosa-pathophysiology-heart-and-pressure`. **Bank item `pp-08`** asked for "an
+abnormally low level of oxygen in the blood" but keyed Hypoxia. Its question now reads "Which term
+describes an abnormally low level of oxygen in the tissues?" and its explanation names hypoxemia for
+the blood. The choices and the key are unchanged, so grading of any answer already given is the
+same. No other bank item changed; the bank stays 180 items and its pinned SHA-256 moved to
+`7ee961eb…670da` in the anatomy, physiology and pathophysiology guards. Sessions issued before the
+change keep their stored question snapshot; no database row was written. (2) *Hormone timing*
+(`hosa-physiology-nerves-and-muscles`): "Hormones travel in the bloodstream. Compared with nerve
+signals, hormones usually act more slowly and their effects often last longer." The receptor
+explanation is unchanged, and the matching check explanation was qualified the same way. Bank item
+`ph-28` still keys "Travel in the bloodstream and act more slowly but for longer" under a stem that
+says "normally"; it was left alone because changing a key's text would change how answers already
+given are graded. (3) *Apoptosis* (`hosa-pathophysiology-how-tissue-changes`): the pieces "are
+usually cleared away with little or no inflammation"; the necrosis paragraph already said necrosis
+often provokes inflammation after the cell's contents spill out. (4) *Acute and chronic* (same
+lesson): "Acute mainly describes a rapid or sudden onset and a relatively short course. Chronic
+describes something long-lasting or recurring"; "Neither word by itself tells you how severe a
+condition is." The aside about glossaries using "acute" to mean severe is gone; the bank's timing
+distinction (`pp-09`) is unchanged. **Not changed:** 17 lessons and their order, the five practice
+choices, the six remediation owners, 180 bank items, navigation, DECA, Debate, mastery, readiness
+and XP. **Guards:** content snapshot updated for exactly the four changed slugs (above) with
+`LEARNING_CONTENT_BASELINE` pinned to `HOSA-MEDTERM-OWNER-REPAIRS-V1`; `hosa-medterm-pathophysiology`
+gained check K (21 checks: the hypoxia, apoptosis and acute-severity wordings as false facts with
+planted controls, and `pp-08` pinned); `hosa-medterm-physiology` gained check K (19 checks: the old
+hormone wording barred from every teaching, hint and explanation string); `hosa-medterm-lessons`
+A7h2 and A7h3 pin both waiver phrases in each of the four module records, just before each module's
+first lesson; `hosa-medterm-evidence` allows exactly the corrected `pp-08` question and explanation
+among the original 54 items (in a plain run that block sits behind the suite's baseline failure PA7;
+under soft asserts only PA7 fails). The comments on the four HOSA label constants in
+`lib/education/tracks/hosa.ts` now say the waiver leaves the labels as they are. Sixteen planted
+regressions (each old wording restored, the waiver removed or moved, the snapshot drifted) were all
+caught. **Left as is:** in `hosa-pathophysiology-how-tissue-changes`, check explanations and the
+worked example still say an acute condition "comes on suddenly and is short-lived", the bank's own
+`pp-09` wording, which agrees with the corrected definition. **Independent review:** three AI
+reviewers read only this diff (content, provenance, guards), each finding checked by a separate AI
+skeptic; four minor findings were upheld and fixed (a stale guard summary, a waiver pin that did
+not cover all four records, label comments that still read as if a waiver could change the label,
+and a stale "review still open" note). No blocker. This is AI review, not a human review.
+**Official HOSA alignment, recorded only:** see *What remains open* in `docs/HANDOFF.md`. No
+learner-facing claim about the official HOSA weighting was added. **Verification:** typecheck
+clean; lint clean on the changed files; the six named suites pass (`hosa-medterm-lessons` 14 checks,
+`hosa-medterm-physiology` 19, `hosa-medterm-pathophysiology` 21, `hosa-medterm-targeted-practice` 6,
+`hosa-medterm-remediation` 8, `learning-content-integrity`); 56 of the 62 safe suites pass, and the
+six failures are the known baseline (coach-evidence S3-15d, debate-mastery 24, deca-mastery PA7,
+hosa-medterm-evidence PA7, hosa-practice-scope 10c, skills-compat 2), with the same recorded
+failures under soft asserts as at the end-to-end QA. No provider call, no database write, no seed,
+no build, no browser.
 
 ## HOSA Medical Terminology end-to-end QA — 2026-09-27 — LOCAL COMMIT
 

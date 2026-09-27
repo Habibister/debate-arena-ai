@@ -221,8 +221,9 @@ function main() {
     // The HOSA Medical Terminology word-part course raised it 20 -> 24: the first four HOSA concept
     // lessons. Nine Debate, eleven DECA, four HOSA.
     // The HOSA anatomy module raised it 24 -> 28. Nine Debate, eleven DECA, eight HOSA.
-    assert.equal(published.length, 28,
-      `control: exactly twenty-eight published concept lessons — found ${published.length}. If a lesson was ` +
+    // The HOSA physiology module raised it 28 -> 32. Nine Debate, eleven DECA, twelve HOSA.
+    assert.equal(published.length, 32,
+      `control: exactly thirty-two published concept lessons — found ${published.length}. If a lesson was ` +
       `added or withdrawn, update this number deliberately rather than loosening it to a floor.`);
     for (const entry of published as Array<{ id: string; source: ConceptEducationLessonSource }>) {
       const c = entry.source.lesson.content;
@@ -291,6 +292,8 @@ function main() {
     // The HOSA anatomy module added four more HOSA entries with the same shape as the word-part
     // lessons (teachingSections, additionalExamples, a misconception and commonMistakes) and the same
     // refusals for the same reasons. They too were AI-drafted and no person has reviewed them yet.
+    // The HOSA physiology module added four more with that same shape, likewise AI-drafted and not yet
+    // reviewed by a person.
     assert.deepEqual(populated.map((e) => e.id).sort(), [
       "debate-answer-types",
       "debate-clash",
@@ -319,7 +322,11 @@ function main() {
       "hosa-medical-prefixes",
       "hosa-medical-suffixes",
       "hosa-medical-terminology-basics",
-      "hosa-medical-word-roots"
+      "hosa-medical-word-roots",
+      "hosa-physiology-breathing-and-digestion",
+      "hosa-physiology-heart-and-blood",
+      "hosa-physiology-nerves-and-muscles",
+      "hosa-physiology-staying-in-balance"
     ],
       "A3. exactly the reviewed lessons author the new teaching structures");
     // And the ones that do author WHOLE structures — the validator rejects a half-written one, so
@@ -720,7 +727,7 @@ function main() {
       // Teach-first holds for the real lessons too, not only the fixture.
       assertOrder(html, entry.source.lesson.content.explanation.slice(0, 40), CHECKS_ANCHOR, `O6.${entry.id}`);
     }
-    assert.equal(publishedAll.length, 28, "O7. control: all twenty-eight published lessons were rendered");
+    assert.equal(publishedAll.length, 32, "O7. control: all thirty-two published lessons were rendered");
   });
 
   console.log(`\nconcept-lesson-schema: ${checks} controls passed.`);

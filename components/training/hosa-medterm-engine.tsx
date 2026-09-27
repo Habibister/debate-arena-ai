@@ -266,7 +266,7 @@ export function HosaMedTermEngine({
   remediation?: readonly Remediation[];
 }) {
   const [mode, setMode] = useState<"timed" | "untimed">("timed");
-  // What to practise: the taught word parts, the taught anatomy, or every area. Sent to the server as
+  // What to practise: the taught word parts, anatomy or physiology, or every area. Sent to the server as
   // the canonical area ids of the choice (or omitted for every area), where the same validated
   // contract applies.
   const [focus, setFocus] = useState<MedTermFocusId>(initialFocus ?? DEFAULT_MEDTERM_FOCUS);

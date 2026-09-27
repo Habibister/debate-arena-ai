@@ -16,7 +16,7 @@
 //
 // None of those three legacy modules imports anything from `lib/education/`, so there is no cycle,
 // and none of them was modified to make this work. `tracks/deca.ts` (P1-B1) and `tracks/hosa.ts`
-// (HOSA Medical Terminology word parts and anatomy) sit beside `tracks/debate.ts` in that chain and follow the
+// (HOSA Medical Terminology word parts, anatomy and physiology) sit beside `tracks/debate.ts` in that chain and follow the
 // same by-reference rule.
 //
 // `app/(app)/lessons/**` consumes the helpers below for MIGRATED lessons only (M13E1B). The three
@@ -102,13 +102,14 @@ export const EDUCATION_COURSES: readonly EducationCourse[] = [
     // Branch A of the approved HOSA curriculum (docs/curriculum/03-hosa-course.md §3A), for the one
     // knowledge-test event CompeteReady routes: Medical Terminology. FIRST among the HOSA courses
     // because it is the one with a live practice room behind it, so it is where a HOSA beginner
-    // starts. Word parts come first, then anatomy, which reads its structure names through them.
-    // Created no larger than its modules need; the physiology and disease areas the practice room
-    // also asks about are not taught yet and get no empty module here.
+    // starts. Word parts come first, then anatomy, which reads its structure names through them, then
+    // physiology, which says how those structures normally work. Created no larger than its modules
+    // need; the disease (pathophysiology) area the practice room also asks about is not taught yet and
+    // gets no empty module here.
     id: "hosa-medterm-study",
     track: "HOSA",
     label: "HOSA Medical Terminology Study (Branch A)",
-    moduleIds: ["hosa-medterm-word-parts", "hosa-medterm-anatomy"]
+    moduleIds: ["hosa-medterm-word-parts", "hosa-medterm-anatomy", "hosa-medterm-physiology"]
   },
   {
     id: "hosa-clinical-skill-communication",
@@ -211,6 +212,18 @@ export const EDUCATION_MODULES: readonly EducationModule[] = [
     prerequisiteId: "hosa-medterm-word-parts"
   },
   {
+    // The normal body function the Medical Terminology practice bank asks about, derived from a census
+    // of its 30 physiology questions: balance and feedback, hormones and the kidneys, the blood and the
+    // heartbeat, breathing and digestion, nerves and muscles. Normal function only; how disease changes
+    // the body (pathophysiology) is not taught here.
+    id: "hosa-medterm-physiology",
+    courseId: "hosa-medterm-study",
+    track: "HOSA",
+    label: "Physiology",
+    outcome: "Explain how the healthy body keeps itself in balance, moves blood, air and food, and sends fast signals through nerves and muscles.",
+    prerequisiteId: "hosa-medterm-anatomy"
+  },
+  {
     id: "hosa-communication-layer",
     courseId: "hosa-clinical-skill-communication",
     track: "HOSA",
@@ -287,9 +300,9 @@ export const EDUCATION_LESSONS: readonly EducationRegistryEntry[] = [
   // DECA catalog entries stay absent.
   ...DECA_PUBLISHED_LESSONS,
   // The HOSA CONCEPT lessons, held by reference from the catalog through lib/education/tracks/hosa.ts:
-  // the Medical Terminology course (word parts, then anatomy), ahead of the communication lesson
-  // because it is the HOSA course with practice behind it. The two held HOSA catalog entries stay
-  // absent.
+  // the Medical Terminology course (word parts, then anatomy, then physiology), ahead of the
+  // communication lesson because it is the HOSA course with practice behind it. The two held HOSA
+  // catalog entries stay absent.
   ...HOSA_PUBLISHED_LESSONS,
   {
     id: "how-hosa-scenario-interaction-works",

@@ -81,8 +81,9 @@ function check(name: string, fn: () => void | Promise<void>): Promise<void> {
 }
 
 // The word-part module, which this suite owns. The course continues into an anatomy module after it
-// (scripts/hosa-medterm-anatomy-smoke.ts owns those lessons), so the course's own chain and end are
-// asserted against both lists.
+// and a physiology module after that (scripts/hosa-medterm-anatomy-smoke.ts and
+// scripts/hosa-medterm-physiology-smoke.ts own those lessons), so the course's own chain and end are
+// asserted against all three lists.
 const COURSE_ORDER = [
   "hosa-medical-terminology-basics",
   "hosa-medical-word-roots",
@@ -94,6 +95,12 @@ const ANATOMY_ORDER = [
   "hosa-anatomy-heart-and-lungs",
   "hosa-anatomy-digestive-and-urinary",
   "hosa-anatomy-bones-muscles-nerves-skin"
+] as const;
+const PHYSIOLOGY_ORDER = [
+  "hosa-physiology-staying-in-balance",
+  "hosa-physiology-heart-and-blood",
+  "hosa-physiology-breathing-and-digestion",
+  "hosa-physiology-nerves-and-muscles"
 ] as const;
 
 function sourceOf(id: string): ConceptEducationLessonSource {
@@ -358,9 +365,9 @@ async function main() {
 
   // ---- A. registration --------------------------------------------------------------------------
   await check("A. the four lessons are registered in one chain, in their own course, by reference", () => {
-    assert.deepEqual([...PUBLISHED_HOSA_SLUGS], [...COURSE_ORDER, ...ANATOMY_ORDER],
-      "A1. the track file publishes the four first, in teaching order, then the anatomy module's four");
-    assert.deepEqual(HOSA_PUBLISHED_LESSONS.map((e) => e.id), [...COURSE_ORDER, ...ANATOMY_ORDER], "A1b. and registers them in that order");
+    assert.deepEqual([...PUBLISHED_HOSA_SLUGS], [...COURSE_ORDER, ...ANATOMY_ORDER, ...PHYSIOLOGY_ORDER],
+      "A1. the track file publishes the four first, in teaching order, then the anatomy module's four, then the physiology module's four");
+    assert.deepEqual(HOSA_PUBLISHED_LESSONS.map((e) => e.id), [...COURSE_ORDER, ...ANATOMY_ORDER, ...PHYSIOLOGY_ORDER], "A1b. and registers them in that order");
     const hosa = educationLessonsForTrack("HOSA").map((e) => e.id);
     assert.deepEqual(hosa.slice(0, 4), [...COURSE_ORDER], "A2. they lead the HOSA registry order");
     for (const [index, id] of COURSE_ORDER.entries()) {
@@ -397,7 +404,8 @@ async function main() {
       "A7h. which is what the authoring record still says");
     const course = EDUCATION_COURSES.find((c) => c.id === HOSA_MEDTERM_STUDY_COURSE);
     assert.ok(course && course.track === "HOSA", "A8. the course exists on the HOSA track");
-    assert.deepEqual(course.moduleIds, ["hosa-medterm-word-parts", "hosa-medterm-anatomy"], "A8b. word parts first, then anatomy");
+    assert.deepEqual(course.moduleIds, ["hosa-medterm-word-parts", "hosa-medterm-anatomy", "hosa-medterm-physiology"],
+      "A8b. word parts first, then anatomy, then physiology");
     assert.equal(getEducationModule("hosa-medterm-word-parts")?.label, "Medical word parts", "A8c. whose learner label names the skill");
   });
 
@@ -423,7 +431,7 @@ async function main() {
       assert.ok(!(hosaCourseEndAction(entry.id) && decaCourseEndAction(entry.id)), `B1b. ${entry.id}: at most one course-end action`);
     }
     assert.deepEqual(EDUCATION_LESSONS.filter((entry) => hosaCourseEndAction(entry.id) !== null).map((entry) => entry.id),
-      [ANATOMY_ORDER[ANATOMY_ORDER.length - 1]], "B1c. and the one lesson that has it is the course's last, which ends the anatomy module");
+      [PHYSIOLOGY_ORDER[PHYSIOLOGY_ORDER.length - 1]], "B1c. and the one lesson that has it is the course's last, which ends the physiology module");
     // Prefixes ends the word-part module, so it carries the word-part practice link beside "Next lesson".
     assert.equal(hosaLessonPracticeReturn("hosa-medical-prefixes"), HOSA_MEDTERM_PRACTICE_ENTRY,
       "B1d. Prefixes, the word-part module's last lesson, still hands the learner to word-part practice");
@@ -442,7 +450,7 @@ async function main() {
     // What the room saves is its own business; this copy claims nothing about it in either direction.
     assert.ok(!/record|saved|\bsave|mastery|progress|nothing is|score/i.test(copy), "B4. the copy makes no persistence claim");
     assert.match(copy, /original questions, not official HOSA test items/, "B5. it says the questions are original, not official");
-    assert.match(copy, /adds questions on anatomy, physiology and disease\. The lessons after this one are about anatomy, and physiology and disease have no lessons yet/,
+    assert.match(copy, /adds questions on anatomy, physiology and disease\. The lessons after this one are about anatomy and physiology, and disease has no lessons yet/,
       "B6. and it names what the room's other choice adds, and which of that the course does not teach yet");
     // Some of the bank's word-part questions test parts no lesson teaches yet (NOT_TAUGHT, which C2
     // derives from the bank), so the copy may not claim the course covers that half of the room. Once
@@ -836,7 +844,7 @@ async function main() {
       [HOSA_MEDTERM_STUDY_COURSE, "hosa-clinical-skill-communication"], "F2c2. so the Medical Terminology course is listed first");
     assert.deepEqual(
       educationLessonsForTrack("HOSA").filter((entry) => entry.courseId === HOSA_MEDTERM_STUDY_COURSE).map((entry) => entry.id),
-      [...COURSE_ORDER, ...ANATOMY_ORDER], "F2d. with its lessons in course order, word parts then anatomy");
+      [...COURSE_ORDER, ...ANATOMY_ORDER, ...PHYSIOLOGY_ORDER], "F2d. with its lessons in course order, word parts, anatomy, then physiology");
     // A concept card's third row: other tracks keep their Study Arcade drill set, a HOSA card names
     // the event's question practice only when its course has one, and any other HOSA card claims
     // nothing more. Study Arcade has no HOSA drills.

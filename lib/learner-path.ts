@@ -109,14 +109,14 @@ const HOSA_PATH: readonly LearnerPathStage[] = [
   {
     // LEARN opens the HOSA lesson CATALOG, for the reason recorded above for Debate and DECA. It opened
     // the communication lesson while that was the only HOSA lesson, and "Reading only" was true of it.
-    // The Medical Terminology course (word parts, then anatomy) now leads the catalog, with worked
-    // examples and knowledge checks, so the stage is available. The communication lesson is still in the catalog,
+    // The Medical Terminology course (word parts, then anatomy, then physiology) now leads the
+    // catalog, with worked examples and knowledge checks, so the stage is available. The communication lesson is still in the catalog,
     // still readable, and its interactive scenario (withdrawn in M11R6) stays withdrawn.
     id: "learn",
     label: "Learn",
     state: "available",
     href: "/lessons?track=hosa",
-    note: "Medical Terminology word parts and anatomy, plus a reading-only communication lesson."
+    note: "Medical Terminology word parts, anatomy and physiology, plus a reading-only communication lesson."
   },
   {
     id: "practice",

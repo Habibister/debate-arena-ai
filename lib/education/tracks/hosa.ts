@@ -1,4 +1,4 @@
-// HOSA — authored concept lessons: Medical Terminology word parts and anatomy (Branch A).
+// HOSA — authored concept lessons: Medical Terminology word parts, anatomy and physiology (Branch A).
 //
 // Registered the same way the Debate and DECA concept lessons are: this file imports
 // `LEARNING_SKILL_CATALOG`, selects entries by slug, and hands the ORIGINAL objects to the canonical
@@ -13,7 +13,9 @@
 // curriculum's Branch A (docs/curriculum/03-hosa-course.md §3A) covers knowledge-test events, and
 // word parts are the foundation every other Medical Terminology topic is read through. The anatomy
 // module comes second: it teaches the room's anatomy questions, and its structure names are read
-// through those word parts. Physiology and disease (pathophysiology) have no lessons yet.
+// through those word parts. The physiology module comes third: it teaches the room's physiology
+// questions, how the healthy body works, on top of the structures the anatomy lessons named. Disease
+// (pathophysiology) has no lessons yet.
 //
 // WHAT IT DELIBERATELY DOES NOT CLAIM. No entry carries a `skillSlug` or a `practiceDrill`. The
 // practice room's evidence model is HOSA's own review-only ladder, not a drill area this registry can
@@ -73,6 +75,22 @@ export const STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE: SourceFreshnessMetadata = 
 });
 
 /**
+ * Provenance for the physiology module: the same tier, the same label and the same gate as anatomy.
+ * These lessons teach normal body function to the depth of the practice bank's physiology questions,
+ * so the label says they are AI-generated, not official HOSA material, and not yet reviewed by a
+ * person. A separate constant keeps the physiology module's review status independent: when a
+ * qualified human subject-accuracy review is recorded for these lessons in the authoring record in
+ * lib/learning-content.ts (the owner's 2026-09-27 plan: one such review of the whole Medical
+ * Terminology curriculum before the stack is pushed), only this label changes.
+ */
+export const STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE: SourceFreshnessMetadata = Object.freeze({
+  authority: "stable-teaching",
+  freshness: "stable",
+  organization: "CompeteReady",
+  sourceLabel: "AI-generated CompeteReady lesson, not an official HOSA lesson or test item — not yet reviewed by a person"
+});
+
+/**
  * The HOSA catalog slugs this file publishes, in teaching order.
  *
  * Exported so a suite can prove that this list and `HELD_HOSA_CATALOG_SLUGS` PARTITION the HOSA
@@ -86,7 +104,11 @@ export const PUBLISHED_HOSA_SLUGS = [
   "hosa-anatomy-body-map",
   "hosa-anatomy-heart-and-lungs",
   "hosa-anatomy-digestive-and-urinary",
-  "hosa-anatomy-bones-muscles-nerves-skin"
+  "hosa-anatomy-bones-muscles-nerves-skin",
+  "hosa-physiology-staying-in-balance",
+  "hosa-physiology-heart-and-blood",
+  "hosa-physiology-breathing-and-digestion",
+  "hosa-physiology-nerves-and-muscles"
 ] as const;
 
 /** The HOSA catalog entries that exist but are NOT learner-visible. Exported so a suite can prove it. */
@@ -144,11 +166,16 @@ const anatomyBodyMap = selectHosaCatalogLesson("hosa-anatomy-body-map");
 const anatomyHeartAndLungs = selectHosaCatalogLesson("hosa-anatomy-heart-and-lungs");
 const anatomyDigestiveAndUrinary = selectHosaCatalogLesson("hosa-anatomy-digestive-and-urinary");
 const anatomyBonesMusclesNervesSkin = selectHosaCatalogLesson("hosa-anatomy-bones-muscles-nerves-skin");
+const physiologyStayingInBalance = selectHosaCatalogLesson("hosa-physiology-staying-in-balance");
+const physiologyHeartAndBlood = selectHosaCatalogLesson("hosa-physiology-heart-and-blood");
+const physiologyBreathingAndDigestion = selectHosaCatalogLesson("hosa-physiology-breathing-and-digestion");
+const physiologyNervesAndMuscles = selectHosaCatalogLesson("hosa-physiology-nerves-and-muscles");
 
 /** Exported for the smoke suite's strict-identity proof against the catalog. */
 export const PUBLISHED_HOSA_SOURCES = {
   medicalTerminologyBasics, medicalWordRoots, medicalSuffixes, medicalPrefixes,
-  anatomyBodyMap, anatomyHeartAndLungs, anatomyDigestiveAndUrinary, anatomyBonesMusclesNervesSkin
+  anatomyBodyMap, anatomyHeartAndLungs, anatomyDigestiveAndUrinary, anatomyBonesMusclesNervesSkin,
+  physiologyStayingInBalance, physiologyHeartAndBlood, physiologyBreathingAndDigestion, physiologyNervesAndMuscles
 } as const;
 
 /**
@@ -228,8 +255,9 @@ export const HOSA_MEDTERM_PREFIXES_LESSON: EducationRegistryEntry = {
  * census of the practice bank's 30 anatomy questions, and each lesson owns the questions that census
  * assigned to it (scripts/hosa-medterm-anatomy-smoke.ts).
  *
- * `nextLessonId` on the last lesson is null: it is the end of the course written so far, and the
- * course-end action hands the learner to anatomy practice from there.
+ * The last anatomy lesson leads on to the physiology module (below), so the anatomy module ends at
+ * bones, muscles, nerves and skin, and that lesson's module-end action hands the learner to anatomy
+ * practice from there.
  */
 export const HOSA_ANATOMY_BODY_MAP_LESSON: EducationRegistryEntry = {
   id: "hosa-anatomy-body-map",
@@ -287,8 +315,79 @@ export const HOSA_ANATOMY_BONES_MUSCLES_NERVES_SKIN_LESSON: EducationRegistryEnt
   source: anatomyBonesMusclesNervesSkin,
   sourceKind: "concept-education-lesson",
   legacySlugs: [],
-  nextLessonId: null,
+  nextLessonId: "hosa-physiology-staying-in-balance",
   provenance: STABLE_TEACHING_HOSA_ANATOMY_PROVENANCE
+};
+
+/**
+ * The physiology module, in the order a beginner needs it: balance first (homeostasis, negative
+ * feedback, hormones and the kidneys), because the later lessons lean on feedback and on hormones as
+ * messengers; then the heart and blood, breathing and digestion, and nerves and muscles, which closes
+ * by comparing nerve signals with hormones. The four were derived from a census of the practice
+ * bank's 30 physiology questions, and each lesson owns the questions that census assigned to it
+ * (scripts/hosa-medterm-physiology-smoke.ts).
+ *
+ * `nextLessonId` on the last lesson is null: it is the end of the course written so far, and the
+ * course-end action hands the learner to physiology practice from there.
+ */
+export const HOSA_PHYSIOLOGY_STAYING_IN_BALANCE_LESSON: EducationRegistryEntry = {
+  id: "hosa-physiology-staying-in-balance",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-physiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: physiologyStayingInBalance,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-physiology-heart-and-blood",
+  provenance: STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PHYSIOLOGY_HEART_AND_BLOOD_LESSON: EducationRegistryEntry = {
+  id: "hosa-physiology-heart-and-blood",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-physiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: physiologyHeartAndBlood,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-physiology-breathing-and-digestion",
+  provenance: STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PHYSIOLOGY_BREATHING_AND_DIGESTION_LESSON: EducationRegistryEntry = {
+  id: "hosa-physiology-breathing-and-digestion",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-physiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: physiologyBreathingAndDigestion,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: "hosa-physiology-nerves-and-muscles",
+  provenance: STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE
+};
+
+export const HOSA_PHYSIOLOGY_NERVES_AND_MUSCLES_LESSON: EducationRegistryEntry = {
+  id: "hosa-physiology-nerves-and-muscles",
+  track: "HOSA",
+  courseId: "hosa-medterm-study",
+  moduleId: "hosa-medterm-physiology",
+  variant: "concept",
+  visibility: "learner",
+  practiceState: "available",
+  source: physiologyNervesAndMuscles,
+  sourceKind: "concept-education-lesson",
+  legacySlugs: [],
+  nextLessonId: null,
+  provenance: STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE
 };
 
 export const HOSA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
@@ -299,5 +398,9 @@ export const HOSA_PUBLISHED_LESSONS: readonly EducationRegistryEntry[] = [
   HOSA_ANATOMY_BODY_MAP_LESSON,
   HOSA_ANATOMY_HEART_AND_LUNGS_LESSON,
   HOSA_ANATOMY_DIGESTIVE_AND_URINARY_LESSON,
-  HOSA_ANATOMY_BONES_MUSCLES_NERVES_SKIN_LESSON
+  HOSA_ANATOMY_BONES_MUSCLES_NERVES_SKIN_LESSON,
+  HOSA_PHYSIOLOGY_STAYING_IN_BALANCE_LESSON,
+  HOSA_PHYSIOLOGY_HEART_AND_BLOOD_LESSON,
+  HOSA_PHYSIOLOGY_BREATHING_AND_DIGESTION_LESSON,
+  HOSA_PHYSIOLOGY_NERVES_AND_MUSCLES_LESSON
 ];

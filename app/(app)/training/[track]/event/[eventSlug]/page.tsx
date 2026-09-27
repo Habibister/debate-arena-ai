@@ -54,7 +54,7 @@ const EVENT_HQ: Record<
       // Lessons lead, as they do for Debate. This row replaces "Skills & lessons", which promised guided
       // lessons while linking to /skills, whose HOSA branch holds only a link back to the Event
       // Navigator: a loop with no lesson in it. The Medical Terminology course is what it now opens.
-      { label: "Lessons", detail: "Start here if you’re new. Learn how medical words are built from roots, suffixes and prefixes, then the anatomy the practice asks about, with worked examples and quick checks.", href: "/lessons?track=hosa", icon: "skills" },
+      { label: "Lessons", detail: "Start here if you’re new. Learn how medical words are built from roots, suffixes and prefixes, then the anatomy and physiology the practice asks about, with worked examples and quick checks.", href: "/lessons?track=hosa", icon: "skills" },
       { label: "Timed practice + official 50q mode", detail: "The knowledge engine with confidence checks, explanations, and spaced review.", href: "/training/hosa/practice", icon: "sim" },
       { label: "Flashcards", detail: "Term, definition, example, and a quick check per card.", href: "/study-arcade?track=hosa", icon: "cards" },
       { label: "Practice tests", detail: "Original generated sets in the official format where verified.", href: "/tests?track=hosa", icon: "tests" }

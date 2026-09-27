@@ -3935,6 +3935,624 @@ export const LEARNING_SKILL_CATALOG: LearningSkillSeed[] = [
       )
     }
   },
+  // ---- HOSA MEDICAL TERMINOLOGY: PHYSIOLOGY --------------------------------------------------------
+  //
+  // The third module of the same Branch A course (docs/curriculum/03-hosa-course.md §3A), following
+  // the anatomy lessons above. It teaches the normal body function the Medical Terminology practice
+  // bank already asks about (lib/hosa-medterm.ts, area "physiology", 30 questions), and nothing chosen
+  // from general physiology knowledge: the four lessons were derived from a census of those 30
+  // questions, and scripts/hosa-medterm-physiology-smoke.ts proves, question by question, that the
+  // fact each one needs is taught in the lesson that owns it.
+  //
+  // NORMAL FUNCTION ONLY, TO THE BANK'S DEPTH. These lessons teach how the healthy body works: balance
+  // and feedback, blood and the heartbeat, breathing and digestion, nerves and muscles. How disease
+  // changes the body (pathophysiology) is not taught here, no disease is named, and nothing diagnoses
+  // an illness or describes a treatment. This is preparation for a knowledge test, not medical advice.
+  //
+  // ONE NUMBER. The lessons state exactly one number: a typical resting heart rate of about 60 to 100
+  // beats per minute for adults, the range the bank's own reviewed explanation gives, stated with the
+  // caveat that it is a general adult range and not a way to judge a particular person's heart. The
+  // physiology guard allows digits in that one sentence and nowhere else, and no measured quantity
+  // written in words anywhere.
+  //
+  // CONSISTENT WITH THE PRACTICE BANK. Every fact a bank question needs is stated here the way the
+  // bank's own reviewed explanation states it. The checks are original CompeteReady teaching items,
+  // deliberately NOT copies of bank items, and the worked examples say so in the learner's own view.
+  //
+  // NO OFFICIAL CLAIMS. Nothing here states a HOSA rule, test format, timing, weighting, score or
+  // coverage. A stable-teaching lesson is never a rules source (docs/curriculum/00-principles-and-sources.md).
+  //
+  // AUTHORING RECORD. All four were AI-drafted in a Claude Code session on 2026-09-27 and have NOT yet
+  // had a human content review, so their provenance label says they are AI-generated, not official HOSA
+  // material, and not yet reviewed by a person (set in the education registry's HOSA track file). The
+  // repository's source policy requires a subject-accuracy review before release. The owner's plan
+  // (2026-09-27) is one qualified human subject-accuracy review of the whole Medical Terminology
+  // curriculum before the stack is pushed. Record that review here, by reviewer and date,
+  // before changing the label or pushing these lessons. Before the local commit, independent AI
+  // reviewers (one per lesson for accuracy, plus bank alignment, product, QA and security) raised 30
+  // findings, and most of the wording they flagged was corrected: platelets as cell fragments, why
+  // carbon dioxide drives breathing, the cardiac-output feedback, the atrial phases, hints that gave
+  // the answer away, and others. That is not a human review and does not replace one.
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-physiology-staying-in-balance",
+    description: "Explain how the body keeps its inside conditions steady, using negative feedback, the pancreas and thyroid hormones, and the kidneys.",
+    category: "Health science",
+    order: 11,
+    lesson: {
+      title: "Staying in Balance: Feedback, Hormones and the Kidneys",
+      slug: "hosa-physiology-staying-in-balance-lesson",
+      summary: "Learn how negative feedback keeps the body’s inside conditions steady, what insulin, glucagon, thyroid hormone and ADH do, and how the kidneys filter the blood and take back what the body needs.",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Explain homeostasis and negative feedback with an example, say what insulin, glucagon, thyroid hormone and antidiuretic hormone (ADH) normally do, and describe how the kidneys filter the blood and reabsorb what the body needs.",
+        "On a hot day you sweat. On a cold day you shiver. Those two opposite responses have the same purpose: keeping the inside of your body close to the same temperature, whatever the weather is doing. Physiology is the study of how the body works, and this steadiness is one of its first ideas.\n\nHomeostasis is the body’s ability to maintain a stable internal environment. It keeps conditions such as temperature, water, blood glucose (blood sugar) and pH (how acidic a fluid is) within a narrow range, even when things outside the body change. In short, homeostasis means keeping conditions inside the body steady while the outside changes. The body does not hold these conditions perfectly still. It keeps nudging each one back toward a target value, called its set point.\n\nMost of that nudging is done by negative feedback. The body notices that a condition has moved away from its set point and responds in the opposite direction, pushing the condition back. Negative means the response reverses the change. It does not mean that something has gone wrong. The signals travel in two ways, along nerves and as hormones. This lesson looks at hormones and at the kidneys, and the nerves and muscles lesson compares hormones with nerves.",
+        "Many questions about how the body works come back to one idea: something changes, the body notices, and it responds to undo the change. If you can name the change and the response, you can often reason out the answer, for example which hormone is released or whether the kidneys keep more water or less.",
+        [
+          "Name the condition that is changing, such as body temperature, blood glucose or the body’s water.",
+          "Say which way it moved: above its set point or below it.",
+          "Name the response that pushes it back the other way, and whether the signal is carried by a nerve or a hormone.",
+          "Check your answer against the direction. In negative feedback the response always works against the change."
+        ],
+        {
+          prompt: "After lunch a student’s blood glucose goes up. The student says the pancreas releases glucagon to deal with it. Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. Glucagon is the pancreas hormone for blood sugar, so the pancreas releases it whenever blood sugar changes.",
+          strongAnswer: "No. After a meal, blood glucose rises above its set point, so the body needs to lower it. The pancreas releases insulin, which helps glucose move out of the blood and into the body’s cells, and blood glucose falls back toward its set point. Glucagon does the opposite job: the pancreas releases it when blood glucose is low, and it raises blood glucose.",
+          whyItWorks: "The weak answer remembers that glucagon is a pancreas hormone but ignores which way blood glucose moved. The strong answer starts from the direction of the change, a rise, and picks the hormone whose response reverses it. That is how negative feedback works."
+        },
+        q(
+          "A thermostat switches the heating on when a room gets too cold and off when the room warms up again. Which kind of control is that, the same kind the body uses for its temperature?",
+          ["Positive feedback", "A set point", "Negative feedback", "Filtration"],
+          "Negative feedback",
+          "Does the heating push the temperature further the same way, or back the other way?",
+          "The heating works against each change: a room that cools is warmed back up, and a room that warms has its heating switched off. A response that reverses the change is negative feedback, the same kind of control the body uses for its temperature. Positive feedback would push the change further the same way. The set point is the target temperature, not the kind of control, and filtration is what the kidneys do to the blood.",
+          "Negative feedback"
+        ),
+        [
+          q(
+            "Which statement best describes homeostasis?",
+            ["Keeping conditions inside the body steady while the outside changes", "Keeping every condition in the body at exactly the same value at all times", "Growing and repairing the body as fast as possible", "Storing extra energy so the body never runs short"],
+            "Keeping conditions inside the body steady while the outside changes",
+            "Think of sweating and shivering. What are they both for?",
+            "Homeostasis is keeping conditions inside the body, such as temperature and blood glucose, steady within a narrow range while the outside world changes. The body does not hold them at exactly one value: it keeps nudging each one back toward its set point. Growing, repairing and storing energy are other things the body does, not homeostasis.",
+            "Homeostasis"
+          ),
+          q(
+            "Several hours after eating, a person’s blood glucose has dropped below its set point. Which hormone does the pancreas release to bring it back up?",
+            ["Insulin", "Thyroid hormone", "ADH", "Glucagon"],
+            "Glucagon",
+            "The hormone you need raises blood glucose.",
+            "Glucagon raises blood glucose, so the pancreas releases it when glucose is low; it signals the liver to release stored glucose into the blood. Insulin does the opposite and lowers blood glucose, for example after a meal. Thyroid hormone regulates the metabolic rate, and ADH controls how much water the kidneys keep.",
+            "Pancreas hormones"
+          ),
+          q(
+            "Thyroid hormone sets the pace at which the body’s cells use energy. What is that pace called?",
+            ["The set point", "Blood glucose", "Metabolic rate", "Water balance"],
+            "Metabolic rate",
+            "Look back at the hormones section: it named the pace that thyroid hormone regulates.",
+            "Metabolic rate is the pace at which the body’s cells use energy, and thyroid hormone, made by the thyroid gland in the neck, regulates it. A set point is the target value for a condition, not a pace. Blood glucose is regulated mainly by insulin and glucagon, and water balance by ADH and the kidneys.",
+            "Thyroid hormone"
+          ),
+          q(
+            "The kidneys filter a large amount of fluid out of the blood every day, yet only a small part of it leaves the body as urine. What happens to most of the filtered fluid?",
+            ["It is stored in the bladder until later", "It is reabsorbed back into the blood", "It is turned into sweat by the skin", "It is sent on to the large intestine"],
+            "It is reabsorbed back into the blood",
+            "Think about the second of the kidney’s three steps.",
+            "After filtration, the kidney tubules reabsorb most of the water and the substances the body needs, such as glucose and salts, so most of the filtered fluid is reabsorbed back into the blood. Only what is left becomes urine. The bladder stores that urine, not the rest of the filtered fluid; sweat is made by the skin from the blood, and the large intestine belongs to the digestive tract, not the urinary tract.",
+            "Kidney function"
+          ),
+          q(
+            "A student says the kidneys only get rid of waste. What else do they normally do?",
+            ["Help keep the body’s water, salts and pH in balance", "Set the body’s metabolic rate", "Release insulin and glucagon to keep blood glucose steady", "Make the antibodies that defend the body"],
+            "Help keep the body’s water, salts and pH in balance",
+            "The kidneys decide how much of several things leaves the body in the urine.",
+            "Besides removing waste, the kidneys help maintain the body’s fluid, electrolyte and pH balance: they adjust how much water, how much of each electrolyte and how much acid the body loses in the urine. Thyroid hormone sets the metabolic rate, the pancreas, not the kidneys, releases insulin and glucagon, and antibodies are made by white blood cells.",
+            "Kidney function"
+          )
+        ],
+        [
+          q(
+            "A person drinks several large glasses of water, and their body releases less ADH. What do the kidneys normally do next?",
+            ["Reabsorb more water, making a small amount of concentrated urine", "Stop filtering the blood until the extra water has been breathed out", "Reabsorb less water, so more urine is made and it is more dilute", "Send the extra water to the pancreas so that insulin can remove it"],
+            "Reabsorb less water, so more urine is made and it is more dilute",
+            "ADH helps the body save water. What happens when there is less of it?",
+            "Less ADH means the kidneys reabsorb less water, so more of it stays in the urine: more urine is made, and it is more dilute. That removes the extra water and brings the body’s water back toward its set point, which is negative feedback. Reabsorbing more water is what happens when ADH is high. The kidneys keep filtering the blood all the time, and insulin acts on glucose, not on water.",
+            "ADH and the kidneys"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Homeostasis and negative feedback",
+              body: "A feedback loop has three jobs: something detects a condition, something compares it with the set point, and some part of the body responds. In negative feedback the response pushes the condition back toward the set point.\n\nBody temperature control is an example of negative feedback that keeps your temperature near its set point. When your body gets too warm, you sweat and the blood vessels in your skin widen, and both help the body lose heat. When it gets too cold, you shiver, which makes heat. Either way, your temperature is pushed back toward its set point.\n\nPositive feedback, where the response pushes a change further the same way, is much less common. Temperature, blood glucose and the body’s water are all kept steady by negative feedback."
+            },
+            {
+              heading: "Hormones: chemical messengers",
+              body: "A hormone is a chemical messenger. A gland releases it into the blood, and the blood carries it around the body to the cells that respond to it.\n\nThe pancreas, an organ beside the digestive tract, regulates blood glucose by releasing two hormones with opposite jobs, insulin and glucagon. Insulin lowers blood glucose: after a meal, when glucose rises, insulin helps glucose move out of the blood and into the body’s cells. Glucagon raises blood glucose: when glucose falls, for example several hours after eating, glucagon signals the liver to release stored glucose into the blood.\n\nThe thyroid gland, in the front of the neck, makes thyroid hormone. Thyroid hormone regulates the body’s metabolic rate, the pace at which cells use energy. That pace affects how much heat the body makes."
+            },
+            {
+              heading: "The kidneys: a balance organ",
+              body: "The anatomy lessons showed that each kidney contains a very large number of tiny filtering units called nephrons. Here is what those units do, in three steps.\n\nFiltration: in each nephron, blood passes through a tiny cluster of capillaries, and water and small dissolved substances are pushed out of the blood into the nephron’s tubule. Blood cells and most large proteins normally stay in the blood. The fluid that has been filtered out is called filtrate.\n\nReabsorption: as the filtrate flows along the tubule, water and the substances the body needs, such as glucose and salts, are reabsorbed back into the blood. In normal kidney function, filtration is followed by reabsorption, and most of the filtered water is taken back.\n\nSecretion: the tubule can also move some extra substances out of the blood into the filtrate. What is left at the end is urine, which is carried to the bladder.\n\nAntidiuretic hormone (ADH) adjusts how much water is reabsorbed. When the body needs to save water, more ADH is released, and ADH makes the kidneys increase water reabsorption, so less urine is made and it is more concentrated. When there is extra water, less ADH is released, so more urine is made and it is more dilute.\n\nBesides removing waste, the kidneys help maintain the body’s fluid, electrolyte and pH balance. They adjust how much water, how much of each electrolyte (dissolved minerals such as sodium and potassium) and how much acid the body keeps or loses in the urine."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Blood glucose falls several hours after breakfast. Which hormone responds, and from where?",
+              strong: "Glucagon, from the pancreas. It raises blood glucose back toward its set point.",
+              explanation: "The change is a fall, so the response has to raise glucose. Of the pancreas’s two hormones, glucagon is the one that raises it."
+            },
+            {
+              setup: "On a cold morning you start to shiver. What kind of control is that?",
+              strong: "Negative feedback. Your body temperature fell, and shivering makes heat that brings it back up toward its set point.",
+              explanation: "The response works against the change, which is what makes it negative feedback."
+            }
+          ],
+          misconception: {
+            wrongModel: "The kidneys throw away everything they filter out of the blood.",
+            whyItFails: "Filtration takes a large amount of fluid out of the blood, including water, glucose and salts the body needs. If all of it left as urine, the body would lose its water and useful substances very quickly.",
+            betterModel: "Filtration is followed by reabsorption. Most of the filtered water and nearly all of the useful substances are reabsorbed back into the blood, and only what is left becomes urine."
+          },
+          commonMistakes: [
+            {
+              mistake: "Thinking “negative feedback” means something has gone wrong.",
+              whyItFails: "Negative describes the direction of the response, not whether it is good or bad. Negative feedback is how the body normally stays in balance, all day long.",
+              fix: "Read negative as “reverses the change”: a rise is answered by something that lowers, and a fall by something that raises."
+            },
+            {
+              mistake: "Swapping insulin and glucagon.",
+              whyItFails: "Both come from the pancreas and both act on blood glucose, so the organ does not tell them apart. Only the direction does.",
+              fix: "Insulin lowers blood glucose, as after a meal. Glucagon raises it, when glucose is low: think “glucose is gone, call glucagon”."
+            },
+            {
+              mistake: "Reading ADH as a hormone that makes more urine.",
+              whyItFails: "Anti- means against, and diuresis means making a lot of urine, so an antidiuretic hormone works against urine loss.",
+              fix: "ADH saves water: more ADH means more water is reabsorbed and less urine is made."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-physiology-heart-and-blood",
+    description: "Say what each part of the blood does, follow one heartbeat from the SA node to the ventricles, and explain the valves and cardiac output.",
+    category: "Health science",
+    order: 12,
+    lesson: {
+      title: "Heart and Blood at Work",
+      slug: "hosa-physiology-heart-and-blood-lesson",
+      summary: "Learn what plasma, red cells, white cells and platelets do, follow the electrical signal through one heartbeat, and see how the valves and cardiac output work.",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Say what plasma, red blood cells, white blood cells and platelets normally do, put the steps of one heartbeat in order from the SA node, explain what the heart valves do, and work out how cardiac output changes when heart rate or stroke volume changes.",
+        "Put two fingers on the inside of your wrist, just below the base of your thumb, and you can feel your pulse: one push of blood for every beat of your heart. The anatomy lessons showed the heart’s four chambers and the vessels that carry blood. This lesson shows what the heart and the blood are doing while you feel that pulse.\n\nBlood is a transport system. Its liquid part, plasma, carries things dissolved in it. Red blood cells and white blood cells travel along in the plasma: red blood cells carry oxygen, and white blood cells defend the body. Platelets travel with them; they are small cell fragments, not whole cells, and they help stop bleeding.\n\nThe heart is the pump that keeps the blood moving. Each beat starts with a tiny electrical signal inside the heart itself. The signal makes the upper chambers, the atria, squeeze first and the lower chambers, the ventricles, a moment later, and valves make sure the blood goes only one way.",
+        "Questions on the heart often ask what happens in what order, or what a part is for: where the signal goes next, what the valves do, or what a kind of blood cell carries. If you can follow one heartbeat and one drop of blood, you can reason about each part instead of guessing.",
+        [
+          "For a blood question, name the part of the blood first (plasma, red cells, white cells or platelets) and say its one main job.",
+          "For a heartbeat question, say the signal’s path in order: SA node, atria, AV node, bundle of His, bundle branches, Purkinje fibers, ventricles.",
+          "Decide whether the question is about contracting (systole) or relaxing and filling (diastole), and which chambers it means.",
+          "For cardiac output, multiply in your head: if one factor goes up and the other stays the same, the result goes up."
+        ],
+        {
+          prompt: "A student says the heart valves are what pump blood out of the heart. Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. The valves open and shut with every beat, so they must be what pushes the blood.",
+          strongAnswer: "No. The heart muscle does the pumping: when the ventricles contract, they push blood out. The valves are flaps that open to let blood pass forward and close to stop it flowing backward. Their job is to keep blood moving in one direction.",
+          whyItWorks: "The weak answer sees that the valves move with each beat and assumes they cause the flow. The strong answer separates the two jobs: the muscle pushes, and the valves direct. The valves open and close because of the pressure changes as the muscle squeezes and relaxes."
+        },
+        q(
+          "Which part of the blood carries oxygen from the lungs to the rest of the body?",
+          ["Plasma", "White blood cells", "Platelets", "Red blood cells"],
+          "Red blood cells",
+          "Look for the cells that contain hemoglobin.",
+          "Red blood cells carry oxygen from the lungs to the body’s tissues, held by a protein inside them called hemoglobin. Plasma carries the cells, nutrients, hormones and wastes in fluid, white blood cells defend the body, and platelets help stop bleeding.",
+          "Parts of the blood"
+        ),
+        [
+          q(
+            "Which order does the heartbeat’s electrical signal follow, starting at the SA node?",
+            ["SA node, atria, AV node, bundle of His, bundle branches, Purkinje fibers", "SA node, AV node, atria, Purkinje fibers, bundle branches, bundle of His", "SA node, atria, Purkinje fibers, bundle branches, bundle of His, AV node", "SA node, atria, bundle of His, AV node, bundle branches, Purkinje fibers"],
+            "SA node, atria, AV node, bundle of His, bundle branches, Purkinje fibers",
+            "The signal pauses at one node before it goes on toward the ventricles.",
+            "The signal starts in the SA node, then the atria, then the AV node, which holds it back for a moment so the ventricles can finish filling. From there it runs down the bundle of His, splits into the bundle branches, and spreads through the Purkinje fibers in the ventricle walls, so the ventricles contract.",
+            "The heartbeat"
+          ),
+          q(
+            "When the ventricles relax after a beat, the blood just pumped into the aorta is under pressure. What stops it from flowing back into the heart?",
+            ["The SA node", "A valve that closes", "The septum", "The AV node"],
+            "A valve that closes",
+            "Which part of the heart has the job of keeping blood moving in one direction?",
+            "A valve at the start of the aorta closes when the ventricles relax, so blood cannot flow backward into the heart. Keeping blood moving in one direction is the valves’ job. The SA node and the AV node carry the electrical signal, and the septum is the wall between the heart’s right and left sides.",
+            "Heart valves"
+          ),
+          q(
+            "The ventricles contract and push blood out into the aorta and the pulmonary artery. What is that part of the heartbeat called?",
+            ["Atrial diastole", "Atrial systole", "Ventricular systole", "Ventricular diastole"],
+            "Ventricular systole",
+            "Name the chambers, then choose between the word for contracting and the word for relaxing.",
+            "Systole means contracting, so the ventricles contracting and ejecting blood is ventricular systole. Diastole means relaxing and filling. Atrial systole is the atria contracting, just before the ventricles contract, and atrial diastole is the atria relaxing and filling, which happens while the ventricles are contracting.",
+            "The heartbeat"
+          ),
+          q(
+            "A person’s heart rate stays the same, but each beat now pushes out more blood. What happens to their cardiac output?",
+            ["It falls", "It stays the same", "It rises", "It is set by the valves alone"],
+            "It rises",
+            "Cardiac output is heart rate multiplied by stroke volume.",
+            "Cardiac output is heart rate multiplied by stroke volume. Stroke volume, the blood pushed out in each beat, has gone up while heart rate stayed the same, so cardiac output rises. With heart rate unchanged, it would stay the same only if stroke volume stayed the same, and it would fall only if stroke volume went down. The valves direct the blood; they do not set the output.",
+            "Cardiac output"
+          ),
+          q(
+            "B cells, a kind of white blood cell, make antibodies. Which body system do white blood cells belong to?",
+            ["The endocrine system", "The immune system", "The respiratory system", "The nervous system"],
+            "The immune system",
+            "What are antibodies for? Name the body system that does that job.",
+            "White blood cells, including the B cells that make antibodies, are part of the immune system, which defends the body against germs. The endocrine system is the glands that release hormones, the respiratory system moves air in and out, and the nervous system carries signals along nerves.",
+            "Parts of the blood"
+          )
+        ],
+        [
+          q(
+            "A small cut on a finger bleeds for a moment and then stops. Which describes what the blood does to seal the break?",
+            ["Fibrin threads form first, then platelets gather on them", "Platelets clump into a plug, then fibrin threads strengthen it", "Red blood cells clump into a plug, then plasma dries over it", "White blood cells seal the break, then platelets carry oxygen to it"],
+            "Platelets clump into a plug, then fibrin threads strengthen it",
+            "Think of which part of the blood exists to help stop bleeding.",
+            "Platelets clump at the injury site to form a plug, and then fibrin threads form a mesh that strengthens the plug into a clot. Fibrin forms after the platelets gather, not before. Red blood cells carry oxygen and plasma carries dissolved substances; neither makes the plug. White blood cells defend the body, and platelets do not carry oxygen.",
+            "Parts of the blood"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "What the blood carries",
+              body: "Plasma, the liquid part of blood, is mostly water, and its job is to carry cells, nutrients, hormones and wastes in fluid around the body.\n\nRed blood cells carry oxygen from the lungs to the body’s tissues. Inside each one is a protein called hemoglobin, which holds on to the oxygen.\n\nWhite blood cells defend the body against germs, such as bacteria and viruses, and they are part of the immune system. One kind, called B cells, makes antibodies: proteins that attach to one particular germ and help the body destroy it. The immune system is the body system that produces antibodies.\n\nPlatelets are small cell fragments that help stop bleeding. When a small blood vessel is cut, platelets clump at the injury site to form a plug. Then threads of a protein called fibrin form a mesh that strengthens the plug into a clot."
+            },
+            {
+              heading: "One heartbeat, step by step",
+              body: "Each heartbeat starts with an electrical signal from the SA node (sinoatrial node), a small patch of special tissue in the wall of the right atrium. It sets the pace of the heartbeat, so it is called the heart’s natural pacemaker.\n\nThe signal spreads across both atria, and they contract, pushing blood down into the ventricles. This is atrial systole.\n\nAfter spreading across the atria, the signal next reaches the AV node (atrioventricular node), between the atria and the ventricles. The AV node holds the signal back for a moment, so the ventricles can finish filling before they contract.\n\nFrom the AV node, the signal runs down the bundle of His, splits into the left and right bundle branches, and spreads through the Purkinje fibers in the walls of the ventricles.\n\nThis is ventricular systole: the ventricles contract and eject blood into the aorta, which carries it to the body, and the pulmonary artery, which carries it to the lungs.\n\nThen the ventricles relax and fill with blood again. This is ventricular diastole. Systole means contracting, and diastole means relaxing and filling."
+            },
+            {
+              heading: "Valves, heart rate and cardiac output",
+              body: "The heart has four valves. One sits between each atrium and the ventricle below it, and one sits at the start of each of the two large arteries that leave the ventricles, the aorta and the pulmonary artery. Each valve is a set of flaps that opens to let blood pass forward and closes to stop it flowing back. The valves open and close because of the pressure changes as the heart squeezes and relaxes. The valves’ job is to keep blood moving in one direction. The heart muscle, not the valves, does the pumping.\n\nHeart rate is the number of heartbeats in one minute. For an adult at rest, a typical heart rate is about 60 to 100 beats per minute. That is a general range for adults at rest, not a way to tell whether a particular person’s heart is healthy: heart rate rises with exercise, excitement or fear, and it differs from person to person.\n\nStroke volume is the amount of blood one ventricle pushes out in one beat. Cardiac output is the amount of blood one ventricle pumps out in one minute, and it equals heart rate multiplied by stroke volume. So if heart rate rises while stroke volume stays the same, cardiac output increases, and the same happens if stroke volume rises while heart rate stays the same."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Which part of the heart sets the pace of the heartbeat?",
+              strong: "The SA node, in the wall of the right atrium. It is the heart’s natural pacemaker.",
+              explanation: "The heartbeat’s signal starts at the SA node, so the SA node sets the pace. The AV node comes later on the signal’s path."
+            },
+            {
+              setup: "A runner’s heart rate goes up during a race, and each beat also pushes out more blood. What happens to cardiac output?",
+              strong: "It increases, because both factors in heart rate multiplied by stroke volume have gone up.",
+              explanation: "When either factor rises and the other does not fall, the product rises. Here both rise."
+            }
+          ],
+          misconception: {
+            wrongModel: "Cardiac output is just another name for heart rate.",
+            whyItFails: "Heart rate counts beats, but each beat can push out more or less blood. Two hearts beating at the same rate pump different amounts if their stroke volumes differ.",
+            betterModel: "Cardiac output is heart rate multiplied by stroke volume, so it depends both on how often the heart beats and on how much blood each beat pushes out."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping systole and diastole.",
+              whyItFails: "Both words name a phase of the heartbeat and differ only at the start, so they are easy to swap under pressure.",
+              fix: "Systole is the squeeze: contracting and pushing blood out. Diastole is relaxing and filling. Then add which chambers: atrial or ventricular."
+            },
+            {
+              mistake: "Starting the heartbeat at the AV node.",
+              whyItFails: "The AV node is on the signal’s path, but the signal starts before it, in the SA node in the right atrium. The AV node is where the signal pauses on its way to the ventricles.",
+              fix: "Start at the SA node, the pacemaker, and say the path in order: SA node, atria, AV node, bundle of His, bundle branches, Purkinje fibers."
+            },
+            {
+              mistake: "Thinking plasma carries the oxygen.",
+              whyItFails: "Plasma carries the blood cells and many dissolved substances, but very little oxygen travels dissolved in it. Almost all of the oxygen is held by hemoglobin inside the red blood cells.",
+              fix: "Oxygen travels in red blood cells, on hemoglobin. Plasma carries the cells, nutrients, hormones and wastes."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-physiology-breathing-and-digestion",
+    description: "Explain how the diaphragm moves air, how oxygen and carbon dioxide cross in the alveoli, what drives breathing, and what each part of the digestive tract does.",
+    category: "Health science",
+    order: 13,
+    lesson: {
+      title: "Breathing and Digestion at Work",
+      slug: "hosa-physiology-breathing-and-digestion-lesson",
+      summary: "Learn how breathing moves air, why gases cross between the alveoli and the blood, and what the stomach, small intestine, bile and large intestine each do.",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Explain how the diaphragm moves air in and out, why oxygen and carbon dioxide cross between the alveoli and the blood, what mainly makes you breathe more, and what peristalsis, the small intestine, bile and the large intestine each do.",
+        "Take a slow, deep breath with a hand on your belly. As you breathe in, your belly moves out a little. That movement comes from the diaphragm, the dome-shaped muscle below the lungs that the anatomy lessons called the main muscle of breathing: as it contracts, it pushes down on the organs below it.\n\nThe respiratory system’s main job is to exchange oxygen and carbon dioxide: it brings oxygen into the blood and removes carbon dioxide from it. The digestive system’s job is to break food down into pieces small enough for the body to absorb, and to get rid of what is left.\n\nThis lesson follows the air in and out of the lungs, and then the food along the digestive tract, saying what happens at each stop.",
+        "Questions on breathing and digestion usually ask what happens at one stop along a path: what the diaphragm does, which way a gas moves, where nutrients are absorbed, or what bile is for. If you know the path and the job at each stop, you can place any step instead of guessing.",
+        [
+          "Decide which path the question is on: air in and out of the lungs, or food along the digestive tract.",
+          "For breathing, ask whether the step is breathing in or breathing out, and what the diaphragm is doing.",
+          "For a gas, compare its partial pressure on each side. It diffuses from the higher side to the lower side.",
+          "For digestion, find the stop on the path (stomach, small intestine or large intestine) and say that stop’s main job."
+        ],
+        {
+          prompt: "A student says bile is an enzyme that digests fat. Is that right? (Our example, not an official test question.)",
+          weakAnswer: "Yes. Bile works on fat in the small intestine, so it must be one of the enzymes that digest it.",
+          strongAnswer: "No. Bile is not an enzyme. It emulsifies fats: it breaks big fat drops into many tiny droplets, so enzymes have far more surface to work on. The enzymes that then break the fat down come mostly from the pancreas.",
+          whyItWorks: "The weak answer mixes up helping digestion with doing it. The strong answer names bile’s real job, emulsifying, and keeps the enzymes’ job separate."
+        },
+        q(
+          "As you breathe in, what is the diaphragm doing, and what happens to the chest cavity?",
+          ["Relaxing and doming up; the chest gets smaller", "Relaxing and flattening; the chest gets bigger", "Contracting and doming up; the chest gets smaller", "Contracting and flattening; the chest gets bigger"],
+          "Contracting and flattening; the chest gets bigger",
+          "Air flows in when the pressure inside the lungs drops.",
+          "Breathing in starts with the diaphragm contracting and flattening downward, which makes the chest cavity bigger and lowers the pressure inside the lungs, so air flows in. Relaxing and doming up is what the diaphragm does when you breathe out, and that makes the chest smaller. A muscle that contracts shortens, so it flattens rather than domes up.",
+          "Breathing"
+        ),
+        [
+          q(
+            "In the alveoli, the air has a higher partial pressure of oxygen than the blood arriving from the body. What does the oxygen do?",
+            ["It stays in the alveoli until the heart pulls it in", "It diffuses from the alveoli into the blood", "It diffuses from the blood into the alveoli", "It is carried across by peristalsis"],
+            "It diffuses from the alveoli into the blood",
+            "Compare the two sides of the alveolar wall. Which way does a gas move?",
+            "Oxygen diffuses from the alveoli into the blood, because a gas spreads from where its partial pressure is higher to where it is lower. Carbon dioxide diffuses the other way, from the blood into the alveoli. Nothing pumps or pulls the gases across, and peristalsis moves food, not air.",
+            "Gas exchange"
+          ),
+          q(
+            "You hold your breath, and the urge to breathe grows stronger and stronger. What is mainly causing that urge?",
+            ["A rise in carbon dioxide", "A fall in blood glucose levels", "A rise in blood calcium", "A tiring diaphragm muscle"],
+            "A rise in carbon dioxide",
+            "Think about what the sensors in the brainstem and neck are most sensitive to.",
+            "Holding your breath lets carbon dioxide build up in the blood, because it is no longer being breathed out, and a rise in carbon dioxide is the main chemical signal to breathe. Blood glucose and calcium do not drive breathing, and the urge does not come from the diaphragm getting tired.",
+            "Control of breathing"
+          ),
+          q(
+            "Food keeps moving along your intestines even when you are lying down. What moves it?",
+            ["Gravity", "Bile from the gallbladder", "Peristalsis", "The diaphragm"],
+            "Peristalsis",
+            "The walls of the digestive tract contain muscle. What does that muscle do?",
+            "Peristalsis, waves of muscle contraction in the walls of the digestive tract, squeezes food along, which is why it keeps moving even when you lie down. Gravity cannot be what moves it, or food would stop when you lie flat. Bile emulsifies fats, and the diaphragm is a breathing muscle.",
+            "Digestion"
+          ),
+          q(
+            "A nutrient from your lunch has just passed from the digestive tract into the body. Where did that most likely happen?",
+            ["In the stomach", "In the small intestine", "In the large intestine", "In the gallbladder"],
+            "In the small intestine",
+            "Its lining is covered in villi.",
+            "The small intestine completes most digestion and absorbs most nutrients through the villi that line it, so that is where a nutrient most likely entered the body. The stomach begins protein digestion, the large intestine mainly reabsorbs water and electrolytes, and the gallbladder stores bile; food never passes through it.",
+            "Digestion"
+          ),
+          q(
+            "By the time material reaches the large intestine, most nutrients have already been absorbed. What does the large intestine mainly take back?",
+            ["Most of the protein and fat", "Carbon dioxide", "Glucose from the meal", "Water and electrolytes"],
+            "Water and electrolytes",
+            "Think of what the body still needs from what is left.",
+            "Water and electrolytes are what the large intestine mainly takes back as material passes through it, and the waste becomes firmer before it leaves the body. Protein, fat and glucose are absorbed earlier, in the small intestine, and carbon dioxide leaves the body through the lungs.",
+            "Digestion"
+          )
+        ],
+        [
+          q(
+            "Which pairing of a part and its normal job is correct?",
+            ["Small intestine: completes most digestion and absorbs most nutrients", "Bile: an enzyme that breaks fats into their building blocks", "Large intestine: completes most digestion and absorbs most nutrients", "Diaphragm: relaxes and domes up to pull air in"],
+            "Small intestine: completes most digestion and absorbs most nutrients",
+            "Check each pairing against that stop’s main job.",
+            "The small intestine completes most digestion and absorbs most nutrients, so that pairing is correct. The large intestine mainly reabsorbs water and electrolytes. Bile emulsifies fats but is not an enzyme, and the diaphragm contracts and flattens to pull air in; relaxing is breathing out.",
+            "Digestion"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Breathing in and out",
+              body: "Moving air in and out of the lungs is called ventilation. Breathing in is inhalation, and breathing out is exhalation.\n\nWhen you breathe in, the diaphragm contracts and flattens downward, which makes the chest cavity bigger. Muscles between the ribs help by lifting the ribs up and out. A bigger chest lowers the air pressure inside the lungs below the pressure of the air outside, so air flows in. In short, contracting and flattening means the chest gets bigger and air comes in.\n\nWhen you breathe out quietly, the diaphragm relaxes and domes back up, the chest gets smaller, the pressure inside the lungs rises, and air flows out. Quiet breathing out is passive: it needs no extra muscle work."
+            },
+            {
+              heading: "Gas exchange in the alveoli",
+              body: "The alveoli are tiny air sacs, each wrapped in capillaries. Their walls and the capillary walls are so thin that gases pass straight through them.\n\nGases move by diffusion: a gas spreads from where its partial pressure is higher to where it is lower. Partial pressure is the share of the air’s pressure that comes from one gas; the more of that gas there is, the higher its partial pressure. A difference in partial pressure between two places is called a partial-pressure gradient, and moving down the gradient means moving from the higher side to the lower side.\n\nIn the alveoli, oxygen moves into the blood by diffusion down a partial-pressure gradient: the air in the alveoli has a higher partial pressure of oxygen than the blood arriving from the body, so oxygen diffuses from the alveoli into the blood. Carbon dioxide moves the opposite way, from the blood into the alveoli, down its own gradient, and you breathe it out. Diffusion needs no pump and no energy from the cells."
+            },
+            {
+              heading: "What makes you breathe more",
+              body: "Your breathing speeds up and slows down on its own. Sensors called chemoreceptors, in the brainstem and in large arteries in the neck and chest, keep track of the chemistry of the blood.\n\nIn a healthy person at rest, the main chemical signal to breathe more is a rise in carbon dioxide in the blood, not a fall in oxygen. The sensors are very sensitive to carbon dioxide, because even a small rise makes the blood slightly more acidic. When carbon dioxide rises, you breathe faster and deeper, which increases ventilation and removes more of it. That is negative feedback, the same idea as in the balance lesson."
+            },
+            {
+              heading: "Food along the digestive tract",
+              body: "Peristalsis moves food through the digestive tract: waves of muscle contraction in the walls of the tube squeeze the food along, from the esophagus all the way through the intestines. It works even when you are lying down.\n\nThe stomach churns food and mixes it with acid and an enzyme that begin to digest protein.\n\nThe small intestine’s main job is to complete most digestion and absorb most nutrients. Enzymes, many of them from the pancreas, finish breaking food down into small molecules, and the villi lining the small intestine take those molecules into the body.\n\nBile helps with fats. It is made in the liver and stored in the gallbladder, which releases it into the small intestine. Bile is not an enzyme: its job is to emulsify fats, breaking big fat drops into tiny droplets so that enzymes can break them down faster.\n\nThe large intestine receives what is left. As material passes through it, the large intestine reabsorbs water and electrolytes (dissolved minerals such as sodium and potassium), and the waste becomes firmer before it leaves the body."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "Where is bile made, and where does it do its job?",
+              strong: "It is made in the liver and stored in the gallbladder, which releases it into the small intestine, where it emulsifies fats.",
+              explanation: "Bile does its job in the small intestine, where most digestion is completed. The liver makes it and the gallbladder stores it, but food never passes through either."
+            },
+            {
+              setup: "Which way does carbon dioxide move in the alveoli?",
+              strong: "Out of the blood and into the alveoli, because its partial pressure is higher in the blood arriving from the body than in the air in the alveoli. Then you breathe it out.",
+              explanation: "Each gas diffuses down its own partial-pressure gradient, from the higher side to the lower side, so the two gases cross in opposite directions."
+            }
+          ],
+          misconception: {
+            wrongModel: "You breathe because your body notices that it is running low on oxygen.",
+            whyItFails: "Oxygen does fall when you stop breathing, but the sensors respond strongly to oxygen only after it has fallen a long way. They are much more sensitive to carbon dioxide: even a small rise makes the blood slightly more acidic, and that strongly drives breathing.",
+            betterModel: "At rest, the main chemical signal to breathe more is a rise in carbon dioxide. That is why the urge to breathe grows while you hold your breath."
+          },
+          commonMistakes: [
+            {
+              mistake: "Thinking the lungs pull air in by themselves.",
+              whyItFails: "The lungs do not pull in air on their own. They expand because the diaphragm and the rib muscles make the chest bigger, which lowers the pressure inside them.",
+              fix: "Start every breathing question with the diaphragm: contracting and flattening means breathing in, and relaxing and doming up means breathing out."
+            },
+            {
+              mistake: "Thinking the large intestine absorbs most nutrients.",
+              whyItFails: "By the time food reaches the large intestine, most nutrients have already been taken into the body in the small intestine. The large intestine mainly takes back water and electrolytes.",
+              fix: "Small intestine: finish digestion and take in most nutrients. Large intestine: reabsorb water and electrolytes."
+            },
+            {
+              mistake: "Mixing up which way each gas moves in the lungs.",
+              whyItFails: "Oxygen and carbon dioxide cross the same thin walls, but in opposite directions.",
+              fix: "Each gas moves from where its partial pressure is higher to where it is lower: oxygen from the alveoli into the blood, and carbon dioxide from the blood into the alveoli."
+            }
+          ]
+        }
+      )
+    }
+  },
+  {
+    organization: "HOSA",
+    track: "HOSA",
+    name: "Medical Terminology",
+    slug: "hosa-physiology-nerves-and-muscles",
+    description: "Follow a nerve signal across a synapse, explain a reflex and the two branches that ready the body for action or rest, compare nerves with hormones, and put a muscle contraction in order.",
+    category: "Health science",
+    order: 14,
+    lesson: {
+      title: "Nerves and Muscles: Fast Signals",
+      slug: "hosa-physiology-nerves-and-muscles-lesson",
+      summary: "Learn how nerve cells pass signals on, why a reflex moves you before you feel anything, how the body switches between action and rest, and how calcium lets a muscle contract.",
+      estimatedMinutes: 14,
+      content: lesson(
+        "Explain how a nerve signal crosses a synapse, why a withdrawal reflex happens before the brain processes the sensation, what the sympathetic and parasympathetic branches do, how hormones differ from nerve signals, and what lets a muscle fiber contract.",
+        "If you ever touch something very hot by accident, your hand jerks away before you even feel the heat. That fast, automatic movement is a reflex, and it shows how quickly nerves can work.\n\nThe anatomy lessons divided the nervous system into the central nervous system (the brain and spinal cord) and the peripheral nervous system (the nerves outside them). The working units of both are nerve cells, called neurons. A neuron carries an electrical signal along its length, and at its end it passes the signal on to the next cell.\n\nThis lesson follows that signal: across the gap to the next cell, through a reflex, into the branches that ready the body for action or for rest, and finally into a muscle, where it makes the muscle contract.",
+        "Questions on nerves and muscles often ask about a sequence: what happens at the gap between two cells, which way a reflex signal travels, or which step lets a muscle contract. If you can tell the story in order, you can find the step a question is asking about.",
+        [
+          "Decide what the question is about: a signal passing between cells, a reflex, the body getting ready for action or rest, or a muscle contracting.",
+          "Tell the signal’s story in order, from where it starts to where it ends.",
+          "For action or rest, ask which branch is working: sympathetic for action, parasympathetic for rest and digestion.",
+          "For a muscle, say what calcium does before you say what actin and myosin do."
+        ],
+        {
+          prompt: "A student touches a hot pan and says, “My brain felt the heat and then told my hand to move.” Is that the right order? (Our example, not an official test question.)",
+          weakAnswer: "Yes. The brain is in charge of the body, so it has to decide before the hand can move.",
+          strongAnswer: "No. In a withdrawal reflex, the signal from the skin goes to the spinal cord, and the spinal cord sends a signal straight back out to the arm muscles. The hand moves through the spinal cord, before the brain processes the sensation. The signal also travels up to the brain, which is why you feel the heat, but by then the hand is already moving.",
+          whyItWorks: "The weak answer assumes every movement starts with a decision in the brain. The strong answer follows the reflex path, from the skin to the spinal cord and back out to the muscle, which is shorter and faster, and explains why the feeling comes after the movement."
+        },
+        q(
+          "A signal has reached the end of a neuron, where a tiny gap separates it from the next cell. What carries the signal across that gap?",
+          ["An electrical spark that jumps the gap", "A neurotransmitter released into the gap", "Blood flowing between the two cells", "The neuron growing until it touches the next cell"],
+          "A neurotransmitter released into the gap",
+          "At a chemical synapse, the two cells do not touch.",
+          "The sending neuron releases a neurotransmitter, a chemical messenger, into the gap, which is called the synaptic cleft. The neurotransmitter crosses the cleft and attaches to receptors on the next cell. At a typical chemical synapse the cells do not touch, no electrical spark jumps the gap, and blood does not carry the signal across.",
+          "Synapses"
+        ),
+        [
+          q(
+            "After a meal, as you sit and rest, one branch of the nervous system slows your heart and helps digestion. Which branch is it?",
+            ["The sympathetic branch", "The central nervous system", "The parasympathetic branch", "The endocrine system"],
+            "The parasympathetic branch",
+            "One branch is for action, and the other is for rest and digestion.",
+            "The parasympathetic branch supports rest and digestion: it slows the heart and helps digestion work. The sympathetic branch does the opposite and prepares the body for exertion. The central nervous system is the brain and spinal cord, and the endocrine system works through hormones.",
+            "Action and rest"
+          ),
+          q(
+            "A message travels in the blood, takes a while to have an effect, and keeps working for a long time. What kind of messenger is it most likely to be?",
+            ["A hormone", "A reflex", "A signal along a neuron", "A neurotransmitter crossing a synapse"],
+            "A hormone",
+            "Nerve signals are fast and brief. The other kind of messenger is carried in the blood.",
+            "A hormone travels in the bloodstream and acts more slowly but for longer than a nerve signal, so a slow, long-lasting message carried in the blood is most likely a hormone. A reflex, a signal along a neuron and a neurotransmitter crossing a synapse are all part of nerve signalling, which acts within a fraction of a second.",
+            "Nerves and hormones"
+          ),
+          q(
+            "Inside a muscle fiber, which two protein filaments slide past each other to shorten it?",
+            ["Troponin and tropomyosin", "Tendons and ligaments", "Neurons and synapses", "Actin and myosin"],
+            "Actin and myosin",
+            "One filament is thin and the other is thick.",
+            "Actin and myosin are the two filaments that slide: the myosin heads attach to the actin and pull it along, which shortens the fiber. Troponin and tropomyosin are attached to the actin and move with it, but they are control proteins that decide whether myosin can attach; the filaments that slide past each other are actin and myosin. Tendons and ligaments are outside the fiber, and neurons carry the signal to it.",
+            "Muscle contraction"
+          ),
+          q(
+            "You step on a sharp stone and lift your foot before you even feel it. Which route did that reflex signal take?",
+            ["Skin to the brain, which then signals the leg muscles", "Skin to the spinal cord, then back to the leg muscles", "Skin to the leg muscles directly, with no nerve involved", "Skin to a gland, which releases a hormone into the blood"],
+            "Skin to the spinal cord, then back to the leg muscles",
+            "Where does a withdrawal reflex signal turn back toward the muscles?",
+            "In a withdrawal reflex the signal goes from the skin to the spinal cord, and the spinal cord sends it straight back to the leg muscles, so the foot moves before the brain processes the feeling. The signal travels to the brain too, but by the time the brain has processed it and you feel it, the foot is already moving. A reflex needs nerves, and a hormone in the blood would be far too slow.",
+            "Reflexes"
+          ),
+          q(
+            "You sprint to catch a bus. Which change does the sympathetic branch normally make?",
+            ["Your heart slows so that it does not tire out during the run", "Your digestion speeds up to release more energy from the food you ate", "Your heart rate rises and more blood goes to your skeletal muscles", "Your kidneys make more urine to lighten your load"],
+            "Your heart rate rises and more blood goes to your skeletal muscles",
+            "This branch gets the body ready for exertion.",
+            "The sympathetic branch raises your heart rate and shifts more blood toward your skeletal muscles, preparing you for exertion. Slowing the heart and speeding up digestion are what the parasympathetic branch does during rest, and the sympathetic branch actually slows digestion for a while. Making more urine does not help you run.",
+            "Action and rest"
+          )
+        ],
+        [
+          q(
+            "A nerve signal reaches a skeletal muscle fiber. Which order of events follows?",
+            ["Calcium is released, calcium binds to troponin, the binding sites on actin are exposed, myosin pulls the actin", "Myosin pulls the actin, calcium is released, calcium binds to troponin, the binding sites on actin are exposed", "Calcium is released, the binding sites on actin are exposed, calcium binds to troponin, myosin pulls the actin", "Calcium binds to troponin, myosin pulls the actin, calcium is released, the binding sites on actin are exposed"],
+            "Calcium is released, calcium binds to troponin, the binding sites on actin are exposed, myosin pulls the actin",
+            "Something must uncover the binding sites before myosin can attach.",
+            "First calcium is released inside the fiber, then calcium binds to troponin, which moves the tropomyosin aside, so the binding sites on actin are exposed, myosin attaches and pulls the actin. Myosin cannot pull before the sites are uncovered, and the sites are uncovered only after calcium has bound to troponin.",
+            "Muscle contraction"
+          )
+        ],
+        {
+          teachingSections: [
+            {
+              heading: "Passing a signal across a synapse",
+              body: "Most neurons do not touch the next cell. The place where a signal passes from one cell to the next is called a synapse, and at a typical chemical synapse there is a tiny gap between the two cells, called the synaptic cleft.\n\nWhen the signal reaches the end of the sending neuron, the neuron releases a neurotransmitter into the synaptic cleft. A neurotransmitter is a chemical messenger. Once it is released into the gap, it crosses the cleft and attaches to receptors on the next cell, which can start a new signal in that cell or make one more or less likely. The neurotransmitter is then quickly cleared from the gap, so each signal is brief. So at a chemical synapse, a chemical carries the signal across the gap."
+            },
+            {
+              heading: "Reflexes",
+              body: "A reflex is a fast, automatic response that you do not have to think about. In a withdrawal reflex, such as pulling your hand off something hot, the signal travels from sensors in the skin to the spinal cord, and the spinal cord sends a signal straight back to the muscles that move the hand. The protective movement happens through the spinal cord, before the brain processes the sensation. The signal also travels up to the brain, so you feel the heat a moment later. Stepping on something sharp works the same way: the spinal cord signals the leg muscles to lift your foot before you feel it."
+            },
+            {
+              heading: "Ready for action, or ready to rest",
+              body: "Part of the nervous system works without you thinking about it, controlling things like heart rate and digestion. It is called the autonomic nervous system, and it has two branches that usually work in opposite directions.\n\nThe sympathetic branch prepares the body for exertion, sometimes called “fight or flight”. Sympathetic activity prepares the body by raising heart rate and shifting blood toward skeletal muscle, the muscles that move the skeleton. When the sympathetic branch is active, your heart rate rises and more blood goes to your skeletal muscles. It also slows digestion for a while.\n\nThe parasympathetic branch supports rest and digestion. It slows the heart rate and helps digestion work."
+            },
+            {
+              heading: "Nerves and hormones compared",
+              body: "Nerves and hormones both carry messages, but in different ways. A nerve signal travels along neurons and acts within a fraction of a second, on the exact cells it reaches. Compared with nerve signals, hormones travel in the bloodstream and act more slowly but for longer. A hormone reaches every part of the body the blood does, but only cells with the right receptors respond to it."
+            },
+            {
+              heading: "How a muscle contracts",
+              body: "A skeletal muscle is made of long cells called muscle fibers. Inside each fiber are two kinds of protein filament: thin ones called actin and thick ones called myosin. When the muscle contracts, the actin and myosin filaments slide past each other, which shortens the fiber.\n\nAt rest, a protein called tropomyosin lies along the actin and covers the binding sites, the places where myosin could attach.\n\nWhen a nerve signal reaches the fiber, calcium is released from a store inside the fiber called the sarcoplasmic reticulum. Calcium binds to troponin, a protein attached to the tropomyosin, which shifts the tropomyosin aside and exposes the binding sites on actin. Once the binding sites on actin are exposed, the heads of the myosin filaments attach to the actin, pull it, let go and attach again, over and over, using energy. This is called cross-bridge cycling, and myosin pulls the actin along with every cycle.\n\nWhen the nerve signal stops, calcium is pumped back into its store, the tropomyosin covers the binding sites again, and the muscle relaxes."
+            }
+          ],
+          additionalExamples: [
+            {
+              setup: "In a withdrawal reflex, where does the signal turn back toward the muscles?",
+              strong: "In the spinal cord. The signal comes in from the skin, and the spinal cord sends one straight back out to the muscles without waiting for the brain.",
+              explanation: "That short path through the spinal cord is why a withdrawal reflex is so fast, and why you feel the sensation only after you have already moved."
+            },
+            {
+              setup: "Why does a hormone’s effect usually last longer than a nerve signal’s?",
+              strong: "A hormone stays in the blood and keeps reaching the cells that respond to it until the body breaks it down or removes it, which can take minutes or hours. At a synapse, the neurotransmitter is cleared from the gap almost at once, so a nerve signal’s effect is soon over.",
+              explanation: "The reason is how long the messenger stays around: a hormone lingers in the blood, while a neurotransmitter is cleared from the synapse within a fraction of a second."
+            }
+          ],
+          misconception: {
+            wrongModel: "A nerve signal jumps straight across the gap to the next cell as electricity.",
+            whyItFails: "At a typical chemical synapse the two cells do not touch. The electrical signal stops at the end of the first neuron.",
+            betterModel: "At a chemical synapse the sending neuron releases a neurotransmitter, which crosses the synaptic cleft and attaches to the next cell. A chemical carries the signal across the gap."
+          },
+          commonMistakes: [
+            {
+              mistake: "Swapping sympathetic and parasympathetic.",
+              whyItFails: "They are two branches of the same system, with long, similar names, and they act on many of the same organs, usually in opposite directions.",
+              fix: "Sympathetic is for action: a faster heart and more blood to the skeletal muscles. Parasympathetic is for rest and digestion: a slower heart and digestion at work."
+            },
+            {
+              mistake: "Thinking the bone shortens and pulls on the muscle.",
+              whyItFails: "Bones do not shorten. The muscle fiber shortens when myosin pulls the actin filaments along, and the muscle then pulls on the bone through its tendon.",
+              fix: "Muscles pull, and bones are pulled. Inside the muscle, myosin pulls the actin."
+            },
+            {
+              mistake: "Thinking calcium does the pulling.",
+              whyItFails: "Calcium is the switch, not the motor. It binds to troponin so that the binding sites on actin are uncovered.",
+              fix: "Calcium uncovers the binding sites, and then myosin does the pulling."
+            }
+          ]
+        }
+      )
+    }
+  },
   {
     organization: "HOSA",
     track: "HOSA",

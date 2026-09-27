@@ -1,7 +1,7 @@
 # CURRENT STATE — AUTHORITATIVE
 
 _Last updated: 2026-09-27, HOSA lines only (the Medical Terminology word-parts course, its anatomy
-module, their practice and HOSA test-result next steps). Every other
+and physiology modules, their practice and HOSA test-result next steps). Every other
 line in this region was last synced on 2026-09-09 and lags later commits, for example the DECA
 beginner-QA repairs through `01bbaa1`; re-derive before relying on them._
 
@@ -54,9 +54,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   reviews, nullable mastery) → `f004d05` → `956b9a9` (the two simulation prerequisites) → `d37a533`
   (simulation connected) → `77a8fab` (navigation truth).
 - **Lesson counts — never collapse DECA into the global figure.** **DECA published = 12.**
-  **Global published (all tracks, learner-visible registry entries) = 31**: 12 DECA, 10 General
-  Debate, 9 HOSA (it was 23, with 1 HOSA, at `01bbaa1`; the eight added are the HOSA Medical
-  Terminology word-parts and anatomy lessons below). Writing the global number where the DECA number belongs was
+  **Global published (all tracks, learner-visible registry entries) = 35**: 12 DECA, 10 General
+  Debate, 13 HOSA (it was 23, with 1 HOSA, at `01bbaa1`; the twelve added are the HOSA Medical
+  Terminology word-parts, anatomy and physiology lessons below). Writing the global number where the DECA number belongs was
   a real reporting error during P1-B4 and is the reason this line exists. **DECA held = 1.**
   ROLE-PLAY CORE carries the published prerequisite and skill path: `how-deca-roleplay-works`,
   `deca-reading-scenarios`, `deca-identifying-problem`, `deca-understanding-performance-indicators`,
@@ -210,9 +210,9 @@ non-executable. Rewrite this region after each milestone; append history below t
   carry a published teaching owner and resolve to their exact drill. **HOSA still has none.** (This
   line read "DECA and HOSA have no concept-drill mapping" until DECA P1; it was true when written.)
   The HOSA Medical Terminology course does not change that. Since the practice remediation
-  (2026-09-26) and the anatomy module (2026-09-27, local commits), a practice-room weak area in word
-  roots, prefixes, suffixes or anatomy links to the lesson that teaches it; that is navigation, not a
-  concept-drill mapping, and it writes nothing.
+  (2026-09-26) and the anatomy and physiology modules (2026-09-27, local commits), a practice-room
+  weak area in word roots, prefixes, suffixes, anatomy or physiology links to the lesson that teaches
+  it; that is navigation, not a concept-drill mapping, and it writes nothing.
 - Thresholds: `PRACTICING_MASTERY_MIN` **70** and `DRILL_PASS_THRESHOLD` **70** — equal numbers,
   distinct product concepts. DUE ≠ WEAK.
 
@@ -779,10 +779,10 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
   `node_modules/.prisma/client/index.js` dotenv-reads `<repo>/.env` at module scope, so any module
   reaching `@prisma/client` as a value is a carrier — `lib/api.ts` as well as `lib/prisma.ts`. A
   suite whose own source never mentions `.env` still reads it if its closure does.
-- **REGISTERED = 58** as of 2026-09-27 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
+- **REGISTERED = 59** as of 2026-09-27 (52 at `01bbaa1`, plus `hosa-medterm-lessons:smoke`,
   `hosa-medterm-session-safety:smoke`, `hosa-medterm-targeted-practice:smoke`,
-  `hosa-medterm-remediation:smoke`, `hosa-result-next-steps:smoke` and
-  `hosa-medterm-anatomy:smoke`); it read 45 when
+  `hosa-medterm-remediation:smoke`, `hosa-result-next-steps:smoke`,
+  `hosa-medterm-anatomy:smoke` and `hosa-medterm-physiology:smoke`); it read 45 when
   re-derived on 2026-09-09. **The four
   counts below were computed against REGISTERED = 36 and are STALE — re-derive before relying on
   any of them.** Only REGISTERED is derivable from `package.json`; the rest are properties of each
@@ -857,11 +857,13 @@ any sweep, which is why this paragraph describes the defect instead of reproduci
 
 ## Current next action
 
-**HOSA LEARNING, 2026-09-27.** The Medical Terminology anatomy module is a local commit on top of
-the local HOSA stack (see *HOSA Medical Terminology anatomy* below the archive boundary); a human
-subject-accuracy review, or an explicit owner waiver, is required before any push. The owner's
-stated order after it: Physiology, then Pathophysiology, then HOSA end-to-end QA, then human
-medical-content review, then merge and push, then design. Each step starts only when the owner asks.
+**HOSA LEARNING, 2026-09-27.** The Medical Terminology anatomy and physiology modules are local
+commits on top of the local HOSA stack (see *HOSA Medical Terminology physiology* and *HOSA Medical
+Terminology anatomy* below the archive boundary). The owner's plan (2026-09-27): keep all HOSA
+medical work local, build Pathophysiology next, then run one HOSA Medical Terminology end-to-end QA
+and one qualified human subject-accuracy review of the whole curriculum before the stack is pushed;
+the owner has said they cannot be that reviewer. Then merge and push, then design. Each step starts
+only when the owner asks.
 
 **Recorded 2026-09-26** (the session-builder hang named here was fixed at `6e365e9`; word-part
 practice, remediation and the anatomy module followed). **HOSA LEARNING (owner direction, 2026-09-26).** The owner paused repeated DECA acceptance reviews
@@ -937,6 +939,94 @@ historical claim promoted back into current guidance must first be re-derived fr
 
 The archive preserves historical records in roughly reverse-chronological order; it contains known
 ordering irregularities and is not warranted as a strict chronology. Current truth is above.
+
+## HOSA Medical Terminology physiology — 2026-09-27 — LOCAL COMMIT
+
+Not pushed, not deployed, not Production-verified, not browser-verified (`npm run build`, a dev
+server and a browser session are forbidden in the cloud workspace; the lessons, the lessons index,
+Event HQ, the practice page and the room were rendered server-side in the guard only). **The gap:**
+the practice bank's 30 physiology questions (bank unchanged: 180 questions, six canonical areas × 30,
+SHA-256 pinned) had no lesson; the practice room marked physiology "not taught yet" and a physiology
+weak area said no lesson existed. **Census** (all 30, each classified by concept, skill and owning
+lesson in `scripts/hosa-medterm-physiology-smoke.ts`): homeostasis and negative feedback 2, glucose
+and metabolic-rate hormones 3, kidney function and ADH 3, parts of the blood 4, the heartbeat and
+valves 3, heart rate and cardiac output 2, breathing and gas exchange 4, digestion along the tract 4,
+nerve signals, reflexes and the autonomic branches 4, muscle contraction 1. **The change:** a third
+module of the Medical Terminology course, `hosa-medterm-physiology` ("Physiology", prerequisite
+`hosa-medterm-anatomy`), with four published concept lessons chained on from
+`hosa-anatomy-bones-muscles-nerves-skin`: `hosa-physiology-staying-in-balance` →
+`hosa-physiology-heart-and-blood` → `hosa-physiology-breathing-and-digestion` →
+`hosa-physiology-nerves-and-muscles` → end. Each has the course's shape (what it is, an early
+example, steps, teaching sections, a worked weak/strong example labelled "(Our example, not an
+official test question.)", more examples, a misconception and common mistakes) and seven explained
+checks with hints (one guided, five practice, one "Final check"; 28 in all); the checks save nothing
+and claim no mastery. Written for beginners aged 12 to 17: normal function only, at the bank's
+depth, referring back to the anatomy lessons (nephrons, the diaphragm, the chambers, the central and
+peripheral nervous systems). No disease is named, no diagnosis, treatment or clinical advice, no HOSA
+rule, and exactly one measured value (plain counts such as "four valves" are allowed): a typical
+resting adult heart rate of about 60 to 100 beats per minute, the bank's own range, with the caveat
+that it is a general range and not a way to judge anyone's heart. **Alignment:** PHYSIOLOGY QUESTIONS 30, TAUGHT 30, NOT YET TAUGHT 0. For each question the
+guard finds the fact that answers it in one sentence of its owning lesson's teaching text (checks,
+weak answers, prompts and mistakes as stated are excluded), and finds the tempting wrong fact nowhere
+the lessons mean to be true, check hints and feedback included. **Practice:** a fourth choice,
+"Physiology from the course" (`/training/hosa/practice?focus=physiology`, exactly the canonical
+`physiology` area, marked taught, never auto-starts, through the existing validated contract). The
+"All Medical Terminology" disclosure now says only disease (pathophysiology) has no lessons yet; the
+word-part and anatomy links say the lessons after them teach physiology. The first physiology lesson
+links back to physiology practice and the last one ends in it (the course end). **Remediation:**
+`HOSA_MEDTERM_AREA_TEACHING_OWNERS.physiology = "hosa-physiology-staying-in-balance"`; a physiology
+weak area reads "Study physiology in the Physiology lessons, starting with “Staying in Balance:
+Feedback, Hormones and the Kidneys”". Anatomy keeps its mapping. Pathophysiology keeps "CompeteReady
+does not have a lesson for this area yet." and stays marked "not taught yet" (false coverage 0).
+**Test results:** no exact mapping from a test-result weak area to the physiology lessons exists, so
+none was added. **Entry points:** HOSA Learn, Event HQ's Lessons row and the lessons index name the
+physiology lessons. **Provenance:** AI-drafted. Label "AI-generated CompeteReady lesson, not an
+official HOSA lesson or test item — not yet reviewed by a person"
+(`STABLE_TEACHING_HOSA_PHYSIOLOGY_PROVENANCE` in `lib/education/tracks/hosa.ts`), rendered in each
+lesson header. **HUMAN SUBJECT-ACCURACY REVIEW REQUIRED BEFORE PUSH.** **For the reviewer:** some
+statements go beyond the bank's questions and keys, and several of those (hemoglobin, the
+sarcoplasmic reticulum, secretion as the third kidney step, carbon dioxide acting through the
+blood's acidity) at least appear in the bank's own explanations. These have no bank backing at all
+and are the first to check: the AV node holding the signal so the ventricles can finish filling; the
+SA node's place in the right atrium wall; the positions of the four valves; glucagon signalling the
+liver to release stored glucose; only cells with the right receptors responding to a hormone; a
+hormone's effect lasting minutes or hours while a neurotransmitter is cleared almost at once;
+calcium pumped back into its store when a muscle relaxes; the oxygen sensors responding strongly
+only after oxygen has fallen a long way; the rib muscles' part in breathing in; villi; the
+three-part feedback loop and positive feedback being less common. **Review:** independent AI
+reviewers (one per lesson for accuracy, plus bank alignment, product, QA/guard and security) raised
+30 findings; of two adversarial verifiers per finding, at least one upheld 9 (both upheld 5 and
+they split on 4; two of the 9 are the same cardiac-output sentence reported twice) and both refuted
+21. None was major after verification. The 9: the cardiac-output feedback stated a false general
+rule; platelets were called cells in the opening; the thyroid hint matched the key by a shared word;
+the reason carbon dioxide drives breathing; a restated "why" example; troponin "does not slide"; a
+56-word sentence; a stale registry comment. All were fixed. Most refuted ones were fixed too where
+the change was cheap and improved accuracy or safety: hints that gave the answer away; the
+hot-object hook rewritten as a description; ventilation and inhalation named; the kidney check's
+wording; electrolytes glossed as dissolved minerals rather than salts; lesson time 12 → 14 minutes.
+The guard was hardened from the QA findings. The wrong-fact scan now covers hints, feedback, set-ups
+and the plain statements in check prompts. ph-08 requires the pancreas as the subject. The disease
+scan catches condition names and pathophysiology phrasing: it recognises all 30 disease questions
+by their wording, although some disease keys alone, such as "Insulin", are normal words. The
+treatment scan catches words such as "inject", "therapy" and "doctor", and a measured quantity
+written in words counts as a number. A second independent AI check of those fixes (content, guard,
+records) found no blocker and 19 small follow-ups, all applied: the reflex hint no longer points at
+a distractor, the platelet sentence was split, the wrong-organ and swapped-fact patterns were
+widened, disease-scan false positives were removed, and these records were corrected. 47 deliberate
+mutations of the lessons, wiring, bank and guard were run: 46 were caught. The survivor removes
+"Insulin lowers blood glucose" from the teaching section while the same sentence stays in the
+lesson's common-mistake fix, so the fact is still taught; removing both is caught. **Guard:**
+`npm run hosa-medterm-physiology:smoke` (18 checks). Content snapshot marker
+`HOSA-MEDTERM-PHYSIOLOGY-V1`, updated for exactly the four new slugs. Pins deliberately updated:
+`education-registry` (35 lessons, 11 modules, the HOSA chain end), `education-migration`,
+`concept-lesson-schema`, `learning-content-integrity`, `hosa-medterm-lessons`,
+`hosa-medterm-anatomy` (the course now ends at physiology; four practice choices),
+`hosa-medterm-targeted-practice` (untaught-area probes moved to pathophysiology),
+`hosa-medterm-remediation` (physiology now has an owner) and `hosa-result-next-steps`. **Known
+limits:** the fourth lesson covers nerves and muscles in one sitting; a hint can still narrow the
+choices without naming the key, which no scan can fully judge; the practice setup screen was not
+exercised in a browser; the HOSA deck page still follows the viewer's selected track (deferred by the
+owner). REGISTERED = 59.
 
 ## HOSA Medical Terminology anatomy — 2026-09-27 — LOCAL COMMIT
 
